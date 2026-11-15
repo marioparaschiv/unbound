@@ -6,7 +6,7 @@ namespace loader {
 static std::vector<std::string> splitKeyPath(const std::string &key)
 {
     std::vector<std::string> parts;
-    size_t                   start = 0;
+    size_t start = 0;
     while (start <= key.size())
     {
         size_t end = key.find('.', start);
@@ -15,9 +15,11 @@ static std::vector<std::string> splitKeyPath(const std::string &key)
             parts.push_back(key.substr(start));
             break;
         }
+
         parts.push_back(key.substr(start, end - start));
         start = end + 1;
     }
+
     return parts;
 }
 
@@ -89,6 +91,7 @@ const nlohmann::json *SettingsStore::findLocked(const std::string &store,
         {
             return nullptr;
         }
+
         current = &*next;
     }
 
@@ -99,7 +102,7 @@ std::optional<nlohmann::json> SettingsStore::get(const std::string &store,
                                                  const std::string &key) const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    const nlohmann::json       *value = findLocked(store, key);
+    const nlohmann::json *value = findLocked(store, key);
     return value ? std::optional<nlohmann::json>(*value) : std::nullopt;
 }
 
@@ -107,11 +110,12 @@ bool SettingsStore::read(const std::string &store, const std::string &key,
                          const std::function<void(const nlohmann::json &)> &reader) const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    const nlohmann::json       *value = findLocked(store, key);
+    const nlohmann::json *value = findLocked(store, key);
     if (value)
     {
         reader(*value);
     }
+
     return value != nullptr;
 }
 
@@ -119,7 +123,7 @@ bool SettingsStore::getBoolean(const std::string &store, const std::string &key,
                                bool fallback) const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    const nlohmann::json       *value = findLocked(store, key);
+    const nlohmann::json *value = findLocked(store, key);
     if (!value)
     {
         return fallback;
@@ -148,7 +152,7 @@ std::string SettingsStore::getString(const std::string &store, const std::string
                                      const std::string &fallback) const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    const nlohmann::json       *value = findLocked(store, key);
+    const nlohmann::json *value = findLocked(store, key);
     if (!value || !value->is_string())
     {
         return fallback;
@@ -165,6 +169,7 @@ bool SettingsStore::set(const std::string &store, const std::string &key, nlohma
     {
         return false;
     }
+
     setLocked(store, key, std::move(value));
     return true;
 }
@@ -203,6 +208,7 @@ bool SettingsStore::flush()
             return true;
         }
     }
+
     return save();
 }
 
@@ -214,18 +220,21 @@ void SettingsStore::applyLocked(const nlohmann::json &changes) const
         {
             continue;
         }
+
         if (change.contains("clear") && change["clear"].is_boolean() && change["clear"].get<bool>())
         {
-            const std::string &store  = change["store"].get_ref<const std::string &>();
-            bool               erased = data_.erase(store) > 0;
-            erased                    = raw_.erase(store) > 0 || erased;
-            dirty_                    = erased || dirty_;
+            const std::string &store = change["store"].get_ref<const std::string &>();
+            bool erased              = data_.erase(store) > 0;
+            erased                   = raw_.erase(store) > 0 || erased;
+            dirty_                   = erased || dirty_;
             if (erased)
             {
                 journal_.push_back({{"store", store}, {"clear", true}});
             }
+
             continue;
         }
+
         if (!change.contains("key") || !change["key"].is_string())
         {
             continue;
@@ -233,8 +242,8 @@ void SettingsStore::applyLocked(const nlohmann::json &changes) const
 
         const std::string store = change["store"].get<std::string>();
         const std::string key   = change["key"].get<std::string>();
-        if (change.contains("remove") && change["remove"].is_boolean() &&
-            change["remove"].get<bool>())
+        if (change.contains("remove") && change["remove"].is_boolean()
+            && change["remove"].get<bool>())
         {
             removeLocked(store, key);
         }
@@ -259,8 +268,8 @@ void SettingsStore::setLocked(const std::string &store, const std::string &key,
         payload = nlohmann::json::object();
     }
 
-    std::vector<std::string> parts   = splitKeyPath(key);
-    nlohmann::json          *current = &payload;
+    std::vector<std::string> parts = splitKeyPath(key);
+    nlohmann::json *current        = &payload;
     for (size_t index = 0; index + 1 < parts.size(); index++)
     {
         nlohmann::json &next = (*current)[parts[index]];
@@ -268,6 +277,7 @@ void SettingsStore::setLocked(const std::string &store, const std::string &key,
         {
             next = nlohmann::json::object();
         }
+
         current = &next;
     }
 
@@ -283,7 +293,7 @@ void SettingsStore::removeLocked(const std::string &store, const std::string &ke
         return;
     }
 
-    std::vector<std::string>      parts   = splitKeyPath(key);
+    std::vector<std::string> parts        = splitKeyPath(key);
     std::vector<nlohmann::json *> parents = {&*payload};
     for (size_t index = 0; index + 1 < parts.size(); index++)
     {
@@ -292,6 +302,7 @@ void SettingsStore::removeLocked(const std::string &store, const std::string &ke
         {
             return;
         }
+
         parents.push_back(&*next);
     }
 
@@ -299,6 +310,7 @@ void SettingsStore::removeLocked(const std::string &store, const std::string &ke
     {
         return;
     }
+
     dirty_ = true;
     journal_.push_back({{"store", store}, {"key", key}, {"remove", true}});
 
@@ -308,6 +320,7 @@ void SettingsStore::removeLocked(const std::string &store, const std::string &ke
         {
             break;
         }
+
         parents[index - 1]->erase(parts[index - 1]);
     }
 

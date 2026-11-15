@@ -12,18 +12,18 @@ constexpr const char *kBundleSignatureSuffix = ".sig";
 struct BundleTrust {
     std::string productionKey;
     std::string pullRequestKey;
-    uint32_t    pullRequestNumber = 0;
+    uint32_t pullRequestNumber = 0;
 
-    bool                     isEnabled() const;
-    bool                     trustsPullRequestKey() const;
+    bool isEnabled() const;
+    bool trustsPullRequestKey() const;
     std::vector<std::string> productionKeys() const;
 };
 
 std::optional<std::string> decodeBase64(std::string_view encoded);
-std::string                compiledBundleSigningKey();
-BundleTrust                compiledBundleTrust();
-std::string                pullRequestSigningContext(uint32_t pullRequestNumber);
-std::string                sha512Hex(std::string_view data);
+std::string compiledBundleSigningKey();
+BundleTrust compiledBundleTrust();
+std::string pullRequestSigningContext(uint32_t pullRequestNumber);
+std::string sha512Hex(std::string_view data);
 
 bool verifyBundleSignature(const std::string &bundle, const std::string &signatureBase64,
                            const std::string &publicKeyBase64);
@@ -37,7 +37,7 @@ enum class TrustedSigner
 
 TrustedSigner verifyTrustedSignature(const std::string &message, const std::string &signatureBase64,
                                      const BundleTrust &trust);
-std::string   describeSigner(TrustedSigner signer, const BundleTrust &trust);
+std::string describeSigner(TrustedSigner signer, const BundleTrust &trust);
 
 bool isDevelopmentBundleURL(const std::string &url);
 }

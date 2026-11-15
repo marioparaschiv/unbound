@@ -10,7 +10,7 @@
 #include "LoaderFiles.h"
 
 namespace loader {
-static std::mutex   reportMutex;
+static std::mutex reportMutex;
 static LaunchReport currentReport;
 
 LaunchReport launchReport()
@@ -71,7 +71,7 @@ void recordSettingsRecovery(const std::string &recovery)
 int pullRequestOf(const std::string &updateURL)
 {
     static const std::regex pullRequestPath(R"(/pr/(\d+)(/|$))");
-    std::smatch             match;
+    std::smatch match;
     return std::regex_search(updateURL, match, pullRequestPath) ? std::stoi(match[1].str()) : 0;
 }
 
@@ -81,10 +81,12 @@ std::string bundleSourceOf(const std::string &updateURL, bool development)
     {
         return "";
     }
+
     if (development)
     {
         return "dev";
     }
+
     return pullRequestOf(updateURL) ? "pr" : "custom";
 }
 
@@ -97,14 +99,16 @@ std::vector<NativeCrashRecord> readCrashHistory(const std::string &directory)
     {
         return history;
     }
+
     for (const nlohmann::json &entry : parsed)
     {
-        if (entry.is_object() && entry.contains("at") && entry["at"].is_number_integer() &&
-            entry.contains("crash") && entry["crash"].is_string())
+        if (entry.is_object() && entry.contains("at") && entry["at"].is_number_integer()
+            && entry.contains("crash") && entry["crash"].is_string())
         {
             history.push_back({entry["at"].get<int64_t>(), entry["crash"].get<std::string>()});
         }
     }
+
     return history;
 }
 
@@ -115,6 +119,7 @@ bool recordCrash(const std::string &directory, const std::string &stack, int64_t
     {
         return false;
     }
+
     std::vector<NativeCrashRecord> history = readCrashHistory(directory);
     history.push_back({at, crash});
     if (history.size() > kCrashHistoryLimit)
@@ -122,11 +127,13 @@ bool recordCrash(const std::string &directory, const std::string &stack, int64_t
         history.erase(history.begin(),
                       history.begin() + static_cast<long>(history.size() - kCrashHistoryLimit));
     }
+
     nlohmann::json json = nlohmann::json::array();
     for (const NativeCrashRecord &record : history)
     {
         json.push_back({{"at", record.at}, {"crash", record.crash}});
     }
+
     return writeTextFileAtomically(joinPath(directory, kCrashHistoryFile), json.dump());
 }
 
@@ -143,6 +150,7 @@ std::string bundleStateName(BundleState state)
         case BundleState::RolledBack:
             return "rolled back";
     }
+
     return "active";
 }
 
@@ -157,6 +165,7 @@ static std::string previousExitName(PreviousExit exit)
         case PreviousExit::Unknown:
             break;
     }
+
     return "unknown";
 }
 
@@ -184,7 +193,7 @@ static std::string signalName(int signal)
 static std::vector<std::string> linesOf(const std::string &text)
 {
     std::vector<std::string> lines;
-    size_t                   start = 0;
+    size_t start = 0;
     while (start < text.size())
     {
         size_t end = text.find('\n', start);
@@ -192,9 +201,11 @@ static std::vector<std::string> linesOf(const std::string &text)
         {
             end = text.size();
         }
+
         lines.push_back(text.substr(start, end - start));
         start = end + 1;
     }
+
     return lines;
 }
 
@@ -205,19 +216,22 @@ static std::optional<std::string> addonName(const std::string &line)
     {
         return std::nullopt;
     }
+
     nlohmann::json record = nlohmann::json::parse(line.substr(kPrefix.size()), nullptr, false);
     if (!record.is_object())
     {
         return std::nullopt;
     }
+
     for (const char *key : {"name", "id"})
     {
-        if (record.contains(key) && record[key].is_string() &&
-            !record[key].get<std::string>().empty())
+        if (record.contains(key) && record[key].is_string()
+            && !record[key].get<std::string>().empty())
         {
             return record[key].get<std::string>();
         }
     }
+
     return std::nullopt;
 }
 
@@ -228,10 +242,12 @@ std::string nativeCrashHeadline(const std::string &stack)
     {
         return "ANR (not responding)";
     }
+
     if (lines.empty() || !lines.front().starts_with("Signal "))
     {
         return "";
     }
+
     std::string headline = signalName(std::atoi(lines.front().c_str() + 7));
     for (size_t index = 1; index < lines.size(); index++)
     {
@@ -241,6 +257,7 @@ std::string nativeCrashHeadline(const std::string &stack)
             break;
         }
     }
+
     return headline;
 }
 
@@ -252,6 +269,7 @@ std::string describeNativeCrash(const std::string &stack)
         std::optional<std::string> name = addonName(line);
         described += (name ? "Addon " + *name : line) + "\n";
     }
+
     return described;
 }
 
@@ -269,19 +287,23 @@ nlohmann::json launchReportJSON(const LaunchReport &report, const std::string &n
         json["lastCrash"]  = headline;
         json["crashStack"] = nativeCrash.substr(0, kCrashStackLimit);
     }
+
     if (report.firstRenderMs > 0)
     {
         json["bundleMs"]      = report.bundleMs;
         json["firstRenderMs"] = report.firstRenderMs;
     }
+
     if (!report.source.empty())
     {
         json["source"] = report.source;
     }
+
     if (report.pullRequest > 0)
     {
         json["pullRequest"] = report.pullRequest;
     }
+
     if (report.checkedAt > 0)
     {
         json["lastCheck"] = {{"at", report.checkedAt}, {"outcome", report.checkOutcome}};
@@ -290,15 +312,18 @@ nlohmann::json launchReportJSON(const LaunchReport &report, const std::string &n
             json["lastCheck"]["detail"] = report.checkDetail;
         }
     }
+
     if (!report.settingsRecovery.empty())
     {
         json["settings"] = report.settingsRecovery;
     }
+
     if (!report.revision.empty())
     {
         json["revision"] = report.revision;
         json["channel"]  = report.channel;
     }
+
     if (!history.empty())
     {
         nlohmann::json crashes = nlohmann::json::array();
@@ -306,8 +331,10 @@ nlohmann::json launchReportJSON(const LaunchReport &report, const std::string &n
         {
             crashes.push_back({{"at", record.at}, {"crash", record.crash}});
         }
+
         json["crashes"] = crashes;
     }
+
     return json;
 }
 
@@ -318,19 +345,23 @@ std::string launchReportLine(const LaunchReport &report, const std::string &nati
     {
         parts.push_back("bundle " + bundleStateName(report.bundle));
     }
+
     if (report.recovery)
     {
         parts.emplace_back("recovery mode");
     }
+
     if (report.earlyCloses > 0)
     {
-        parts.push_back(std::to_string(report.earlyCloses) +
-                        (report.earlyCloses == 1 ? " early close" : " early closes"));
+        parts.push_back(std::to_string(report.earlyCloses)
+                        + (report.earlyCloses == 1 ? " early close" : " early closes"));
     }
+
     if (report.previousExit == PreviousExit::Crashed)
     {
         parts.emplace_back("previous launch crashed");
     }
+
     if (std::string headline = nativeCrashHeadline(nativeCrash); !headline.empty())
     {
         parts.push_back("last crash " + headline);
@@ -341,6 +372,7 @@ std::string launchReportLine(const LaunchReport &report, const std::string &nati
     {
         line += (line.empty() ? "" : " · ") + part;
     }
+
     return line;
 }
 }

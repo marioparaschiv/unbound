@@ -48,32 +48,32 @@ public:
     bool isWatching(const std::string &path) const;
 
     void fileChanged(const std::string &path, FileWatchEvent event);
-    void directoryChanged(const std::string                &directory,
+    void directoryChanged(const std::string &directory,
                           const std::optional<std::string> &name = std::nullopt);
 
 private:
     struct Monitor {
         FileWatchCallback onChange;
-        bool              armed      = false;
-        uint64_t          generation = 0;
+        bool armed          = false;
+        uint64_t generation = 0;
     };
 
     struct Pending {
         std::string path;
-        uint64_t    generation = 0;
+        uint64_t generation = 0;
     };
 
-    void    arm(const std::string &path, Monitor &monitor);
+    void arm(const std::string &path, Monitor &monitor);
     Pending stamp(const std::string &path, Monitor &monitor);
-    void    schedule(const std::vector<Pending> &pending);
-    void    notify(const std::string &path, uint64_t generation);
+    void schedule(const std::vector<Pending> &pending);
+    void notify(const std::string &path, uint64_t generation);
 
-    std::shared_ptr<FileWatchBackend>            backend_;
-    FileWatchScheduler                           schedule_;
-    double                                       debounceSeconds_;
-    std::map<std::string, Monitor>               monitors_;
+    std::shared_ptr<FileWatchBackend> backend_;
+    FileWatchScheduler schedule_;
+    double debounceSeconds_;
+    std::map<std::string, Monitor> monitors_;
     std::map<std::string, std::set<std::string>> directories_;
-    uint64_t                                     nextGeneration_ = 0;
-    mutable std::mutex                           mutex_;
+    uint64_t nextGeneration_ = 0;
+    mutable std::mutex mutex_;
 };
 }

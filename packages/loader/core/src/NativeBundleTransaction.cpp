@@ -24,7 +24,7 @@ static bool copyExistingBundle(const char *sourcePath, const char *backupPath)
         return false;
     }
 
-    std::string       stagingTemplate = std::string(backupPath) + ".XXXXXX";
+    std::string stagingTemplate = std::string(backupPath) + ".XXXXXX";
     std::vector<char> staging(stagingTemplate.begin(), stagingTemplate.end());
     staging.push_back('\0');
     int destination = mkstemp(staging.data());
@@ -34,7 +34,7 @@ static bool copyExistingBundle(const char *sourcePath, const char *backupPath)
         return false;
     }
 
-    bool                    copied = fchmod(destination, metadata.st_mode & 0777) == 0;
+    bool copied = fchmod(destination, metadata.st_mode & 0777) == 0;
     std::array<char, 65536> buffer{};
     while (copied)
     {
@@ -43,15 +43,18 @@ static bool copyExistingBundle(const char *sourcePath, const char *backupPath)
         {
             break;
         }
+
         if (count < 0)
         {
             if (errno == EINTR)
             {
                 continue;
             }
+
             copied = false;
             break;
         }
+
         for (ssize_t offset = 0; offset < count;)
         {
             ssize_t written = write(destination, buffer.data() + offset, count - offset);
@@ -59,11 +62,13 @@ static bool copyExistingBundle(const char *sourcePath, const char *backupPath)
             {
                 continue;
             }
+
             if (written <= 0)
             {
                 copied = false;
                 break;
             }
+
             offset += written;
         }
     }
@@ -72,34 +77,38 @@ static bool copyExistingBundle(const char *sourcePath, const char *backupPath)
     {
         copied = fsync(destination) == 0;
     }
+
     if (close(destination) != 0)
     {
         copied = false;
     }
+
     close(source);
     if (copied)
     {
         copied = rename(staging.data(), backupPath) == 0;
     }
+
     if (!copied)
     {
         unlink(staging.data());
     }
+
     return copied;
 }
 
 bool promoteNativeBundle(const char *candidatePath, const char *targetPath, const char *backupPath)
 {
-    if (!candidatePath || !targetPath || !backupPath || !*candidatePath || !*targetPath ||
-        !*backupPath || strcmp(candidatePath, targetPath) == 0 ||
-        strcmp(candidatePath, backupPath) == 0 || strcmp(targetPath, backupPath) == 0)
+    if (!candidatePath || !targetPath || !backupPath || !*candidatePath || !*targetPath
+        || !*backupPath || strcmp(candidatePath, targetPath) == 0
+        || strcmp(candidatePath, backupPath) == 0 || strcmp(targetPath, backupPath) == 0)
     {
         return false;
     }
 
     struct stat candidateMetadata;
-    if (lstat(candidatePath, &candidateMetadata) != 0 || !S_ISREG(candidateMetadata.st_mode) ||
-        candidateMetadata.st_size == 0)
+    if (lstat(candidatePath, &candidateMetadata) != 0 || !S_ISREG(candidateMetadata.st_mode)
+        || candidateMetadata.st_size == 0)
     {
         return false;
     }
@@ -122,8 +131,8 @@ bool promoteNativeBundle(const char *candidatePath, const char *targetPath, cons
 
 bool restoreNativeBundle(const char *backupPath, const char *targetPath)
 {
-    if (!backupPath || !targetPath || !*backupPath || !*targetPath ||
-        strcmp(backupPath, targetPath) == 0)
+    if (!backupPath || !targetPath || !*backupPath || !*targetPath
+        || strcmp(backupPath, targetPath) == 0)
     {
         return false;
     }

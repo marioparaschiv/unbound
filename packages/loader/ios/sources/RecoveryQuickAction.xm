@@ -9,7 +9,7 @@ using unbound::ios::toStdString;
 
 static NSString *recoveryShortcutType(void)
 {
-    static NSString       *type = nil;
+    static NSString *type = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken,
                   ^{ type = [CoreBridge toolbox:@"recovery-shortcut-action" argument:@""]; });
@@ -24,11 +24,13 @@ static NSDictionary *shortcutRecord(UIApplicationShortcutItem *item)
                                                                      forKey:@"type"];
     record[@"title"]            = item.localizedTitle ?: @"";
     record[@"subtitle"]         = item.localizedSubtitle;
-    if (item.userInfo && [NSPropertyListSerialization propertyList:item.userInfo
-                                                  isValidForFormat:NSPropertyListBinaryFormat_v1_0])
+    if (item.userInfo &&
+        [NSPropertyListSerialization propertyList:item.userInfo
+                                 isValidForFormat:NSPropertyListBinaryFormat_v1_0])
     {
         record[@"userInfo"] = item.userInfo;
     }
+
     if ([item.icon respondsToSelector:NSSelectorFromString(@"systemImageName")])
     {
         id iconName = [item.icon valueForKey:@"systemImageName"];
@@ -37,6 +39,7 @@ static NSDictionary *shortcutRecord(UIApplicationShortcutItem *item)
             record[@"systemImageName"] = iconName;
         }
     }
+
     return record;
 }
 
@@ -48,9 +51,10 @@ static UIApplicationShortcutItem *shortcutFromRecord(NSDictionary *record)
     {
         return nil;
     }
-    NSString                  *subtitle = record[@"subtitle"];
-    NSString                  *iconName = record[@"systemImageName"];
-    NSDictionary              *userInfo = record[@"userInfo"];
+
+    NSString *subtitle     = record[@"subtitle"];
+    NSString *iconName     = record[@"systemImageName"];
+    NSDictionary *userInfo = record[@"userInfo"];
     UIApplicationShortcutIcon *icon =
         [iconName isKindOfClass:[NSString class]]
             ? [UIApplicationShortcutIcon iconWithSystemImageName:iconName]
@@ -76,6 +80,7 @@ static NSArray<UIApplicationShortcutItem *> *savedDiscordShortcutItems(void)
             [items addObject:item];
         }
     }
+
     return items;
 }
 
@@ -86,6 +91,7 @@ static void saveDiscordShortcutItems(NSArray<UIApplicationShortcutItem *> *items
     {
         [records addObject:shortcutRecord(item)];
     }
+
     [[NSUserDefaults standardUserDefaults] setObject:records forKey:kDiscordShortcutItemsKey];
 }
 
@@ -97,6 +103,7 @@ static NSArray<UIApplicationShortcutItem *> *discordShortcutItems(void)
     {
         currentDiscordShortcutItems = savedDiscordShortcutItems();
     }
+
     return currentDiscordShortcutItems;
 }
 
@@ -121,7 +128,7 @@ static void showRecoveryStatus(NSString *status)
 + (NSArray<UIApplicationShortcutItem *> *)itemsWithRecoveryAction:
     (NSArray<UIApplicationShortcutItem *> *)items
 {
-    NSString                  *title = [CoreBridge recoveryActionLabel];
+    NSString *title                 = [CoreBridge recoveryActionLabel];
     UIApplicationShortcutIcon *icon = [UIApplicationShortcutIcon iconWithSystemImageName:@"shield"];
     UIApplicationShortcutItem *recovery =
         [[UIApplicationShortcutItem alloc] initWithType:recoveryShortcutType()
@@ -137,6 +144,7 @@ static void showRecoveryStatus(NSString *status)
     {
         types.push_back(toStdString(item.type));
     }
+
     NSArray *kept = [CoreBridge toolboxArray:@"recovery-shortcut-order"
                                     argument:toNSString(types.dump())];
     for (NSNumber *index in kept)
@@ -165,6 +173,7 @@ static void showRecoveryStatus(NSString *status)
     {
         [Utilities reloadApp];
     }
+
     return YES;
 }
 
@@ -186,6 +195,7 @@ static void showRecoveryStatus(NSString *status)
         currentDiscordShortcutItems = [items copy];
         saveDiscordShortcutItems(currentDiscordShortcutItems);
     }
+
     %orig([RecoveryQuickAction itemsWithRecoveryAction:currentDiscordShortcutItems]);
 }
 
@@ -222,6 +232,7 @@ static void showRecoveryStatus(NSString *status)
         {
             completionHandler(YES);
         }
+
         return;
     }
 

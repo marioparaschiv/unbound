@@ -46,9 +46,9 @@ int main()
 {
     auto executor = std::make_shared<RecordingExecutor>();
     loader::native::setExecutor(executor);
-    auto                               resources = std::make_shared<RuntimeResourceRegistry>();
+    auto resources = std::make_shared<RuntimeResourceRegistry>();
     std::vector<std::function<void()>> posted;
-    loader::native::MainThreadPost     post = [&](std::function<void()> work) {
+    loader::native::MainThreadPost post = [&](std::function<void()> work) {
         posted.push_back(std::move(work));
     };
     auto owner = [&](std::string key, bool inlineRuntime) {

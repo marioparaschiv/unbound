@@ -6,7 +6,7 @@
 int main()
 {
     loader::NativePlatformProvider provider;
-    nlohmann::json                 unset = loader::debugEnvironment(provider);
+    nlohmann::json unset = loader::debugEnvironment(provider);
     assert(unset["isVirtualDevice"] == false);
     assert(unset["hostAddress"].is_null());
     assert(unset["resources"]["hooks"] == 0);
@@ -17,6 +17,7 @@ int main()
     {
         assert(kinds[name] == 0);
     }
+
     assert(kinds["mainWork"]["drains"].is_number());
     assert(kinds["mainWaits"].is_array());
     loader::native::setPlatformResourceCounter(loader::native::kJavaHandleCounter, [] {

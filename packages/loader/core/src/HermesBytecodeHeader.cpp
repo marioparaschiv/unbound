@@ -36,7 +36,7 @@ uint32_t hermesBytecodeVersion(const void *data, size_t length)
 uint32_t hermesBytecodeVersionOfFile(const std::string &path)
 {
     std::ifstream stream(path, std::ios::binary);
-    char          buffer[sizeof(HermesHeaderPrefix)] = {};
+    char buffer[sizeof(HermesHeaderPrefix)] = {};
     if (!stream.read(buffer, sizeof(buffer)))
     {
         return 0;

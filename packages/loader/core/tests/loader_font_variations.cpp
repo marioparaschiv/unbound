@@ -15,11 +15,11 @@ static FontFace vectorSans()
 static void fillsAndClampsCoordinates()
 {
     const FontFace font = vectorSans();
-    std::string    error;
-    assert((instanceCoordinates(font.axes, {{"wght", 450}}, error) ==
-            FontVariations{{"wght", 450}, {"wdth", 100}}));
-    assert((instanceCoordinates(font.axes, {{"wght", 2000}, {"wdth", 0}}, error) ==
-            FontVariations{{"wght", 900}, {"wdth", 75}}));
+    std::string error;
+    assert((instanceCoordinates(font.axes, {{"wght", 450}}, error)
+            == FontVariations{{"wght", 450}, {"wdth", 100}}));
+    assert((instanceCoordinates(font.axes, {{"wght", 2000}, {"wdth", 0}}, error)
+            == FontVariations{{"wght", 900}, {"wdth", 75}}));
     assert(!instanceCoordinates(font.axes, {{"opsz", 12}}, error));
     assert(error.find("opsz") != std::string::npos);
 }
@@ -56,8 +56,8 @@ static void followsItalicAndSlantAxes()
 
 static void expandsIntoFaces()
 {
-    const FontFace font  = vectorSans();
-    auto           named = variableFaces(font, std::nullopt);
+    const FontFace font = vectorSans();
+    auto named          = variableFaces(font, std::nullopt);
     assert(named.size() == 3);
     assert(named[0].postScriptName == "VectorSans-Regular" && named[0].weight == 400);
     assert(named[1].postScriptName == "VectorSans-Bold" && named[1].weight == 700);

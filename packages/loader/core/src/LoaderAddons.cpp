@@ -56,9 +56,9 @@ static std::optional<nlohmann::json> parseObjectFile(const std::string &path,
     return parsed;
 }
 
-static std::optional<std::string> resolveManifestEntry(const std::string    &directory,
+static std::optional<std::string> resolveManifestEntry(const std::string &directory,
                                                        const nlohmann::json &manifest,
-                                                       const std::string    &key)
+                                                       const std::string &key)
 {
     auto value = manifest.find(key);
     if (value == manifest.end() || !value->is_string() || value->get<std::string>().empty())
@@ -72,6 +72,7 @@ static std::optional<std::string> resolveManifestEntry(const std::string    &dir
     {
         return std::nullopt;
     }
+
     const std::string &path = *inside;
     if (!fileExists(path) || isDirectory(path))
     {
@@ -83,17 +84,17 @@ static std::optional<std::string> resolveManifestEntry(const std::string    &dir
 
 static bool isSingleFolderName(const std::string &folder)
 {
-    return !folder.empty() && folder != "." && folder != ".." &&
-           folder.find_first_of(std::string("/\\\0", 3)) == std::string::npos;
+    return !folder.empty() && folder != "." && folder != ".."
+           && folder.find_first_of(std::string("/\\\0", 3)) == std::string::npos;
 }
 
 static std::string bytecodePathFor(const std::string &entry, uint32_t bytecodeVersion)
 {
-    size_t      slash = entry.find_last_of('/');
-    size_t      dot   = entry.find_last_of('.');
-    std::string stem  = dot != std::string::npos && (slash == std::string::npos || dot > slash)
-                            ? entry.substr(0, dot)
-                            : entry;
+    size_t slash     = entry.find_last_of('/');
+    size_t dot       = entry.find_last_of('.');
+    std::string stem = dot != std::string::npos && (slash == std::string::npos || dot > slash)
+                           ? entry.substr(0, dot)
+                           : entry;
     return stem + "." + std::to_string(bytecodeVersion) + ".hbc";
 }
 
@@ -104,32 +105,37 @@ std::optional<std::string> readPluginBytecode(const std::string &documents,
     {
         return std::nullopt;
     }
-    std::string                   directory = joinPath(joinPath(documents, "Plugins"), folder);
+
+    std::string directory = joinPath(joinPath(documents, "Plugins"), folder);
     std::optional<nlohmann::json> manifest =
         parseObjectFile(joinPath(directory, "manifest.json"), folder, "plugins", "manifest");
     if (!manifest)
     {
         return std::nullopt;
     }
+
     auto digests = manifest->find("bytecode");
     if (digests == manifest->end() || !isValidBytecodeDigests(*digests))
     {
         return std::nullopt;
     }
-    auto                       digest = digests->find(std::to_string(bytecodeVersion));
-    std::optional<std::string> entry  = resolveManifestEntry(directory, *manifest, "main");
+
+    auto digest                      = digests->find(std::to_string(bytecodeVersion));
+    std::optional<std::string> entry = resolveManifestEntry(directory, *manifest, "main");
     if (digest == digests->end() || !entry)
     {
         return std::nullopt;
     }
-    std::string                bytecodePath = bytecodePathFor(*entry, bytecodeVersion);
-    std::optional<std::string> bytecode     = readTextFile(bytecodePath);
-    if (!bytecode || !isHermesBytecode(bytecode->data(), bytecode->size()) ||
-        hermesBytecodeVersion(bytecode->data(), bytecode->size()) != bytecodeVersion ||
-        cachedSha512(directory, bytecodePath, *bytecode) != digest->get<std::string>())
+
+    std::string bytecodePath            = bytecodePathFor(*entry, bytecodeVersion);
+    std::optional<std::string> bytecode = readTextFile(bytecodePath);
+    if (!bytecode || !isHermesBytecode(bytecode->data(), bytecode->size())
+        || hermesBytecodeVersion(bytecode->data(), bytecode->size()) != bytecodeVersion
+        || cachedSha512(directory, bytecodePath, *bytecode) != digest->get<std::string>())
     {
         return std::nullopt;
     }
+
     return bytecode;
 }
 
@@ -140,10 +146,11 @@ static bool hasBytecodeFor(const nlohmann::json &manifest, const std::string &en
     {
         return false;
     }
+
     auto digests = manifest.find("bytecode");
-    return digests != manifest.end() && isValidBytecodeDigests(*digests) &&
-           digests->contains(std::to_string(bytecodeVersion)) &&
-           fileExists(bytecodePathFor(entry, bytecodeVersion));
+    return digests != manifest.end() && isValidBytecodeDigests(*digests)
+           && digests->contains(std::to_string(bytecodeVersion))
+           && fileExists(bytecodePathFor(entry, bytecodeVersion));
 }
 
 static nlohmann::json pluginEntry(nlohmann::json manifest, std::string bundle,
@@ -153,6 +160,7 @@ static nlohmann::json pluginEntry(nlohmann::json manifest, std::string bundle,
     {
         return {{"manifest", std::move(manifest)}, {"sha256", std::move(*sourceDigest)}};
     }
+
     return {{"manifest", std::move(manifest)}, {"bundle", std::move(bundle)}};
 }
 
@@ -162,7 +170,8 @@ std::optional<std::string> readPluginSource(const std::string &documents, const 
     {
         return std::nullopt;
     }
-    std::string                   directory = joinPath(joinPath(documents, "Plugins"), folder);
+
+    std::string directory = joinPath(joinPath(documents, "Plugins"), folder);
     std::optional<nlohmann::json> manifest =
         parseObjectFile(joinPath(directory, "manifest.json"), folder, "plugins", "manifest");
     std::optional<std::string> entry =
@@ -172,12 +181,14 @@ std::optional<std::string> readPluginSource(const std::string &documents, const 
     {
         return std::nullopt;
     }
+
     std::string digest = cachedSha512(directory, *entry, *bundle);
-    if (verifyAddonSignature(*manifest, *bundle, compiledBundleTrust(), &digest).status ==
-        AddonSignatureStatus::Invalid)
+    if (verifyAddonSignature(*manifest, *bundle, compiledBundleTrust(), &digest).status
+        == AddonSignatureStatus::Invalid)
     {
         return std::nullopt;
     }
+
     return bundle;
 }
 
@@ -226,7 +237,7 @@ nlohmann::json scanPlugins(const std::string &documents, uint32_t bytecodeVersio
                 return;
             }
 
-            std::string          digest = cachedSha512(directory, *entry, *bundle);
+            std::string digest = cachedSha512(directory, *entry, *bundle);
             AddonSignatureResult signature =
                 verifyAddonSignature(*manifest, *bundle, compiledBundleTrust(), &digest);
             if (signature.status == AddonSignatureStatus::Invalid)
@@ -235,6 +246,7 @@ nlohmann::json scanPlugins(const std::string &documents, uint32_t bytecodeVersio
                     "Skipping " + folder + " as " + signature.problem + ".");
                 return;
             }
+
             (*manifest)["trust"] = describeAddonSignature(signature.status);
 
             (*manifest)["folder"] = folder;
@@ -246,6 +258,7 @@ nlohmann::json scanPlugins(const std::string &documents, uint32_t bytecodeVersio
             {
                 sourceDigest = cachedSha256(directory, *entry, *bundle);
             }
+
             plugins.push_back(
                 pluginEntry(std::move(*manifest), std::move(*bundle), std::move(sourceDigest)));
             log(LogLevel::Info, LOG_CATEGORY_PLUGINS, "Loaded " + folder + " from " + *entry + ".");
@@ -303,6 +316,7 @@ nlohmann::json scanThemes(const std::string &documents)
                     "Skipping " + folder + " as its bundle failed to be read.");
                 return;
             }
+
             if (!parseBoundedJSON(*bundle).is_object())
             {
                 log(LogLevel::Info, LOG_CATEGORY_THEMES,
@@ -332,6 +346,7 @@ void AddonState::prescan(const std::string &documents, uint32_t bytecodeVersion)
     {
         return;
     }
+
     prescan_ = std::async(std::launch::async, scanAll, documents, bytecodeVersion).share();
 }
 
@@ -340,12 +355,13 @@ bool AddonState::adoptPrescan(const std::string &documents, uint32_t bytecodeVer
     std::shared_future<Scanned> pending;
     {
         std::lock_guard<std::mutex> lock(prescanMutex_);
-        bool                        first = !scanned_;
-        scanned_                          = true;
+        bool first = !scanned_;
+        scanned_   = true;
         if (!first || !prescan_.valid())
         {
             return false;
         }
+
         pending  = std::move(prescan_);
         prescan_ = {};
     }
@@ -355,6 +371,7 @@ bool AddonState::adoptPrescan(const std::string &documents, uint32_t bytecodeVer
     {
         return false;
     }
+
     std::lock_guard<std::mutex> lock(mutex_);
     plugins_ = scanned.plugins;
     themes_  = scanned.themes;
@@ -367,6 +384,7 @@ void AddonState::scan(const std::string &documents, uint32_t bytecodeVersion)
     {
         return;
     }
+
     Scanned scanned = scanAll(documents, bytecodeVersion);
 
     std::lock_guard<std::mutex> lock(mutex_);
@@ -399,13 +417,15 @@ std::optional<nlohmann::json> AddonState::theme(const std::string &id) const
     nlohmann::json theme;
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        const nlohmann::json       *found = findTheme(themes_, id);
+        const nlohmann::json *found = findTheme(themes_, id);
         if (!found)
         {
             return std::nullopt;
         }
+
         theme = *found;
     }
+
     // Scanning keeps the bundle as its file text for the client; native colours need it parsed.
     theme["bundle"] = parseBoundedJSON(theme["bundle"].get<std::string>());
     return theme;

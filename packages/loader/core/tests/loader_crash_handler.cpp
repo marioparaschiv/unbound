@@ -50,6 +50,7 @@ int runInChild(const std::function<void()> &body)
         body();
         _exit(0);
     }
+
     int status = 0;
     assert(waitpid(child, &status, 0) == child);
     return status;
@@ -150,11 +151,12 @@ void onlyTheFirstCrashIsRecorded(const std::filesystem::path &root)
             loader::AddonScope scope(first);
             raise(SIGTRAP);
         }
+
         expect(gPreviousCalls == 1 && gPreviousSignal == SIGTRAP, 41);
         std::string record = readFile(marker);
         std::string stack  = readFile(root / loader::kNativeCrashFile);
-        expect(nlohmann::json::parse(record, nullptr, false) ==
-                   nlohmann::json({{"id", "plugins:first"}, {"name", "First"}}),
+        expect(nlohmann::json::parse(record, nullptr, false)
+                   == nlohmann::json({{"id", "plugins:first"}, {"name", "First"}}),
                42);
         expect(stack.rfind("Signal " + std::to_string(SIGTRAP) + "\n", 0) == 0, 43);
 
@@ -162,6 +164,7 @@ void onlyTheFirstCrashIsRecorded(const std::filesystem::path &root)
             loader::AddonScope scope(second);
             raise(SIGTRAP);
         }
+
         expect(gPreviousCalls == 2, 44);
         expect(readFile(marker) == record, 45);
         expect(readFile(root / loader::kNativeCrashFile) == stack, 46);
@@ -180,7 +183,8 @@ void forwardsToASiginfoHandler(const std::filesystem::path &root)
         expect(gPreviousHadContext == 1, 53);
         expect(readFile(root / "running").empty(), 54);
         expect(readFile(root / loader::kNativeCrashFile)
-                       .rfind("Signal " + std::to_string(SIGILL) + "\n", 0) == 0,
+                       .rfind("Signal " + std::to_string(SIGILL) + "\n", 0)
+                   == 0,
                55);
     });
     assert(exitedCleanly(status));
@@ -196,7 +200,8 @@ void ignoredSignalsFallBackToTheDefaultAction(const std::filesystem::path &root)
     });
     assert(WIFSIGNALED(status) && WTERMSIG(status) == SIGFPE);
     assert(readFile(root / loader::kNativeCrashFile)
-               .rfind("Signal " + std::to_string(SIGFPE) + "\n", 0) == 0);
+               .rfind("Signal " + std::to_string(SIGFPE) + "\n", 0)
+           == 0);
 }
 
 void bareMarkerPathWritesTheStackInTheWorkingDirectory(const std::filesystem::path &root)
@@ -211,7 +216,8 @@ void bareMarkerPathWritesTheStackInTheWorkingDirectory(const std::filesystem::pa
     assert(exitedCleanly(status));
     assert(std::filesystem::exists(root / "running"));
     assert(readFile(root / loader::kNativeCrashFile)
-               .rfind("Signal " + std::to_string(SIGTRAP) + "\n", 0) == 0);
+               .rfind("Signal " + std::to_string(SIGTRAP) + "\n", 0)
+           == 0);
 }
 
 void adoptedStackSurvivesAnInstallWithoutAWrittenStack(const std::filesystem::path &root)

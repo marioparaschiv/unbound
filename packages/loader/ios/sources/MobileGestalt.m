@@ -1,7 +1,7 @@
 #import "MobileGestalt.h"
 
-@interface                                 MobileGestalt ()
-@property (nonatomic) void                *handle;
+@interface MobileGestalt ()
+@property (nonatomic) void *handle;
 @property (nonatomic) MGCopyAnswerFunction copyAnswerRef;
 @end
 
@@ -9,7 +9,7 @@
 
 + (instancetype)sharedInstance
 {
-    static MobileGestalt  *sharedInstance = nil;
+    static MobileGestalt *sharedInstance = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{ sharedInstance = [[self alloc] init]; });
     return sharedInstance;
@@ -41,6 +41,7 @@
             self.copyAnswerRef = NULL;
         }
     }
+
     return self;
 }
 
@@ -78,7 +79,9 @@
 - (nullable NSString *)cfTypeRefToString:(CFTypeRef)ref
 {
     if (!ref)
+    {
         return nil;
+    }
 
     CFTypeID typeID = CFGetTypeID(ref);
 
@@ -98,7 +101,7 @@
     }
     else if (typeID == CFDataGetTypeID())
     {
-        NSData   *data   = (__bridge NSData *) ref;
+        NSData *data     = (__bridge NSData *) ref;
         NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
         if (string)
         {

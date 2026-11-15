@@ -36,8 +36,8 @@ static std::string stringField(const nlohmann::json &entry, const char *key)
 static nlohmann::json customAppIcons(const std::string &documents)
 {
     const std::string directory = loader::joinPath(documents, kAppIconDirectory);
-    const auto        manifest  = loader::readTextFile(loader::joinPath(directory, "custom.json"));
-    nlohmann::json    icons     = nlohmann::json::array();
+    const auto manifest         = loader::readTextFile(loader::joinPath(directory, "custom.json"));
+    nlohmann::json icons        = nlohmann::json::array();
     if (!manifest)
     {
         return icons;
@@ -54,14 +54,16 @@ static nlohmann::json customAppIcons(const std::string &documents)
         const std::string id   = stringField(entry, "id");
         const std::string name = stringField(entry, "name");
         const std::string file = stringField(entry, "file");
-        const auto        path = loader::resolveInsideDirectory(directory, file);
-        if (id.rfind(kCustomIconPrefix, 0) != 0 || name.empty() || !path ||
-            !loader::fileExists(*path))
+        const auto path        = loader::resolveInsideDirectory(directory, file);
+        if (id.rfind(kCustomIconPrefix, 0) != 0 || name.empty() || !path
+            || !loader::fileExists(*path))
         {
             continue;
         }
+
         icons.push_back({{"id", id}, {"name", name}, {"image", "file://" + *path}});
     }
+
     return icons;
 }
 
@@ -83,9 +85,9 @@ static jint milliseconds(double seconds)
     return static_cast<jint>(seconds * 1000);
 }
 
-static std::mutex                      gLoaderMutex;
+static std::mutex gLoaderMutex;
 static std::shared_ptr<loader::Loader> gLoader;
-static std::shared_ptr<AndroidLoader>  gHost;
+static std::shared_ptr<AndroidLoader> gHost;
 
 std::shared_ptr<loader::Loader> currentLoader()
 {
@@ -125,9 +127,9 @@ AndroidLoader::AndroidLoader(LoaderConfiguration configuration, JavaCallbacks ca
 
 std::shared_ptr<loader::NativePlatformProvider> AndroidLoader::platformProvider() const
 {
-    const nlohmann::json info      = configuration_.platformInfo;
-    const JavaCallbacks  callbacks = callbacks_;
-    auto                 text      = [info](const char *key) {
+    const nlohmann::json info     = configuration_.platformInfo;
+    const JavaCallbacks callbacks = callbacks_;
+    auto text                     = [info](const char *key) {
         return [info, key]() {
             return info.value(key, std::string());
         };
@@ -155,6 +157,7 @@ std::shared_ptr<loader::NativePlatformProvider> AndroidLoader::platformProvider(
         {
             state = nlohmann::json::object();
         }
+
         state["injected"] = injectedModules();
         return state;
     };
@@ -167,6 +170,7 @@ std::shared_ptr<loader::NativePlatformProvider> AndroidLoader::platformProvider(
         {
             return environment;
         }
+
         environment["install"] = loader::environment_report::androidInstallLine(
             facts.value("install", nlohmann::json()));
         nlohmann::json device = facts.value("device", nlohmann::json::object());
@@ -175,6 +179,7 @@ std::shared_ptr<loader::NativePlatformProvider> AndroidLoader::platformProvider(
         {
             markers.selinuxEnforcing = device["selinux"].get<bool>();
         }
+
         markers.verifiedBootState = device.value("verifiedBoot", std::string());
         markers.buildTags         = device.value("buildTags", std::string());
         markers.customROM         = device.value("rom", std::string());
@@ -219,8 +224,8 @@ bool AndroidLoader::installSchedulerDrain(jsi::Runtime &runtime)
             return false;
         }
 
-        std::weak_ptr<AndroidLoader> weak    = weak_from_this();
-        jsi::Function                factory = loader::native::makeFunction(
+        std::weak_ptr<AndroidLoader> weak = weak_from_this();
+        jsi::Function factory             = loader::native::makeFunction(
             runtime, kSchedulerDrainModule, 0,
             [weak](jsi::Runtime &moduleRuntime, const jsi::Value &, const jsi::Value *,
                    size_t) -> jsi::Value {
@@ -234,6 +239,7 @@ bool AndroidLoader::installSchedulerDrain(jsi::Runtime &runtime)
                                            {
                                                loader->drainScheduledRuntimeWork(drainRuntime);
                                            }
+
                                            return jsi::Value::undefined();
                                        }));
                 return jsi::Value(std::move(module));
@@ -245,8 +251,8 @@ bool AndroidLoader::installSchedulerDrain(jsi::Runtime &runtime)
     catch (const std::exception &error)
     {
         loader::log(loader::LogLevel::Warning, LOG_CATEGORY_RUNTIME,
-                    std::string("RuntimeScheduler drains could not be registered: ") +
-                        error.what());
+                    std::string("RuntimeScheduler drains could not be registered: ")
+                        + error.what());
         return false;
     }
 }
@@ -258,6 +264,7 @@ void AndroidLoader::drainScheduledRuntimeWork(jsi::Runtime &runtime)
         loader::log(loader::LogLevel::Info, LOG_CATEGORY_RUNTIME,
                     "Runtime work now drains through React Native's RuntimeScheduler.");
     }
+
     if (drainQueuedRuntimeWork(runtime))
     {
         requestRuntimeDrain(false);
@@ -276,6 +283,7 @@ void AndroidLoader::drainRuntimeWork(jsi::Runtime &runtime)
         loader::log(loader::LogLevel::Error, LOG_CATEGORY_RUNTIME,
                     std::string("Microtasks after runtime work failed: ") + error.what());
     }
+
     if (remaining)
     {
         scheduleRuntimeDrain();
@@ -314,6 +322,7 @@ void AndroidLoader::drainMainWork()
         work.swap(mainQueue_);
         mainDrainScheduled_ = false;
     }
+
     if (work.empty())
     {
         return;
@@ -337,6 +346,7 @@ void AndroidLoader::drainMainWork()
                         "Main-thread native work failed.");
         }
     }
+
     loader::native::recordMainDrain(work.size(), std::chrono::steady_clock::now() - startedAt);
 }
 
@@ -364,7 +374,7 @@ void AndroidLoader::runOnRuntimeCritical(std::function<void(jsi::Runtime &)> wor
 }
 
 void AndroidLoader::enqueueRuntime(std::function<void(jsi::Runtime &)> work,
-                                   loader::native::NativeWorkPriority  priority)
+                                   loader::native::NativeWorkPriority priority)
 {
     if (runtimeQueue_.enqueue(std::move(work), priority))
     {
@@ -384,6 +394,7 @@ void AndroidLoader::requestRuntimeDrain(bool throughScheduler)
         runtimeQueue_.retryScheduling();
         return;
     }
+
     callStaticVoid(callbacks_.bridgeClass, callbacks_.scheduleRuntime,
                    static_cast<jboolean>(throughScheduler));
 }
@@ -402,6 +413,7 @@ void AndroidLoader::runOnMain(std::function<void()> work)
         {
             return;
         }
+
         mainDrainScheduled_ = true;
     }
 
@@ -411,6 +423,7 @@ void AndroidLoader::runOnMain(std::function<void()> work)
         mainDrainScheduled_ = false;
         return;
     }
+
     callStaticVoid(callbacks_.bridgeClass, callbacks_.scheduleMain);
 }
 
@@ -428,6 +441,7 @@ bool AndroidLoader::runOnMainNextFrame(std::function<void()> work)
                     "Failed to schedule frame-batched native work.");
         return false;
     }
+
     return true;
 }
 
@@ -465,6 +479,7 @@ std::optional<std::string> AndroidLoader::resource(const std::string &name)
     {
         return std::nullopt;
     }
+
     return script->get<std::string>();
 }
 
@@ -497,7 +512,7 @@ uint32_t AndroidLoader::runtimeBytecodeVersion()
 
 void AndroidLoader::extendNativeProvider(loader::UnboundNativeProvider &provider)
 {
-    const auto     appIcons = configuration_.platformInfo.find("appIcons");
+    const auto appIcons     = configuration_.platformInfo.find("appIcons");
     nlohmann::json packaged = appIcons != configuration_.platformInfo.end() && appIcons->is_array()
                                   ? *appIcons
                                   : nlohmann::json::array();
@@ -509,6 +524,7 @@ void AndroidLoader::extendNativeProvider(loader::UnboundNativeProvider &provider
             {
                 icons.push_back(std::move(icon));
             }
+
             return icons;
         };
         provider.syncAppIcons = [] {};
@@ -519,6 +535,7 @@ void AndroidLoader::extendNativeProvider(loader::UnboundNativeProvider &provider
             return packaged;
         };
     }
+
     provider.installHomeScreenIcon = [self = shared_from_this()](const std::string &name,
                                                                  const std::string &imagePath) {
         return self->installHomeScreenIcon(name, imagePath);
@@ -573,6 +590,7 @@ void AndroidLoader::recordSystemExits()
     {
         return;
     }
+
     static const std::map<std::string, loader::system_exits::ExitKind> kinds = {
         {"memory", loader::system_exits::ExitKind::Memory},
         {"watchdog", loader::system_exits::ExitKind::Watchdog},
@@ -623,11 +641,13 @@ void AndroidLoader::collectBackgroundDownload(const std::string &destination)
     {
         return;
     }
+
     nlohmann::json download = nlohmann::json::parse(*collected, nullptr, false);
     if (!download.is_object() || !download["url"].is_string() || !download["path"].is_string())
     {
         return;
     }
+
     loader::finishBackgroundDownload(download["url"].get<std::string>(), destination,
                                      download["path"].get<std::string>());
 }
@@ -643,7 +663,7 @@ void AndroidLoader::continueDownloadInBackground(const std::string &url,
 std::optional<loader::DownloadResult>
 AndroidLoader::download(const std::string &url, const std::string &destination,
                         const std::map<std::string, std::string> &headers,
-                        const loader::DownloadPolicy             &policy)
+                        const loader::DownloadPolicy &policy)
 {
     JNIEnv *env = currentEnvironment();
     if (!env)
@@ -659,10 +679,10 @@ AndroidLoader::download(const std::string &url, const std::string &destination,
         values.push_back(value);
     }
 
-    jstring      javaURL         = toJavaString(env, url);
-    jstring      javaDestination = toJavaString(env, destination);
-    jobjectArray javaKeys        = toJavaStringArray(env, keys);
-    jobjectArray javaValues      = toJavaStringArray(env, values);
+    jstring javaURL         = toJavaString(env, url);
+    jstring javaDestination = toJavaString(env, destination);
+    jobjectArray javaKeys   = toJavaStringArray(env, keys);
+    jobjectArray javaValues = toJavaStringArray(env, values);
 
     auto response = static_cast<jobjectArray>(env->CallStaticObjectMethod(
         callbacks_.bridgeClass, callbacks_.download, javaURL, javaDestination, javaKeys, javaValues,

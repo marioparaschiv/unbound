@@ -30,19 +30,22 @@ std::shared_ptr<MappedFileBuffer> MappedFileBuffer::map(const std::string &path)
     {
         return nullptr;
     }
+
     struct stat status{};
     if (fstat(descriptor, &status) != 0 || !S_ISREG(status.st_mode) || status.st_size <= 0)
     {
         close(descriptor);
         return nullptr;
     }
+
     size_t size = static_cast<size_t>(status.st_size);
-    void  *data = mmap(nullptr, size, PROT_READ, MAP_PRIVATE, descriptor, 0);
+    void *data  = mmap(nullptr, size, PROT_READ, MAP_PRIVATE, descriptor, 0);
     close(descriptor);
     if (data == MAP_FAILED)
     {
         return nullptr;
     }
+
     // The loader maps the bundle as Discord's runtime starts, well before Hermes runs it: start
     // reading it in now so those reads overlap Discord's own startup instead of stalling Hermes.
     madvise(data, size, MADV_WILLNEED);
@@ -72,14 +75,15 @@ static void logEvaluationFailure(const std::string &tag, const char *kind, const
         "JSI eval of '" + tag + "' threw " + kind + (detail ? std::string(": ") + detail : ""));
 }
 
-bool evaluateBytecodeBuffer(jsi::Runtime                             &runtime,
+bool evaluateBytecodeBuffer(jsi::Runtime &runtime,
                             const std::shared_ptr<const jsi::Buffer> &bytecode,
-                            const std::string                        &tag)
+                            const std::string &tag)
 {
     if (!bytecode || !isHermesBytecode(bytecode->data(), bytecode->size()))
     {
         return false;
     }
+
     try
     {
         runtime.evaluatePreparedJavaScript(runtime.prepareJavaScript(bytecode, tag));
@@ -97,6 +101,7 @@ bool evaluateBytecodeBuffer(jsi::Runtime                             &runtime,
     {
         logEvaluationFailure(tag, "an unknown error", nullptr);
     }
+
     return false;
 }
 
@@ -119,6 +124,7 @@ bool evaluateScript(jsi::Runtime &runtime, std::string script, const std::string
         {
             runtime.evaluateJavaScript(std::make_shared<jsi::StringBuffer>(std::move(script)), tag);
         }
+
         return true;
     }
     catch (const jsi::JSError &error)
@@ -136,6 +142,7 @@ bool evaluateScript(jsi::Runtime &runtime, std::string script, const std::string
         log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
             "JSI eval of '" + tag + "' threw an unknown error");
     }
+
     return false;
 }
 
@@ -165,6 +172,7 @@ jsi::Value evaluateSource(jsi::Runtime &runtime, const std::string &source, cons
         log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
             "JSI source eval of '" + tag + "' threw an unknown error");
     }
+
     return jsi::Value();
 }
 

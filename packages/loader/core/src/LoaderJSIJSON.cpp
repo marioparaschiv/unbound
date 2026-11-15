@@ -28,6 +28,7 @@ jsi::Value toJSIValue(jsi::Runtime &runtime, const nlohmann::json &value)
             {
                 array.setValueAtIndex(runtime, index, toJSIValue(runtime, value[index]));
             }
+
             return array;
         }
         case nlohmann::json::value_t::object: {
@@ -38,11 +39,13 @@ jsi::Value toJSIValue(jsi::Runtime &runtime, const nlohmann::json &value)
                                    jsi::PropNameID::forUtf8(runtime, withValidUTF8(entry.key())),
                                    toJSIValue(runtime, entry.value()));
             }
+
             return object;
         }
         case nlohmann::json::value_t::binary:
             return jsi::Value::undefined();
     }
+
     return jsi::Value::undefined();
 }
 
@@ -54,18 +57,22 @@ static nlohmann::json convertJSIValue(jsi::Runtime &runtime, const jsi::Value &v
     {
         return nullptr;
     }
+
     if (value.isBool())
     {
         return value.getBool();
     }
+
     if (value.isNumber())
     {
         return value.getNumber();
     }
+
     if (value.isString())
     {
         return value.getString(runtime).utf8(runtime);
     }
+
     if (!value.isObject())
     {
         return nullptr;
@@ -73,21 +80,22 @@ static nlohmann::json convertJSIValue(jsi::Runtime &runtime, const jsi::Value &v
 
     if (depth > kMaximumConvertedDepth)
     {
-        throw std::invalid_argument("Native value nests deeper than " +
-                                    std::to_string(kMaximumConvertedDepth) +
-                                    " levels or refers to itself");
+        throw std::invalid_argument("Native value nests deeper than "
+                                    + std::to_string(kMaximumConvertedDepth)
+                                    + " levels or refers to itself");
     }
 
     jsi::Object object = value.getObject(runtime);
     if (object.isArray(runtime))
     {
-        jsi::Array     array  = object.getArray(runtime);
+        jsi::Array array      = object.getArray(runtime);
         nlohmann::json result = nlohmann::json::array();
         for (size_t index = 0; index < array.size(runtime); index++)
         {
             result.push_back(
                 convertJSIValue(runtime, array.getValueAtIndex(runtime, index), depth + 1));
         }
+
         return result;
     }
 
@@ -97,13 +105,14 @@ static nlohmann::json convertJSIValue(jsi::Runtime &runtime, const jsi::Value &v
     }
 
     nlohmann::json result = nlohmann::json::object();
-    jsi::Array     names  = object.getPropertyNames(runtime);
+    jsi::Array names      = object.getPropertyNames(runtime);
     for (size_t index = 0; index < names.size(runtime); index++)
     {
         std::string name = names.getValueAtIndex(runtime, index).getString(runtime).utf8(runtime);
         result[name] =
             convertJSIValue(runtime, object.getProperty(runtime, name.c_str()), depth + 1);
     }
+
     return result;
 }
 

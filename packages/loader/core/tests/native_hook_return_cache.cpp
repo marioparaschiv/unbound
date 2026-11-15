@@ -16,20 +16,21 @@ static bool exhausts(HookReturnCache &cache, const nlohmann::json &self)
         assert(error.code() == "NATIVE_BRIDGE_ERROR");
         return true;
     }
+
     return false;
 }
 
 int main()
 {
-    assert(canonicalJSON(nlohmann::json::parse(R"({"value":42.0,"type":"int"})")) ==
-           canonicalJSON(nlohmann::json::parse(R"({"type":"int","value":42})")));
+    assert(canonicalJSON(nlohmann::json::parse(R"({"value":42.0,"type":"int"})"))
+           == canonicalJSON(nlohmann::json::parse(R"({"type":"int","value":42})")));
     assert(canonicalJSON(nlohmann::json::parse("[1.5,2.0]")) == "[1.5,2]");
     assert(canonicalJSON(nlohmann::json::parse("1e20")) == nlohmann::json::parse("1e20").dump());
 
     NativeResourceBudget budget(2);
-    HookReturnCache      cache(budget);
-    nlohmann::json       self      = {{"type", "int"}, {"value", 42}};
-    nlohmann::json       arguments = nlohmann::json::parse(R"([{"type":"string","value":"a"}])");
+    HookReturnCache cache(budget);
+    nlohmann::json self      = {{"type", "int"}, {"value", 42}};
+    nlohmann::json arguments = nlohmann::json::parse(R"([{"type":"string","value":"a"}])");
 
     cache.set("hook-1", self, arguments, {{"type", "string"}, {"value", "cached"}});
     assert(budget.used() == 1);

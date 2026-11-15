@@ -9,11 +9,12 @@ static constexpr const char *kIndexNotNumber = "Native batch result index must b
 
 size_t batchReferenceIndex(double index, size_t stepIndex)
 {
-    if (!(index >= 0 && index < stepIndex) ||
-        static_cast<double>(static_cast<size_t>(index)) != index)
+    if (!(index >= 0 && index < stepIndex)
+        || static_cast<double>(static_cast<size_t>(index)) != index)
     {
         throw std::invalid_argument("Native batch can only reference earlier results");
     }
+
     return static_cast<size_t>(index);
 }
 
@@ -23,15 +24,18 @@ std::optional<size_t> batchResultIndex(const nlohmann::json &value, size_t stepI
     {
         return std::nullopt;
     }
+
     auto reference = value.find(kNativeBatchResultKey);
     if (reference == value.end())
     {
         return std::nullopt;
     }
+
     if (!reference->is_number())
     {
         throw std::invalid_argument(kIndexNotNumber);
     }
+
     return batchReferenceIndex(reference->get<double>(), stepIndex);
 }
 
@@ -42,15 +46,18 @@ std::optional<size_t> batchResultIndex(jsi::Runtime &runtime, const jsi::Value &
     {
         return std::nullopt;
     }
+
     jsi::Value reference = value.asObject(runtime).getProperty(runtime, kNativeBatchResultKey);
     if (reference.isUndefined())
     {
         return std::nullopt;
     }
+
     if (!reference.isNumber())
     {
         throw jsi::JSError(runtime, kIndexNotNumber);
     }
+
     try
     {
         return batchReferenceIndex(reference.getNumber(), stepIndex);

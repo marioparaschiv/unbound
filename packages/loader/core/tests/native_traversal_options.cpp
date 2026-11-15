@@ -18,6 +18,7 @@ static bool rejects(const nlohmann::json &options, TraversalProfile profile)
     {
         return true;
     }
+
     return false;
 }
 
@@ -61,8 +62,8 @@ int main()
     auto flags = parseTraversalOptions(
         {{"attachedOnly", true}, {"stopAtMatch", true}, {"direction", "ancestors"}},
         TraversalProfile::Search);
-    assert(flags.attachedOnly && flags.stopAtMatch &&
-           flags.direction == TraversalDirection::Ancestors);
+    assert(flags.attachedOnly && flags.stopAtMatch
+           && flags.direction == TraversalDirection::Ancestors);
 
     auto ignoredFlags = parseTraversalOptions({{"attachedOnly", "yes"}, {"maxResults", 2}},
                                               TraversalProfile::Snapshot);

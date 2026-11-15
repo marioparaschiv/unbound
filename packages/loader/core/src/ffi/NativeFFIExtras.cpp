@@ -46,11 +46,11 @@ namespace {
 
     struct SlotState {
         CallbackHandler handler;
-        bool            floatReturn = false;
-        bool            used        = false;
+        bool floatReturn = false;
+        bool used        = false;
     };
 
-    std::mutex                                gSlotsMutex;
+    std::mutex gSlotsMutex;
     std::array<SlotState, kCallbackSlots * 2> gSlots;
 
     CallbackResult runSlot(std::size_t slot, const CallbackRegisters &registers)
@@ -62,8 +62,10 @@ namespace {
             {
                 return {};
             }
+
             handler = gSlots[slot].handler;
         }
+
         return handler ? handler(registers) : CallbackResult{};
     }
 
@@ -117,17 +119,17 @@ namespace {
         return table;
     }
 
-    std::mutex                            gMemoryMutex;
+    std::mutex gMemoryMutex;
     std::map<std::uintptr_t, std::size_t> gAllocations;
 
-    std::mutex                                    gRebindMutex;
+    std::mutex gRebindMutex;
     std::map<std::string, std::vector<Rebinding>> gRebindings;
 }
 
 std::optional<void *> acquireCallbackSlot(CallbackHandler handler, bool floatReturn)
 {
     std::lock_guard<std::mutex> lock(gSlotsMutex);
-    std::size_t                 base = floatReturn ? kCallbackSlots : 0;
+    std::size_t base = floatReturn ? kCallbackSlots : 0;
     for (std::size_t index = 0; index < kCallbackSlots; index++)
     {
         SlotState &state = gSlots[base + index];
@@ -137,6 +139,7 @@ std::optional<void *> acquireCallbackSlot(CallbackHandler handler, bool floatRet
             return floatReturn ? floatSlots()[index] : integerSlots()[index];
         }
     }
+
     return std::nullopt;
 }
 
@@ -151,12 +154,13 @@ bool releaseCallbackSlot(void *code)
             if (candidate == code)
             {
                 SlotState &state = gSlots[(floating ? kCallbackSlots : 0) + index];
-                bool       used  = state.used;
+                bool used        = state.used;
                 state            = {};
                 return used;
             }
         }
     }
+
     return false;
 }
 
@@ -175,12 +179,14 @@ void *allocateMemory(std::size_t size)
     {
         return nullptr;
     }
+
     void *memory = std::calloc(1, size);
     if (memory)
     {
         std::lock_guard<std::mutex> lock(gMemoryMutex);
         gAllocations[reinterpret_cast<std::uintptr_t>(memory)] = size;
     }
+
     return memory;
 }
 
@@ -192,6 +198,7 @@ bool freeMemory(void *pointer)
     {
         return false;
     }
+
     gAllocations.erase(found);
     std::free(pointer);
     return true;
@@ -199,16 +206,17 @@ bool freeMemory(void *pointer)
 
 bool isAllocatedRange(const void *pointer, std::size_t size)
 {
-    auto                        address = reinterpret_cast<std::uintptr_t>(pointer);
+    auto address = reinterpret_cast<std::uintptr_t>(pointer);
     std::lock_guard<std::mutex> lock(gMemoryMutex);
-    auto                        found = gAllocations.upper_bound(address);
+    auto found = gAllocations.upper_bound(address);
     if (found == gAllocations.begin())
     {
         return false;
     }
+
     --found;
-    return address >= found->first && address + size <= found->first + found->second &&
-           address + size >= address;
+    return address >= found->first && address + size <= found->first + found->second
+           && address + size >= address;
 }
 
 #if defined(__APPLE__)
@@ -218,10 +226,12 @@ namespace {
         vm_address_t page =
             reinterpret_cast<vm_address_t>(slot) & ~static_cast<vm_address_t>(vm_page_size - 1);
         if (vm_protect(mach_task_self(), page, vm_page_size, false,
-                       VM_PROT_READ | VM_PROT_WRITE | VM_PROT_COPY) != KERN_SUCCESS)
+                       VM_PROT_READ | VM_PROT_WRITE | VM_PROT_COPY)
+            != KERN_SUCCESS)
         {
             return false;
         }
+
         *slot = value;
         return true;
     }
@@ -229,9 +239,9 @@ namespace {
     void rebindImage(const mach_header_64 *header, intptr_t slide, const std::string &symbol,
                      void *replacement, std::vector<Rebinding> &done)
     {
-        const symtab_command           *symtab   = nullptr;
-        const dysymtab_command         *dysymtab = nullptr;
-        const segment_command_64       *linkedit = nullptr;
+        const symtab_command *symtab       = nullptr;
+        const dysymtab_command *dysymtab   = nullptr;
+        const segment_command_64 *linkedit = nullptr;
         std::vector<const section_64 *> sections;
         auto *command = reinterpret_cast<const load_command *>(header + 1);
         for (uint32_t index = 0; index < header->ncmds; index++)
@@ -264,35 +274,40 @@ namespace {
                     }
                 }
             }
+
             command = reinterpret_cast<const load_command *>(
                 reinterpret_cast<const uint8_t *>(command) + command->cmdsize);
         }
+
         if (!symtab || !dysymtab || !linkedit || !dysymtab->nindirectsyms)
         {
             return;
         }
-        uintptr_t   base     = static_cast<uintptr_t>(slide) + linkedit->vmaddr - linkedit->fileoff;
-        auto       *symbols  = reinterpret_cast<const nlist_64 *>(base + symtab->symoff);
-        auto       *strings  = reinterpret_cast<const char *>(base + symtab->stroff);
-        auto       *indirect = reinterpret_cast<const uint32_t *>(base + dysymtab->indirectsymoff);
-        std::string wanted   = "_" + symbol;
+
+        uintptr_t base     = static_cast<uintptr_t>(slide) + linkedit->vmaddr - linkedit->fileoff;
+        auto *symbols      = reinterpret_cast<const nlist_64 *>(base + symtab->symoff);
+        auto *strings      = reinterpret_cast<const char *>(base + symtab->stroff);
+        auto *indirect     = reinterpret_cast<const uint32_t *>(base + dysymtab->indirectsymoff);
+        std::string wanted = "_" + symbol;
         for (const section_64 *section : sections)
         {
             auto **slots = reinterpret_cast<void **>(static_cast<uintptr_t>(slide) + section->addr);
             for (uint64_t item = 0; item < section->size / sizeof(void *); item++)
             {
                 uint32_t symbolIndex = indirect[section->reserved1 + item];
-                if (symbolIndex == INDIRECT_SYMBOL_ABS || symbolIndex == INDIRECT_SYMBOL_LOCAL ||
-                    symbolIndex == (INDIRECT_SYMBOL_LOCAL | INDIRECT_SYMBOL_ABS) ||
-                    symbolIndex >= symtab->nsyms)
+                if (symbolIndex == INDIRECT_SYMBOL_ABS || symbolIndex == INDIRECT_SYMBOL_LOCAL
+                    || symbolIndex == (INDIRECT_SYMBOL_LOCAL | INDIRECT_SYMBOL_ABS)
+                    || symbolIndex >= symtab->nsyms)
                 {
                     continue;
                 }
+
                 const char *name = strings + symbols[symbolIndex].n_un.n_strx;
                 if (wanted != name)
                 {
                     continue;
                 }
+
                 void *original = slots[item];
                 if (original != replacement && writePointer(&slots[item], replacement))
                 {
@@ -307,7 +322,7 @@ std::vector<Rebinding> rebindImportedSymbol(const std::string &name, void *repla
                                             const void *skipImageContaining)
 {
     std::vector<Rebinding> done;
-    Dl_info                skip{};
+    Dl_info skip{};
     bool skipping = skipImageContaining && dladdr(skipImageContaining, &skip) && skip.dli_fbase;
     for (uint32_t index = 0; index < _dyld_image_count(); index++)
     {
@@ -316,8 +331,10 @@ std::vector<Rebinding> rebindImportedSymbol(const std::string &name, void *repla
         {
             continue;
         }
+
         rebindImage(header, _dyld_get_image_vmaddr_slide(index), name, replacement, done);
     }
+
     return done;
 }
 
@@ -329,27 +346,30 @@ bool restoreRebindings(const std::vector<Rebinding> &rebindings)
         restored =
             writePointer(static_cast<void **>(rebinding.slot), rebinding.original) && restored;
     }
+
     return restored;
 }
 #elif defined(__ANDROID__) || defined(__linux__)
 namespace {
     bool writePointer(void **slot, void *value)
     {
-        long      size = sysconf(_SC_PAGESIZE);
+        long size      = sysconf(_SC_PAGESIZE);
         uintptr_t page = reinterpret_cast<uintptr_t>(slot) & ~static_cast<uintptr_t>(size - 1);
         if (mprotect(reinterpret_cast<void *>(page), static_cast<size_t>(size),
-                     PROT_READ | PROT_WRITE) != 0)
+                     PROT_READ | PROT_WRITE)
+            != 0)
         {
             return false;
         }
+
         *slot = value;
         return true;
     }
 
     struct RebindRequest {
-        std::string             name;
-        void                   *replacement;
-        const void             *skip;
+        std::string name;
+        void *replacement;
+        const void *skip;
         std::vector<Rebinding> *done;
     };
 
@@ -375,13 +395,15 @@ namespace {
             {
                 continue;
             }
+
             const ElfW(Sym) &symbol = symbols[ELF64_R_SYM(relocation.r_info)];
             if (request.name != strings + symbol.st_name)
             {
                 continue;
             }
-            auto **slot     = reinterpret_cast<void **>(base + relocation.r_offset);
-            void  *original = *slot;
+
+            auto **slot    = reinterpret_cast<void **>(base + relocation.r_offset);
+            void *original = *slot;
             if (original != request.replacement && writePointer(slot, request.replacement))
             {
                 request.done->push_back({slot, original});
@@ -405,24 +427,27 @@ namespace {
                 }
             }
         }
+
         const ElfW(Dyn) *dynamic = nullptr;
         for (int index = 0; index < info->dlpi_phnum; index++)
         {
             if (info->dlpi_phdr[index].p_type == PT_DYNAMIC)
             {
-                dynamic = reinterpret_cast<const ElfW(Dyn) *>(info->dlpi_addr +
-                                                              info->dlpi_phdr[index].p_vaddr);
+                dynamic = reinterpret_cast<const ElfW(Dyn) *>(info->dlpi_addr
+                                                              + info->dlpi_phdr[index].p_vaddr);
             }
         }
+
         if (!dynamic || (info->dlpi_name && std::strstr(info->dlpi_name, "vdso") != nullptr))
         {
             return 0;
         }
+
         const ElfW(Sym) *symbols = nullptr;
         const char *strings      = nullptr;
         const ElfW(Rela) *plt = nullptr, *rela = nullptr;
         size_t pltSize = 0, relaSize = 0;
-        auto   located = [&](ElfW(Addr) address) {
+        auto located = [&](ElfW(Addr) address) {
             return address < info->dlpi_addr ? address + info->dlpi_addr : address;
         };
         for (const ElfW(Dyn) *entry = dynamic; entry->d_tag != DT_NULL; entry++)
@@ -451,10 +476,12 @@ namespace {
                     break;
             }
         }
+
         if (!symbols || !strings)
         {
             return 0;
         }
+
         rebindRelocations(info->dlpi_addr, plt, pltSize / sizeof(ElfW(Rela)), symbols, strings,
                           request);
         rebindRelocations(info->dlpi_addr, rela, relaSize / sizeof(ElfW(Rela)), symbols, strings,
@@ -467,7 +494,7 @@ std::vector<Rebinding> rebindImportedSymbol(const std::string &name, void *repla
                                             const void *skipImageContaining)
 {
     std::vector<Rebinding> done;
-    RebindRequest          request{name, replacement, skipImageContaining, &done};
+    RebindRequest request{name, replacement, skipImageContaining, &done};
     dl_iterate_phdr(rebindObject, &request);
     return done;
 }
@@ -480,6 +507,7 @@ bool restoreRebindings(const std::vector<Rebinding> &rebindings)
         restored =
             writePointer(static_cast<void **>(rebinding.slot), rebinding.original) && restored;
     }
+
     return restored;
 }
 #else
@@ -506,7 +534,7 @@ namespace {
     };
 
     struct Slot {
-        Passing     passing;
+        Passing passing;
         std::size_t count = 1;
         std::size_t size  = 0;
     };
@@ -532,36 +560,41 @@ namespace {
         {
             return {Passing::Float, 1, sizeof(float)};
         }
+
         if (type.kind == Kind::Double)
         {
             return {Passing::Double, 1, sizeof(double)};
         }
+
         if (type.kind == Kind::Struct && type.layout)
         {
             std::vector<Kind> leaves;
             flatten(*type.layout, leaves);
-            bool aggregate = !leaves.empty() && leaves.size() <= 4 &&
-                             (leaves.front() == Kind::Float || leaves.front() == Kind::Double) &&
-                             std::all_of(leaves.begin(), leaves.end(), [&](Kind leaf) {
-                                 return leaf == leaves.front();
-                             });
+            bool aggregate = !leaves.empty() && leaves.size() <= 4
+                             && (leaves.front() == Kind::Float || leaves.front() == Kind::Double)
+                             && std::all_of(leaves.begin(), leaves.end(), [&](Kind leaf) {
+                                    return leaf == leaves.front();
+                                });
             if (aggregate)
             {
                 return {Passing::FloatAggregate, leaves.size(), type.layout->size};
             }
+
             if (type.layout->size <= 16)
             {
                 return {Passing::IntegerAggregate, (type.layout->size + 7) / 8, type.layout->size};
             }
+
             return {Passing::Indirect, 1, type.layout->size};
         }
+
         return {Passing::Integer, 1, typeSize(type)};
     }
 
     bool floating(const Slot &slot)
     {
-        return slot.passing == Passing::Float || slot.passing == Passing::Double ||
-               slot.passing == Passing::FloatAggregate;
+        return slot.passing == Passing::Float || slot.passing == Passing::Double
+               || slot.passing == Passing::FloatAggregate;
     }
 
     std::vector<std::uint8_t> argumentBytes(const Slot &slot, const CallbackRegisters &registers,
@@ -588,6 +621,7 @@ namespace {
                 {
                     std::memcpy(buffer.data() + index * element, &registers.d[d++], element);
                 }
+
                 break;
             }
             case Passing::IntegerAggregate:
@@ -600,9 +634,11 @@ namespace {
                 {
                     std::memcpy(buffer.data(), source, slot.size);
                 }
+
                 break;
             }
         }
+
         return buffer;
     }
 
@@ -626,43 +662,48 @@ namespace {
         {
             std::memcpy(result.x, bytes.data(), std::min<std::size_t>(bytes.size(), 16));
         }
+
         return result;
     }
 
     struct JSCallback {
-        Signature                      signature;
-        std::vector<Slot>              slots;
-        Slot                           result{Passing::Integer};
+        Signature signature;
+        std::vector<Slot> slots;
+        Slot result{Passing::Integer};
         std::shared_ptr<jsi::Function> function;
-        std::uint64_t                  generation = 0;
+        std::uint64_t generation = 0;
     };
 
     CallbackResult runJavaScript(const std::shared_ptr<JSCallback> &callback,
-                                 const CallbackRegisters           &registers)
+                                 const CallbackRegisters &registers)
     {
         std::vector<std::uint8_t> output(std::max<std::size_t>(callback->result.size, 32));
         if (callback->generation != native::runtimeGeneration())
         {
             return resultFrom(callback->result, output);
         }
-        std::size_t                            x = 0;
-        std::size_t                            d = 0;
+
+        std::size_t x = 0;
+        std::size_t d = 0;
         std::vector<std::vector<std::uint8_t>> arguments;
         for (const Slot &slot : callback->slots)
         {
             arguments.push_back(argumentBytes(slot, registers, x, d));
         }
+
         native::executeRuntimeSynchronously([&](jsi::Runtime &runtime) {
             if (callback->generation != native::runtimeGeneration())
             {
                 return;
             }
+
             std::vector<jsi::Value> values;
             for (std::size_t index = 0; index < arguments.size(); index++)
             {
                 values.push_back(readValue(runtime, callback->signature.arguments[index],
                                            arguments[index].data()));
             }
+
             jsi::Value returned = callback->function->call(
                 runtime, static_cast<const jsi::Value *>(values.data()), values.size());
             if (callback->signature.result.kind != Kind::Void)
@@ -681,6 +722,7 @@ namespace {
         {
             throw std::invalid_argument(std::string(method) + " expects a pointer");
         }
+
         return host->value();
     }
 
@@ -691,10 +733,12 @@ namespace {
         {
             return 0;
         }
+
         if (!args[index].isNumber() || args[index].getNumber() < 0)
         {
             throw std::invalid_argument("The memory offset must be a non-negative number");
         }
+
         return static_cast<std::size_t>(args[index].getNumber());
     }
 
@@ -713,11 +757,13 @@ jsi::Value allocate(jsi::Runtime &runtime, const jsi::Value *args, std::size_t c
     {
         throw std::invalid_argument("ffi.alloc expects a size in bytes");
     }
+
     void *memory = allocateMemory(static_cast<std::size_t>(args[0].getNumber()));
     if (!memory)
     {
         throw std::invalid_argument("ffi.alloc could not allocate that size");
     }
+
     return pointerValue(runtime, memory);
 }
 
@@ -727,6 +773,7 @@ jsi::Value release(jsi::Runtime &runtime, const jsi::Value *args, std::size_t co
     {
         throw std::invalid_argument("ffi.free expects a pointer from ffi.alloc");
     }
+
     return jsi::Value(freeMemory(pointerArgument(runtime, args[0], "ffi.free")));
 }
 
@@ -736,19 +783,22 @@ jsi::Value read(jsi::Runtime &runtime, const jsi::Value *args, std::size_t count
     {
         throw std::invalid_argument("ffi.read expects a pointer and a type");
     }
-    auto       *base   = static_cast<std::uint8_t *>(pointerArgument(runtime, args[0], "ffi.read"));
-    Type        type   = typeArgument(runtime, args[1]);
+
+    auto *base         = static_cast<std::uint8_t *>(pointerArgument(runtime, args[0], "ffi.read"));
+    Type type          = typeArgument(runtime, args[1]);
     std::size_t size   = typeSize(type);
     std::size_t offset = offsetArgument(runtime, args, count, 2);
     if (size == 0)
     {
         throw std::invalid_argument("ffi.read cannot read a void");
     }
+
     std::vector<std::uint8_t> buffer(std::max<std::size_t>(size, 8));
     if (!readMemorySafely(base + offset, buffer.data(), size))
     {
         throw std::invalid_argument("ffi.read could not read that address");
     }
+
     return readValue(runtime, type, buffer.data());
 }
 
@@ -758,21 +808,24 @@ jsi::Value write(jsi::Runtime &runtime, const jsi::Value *args, std::size_t coun
     {
         throw std::invalid_argument("ffi.write expects a pointer, a type and a value");
     }
-    auto       *base = static_cast<std::uint8_t *>(pointerArgument(runtime, args[0], "ffi.write"));
-    Type        type = typeArgument(runtime, args[1]);
+
+    auto *base       = static_cast<std::uint8_t *>(pointerArgument(runtime, args[0], "ffi.write"));
+    Type type        = typeArgument(runtime, args[1]);
     std::size_t size = typeSize(type);
     std::size_t offset = offsetArgument(runtime, args, count, 3);
     if (size == 0 || !isAllocatedRange(base + offset, size))
     {
         throw std::invalid_argument("ffi.write only writes inside memory from ffi.alloc");
     }
+
     std::vector<std::uint8_t> buffer(std::max<std::size_t>(size, 8));
-    ArgumentStorage           storage;
+    ArgumentStorage storage;
     writeValue(runtime, args[2], type, buffer.data(), storage);
     if (type.kind == Kind::CString)
     {
         throw std::invalid_argument("ffi.write cannot store a string; allocate its bytes instead");
     }
+
     std::memcpy(base + offset, buffer.data(), size);
     return jsi::Value::undefined();
 }
@@ -783,6 +836,7 @@ jsi::Value callback(jsi::Runtime &runtime, const jsi::Value *args, std::size_t c
     {
         throw std::invalid_argument("ffi.callback expects a signature and a function");
     }
+
     auto state           = std::make_shared<JSCallback>();
     state->signature     = signatureFromValue(runtime, args[0]);
     std::size_t integers = 0;
@@ -802,6 +856,7 @@ jsi::Value callback(jsi::Runtime &runtime, const jsi::Value *args, std::size_t c
     {
         throw std::invalid_argument("ffi.callback has more arguments than fit in registers");
     }
+
     state->result    = slotFor(state->signature.result);
     bool floatReturn = floating(state->result);
 #if defined(__x86_64__)
@@ -814,6 +869,7 @@ jsi::Value callback(jsi::Runtime &runtime, const jsi::Value *args, std::size_t c
     {
         throw std::invalid_argument("ffi.callback cannot return a struct larger than 16 bytes");
     }
+
     state->function =
         std::make_shared<jsi::Function>(args[1].asObject(runtime).asFunction(runtime));
     state->generation          = native::runtimeGeneration();
@@ -826,6 +882,7 @@ jsi::Value callback(jsi::Runtime &runtime, const jsi::Value *args, std::size_t c
     {
         throw std::invalid_argument("ffi.callback has no free slots; release callbacks first");
     }
+
     return pointerValue(runtime, *code, true);
 }
 
@@ -835,6 +892,7 @@ jsi::Value releaseCallback(jsi::Runtime &runtime, const jsi::Value *args, std::s
     {
         throw std::invalid_argument("ffi.releaseCallback expects a pointer from ffi.callback");
     }
+
     return jsi::Value(
         releaseCallbackSlot(pointerArgument(runtime, args[0], "ffi.releaseCallback")));
 }
@@ -845,20 +903,23 @@ jsi::Value rebind(jsi::Runtime &runtime, const jsi::Value *args, std::size_t cou
     {
         throw std::invalid_argument("ffi.rebind expects a symbol name and a replacement pointer");
     }
-    std::string name        = args[0].getString(runtime).utf8(runtime);
-    void       *replacement = pointerArgument(runtime, args[1], "ffi.rebind");
-    void       *original    = dlsym(RTLD_DEFAULT, name.c_str());
+
+    std::string name  = args[0].getString(runtime).utf8(runtime);
+    void *replacement = pointerArgument(runtime, args[1], "ffi.rebind");
+    void *original    = dlsym(RTLD_DEFAULT, name.c_str());
     if (!original)
     {
         throw std::invalid_argument("ffi.rebind found no symbol named " + name);
     }
+
     std::vector<Rebinding> done = rebindImportedSymbol(
         name, replacement, reinterpret_cast<const void *>(&rebindImportedSymbol));
     {
         std::lock_guard<std::mutex> lock(gRebindMutex);
-        std::vector<Rebinding>     &recorded = gRebindings[name];
+        std::vector<Rebinding> &recorded = gRebindings[name];
         recorded.insert(recorded.end(), done.begin(), done.end());
     }
+
     jsi::Object result(runtime);
     result.setProperty(runtime, "original", pointerValue(runtime, original, true));
     result.setProperty(runtime, "slots", static_cast<double>(done.size()));
@@ -871,6 +932,7 @@ jsi::Value restore(jsi::Runtime &runtime, const jsi::Value *args, std::size_t co
     {
         throw std::invalid_argument("ffi.restore expects a symbol name");
     }
+
     std::vector<Rebinding> done;
     {
         std::lock_guard<std::mutex> lock(gRebindMutex);
@@ -879,9 +941,11 @@ jsi::Value restore(jsi::Runtime &runtime, const jsi::Value *args, std::size_t co
         {
             return jsi::Value(false);
         }
+
         done = std::move(found->second);
         gRebindings.erase(found);
     }
+
     std::reverse(done.begin(), done.end());
     return jsi::Value(restoreRebindings(done));
 }

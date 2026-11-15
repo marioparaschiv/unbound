@@ -19,6 +19,7 @@ jsi::Object settingsBridge(jsi::Runtime &runtime, SettingsStore *store)
                 {
                     throw jsi::JSError(rt, "settings.apply expects an array of changes");
                 }
+
                 return jsi::Value(store->apply(fromJSIValue(rt, args[0])));
             }));
     settings.setProperty(
@@ -31,6 +32,7 @@ jsi::Object settingsBridge(jsi::Runtime &runtime, SettingsStore *store)
                 {
                     throw jsi::JSError(rt, "settings.stage expects an array of changes");
                 }
+
                 return jsi::Value(store->stage(fromJSIValue(rt, args[0])));
             }));
     settings.setProperty(runtime, "flush",
@@ -49,11 +51,13 @@ jsi::Object settingsBridge(jsi::Runtime &runtime, SettingsStore *store)
                 {
                     return toJSIValue(rt, store->snapshot());
                 }
-                if (!args[0].isString() ||
-                    (count > 1 && !args[1].isUndefined() && !args[1].isString()))
+
+                if (!args[0].isString()
+                    || (count > 1 && !args[1].isUndefined() && !args[1].isString()))
                 {
                     throw jsi::JSError(rt, "settings.get expects a store name and a key path");
                 }
+
                 const std::string key =
                     count > 1 && args[1].isString() ? args[1].getString(rt).utf8(rt) : "";
                 // Converts in place: copying a large store first would double the work.

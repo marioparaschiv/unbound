@@ -37,6 +37,7 @@ static void readsWholeFiles(const std::filesystem::path &parent)
     {
         binary[index] = static_cast<char>(index * 31);
     }
+
     const auto large = parent / "large.bin";
     assert(loader::writeTextFileAtomically(large.string(), binary));
     assert(loader::readTextFile(large.string()) == binary);
@@ -44,11 +45,11 @@ static void readsWholeFiles(const std::filesystem::path &parent)
     const auto fifo = parent / "pipe";
     assert(mkfifo(fifo.c_str(), 0600) == 0);
     const std::string streamed(200 * 1024, 'p');
-    std::thread       writer([&] {
+    std::thread writer([&] {
         int descriptor = open(fifo.c_str(), O_WRONLY);
         assert(descriptor >= 0);
-        assert(write(descriptor, streamed.data(), streamed.size()) ==
-               static_cast<ssize_t>(streamed.size()));
+        assert(write(descriptor, streamed.data(), streamed.size())
+               == static_cast<ssize_t>(streamed.size()));
         close(descriptor);
     });
     assert(loader::readTextFile(fifo.string()) == streamed);
@@ -57,8 +58,8 @@ static void readsWholeFiles(const std::filesystem::path &parent)
 
 static void writesWithoutStagingLeftovers(const std::filesystem::path &parent)
 {
-    const auto               directory = parent / "atomic";
-    const auto               target    = directory / "settings.json";
+    const auto directory = parent / "atomic";
+    const auto target    = directory / "settings.json";
     std::vector<std::thread> writers;
     for (int index = 0; index < 8; index++)
     {
@@ -70,6 +71,7 @@ static void writesWithoutStagingLeftovers(const std::filesystem::path &parent)
             }
         });
     }
+
     for (std::thread &writer : writers)
     {
         writer.join();

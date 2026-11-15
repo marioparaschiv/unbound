@@ -89,6 +89,7 @@ static void callInterfacesAreCachedAndBounded()
         loader::ffi::callInterface(
             loader::ffi::Type{Kind::Pointer, "pointer#" + std::to_string(index)}, {});
     }
+
     assert(loader::ffi::cachedCallInterfaceCount() <= loader::ffi::kCallInterfaceCacheCapacity);
     assert(first->cif.nargs == 2);
 
@@ -98,8 +99,8 @@ static void callInterfacesAreCachedAndBounded()
 
 static void structsTravelByValue()
 {
-    Type        rect = type("struct:CGRect");
-    CallFrame   frame(loader::ffi::callInterface(rect, {rect, type("double")}));
+    Type rect = type("struct:CGRect");
+    CallFrame frame(loader::ffi::callInterface(rect, {rect, type("double")}));
     NativeValue value{
         NativeFields{NativeValue{NativeFields{NativeValue{1.0}, NativeValue{2.0}}},
                      NativeValue{NativeFields{NativeValue{30.0}, NativeValue{40.0}}}}};
@@ -133,16 +134,17 @@ static void nullCStringsReachNativeCode()
 static void sixteenArgumentsAreSupported()
 {
     std::vector<Type> arguments(loader::ffi::kMaximumArguments, type("i32"));
-    auto              signature = loader::ffi::makeSignature(type("i64"), arguments);
-    CallFrame         frame(loader::ffi::callInterface(signature.result, signature.arguments));
+    auto signature = loader::ffi::makeSignature(type("i64"), arguments);
+    CallFrame frame(loader::ffi::callInterface(signature.result, signature.arguments));
     for (std::size_t index = 0; index < arguments.size(); index++)
     {
         loader::ffi::encodeValue(arguments[index], NativeValue{static_cast<double>(index + 1)},
                                  frame.argument(index), frame.storage());
     }
+
     frame.invoke(reinterpret_cast<void *>(&unboundTestSum));
-    assert(std::get<std::int64_t>(loader::ffi::decodeValue(type("i64"), frame.result()).data) ==
-           136);
+    assert(std::get<std::int64_t>(loader::ffi::decodeValue(type("i64"), frame.result()).data)
+           == 136);
 }
 
 static void extensionTypesResolveThroughTheirCodec()
@@ -157,6 +159,7 @@ static void extensionTypesResolveThroughTheirCodec()
         rejectedUnknown =
             std::string(error.what()) == "Unsupported native FFI type marker on this platform";
     }
+
     assert(rejectedUnknown);
 
     auto codec = std::make_shared<MarkerCodec>();
@@ -176,6 +179,7 @@ static void extensionTypesResolveThroughTheirCodec()
     {
         rejectedDuplicate = true;
     }
+
     assert(rejectedDuplicate);
 
     bool rejectedBuiltin = false;
@@ -187,12 +191,13 @@ static void extensionTypesResolveThroughTheirCodec()
     {
         rejectedBuiltin = true;
     }
+
     assert(rejectedBuiltin);
 
     bool rejectedEncoding = false;
     try
     {
-        std::vector<std::uint8_t>    bytes(loader::ffi::valueStorageSize(marker));
+        std::vector<std::uint8_t> bytes(loader::ffi::valueStorageSize(marker));
         loader::ffi::ArgumentStorage storage;
         loader::ffi::encodeValue(marker, NativeValue{}, bytes.data(), storage);
     }
@@ -200,6 +205,7 @@ static void extensionTypesResolveThroughTheirCodec()
     {
         rejectedEncoding = true;
     }
+
     assert(rejectedEncoding);
 }
 

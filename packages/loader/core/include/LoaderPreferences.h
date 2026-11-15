@@ -22,10 +22,10 @@ enum class ToolboxGesture
     ThreeFinger,
 };
 
-bool        loaderEnabled(const SettingsStore &settings);
-bool        recoveryEnabled(const SettingsStore &settings);
+bool loaderEnabled(const SettingsStore &settings);
+bool recoveryEnabled(const SettingsStore &settings);
 std::string automaticRecoveryKey(const SettingsStore &settings);
-void        setAutomaticRecoveryKey(SettingsStore &settings, const std::string &key);
+void setAutomaticRecoveryKey(SettingsStore &settings, const std::string &key);
 // Always saves, so the toggle reports whether the file was written.
 bool setRecoveryEnabled(SettingsStore &settings, bool enabled);
 bool developerMode(const SettingsStore &settings);
@@ -58,23 +58,23 @@ bool updatesWaitForWifi(const SettingsStore &settings);
 
 // The ETag of the bundle last downloaded, or empty.
 std::string bundleEtag(const SettingsStore &settings);
-void        setBundleEtag(SettingsStore &settings, const std::string &etag);
+void setBundleEtag(SettingsStore &settings, const std::string &etag);
 // The bundle record a promotion replaced, so a rollback can restore it; empty when none.
 std::string bundleBaseline(const SettingsStore &settings);
 std::string rejectedRevision(const SettingsStore &settings);
-void        setRejectedRevision(SettingsStore &settings, const std::string &revision);
-void        setBundleBaseline(SettingsStore &settings, const std::string &record);
+void setRejectedRevision(SettingsStore &settings, const std::string &revision);
+void setBundleBaseline(SettingsStore &settings, const std::string &record);
 // The loader version that last checked for a bundle, so a loader update is noticed once.
 std::string checkedByLoader(const SettingsStore &settings);
-void        setCheckedByLoader(SettingsStore &settings, const std::string &version);
+void setCheckedByLoader(SettingsStore &settings, const std::string &version);
 
 std::optional<std::string> appliedThemeId(const SettingsStore &settings);
 std::optional<std::string> activeThemeId(const SettingsStore &settings);
-nlohmann::json             fontOverrides(const SettingsStore &settings);
+nlohmann::json fontOverrides(const SettingsStore &settings);
 
 std::optional<ToolboxGesture> gestureNamed(const std::string &name);
-const char                   *gestureName(ToolboxGesture gesture);
-bool                          gestureEnabled(const SettingsStore &settings, ToolboxGesture gesture);
+const char *gestureName(ToolboxGesture gesture);
+bool gestureEnabled(const SettingsStore &settings, ToolboxGesture gesture);
 bool setGestureEnabled(SettingsStore &settings, ToolboxGesture gesture, bool enabled);
 
 std::string recoveryActionLabel(bool enabled);

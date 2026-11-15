@@ -34,6 +34,7 @@ static SecKeyRef createPublicKey(CFErrorRef *error)
     {
         return NULL;
     }
+
     return SecKeyCreateWithData((__bridge CFDataRef) dataOf(*point), (__bridge CFDictionaryRef) @{
         (__bridge id) kSecAttrKeyType : (__bridge id) kSecAttrKeyTypeECSECPrimeRandom,
         (__bridge id) kSecAttrKeyClass : (__bridge id) kSecAttrKeyClassPublic,
@@ -49,13 +50,15 @@ bool VerifyEmbeddedAttestation(void)
     {
         return failVerification(@"unable to resolve the loaded dylib path");
     }
+
     const struct mach_header_64 *loadedHeader = (const struct mach_header_64 *) imageInfo.dli_fbase;
     if (!loadedHeader || loadedHeader->magic != MH_MAGIC_64)
     {
         return failVerification(@"loaded image is not a 64-bit Mach-O");
     }
+
     NSError *fileError = nil;
-    NSData  *fileData =
+    NSData *fileData =
         [NSData dataWithContentsOfFile:[NSString stringWithUTF8String:imageInfo.dli_fname]
                                options:0
                                  error:&fileError];
@@ -73,14 +76,15 @@ bool VerifyEmbeddedAttestation(void)
         return failVerification(unbound::ios::toNSString(*evaluation.failure));
     }
 
-    CFErrorRef keyError  = NULL;
-    SecKeyRef  publicKey = createPublicKey(&keyError);
+    CFErrorRef keyError = NULL;
+    SecKeyRef publicKey = createPublicKey(&keyError);
     if (!publicKey)
     {
         NSString *reason =
             keyError ? CFBridgingRelease(keyError) : @"unable to import the P-256 public key";
         return failVerification(reason);
     }
+
     CFErrorRef verifyError = NULL;
     BOOL verified = SecKeyVerifySignature(publicKey, kSecKeyAlgorithmECDSASignatureDigestX962SHA256,
                                           (__bridge CFDataRef) dataOf(evaluation.digest),
@@ -93,6 +97,7 @@ bool VerifyEmbeddedAttestation(void)
             verifyError ? CFBridgingRelease(verifyError) : @"P-256 signature mismatch";
         return failVerification(reason);
     }
+
     [Logger info:LOG_CATEGORY_UTILITIES
           format:@"Embedded attestation verified for %@/%@ digest %s commit %s",
                  @(evaluation.record.cpuType), @(evaluation.record.cpuSubtype),

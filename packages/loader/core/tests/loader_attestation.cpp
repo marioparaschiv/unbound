@@ -9,16 +9,16 @@
 using namespace loader;
 using namespace loader::attestation;
 
-static constexpr int32_t     kARM64        = 0x0100000c;
-static constexpr int32_t     kARM64E       = 2;
-static constexpr int32_t     kX86_64       = 0x01000007;
-static constexpr size_t      kHeaderSize   = 32;
-static constexpr size_t      kTextSize     = 72 + 80;
-static constexpr size_t      kLinkeditSize = 72;
-static constexpr size_t      kSignSize     = 16;
-static constexpr size_t      kSection      = 512;
-static constexpr size_t      kSignature    = 1024;
-static constexpr size_t      kSignatureLen = 64;
+static constexpr int32_t kARM64       = 0x0100000c;
+static constexpr int32_t kARM64E      = 2;
+static constexpr int32_t kX86_64      = 0x01000007;
+static constexpr size_t kHeaderSize   = 32;
+static constexpr size_t kTextSize     = 72 + 80;
+static constexpr size_t kLinkeditSize = 72;
+static constexpr size_t kSignSize     = 16;
+static constexpr size_t kSection      = 512;
+static constexpr size_t kSignature    = 1024;
+static constexpr size_t kSignatureLen = 64;
 static constexpr const char *kGoELFCanonicalDigest =
     "29d2713b315ef31b19e1cebfa5f0b4c5b9a793b91b2df7e62f51437009b61c17";
 static constexpr const char *kGoCanonicalDigest =
@@ -81,10 +81,12 @@ static std::string thinMachO(int32_t cpuSubtype)
     {
         data[index] = static_cast<char>(index * 7);
     }
+
     for (size_t index = kSignature; index < data.size(); index++)
     {
         data[index] = static_cast<char>(0xa5);
     }
+
     return data;
 }
 
@@ -117,12 +119,12 @@ static std::string fat(const std::string &first, int32_t firstSubtype, const std
 {
     const size_t entrySize = wide ? 32 : 20;
     const size_t offset    = 0x4000;
-    std::string  data(offset * 3, '\0');
+    std::string data(offset * 3, '\0');
     putBig(data, 0, wide ? 0xcafebabf : 0xcafebabe, 4);
     putBig(data, 4, 2, 4);
     const std::string slices[] = {first, second};
-    const int32_t     cpus[]   = {kARM64, secondCPU};
-    const int32_t     subs[]   = {firstSubtype, secondSubtype};
+    const int32_t cpus[]       = {kARM64, secondCPU};
+    const int32_t subs[]       = {firstSubtype, secondSubtype};
     for (size_t index = 0; index < 2; index++)
     {
         const size_t entry = 8 + index * entrySize;
@@ -132,6 +134,7 @@ static std::string fat(const std::string &first, int32_t firstSubtype, const std
         putBig(data, entry + (wide ? 16 : 12), slices[index].size(), wide ? 8 : 4);
         std::memcpy(data.data() + offset * (index + 1), slices[index].data(), slices[index].size());
     }
+
     return data;
 }
 
@@ -158,26 +161,26 @@ static void matchesGoCanonicalDigest()
 static void ignoresResignedFields()
 {
     const std::string original = attested(0);
-    std::string       resigned = original;
+    std::string resigned       = original;
     putLittle(resigned, kSection + kSignatureLengthOffset, 71, 2);
     std::memset(resigned.data() + kSection + kSignatureOffset, 0x11, kSignatureCapacity);
     putLittle(resigned, kHeaderSize + kTextSize + kLinkeditSize + 12, 48, 4);
     putLittle(resigned, kHeaderSize + kTextSize + 32, 0x8000, 8);
     putLittle(resigned, kHeaderSize + kTextSize + 48, 0x7000, 8);
     std::memset(resigned.data() + kSignature, 0x3c, kSignatureLen);
-    assert(*canonicalDigest(original, *parseSlice(original)) ==
-           *canonicalDigest(resigned, *parseSlice(resigned)));
+    assert(*canonicalDigest(original, *parseSlice(original))
+           == *canonicalDigest(resigned, *parseSlice(resigned)));
 
     std::string patched = original;
     patched[kSection + kSectionSize + 3] ^= 1;
-    assert(*canonicalDigest(original, *parseSlice(original)) !=
-           *canonicalDigest(patched, *parseSlice(patched)));
+    assert(*canonicalDigest(original, *parseSlice(original))
+           != *canonicalDigest(patched, *parseSlice(patched)));
 }
 
 static void evaluatesThinSlices()
 {
-    const std::string data       = attested(kARM64E);
-    const Evaluation  evaluation = evaluate(data, kARM64, kARM64E);
+    const std::string data      = attested(kARM64E);
+    const Evaluation evaluation = evaluate(data, kARM64, kARM64E);
     assert(!evaluation.failure);
     assert(evaluation.digest == evaluation.record.digest);
     assert(evaluation.record.signature == std::string(70, '\x5a'));
@@ -214,9 +217,10 @@ static void selectsFatSlices()
         assert(*loadedSlice(universal, kARM64, 5) == arm64);
         assert(!loadedSlice(universal, kX86_64, 3));
         assert(!evaluate(universal, kARM64, kARM64E).failure);
-        assert(evaluate(universal, kX86_64, 3).failure ==
-               "unable to select the loaded architecture slice");
+        assert(evaluate(universal, kX86_64, 3).failure
+               == "unable to select the loaded architecture slice");
     }
+
     std::string truncated = fat(arm64, 0, arm64e, kARM64E, kARM64, false);
     truncated.resize(0x4000 * 2 + 10);
     assert(!loadedSlice(truncated, kARM64, kARM64E));
@@ -227,8 +231,8 @@ static void rejectsMalformedLayouts()
     assert(!parseSlice(""));
     assert(!parseSlice(std::string(31, '\0')));
     std::string data = thinMachO(0);
-    assert(evaluate(data.substr(0, 3), kARM64, 0).failure ==
-           "unable to select the loaded architecture slice");
+    assert(evaluate(data.substr(0, 3), kARM64, 0).failure
+           == "unable to select the loaded architecture slice");
 
     std::string wrongMagic = data;
     putLittle(wrongMagic, 0, 0xfeedface, 4);

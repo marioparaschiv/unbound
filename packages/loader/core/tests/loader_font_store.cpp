@@ -49,8 +49,8 @@ static void migratesTheOldFolderOnce(const fs::path &root)
     assert(state.fonts[0].id == "Old-Regular" && state.fonts[0].file == "Old.ttf");
     assert(state.fonts[0].source.local() && state.fonts[0].source.id == "Old-Regular");
     // A system font name has no installed face to point at, so it is dropped.
-    assert(state.overrides ==
-           (std::map<std::string, std::string>{{"ggsans-Normal", "Old-Regular"}}));
+    assert(state.overrides
+           == (std::map<std::string, std::string>{{"ggsans-Normal", "Old-Regular"}}));
     assert(fs::exists(root / "Fonts" / "state.json"));
 
     FontStore again(root.string());
@@ -93,9 +93,9 @@ static void sharesVariableFiles(const fs::path &root)
 {
     FontStore store(root.string());
     store.open(nlohmann::json::object());
-    const std::vector<FontAxis> axes    = {{"wght", "Weight", 100, 400, 900}};
-    InstalledFont               regular = face("Vector-Regular", 400, false, "Vector");
-    InstalledFont               bold    = face("Vector-Bold", 700, false, "Vector");
+    const std::vector<FontAxis> axes = {{"wght", "Weight", 100, 400, 900}};
+    InstalledFont regular            = face("Vector-Regular", 400, false, "Vector");
+    InstalledFont bold               = face("Vector-Bold", 700, false, "Vector");
     regular.file = bold.file = "Vector.ttf";
     regular.axes = bold.axes = axes;
     regular.variations       = {{"wght", 400}};
@@ -122,6 +122,7 @@ static void sharesVariableFiles(const fs::path &root)
         {
             threw = true;
         }
+
         assert(threw);
     }
 
@@ -183,7 +184,7 @@ static void expandsGroupsByWeight(const fs::path &root)
 
 static void keepsPresets(const fs::path &root)
 {
-    FontStore  store(root.string());
+    FontStore store(root.string());
     FontPreset preset{"", "My Fonts", {{"ggsans-Normal", {"google", "Inter", 400, "normal"}}}};
     store.open(nlohmann::json::object());
     const FontPreset saved  = store.savePreset(preset);
@@ -200,8 +201,8 @@ static void keepsPresets(const fs::path &root)
 
 int main()
 {
-    const fs::path base  = fs::temp_directory_path() / "unbound-font-store";
-    int            case_ = 0;
+    const fs::path base = fs::temp_directory_path() / "unbound-font-store";
+    int case_           = 0;
     for (auto test : {migratesTheOldFolderOnce, installsReplacesAndRemoves, sharesVariableFiles,
                       expandsGroupsByWeight, keepsPresets})
     {
@@ -209,6 +210,7 @@ int main()
         fs::remove_all(root);
         test(root);
     }
+
     fs::remove_all(base);
     return 0;
 }

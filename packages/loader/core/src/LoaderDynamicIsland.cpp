@@ -10,10 +10,12 @@ std::optional<Cutout> cutoutFromSystem(std::optional<Frame> rect)
     {
         return std::nullopt;
     }
+
     if (rect->y <= 0)
     {
         return Cutout{CutoutKind::Notch, *rect};
     }
+
     const CutoutKind kind = rect->width > rect->height ? CutoutKind::Island : CutoutKind::Hole;
     return Cutout{kind, *rect};
 }
@@ -30,6 +32,7 @@ double cornerRadius(const Cutout &cutout)
         case CutoutKind::Island:
             break;
     }
+
     return frame.height / 2;
 }
 
@@ -49,10 +52,12 @@ Start Presentation::start(bool hasCutout)
     {
         return Start::NoIsland;
     }
+
     if (started_)
     {
         return Start::AlreadyStarted;
     }
+
     started_ = true;
     return Start::Started;
 }
@@ -63,10 +68,12 @@ Plan Presentation::show(const ViewState &view) const
     {
         return {true, true, false};
     }
+
     if (!view.hidden && view.alpha >= 1.0)
     {
         return {};
     }
+
     return {false, true, false};
 }
 
@@ -76,6 +83,7 @@ Plan Presentation::hide(const ViewState &view) const
     {
         return {};
     }
+
     return {false, false, true};
 }
 

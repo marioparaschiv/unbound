@@ -6,8 +6,8 @@
 
 struct Entry {
     loader::LogLevel level;
-    std::string      category;
-    std::string      message;
+    std::string category;
+    std::string message;
 };
 
 int main()
@@ -22,6 +22,7 @@ int main()
     {
         assert(loader::isLogCategory(category));
     }
+
     assert(loader::isLogCategory(LOG_CATEGORY_HOOKS));
     assert(!loader::isLogCategory("Default"));
     assert(!loader::isLogCategory(""));

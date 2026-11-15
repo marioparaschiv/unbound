@@ -60,14 +60,14 @@ static void opensWebCryptoCallbacks()
 
         std::string flippedMAC = mac;
         flippedMAC[5] ^= 1;
-        assert(browserlogin::openCallback(secret, state, iv, ciphertext, flippedMAC).status ==
-               browserlogin::OpenStatus::Unverified);
+        assert(browserlogin::openCallback(secret, state, iv, ciphertext, flippedMAC).status
+               == browserlogin::OpenStatus::Unverified);
         std::string flippedCiphertext = ciphertext;
         flippedCiphertext.back() ^= 1;
-        assert(browserlogin::openCallback(secret, state, iv, flippedCiphertext, mac).status ==
-               browserlogin::OpenStatus::Unverified);
-        assert(browserlogin::openCallback(secret, state + "x", iv, ciphertext, mac).status ==
-               browserlogin::OpenStatus::Unverified);
+        assert(browserlogin::openCallback(secret, state, iv, flippedCiphertext, mac).status
+               == browserlogin::OpenStatus::Unverified);
+        assert(browserlogin::openCallback(secret, state + "x", iv, ciphertext, mac).status
+               == browserlogin::OpenStatus::Unverified);
     }
 }
 

@@ -35,12 +35,13 @@ const nlohmann::json *findTheme(const nlohmann::json &themes, const std::string 
 
     for (const nlohmann::json &theme : themes)
     {
-        if (theme.is_object() && theme.contains("manifest") && theme["manifest"].is_object() &&
-            stringField(theme["manifest"], "id") == id)
+        if (theme.is_object() && theme.contains("manifest") && theme["manifest"].is_object()
+            && stringField(theme["manifest"], "id") == id)
         {
             return &theme;
         }
     }
+
     return nullptr;
 }
 
@@ -51,16 +52,16 @@ static std::optional<RGBAColor> colorValue(const nlohmann::json &value)
 
 std::string themeColorAccessor(const std::string &key)
 {
-    if (key.find_first_of("_-.") == std::string::npos &&
-        std::any_of(key.begin(), key.end(), [](unsigned char c) {
-            return std::islower(c);
-        }))
+    if (key.find_first_of("_-.") == std::string::npos
+        && std::any_of(key.begin(), key.end(), [](unsigned char c) {
+               return std::islower(c);
+           }))
     {
         return key;
     }
 
     std::string accessor;
-    bool        capitalize = false;
+    bool capitalize = false;
     for (unsigned char character : key)
     {
         if (character == '_' || character == '-' || character == '.')
@@ -68,10 +69,12 @@ std::string themeColorAccessor(const std::string &key)
             capitalize = !accessor.empty();
             continue;
         }
+
         accessor +=
             static_cast<char>(capitalize ? std::toupper(character) : std::tolower(character));
         capitalize = false;
     }
+
     return accessor;
 }
 
@@ -96,8 +99,8 @@ ThemeColors resolveThemeColors(const nlohmann::json &theme)
             continue;
         }
 
-        std::string              type  = stringField(*entry, "type");
-        std::string              value = stringField(*entry, "value");
+        std::string type  = stringField(*entry, "type");
+        std::string value = stringField(*entry, "value");
         std::optional<RGBAColor> color;
 
         if (type == "color")
@@ -113,8 +116,10 @@ ThemeColors resolveThemeColors(const nlohmann::json &theme)
                 {
                     colors.rawFallbacks[entry.key()] = value;
                 }
+
                 continue;
             }
+
             color = themed->second;
         }
 
@@ -127,8 +132,10 @@ ThemeColors resolveThemeColors(const nlohmann::json &theme)
         {
             color->alpha = std::clamp((*entry)["opacity"].get<double>(), 0.0, 1.0);
         }
+
         colors.semantic[entry.key()] = *color;
     }
+
     return colors;
 }
 
@@ -140,6 +147,7 @@ std::string themeColorResource(const std::string &key)
         resource +=
             character == '-' || character == '.' ? '_' : static_cast<char>(std::tolower(character));
     }
+
     return resource;
 }
 
@@ -153,10 +161,12 @@ nlohmann::json themeColorsByAccessor(const ThemeColors &colors)
     {
         semantic[themeColorAccessor(name)] = toARGB(color);
     }
+
     for (const auto &[name, color] : colors.raw)
     {
         raw[themeColorResource(name)] = toARGB(color);
     }
+
     for (const auto &[name, fallback] : colors.rawFallbacks)
     {
         rawFallbacks[themeColorAccessor(name)] = themeColorResource(fallback);
@@ -198,6 +208,7 @@ bool ThemeSelection::select(const std::string &manifestId)
     {
         return false;
     }
+
     std::lock_guard<std::mutex> lock(mutex_);
     customActive_ = themeId.has_value();
     return true;
@@ -216,10 +227,12 @@ ThemeRefresh ThemeSelection::refresh()
     {
         return ThemeRefresh::None;
     }
+
     if (installed_(*themeId))
     {
         return ThemeRefresh::Reapply;
     }
+
     std::lock_guard<std::mutex> lock(mutex_);
     customActive_ = false;
     return ThemeRefresh::Reset;
@@ -233,6 +246,7 @@ std::optional<std::string> ThemeSelection::followDiscordTheme(const std::string 
     {
         return std::nullopt;
     }
+
     return discordTheme;
 }
 }

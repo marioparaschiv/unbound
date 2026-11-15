@@ -15,7 +15,7 @@ static void leavesAlertsWithoutTimeoutAlone()
 {
     for (long seconds : {0L, -3L})
     {
-        Countdown            countdown("Warning", seconds);
+        Countdown countdown("Warning", seconds);
         const CountdownFrame frame = countdown.frame();
         assert(frame.title == "Warning" && frame.buttonsEnabled && !frame.running);
         const CountdownFrame ticked = countdown.tick(true);
@@ -25,7 +25,7 @@ static void leavesAlertsWithoutTimeoutAlone()
 
 static void countsDownThenEnablesButtons()
 {
-    Countdown      countdown("Integrity", 3);
+    Countdown countdown("Integrity", 3);
     CountdownFrame frame = countdown.frame();
     assert(frame.title == "Integrity (3)" && !frame.buttonsEnabled && frame.running);
 

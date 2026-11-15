@@ -20,8 +20,8 @@ Value snapshotUI(Runtime &runtime, const Value *args, size_t count)
         throw JSError(runtime, "objc.snapshot expects a UIView handle");
     }
 
-    Value                            noOptions = Value::undefined();
-    loader::native::TraversalOptions options   = loader::native::parseTraversalOptions(
+    Value noOptions                          = Value::undefined();
+    loader::native::TraversalOptions options = loader::native::parseTraversalOptions(
         runtime, count > 1 ? args[1] : noOptions, loader::native::TraversalProfile::Snapshot);
     NSUInteger maxDepth = options.maxDepth;
     NSUInteger maxNodes = options.maxNodes;
@@ -34,11 +34,11 @@ Value snapshotUI(Runtime &runtime, const Value *args, size_t count)
             [queue addObject:@{@"view" : root, @"parent" : @(-1), @"depth" : @(0)}];
             for (NSUInteger index = 0; index < queue.count && captured.count < maxNodes; index++)
             {
-                NSDictionary *queued       = queue[index];
-                UIView       *view         = queued[@"view"];
-                NSUInteger    depth        = [queued[@"depth"] unsignedIntegerValue];
-                NSString     *text         = nil;
-                SEL           textSelector = @selector(text);
+                NSDictionary *queued = queue[index];
+                UIView *view         = queued[@"view"];
+                NSUInteger depth     = [queued[@"depth"] unsignedIntegerValue];
+                NSString *text       = nil;
+                SEL textSelector     = @selector(text);
                 if ([view respondsToSelector:textSelector])
                 {
                     NSMethodSignature *signature = [view methodSignatureForSelector:textSelector];
@@ -46,9 +46,12 @@ Value snapshotUI(Runtime &runtime, const Value *args, size_t count)
                     {
                         id value = ((id (*)(id, SEL)) objc_msgSend)(view, textSelector);
                         if ([value isKindOfClass:[NSString class]])
+                        {
                             text = value;
+                        }
                     }
                 }
+
                 [captured addObject:@{
                     @"view" : view,
                     @"parent" : queued[@"parent"],
@@ -59,12 +62,18 @@ Value snapshotUI(Runtime &runtime, const Value *args, size_t count)
                     @"visible" : @(!view.hidden && view.alpha > 0 && view.window != nil),
                 }];
                 if (depth >= maxDepth)
+                {
                     continue;
+                }
+
                 NSNumber *parent = @(captured.count - 1);
                 for (UIView *child in view.subviews)
                 {
                     if (queue.count >= maxNodes)
+                    {
                         break;
+                    }
+
                     [queue addObject:@{
                         @"view" : child,
                         @"parent" : parent,
@@ -77,10 +86,10 @@ Value snapshotUI(Runtime &runtime, const Value *args, size_t count)
             Array result(completionRuntime, captured.count);
             for (NSUInteger index = 0; index < captured.count; index++)
             {
-                NSDictionary *node  = captured[index];
-                CGRect        frame = [node[@"frame"] CGRectValue];
-                Object        item(completionRuntime);
-                Object        bounds(completionRuntime);
+                NSDictionary *node = captured[index];
+                CGRect frame       = [node[@"frame"] CGRectValue];
+                Object item(completionRuntime);
+                Object bounds(completionRuntime);
                 bounds.setProperty(completionRuntime, "x", Value((double) frame.origin.x));
                 bounds.setProperty(completionRuntime, "y", Value((double) frame.origin.y));
                 bounds.setProperty(completionRuntime, "width", Value((double) frame.size.width));
@@ -99,6 +108,7 @@ Value snapshotUI(Runtime &runtime, const Value *args, size_t count)
                 item.setProperty(completionRuntime, "visible", Value([node[@"visible"] boolValue]));
                 result.setValueAtIndex(completionRuntime, index, std::move(item));
             }
+
             return result;
         });
 }
@@ -110,21 +120,22 @@ Value findUIViews(Runtime &runtime, const Value *args, size_t count)
     {
         throw JSError(runtime, "objc.findViews expects a UIView handle and class name");
     }
+
     NSString *className = jsiString(runtime, args[1]);
     if (className.length == 0 || className.length > 128)
     {
         throw JSError(runtime, "Native view class name must contain 1 to 128 characters");
     }
 
-    Value                            noOptions = Value::undefined();
-    loader::native::TraversalOptions options   = loader::native::parseTraversalOptions(
+    Value noOptions                          = Value::undefined();
+    loader::native::TraversalOptions options = loader::native::parseTraversalOptions(
         runtime, count > 2 ? args[2] : noOptions, loader::native::TraversalProfile::Search);
-    NSUInteger maxDepth        = options.maxDepth;
-    NSUInteger maxVisited      = options.maxNodes;
-    NSUInteger maxResults      = options.maxResults;
-    bool       attachedOnly    = options.attachedOnly;
-    bool       stopAtMatch     = options.stopAtMatch;
-    bool       searchAncestors = options.direction == loader::native::TraversalDirection::Ancestors;
+    NSUInteger maxDepth   = options.maxDepth;
+    NSUInteger maxVisited = options.maxNodes;
+    NSUInteger maxResults = options.maxResults;
+    bool attachedOnly     = options.attachedOnly;
+    bool stopAtMatch      = options.stopAtMatch;
+    bool searchAncestors  = options.direction == loader::native::TraversalDirection::Ancestors;
 
     NSMutableArray<UIView *> *found = [NSMutableArray arrayWithCapacity:maxResults];
     return executeMainAsynchronously(
@@ -145,18 +156,22 @@ Value findUIViews(Runtime &runtime, const Value *args, size_t count)
                     {
                         [found addObject:view];
                         if (found.count >= maxResults || stopAtMatch)
+                        {
                             break;
+                        }
                     }
                 }
+
                 return;
             }
+
             NSMutableArray<NSDictionary *> *queue = [NSMutableArray arrayWithCapacity:maxVisited];
             [queue addObject:@{@"view" : root, @"depth" : @(0)}];
             for (NSUInteger index = 0; index < queue.count && index < maxVisited; index++)
             {
                 NSDictionary *queued = queue[index];
-                UIView       *view   = queued[@"view"];
-                NSUInteger    depth  = [queued[@"depth"] unsignedIntegerValue];
+                UIView *view         = queued[@"view"];
+                NSUInteger depth     = [queued[@"depth"] unsignedIntegerValue];
                 bool matches = expectedClass
                                    ? [view isKindOfClass:expectedClass]
                                    : [NSStringFromClass([view class]) containsString:className];
@@ -164,14 +179,23 @@ Value findUIViews(Runtime &runtime, const Value *args, size_t count)
                 {
                     [found addObject:view];
                     if (found.count >= maxResults)
+                    {
                         break;
+                    }
                 }
+
                 if (depth >= maxDepth || (matches && stopAtMatch))
+                {
                     continue;
+                }
+
                 for (UIView *child in view.subviews)
                 {
                     if (queue.count >= maxVisited)
+                    {
                         break;
+                    }
+
                     [queue addObject:@{@"view" : child, @"depth" : @(depth + 1)}];
                 }
             }
@@ -183,6 +207,7 @@ Value findUIViews(Runtime &runtime, const Value *args, size_t count)
                 result.setValueAtIndex(completionRuntime, index,
                                        objcHandleResult(completionRuntime, found[index]));
             }
+
             return result;
         });
 }

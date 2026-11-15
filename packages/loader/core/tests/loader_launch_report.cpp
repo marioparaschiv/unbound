@@ -7,17 +7,17 @@
 
 using namespace loader;
 
-static const std::string kStack = "Signal " + std::to_string(SIGSEGV) +
-                                  "\nAddon {\"id\":\"chat-bubbles\",\"name\":\"Chat Bubbles\"}\n"
-                                  "#0 0x1 Unbound.dylib + 0x10\n";
+static const std::string kStack = "Signal " + std::to_string(SIGSEGV)
+                                  + "\nAddon {\"id\":\"chat-bubbles\",\"name\":\"Chat Bubbles\"}\n"
+                                    "#0 0x1 Unbound.dylib + 0x10\n";
 
 static void checkNativeCrashes()
 {
     assert(nativeCrashHeadline(kStack) == "SIGSEGV in Chat Bubbles");
-    assert(nativeCrashHeadline("Signal " + std::to_string(SIGSEGV) +
-                               "\nImage Unbound.dylib 01234567-89AB-CDEF-0123-456789ABCDEF\n"
-                               "Addon {\"id\":\"x\",\"name\":\"Chat Bubbles\"}\n") ==
-           "SIGSEGV in Chat Bubbles");
+    assert(nativeCrashHeadline("Signal " + std::to_string(SIGSEGV)
+                               + "\nImage Unbound.dylib 01234567-89AB-CDEF-0123-456789ABCDEF\n"
+                                 "Addon {\"id\":\"x\",\"name\":\"Chat Bubbles\"}\n")
+           == "SIGSEGV in Chat Bubbles");
     assert(nativeCrashHeadline("Signal " + std::to_string(SIGABRT) + "\n#0 0x1\n") == "SIGABRT");
     assert(nativeCrashHeadline("").empty());
     assert(nativeCrashHeadline("garbage").empty());
@@ -34,8 +34,9 @@ static void checkReport()
     assert(!launchReportJSON(quiet, "").contains("crashStack"));
 
     LaunchReport troubled{BundleState::RolledBack, 2, true, PreviousExit::Crashed};
-    assert(launchReportLine(troubled, kStack) ==
-           "bundle rolled back · recovery mode · 2 early closes · previous launch crashed · last "
+    assert(
+        launchReportLine(troubled, kStack)
+        == "bundle rolled back · recovery mode · 2 early closes · previous launch crashed · last "
            "crash SIGSEGV in Chat Bubbles");
     nlohmann::json json = launchReportJSON(troubled, kStack);
     assert(json["previousExit"] == "crashed");
@@ -69,6 +70,7 @@ static void checkCrashHistory()
     {
         assert(recordCrash(root.string(), kStack, at));
     }
+
     std::vector<NativeCrashRecord> history = readCrashHistory(root.string());
     assert(history.size() == kCrashHistoryLimit);
     assert(history.front().at == 3);

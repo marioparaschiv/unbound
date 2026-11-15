@@ -1,6 +1,7 @@
 #import "Analytics.h"
 
 %hook SentrySDKInternal
+
 + (void)startWithOptions:(id)options
 {
     [Logger info:LOG_CATEGORY_DEFAULT format:@"Blocked SentrySDK."];
@@ -17,9 +18,11 @@
 {
     return NO;
 }
+
 %end
 
 %hook AppsFlyerLib
+
 - (BOOL)isStopped
 {
     return YES;
@@ -45,6 +48,7 @@
         completionHandler(nil, nil);
     }
 }
+
 %end
 
 %ctor

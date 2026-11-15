@@ -22,18 +22,18 @@ public:
     void open(const nlohmann::json &legacyOverrides);
     void setOnChange(std::function<void()> onChange);
 
-    FontState       state() const;
+    FontState state() const;
     DiscordFamilies families() const;
-    void            setFamilies(DiscordFamilies families);
-    std::string     directory() const;
-    std::string     pathOf(const InstalledFont &font) const;
+    void setFamilies(DiscordFamilies families);
+    std::string directory() const;
+    std::string pathOf(const InstalledFont &font) const;
     // A fresh empty folder inside the Fonts folder to download into before `commitInstall`.
     std::string stagingDirectory() const;
-    void        discardStaging(const std::string &staged) const;
+    void discardStaging(const std::string &staged) const;
 
     // Moves `staged` into the Fonts folder in one rename and records `faces` in one write. A face
     // with an installed id replaces it. Throws when either step fails, leaving nothing behind.
-    std::vector<InstalledFont> commitInstall(const std::string         &staged,
+    std::vector<InstalledFont> commitInstall(const std::string &staged,
                                              std::vector<InstalledFont> faces);
     // Deletes the face, and its file once no other face of a variable font draws from it.
     bool remove(const std::string &id);
@@ -41,10 +41,10 @@ public:
     // face already there. Throws for an unknown id, a static face or an axis the font lacks.
     InstalledFont addInstance(const std::string &id, const FontVariations &variations);
     // Fails for an unknown font id; see `withOverride`.
-    bool       setOverride(const std::string &key, const std::optional<std::string> &fontId);
-    void       replaceOverrides(std::map<std::string, std::string> overrides);
+    bool setOverride(const std::string &key, const std::optional<std::string> &fontId);
+    void replaceOverrides(std::map<std::string, std::string> overrides);
     FontPreset savePreset(FontPreset preset);
-    bool       removePreset(const std::string &id);
+    bool removePreset(const std::string &id);
 
     // `{ family: { name, path } }` for `FontOverrideRegistry::plan`.
     nlohmann::json overrideTargets() const;
@@ -56,11 +56,11 @@ private:
     bool update(const std::function<bool(FontState &)> &change);
     void notify();
 
-    std::string           directory_;
-    mutable std::mutex    mutex_;
-    FontState             state_;
-    DiscordFamilies       families_;
-    bool                  opened_ = false;
+    std::string directory_;
+    mutable std::mutex mutex_;
+    FontState state_;
+    DiscordFamilies families_;
+    bool opened_ = false;
     std::function<void()> onChange_;
 };
 }

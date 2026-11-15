@@ -20,7 +20,7 @@ namespace jsi = facebook::jsi;
 // One runtime's subscribers, touched only on its thread. The bridge's functions own it, so it dies
 // with the runtime; the stream reaches it through a weak pointer.
 struct LogSubscribers {
-    uint64_t                                           next = 0;
+    uint64_t next = 0;
     std::map<uint64_t, std::shared_ptr<jsi::Function>> callbacks;
 };
 
@@ -31,23 +31,27 @@ static void deliver(const std::weak_ptr<LogSubscribers> &weak, std::vector<LogEn
         logStream().stop();
         return;
     }
+
     native::executeRuntimeAsynchronously([weak, batch = std::move(batch)](jsi::Runtime &runtime) {
         std::shared_ptr<LogSubscribers> subscribers = weak.lock();
         if (!subscribers || subscribers->callbacks.empty())
         {
             return;
         }
+
         nlohmann::json entries = nlohmann::json::array();
         for (const LogEntry &entry : batch)
         {
             entries.push_back(logEntryJSON(entry));
         }
-        jsi::Value                                  value = toJSIValue(runtime, entries);
+
+        jsi::Value value = toJSIValue(runtime, entries);
         std::vector<std::shared_ptr<jsi::Function>> callbacks;
         for (const auto &[id, callback] : subscribers->callbacks)
         {
             callbacks.push_back(callback);
         }
+
         for (const std::shared_ptr<jsi::Function> &callback : callbacks)
         {
             try
@@ -84,6 +88,7 @@ static std::vector<std::string> scopeArgument(jsi::Runtime &runtime, const jsi::
     {
         return scope;
     }
+
     jsi::Array parts = value.getObject(runtime).getArray(runtime);
     for (size_t index = 0, size = parts.size(runtime); index < size; index++)
     {
@@ -93,6 +98,7 @@ static std::vector<std::string> scopeArgument(jsi::Runtime &runtime, const jsi::
             scope.push_back(part.getString(runtime).utf8(runtime));
         }
     }
+
     return scope;
 }
 
@@ -106,11 +112,13 @@ static jsi::Function logFunction(jsi::Runtime &runtime)
             {
                 throw jsi::JSError(rt, "log expects a level, a scope and a message");
             }
+
             std::optional<LogLevel> level = logLevelFromName(args[0].getString(rt).utf8(rt));
             if (!level)
             {
                 throw jsi::JSError(rt, "log expects debug, info, warn or error");
             }
+
             appendLogEntry({logNow(), LogSource::Unbound, *level, scopeArgument(rt, args[1]),
                             args[2].getString(rt).utf8(rt)});
             return jsi::Value::undefined();
@@ -125,11 +133,12 @@ static jsi::Function unsubscribeFunction(jsi::Runtime &runtime, std::weak_ptr<Lo
                                                              const jsi::Value *,
                                                              size_t) -> jsi::Value {
                                     std::shared_ptr<LogSubscribers> subscribers = weak.lock();
-                                    if (subscribers && subscribers->callbacks.erase(id) > 0 &&
-                                        subscribers->callbacks.empty())
+                                    if (subscribers && subscribers->callbacks.erase(id) > 0
+                                        && subscribers->callbacks.empty())
                                     {
                                         logStream().stop();
                                     }
+
                                     return jsi::Value::undefined();
                                 });
 }
@@ -145,14 +154,16 @@ static jsi::Function subscribeFunction(jsi::Runtime &runtime)
             {
                 throw jsi::JSError(rt, "logs.subscribe expects a function");
             }
-            uint64_t id    = ++subscribers->next;
-            bool     first = subscribers->callbacks.empty();
+
+            uint64_t id = ++subscribers->next;
+            bool first  = subscribers->callbacks.empty();
             subscribers->callbacks[id] =
                 std::make_shared<jsi::Function>(args[0].getObject(rt).getFunction(rt));
             if (first)
             {
                 startStream(subscribers);
             }
+
             return unsubscribeFunction(rt, subscribers, id);
         });
 }

@@ -13,6 +13,6 @@ struct RGBAColor {
 };
 
 std::optional<RGBAColor> parseColor(const std::string &value);
-uint32_t                 toARGB(const RGBAColor &color);
-bool                     isDarkColor(const RGBAColor &color);
+uint32_t toARGB(const RGBAColor &color);
+bool isDarkColor(const RGBAColor &color);
 }

@@ -21,17 +21,18 @@ int main()
     assert(report.attachments.front().first == "What happened");
     assert(report.attachments.back().first == "Previous launch log");
     assert(report.attachments.back().second == "last line\n");
-    assert(loader::toolbox::issueBody(report).find("Discord closed during startup.") !=
-           std::string::npos);
+    assert(loader::toolbox::issueBody(report).find("Discord closed during startup.")
+           != std::string::npos);
 
     loader::toolbox::IssueReport device{
         "iOS", {{"Unbound", "loader 1.0.0"}}, {{"Entitlements", std::string(20000, '<')}}};
     std::string longLog;
     for (int index = 0; index < 40; index++)
     {
-        longLog += "2026-11-10T19:48:14.860Z E [default] {\"line\": " + std::to_string(index) +
-                   ", \"detail\": \"" + std::string(80, '%') + "\"}\n";
+        longLog += "2026-11-10T19:48:14.860Z E [default] {\"line\": " + std::to_string(index)
+                   + ", \"detail\": \"" + std::string(80, '%') + "\"}\n";
     }
+
     std::string url = loader::crashReportURL(device, "Discord closed during startup.", longLog);
     assert(url.size() <= loader::kCrashReportURLLength);
     assert(url.find("Entitlements") == std::string::npos);
@@ -48,6 +49,7 @@ int main()
     {
         lines += "line " + std::to_string(index) + "\n";
     }
+
     lines += loader::logEntryLine(
         {1793134800123LL, loader::LogSource::JS, loader::LogLevel::Error, {}, "json line"});
     assert(loader::writeTextFileAtomically(

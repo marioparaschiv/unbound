@@ -70,6 +70,7 @@ void logFromPlatform(int level, const std::string &category, const std::string &
         log(logLevelFromIndex(level), category, message);
         return;
     }
+
     log(logLevelFromIndex(level), LOG_CATEGORY_DEFAULT, formatLogLine(category, message));
 }
 }

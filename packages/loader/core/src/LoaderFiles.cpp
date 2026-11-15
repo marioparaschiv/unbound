@@ -21,34 +21,38 @@ std::optional<std::string> readTextFile(const std::string &path)
     }
 
     struct stat status{};
-    size_t      capacity = 64 * 1024;
+    size_t capacity = 64 * 1024;
     if (fstat(descriptor, &status) == 0 && S_ISREG(status.st_mode) && status.st_size > 0)
     {
         capacity = static_cast<size_t>(status.st_size) + 1;
     }
 
     std::string contents(capacity, '\0');
-    size_t      length = 0;
+    size_t length = 0;
     while (true)
     {
         if (length == contents.size())
         {
             contents.resize(contents.size() * 2);
         }
+
         ssize_t count = read(descriptor, contents.data() + length, contents.size() - length);
         if (count < 0 && errno == EINTR)
         {
             continue;
         }
+
         if (count < 0)
         {
             close(descriptor);
             return std::nullopt;
         }
+
         if (count == 0)
         {
             break;
         }
+
         length += static_cast<size_t>(count);
     }
 
@@ -67,12 +71,15 @@ static bool writeAll(int descriptor, const std::string &contents)
         {
             continue;
         }
+
         if (count <= 0)
         {
             return false;
         }
+
         written += static_cast<size_t>(count);
     }
+
     return true;
 }
 
@@ -83,6 +90,7 @@ static void syncDirectory(const std::filesystem::path &directory)
     {
         return;
     }
+
     fsync(descriptor);
     close(descriptor);
 }
@@ -91,19 +99,20 @@ static void syncDirectory(const std::filesystem::path &directory)
 // fsyncs keep a power loss from leaving an empty file behind the rename.
 bool writeTextFileAtomically(const std::string &path, const std::string &contents)
 {
-    std::error_code       error;
+    std::error_code error;
     std::filesystem::path target(path);
     if (target.has_parent_path())
     {
         std::filesystem::create_directories(target.parent_path(), error);
     }
 
-    std::string staging    = path + ".tmp-XXXXXX";
-    int         descriptor = mkstemp(staging.data());
+    std::string staging = path + ".tmp-XXXXXX";
+    int descriptor      = mkstemp(staging.data());
     if (descriptor < 0)
     {
         return false;
     }
+
     fcntl(descriptor, F_SETFD, FD_CLOEXEC);
     fchmod(descriptor, 0644);
 
@@ -121,6 +130,7 @@ bool writeTextFileAtomically(const std::string &path, const std::string &content
         unlink(staging.c_str());
         return false;
     }
+
     syncDirectory(target.parent_path());
     return true;
 }
@@ -153,6 +163,7 @@ bool isContainedRelativePath(const std::filesystem::path &relative)
             return false;
         }
     }
+
     return true;
 }
 
@@ -172,7 +183,7 @@ bool removeTree(const std::string &root, const std::string &relative)
 uint64_t fileSize(const std::string &path)
 {
     std::error_code error;
-    uintmax_t       size = std::filesystem::file_size(path, error);
+    uintmax_t size = std::filesystem::file_size(path, error);
     return error ? 0 : static_cast<uint64_t>(size);
 }
 
@@ -198,11 +209,12 @@ bool createDirectories(const std::string &path)
 std::vector<std::string> listDirectory(const std::string &path)
 {
     std::vector<std::string> entries;
-    std::error_code          error;
+    std::error_code error;
     for (const auto &entry : std::filesystem::directory_iterator(path, error))
     {
         entries.push_back(entry.path().filename().string());
     }
+
     std::sort(entries.begin(), entries.end());
     return entries;
 }
@@ -217,24 +229,26 @@ std::optional<std::string> resolveInsideDirectory(const std::string &directory,
                                                   const std::string &relative)
 {
     const std::filesystem::path normal = std::filesystem::path(relative).lexically_normal();
-    if (relative.empty() || normal.empty() || normal.is_absolute() || normal.has_root_name() ||
-        *normal.begin() == "..")
+    if (relative.empty() || normal.empty() || normal.is_absolute() || normal.has_root_name()
+        || *normal.begin() == "..")
     {
         return std::nullopt;
     }
 
-    std::error_code             error;
+    std::error_code error;
     const std::filesystem::path root = std::filesystem::weakly_canonical(directory, error);
     if (error)
     {
         return std::nullopt;
     }
+
     const std::filesystem::path resolved =
         std::filesystem::weakly_canonical(std::filesystem::path(directory) / normal, error);
     if (error || !containedIn(root, resolved))
     {
         return std::nullopt;
     }
+
     return (std::filesystem::path(directory) / normal).string();
 }
 

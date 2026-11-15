@@ -7,7 +7,7 @@
 
 namespace loader::system_exits {
 constexpr const char *kSystemExitsFile = "system-exits.json";
-constexpr int64_t     kSummaryWindowMs = 7ll * 24 * 60 * 60 * 1000;
+constexpr int64_t kSummaryWindowMs     = 7ll * 24 * 60 * 60 * 1000;
 
 enum class ExitKind
 {
@@ -20,8 +20,8 @@ enum class ExitKind
 };
 
 std::string exitKindName(ExitKind kind);
-int64_t     parseMetricKitTimestamp(const std::string &timestamp);
-int64_t     parseMetricKitDuration(const std::string &duration);
+int64_t parseMetricKitTimestamp(const std::string &timestamp);
+int64_t parseMetricKitDuration(const std::string &duration);
 
 void recordMetricKitMetrics(const std::string &documents, const std::string &payloadJSON);
 void recordMetricKitDiagnostics(const std::string &documents, const std::string &payloadJSON);

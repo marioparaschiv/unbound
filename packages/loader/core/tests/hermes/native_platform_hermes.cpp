@@ -149,6 +149,7 @@ int main()
         std::fprintf(stderr, "native platform check failed: %s\n",
                      failure.get<std::string>().c_str());
     }
+
     require(failures.empty(), "every JavaScript check passes");
 
     auto reloaded = facebook::hermes::makeHermesRuntime();

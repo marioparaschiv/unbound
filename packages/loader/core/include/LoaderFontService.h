@@ -18,7 +18,7 @@ public:
     FontService(std::string documents, FileDownloader download);
 
     FontStore &store();
-    void       setApiOrigin(std::string origin);
+    void setApiOrigin(std::string origin);
 
     nlohmann::json list() const;
     // The installed faces as `NativePlatform.fonts.list` entries: `{ name, displayName, path, ...
@@ -28,11 +28,11 @@ public:
     // Installs the files of `input` whose weight and style are in `variants` (every file when it
     // is null or empty). Returns `{ installed, errors }`; throws when nothing installed.
     nlohmann::json install(const std::string &input, const nlohmann::json &variants);
-    void           remove(const std::string &id);
+    void remove(const std::string &id);
     // Adds a face of variable font `id` at `variations` (`{ wght: 450 }`) and returns it.
     nlohmann::json addInstance(const std::string &id, const nlohmann::json &variations);
-    void           setOverride(const std::string &family, const std::optional<std::string> &fontId);
-    void           setTargets(const nlohmann::json &constants, const nlohmann::json &options);
+    void setOverride(const std::string &family, const std::optional<std::string> &fontId);
+    void setTargets(const nlohmann::json &constants, const nlohmann::json &options);
 
     nlohmann::json listPresets() const;
     // Saves `preset`; one with no `overrides` snapshots the current ones.
@@ -40,16 +40,16 @@ public:
     // Replaces every override with the preset's, installing missing faces first. Returns
     // `{ applied, unavailable, skipped, errors }`.
     nlohmann::json applyPreset(const std::string &id);
-    void           removePreset(const std::string &id);
+    void removePreset(const std::string &id);
 
 private:
     nlohmann::json installLocked(const std::string &input, const nlohmann::json &variants);
     nlohmann::json resolveLocked(const std::string &input);
 
-    FontStore      store_;
+    FontStore store_;
     FileDownloader download_;
-    std::string    apiOrigin_;
-    std::mutex     apiMutex_;
+    std::string apiOrigin_;
+    std::mutex apiMutex_;
     // One install or preset at a time, so two never stage the same face.
     std::mutex installMutex_;
 };

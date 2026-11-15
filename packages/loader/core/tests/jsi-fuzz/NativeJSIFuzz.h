@@ -54,8 +54,8 @@ public:
 
 private:
     const std::uint8_t *data_;
-    std::size_t         size_;
-    std::size_t         position_ = 0;
+    std::size_t size_;
+    std::size_t position_ = 0;
 };
 
 inline void require(bool condition, const char *invariant, const std::string &source)
@@ -109,6 +109,7 @@ inline std::string keyLiteral(ByteReader &bytes)
     {
         return key.front() == '[' ? key : "[" + key + "]";
     }
+
     return "'" + key + "'";
 }
 
@@ -118,6 +119,7 @@ inline std::string valueSource(ByteReader &bytes, int depth)
     {
         return "0";
     }
+
     switch (bytes.next() % 22)
     {
         case 0:
@@ -134,30 +136,33 @@ inline std::string valueSource(ByteReader &bytes, int depth)
             return stringLiteral(bytes);
         case 7: {
             std::string array = "[";
-            int         count = bytes.next() % 6;
+            int count         = bytes.next() % 6;
             for (int index = 0; index < count; index++)
             {
                 array += (index ? "," : "") + valueSource(bytes, depth + 1);
             }
+
             return array + "]";
         }
         case 8: {
             std::string object = "({";
-            int         count  = bytes.next() % 6;
+            int count          = bytes.next() % 6;
             for (int index = 0; index < count; index++)
             {
                 object +=
                     (index ? "," : "") + keyLiteral(bytes) + ":" + valueSource(bytes, depth + 1);
             }
+
             return object + "})";
         }
         case 9: {
             std::string nested = valueSource(bytes, depth + 1);
-            int         levels = 1 + bytes.next() % 64;
+            int levels         = 1 + bytes.next() % 64;
             for (int level = 0; level < levels; level++)
             {
                 nested = (bytes.next() % 2 ? "[" + nested + "]" : "({v:" + nested + "})");
             }
+
             return nested;
         }
         case 10:
@@ -172,8 +177,8 @@ inline std::string valueSource(ByteReader &bytes, int depth)
             return "new Proxy([], { get(t, k) { return k === 'length' ? 1e9 : 1; } })";
         case 15: {
             static const char *const lengths[] = {"1e6", "4294967295", "65", "513", "17"};
-            return std::string("(() => { const a = []; a.length = ") + lengths[bytes.next() % 5] +
-                   "; return a; })()";
+            return std::string("(() => { const a = []; a.length = ") + lengths[bytes.next() % 5]
+                   + "; return a; })()";
         }
         case 16:
             return "Symbol('s')";
@@ -190,9 +195,9 @@ inline std::string valueSource(ByteReader &bytes, int depth)
             return objects[bytes.next() % (sizeof(objects) / sizeof(objects[0]))];
         }
         case 20:
-            return "({ id: " + stringLiteral(bytes) + ", x: " + numberLiteral(bytes) +
-                   ", y: " + numberLiteral(bytes) + ", width: " + numberLiteral(bytes) +
-                   ", height: " + numberLiteral(bytes) + " })";
+            return "({ id: " + stringLiteral(bytes) + ", x: " + numberLiteral(bytes)
+                   + ", y: " + numberLiteral(bytes) + ", width: " + numberLiteral(bytes)
+                   + ", height: " + numberLiteral(bytes) + " })";
         default:
             return "Array.from({ length: " + std::to_string(bytes.next() * 40) + " }, (_, i) => i)";
     }
@@ -249,7 +254,7 @@ template <typename Body> inline std::optional<std::string> serializedOrRejected(
 
 inline void checkDirectMatchesTree(jsi::Runtime &runtime, const jsi::Value &value,
                                    const NativeConversionProfile &profile,
-                                   const std::string             &source)
+                                   const std::string &source)
 {
     std::optional<std::string> direct = serializedOrRejected([&] {
         return loader::native::serializeBounded(runtime, value, profile);
@@ -293,8 +298,8 @@ inline void fuzzConversions(jsi::Runtime &runtime, const jsi::Value &value, std:
     });
     rejectsOnly([&] {
         loader::native::NativeSize size = loader::native::parseSize(runtime, value);
-        require(size.width >= 0 && size.width <= loader::native::kMaximumNativeDimension &&
-                    size.height >= 0 && size.height <= loader::native::kMaximumNativeDimension,
+        require(size.width >= 0 && size.width <= loader::native::kMaximumNativeDimension
+                    && size.height >= 0 && size.height <= loader::native::kMaximumNativeDimension,
                 "a parsed size stays within the native limits", source);
     });
     rejectsOnly([&] {
@@ -323,9 +328,9 @@ inline void fuzzFFIWrite(jsi::Runtime &runtime, const jsi::Value &value, std::ui
                                         "struct:NSRange",
                                         "struct:UIEdgeInsets",
                                         "struct:timespec"};
-    loader::ffi::Type        type =
+    loader::ffi::Type type =
         *loader::ffi::parseType(types[selector % (sizeof(types) / sizeof(types[0]))]);
-    std::vector<std::uint8_t>    target(loader::ffi::valueStorageSize(type) + 16, 0xa5);
+    std::vector<std::uint8_t> target(loader::ffi::valueStorageSize(type) + 16, 0xa5);
     loader::ffi::ArgumentStorage storage;
     rejectsOnly([&] {
         loader::ffi::writeValue(runtime, value, type, target.data(), storage);
@@ -355,6 +360,7 @@ inline void fuzzSource(jsi::Runtime &runtime, const std::string &source,
     {
         return;
     }
+
     stats().evaluated++;
     auto started = std::chrono::steady_clock::now();
     fuzzConversions(runtime, value, conversionSelector, source);
@@ -369,6 +375,7 @@ inline void fuzzOne(jsi::Runtime &runtime, const std::uint8_t *data, std::size_t
     {
         return;
     }
+
     fuzzSource(runtime, sourceFor(data + 2, size - 2), data[0], data[1]);
 }
 

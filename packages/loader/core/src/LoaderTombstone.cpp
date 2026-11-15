@@ -25,15 +25,15 @@ namespace {
     constexpr uint32_t kFrameFunctionName     = 4;
     constexpr uint32_t kFrameFunctionOffset   = 5;
     constexpr uint32_t kFrameFileName         = 6;
-    constexpr uint8_t  kWireVarint            = 0;
-    constexpr uint8_t  kWireFixed64           = 1;
-    constexpr uint8_t  kWireLengthDelimited   = 2;
-    constexpr uint8_t  kWireFixed32           = 5;
+    constexpr uint8_t kWireVarint             = 0;
+    constexpr uint8_t kWireFixed64            = 1;
+    constexpr uint8_t kWireLengthDelimited    = 2;
+    constexpr uint8_t kWireFixed32            = 5;
 
     struct Field {
-        uint32_t    number = 0;
-        uint8_t     wire   = 0;
-        uint64_t    value  = 0;
+        uint32_t number = 0;
+        uint8_t wire    = 0;
+        uint64_t value  = 0;
         std::string bytes;
     };
 
@@ -48,11 +48,13 @@ namespace {
             {
                 return false;
             }
+
             uint64_t key = 0;
             if (!varint(key))
             {
                 return fail();
             }
+
             field.number = static_cast<uint32_t>(key >> 3);
             field.wire   = static_cast<uint8_t>(key & 7);
             field.value  = 0;
@@ -71,6 +73,7 @@ namespace {
                     {
                         return fail();
                     }
+
                     field.bytes = data_.substr(position_, static_cast<size_t>(length));
                     position_ += static_cast<size_t>(length);
                     return true;
@@ -93,6 +96,7 @@ namespace {
                     return true;
                 }
             }
+
             return false;
         }
 
@@ -102,6 +106,7 @@ namespace {
             {
                 return false;
             }
+
             position_ += count;
             return true;
         }
@@ -113,29 +118,29 @@ namespace {
         }
 
         const std::string &data_;
-        size_t             position_ = 0;
-        bool               failed_   = false;
+        size_t position_ = 0;
+        bool failed_     = false;
     };
 
     struct Frame {
-        uint64_t    relativePC = 0;
-        uint64_t    pc         = 0;
-        uint64_t    offset     = 0;
+        uint64_t relativePC = 0;
+        uint64_t pc         = 0;
+        uint64_t offset     = 0;
         std::string function;
         std::string file;
     };
 
     struct Thread {
-        uint32_t           id = 0;
-        std::string        name;
+        uint32_t id = 0;
+        std::string name;
         std::vector<Frame> frames;
     };
 
     Frame parseFrame(const std::string &bytes)
     {
-        Frame  frame;
+        Frame frame;
         Reader reader(bytes);
-        Field  field;
+        Field field;
         while (reader.next(field))
         {
             switch (field.number)
@@ -159,6 +164,7 @@ namespace {
                     break;
             }
         }
+
         return frame;
     }
 
@@ -166,7 +172,7 @@ namespace {
     {
         Thread thread;
         Reader reader(bytes);
-        Field  field;
+        Field field;
         while (reader.next(field))
         {
             if (field.number == kThreadId && field.wire == kWireVarint)
@@ -177,12 +183,13 @@ namespace {
             {
                 thread.name = field.bytes;
             }
-            else if (field.number == kThreadBacktrace && field.wire == kWireLengthDelimited &&
-                     thread.frames.size() < kMaxFrames)
+            else if (field.number == kThreadBacktrace && field.wire == kWireLengthDelimited
+                     && thread.frames.size() < kMaxFrames)
             {
                 thread.frames.push_back(parseFrame(field.bytes));
             }
         }
+
         return thread;
     }
 
@@ -196,14 +203,14 @@ namespace {
 
 std::optional<std::string> tombstoneStack(const std::string &tombstone)
 {
-    uint32_t                   tid    = 0;
-    int64_t                    signal = -1;
-    std::string                signalName;
-    std::string                abortMessage;
+    uint32_t tid   = 0;
+    int64_t signal = -1;
+    std::string signalName;
+    std::string abortMessage;
     std::map<uint32_t, Thread> threads;
 
     Reader reader(tombstone);
-    Field  field;
+    Field field;
     while (reader.next(field))
     {
         if (field.number == kTombstoneTid && field.wire == kWireVarint)
@@ -213,15 +220,15 @@ std::optional<std::string> tombstoneStack(const std::string &tombstone)
         else if (field.number == kTombstoneSignal && field.wire == kWireLengthDelimited)
         {
             Reader signalReader(field.bytes);
-            Field  signalField;
+            Field signalField;
             while (signalReader.next(signalField))
             {
                 if (signalField.number == kSignalNumber && signalField.wire == kWireVarint)
                 {
                     signal = static_cast<int32_t>(signalField.value);
                 }
-                else if (signalField.number == kSignalName &&
-                         signalField.wire == kWireLengthDelimited)
+                else if (signalField.number == kSignalName
+                         && signalField.wire == kWireLengthDelimited)
                 {
                     signalName = signalField.bytes;
                 }
@@ -233,11 +240,11 @@ std::optional<std::string> tombstoneStack(const std::string &tombstone)
         }
         else if (field.number == kTombstoneThreads && field.wire == kWireLengthDelimited)
         {
-            Reader   entry(field.bytes);
-            Field    entryField;
+            Reader entry(field.bytes);
+            Field entryField;
             uint32_t key = 0;
-            Thread   thread;
-            bool     hasThread = false;
+            Thread thread;
+            bool hasThread = false;
             while (entry.next(entryField))
             {
                 if (entryField.number == kMapKey && entryField.wire == kWireVarint)
@@ -250,6 +257,7 @@ std::optional<std::string> tombstoneStack(const std::string &tombstone)
                     hasThread = true;
                 }
             }
+
             if (hasThread)
             {
                 threads[key ? key : thread.id] = std::move(thread);
@@ -268,27 +276,32 @@ std::optional<std::string> tombstoneStack(const std::string &tombstone)
     {
         text += " (" + signalName + ")";
     }
+
     text += " in thread " + std::to_string(tid);
     if (!crashing->second.name.empty())
     {
         text += " (" + crashing->second.name + ")";
     }
+
     text += ", from Android's tombstone\n";
     if (!abortMessage.empty())
     {
         text += "Abort message: " + abortMessage + "\n";
     }
+
     size_t index = 0;
     for (const Frame &frame : crashing->second.frames)
     {
-        text += "#" + std::to_string(index++) + " " + hex(frame.pc) + " " +
-                (frame.file.empty() ? "?" : frame.file) + " + " + hex(frame.relativePC);
+        text += "#" + std::to_string(index++) + " " + hex(frame.pc) + " "
+                + (frame.file.empty() ? "?" : frame.file) + " + " + hex(frame.relativePC);
         if (!frame.function.empty())
         {
             text += " " + frame.function + "+" + std::to_string(frame.offset);
         }
+
         text += "\n";
     }
+
     return text;
 }
 
@@ -302,13 +315,13 @@ static std::string trimmed(const std::string &line)
 std::optional<std::string> anrTraceStack(const std::string &trace)
 {
     constexpr size_t kMaxFrames = 60;
-    std::string      text;
-    size_t           frames = 0;
-    bool             inMain = false;
-    size_t           start  = 0;
+    std::string text;
+    size_t frames = 0;
+    bool inMain   = false;
+    size_t start  = 0;
     while (start <= trace.size())
     {
-        size_t      end = trace.find('\n', start);
+        size_t end = trace.find('\n', start);
         std::string line =
             trace.substr(start, end == std::string::npos ? std::string::npos : end - start);
         start            = end == std::string::npos ? trace.size() + 1 : end + 1;
@@ -318,23 +331,27 @@ std::optional<std::string> anrTraceStack(const std::string &trace)
             inMain = body.starts_with("\"main\" ");
             continue;
         }
+
         if (body.empty())
         {
             break;
         }
-        bool frame = body.starts_with("at ") || body.starts_with("native: #") ||
-                     body.starts_with("- waiting") || body.starts_with("- locked") ||
-                     body.starts_with("- blocked");
+
+        bool frame = body.starts_with("at ") || body.starts_with("native: #")
+                     || body.starts_with("- waiting") || body.starts_with("- locked")
+                     || body.starts_with("- blocked");
         if (frame && frames < kMaxFrames)
         {
             text += body + "\n";
             frames++;
         }
     }
+
     if (frames == 0)
     {
         return std::nullopt;
     }
+
     return "ANR in thread 1 (main), from Android's ANR trace\n" + text;
 }
 }

@@ -22,6 +22,7 @@ namespace {
         {
             return true;
         }
+
         return copyFile(source, target) && removeFile(source);
     }
 }
@@ -34,11 +35,13 @@ std::optional<DownloadResult> adoptBackgroundDownload(const std::string &url,
     {
         return std::nullopt;
     }
+
     if (readTextFile(destination + kBackgroundDownloadURLSuffix) != url)
     {
         discardBackgroundDownload(destination);
         return std::nullopt;
     }
+
     removeFile(destination);
     if (!moveFile(finished, destination))
     {
@@ -47,6 +50,7 @@ std::optional<DownloadResult> adoptBackgroundDownload(const std::string &url,
         discardBackgroundDownload(destination);
         return std::nullopt;
     }
+
     removeFile(destination + kBackgroundDownloadURLSuffix);
     log(LogLevel::Info, LOG_CATEGORY_UPDATER, "Adopted the background download of " + url);
     DownloadResult result;
@@ -58,14 +62,15 @@ bool finishBackgroundDownload(const std::string &url, const std::string &destina
                               const std::string &downloadedPath)
 {
     discardBackgroundDownload(destination);
-    if (!writeTextFileAtomically(destination + kBackgroundDownloadURLSuffix, url) ||
-        !moveFile(downloadedPath, destination + kBackgroundDownloadSuffix))
+    if (!writeTextFileAtomically(destination + kBackgroundDownloadURLSuffix, url)
+        || !moveFile(downloadedPath, destination + kBackgroundDownloadSuffix))
     {
         log(LogLevel::Error, LOG_CATEGORY_UPDATER,
             "Failed to keep the background download of " + url);
         discardBackgroundDownload(destination);
         return false;
     }
+
     log(LogLevel::Info, LOG_CATEGORY_UPDATER, "Finished the background download of " + url);
     return true;
 }
@@ -75,15 +80,17 @@ FileDownloader withBackgroundHandoff(FileDownloader foreground, BackgroundDownlo
     return [foreground = std::move(foreground), background = std::move(background)](
                const std::string &url, const std::string &destination,
                const std::map<std::string, std::string> &headers,
-               const DownloadPolicy                     &policy) -> std::optional<DownloadResult> {
+               const DownloadPolicy &policy) -> std::optional<DownloadResult> {
         if (background.collect)
         {
             background.collect(destination);
         }
+
         if (std::optional<DownloadResult> adopted = adoptBackgroundDownload(url, destination))
         {
             return adopted;
         }
+
         std::optional<DownloadResult> result =
             foreground ? foreground(url, destination, headers, policy) : std::nullopt;
         if (!result && background.start)
@@ -92,6 +99,7 @@ FileDownloader withBackgroundHandoff(FileDownloader foreground, BackgroundDownlo
                 "Continuing the download of " + url + " in the background");
             background.start(url, destination, headers);
         }
+
         return result;
     };
 }

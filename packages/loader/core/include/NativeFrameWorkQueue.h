@@ -13,8 +13,8 @@ public:
     void clear();
 
 private:
-    std::mutex                        mutex_;
+    std::mutex mutex_;
     std::deque<std::function<void()>> work_;
-    bool                              scheduled_ = false;
+    bool scheduled_ = false;
 };
 }

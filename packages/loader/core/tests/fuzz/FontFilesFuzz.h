@@ -68,24 +68,26 @@ inline void fuzzOne(const uint8_t *data, size_t size)
     limits.maxTotalBytes          = 1 << 18;
     limits.maxFonts               = 8;
     const ArchiveContents archive = extractFontArchive(input, limits);
-    size_t                total   = 0;
+    size_t total                  = 0;
     for (const ArchiveFont &font : archive.fonts)
     {
         require(isContainedArchivePath(font.name), "an extracted name stays in the archive");
         require(font.data.size() <= limits.maxEntryBytes, "an entry stays under its limit");
         total += font.data.size();
     }
+
     require(total <= limits.maxTotalBytes && archive.fonts.size() <= limits.maxFonts,
             "an archive stays under its limits");
     require(archive.fonts.empty() || archive.error.empty(), "a failed archive yields no fonts");
 
     const nlohmann::json json = loader::parseBoundedJSON(input);
-    std::string          presetError;
+    std::string presetError;
     if (const auto preset = parseFontPreset(json, presetError))
     {
         require(parseFontPreset(fontPresetJSON(*preset), presetError).has_value(),
                 "a valid preset survives its own JSON");
     }
+
     const FontState state = parseFontState(json);
     require(parseFontState(fontStateJSON(state)).fonts.size() == state.fonts.size(),
             "a parsed state survives its own JSON");

@@ -21,11 +21,12 @@ static std::vector<std::string> ids(const loader::toolbox::MenuSection &section)
     {
         result.push_back(item.id);
     }
+
     return result;
 }
 
 static const loader::toolbox::MenuItem &item(const std::vector<loader::toolbox::MenuSection> &menu,
-                                             const std::string                               &id)
+                                             const std::string &id)
 {
     for (const auto &section : menu)
     {
@@ -37,13 +38,14 @@ static const loader::toolbox::MenuItem &item(const std::vector<loader::toolbox::
             }
         }
     }
+
     assert(false);
     return menu.front().items.front();
 }
 
 int main()
 {
-    const auto            root = makeTemporaryDirectory();
+    const auto root = makeTemporaryDirectory();
     loader::SettingsStore settings((root / "settings.json").string());
     settings.load();
 
@@ -51,12 +53,13 @@ int main()
     assert(plain.size() == 4);
     assert(plain[0].title == "Bundle" && plain[1].title == "Addons");
     assert(plain[2].title == "Utilities" && plain[3].title == "Settings");
-    assert((ids(plain[0]) ==
-            std::vector<std::string>{"refetch-bundle", "delete-bundle", "custom-bundle"}));
-    assert((ids(plain[1]) ==
-            std::vector<std::string>{"wipe-plugins", "wipe-themes", "wipe-fonts", "wipe-icons"}));
-    assert((ids(plain[2]) ==
-            std::vector<std::string>{"toggle-recovery", "factory-reset", "open-issue"}));
+    assert((ids(plain[0])
+            == std::vector<std::string>{"refetch-bundle", "delete-bundle", "custom-bundle"}));
+    assert(
+        (ids(plain[1])
+         == std::vector<std::string>{"wipe-plugins", "wipe-themes", "wipe-fonts", "wipe-icons"}));
+    assert((ids(plain[2])
+            == std::vector<std::string>{"toggle-recovery", "factory-reset", "open-issue"}));
     assert((ids(plain[3]) == std::vector<std::string>{"gesture-shake", "gesture-three-finger"}));
 
     const auto &icons = item(plain, "wipe-icons");
@@ -69,6 +72,7 @@ int main()
     {
         assert(item(plain, destructive).destructive);
     }
+
     for (const char *safe : {"refetch-bundle", "custom-bundle", "toggle-recovery", "open-issue"})
     {
         assert(!item(plain, safe).destructive);
@@ -101,30 +105,33 @@ int main()
     assert(item(ios, "toggle-recovery").title == "Disable Recovery Mode");
     assert(!item(ios, "gesture-shake").on);
     assert(item(ios, "gesture-three-finger").on);
-    assert((ids(ios[2]) == std::vector<std::string>{"toggle-recovery", "factory-reset",
-                                                    "open-app-folder", "open-issue"}));
+    assert((ids(ios[2])
+            == std::vector<std::string>{"toggle-recovery", "factory-reset", "open-app-folder",
+                                        "open-issue"}));
     assert((ids(ios[3]) == std::vector<std::string>{"gesture-shake", "gesture-three-finger"}));
 
     const auto android = loader::toolbox::menu(
         settings, loader::toolbox::menuOptions(R"({"copyAppFolderPath":true})"));
-    assert((ids(android[2]) == std::vector<std::string>{"toggle-recovery", "factory-reset",
-                                                        "copy-app-folder-path", "open-issue"}));
+    assert((ids(android[2])
+            == std::vector<std::string>{"toggle-recovery", "factory-reset", "copy-app-folder-path",
+                                        "open-issue"}));
     assert(ids(android[3]).size() == 2);
     assert(loader::toolbox::menuOptions("not json").openAppFolder == false);
 
     loader::toolbox::MenuOptions withPrevious;
     withPrevious.previousBundle = "1111111abcdef";
     const auto previous         = loader::toolbox::menu(settings, withPrevious);
-    assert((ids(previous[0]) == std::vector<std::string>{"refetch-bundle", "previous-bundle",
-                                                         "delete-bundle", "custom-bundle"}));
+    assert((ids(previous[0])
+            == std::vector<std::string>{"refetch-bundle", "previous-bundle", "delete-bundle",
+                                        "custom-bundle"}));
     assert(item(previous, "previous-bundle").title == "Use Previous Bundle (1111111)");
-    assert(item(previous, "previous-bundle").failure ==
-           loader::toolbox::kPreviousBundleFailedMessage);
+    assert(item(previous, "previous-bundle").failure
+           == loader::toolbox::kPreviousBundleFailedMessage);
     assert(item(previous, "previous-bundle").restartsApp);
     assert(!item(previous, "previous-bundle").destructive);
     withPrevious.previousBundle = "";
-    assert(item(loader::toolbox::menu(settings, withPrevious), "previous-bundle").title ==
-           "Use Previous Bundle");
+    assert(item(loader::toolbox::menu(settings, withPrevious), "previous-bundle").title
+           == "Use Previous Bundle");
 
     const nlohmann::json json = loader::toolbox::menuJSON(settings, {});
     assert(json["title"] == "Unbound Toolbox");
@@ -162,7 +169,7 @@ int main()
                                             [] {
                                                 return 96u;
                                             }};
-    const nlohmann::json            performed = nlohmann::json::parse(
+    const nlohmann::json performed = nlohmann::json::parse(
         loader::toolbox::perform(context, "menu", R"({"copyAppFolderPath":true})"));
     assert(performed["sections"][2]["items"][2]["id"] == "copy-app-folder-path");
     assert(loader::toolbox::perform(context, "message", "refetch-failed").empty());

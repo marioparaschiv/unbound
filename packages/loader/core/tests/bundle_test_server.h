@@ -21,16 +21,17 @@ inline std::string encodeBase64(const std::string &data)
     static constexpr char kAlphabet[] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     std::string encoded;
-    size_t      index = 0;
+    size_t index = 0;
     while (index + 2 < data.size())
     {
-        uint32_t chunk = (static_cast<uint8_t>(data[index]) << 16) |
-                         (static_cast<uint8_t>(data[index + 1]) << 8) |
-                         static_cast<uint8_t>(data[index + 2]);
+        uint32_t chunk = (static_cast<uint8_t>(data[index]) << 16)
+                         | (static_cast<uint8_t>(data[index + 1]) << 8)
+                         | static_cast<uint8_t>(data[index + 2]);
         encoded += {kAlphabet[chunk >> 18], kAlphabet[(chunk >> 12) & 63],
                     kAlphabet[(chunk >> 6) & 63], kAlphabet[chunk & 63]};
         index += 3;
     }
+
     if (index + 1 == data.size())
     {
         uint32_t chunk = static_cast<uint8_t>(data[index]) << 16;
@@ -38,17 +39,18 @@ inline std::string encodeBase64(const std::string &data)
     }
     else if (index + 2 == data.size())
     {
-        uint32_t chunk = (static_cast<uint8_t>(data[index]) << 16) |
-                         (static_cast<uint8_t>(data[index + 1]) << 8);
+        uint32_t chunk = (static_cast<uint8_t>(data[index]) << 16)
+                         | (static_cast<uint8_t>(data[index + 1]) << 8);
         encoded += {kAlphabet[chunk >> 18], kAlphabet[(chunk >> 12) & 63],
                     kAlphabet[(chunk >> 6) & 63], '='};
     }
+
     return encoded;
 }
 
 struct SigningKey {
     std::array<uint8_t, 64> secret{};
-    std::string             publicKey;
+    std::string publicKey;
 
     explicit SigningKey(uint8_t fill)
     {
@@ -99,27 +101,28 @@ inline loader::BundleTrust pullRequestTrust(uint32_t number)
 }
 
 struct Signer {
-    const SigningKey *key         = &productionKey();
-    uint32_t          pullRequest = 0;
+    const SigningKey *key = &productionKey();
+    uint32_t pullRequest  = 0;
 };
 
-inline std::string manifestText(const std::string                        &buildTime,
+inline std::string manifestText(const std::string &buildTime,
                                 const std::map<std::string, std::string> &bundles,
-                                const std::string                        &channel  = "beta",
-                                const std::string                        &revision = "abc1234",
-                                const std::string                        &minLoaderVersion = "")
+                                const std::string &channel          = "beta",
+                                const std::string &revision         = "abc1234",
+                                const std::string &minLoaderVersion = "")
 {
     std::string hashes;
     for (const auto &[file, contents] : bundles)
     {
-        hashes += (hashes.empty() ? "" : ",") + std::string("\"") + file + "\":\"" +
-                  loader::sha512Hex(contents) + "\"";
+        hashes += (hashes.empty() ? "" : ",") + std::string("\"") + file + "\":\""
+                  + loader::sha512Hex(contents) + "\"";
     }
-    return "{\n  \"revision\": \"" + revision + "\",\n  \"channel\": \"" + channel +
-           "\",\n  \"buildTime\": \"" + buildTime + "\",\n  \"bytecodeVersions\": [98],\n  " +
-           (minLoaderVersion.empty() ? ""
-                                     : "\"minLoaderVersion\": \"" + minLoaderVersion + "\",\n  ") +
-           "\"sha512\": {" + hashes + "}\n}";
+
+    return "{\n  \"revision\": \"" + revision + "\",\n  \"channel\": \"" + channel
+           + "\",\n  \"buildTime\": \"" + buildTime + "\",\n  \"bytecodeVersions\": [98],\n  "
+           + (minLoaderVersion.empty() ? ""
+                                       : "\"minLoaderVersion\": \"" + minLoaderVersion + "\",\n  ")
+           + "\"sha512\": {" + hashes + "}\n}";
 }
 
 inline std::filesystem::path makeTemporaryDirectory()
@@ -132,12 +135,12 @@ inline std::filesystem::path makeTemporaryDirectory()
 }
 
 struct Server {
-    std::filesystem::path              root = makeTemporaryDirectory();
-    loader::SettingsStore              settings{(root / "settings.json").string()};
+    std::filesystem::path root = makeTemporaryDirectory();
+    loader::SettingsStore settings{(root / "settings.json").string()};
     std::map<std::string, std::string> files;
     std::map<std::string, std::string> lastHeaders;
-    std::string                        lastDownload;
-    int                                downloads = 0;
+    std::string lastDownload;
+    int downloads = 0;
     // Answers the next bundle download with this instead of the file.
     std::optional<loader::DownloadResult> failNext;
 
@@ -188,17 +191,20 @@ struct Server {
                     failNext.reset();
                     return failure;
                 }
+
                 auto file = files.find(url);
                 if (file == files.end())
                 {
                     return loader::DownloadResult{404, ""};
                 }
-                std::string etag  = "\"" + loader::sha512Hex(file->second).substr(0, 16) + "\"";
-                auto        match = headers.find("If-None-Match");
+
+                std::string etag = "\"" + loader::sha512Hex(file->second).substr(0, 16) + "\"";
+                auto match       = headers.find("If-None-Match");
                 if (match != headers.end() && match->second == etag)
                 {
                     return loader::DownloadResult{304, etag};
                 }
+
                 assert(loader::writeTextFileAtomically(destination, file->second));
                 return loader::DownloadResult{200, etag};
             },
@@ -238,9 +244,10 @@ struct Server {
         {
             return false;
         }
+
         std::string resolved = updater.resolveBundlePath();
-        return resolved == candidate() && updater.markBundleAttempted(resolved) &&
-               updater.acceptBundle(resolved);
+        return resolved == candidate() && updater.markBundleAttempted(resolved)
+               && updater.acceptBundle(resolved);
     }
 
     std::string activeContents() const

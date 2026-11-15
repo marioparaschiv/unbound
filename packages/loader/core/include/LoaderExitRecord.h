@@ -12,8 +12,8 @@ public:
 
     explicit ExitRecord(std::string directory);
 
-    bool         markEnded() const;
-    bool         clear() const;
+    bool markEnded() const;
+    bool clear() const;
     PreviousExit take(bool nativeCrashRecorded) const;
 
 private:

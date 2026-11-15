@@ -12,9 +12,9 @@ using MainThreadPost = std::function<void(std::function<void()>)>;
 
 struct HookCallbackOwner {
     std::weak_ptr<RuntimeResourceRegistry> resources;
-    uint64_t                               identity = 0;
-    std::string                            key;
-    bool                                   inlineRuntime = false;
+    uint64_t identity = 0;
+    std::string key;
+    bool inlineRuntime = false;
 };
 
 void releaseHookCallbacks(const HookCallbackOwner &owner, const MainThreadPost &postToMain);

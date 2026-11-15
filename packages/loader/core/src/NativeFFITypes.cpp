@@ -15,7 +15,7 @@ namespace {
     };
 
     struct StructDefinition {
-        const char                  *name;
+        const char *name;
         std::vector<FieldDefinition> fields;
     };
 
@@ -59,10 +59,10 @@ namespace {
         return (value + alignment - 1) / alignment * alignment;
     }
 
-    std::mutex                                           layoutMutex;
+    std::mutex layoutMutex;
     std::map<std::string, std::unique_ptr<StructLayout>> layouts;
 
-    std::mutex                                              extensionMutex;
+    std::mutex extensionMutex;
     std::map<std::string, std::shared_ptr<const TypeCodec>> extensions;
 
     const StructLayout *buildLayout(const std::string &name)
@@ -87,7 +87,7 @@ namespace {
             for (const FieldDefinition &field : definition.fields)
             {
                 std::string typeName = field.type;
-                Type        type;
+                Type type;
                 if (typeName.rfind("struct:", 0) == 0)
                 {
                     const StructLayout *nested = buildLayout(typeName.substr(7));
@@ -95,6 +95,7 @@ namespace {
                     {
                         return nullptr;
                     }
+
                     type = {Kind::Struct, typeName, nested};
                 }
                 else
@@ -108,12 +109,14 @@ namespace {
                 layout->size += typeSize(type);
                 layout->alignment = std::max(layout->alignment, alignment);
             }
+
             layout->size = alignUp(layout->size, layout->alignment);
 
             const StructLayout *result = layout.get();
             layouts.emplace(name, std::move(layout));
             return result;
         }
+
         return nullptr;
     }
 }
@@ -133,6 +136,7 @@ std::optional<Type> parseType(const std::string &name)
         {
             return std::nullopt;
         }
+
         return Type{Kind::Struct, name, layout};
     }
 
@@ -143,11 +147,12 @@ std::optional<Type> parseType(const std::string &name)
     }
 
     std::lock_guard<std::mutex> lock(extensionMutex);
-    auto                        extension = extensions.find(name);
+    auto extension = extensions.find(name);
     if (extension == extensions.end())
     {
         return std::nullopt;
     }
+
     return Type{Kind::Extension, name, nullptr, extension->second.get()};
 }
 
@@ -169,9 +174,10 @@ Signature makeSignature(Type result, std::vector<Type> arguments)
 {
     if (arguments.size() > kMaximumArguments)
     {
-        throw std::invalid_argument("Native FFI signatures take at most " +
-                                    std::to_string(kMaximumArguments) + " arguments");
+        throw std::invalid_argument("Native FFI signatures take at most "
+                                    + std::to_string(kMaximumArguments) + " arguments");
     }
+
     for (const Type &argument : arguments)
     {
         if (argument.kind == Kind::Void)
@@ -179,6 +185,7 @@ Signature makeSignature(Type result, std::vector<Type> arguments)
             throw std::invalid_argument("Native FFI arguments cannot be void");
         }
     }
+
     return Signature{std::move(result), std::move(arguments)};
 }
 
@@ -210,6 +217,7 @@ std::size_t typeSize(const Type &type)
         case Kind::Struct:
             return type.layout ? type.layout->size : 0;
     }
+
     return 0;
 }
 
@@ -219,6 +227,7 @@ std::size_t typeAlignment(const Type &type)
     {
         return type.layout ? type.layout->alignment : 1;
     }
+
     return std::max<std::size_t>(1, typeSize(type));
 }
 }

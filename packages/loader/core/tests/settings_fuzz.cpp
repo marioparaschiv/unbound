@@ -83,6 +83,7 @@ public:
                 {
                     array.push_back(value(depth + 1));
                 }
+
                 return array;
             }
             default: {
@@ -92,6 +93,7 @@ public:
                     object[kKeyPaths[next(sizeof(kKeyPaths) / sizeof(kKeyPaths[0]))]] =
                         value(depth + 1);
                 }
+
                 return object;
             }
         }
@@ -108,22 +110,25 @@ public:
                 root[store] = value(2);
                 continue;
             }
+
             nlohmann::json &entries = root[store];
             if (!entries.is_object())
             {
                 entries = nlohmann::json::object();
             }
+
             for (uint32_t key = 1 + next(6); key > 0; key--)
             {
-                std::string       path = kKeyPaths[next(sizeof(kKeyPaths) / sizeof(kKeyPaths[0]))];
-                nlohmann::json   *cursor = &entries;
+                std::string path       = kKeyPaths[next(sizeof(kKeyPaths) / sizeof(kKeyPaths[0]))];
+                nlohmann::json *cursor = &entries;
                 std::stringstream parts(path);
-                std::string       part;
+                std::string part;
                 std::vector<std::string> segments;
                 while (std::getline(parts, part, '.'))
                 {
                     segments.push_back(part);
                 }
+
                 for (size_t segment = 0; segment + 1 < segments.size(); segment++)
                 {
                     nlohmann::json &child = (*cursor)[segments[segment]];
@@ -131,18 +136,22 @@ public:
                     {
                         child = next(4) == 0 ? value(3) : nlohmann::json::object();
                     }
+
                     if (!child.is_object())
                     {
                         break;
                     }
+
                     cursor = &child;
                 }
+
                 if (cursor->is_object())
                 {
                     (*cursor)[segments.back()] = value(2);
                 }
             }
         }
+
         return root;
     }
 
@@ -156,20 +165,22 @@ public:
                 {
                     byte = static_cast<char>(random_());
                 }
+
                 return data;
             }
             case 1: {
                 size_t depth = next(2) ? 5000 + next(20000) : 200000;
-                return std::string(depth, next(2) ? '[' : '{').substr(0) +
-                       (next(2) ? "" : std::string(depth, ']'));
+                return std::string(depth, next(2) ? '[' : '{').substr(0)
+                       + (next(2) ? "" : std::string(depth, ']'));
             }
             case 2: {
-                size_t      depth = 1000 + next(100000);
-                std::string text  = "{\"unbound\":{\"loader\":";
+                size_t depth     = 1000 + next(100000);
+                std::string text = "{\"unbound\":{\"loader\":";
                 for (size_t level = 0; level < depth; level++)
                 {
                     text += "{\"a\":";
                 }
+
                 text += "1";
                 text += std::string(depth, '}');
                 return text + "}}";
@@ -217,7 +228,7 @@ static void exercise(loader::SettingsStore &store)
 
 static std::string readFile(const fs::path &path)
 {
-    std::ifstream     file(path, std::ios::binary);
+    std::ifstream file(path, std::ios::binary);
     std::stringstream buffer;
     buffer << file.rdbuf();
     return buffer.str();
@@ -226,20 +237,20 @@ static std::string readFile(const fs::path &path)
 int main()
 {
     const char *roundsVariable = std::getenv("UNBOUND_FUZZ_ITERATIONS");
-    const long  rounds         = roundsVariable ? std::strtol(roundsVariable, nullptr, 10) : 150;
-    Generator   generator(0x5e771);
-    fs::path    directory = fs::temp_directory_path() / "unbound-settings-fuzz";
+    const long rounds          = roundsVariable ? std::strtol(roundsVariable, nullptr, 10) : 150;
+    Generator generator(0x5e771);
+    fs::path directory = fs::temp_directory_path() / "unbound-settings-fuzz";
 
     for (long round = 0; round < rounds; round++)
     {
         fs::remove_all(directory);
         fs::create_directories(directory);
-        fs::path    path     = directory / "settings.json";
+        fs::path path        = directory / "settings.json";
         std::string contents = generator.fileContents();
         std::ofstream(path, std::ios::binary) << contents;
 
-        nlohmann::json parsed  = nlohmann::json::parse(contents, nullptr, false);
-        bool           corrupt = parsed.is_discarded() || !parsed.is_object();
+        nlohmann::json parsed = nlohmann::json::parse(contents, nullptr, false);
+        bool corrupt          = parsed.is_discarded() || !parsed.is_object();
 
         try
         {
@@ -256,8 +267,10 @@ int main()
                     backedUp =
                         backedUp || entry.path().filename().string().find("settings.json.") == 0;
                 }
+
                 require(backedUp || contents.empty(), "a corrupt file is kept aside", contents);
             }
+
             exercise(store);
             std::ofstream(path, std::ios::binary) << generator.fileContents();
             exercise(store);
@@ -268,6 +281,7 @@ int main()
                     std::string(error.what()) + " for " + contents);
         }
     }
+
     fs::remove_all(directory);
     std::printf("settings fuzz: %ld settings files\n", rounds);
     return 0;

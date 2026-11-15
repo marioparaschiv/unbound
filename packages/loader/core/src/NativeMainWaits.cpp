@@ -22,6 +22,7 @@ static const char *mainWorkKindName(uint32_t kind)
         case MainWorkKind::Asynchronous:
             return "async";
     }
+
     return "unknown";
 }
 
@@ -44,8 +45,8 @@ uint64_t monotonicNanos()
 void raiseTo(std::atomic_uint64_t &maximum, uint64_t value)
 {
     uint64_t current = maximum.load(std::memory_order_relaxed);
-    while (value > current &&
-           !maximum.compare_exchange_weak(current, value, std::memory_order_relaxed))
+    while (value > current
+           && !maximum.compare_exchange_weak(current, value, std::memory_order_relaxed))
     {
     }
 }
@@ -53,7 +54,7 @@ void raiseTo(std::atomic_uint64_t &maximum, uint64_t value)
 static uint64_t mainWaitKey(AddonSlot addon, MainWorkKind kind, std::string_view label)
 {
     uint64_t hash = 14695981039346656037ull;
-    auto     mix  = [&hash](uint64_t value) {
+    auto mix      = [&hash](uint64_t value) {
         hash ^= value;
         hash *= 1099511628211ull;
     };
@@ -63,6 +64,7 @@ static uint64_t mainWaitKey(AddonSlot addon, MainWorkKind kind, std::string_view
     {
         mix(static_cast<unsigned char>(character));
     }
+
     return hash == 0 ? 1 : hash;
 }
 
@@ -77,16 +79,18 @@ MainWaitRecord &mainWaitRecord(AddonSlot addon, MainWorkKind kind, std::string_v
     uint64_t key = mainWaitKey(addon, kind, label);
     for (size_t probe = 0; probe < kMainWaitRecordLimit; probe++)
     {
-        MainWaitRecord &record   = gMainWaits[(key + probe) % kMainWaitRecordLimit];
-        uint64_t        existing = record.key.load(std::memory_order_acquire);
+        MainWaitRecord &record = gMainWaits[(key + probe) % kMainWaitRecordLimit];
+        uint64_t existing      = record.key.load(std::memory_order_acquire);
         if (existing == key)
         {
             return record;
         }
+
         if (existing != 0)
         {
             continue;
         }
+
         if (record.key.compare_exchange_strong(existing, key, std::memory_order_acq_rel))
         {
             record.addon = addon;
@@ -96,32 +100,35 @@ MainWaitRecord &mainWaitRecord(AddonSlot addon, MainWorkKind kind, std::string_v
             record.ready.store(true, std::memory_order_release);
             return record;
         }
+
         if (existing == key)
         {
             return record;
         }
     }
+
     return gOverflowMainWaits;
 }
 
 struct CachedMainWaitRecord {
-    MainWaitRecord *record   = nullptr;
-    uint32_t        sequence = 0;
-    AddonSlot       addon    = kNoAddon;
-    MainWorkKind    kind     = MainWorkKind::Synchronous;
+    MainWaitRecord *record = nullptr;
+    uint32_t sequence      = 0;
+    AddonSlot addon        = kNoAddon;
+    MainWorkKind kind      = MainWorkKind::Synchronous;
 };
 
 static thread_local CachedMainWaitRecord tCachedMainWait;
 
 MainWaitRecord &currentCallRecord(AddonSlot addon, MainWorkKind kind)
 {
-    CurrentNativeCall     call   = currentNativeCall();
+    CurrentNativeCall call       = currentNativeCall();
     CachedMainWaitRecord &cached = tCachedMainWait;
-    if (cached.record && cached.sequence == call.sequence && cached.addon == addon &&
-        cached.kind == kind)
+    if (cached.record && cached.sequence == call.sequence && cached.addon == addon
+        && cached.kind == kind)
     {
         return *cached.record;
     }
+
     MainWaitRecord &record = mainWaitRecord(addon, kind, call.label);
     cached                 = {&record, call.sequence, addon, kind};
     return record;
@@ -184,22 +191,25 @@ nlohmann::json mainWaitCounts()
     nlohmann::json waits = nlohmann::json::array();
     for (const MainWaitRecord &record : gMainWaits)
     {
-        if (!record.ready.load(std::memory_order_acquire) ||
-            record.posted.load(std::memory_order_relaxed) == 0)
+        if (!record.ready.load(std::memory_order_acquire)
+            || record.posted.load(std::memory_order_relaxed) == 0)
         {
             continue;
         }
+
         waits.push_back(describeMainWaits(record, record.label, threading::addonName(record.addon),
                                           mainWorkKindName(record.kind)));
     }
+
     if (gOverflowMainWaits.posted.load(std::memory_order_relaxed) > 0)
     {
         waits.push_back(describeMainWaits(gOverflowMainWaits, "(other)", "(other)", "unknown"));
     }
+
     std::sort(waits.begin(), waits.end(),
               [](const nlohmann::json &left, const nlohmann::json &right) {
-                  return left["queuedMs"].get<double>() + left["runMs"].get<double>() >
-                         right["queuedMs"].get<double>() + right["runMs"].get<double>();
+                  return left["queuedMs"].get<double>() + left["runMs"].get<double>()
+                         > right["queuedMs"].get<double>() + right["runMs"].get<double>();
               });
     return waits;
 }
@@ -210,6 +220,7 @@ void resetMainWorkCounts()
     {
         resetMainWaits(record);
     }
+
     resetMainWaits(gOverflowMainWaits);
     gMainDrains.store(0, std::memory_order_relaxed);
     gMainDrainedItems.store(0, std::memory_order_relaxed);

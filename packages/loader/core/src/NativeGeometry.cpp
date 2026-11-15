@@ -14,11 +14,13 @@ static double finiteField(const nlohmann::json &value, const char *subject, cons
     {
         throw std::invalid_argument(std::string(subject) + " " + field + " must be a number");
     }
+
     double number = found->get<double>();
     if (!std::isfinite(number))
     {
         throw std::invalid_argument(std::string(subject) + " " + field + " must be finite");
     }
+
     return number;
 }
 
@@ -27,9 +29,10 @@ static double dimension(const nlohmann::json &value, const char *subject, const 
     double number = finiteField(value, subject, field);
     if (number < 0 || number > kMaximumNativeDimension)
     {
-        throw std::invalid_argument(std::string(subject) + " " + field +
-                                    " must be between 0 and 32768");
+        throw std::invalid_argument(std::string(subject) + " " + field
+                                    + " must be between 0 and 32768");
     }
+
     return number;
 }
 
@@ -38,9 +41,10 @@ static double coordinate(const nlohmann::json &value, const char *subject, const
     double number = finiteField(value, subject, field);
     if (number < -kMaximumNativeCoordinate || number > kMaximumNativeCoordinate)
     {
-        throw std::invalid_argument(std::string(subject) + " " + field +
-                                    " must be between -100000 and 100000");
+        throw std::invalid_argument(std::string(subject) + " " + field
+                                    + " must be between -100000 and 100000");
     }
+
     return number;
 }
 
@@ -72,7 +76,8 @@ static nlohmann::json numericFields(jsi::Runtime &runtime, const jsi::Value &val
     {
         return nullptr;
     }
-    jsi::Object    object = value.asObject(runtime);
+
+    jsi::Object object    = value.asObject(runtime);
     nlohmann::json result = nlohmann::json::object();
     for (const char *field : fields)
     {
@@ -82,6 +87,7 @@ static nlohmann::json numericFields(jsi::Runtime &runtime, const jsi::Value &val
             result[field] = property.getNumber();
         }
     }
+
     return result;
 }
 

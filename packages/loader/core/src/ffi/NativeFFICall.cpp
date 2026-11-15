@@ -12,17 +12,17 @@
 namespace loader::ffi {
 namespace {
     struct StructType {
-        ffi_type                type{};
+        ffi_type type{};
         std::vector<ffi_type *> elements;
     };
 
-    std::recursive_mutex                                        structTypeMutex;
+    std::recursive_mutex structTypeMutex;
     std::map<const StructLayout *, std::unique_ptr<StructType>> structTypes;
 
     ffi_type *structType(const StructLayout *layout)
     {
         std::lock_guard<std::recursive_mutex> lock(structTypeMutex);
-        auto                                  existing = structTypes.find(layout);
+        auto existing = structTypes.find(layout);
         if (existing != structTypes.end())
         {
             return &existing->second->type;
@@ -33,15 +33,17 @@ namespace {
         {
             created->elements.push_back(libffiType(field.type));
         }
+
         created->elements.push_back(nullptr);
         created->type.type     = FFI_TYPE_STRUCT;
         created->type.elements = created->elements.data();
-        if (ffi_get_struct_offsets(FFI_DEFAULT_ABI, &created->type, nullptr) != FFI_OK ||
-            created->type.size != layout->size)
+        if (ffi_get_struct_offsets(FFI_DEFAULT_ABI, &created->type, nullptr) != FFI_OK
+            || created->type.size != layout->size)
         {
-            throw std::invalid_argument("Native FFI " + layout->name +
-                                        " layout could not be prepared");
+            throw std::invalid_argument("Native FFI " + layout->name
+                                        + " layout could not be prepared");
         }
+
         ffi_type *result    = &created->type;
         structTypes[layout] = std::move(created);
         return result;
@@ -55,6 +57,7 @@ namespace {
             key.push_back('\0');
             key += argument.name;
         }
+
         return key;
     }
 
@@ -64,25 +67,27 @@ namespace {
         std::shared_ptr<CallInterface> find(const std::string &key)
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            auto                        entry = entries_.find(key);
+            auto entry = entries_.find(key);
             if (entry == entries_.end())
             {
                 return nullptr;
             }
+
             order_.splice(order_.begin(), order_, entry->second.position);
             return entry->second.interface;
         }
 
-        std::shared_ptr<CallInterface> insert(const std::string             &key,
+        std::shared_ptr<CallInterface> insert(const std::string &key,
                                               std::shared_ptr<CallInterface> interface)
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            auto                        existing = entries_.find(key);
+            auto existing = entries_.find(key);
             if (existing != entries_.end())
             {
                 order_.splice(order_.begin(), order_, existing->second.position);
                 return existing->second.interface;
             }
+
             order_.push_front(key);
             entries_.emplace(key, Entry{interface, order_.begin()});
             while (entries_.size() > kCallInterfaceCacheCapacity)
@@ -90,6 +95,7 @@ namespace {
                 entries_.erase(order_.back());
                 order_.pop_back();
             }
+
             return interface;
         }
 
@@ -101,12 +107,12 @@ namespace {
 
     private:
         struct Entry {
-            std::shared_ptr<CallInterface>   interface;
+            std::shared_ptr<CallInterface> interface;
             std::list<std::string>::iterator position;
         };
 
-        std::mutex                             mutex_;
-        std::list<std::string>                 order_;
+        std::mutex mutex_;
+        std::list<std::string> order_;
         std::unordered_map<std::string, Entry> entries_;
     };
 
@@ -156,6 +162,7 @@ ffi_type *libffiType(const Type &type)
         case Kind::Struct:
             return structType(type.layout);
     }
+
     throw std::invalid_argument("Unsupported native FFI type " + type.name);
 }
 
@@ -175,12 +182,15 @@ std::shared_ptr<CallInterface> callInterface(const Type &result, const std::vect
     {
         created->argumentTypes.push_back(libffiType(argument));
     }
+
     if (ffi_prep_cif(&created->cif, FFI_DEFAULT_ABI,
                      static_cast<unsigned>(created->argumentTypes.size()), libffiType(result),
-                     created->argumentTypes.data()) != FFI_OK)
+                     created->argumentTypes.data())
+        != FFI_OK)
     {
         throw std::invalid_argument("Native FFI signature could not be prepared");
     }
+
     return callInterfaceCache().insert(key, std::move(created));
 }
 
@@ -204,6 +214,7 @@ CallFrame::CallFrame(std::shared_ptr<CallInterface> interface) : interface_(std:
         argumentBuffers_.emplace_back(wordsFor(valueStorageSize(argument)), 0);
         argumentPointers_.push_back(argumentBuffers_.back().data());
     }
+
     resultBuffer_.assign(wordsFor(std::max(valueStorageSize(interface_->result), sizeof(ffi_arg))),
                          0);
 }

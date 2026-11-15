@@ -16,6 +16,7 @@ bool loader::native::NativeFrameWorkQueue::enqueue(std::function<void()> work)
     {
         return false;
     }
+
     scheduled_ = true;
     return true;
 }
@@ -28,6 +29,7 @@ void loader::native::NativeFrameWorkQueue::drain()
         work.swap(work_);
         scheduled_ = false;
     }
+
     if (work.empty())
     {
         return;
@@ -51,6 +53,7 @@ void loader::native::NativeFrameWorkQueue::drain()
                         "Frame-batched native work failed.");
         }
     }
+
     loader::native::recordMainDrain(work.size(), std::chrono::steady_clock::now() - startedAt);
 }
 

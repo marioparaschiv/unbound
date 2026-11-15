@@ -25,8 +25,8 @@ std::string settingsPath(const std::filesystem::path &root)
 
 void touchLater(const std::string &path)
 {
-    std::filesystem::last_write_time(path, std::filesystem::file_time_type::clock::now() +
-                                               std::chrono::seconds(2));
+    std::filesystem::last_write_time(path, std::filesystem::file_time_type::clock::now()
+                                               + std::chrono::seconds(2));
 }
 
 int countPrefixed(const std::filesystem::path &root, const std::string &prefix)
@@ -36,6 +36,7 @@ int countPrefixed(const std::filesystem::path &root, const std::string &prefix)
     {
         count += entry.path().filename().string().rfind(prefix, 0) == 0;
     }
+
     return count;
 }
 
@@ -78,6 +79,7 @@ void corruptBackupsWithOtherNamesDoNotStopLoading(const std::filesystem::path &r
     {
         assert(loader::writeTextFileAtomically(path + ".corrupt-" + std::to_string(index), "x"));
     }
+
     assert(loader::writeTextFileAtomically(path, "{broken"));
 
     loader::SettingsStore store(path);
@@ -248,7 +250,7 @@ void saveFailsWhenTheDirectoryIsAFile(const std::filesystem::path &root)
 {
     const auto blocker = root / "blocker";
     assert(loader::writeTextFileAtomically(blocker.string(), "file"));
-    const std::string     path = settingsPath(blocker);
+    const std::string path = settingsPath(blocker);
     loader::SettingsStore store(path);
     store.load();
     assert(store.set("a", "x", 1));
@@ -272,6 +274,7 @@ void unreadableSettingsAreNeverOverwritten(const std::filesystem::path &root)
         std::filesystem::permissions(path, std::filesystem::perms::owner_all);
         return;
     }
+
     assert(!store.readable());
     store.set("a", "x", 2);
     assert(!store.save());

@@ -10,7 +10,7 @@ class OwnedBuffer : public facebook::jsi::Buffer
 public:
     explicit OwnedBuffer(std::string data);
 
-    size_t         size() const override;
+    size_t size() const override;
     const uint8_t *data() const override;
 
 private:
@@ -26,20 +26,20 @@ public:
     static std::shared_ptr<MappedFileBuffer> map(const std::string &path);
     ~MappedFileBuffer() override;
 
-    size_t         size() const override;
+    size_t size() const override;
     const uint8_t *data() const override;
 
 private:
     MappedFileBuffer(void *data, size_t size);
 
-    void  *data_;
+    void *data_;
     size_t size_;
 };
 
 bool evaluateScript(facebook::jsi::Runtime &runtime, std::string script, const std::string &tag);
-bool evaluateBytecodeBuffer(facebook::jsi::Runtime                             &runtime,
+bool evaluateBytecodeBuffer(facebook::jsi::Runtime &runtime,
                             const std::shared_ptr<const facebook::jsi::Buffer> &bytecode,
-                            const std::string                                  &tag);
+                            const std::string &tag);
 facebook::jsi::Value evaluateSource(facebook::jsi::Runtime &runtime, const std::string &source,
                                     const std::string &tag);
 facebook::jsi::Value evaluateBytecode(facebook::jsi::Runtime &runtime, std::string bytecode,

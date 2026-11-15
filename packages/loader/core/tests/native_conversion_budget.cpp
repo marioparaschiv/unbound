@@ -19,11 +19,13 @@ static void exhaustsProfile(const NativeConversionProfile &profile)
     {
         assert(budget.enter());
     }
+
     assert(!budget.enter());
     for (size_t index = 0; index < profile.maximumDepth; index++)
     {
         budget.leave();
     }
+
     assert(budget.enter());
     budget.leave();
 }
@@ -32,8 +34,8 @@ static void reservesRegardlessOfOrder(const NativeConversionProfile &profile)
 {
     NativeConversionBudget wideFirst(profile);
     NativeConversionBudget wideLast(profile);
-    size_t                 wide   = profile.maximumEntries / 2;
-    size_t                 narrow = profile.maximumEntries - wide;
+    size_t wide   = profile.maximumEntries / 2;
+    size_t narrow = profile.maximumEntries - wide;
     assert(wideFirst.reserveEntries(wide) && wideFirst.reserveEntries(narrow));
     assert(wideLast.reserveEntries(narrow) && wideLast.reserveEntries(wide));
     assert(!wideFirst.reserveEntries(1) && !wideLast.reserveEntries(1));

@@ -3,8 +3,8 @@
 #include <pthread.h>
 
 namespace unbound::android {
-static JavaVM        *gJavaVM = nullptr;
-static pthread_key_t  gDetachKey;
+static JavaVM *gJavaVM = nullptr;
+static pthread_key_t gDetachKey;
 static pthread_once_t gDetachKeyOnce = PTHREAD_ONCE_INIT;
 
 static void detachThread(void *)
@@ -61,6 +61,7 @@ std::string toStdString(JNIEnv *env, jstring value)
     {
         env->ReleaseStringUTFChars(value, characters);
     }
+
     return result;
 }
 
@@ -70,6 +71,7 @@ std::optional<std::string> toOptionalString(JNIEnv *env, jstring value)
     {
         return std::nullopt;
     }
+
     return toStdString(env, value);
 }
 
@@ -80,7 +82,7 @@ jstring toJavaString(JNIEnv *env, const std::string &value)
 
 jobjectArray toJavaStringArray(JNIEnv *env, const std::vector<std::string> &values)
 {
-    LocalClass   stringClass(env, env->FindClass("java/lang/String"));
+    LocalClass stringClass(env, env->FindClass("java/lang/String"));
     jobjectArray array =
         env->NewObjectArray(static_cast<jsize>(values.size()), stringClass.get(), nullptr);
     for (size_t index = 0; index < values.size(); index++)
@@ -89,6 +91,7 @@ jobjectArray toJavaStringArray(JNIEnv *env, const std::vector<std::string> &valu
         env->SetObjectArrayElement(array, static_cast<jsize>(index), element);
         env->DeleteLocalRef(element);
     }
+
     return array;
 }
 
@@ -98,6 +101,7 @@ bool clearPendingException(JNIEnv *env)
     {
         return false;
     }
+
     env->ExceptionDescribe();
     env->ExceptionClear();
     return true;
@@ -112,9 +116,9 @@ std::string takeJavaFailure(JNIEnv *env, const char *fallback)
     }
 
     env->ExceptionClear();
-    jclass      throwableClass = env->GetObjectClass(thrown);
-    jmethodID   describe = env->GetMethodID(throwableClass, "toString", "()Ljava/lang/String;");
-    std::string message  = fallback;
+    jclass throwableClass = env->GetObjectClass(thrown);
+    jmethodID describe    = env->GetMethodID(throwableClass, "toString", "()Ljava/lang/String;");
+    std::string message   = fallback;
     if (describe)
     {
         auto described = static_cast<jstring>(env->CallObjectMethod(thrown, describe));
@@ -122,10 +126,12 @@ std::string takeJavaFailure(JNIEnv *env, const char *fallback)
         {
             message = toStdString(env, described);
         }
+
         if (described)
         {
             env->DeleteLocalRef(described);
         }
+
         env->ExceptionClear();
     }
 

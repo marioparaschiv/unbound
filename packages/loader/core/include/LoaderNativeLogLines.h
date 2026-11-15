@@ -15,7 +15,7 @@ constexpr std::size_t kNativeLogLineMaximum = 16 * 1024;
 // One captured stderr/stdout line, sorted into `react-native` or `native`.
 struct NativeLogLine {
     LogSource source = LogSource::Native;
-    LogLevel  level  = LogLevel::Info;
+    LogLevel level   = LogLevel::Info;
     // React Native's `<file>:<line>` tag when the line has one, otherwise empty.
     std::string scope;
     std::string message;

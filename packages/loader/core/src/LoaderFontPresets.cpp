@@ -6,24 +6,24 @@
 
 namespace loader::fonts {
 struct PlannedFace {
-    std::string   family;
-    FontSource    source;
+    std::string family;
+    FontSource source;
     DiscordFamily wanted;
 };
 
 // The faces one provider install has to bring, or every face when a source names none.
 struct MissingOrigin {
-    FontSource     source;
-    nlohmann::json variants  = nlohmann::json::array();
-    bool           everyFace = false;
+    FontSource source;
+    nlohmann::json variants = nlohmann::json::array();
+    bool everyFace          = false;
 };
 
 nlohmann::json FontService::applyPreset(const std::string &id)
 {
     std::lock_guard<std::mutex> lock(installMutex_);
-    const FontState             state    = store_.state();
-    const DiscordFamilies       families = store_.families();
-    const auto                  preset =
+    const FontState state          = store_.state();
+    const DiscordFamilies families = store_.families();
+    const auto preset =
         std::find_if(state.presets.begin(), state.presets.end(), [&](const FontPreset &entry) {
             return entry.id == id;
         });
@@ -32,8 +32,8 @@ nlohmann::json FontService::applyPreset(const std::string &id)
         throw std::runtime_error("No preset has the id " + id);
     }
 
-    nlohmann::json             skipped = nlohmann::json::array();
-    std::vector<PlannedFace>   planned;
+    nlohmann::json skipped = nlohmann::json::array();
+    std::vector<PlannedFace> planned;
     std::vector<MissingOrigin> missing;
     for (const auto &[family, source] : preset->overrides)
     {
@@ -43,12 +43,14 @@ nlohmann::json FontService::applyPreset(const std::string &id)
             skipped.push_back(family);
             continue;
         }
+
         const DiscordFamily wanted = discordFamily(families, family);
         planned.push_back({family, source, wanted});
         if (source.local() || matchSource(state.fonts, source, wanted))
         {
             continue;
         }
+
         auto origin = std::find_if(missing.begin(), missing.end(), [&](const MissingOrigin &entry) {
             return sameOrigin(entry.source, source);
         });
@@ -56,6 +58,7 @@ nlohmann::json FontService::applyPreset(const std::string &id)
         {
             origin = missing.insert(missing.end(), {source});
         }
+
         if (source.weight)
         {
             origin->variants.push_back(
@@ -83,16 +86,16 @@ nlohmann::json FontService::applyPreset(const std::string &id)
         catch (const std::exception &error)
         {
             log(LogLevel::Warning, LOG_CATEGORY_FONTS,
-                "Failed to install " + origin.source.id + " for preset " + id + ": " +
-                    error.what());
+                "Failed to install " + origin.source.id + " for preset " + id + ": "
+                    + error.what());
             errors.push_back(error.what());
         }
     }
 
-    const std::vector<InstalledFont>   installed = store_.state().fonts;
+    const std::vector<InstalledFont> installed = store_.state().fonts;
     std::map<std::string, std::string> overrides;
-    nlohmann::json                     applied     = nlohmann::json::array();
-    nlohmann::json                     unavailable = nlohmann::json::array();
+    nlohmann::json applied     = nlohmann::json::array();
+    nlohmann::json unavailable = nlohmann::json::array();
     for (const PlannedFace &face : planned)
     {
         // A face that failed keeps Discord's font: no override points at a missing file.
@@ -106,6 +109,7 @@ nlohmann::json FontService::applyPreset(const std::string &id)
             unavailable.push_back(face.family);
         }
     }
+
     store_.replaceOverrides(std::move(overrides));
     return {{"applied", std::move(applied)},
             {"unavailable", std::move(unavailable)},

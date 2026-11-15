@@ -42,12 +42,13 @@ bool candidateFilesGone(const bundle_test::Server &server)
             return false;
         }
     }
+
     return true;
 }
 
 void interruptedPromotionRestoresTheReplacedBundle()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = installTwice(server);
     assert(!storedEtag(server).empty());
 
@@ -61,7 +62,7 @@ void interruptedPromotionRestoresTheReplacedBundle()
 
 void interruptedPromotionWithItsCandidateDiscardsTheCandidate()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = installTwice(server);
     publishUnkeyed(server, "next");
     assert(server.download(updater, std::nullopt));
@@ -77,7 +78,7 @@ void invalidPromotionMarkerStopsTheLaunch()
 {
     for (const char *marker : {"", "2", "yes"})
     {
-        bundle_test::Server   server;
+        bundle_test::Server server;
         loader::BundleUpdater updater = installTwice(server);
         assert(loader::writeTextFileAtomically(server.candidate() + ".promoting", marker));
 
@@ -90,6 +91,7 @@ void invalidPromotionMarkerStopsTheLaunch()
         {
             threw = true;
         }
+
         assert(threw);
         assert(server.activeContents() == "bad");
     }
@@ -97,7 +99,7 @@ void invalidPromotionMarkerStopsTheLaunch()
 
 void attemptedCandidateIsDiscardedWithItsFiles()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = server.updater(loader::BundleTrust{});
     publishUnkeyed(server, "good");
     assert(server.install(updater, std::nullopt));
@@ -115,7 +117,7 @@ void attemptedCandidateIsDiscardedWithItsFiles()
 
 void candidateWithoutAnEtagIsDiscarded()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = server.updater(loader::BundleTrust{});
     publishUnkeyed(server, "good");
     assert(server.install(updater, std::nullopt));
@@ -129,7 +131,7 @@ void candidateWithoutAnEtagIsDiscarded()
 
 void emptyCandidateIsDiscarded()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = server.updater(loader::BundleTrust{});
     publishUnkeyed(server, "good");
     assert(server.install(updater, std::nullopt));
@@ -143,7 +145,7 @@ void emptyCandidateIsDiscarded()
 
 void candidateWithoutARecordIsDiscarded()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = server.updater(loader::BundleTrust{});
     publishUnkeyed(server, "next");
     assert(server.download(updater, std::nullopt));
@@ -156,7 +158,7 @@ void candidateWithoutARecordIsDiscarded()
 
 void exemptionThatNoLongerAppliesDiscardsTheCandidate()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater unkeyed = server.updater(loader::BundleTrust{});
     publishUnkeyed(server, "next");
     assert(server.download(unkeyed, std::nullopt));
@@ -168,7 +170,7 @@ void exemptionThatNoLongerAppliesDiscardsTheCandidate()
 
 void resolvesTheFirstBundleThatExists()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = server.updater(loader::BundleTrust{});
     assert(updater.resolveBundlePath() == server.path("unbound.bundle"));
 
@@ -181,7 +183,7 @@ void resolvesTheFirstBundleThatExists()
 
 void promotingAJsBundleRemovesTheOtherExtension()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = server.updater(loader::BundleTrust{});
     publishUnkeyed(server, "bytecode");
     assert(server.install(updater, std::nullopt));
@@ -203,7 +205,7 @@ void promotingAJsBundleRemovesTheOtherExtension()
 
 void activeBundlesPassThroughCandidateOperations()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = server.updater(loader::BundleTrust{});
     publishUnkeyed(server, "good");
     assert(server.install(updater, std::nullopt));
@@ -222,7 +224,7 @@ void activeBundlesPassThroughCandidateOperations()
 
 void promotionMovesTheReplacedRecordToTheBackup()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = server.updater(loader::BundleTrust{});
     publishUnkeyed(server, "good");
     assert(server.install(updater, std::nullopt));
@@ -234,8 +236,8 @@ void promotionMovesTheReplacedRecordToTheBackup()
 
     publishUnkeyed(server, "next");
     assert(server.install(updater, std::nullopt));
-    assert(loader::readTextFile(server.active() + ".previous" + loader::kBundleTrustSuffix) ==
-           goodRecord);
+    assert(loader::readTextFile(server.active() + ".previous" + loader::kBundleTrustSuffix)
+           == goodRecord);
     assert(storedEtag(server) != goodEtag);
     assert(candidateFilesGone(server));
     assert(!loader::fileExists(server.candidate() + ".promoting"));
@@ -272,7 +274,7 @@ void unsignedPromotionClearsTheBaseline()
 
 void rollBackIgnoresAnEmptyBackup()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = server.updater(loader::BundleTrust{});
     publishUnkeyed(server, "good");
     assert(server.install(updater, std::nullopt));
@@ -284,7 +286,7 @@ void rollBackIgnoresAnEmptyBackup()
 
 void previousRevisionNamesTheBundleARollbackRestores()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
     server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "first"}}, {}, "beta",
                    "1111111abcdef");
@@ -303,7 +305,7 @@ void previousRevisionNamesTheBundleARollbackRestores()
 
 void previousRevisionIsEmptyWithoutAManifest()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = installTwice(server);
     assert(updater.previousBundleRevision() == "");
 }

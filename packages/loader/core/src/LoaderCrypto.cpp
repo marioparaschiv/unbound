@@ -58,8 +58,9 @@ std::optional<std::string> aes256CBCEncrypt(std::string_view key, std::string_vi
     {
         return std::nullopt;
     }
+
     const size_t padding = kAESBlockBytes - plaintext.size() % kAESBlockBytes;
-    std::string  buffer(plaintext);
+    std::string buffer(plaintext);
     buffer.append(padding, static_cast<char>(padding));
 
     br_aes_ct64_cbcenc_keys keys;
@@ -76,26 +77,30 @@ static std::optional<size_t> paddingLength(std::string_view decrypted)
     {
         return std::nullopt;
     }
+
     unsigned char difference = 0;
     for (size_t index = decrypted.size() - padding; index < decrypted.size(); index++)
     {
         difference |= static_cast<unsigned char>(decrypted[index]) ^ padding;
     }
+
     if (difference != 0)
     {
         return std::nullopt;
     }
+
     return padding;
 }
 
 std::optional<std::string> aes256CBCDecrypt(std::string_view key, std::string_view iv,
                                             std::string_view ciphertext)
 {
-    if (!hasCipherParameters(key, iv) || ciphertext.empty() ||
-        ciphertext.size() % kAESBlockBytes != 0)
+    if (!hasCipherParameters(key, iv) || ciphertext.empty()
+        || ciphertext.size() % kAESBlockBytes != 0)
     {
         return std::nullopt;
     }
+
     br_aes_ct64_cbcdec_keys keys;
     br_aes_ct64_cbcdec_init(&keys, key.data(), key.size());
     std::string chain(iv);
@@ -107,6 +112,7 @@ std::optional<std::string> aes256CBCDecrypt(std::string_view key, std::string_vi
     {
         return std::nullopt;
     }
+
     buffer.resize(buffer.size() - *padding);
     return buffer;
 }
@@ -117,11 +123,13 @@ bool constantTimeEqual(std::string_view left, std::string_view right)
     {
         return false;
     }
+
     unsigned char difference = 0;
     for (size_t index = 0; index < left.size(); index++)
     {
         difference |= static_cast<unsigned char>(left[index] ^ right[index]);
     }
+
     return difference == 0;
 }
 
@@ -140,11 +148,14 @@ static bool fillFromPlatform(unsigned char *buffer, size_t count)
             {
                 continue;
             }
+
             return false;
         }
+
         buffer += written;
         count -= static_cast<size_t>(written);
     }
+
     return true;
 #endif
 }
@@ -157,6 +168,7 @@ std::optional<std::string> randomBytes(size_t count)
         crypto_wipe(buffer.data(), buffer.size());
         return std::nullopt;
     }
+
     return buffer;
 }
 
@@ -166,20 +178,22 @@ bool verifyEd25519(std::string_view message, std::string_view signature, std::st
     {
         return false;
     }
-    return crypto_ed25519_check(bytes(signature), bytes(publicKey), bytes(message),
-                                message.size()) == 0;
+
+    return crypto_ed25519_check(bytes(signature), bytes(publicKey), bytes(message), message.size())
+           == 0;
 }
 
 std::string hex(std::string_view value)
 {
     static constexpr char kDigits[] = "0123456789abcdef";
-    std::string           encoded;
+    std::string encoded;
     encoded.reserve(value.size() * 2);
     for (unsigned char byte : value)
     {
         encoded.push_back(kDigits[byte >> 4]);
         encoded.push_back(kDigits[byte & 0x0f]);
     }
+
     return encoded;
 }
 }

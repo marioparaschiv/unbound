@@ -24,7 +24,7 @@ namespace {
 // callFunctionOnBufferedRuntimeExecutor: dereferences it unchecked, so the instance is only
 // messaged under this mutex and retired before -invalidate runs.
 static std::mutex gRuntimeExecutorMutex;
-static __weak id  gRuntimeExecutorInstance = nil;
+static __weak id gRuntimeExecutorInstance = nil;
 
 class IOSNativePluginExecutor final : public loader::native::NativePluginExecutor,
                                       public std::enable_shared_from_this<IOSNativePluginExecutor>
@@ -78,7 +78,7 @@ public:
     }
 
 private:
-    void enqueueRuntime(std::function<void(Runtime &)>     work,
+    void enqueueRuntime(std::function<void(Runtime &)> work,
                         loader::native::NativeWorkPriority priority)
     {
         if (runtimeQueue_.enqueue(std::move(work), priority))
@@ -137,6 +137,7 @@ void setNativePluginRuntimeExecutor(id instance)
         std::lock_guard<std::mutex> lock(gRuntimeExecutorMutex);
         gRuntimeExecutorInstance = instance;
     }
+
     loader::native::setExecutor(std::make_shared<IOSNativePluginExecutor>());
 }
 
@@ -152,11 +153,12 @@ void retireNativePluginRuntimeExecutor(id instance)
 bool runOnNativePluginRuntime(std::function<void(Runtime &)> work)
 {
     std::lock_guard<std::mutex> lock(gRuntimeExecutorMutex);
-    id                          instance = gRuntimeExecutorInstance;
+    id instance = gRuntimeExecutorInstance;
     if (!instance)
     {
         return false;
     }
+
     [instance callFunctionOnBufferedRuntimeExecutor:std::move(work)];
     return true;
 }

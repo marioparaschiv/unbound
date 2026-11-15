@@ -10,7 +10,7 @@
 namespace loader {
 // One member of a JSON object: its decoded key and the raw text of its value.
 struct JSONMember {
-    std::string      key;
+    std::string key;
     std::string_view value;
 };
 

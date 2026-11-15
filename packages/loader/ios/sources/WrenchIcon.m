@@ -39,8 +39,8 @@ UIImage *wrenchIcon(CGFloat side)
     UIGraphicsImageRenderer *renderer =
         [[UIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(side, side)];
     UIImage *image = [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
-        CGFloat       scale = side / kViewBox;
-        UIBezierPath *path  = wrenchPath();
+        CGFloat scale      = side / kViewBox;
+        UIBezierPath *path = wrenchPath();
         [path applyTransform:CGAffineTransformMakeScale(scale, scale)];
         path.lineWidth     = kStrokeWidth * scale;
         path.lineCapStyle  = kCGLineCapRound;

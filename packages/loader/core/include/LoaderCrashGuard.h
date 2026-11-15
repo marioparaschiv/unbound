@@ -15,7 +15,7 @@ enum class CrashPhase
 struct CrashedAddon {
     std::string id;
     std::string name;
-    CrashPhase  phase = CrashPhase::Starting;
+    CrashPhase phase = CrashPhase::Starting;
 };
 
 class AddonCrashGuard
@@ -25,13 +25,13 @@ public:
     static constexpr const char *kRunningFile  = "addon-running.json";
     static constexpr const char *kFrozenFile   = "addon-frozen.json";
     static constexpr const char *kCrashesFile  = "addon-crashes.json";
-    static constexpr int         kCrashLimit   = 2;
+    static constexpr int kCrashLimit           = 2;
 
     explicit AddonCrashGuard(std::string directory);
 
     std::vector<CrashedAddon> recoverFromPreviousLaunch() const;
-    bool                      beginStart(const std::string &id, const std::string &name) const;
-    bool                      finishStart(const std::string &id) const;
+    bool beginStart(const std::string &id, const std::string &name) const;
+    bool finishStart(const std::string &id) const;
 
 private:
     std::string startingPath() const;
@@ -43,8 +43,8 @@ private:
 };
 
 std::vector<CrashedAddon> crashDisabledAddons(const std::string &directory);
-bool                      armAddonCrashAttribution(const std::string &directory);
+bool armAddonCrashAttribution(const std::string &directory);
 std::vector<CrashedAddon> takeUnannouncedCrashDisabledAddons(const std::string &directory);
-std::string               crashDisabledNotice(const CrashedAddon &addon);
-nlohmann::json            crashedAddonsJSON(const std::vector<CrashedAddon> &addons);
+std::string crashDisabledNotice(const CrashedAddon &addon);
+nlohmann::json crashedAddonsJSON(const std::vector<CrashedAddon> &addons);
 }

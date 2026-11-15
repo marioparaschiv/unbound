@@ -44,8 +44,8 @@ void countsAFrozenLaunchEvenWhenItWasSwipedAway()
 
     guard.begin();
     assert(guard.markFrozen());
-    assert(loader::readTextFile(server.path(loader::LaunchGuard::kFile)) ==
-           R"({"failures":0,"frozen":true})");
+    assert(loader::readTextFile(server.path(loader::LaunchGuard::kFile))
+           == R"({"failures":0,"frozen":true})");
 
     loader::LaunchVerdict verdict = guard.begin(loader::PreviousExit::Ended);
     assert(verdict.failures == 1);
@@ -67,7 +67,7 @@ void ignoresAnUnreadableMarker()
 
 void rollsBackToTheBundleTheLastPromotionReplaced()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
     server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "good"}});
     assert(server.install(updater, std::nullopt));

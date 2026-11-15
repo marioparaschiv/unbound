@@ -27,8 +27,9 @@ static void setSuperFFIArgument(Runtime &runtime, const char *encoding, id objec
     {
         validateNativeScalarArgument(object, scalarType);
     }
-    char code  = normalizedType(encoding);
-    id   value = object == [NSNull null] ? @0 : object;
+
+    char code = normalizedType(encoding);
+    id value  = object == [NSNull null] ? @0 : object;
     if (code == '@' || code == '#')
     {
         id retainedValue = object == [NSNull null] ? nil : object;
@@ -36,6 +37,7 @@ static void setSuperFFIArgument(Runtime &runtime, const char *encoding, id objec
         storeNativeValue<void *>(target, (__bridge void *) retainedValue);
         return;
     }
+
     if (code == ':')
     {
         SEL selector = NULL;
@@ -47,9 +49,11 @@ static void setSuperFFIArgument(Runtime &runtime, const char *encoding, id objec
         {
             selector = (SEL)[(NSValue *) value pointerValue];
         }
+
         storeNativeValue<SEL>(target, selector);
         return;
     }
+
     if (code == '^' || code == '*')
     {
         const void *pointer = nullptr;
@@ -61,32 +65,38 @@ static void setSuperFFIArgument(Runtime &runtime, const char *encoding, id objec
         {
             pointer = [(NSValue *) value pointerValue];
         }
+
         storeNativeValue<const void *>(target, pointer);
         return;
     }
+
     if (code == 'B')
     {
         storeNativeValue<bool>(target, [value boolValue]);
         return;
     }
+
     if (code == 'c' || code == 'C')
     {
         storeNativeValue<uint8_t>(target, code == 'c' ? (uint8_t) [value charValue]
                                                       : [value unsignedCharValue]);
         return;
     }
+
     if (code == 's' || code == 'S')
     {
         storeNativeValue<uint16_t>(target, code == 's' ? (uint16_t) [value shortValue]
                                                        : [value unsignedShortValue]);
         return;
     }
+
     if (code == 'i' || code == 'I')
     {
         storeNativeValue<uint32_t>(target, code == 'i' ? (uint32_t) [value intValue]
                                                        : [value unsignedIntValue]);
         return;
     }
+
     if (code == 'l' || code == 'L' || code == 'q' || code == 'Q')
     {
         storeNativeValue<uint64_t>(target, code == 'l' || code == 'q'
@@ -94,16 +104,19 @@ static void setSuperFFIArgument(Runtime &runtime, const char *encoding, id objec
                                                : [value unsignedLongLongValue]);
         return;
     }
+
     if (code == 'f')
     {
         storeNativeValue<float>(target, [value floatValue]);
         return;
     }
+
     if (code == 'd')
     {
         storeNativeValue<double>(target, [value doubleValue]);
         return;
     }
+
     if (code == '{')
     {
         NSUInteger size      = 0;
@@ -113,13 +126,15 @@ static void setSuperFFIArgument(Runtime &runtime, const char *encoding, id objec
         {
             throw JSError(runtime, "Native super struct argument expected");
         }
+
         [(NSValue *) value getValue:target size:size];
         return;
     }
+
     throw JSError(runtime, "Unsupported native super argument type");
 }
 
-static std::vector<loader::ffi::Type> superArgumentTypes(Runtime           &runtime,
+static std::vector<loader::ffi::Type> superArgumentTypes(Runtime &runtime,
                                                          NSMethodSignature *signature)
 {
     std::vector<loader::ffi::Type> types{loader::ffi::resolveType("pointer"),
@@ -131,12 +146,14 @@ static std::vector<loader::ffi::Type> superArgumentTypes(Runtime           &runt
         {
             throw JSError(runtime, "Unsupported native super argument type encoding");
         }
+
         types.push_back(loader::ffi::resolveType(name));
     }
+
     return types;
 }
 
-static std::unique_ptr<loader::ffi::CallFrame> superCallFrame(Runtime           &runtime,
+static std::unique_ptr<loader::ffi::CallFrame> superCallFrame(Runtime &runtime,
                                                               NSMethodSignature *signature)
 {
     std::string resultName = nativeFFITypeName(signature.methodReturnType);
@@ -144,6 +161,7 @@ static std::unique_ptr<loader::ffi::CallFrame> superCallFrame(Runtime           
     {
         throw JSError(runtime, "Unsupported native super return type encoding");
     }
+
     std::vector<loader::ffi::Type> types = superArgumentTypes(runtime, signature);
     return std::make_unique<loader::ffi::CallFrame>(
         loader::ffi::callInterface(loader::ffi::resolveType(resultName), types));
@@ -173,8 +191,8 @@ Value invokeSuperObject(Runtime &runtime, id target, Class currentClass, SEL sel
         throw JSError(runtime, "Invalid native Objective-C super target");
     }
 
-    Class  superclass = class_getSuperclass(currentClass);
-    Method method     = superclass ? class_getInstanceMethod(superclass, selector) : NULL;
+    Class superclass = class_getSuperclass(currentClass);
+    Method method    = superclass ? class_getInstanceMethod(superclass, selector) : NULL;
     if (!method)
     {
         throw JSError(runtime, "Objective-C super selector is not available");
@@ -190,11 +208,11 @@ Value invokeSuperObject(Runtime &runtime, id target, Class currentClass, SEL sel
     }
 
     std::unique_ptr<loader::ffi::CallFrame> frame = superCallFrame(runtime, signature);
-    std::vector<id>                         retained;
-    struct objc_super                       superInfo = {target, currentClass};
+    std::vector<id> retained;
+    struct objc_super superInfo = {target, currentClass};
     setSuperFFIArguments(runtime, signature, arguments, &superInfo, selector, *frame, retained);
-    NativeMethodFamily family        = nativeMethodFamily(selector);
-    bool               returnsObject = returnsRetainableObject(signature.methodReturnType);
+    NativeMethodFamily family = nativeMethodFamily(selector);
+    bool returnsObject        = returnsRetainableObject(signature.methodReturnType);
     retainConsumedReceiver(family, returnsObject, target);
     frame->invoke((void *) objc_msgSendSuper);
     autoreleaseOwnedResult(family, returnsObject, frame->result());
@@ -203,13 +221,13 @@ Value invokeSuperObject(Runtime &runtime, id target, Class currentClass, SEL sel
 
 namespace {
     struct AsyncSuperCall {
-        struct objc_super                       superInfo{};
+        struct objc_super superInfo{};
         std::unique_ptr<loader::ffi::CallFrame> frame;
-        std::vector<id>                         retainedArguments;
-        __strong id                             retainedTarget = nil;
-        __strong id                             retainedResult = nil;
-        NativeMethodFamily                      family         = NativeMethodFamilyNone;
-        bool                                    returnsObject  = false;
+        std::vector<id> retainedArguments;
+        __strong id retainedTarget = nil;
+        __strong id retainedResult = nil;
+        NativeMethodFamily family  = NativeMethodFamilyNone;
+        bool returnsObject         = false;
     };
 }
 
@@ -221,8 +239,8 @@ Value invokeSuperAsync(Runtime &runtime, id target, Class currentClass, SEL sele
         throw JSError(runtime, "Invalid native Objective-C super target");
     }
 
-    Class  superclass = class_getSuperclass(currentClass);
-    Method method     = superclass ? class_getInstanceMethod(superclass, selector) : NULL;
+    Class superclass = class_getSuperclass(currentClass);
+    Method method    = superclass ? class_getInstanceMethod(superclass, selector) : NULL;
     if (!method)
     {
         throw JSError(runtime, "Objective-C super selector is not available");
@@ -274,6 +292,7 @@ Value invokeSuperWithThreadPolicy(Runtime &runtime, id target, Class currentClas
     {
         return invokeSuperObject(runtime, target, currentClass, selector, arguments);
     }
+
     if (!loader::native::crossesToMain(policy))
     {
         throw JSError(runtime, "Unsupported native thread policy");

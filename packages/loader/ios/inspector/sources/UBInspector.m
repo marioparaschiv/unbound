@@ -12,9 +12,14 @@ NSString *const UBReadNever  = @"never";
 NSString *UBTruncate(NSString *text)
 {
     if (![text isKindOfClass:NSString.class])
+    {
         return @"";
+    }
+
     if (text.length <= UB_TEXT_LIMIT)
+    {
         return text;
+    }
 
     NSRange range = [text rangeOfComposedCharacterSequencesForRange:NSMakeRange(0, UB_TEXT_LIMIT)];
     return [[text substringWithRange:NSMakeRange(0, MIN(range.length, UB_TEXT_LIMIT))]
@@ -39,9 +44,8 @@ NSDictionary *UBPage(NSArray *items, NSString *key, NSUInteger offset, NSUIntege
     {
         NSIndexSet *indexes =
             [items indexesOfObjectsPassingTest:^BOOL(id item, NSUInteger index, BOOL *stop) {
-                return
-                    [nameOf(item) rangeOfString:filter options:NSCaseInsensitiveSearch].location !=
-                    NSNotFound;
+                return [nameOf(item) rangeOfString:filter options:NSCaseInsensitiveSearch].location
+                       != NSNotFound;
             }];
         matches = [items objectsAtIndexes:indexes];
     }
@@ -65,7 +69,9 @@ static NSDictionary *UBDescribeClass(Class cls)
     @try
     {
         if (!cls)
+        {
             return @{@"error" : @"Failed to describe class: no class given"};
+        }
 
         NSMutableArray *chain = [NSMutableArray new];
         for (Class current = cls; current && chain.count < UB_CHAIN_LIMIT;
@@ -90,6 +96,7 @@ static NSDictionary *UBDescribeClass(Class cls)
 
         return @{@"chain" : chain};
     }
+
     @catch (NSException *exception)
     {
         return UBErrorFromException(
@@ -103,7 +110,10 @@ static NSDictionary *UBListMembers(Class cls, NSString *kind, NSUInteger offset,
     @try
     {
         if (!cls)
+        {
             return @{@"error" : @"Failed to list members: no class given"};
+        }
+
         if (!UBIsMemberKind(kind))
         {
             return @{
@@ -114,6 +124,7 @@ static NSDictionary *UBListMembers(Class cls, NSString *kind, NSUInteger offset,
 
         return UBListMemberPage(cls, kind, offset, limit, filter);
     }
+
     @catch (NSException *exception)
     {
         return UBErrorFromException(
@@ -128,6 +139,7 @@ static NSDictionary *UBReadValuesGuarded(id object, Class cls, NSString *kind,
     {
         return UBReadValues(object, cls, kind, names, invokeGetters);
     }
+
     @catch (NSException *exception)
     {
         UBEndGetters();
@@ -143,7 +155,7 @@ static unsigned long UBImageClassCount(const struct mach_header *header)
 {
     static const char *const segments[] = {"__DATA", "__DATA_CONST", "__DATA_DIRTY", "__AUTH",
                                            "__AUTH_CONST"};
-    unsigned long            total      = 0;
+    unsigned long total                 = 0;
     for (size_t index = 0; index < sizeof(segments) / sizeof(*segments); index++)
     {
         unsigned long size = 0;
@@ -153,6 +165,7 @@ static unsigned long UBImageClassCount(const struct mach_header *header)
             total += size / sizeof(void *);
         }
     }
+
     return total;
 }
 
@@ -160,9 +173,9 @@ static unsigned long UBImageClassCount(const struct mach_header *header)
 static NSArray<NSDictionary *> *UBImages(void)
 {
     static NSArray<NSDictionary *> *images;
-    static unsigned int             imageCount;
-    static NSLock                  *lock;
-    static dispatch_once_t          once;
+    static unsigned int imageCount;
+    static NSLock *lock;
+    static dispatch_once_t once;
     dispatch_once(&once, ^{ lock = [NSLock new]; });
 
     [lock lock];
@@ -170,16 +183,20 @@ static NSArray<NSDictionary *> *UBImages(void)
     {
         uint32_t count = _dyld_image_count();
         if (images && count == imageCount)
+        {
             return images;
+        }
 
         NSMutableArray<NSDictionary *> *built = [NSMutableArray new];
         for (uint32_t index = 0; index < count; index++)
         {
-            const struct mach_header *header     = _dyld_get_image_header(index);
-            const char               *name       = _dyld_get_image_name(index);
-            unsigned long             classCount = header && name ? UBImageClassCount(header) : 0;
+            const struct mach_header *header = _dyld_get_image_header(index);
+            const char *name                 = _dyld_get_image_name(index);
+            unsigned long classCount         = header && name ? UBImageClassCount(header) : 0;
             if (!classCount)
+            {
                 continue;
+            }
 
             NSString *path = @(name);
             [built addObject:@{
@@ -196,6 +213,7 @@ static NSArray<NSDictionary *> *UBImages(void)
         imageCount = count;
         return images;
     }
+
     @finally
     {
         [lock unlock];
@@ -209,6 +227,7 @@ static NSDictionary *UBListImages(NSUInteger offset, NSUInteger limit, NSString 
         return UBPage(UBImages(), @"images", offset, limit, filter,
                       ^NSString *(NSDictionary *image) { return image[@"path"]; });
     }
+
     @catch (NSException *exception)
     {
         return UBErrorFromException(@"list images", exception);
@@ -219,7 +238,7 @@ static NSDictionary *UBListClasses(NSString *imagePath, NSUInteger offset, NSUIn
                                    NSString *filter)
 {
     static NSCache<NSString *, NSArray<NSString *> *> *cache;
-    static dispatch_once_t                             once;
+    static dispatch_once_t once;
     dispatch_once(&once, ^{
         cache            = [NSCache new];
         cache.countLimit = 32;
@@ -240,7 +259,10 @@ static NSDictionary *UBListClasses(NSString *imagePath, NSUInteger offset, NSUIn
                 objc_copyClassNamesForImage(imagePath.fileSystemRepresentation, &count);
             NSMutableArray<NSString *> *built = [NSMutableArray arrayWithCapacity:count];
             for (unsigned int index = 0; index < count; index++)
+            {
                 [built addObject:@(names[index])];
+            }
+
             free(names);
 
             classes = [built sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
@@ -250,6 +272,7 @@ static NSDictionary *UBListClasses(NSString *imagePath, NSUInteger offset, NSUIn
         return UBPage(classes, @"classes", offset, limit, filter,
                       ^NSString *(NSString *name) { return name; });
     }
+
     @catch (NSException *exception)
     {
         return UBErrorFromException([NSString stringWithFormat:@"list classes of %@", imagePath],
@@ -270,7 +293,9 @@ static const UBInspectorAPI UBInspectorTable = {
 __attribute__((visibility("default"))) const UBInspectorAPI *UBInspectorGetAPI(uint32_t abiVersion)
 {
     if (abiVersion != UB_INSPECTOR_ABI_VERSION)
+    {
         return NULL;
+    }
 
     static dispatch_once_t once;
     dispatch_once(&once, ^{
@@ -278,6 +303,7 @@ __attribute__((visibility("default"))) const UBInspectorAPI *UBInspectorGetAPI(u
         {
             UBRecoverCrashedGetters();
         }
+
         @catch (NSException *exception)
         {
             NSLog(@"UnboundInspector: Failed to recover crashed getters: %@", exception);

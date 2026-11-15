@@ -52,14 +52,14 @@ static uint64_t connectionOf(NSURLSessionTask *task)
 
 @implementation HotReload
 {
-    dispatch_queue_t      _queue;
-    NSURLSession         *_session;
+    dispatch_queue_t _queue;
+    NSURLSession *_session;
     NSURLSessionDataTask *_task;
 }
 
 + (instancetype)shared
 {
-    static HotReload      *shared = nil;
+    static HotReload *shared = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{ shared = [[HotReload alloc] init]; });
     return shared;
@@ -121,6 +121,7 @@ static uint64_t connectionOf(NSURLSessionTask *task)
         {
             hotReload->onClosed(request.connection, std::string("invalid URL"));
         }
+
         return;
     }
 
@@ -152,10 +153,10 @@ static uint64_t connectionOf(NSURLSessionTask *task)
     didReceiveResponse:(NSURLResponse *)response
      completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler
 {
-    NSInteger status    = [response isKindOfClass:[NSHTTPURLResponse class]]
-                              ? [(NSHTTPURLResponse *) response statusCode]
-                              : 0;
-    auto      hotReload = controller();
+    NSInteger status = [response isKindOfClass:[NSHTTPURLResponse class]]
+                           ? [(NSHTTPURLResponse *) response statusCode]
+                           : 0;
+    auto hotReload   = controller();
     completionHandler(
         hotReload && hotReload->onResponse(connectionOf(dataTask), static_cast<int>(status))
             ? NSURLSessionResponseAllow
@@ -167,7 +168,7 @@ static uint64_t connectionOf(NSURLSessionTask *task)
     didReceiveData:(NSData *)data
 {
     std::string_view chunk(static_cast<const char *>(data.bytes), data.length);
-    auto             hotReload = controller();
+    auto hotReload = controller();
     if (!hotReload || !hotReload->onChunk(connectionOf(dataTask), chunk))
     {
         [dataTask cancel];

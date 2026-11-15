@@ -10,6 +10,6 @@ facebook::jsi::Value invokeSuperAsync(facebook::jsi::Runtime &runtime, id target
                                       Class currentClass, SEL selector, NSArray *arguments);
 facebook::jsi::Value invokeSuperWithThreadPolicy(facebook::jsi::Runtime &runtime, id target,
                                                  Class currentClass, SEL selector,
-                                                 NSArray                    *arguments,
+                                                 NSArray *arguments,
                                                  const facebook::jsi::Value *options);
 }

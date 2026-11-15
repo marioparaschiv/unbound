@@ -10,8 +10,8 @@ namespace loader {
 struct FreezeReport {
     std::string id;
     std::string name;
-    double      seconds  = 0;
-    bool        resolved = false;
+    double seconds = 0;
+    bool resolved  = false;
     std::string detail;
     std::string stack;
 };

@@ -20,12 +20,12 @@ using unbound::ios::toStdString;
 
 @implementation Themes
 static NSMutableDictionary<NSString *, NSValue *> *originalRawImplementations;
-static __weak DCDThemeModule                      *currentDiscordTheme;
-static BOOL                                        semanticColorsSwizzled = NO;
-static BOOL                                        refreshingDiscordTheme = NO;
-static NSDictionary<NSString *, UIColor *>        *semanticColors         = nil;
-static NSDictionary<NSString *, NSString *>       *rawFallbacks           = nil;
-static NSDictionary<NSNumber *, UIColor *>        *paletteColors          = nil;
+static __weak DCDThemeModule *currentDiscordTheme;
+static BOOL semanticColorsSwizzled                         = NO;
+static BOOL refreshingDiscordTheme                         = NO;
+static NSDictionary<NSString *, UIColor *> *semanticColors = nil;
+static NSDictionary<NSString *, NSString *> *rawFallbacks  = nil;
+static NSDictionary<NSNumber *, UIColor *> *paletteColors  = nil;
 
 static NSNumber *paletteKey(CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha)
 {
@@ -72,10 +72,10 @@ static void findDiscordText(void)
             continue;
         }
 
-        unsigned long size  = 0;
-        uint8_t      *start = getsegmentdata(header, "__TEXT", &size);
-        discordTextStart    = (uintptr_t) start;
-        discordTextEnd      = (uintptr_t) start + size;
+        unsigned long size = 0;
+        uint8_t *start     = getsegmentdata(header, "__TEXT", &size);
+        discordTextStart   = (uintptr_t) start;
+        discordTextEnd     = (uintptr_t) start + size;
         return;
     }
 }
@@ -87,8 +87,8 @@ static NS_RETURNS_RETAINED UIColor *themedInitWithHue(NS_RELEASES_ARGUMENT id se
                                                       CGFloat hue, CGFloat saturation,
                                                       CGFloat brightness, CGFloat alpha)
 {
-    uintptr_t caller  = (uintptr_t) __builtin_extract_return_addr(__builtin_return_address(0));
-    BOOL      palette = caller >= discordTextStart && caller < discordTextEnd;
+    uintptr_t caller = (uintptr_t) __builtin_extract_return_addr(__builtin_return_address(0));
+    BOOL palette     = caller >= discordTextStart && caller < discordTextEnd;
 
     UIColor *themed = nil;
     @synchronized([Themes class])
@@ -134,7 +134,7 @@ static NSString *optionalThemeId(const std::optional<std::string> &themeId)
 
 static NSObject *themeApplicationLock(void)
 {
-    static NSObject       *lock = nil;
+    static NSObject *lock = nil;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         lock                       = [[NSObject alloc] init];
@@ -146,7 +146,7 @@ static NSObject *themeApplicationLock(void)
 static double millisecondsSince(uint64_t start)
 {
     static mach_timebase_info_data_t timebase;
-    static dispatch_once_t           once;
+    static dispatch_once_t once;
     dispatch_once(&once, ^{ mach_timebase_info(&timebase); });
     return (double) (mach_absolute_time() - start) * timebase.numer / timebase.denom / 1e6;
 }
@@ -249,6 +249,7 @@ static void reloadVisibleChats(void)
         [Themes refreshDiscordThemeOnMainThread];
         return;
     }
+
     dispatch_async(dispatch_get_main_queue(), ^{ [Themes refreshDiscordThemeOnMainThread]; });
 }
 
@@ -256,8 +257,8 @@ static void reloadVisibleChats(void)
 {
     reloadVisibleChats();
 
-    DCDThemeModule *theme        = currentDiscordTheme;
-    NSString       *discordTheme = optionalThemeId(themeSelection().discordTheme());
+    DCDThemeModule *theme  = currentDiscordTheme;
+    NSString *discordTheme = optionalThemeId(themeSelection().discordTheme());
     if (!theme || discordTheme.length == 0)
     {
         return;
@@ -268,6 +269,7 @@ static void reloadVisibleChats(void)
     {
         [theme updateTheme:discordTheme];
     }
+
     @finally
     {
         refreshingDiscordTheme = NO;
@@ -285,6 +287,7 @@ static void reloadVisibleChats(void)
 
         [Themes applyTheme:manifestId];
     }
+
     [Themes refreshDiscordTheme];
     return YES;
 }
@@ -351,9 +354,9 @@ static void reloadVisibleChats(void)
 
     hookPaletteColors();
 
-    Class                                       colorClass = NSClassFromString(@"UIColor");
-    NSMutableDictionary<NSNumber *, UIColor *> *palette    = [NSMutableDictionary dictionary];
-    NSMutableSet<NSNumber *>                   *ambiguous  = [NSMutableSet set];
+    Class colorClass                                    = NSClassFromString(@"UIColor");
+    NSMutableDictionary<NSNumber *, UIColor *> *palette = [NSMutableDictionary dictionary];
+    NSMutableSet<NSNumber *> *ambiguous                 = [NSMutableSet set];
 
     @try
     {
@@ -371,7 +374,7 @@ static void reloadVisibleChats(void)
             }
 
             __block id (*original)(Class, SEL);
-            IMP     replacement = imp_implementationWithBlock(^UIColor *(id self) {
+            IMP replacement = imp_implementationWithBlock(^UIColor *(id self) {
                 UIColor *color = payload[raw];
                 return color ?: original(instance, selector);
             });
@@ -399,6 +402,7 @@ static void reloadVisibleChats(void)
 
         [Logger info:LOG_CATEGORY_THEMES format:@"Raw color swizzle completed."];
     }
+
     @catch (NSException *e)
     {
         [Logger error:LOG_CATEGORY_THEMES format:@"Failed to swizzle raw colors. (%@)", e.reason];
@@ -442,6 +446,7 @@ static void reloadVisibleChats(void)
         {
             return;
         }
+
         semanticColorsSwizzled = YES;
         [Themes swizzleSemanticColors];
     }
@@ -458,7 +463,7 @@ static void reloadVisibleChats(void)
         Class instance = object_getClass(NSClassFromString(@"DCDThemeColor"));
 
         unsigned methodCount = 0;
-        Method  *methods     = class_copyMethodList(instance, &methodCount);
+        Method *methods      = class_copyMethodList(instance, &methodCount);
 
         for (unsigned int i = 0; i < methodCount; i++)
         {
@@ -476,13 +481,13 @@ static void reloadVisibleChats(void)
                 continue;
             }
 
-            SEL       selector = method_getName(method);
-            NSString *name     = NSStringFromSelector(selector);
+            SEL selector   = method_getName(method);
+            NSString *name = NSStringFromSelector(selector);
 
             __block id (*original)(Class, SEL) =
                 (id (*)(Class, SEL)) method_getImplementation(method);
             IMP replacement = imp_implementationWithBlock(^UIColor *(id self) {
-                UIColor  *themed   = nil;
+                UIColor *themed    = nil;
                 NSString *fallback = nil;
                 @synchronized([Themes class])
                 {
@@ -497,8 +502,8 @@ static void reloadVisibleChats(void)
 
                 if (fallback)
                 {
-                    SEL   colorSelector = NSSelectorFromString(fallback);
-                    Class colorClass    = object_getClass(NSClassFromString(@"UIColor"));
+                    SEL colorSelector = NSSelectorFromString(fallback);
+                    Class colorClass  = object_getClass(NSClassFromString(@"UIColor"));
                     if ([colorClass respondsToSelector:colorSelector])
                     {
                         UIColor *(*getColor)(id, SEL) =
@@ -519,15 +524,18 @@ static void reloadVisibleChats(void)
               format:@"Semantic color swizzle completed: %u of %u getters in %.2f ms.", swizzled,
                      methodCount, millisecondsSince(started)];
     }
+
     @catch (NSException *e)
     {
         [Logger error:LOG_CATEGORY_THEMES
                format:@"Failed to swizzle semantic colors. (%@)", e.reason];
     }
 }
+
 @end
 
 %hook DCDThemeModule
+
 - (void)updateTheme:(id)theme
 {
     if (![theme isKindOfClass:[NSString class]])
@@ -552,4 +560,5 @@ static void reloadVisibleChats(void)
 
     %orig;
 }
+
 %end

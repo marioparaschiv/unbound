@@ -29,14 +29,16 @@ static std::optional<int64_t> corruptBackupTimestamp(const std::string &name,
     {
         return std::nullopt;
     }
-    const char *first     = name.data() + prefix.size();
-    const char *last      = name.data() + name.size();
-    int64_t     timestamp = 0;
-    auto [end, error]     = std::from_chars(first, last, timestamp);
+
+    const char *first = name.data() + prefix.size();
+    const char *last  = name.data() + name.size();
+    int64_t timestamp = 0;
+    auto [end, error] = std::from_chars(first, last, timestamp);
     if (error != std::errc() || end != last)
     {
         return std::nullopt;
     }
+
     return timestamp;
 }
 
@@ -48,16 +50,18 @@ std::string SettingsStore::cachePath() const
 SettingsStore::FileStamp SettingsStore::stampOnDisk() const
 {
     std::error_code error;
-    const auto      size = std::filesystem::file_size(path_, error);
+    const auto size = std::filesystem::file_size(path_, error);
     if (error)
     {
         return {};
     }
+
     const auto modified = std::filesystem::last_write_time(path_, error);
     if (error)
     {
         return {};
     }
+
     return {true, static_cast<int64_t>(modified.time_since_epoch().count()),
             static_cast<uint64_t>(size)};
 }
@@ -68,29 +72,33 @@ void SettingsStore::refreshLocked(bool beforeWrite) const
     {
         return;
     }
+
     auto now = std::chrono::steady_clock::now();
     if (!beforeWrite && now - checkedAt_ < diskRecheck_)
     {
         return;
     }
+
     checkedAt_              = now;
     const FileStamp current = stampOnDisk();
     if (current == stamp_ || !current.exists)
     {
         return;
     }
+
     std::optional<std::string> contents = readTextFile(path_);
     if (contents)
     {
         adoptLocked(*contents);
     }
+
     stamp_ = current;
 }
 
 bool SettingsStore::adoptLocked(const std::string &contents) const
 {
-    const uint64_t                          hash  = settingsHash(contents);
-    std::optional<std::string>              cache = readTextFile(cachePath());
+    const uint64_t hash              = settingsHash(contents);
+    std::optional<std::string> cache = readTextFile(cachePath());
     std::optional<std::vector<CachedStore>> stores =
         cache ? decodeSettingsCache(*cache, hash, contents.size()) : std::nullopt;
     if (stores)
@@ -103,6 +111,7 @@ bool SettingsStore::adoptLocked(const std::string &contents) const
                                   RawStore{contents.substr(store.jsonOffset, store.jsonLength),
                                            std::move(store.packed)});
         }
+
         jsonHash_   = hash;
         cacheStale_ = false;
         return true;
@@ -115,12 +124,14 @@ bool SettingsStore::adoptLocked(const std::string &contents) const
     {
         return false;
     }
+
     data_ = nlohmann::json::object();
     raw_.clear();
     for (JSONMember &member : *members)
     {
         raw_.insert_or_assign(std::move(member.key), RawStore{std::string(member.value), {}});
     }
+
     jsonHash_   = hash;
     cacheStale_ = true;
     return true;
@@ -151,6 +162,7 @@ void SettingsStore::parseStoreLocked(const std::string &store) const
     {
         parsed = parseBoundedJSON(raw->second.json);
     }
+
     if (parsed.is_discarded())
     {
         log(LogLevel::Error, LOG_CATEGORY_SETTINGS,
@@ -160,6 +172,7 @@ void SettingsStore::parseStoreLocked(const std::string &store) const
     {
         data_[store] = std::move(parsed);
     }
+
     raw_.erase(raw);
 }
 
@@ -179,6 +192,7 @@ std::string SettingsStore::dumpLocked(std::vector<CachedStore> &layout) const
         {
             text += ',';
         }
+
         text += nlohmann::json(store).dump();
         text += ':';
         layout.push_back({store, text.size(), value.size(), std::move(packed)});
@@ -189,11 +203,13 @@ std::string SettingsStore::dumpLocked(std::vector<CachedStore> &layout) const
     {
         append(store, value.dump(), packStore(value));
     }
+
     // Stores never read since loading go back out as the text they were read as.
     for (const auto &[store, raw] : raw_)
     {
         append(store, raw.json, raw.packed);
     }
+
     text += '}';
     return text;
 }
@@ -210,6 +226,7 @@ void SettingsStore::load()
             "settings.json exists but cannot be read, as before the first unlock; leaving it "
             "untouched.");
     }
+
     if (!contents)
     {
         resetLocked();
@@ -247,16 +264,19 @@ void SettingsStore::mergeExternalEditsLocked() const
     {
         return;
     }
+
     const FileStamp current = stampOnDisk();
     if (!current.exists || current == stamp_)
     {
         return;
     }
+
     std::optional<std::string> contents = readTextFile(path_);
     if (!contents || !adoptLocked(*contents))
     {
         return;
     }
+
     std::vector<nlohmann::json> journal = std::move(journal_);
     journal_.clear();
     applyLocked(nlohmann::json(journal));
@@ -277,6 +297,7 @@ void SettingsStore::keepLastGoodLocked(const std::string &contents) const
     {
         return;
     }
+
     if (!writeTextFileAtomically(lastGoodPath(), contents))
     {
         log(LogLevel::Warning, LOG_CATEGORY_SETTINGS,
@@ -292,6 +313,7 @@ bool SettingsStore::restoreLastGoodLocked() const
     {
         return false;
     }
+
     log(LogLevel::Error, LOG_CATEGORY_SETTINGS,
         "settings.json was corrupt; restored the last good copy.");
     recordSettingsRecovery("restored");
@@ -307,6 +329,7 @@ void SettingsStore::reload()
             return;
         }
     }
+
     load();
 }
 
@@ -323,15 +346,17 @@ bool SettingsStore::save() const
     {
         return false;
     }
+
     mergeExternalEditsLocked();
     std::vector<CachedStore> layout;
-    const std::string        text = dumpLocked(layout);
+    const std::string text = dumpLocked(layout);
     // settings.json first: a crash before the cache is written leaves a cache for other bytes,
     // which the next load ignores.
     if (!writeTextFileAtomically(path_, text))
     {
         return false;
     }
+
     stamp_    = stampOnDisk();
     dirty_    = false;
     replaced_ = false;
@@ -342,9 +367,11 @@ bool SettingsStore::save() const
     {
         whole = whole && !store.packed.empty();
     }
+
     // A store loaded without the cache has no MessagePack yet; refreshCache() packs it later.
-    cacheStale_ = !whole || !writeTextFileAtomically(
-                                cachePath(), encodeSettingsCache(jsonHash_, text.size(), layout));
+    cacheStale_ = !whole
+                  || !writeTextFileAtomically(cachePath(),
+                                              encodeSettingsCache(jsonHash_, text.size(), layout));
     return true;
 }
 
@@ -359,13 +386,14 @@ void SettingsStore::refreshCache()
     }
 
     // Read and pack outside the lock so readers on other threads are not held up.
-    std::optional<std::string>             contents = readTextFile(path_);
+    std::optional<std::string> contents = readTextFile(path_);
     std::optional<std::vector<JSONMember>> members =
         contents ? splitJSONObject(*contents) : std::nullopt;
     if (!members)
     {
         return;
     }
+
     std::vector<CachedStore> stores;
     for (const JSONMember &member : *members)
     {
@@ -375,9 +403,11 @@ void SettingsStore::refreshCache()
             // A malformed store has no MessagePack form; it keeps loading from JSON.
             return;
         }
+
         stores.push_back({member.key, static_cast<uint64_t>(member.value.data() - contents->data()),
                           member.value.size(), packStore(parsed)});
     }
+
     const uint64_t hash = settingsHash(*contents);
 
     std::lock_guard<std::mutex> lock(mutex_);
@@ -386,6 +416,7 @@ void SettingsStore::refreshCache()
     {
         return;
     }
+
     for (const CachedStore &store : stores)
     {
         auto raw = raw_.find(store.name);
@@ -394,16 +425,17 @@ void SettingsStore::refreshCache()
             raw->second.packed = store.packed;
         }
     }
+
     cacheStale_ =
         !writeTextFileAtomically(cachePath(), encodeSettingsCache(hash, contents->size(), stores));
 }
 
 void SettingsStore::backupCorruptFile() const
 {
-    auto        timestamp = std::chrono::duration_cast<std::chrono::seconds>(
-                                std::chrono::system_clock::now().time_since_epoch())
-                                .count();
-    std::string backup    = path_ + ".corrupt-" + std::to_string(timestamp);
+    auto timestamp     = std::chrono::duration_cast<std::chrono::seconds>(
+                             std::chrono::system_clock::now().time_since_epoch())
+                             .count();
+    std::string backup = path_ + ".corrupt-" + std::to_string(timestamp);
     if (!copyFile(path_, backup))
     {
         log(LogLevel::Error, LOG_CATEGORY_SETTINGS, "Failed to back up corrupt settings.json.");
@@ -418,7 +450,7 @@ void SettingsStore::backupCorruptFile() const
 void SettingsStore::pruneCorruptBackups() const
 {
     const std::filesystem::path settings(path_);
-    const std::string           prefix = settings.filename().string() + ".corrupt-";
+    const std::string prefix = settings.filename().string() + ".corrupt-";
     std::vector<std::pair<int64_t, std::string>> backups;
     for (const std::string &name : listDirectory(settings.parent_path().string()))
     {
@@ -427,6 +459,7 @@ void SettingsStore::pruneCorruptBackups() const
             backups.emplace_back(*timestamp, name);
         }
     }
+
     std::sort(backups.begin(), backups.end());
     for (size_t index = 0; index + kCorruptBackupsKept < backups.size(); index++)
     {

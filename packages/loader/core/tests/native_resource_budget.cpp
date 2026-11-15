@@ -17,6 +17,7 @@ static bool exhausts(NativeResourceBudget &budget)
         assert(error.code() == "NATIVE_BRIDGE_ERROR");
         return true;
     }
+
     return false;
 }
 
@@ -36,6 +37,7 @@ int main()
         NativeResourceReservation abandoned(budget, "budget exhausted");
         assert(budget.used() == 2);
     }
+
     assert(budget.used() == 1);
     assert(!exhausts(budget));
     assert(budget.used() == 2);
@@ -49,21 +51,24 @@ int main()
     assert(budget.acquire(1));
 
     assert(nativeSurfaceBudget().limit() == 64);
-    NativeResourceBudget   hooks(3);
+    NativeResourceBudget hooks(3);
     NativeResourceRegistry registry(hooks);
     {
         NativeResourceReservation reservation(hooks, "budget exhausted");
         registry.adopt("hook-1", reservation);
     }
+
     {
         NativeResourceReservation duplicate(hooks, "budget exhausted");
         registry.adopt("hook-1", duplicate);
     }
+
     assert(hooks.used() == 1 && registry.size() == 1 && registry.contains("hook-1"));
     {
         NativeResourceReservation reservation(hooks, "budget exhausted");
         registry.adopt("hook-2", reservation);
     }
+
     assert(registry.release("hook-1"));
     assert(!registry.release("hook-1"));
     assert(hooks.used() == 1);

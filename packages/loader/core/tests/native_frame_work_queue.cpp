@@ -6,7 +6,7 @@
 int main()
 {
     loader::native::NativeFrameWorkQueue queue;
-    std::vector<int>                     observed;
+    std::vector<int> observed;
 
     assert(queue.enqueue([&]() {
         observed.push_back(1);

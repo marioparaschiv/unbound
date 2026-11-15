@@ -10,9 +10,9 @@
 namespace loader {
 struct NativeCallSlot {
     std::atomic<uintptr_t> owner{0};
-    std::atomic<uint32_t>  sequence{0};
-    std::atomic<int64_t>   startedAt{0};
-    char                   label[kNativeCallLabelLimit] = {};
+    std::atomic<uint32_t> sequence{0};
+    std::atomic<int64_t> startedAt{0};
+    char label[kNativeCallLabelLimit] = {};
 };
 
 static NativeCallSlot gSlots[kActivityThreadLimit];
@@ -50,6 +50,7 @@ static NativeCallSlot *claimSlot()
             return &slot;
         }
     }
+
     return nullptr;
 }
 
@@ -90,6 +91,7 @@ std::optional<NativeCallSnapshot> nativeCallOnThread(uintptr_t thread)
             {
                 continue;
             }
+
             char label[kNativeCallLabelLimit];
             std::memcpy(label, slot.label, kNativeCallLabelLimit);
             int64_t startedAt = slot.startedAt.load(std::memory_order_relaxed);
@@ -97,15 +99,19 @@ std::optional<NativeCallSnapshot> nativeCallOnThread(uintptr_t thread)
             {
                 continue;
             }
+
             label[kNativeCallLabelLimit - 1] = '\0';
             if (startedAt == 0 || label[0] == '\0')
             {
                 return std::nullopt;
             }
+
             return NativeCallSnapshot{label, startedAt};
         }
+
         return std::nullopt;
     }
+
     return std::nullopt;
 }
 
@@ -116,6 +122,7 @@ CurrentNativeCall currentNativeCall()
     {
         return {};
     }
+
     return {std::string_view(slot->label), slot->sequence.load(std::memory_order_relaxed)};
 }
 
@@ -125,9 +132,10 @@ std::string describeNativeCall(const std::optional<NativeCallSnapshot> &call, in
     {
         return "It is running JavaScript, outside any native call.";
     }
+
     int64_t elapsed = std::max<int64_t>(0, now - call->startedAt);
-    return "It has been inside the native call " + call->label + " for " + std::to_string(elapsed) +
-           " ms.";
+    return "It has been inside the native call " + call->label + " for " + std::to_string(elapsed)
+           + " ms.";
 }
 
 NativeCallScope::NativeCallScope(const std::string &name, const std::string &detail)
@@ -137,6 +145,7 @@ NativeCallScope::NativeCallScope(const std::string &name, const std::string &det
     {
         return;
     }
+
     std::memcpy(previousLabel_, slot_->label, kNativeCallLabelLimit);
     previousStartedAt_ = slot_->startedAt.load(std::memory_order_relaxed);
 

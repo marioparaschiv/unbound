@@ -22,6 +22,7 @@ const char *followUpName(FollowUp followUp)
         case FollowUp::OpenToolbox:
             return "open-toolbox";
     }
+
     return "none";
 }
 
@@ -38,7 +39,7 @@ Menu menu(const SettingsStore &settings)
 
 nlohmann::json menuJSON(const SettingsStore &settings)
 {
-    const Menu     model = menu(settings);
+    const Menu model     = menu(settings);
     nlohmann::json items = nlohmann::json::array();
     for (const MenuItem &item : model.items)
     {
@@ -59,10 +60,12 @@ SettingsEditResult saveSettings(SettingsStore &settings, const std::string &json
     {
         return {false, kInvalidSettingsMessage};
     }
+
     if (!settings.save())
     {
         return {false, kSettingsWriteFailedMessage};
     }
+
     return {true, ""};
 }
 
@@ -78,6 +81,7 @@ static double fraction(const nlohmann::json &value, const char *key, double fall
     {
         return fallback;
     }
+
     return std::clamp(entry->get<double>(), 0.0, 1.0);
 }
 
@@ -88,6 +92,7 @@ Point position(const SettingsStore &settings)
     {
         return kDefaultPosition;
     }
+
     return {fraction(*value, "x", kDefaultPosition.x), fraction(*value, "y", kDefaultPosition.y)};
 }
 
@@ -113,11 +118,12 @@ Point buttonCenter(const SettingsStore &settings, Size bounds, Insets insets)
 
 bool saveButtonCenter(SettingsStore &settings, Point center, Size bounds)
 {
-    if (!(bounds.width > 0) || !(bounds.height > 0) || !std::isfinite(center.x) ||
-        !std::isfinite(center.y))
+    if (!(bounds.width > 0) || !(bounds.height > 0) || !std::isfinite(center.x)
+        || !std::isfinite(center.y))
     {
         return false;
     }
+
     settings.set(preferences::kStore, kPositionKey,
                  {{"x", std::clamp(center.x / bounds.width, 0.0, 1.0)},
                   {"y", std::clamp(center.y / bounds.height, 0.0, 1.0)}});
@@ -139,6 +145,7 @@ static std::optional<Frame> intersection(const Frame &first, const Frame &second
     {
         return std::nullopt;
     }
+
     return Frame{left, top, right - left, bottom - top};
 }
 

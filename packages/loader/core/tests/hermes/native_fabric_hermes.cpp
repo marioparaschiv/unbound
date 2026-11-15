@@ -39,6 +39,7 @@ public:
             held.push_back(std::move(work));
             return;
         }
+
         work();
     }
 
@@ -49,11 +50,13 @@ public:
         {
             return false;
         }
+
         frameHeld.push_back(std::move(work));
         if (!holding)
         {
             releaseFrame();
         }
+
         return true;
     }
 
@@ -78,6 +81,7 @@ public:
         {
             work();
         }
+
         for (const auto &work : timers)
         {
             work();
@@ -93,12 +97,13 @@ public:
             delayed.push_back(std::move(work));
             return;
         }
+
         work();
     }
 
-    bool                               holding                 = false;
-    bool                               frameSchedulingSucceeds = true;
-    size_t                             frameSchedules          = 0;
+    bool holding                 = false;
+    bool frameSchedulingSucceeds = true;
+    size_t frameSchedules        = 0;
     std::vector<std::function<void()>> held;
     std::vector<std::function<void()>> frameHeld;
     std::vector<std::function<void()>> delayed;
@@ -115,13 +120,14 @@ public:
 class RecordingAdapter final : public loader::native::FabricAdapter
 {
 public:
-    std::shared_ptr<loader::native::FabricView> view(jsi::Runtime     &runtime,
+    std::shared_ptr<loader::native::FabricView> view(jsi::Runtime &runtime,
                                                      const jsi::Value &handle) override
     {
         if (!handle.isString())
         {
             throw std::invalid_argument("A view handle must be a string here");
         }
+
         return std::make_shared<NamedView>(handle.getString(runtime).utf8(runtime));
     }
 
@@ -129,8 +135,8 @@ public:
                       const nlohmann::json &properties) override
     {
         std::string id = "surface-" + std::to_string(++mounted);
-        calls.push_back("mount " + static_cast<const NamedView &>(container).name + " " +
-                        moduleName + " " + properties.dump());
+        calls.push_back("mount " + static_cast<const NamedView &>(container).name + " " + moduleName
+                        + " " + properties.dump());
         return id;
     }
 
@@ -143,8 +149,8 @@ public:
     void setSize(const std::string &surface, const loader::native::NativeSize &minimum,
                  const loader::native::NativeSize &maximum) override
     {
-        calls.push_back("setSize " + surface + " " + loader::native::toJSON(minimum).dump() + " " +
-                        loader::native::toJSON(maximum).dump());
+        calls.push_back("setSize " + surface + " " + loader::native::toJSON(minimum).dump() + " "
+                        + loader::native::toJSON(maximum).dump());
     }
 
     void setFrame(const std::string &surface, const loader::native::NativeFrame &frame) override
@@ -175,6 +181,7 @@ public:
         {
             calls.push_back("detach " + surface);
         }
+
         return reusable;
     }
 
@@ -199,11 +206,11 @@ public:
         return knowsFrames;
     }
 
-    bool                     reusable      = false;
-    bool                     knowsFrames   = false;
-    bool                     updates       = true;
-    bool                     detachesEarly = false;
-    int                      mounted       = 0;
+    bool reusable      = false;
+    bool knowsFrames   = false;
+    bool updates       = true;
+    bool detachesEarly = false;
+    int mounted        = 0;
     std::vector<std::string> calls;
 };
 
@@ -215,21 +222,24 @@ static bool sameCall(const std::string &actual, const std::string &expected)
     {
         return actual == expected;
     }
+
     if (actual.substr(0, actualJSON) != expected.substr(0, expectedJSON))
     {
         return false;
     }
-    std::string actualRest    = actual.substr(actualJSON);
-    std::string expectedRest  = expected.substr(expectedJSON);
-    size_t      actualSplit   = actualRest.find("} {");
-    size_t      expectedSplit = expectedRest.find("} {");
+
+    std::string actualRest   = actual.substr(actualJSON);
+    std::string expectedRest = expected.substr(expectedJSON);
+    size_t actualSplit       = actualRest.find("} {");
+    size_t expectedSplit     = expectedRest.find("} {");
     if (actualSplit != std::string::npos && expectedSplit != std::string::npos)
     {
-        return nlohmann::json::parse(actualRest.substr(0, actualSplit + 1)) ==
-                   nlohmann::json::parse(expectedRest.substr(0, expectedSplit + 1)) &&
-               nlohmann::json::parse(actualRest.substr(actualSplit + 2)) ==
-                   nlohmann::json::parse(expectedRest.substr(expectedSplit + 2));
+        return nlohmann::json::parse(actualRest.substr(0, actualSplit + 1))
+                   == nlohmann::json::parse(expectedRest.substr(0, expectedSplit + 1))
+               && nlohmann::json::parse(actualRest.substr(actualSplit + 2))
+                      == nlohmann::json::parse(expectedRest.substr(expectedSplit + 2));
     }
+
     return nlohmann::json::parse(actualRest) == nlohmann::json::parse(expectedRest);
 }
 
@@ -324,6 +334,7 @@ static void servesKnownFrames(jsi::Runtime &runtime, RecordingAdapter &adapter)
     {
         std::fprintf(stderr, "%s\n", failure.get<std::string>().c_str());
     }
+
     require(failures.empty(), "every known frame check passes");
 
     size_t measured = 0;
@@ -331,6 +342,7 @@ static void servesKnownFrames(jsi::Runtime &runtime, RecordingAdapter &adapter)
     {
         measured += call.rfind("measureSurface ", 0) == 0 ? 1 : 0;
     }
+
     require(measured == 1, "a known frame is served without measuring on main");
     require(adapter.calls.size() == 5,
             "mount, measure, setFrame, update and unmount reach the adapter");
@@ -345,6 +357,7 @@ static size_t countCalls(const RecordingAdapter &adapter, const std::string &pre
     {
         found += call.rfind(prefix, 0) == 0 ? 1 : 0;
     }
+
     return found;
 }
 
@@ -362,21 +375,21 @@ static void evaluate(jsi::Runtime &runtime, const std::string &source, const cha
 
 static nlohmann::json readFrameConformanceFixture()
 {
-    std::ifstream input(std::string(UNBOUND_CORE_TEST_VECTORS_DIR) +
-                        "/native-fabric-conformance.json");
+    std::ifstream input(std::string(UNBOUND_CORE_TEST_VECTORS_DIR)
+                        + "/native-fabric-conformance.json");
     return nlohmann::json::parse(input);
 }
 
 static void batchesFabricMutationsOnOneFrame(jsi::Runtime &runtime, RecordingAdapter &adapter,
                                              InlineExecutor &executor)
 {
-    const nlohmann::json fixture   = readFrameConformanceFixture();
-    const std::string    surfaceId = "surface-" + std::to_string(adapter.mounted + 1);
+    const nlohmann::json fixture = readFrameConformanceFixture();
+    const std::string surfaceId  = "surface-" + std::to_string(adapter.mounted + 1);
     evaluate(runtime,
-             "globalThis.frameFixture = " + fixture.dump() +
-                 "; "
-                 "globalThis.frameSurface = fabric.mount('frame-row', frameFixture.module, "
-                 "frameFixture.initialProperties)",
+             "globalThis.frameFixture = " + fixture.dump()
+                 + "; "
+                   "globalThis.frameSurface = fabric.mount('frame-row', frameFixture.module, "
+                   "frameFixture.initialProperties)",
              "native-fabric-frame-mount.js");
     adapter.calls.clear();
     executor.holding        = true;
@@ -393,8 +406,8 @@ static void batchesFabricMutationsOnOneFrame(jsi::Runtime &runtime, RecordingAda
     require(adapter.calls.size() == 3, "repeated properties collapse to one platform operation");
     require(called(adapter, "update " + surfaceId + " " + expected["properties"].dump()),
             "the last property update wins in the shared frame batch");
-    require(called(adapter, "setSize " + surfaceId + " " + expected["minimum"].dump() + " " +
-                                expected["maximum"].dump()),
+    require(called(adapter, "setSize " + surfaceId + " " + expected["minimum"].dump() + " "
+                                + expected["maximum"].dump()),
             "the frame batch applies the size mutation");
     require(called(adapter, "setFrame " + surfaceId + " " + expected["frame"].dump()),
             "the last frame update wins in the shared frame batch");
@@ -403,9 +416,9 @@ static void batchesFabricMutationsOnOneFrame(jsi::Runtime &runtime, RecordingAda
     evaluate(runtime, "fabric.unmount(frameSurface)", "native-fabric-frame-unmount.js");
 }
 
-static void rejectsFabricBatchWhenFrameSchedulingFails(jsi::Runtime     &runtime,
+static void rejectsFabricBatchWhenFrameSchedulingFails(jsi::Runtime &runtime,
                                                        RecordingAdapter &adapter,
-                                                       InlineExecutor   &executor)
+                                                       InlineExecutor &executor)
 {
     evaluate(
         runtime,
@@ -462,6 +475,7 @@ static void reusesIdleSurfaces(jsi::Runtime &runtime, RecordingAdapter &adapter)
                 "fabric.unmount(fabric.mount('row-g', 'Avatar', {}, { reuse: true }))"),
             "native-fabric-other.js");
     }
+
     require(loader::native::idleFabricSurfaces() == perModule + 1,
             "another plugin parks its own surface");
 
@@ -482,8 +496,8 @@ static void destroysSurfacesThatCannotUpdate(jsi::Runtime &runtime, RecordingAda
     adapter.reusable = true;
     adapter.calls.clear();
     loader::AddonScope scope(loader::registerAddonSlot("unbound.stale", "Stale"));
-    size_t             reused = loader::native::reusedFabricSurfaces();
-    size_t             missed = loader::native::missedFabricSurfaces();
+    size_t reused = loader::native::reusedFabricSurfaces();
+    size_t missed = loader::native::missedFabricSurfaces();
     evaluate(runtime, "fabric.unmount(fabric.mount('row-a', 'Pill', {}, { reuse: true }))",
              "native-fabric-park.js");
     std::string parked = "surface-" + std::to_string(adapter.mounted);
@@ -523,9 +537,9 @@ static void parksBeforeThePostedDetach(jsi::Runtime &runtime, RecordingAdapter &
              "fabric.unmountAsync(pill); fabric.unmountAsync(other); globalThis.next = "
              "fabric.mount('row-c', 'Pill', { id: 3 }, { reuse: true })",
              "native-fabric-early-race.js");
-    bool        reusedFirst = called(adapter, "attach " + first + " row-c");
-    std::string reused      = reusedFirst ? first : second;
-    std::string untouched   = reusedFirst ? second : first;
+    bool reusedFirst      = called(adapter, "attach " + first + " row-c");
+    std::string reused    = reusedFirst ? first : second;
+    std::string untouched = reusedFirst ? second : first;
     require(called(adapter, "attach " + reused + " row-c"),
             "a mount that runs before the posted detach reuses a parked surface");
     require(countCalls(adapter, "mount ") == 2, "no new surface is created for the reuse");
@@ -567,9 +581,9 @@ static void evictsIdleSurfacesWhenTheBudgetIsFull(jsi::Runtime &runtime, Recordi
     require(loader::native::idleFabricSurfaces() == loader::native::kIdleFabricSurfaces,
             "two plugins fill the idle pool");
 
-    size_t freeSlots = loader::native::kMaximumMountedSurfaces -
-                       loader::native::mountedFabricSurfaces() -
-                       loader::native::idleFabricSurfaces();
+    size_t freeSlots = loader::native::kMaximumMountedSurfaces
+                       - loader::native::mountedFabricSurfaces()
+                       - loader::native::idleFabricSurfaces();
     size_t liveSlots =
         loader::native::kMaximumMountedSurfaces - loader::native::mountedFabricSurfaces();
     runtime.global().setProperty(runtime, "liveSlots", static_cast<double>(liveSlots));
@@ -618,11 +632,11 @@ int main()
         std::make_shared<jsi::StringBuffer>(kAsyncOnlyChecks), "native-fabric-async-only.js");
     nlohmann::json asyncMethods =
         nlohmann::json::parse(asyncResult.getString(*runtime).utf8(*runtime));
-    require(asyncMethods["mount"] == "undefined" && asyncMethods["update"] == "undefined" &&
-                asyncMethods["batch"] == "undefined",
+    require(asyncMethods["mount"] == "undefined" && asyncMethods["update"] == "undefined"
+                && asyncMethods["batch"] == "undefined",
             "async-only platforms do not expose blocking Fabric methods");
-    require(asyncMethods["mountAsync"] == "function" && asyncMethods["updateAsync"] == "function" &&
-                asyncMethods["batchAsync"] == "function",
+    require(asyncMethods["mountAsync"] == "function" && asyncMethods["updateAsync"] == "function"
+                && asyncMethods["batchAsync"] == "function",
             "async-only platforms expose the asynchronous Fabric contract");
     require(asyncMethods["iOSBatch"] == "undefined" && asyncMethods["iOSBatchAsync"] == "function",
             "frame-batched Fabric updates are asynchronous on the iOS compatibility surface");
@@ -634,6 +648,7 @@ int main()
     {
         std::fprintf(stderr, "%s\n", failure.get<std::string>().c_str());
     }
+
     require(failures.empty(), "every JavaScript check passes");
 
     std::vector<std::string> expected = {
@@ -649,9 +664,10 @@ int main()
     for (size_t index = 0; index < expected.size(); index++)
     {
         require(index < adapter->calls.size() && sameCall(adapter->calls[index], expected[index]),
-                "call " + std::to_string(index) + " is " + expected[index] + ", got " +
-                    (index < adapter->calls.size() ? adapter->calls[index] : "nothing"));
+                "call " + std::to_string(index) + " is " + expected[index] + ", got "
+                    + (index < adapter->calls.size() ? adapter->calls[index] : "nothing"));
     }
+
     require(adapter->calls.size() == expected.size(), "an unmounted surface takes no more calls");
     require(loader::native::mountedFabricSurfaces() == 1, "only the kept surface stays mounted");
 

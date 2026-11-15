@@ -51,6 +51,7 @@ static std::string mutate(std::string input, std::mt19937 &random)
                 {
                     input[pick(input.size())] = static_cast<char>(random());
                 }
+
                 break;
             case 1:
                 input.resize(pick(input.size() + 1));
@@ -69,30 +70,34 @@ static std::string mutate(std::string input, std::mt19937 &random)
                         input[at + byte] = static_cast<char>(pick(2) ? 0xFF : random());
                     }
                 }
+
                 break;
             default:
                 input += input.substr(pick(input.size() + 1));
                 break;
         }
     }
+
     return input;
 }
 
 int main()
 {
     const char *roundsVariable = std::getenv("UNBOUND_FUZZ_ITERATIONS");
-    const long  rounds         = roundsVariable ? std::strtol(roundsVariable, nullptr, 10) : 20000;
+    const long rounds          = roundsVariable ? std::strtol(roundsVariable, nullptr, 10) : 20000;
     const std::vector<std::string> inputs = seeds();
-    std::mt19937                   random(0xF0E7);
+    std::mt19937 random(0xF0E7);
 
     for (const std::string &seed : inputs)
     {
         font_files_fuzz::fuzzOne(reinterpret_cast<const uint8_t *>(seed.data()), seed.size());
     }
+
     for (long round = 0; round < rounds; round++)
     {
         const std::string input = mutate(inputs[random() % inputs.size()], random);
         font_files_fuzz::fuzzOne(reinterpret_cast<const uint8_t *>(input.data()), input.size());
     }
+
     return 0;
 }

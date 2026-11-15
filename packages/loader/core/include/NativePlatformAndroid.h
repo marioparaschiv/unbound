@@ -8,6 +8,6 @@
 namespace loader {
 // Builds `NativePlatform.android`: the in-app Discord installer, backed by
 // provider->androidInstaller.
-facebook::jsi::Object androidPlatformObject(facebook::jsi::Runtime                 &runtime,
+facebook::jsi::Object androidPlatformObject(facebook::jsi::Runtime &runtime,
                                             std::shared_ptr<NativePlatformProvider> provider);
 }

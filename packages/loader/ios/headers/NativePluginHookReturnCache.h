@@ -6,7 +6,7 @@
 #import "NativePluginHooks.h"
 
 namespace loader::ios {
-bool applyCachedHookReturn(const std::shared_ptr<HookState>      &state,
+bool applyCachedHookReturn(const std::shared_ptr<HookState> &state,
                            const std::shared_ptr<HookDispatcher> &dispatcher, void **arguments,
                            void *returnValue);
 void setHookReturnCache(facebook::jsi::Runtime &runtime, const std::shared_ptr<HookState> &state,

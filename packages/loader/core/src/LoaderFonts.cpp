@@ -6,17 +6,17 @@
 #include <set>
 
 namespace loader {
-static constexpr uint16_t kFamilyID              = 1;
-static constexpr uint16_t kStyleID               = 2;
-static constexpr uint16_t kFullNameID            = 4;
-static constexpr uint16_t kPostScriptNameID      = 6;
-static constexpr uint16_t kTypographicFamilyID   = 16;
-static constexpr uint16_t kTypographicStyleID    = 17;
-static constexpr uint16_t kWindowsPlatform       = 3;
-static constexpr uint16_t kMacPlatform           = 1;
-static constexpr uint16_t kEnglishUS             = 0x409;
-static constexpr size_t   kFontHeaderBytes       = 16;
-static constexpr size_t   kMaximumNameTableBytes = 1 << 20;
+static constexpr uint16_t kFamilyID            = 1;
+static constexpr uint16_t kStyleID             = 2;
+static constexpr uint16_t kFullNameID          = 4;
+static constexpr uint16_t kPostScriptNameID    = 6;
+static constexpr uint16_t kTypographicFamilyID = 16;
+static constexpr uint16_t kTypographicStyleID  = 17;
+static constexpr uint16_t kWindowsPlatform     = 3;
+static constexpr uint16_t kMacPlatform         = 1;
+static constexpr uint16_t kEnglishUS           = 0x409;
+static constexpr size_t kFontHeaderBytes       = 16;
+static constexpr size_t kMaximumNameTableBytes = 1 << 20;
 
 static std::optional<uint32_t> readU32(const std::string &data, size_t offset)
 {
@@ -24,6 +24,7 @@ static std::optional<uint32_t> readU32(const std::string &data, size_t offset)
     {
         return std::nullopt;
     }
+
     const auto byte = [&](size_t index) {
         return static_cast<uint32_t>(static_cast<uint8_t>(data[offset + index]));
     };
@@ -36,8 +37,9 @@ static std::optional<uint16_t> readU16(const std::string &data, size_t offset)
     {
         return std::nullopt;
     }
-    return static_cast<uint16_t>((static_cast<uint8_t>(data[offset]) << 8) |
-                                 static_cast<uint8_t>(data[offset + 1]));
+
+    return static_cast<uint16_t>((static_cast<uint8_t>(data[offset]) << 8)
+                                 | static_cast<uint8_t>(data[offset + 1]));
 }
 
 static std::string utf16BigEndianToUTF8(const std::string &data, size_t offset, size_t length)
@@ -45,15 +47,16 @@ static std::string utf16BigEndianToUTF8(const std::string &data, size_t offset, 
     std::string result;
     for (size_t index = 0; index + 1 < length; index += 2)
     {
-        uint32_t unit = (static_cast<uint8_t>(data[offset + index]) << 8) |
-                        static_cast<uint8_t>(data[offset + index + 1]);
+        uint32_t unit = (static_cast<uint8_t>(data[offset + index]) << 8)
+                        | static_cast<uint8_t>(data[offset + index + 1]);
         if (unit >= 0xD800 && unit <= 0xDBFF && index + 3 < length)
         {
-            const uint32_t low = (static_cast<uint8_t>(data[offset + index + 2]) << 8) |
-                                 static_cast<uint8_t>(data[offset + index + 3]);
+            const uint32_t low = (static_cast<uint8_t>(data[offset + index + 2]) << 8)
+                                 | static_cast<uint8_t>(data[offset + index + 3]);
             unit               = 0x10000 + ((unit - 0xD800) << 10) + (low - 0xDC00);
             index += 2;
         }
+
         if (unit < 0x80)
         {
             result += static_cast<char>(unit);
@@ -77,6 +80,7 @@ static std::string utf16BigEndianToUTF8(const std::string &data, size_t offset, 
             result += static_cast<char>(0x80 | (unit & 0x3F));
         }
     }
+
     return result;
 }
 
@@ -92,10 +96,12 @@ static std::optional<size_t> fontOffsetIn(const std::string &header)
     {
         return std::nullopt;
     }
+
     if (*signature != 0x74746366)
     {
         return 0;
     }
+
     const auto first = readU32(header, 12);
     return first ? std::optional<size_t>(*first) : std::nullopt;
 }
@@ -107,6 +113,7 @@ static std::optional<TableLocation> nameTableIn(const std::string &directory, si
     {
         return std::nullopt;
     }
+
     for (uint16_t index = 0; index < *tables; index++)
     {
         const size_t record = fontOffset + 12 + static_cast<size_t>(index) * 16;
@@ -114,6 +121,7 @@ static std::optional<TableLocation> nameTableIn(const std::string &directory, si
         {
             break;
         }
+
         const auto tag    = readU32(directory, record);
         const auto offset = readU32(directory, record + 8);
         const auto length = readU32(directory, record + 12);
@@ -122,6 +130,7 @@ static std::optional<TableLocation> nameTableIn(const std::string &directory, si
             return TableLocation{*offset, *length};
         }
     }
+
     return std::nullopt;
 }
 
@@ -144,6 +153,7 @@ static std::optional<std::string> nameFromNameTable(const std::string &table, ui
         {
             break;
         }
+
         const auto platform = readU16(table, record);
         const auto language = readU16(table, record + 4);
         const auto nameID   = readU16(table, record + 6);
@@ -153,11 +163,13 @@ static std::optional<std::string> nameFromNameTable(const std::string &table, ui
         {
             continue;
         }
+
         const size_t start = *storage + *offset;
         if (start + *length > table.size() || *length == 0)
         {
             continue;
         }
+
         if (*platform == kWindowsPlatform)
         {
             std::string text = utf16BigEndianToUTF8(table, start, *length);
@@ -175,18 +187,22 @@ static std::optional<std::string> nameFromNameTable(const std::string &table, ui
             mac = table.substr(start, *length);
         }
     }
+
     if (windows && !windows->empty())
     {
         return windows;
     }
+
     if (windowsAny && !windowsAny->empty())
     {
         return windowsAny;
     }
+
     if (mac && !mac->empty())
     {
         return mac;
     }
+
     return std::nullopt;
 }
 
@@ -198,6 +214,7 @@ std::optional<std::string> fontFullNameFromData(const std::string &data)
     {
         return std::nullopt;
     }
+
     return nameFromNameTable(data.substr(table->offset, table->length), kFullNameID);
 }
 
@@ -210,6 +227,7 @@ static std::optional<std::string> readRange(std::ifstream &file, size_t offset, 
     {
         return std::nullopt;
     }
+
     return buffer;
 }
 
@@ -236,6 +254,7 @@ static std::optional<std::string> nameTableOfFile(const std::string &path)
     {
         return std::nullopt;
     }
+
     return readRange(file, location->offset, location->length);
 }
 
@@ -249,15 +268,18 @@ static std::optional<FontNames> namesFromTable(const std::string &table)
     {
         names.family = nameFromNameTable(table, kFamilyID);
     }
+
     names.style = nameFromNameTable(table, kTypographicStyleID);
     if (!names.style)
     {
         names.style = nameFromNameTable(table, kStyleID);
     }
+
     if (!names.postScript && !names.full)
     {
         return std::nullopt;
     }
+
     return names;
 }
 
@@ -275,6 +297,7 @@ std::optional<FontNames> fontNamesFromData(const std::string &data)
     {
         return std::nullopt;
     }
+
     return namesFromTable(data.substr(table->offset, table->length));
 }
 
@@ -286,6 +309,7 @@ std::optional<std::string> fontNameFromData(const std::string &data, uint16_t na
     {
         return std::nullopt;
     }
+
     return nameFromNameTable(data.substr(table->offset, table->length), nameID);
 }
 
@@ -297,9 +321,9 @@ std::optional<std::string> fontFullName(const std::string &path)
 
 static std::string fileStem(const std::string &path)
 {
-    const size_t      slash = path.find_last_of('/');
-    const std::string file  = slash == std::string::npos ? path : path.substr(slash + 1);
-    const size_t      dot   = file.find_last_of('.');
+    const size_t slash     = path.find_last_of('/');
+    const std::string file = slash == std::string::npos ? path : path.substr(slash + 1);
+    const size_t dot       = file.find_last_of('.');
     return dot == std::string::npos ? file : file.substr(0, dot);
 }
 
@@ -319,10 +343,12 @@ static nlohmann::json entryFromNames(const std::optional<FontNames> &names, cons
     {
         entry["family"] = *names->family;
     }
+
     if (names && names->style)
     {
         entry["style"] = *names->style;
     }
+
     return entry;
 }
 
@@ -345,17 +371,19 @@ static std::optional<std::string> fontName(const nlohmann::json &font)
     {
         return font.get<std::string>();
     }
+
     if (font.is_object() && font.contains("name") && font["name"].is_string())
     {
         return font["name"].get<std::string>();
     }
+
     return std::nullopt;
 }
 
 nlohmann::json systemFontsFromFiles(const std::vector<std::string> &paths,
-                                    const std::string              &source)
+                                    const std::string &source)
 {
-    nlohmann::json        fonts = nlohmann::json::array();
+    nlohmann::json fonts = nlohmann::json::array();
     std::set<std::string> seen;
     for (const std::string &path : paths)
     {
@@ -363,12 +391,14 @@ nlohmann::json systemFontsFromFiles(const std::vector<std::string> &paths,
         {
             continue;
         }
+
         nlohmann::json entry = fontEntry(path, source);
         if (seen.insert(entry["name"].get<std::string>()).second)
         {
             fonts.push_back(std::move(entry));
         }
     }
+
     std::sort(fonts.begin(), fonts.end(),
               [](const nlohmann::json &left, const nlohmann::json &right) {
                   return left["name"].get<std::string>() < right["name"].get<std::string>();
@@ -378,7 +408,7 @@ nlohmann::json systemFontsFromFiles(const std::vector<std::string> &paths,
 
 nlohmann::json fontCatalog(const nlohmann::json &customFonts, const nlohmann::json &platformFonts)
 {
-    nlohmann::json        catalog = nlohmann::json::array();
+    nlohmann::json catalog = nlohmann::json::array();
     std::set<std::string> seen;
     for (const nlohmann::json *list : {&customFonts, &platformFonts})
     {
@@ -386,6 +416,7 @@ nlohmann::json fontCatalog(const nlohmann::json &customFonts, const nlohmann::js
         {
             continue;
         }
+
         for (const nlohmann::json &font : *list)
         {
             const auto name = fontName(font);
@@ -393,12 +424,14 @@ nlohmann::json fontCatalog(const nlohmann::json &customFonts, const nlohmann::js
             {
                 continue;
             }
+
             catalog.push_back(font.is_object() ? font
                                                : nlohmann::json{{"name", *name},
                                                                 {"displayName", *name},
                                                                 {"source", "system"}});
         }
     }
+
     return catalog;
 }
 
@@ -409,44 +442,49 @@ static std::string errorText(const nlohmann::json &error)
 
 FontOverridePlan FontOverrideRegistry::plan(const nlohmann::json &targets)
 {
-    FontOverridePlan            plan;
+    FontOverridePlan plan;
     std::lock_guard<std::mutex> lock(mutex_);
     if (!targets.is_object())
     {
         return plan;
     }
+
     for (const auto &[family, target] : targets.items())
     {
         if (!target.is_object())
         {
             continue;
         }
+
         const auto error = target.find("error");
         if (error != target.end() && !error->is_null())
         {
             plan.errors.push_back(errorText(*error));
             continue;
         }
+
         const auto path = target.find("path");
-        if (path != target.end() && path->is_string() &&
-            registered_.insert(path->get<std::string>()).second)
+        if (path != target.end() && path->is_string()
+            && registered_.insert(path->get<std::string>()).second)
         {
             plan.registrations.push_back(path->get<std::string>());
         }
+
         const auto name = target.find("name");
         if (name != target.end() && name->is_string())
         {
             plan.table[family] = name->get<std::string>();
         }
+
         const auto variations = target.find("variations");
-        if (name != target.end() && name->is_string() && path != target.end() &&
-            path->is_string() && variations != target.end() && variations->is_object() &&
-            !variations->empty())
+        if (name != target.end() && name->is_string() && path != target.end() && path->is_string()
+            && variations != target.end() && variations->is_object() && !variations->empty())
         {
             plan.instances[name->get<std::string>()] = {{"path", *path},
                                                         {"variations", *variations}};
         }
     }
+
     const auto everyFamily = plan.table.find(kAllFontFamilies);
     if (everyFamily != plan.table.end())
     {
@@ -456,6 +494,7 @@ FontOverridePlan FontOverrideRegistry::plan(const nlohmann::json &targets)
             return entry.first != name;
         });
     }
+
     return plan;
 }
 
@@ -468,7 +507,7 @@ nlohmann::json fontOverridePlanJSON(const FontOverridePlan &plan)
 }
 
 std::optional<std::string> fontOverrideLookup(const FontOverrideTable &table,
-                                              const std::string       &name)
+                                              const std::string &name)
 {
     for (const std::string &key : {name, std::string(kAllFontFamilies)})
     {
@@ -478,6 +517,7 @@ std::optional<std::string> fontOverrideLookup(const FontOverrideTable &table,
             return found->second;
         }
     }
+
     return std::nullopt;
 }
 }

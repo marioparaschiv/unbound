@@ -13,12 +13,12 @@ public:
     ~NativeOperationSignpost();
 
 private:
-    os_log_t         log_;
+    os_log_t log_;
     os_signpost_id_t identifier_ = OS_SIGNPOST_ID_INVALID;
-    bool             enabled_;
+    bool enabled_;
 };
 
-[[noreturn]] void         throwWrongThread(facebook::jsi::Runtime &runtime, const char *message);
+[[noreturn]] void throwWrongThread(facebook::jsi::Runtime &runtime, const char *message);
 std::function<void(void)> objcGuarded(std::function<void(void)> operation);
 void executeMainSynchronouslyUnlessMainWaits(std::function<void(void)> callback);
 facebook::jsi::Value

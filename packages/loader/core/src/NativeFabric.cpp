@@ -54,6 +54,7 @@ static SurfacePointer surfaceOf(jsi::Runtime &runtime, const jsi::Value &value)
     {
         throw std::invalid_argument("A Fabric surface handle is invalid");
     }
+
     return value.asObject(runtime).getHostObject<FabricSurface>(runtime);
 }
 
@@ -68,6 +69,7 @@ static nlohmann::json propertiesOf(jsi::Runtime &runtime, const jsi::Value *valu
     {
         return nlohmann::json::object();
     }
+
     return nlohmann::json::parse(
         serializeBoundedObject(runtime, *value, kNativePropertiesConversion));
 }
@@ -81,12 +83,12 @@ static void requireArguments(size_t count, size_t minimum, const char *message)
 }
 
 struct MountRequest {
-    SurfacePointer              surface;
+    SurfacePointer surface;
     std::shared_ptr<FabricView> container;
-    std::string                 moduleName;
-    nlohmann::json              properties;
-    uint64_t                    generation = 0;
-    std::string                 reuseKey;
+    std::string moduleName;
+    nlohmann::json properties;
+    uint64_t generation = 0;
+    std::string reuseKey;
 };
 
 static std::string reuseKeyOf(jsi::Runtime &runtime, const jsi::Value *options,
@@ -96,16 +98,18 @@ static std::string reuseKeyOf(jsi::Runtime &runtime, const jsi::Value *options,
     {
         return "";
     }
+
     jsi::Value reuse = options->asObject(runtime).getProperty(runtime, "reuse");
-    AddonSlot  addon = currentAddon();
+    AddonSlot addon  = currentAddon();
     if (!reuse.isBool() || !reuse.getBool() || addon == kNoAddon)
     {
         return "";
     }
+
     return std::to_string(addon) + ":" + moduleName;
 }
 
-static MountRequest mountRequest(jsi::Runtime                         &runtime,
+static MountRequest mountRequest(jsi::Runtime &runtime,
                                  const std::shared_ptr<FabricAdapter> &adapter,
                                  const jsi::Value *args, size_t count)
 {
@@ -127,16 +131,18 @@ static bool reuseIdle(const MountRequest &request)
     {
         return false;
     }
+
     SurfacePointer idle = takeIdle(request.reuseKey, request.generation);
     if (!idle)
     {
         return false;
     }
+
     try
     {
-        if (idle->adapter().attach(idle->id(), *request.container) &&
-            idle->adapter().update(idle->id(), request.properties) &&
-            adoptReused(request.surface, idle, request.generation, request.reuseKey))
+        if (idle->adapter().attach(idle->id(), *request.container)
+            && idle->adapter().update(idle->id(), request.properties)
+            && adoptReused(request.surface, idle, request.generation, request.reuseKey))
         {
             return true;
         }
@@ -146,6 +152,7 @@ static bool reuseIdle(const MountRequest &request)
         log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
             std::string("Failed to reuse an idle Fabric surface: ") + error.what());
     }
+
     destroyIdle({idle});
     return false;
 }
@@ -156,14 +163,17 @@ static void mount(const MountRequest &request)
     {
         throw std::runtime_error("Fabric runtime was replaced before mounting");
     }
+
     if (reuseIdle(request))
     {
         return;
     }
+
     if (!request.reuseKey.empty())
     {
         countMissedSurface();
     }
+
     evictIdleUntilSurfaceFits();
     NativeResourceReservation reservation(nativeSurfaceBudget(),
                                           "Too many React surfaces are mounted");
@@ -174,6 +184,7 @@ static void mount(const MountRequest &request)
         request.surface->adapter().unmount(id);
         throw std::runtime_error("Fabric runtime was replaced while mounting");
     }
+
     countCreatedSurface();
 }
 
@@ -183,20 +194,22 @@ static void unmount(const SurfacePointer &surface)
     {
         return;
     }
+
     if (park(surface))
     {
         return;
     }
+
     surface->adapter().unmount(surface->id());
     forget(surface.get());
 }
 
 struct FrameRequest {
-    SurfacePointer              surface;
+    SurfacePointer surface;
     std::shared_ptr<FabricView> view;
 };
 
-static FrameRequest measureRequest(jsi::Runtime                         &runtime,
+static FrameRequest measureRequest(jsi::Runtime &runtime,
                                    const std::shared_ptr<FabricAdapter> &adapter,
                                    const jsi::Value *args, size_t count)
 {
@@ -205,17 +218,19 @@ static FrameRequest measureRequest(jsi::Runtime                         &runtime
     {
         return {surfaceOf(runtime, args[0]), nullptr};
     }
+
     return {nullptr, adapter->view(runtime, args[0])};
 }
 
 static NativeFrame measure(const std::shared_ptr<FabricAdapter> &adapter,
-                           const FrameRequest                   &request)
+                           const FrameRequest &request)
 {
     if (request.surface)
     {
         return request.surface->active() ? adapter->measureSurface(request.surface->id())
                                          : NativeFrame{};
     }
+
     return adapter->measure(*request.view);
 }
 
@@ -225,33 +240,34 @@ using Immediate = std::function<std::optional<jsi::Value>(jsi::Runtime &)>;
 
 struct FabricCall {
     Operation operation;
-    Result    result;
+    Result result;
     Immediate immediate;
-    bool      nextFrame = false;
+    bool nextFrame = false;
 };
 
 struct FabricFrameMutation {
-    SurfacePointer                surface;
+    SurfacePointer surface;
     std::optional<nlohmann::json> properties;
-    std::optional<NativeSize>     minimum;
-    std::optional<NativeSize>     maximum;
-    std::optional<NativeFrame>    frame;
+    std::optional<NativeSize> minimum;
+    std::optional<NativeSize> maximum;
+    std::optional<NativeFrame> frame;
 };
 
-static std::vector<FabricFrameMutation> frameMutations(jsi::Runtime     &runtime,
+static std::vector<FabricFrameMutation> frameMutations(jsi::Runtime &runtime,
                                                        const jsi::Value &value)
 {
     if (!value.isObject() || !value.asObject(runtime).isArray(runtime))
     {
         throw std::invalid_argument("A Fabric frame batch requires an array of mutations");
     }
+
     jsi::Array batch = value.asObject(runtime).asArray(runtime);
     if (batch.size(runtime) > kMaximumBatchSteps)
     {
         throw std::invalid_argument("A Fabric frame batch requires at most 64 mutations");
     }
 
-    std::vector<FabricFrameMutation>            mutations;
+    std::vector<FabricFrameMutation> mutations;
     std::unordered_map<FabricSurface *, size_t> indexes;
     for (size_t index = 0; index < batch.size(runtime); index++)
     {
@@ -260,15 +276,17 @@ static std::vector<FabricFrameMutation> frameMutations(jsi::Runtime     &runtime
         {
             throw std::invalid_argument("A Fabric frame mutation must be an object");
         }
-        jsi::Object    entry   = entryValue.asObject(runtime);
+
+        jsi::Object entry      = entryValue.asObject(runtime);
         SurfacePointer surface = surfaceOf(runtime, entry.getProperty(runtime, "surface"));
         auto [found, inserted] = indexes.emplace(surface.get(), mutations.size());
         if (inserted)
         {
             mutations.push_back({surface});
         }
+
         FabricFrameMutation &mutation = mutations[found->second];
-        bool                 changed  = false;
+        bool changed                  = false;
 
         jsi::Value properties = entry.getProperty(runtime, "properties");
         if (!properties.isUndefined())
@@ -291,14 +309,16 @@ static std::vector<FabricFrameMutation> frameMutations(jsi::Runtime     &runtime
             {
                 throw std::invalid_argument("A Fabric frame size mutation must be an object");
             }
+
             jsi::Object sizeObject = size.asObject(runtime);
-            jsi::Value  minimum    = sizeObject.getProperty(runtime, "minimum");
-            jsi::Value  maximum    = sizeObject.getProperty(runtime, "maximum");
+            jsi::Value minimum     = sizeObject.getProperty(runtime, "minimum");
+            jsi::Value maximum     = sizeObject.getProperty(runtime, "maximum");
             if (minimum.isUndefined() || maximum.isUndefined())
             {
                 throw std::invalid_argument(
                     "A Fabric frame size mutation requires minimum and maximum sizes");
             }
+
             mutation.minimum = parseSize(runtime, minimum);
             mutation.maximum = parseSize(runtime, maximum);
             changed          = true;
@@ -317,6 +337,7 @@ static std::vector<FabricFrameMutation> frameMutations(jsi::Runtime     &runtime
             mutation.surface->rememberSetFrame(*mutation.frame);
         }
     }
+
     return mutations;
 }
 
@@ -347,6 +368,7 @@ public:
                     rt, call.operation, call.result ? call.result : Result(undefinedResult),
                     call.nextFrame);
             }
+
             return runSynchronously(rt, call, *adapter, label);
         };
         if (calls_ == FabricCalls::SyncAndAsync)
@@ -355,6 +377,7 @@ public:
                 return run(rt, args, count, true);
             });
         }
+
         add((std::string(name) + "Async").c_str(), argumentCount,
             [run](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                 return run(rt, args, count, false);
@@ -396,11 +419,13 @@ private:
                 return std::move(*known);
             }
         }
+
         if (!call.result && adapter.postsVoidCalls())
         {
             postMainOperation(call.operation, label);
             return jsi::Value::undefined();
         }
+
         executeMainSynchronouslyUnlessMainWaits(call.operation);
         return call.result ? call.result(rt) : jsi::Value::undefined();
     }
@@ -409,16 +434,16 @@ private:
     {
         object_.setProperty(runtime_, name,
                             makeFunction(runtime_, name, argumentCount,
-                                         [handler](jsi::Runtime     &rt, const jsi::Value &,
+                                         [handler](jsi::Runtime &rt, const jsi::Value &,
                                                    const jsi::Value *args, size_t count) {
                                              return handler(rt, args, count);
                                          }));
     }
 
-    jsi::Runtime                  &runtime_;
+    jsi::Runtime &runtime_;
     std::shared_ptr<FabricAdapter> adapter_;
-    FabricCalls                    calls_;
-    jsi::Object                    object_;
+    FabricCalls calls_;
+    jsi::Object object_;
 };
 
 jsi::Object makeFabricNamespace(jsi::Runtime &runtime, std::shared_ptr<FabricAdapter> adapter,
@@ -426,7 +451,7 @@ jsi::Object makeFabricNamespace(jsi::Runtime &runtime, std::shared_ptr<FabricAda
 {
     watchRuntimeGenerations();
     FabricNamespace fabric(runtime, std::move(adapter), calls);
-    auto            shared = fabric.adapter();
+    auto shared = fabric.adapter();
 
     fabric.define("mount", 4, [shared](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
         auto request = std::make_shared<MountRequest>(mountRequest(rt, shared, args, count));
@@ -456,8 +481,8 @@ jsi::Object makeFabricNamespace(jsi::Runtime &runtime, std::shared_ptr<FabricAda
             count, 3,
             "Sizing a React surface requires a handle, a minimum size and a maximum size");
         SurfacePointer surface = surfaceOf(rt, args[0]);
-        NativeSize     minimum = parseSize(rt, args[1]);
-        NativeSize     maximum = parseSize(rt, args[2]);
+        NativeSize minimum     = parseSize(rt, args[1]);
+        NativeSize maximum     = parseSize(rt, args[2]);
         return FabricCall{[surface, minimum, maximum]() {
                               if (surface->active())
                               {
@@ -469,16 +494,18 @@ jsi::Object makeFabricNamespace(jsi::Runtime &runtime, std::shared_ptr<FabricAda
     fabric.define("setFrame", 2, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
         requireArguments(count, 2, "Framing a React surface requires a handle and a frame");
         SurfacePointer surface = surfaceOf(rt, args[0]);
-        NativeFrame    frame   = parseFrame(rt, args[1]);
+        NativeFrame frame      = parseFrame(rt, args[1]);
         if (surface->adapter().measuresLastSetFrame())
         {
             surface->rememberSetFrame(frame);
         }
+
         return FabricCall{[surface, frame]() {
                               if (!surface->active())
                               {
                                   return;
                               }
+
                               try
                               {
                                   surface->adapter().setFrame(surface->id(), frame);
@@ -493,7 +520,7 @@ jsi::Object makeFabricNamespace(jsi::Runtime &runtime, std::shared_ptr<FabricAda
     });
     fabric.define("measure", 1, [shared](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
         FrameRequest request = measureRequest(rt, shared, args, count);
-        auto         frame   = std::make_shared<NativeFrame>();
+        auto frame           = std::make_shared<NativeFrame>();
         return FabricCall{[shared, request, frame]() {
                               *frame = measure(shared, request);
                           },
@@ -507,11 +534,12 @@ jsi::Object makeFabricNamespace(jsi::Runtime &runtime, std::shared_ptr<FabricAda
                               {
                                   return std::nullopt;
                               }
+
                               return toJSIValue(completion, toJSON(*known));
                           }};
     });
     fabric.define("releaseIdle", 0, [](jsi::Runtime &, const jsi::Value *, size_t) {
-        AddonSlot   addon  = currentAddon();
+        AddonSlot addon    = currentAddon();
         std::string prefix = std::to_string(addon) + ":";
         return FabricCall{[addon, prefix]() {
                               if (addon != kNoAddon)
@@ -532,6 +560,7 @@ jsi::Object makeFabricNamespace(jsi::Runtime &runtime, std::shared_ptr<FabricAda
                               },
                               nullptr, nullptr};
         }
+
         return FabricCall{[surface]() {
                               unmount(surface);
                           },
@@ -548,17 +577,20 @@ jsi::Object makeFabricNamespace(jsi::Runtime &runtime, std::shared_ptr<FabricAda
                                   {
                                       continue;
                                   }
+
                                   if (mutation.properties)
                                   {
                                       mutation.surface->adapter().update(mutation.surface->id(),
                                                                          *mutation.properties);
                                   }
+
                                   if (mutation.minimum && mutation.maximum)
                                   {
                                       mutation.surface->adapter().setSize(mutation.surface->id(),
                                                                           *mutation.minimum,
                                                                           *mutation.maximum);
                                   }
+
                                   if (mutation.frame)
                                   {
                                       mutation.surface->adapter().setFrame(mutation.surface->id(),

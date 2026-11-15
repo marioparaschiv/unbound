@@ -15,10 +15,12 @@ std::optional<std::string> countingSource(const std::string &name)
     {
         return std::nullopt;
     }
+
     if (name == "empty")
     {
         return std::string();
     }
+
     return "source of " + name;
 }
 
@@ -31,6 +33,7 @@ struct EarlySource {
         loader::bootstrap::setScriptSource(countingSource);
     }
 };
+
 EarlySource earlySource;
 }
 

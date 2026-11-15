@@ -13,7 +13,7 @@
 namespace loader::fonts {
 // A weight and style someone asked to install, such as 700 italic.
 struct FontVariant {
-    int  weight;
+    int weight;
     bool italic;
 
     bool operator<(const FontVariant &other) const
@@ -34,6 +34,6 @@ FontFace instanceFace(const FontFace &font, const FontVariations &coordinates);
 
 // The faces to install from variable `font`: one per variant in `wanted` that its axes reach,
 // else its named instances, else its default.
-std::vector<FontFace> variableFaces(const FontFace                             &font,
+std::vector<FontFace> variableFaces(const FontFace &font,
                                     const std::optional<std::set<FontVariant>> &wanted);
 }

@@ -25,10 +25,10 @@ public:
 
     UIScope(AddonSlot addon, std::vector<std::string> allowed);
 
-    AddonSlot                       addon() const;
+    AddonSlot addon() const;
     const std::vector<std::string> &allowed() const;
-    bool                            allows(const std::string &path) const;
-    bool                            active() const;
+    bool allows(const std::string &path) const;
+    bool active() const;
 
     // Runs `install` as the scope's addon with currentUIScopeRuntime() set, and keeps its release
     // for dispose. Throws a JSError once the scope is disposed.
@@ -37,11 +37,11 @@ public:
     void dispose();
 
 private:
-    const AddonSlot                addon_;
+    const AddonSlot addon_;
     const std::vector<std::string> allowed_;
-    mutable std::mutex             mutex_;
-    std::vector<Release>           releases_;
-    bool                           disposed_ = false;
+    mutable std::mutex mutex_;
+    std::vector<Release> releases_;
+    bool disposed_ = false;
 };
 
 using UIScopeNamespaceFactory =
@@ -50,15 +50,15 @@ using UIScopeNamespaceFactory =
 // The object `createUIScope` returns: `dispose`, plus each name in `namespaces`, built once per
 // scope by `create` as the scope's addon and rejected after dispose. `onRead` runs before each
 // property read. Disposes the scope when collected.
-facebook::jsi::Object makeUIScopeObject(facebook::jsi::Runtime                       &runtime,
-                                        std::shared_ptr<UIScope>                      scope,
-                                        std::vector<std::string>                      namespaces,
-                                        UIScopeNamespaceFactory                       create,
+facebook::jsi::Object makeUIScopeObject(facebook::jsi::Runtime &runtime,
+                                        std::shared_ptr<UIScope> scope,
+                                        std::vector<std::string> namespaces,
+                                        UIScopeNamespaceFactory create,
                                         std::function<void(facebook::jsi::Runtime &)> onRead = {});
 
 std::vector<std::string> uiScopePaths(const std::vector<std::string> &paths,
-                                      std::string_view                namespacePrefix);
-std::vector<std::string> parseUIScopePaths(facebook::jsi::Runtime     &runtime,
+                                      std::string_view namespacePrefix);
+std::vector<std::string> parseUIScopePaths(facebook::jsi::Runtime &runtime,
                                            const facebook::jsi::Value *args, size_t count,
                                            const char *usage, std::string_view namespacePrefix);
 }

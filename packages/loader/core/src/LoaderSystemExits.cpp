@@ -33,14 +33,17 @@ namespace {
         {
             store = nlohmann::json::object();
         }
+
         if (!store["events"].is_array())
         {
             store["events"] = nlohmann::json::array();
         }
+
         if (!store["seen"].is_array())
         {
             store["seen"] = nlohmann::json::array();
         }
+
         return store;
     }
 
@@ -69,6 +72,7 @@ namespace {
         {
             return false;
         }
+
         seen.push_back(key);
         return true;
     }
@@ -80,6 +84,7 @@ namespace {
         {
             event["ms"] = durationMs;
         }
+
         store["events"].push_back(std::move(event));
     }
 
@@ -89,6 +94,7 @@ namespace {
         {
             return value.get<int64_t>();
         }
+
         return value.is_string() ? std::atoll(value.get<std::string>().c_str()) : 0;
     }
 
@@ -111,9 +117,10 @@ namespace {
         {
             return;
         }
+
         for (const auto &[counter, kind] : kExitCounters)
         {
-            auto    found = exits.find(counter);
+            auto found    = exits.find(counter);
             int64_t count = found == exits.end() ? 0 : std::min<int64_t>(integerOf(*found), 50);
             for (int64_t index = 0; index < count; index++)
             {
@@ -140,6 +147,7 @@ std::string exitKindName(ExitKind kind)
         case ExitKind::Freeze:
             return "freeze";
     }
+
     return "unknown";
 }
 
@@ -147,10 +155,12 @@ int64_t parseMetricKitTimestamp(const std::string &timestamp)
 {
     std::tm parsed{};
     if (std::sscanf(timestamp.c_str(), "%d-%d-%d %d:%d:%d", &parsed.tm_year, &parsed.tm_mon,
-                    &parsed.tm_mday, &parsed.tm_hour, &parsed.tm_min, &parsed.tm_sec) != 6)
+                    &parsed.tm_mday, &parsed.tm_hour, &parsed.tm_min, &parsed.tm_sec)
+        != 6)
     {
         return 0;
     }
+
     parsed.tm_year -= 1900;
     parsed.tm_mon -= 1;
     return static_cast<int64_t>(timegm(&parsed)) * 1000;
@@ -174,37 +184,43 @@ int64_t parseMetricKitDuration(const std::string &duration)
             unit += static_cast<char>(std::tolower(static_cast<unsigned char>(character)));
         }
     }
+
     if (number.empty())
     {
         return 0;
     }
+
     double value = std::atof(number.c_str());
     if (unit.starts_with("ms"))
     {
         return static_cast<int64_t>(value);
     }
+
     if (unit.starts_with("min"))
     {
         return static_cast<int64_t>(value * 60000);
     }
+
     return static_cast<int64_t>(value * 1000);
 }
 
 void recordMetricKitMetrics(const std::string &documents, const std::string &payloadJSON)
 {
     nlohmann::json payload = parsePayload(payloadJSON);
-    std::string    end     = stringMember(payload, "timeStampEnd");
-    auto           exits   = payload.find("applicationExitMetrics");
+    std::string end        = stringMember(payload, "timeStampEnd");
+    auto exits             = payload.find("applicationExitMetrics");
     if (end.empty() || exits == payload.end() || !exits->is_object())
     {
         return;
     }
+
     std::lock_guard<std::mutex> lock(fileMutex);
-    nlohmann::json              store = readStore(documents);
+    nlohmann::json store = readStore(documents);
     if (!markSeen(store, "metrics:" + end))
     {
         return;
     }
+
     int64_t at = parseMetricKitTimestamp(end);
     addExitCounts(store, exits->value("foregroundExitData", nlohmann::json()), at);
     addExitCounts(store, exits->value("backgroundExitData", nlohmann::json()), at);
@@ -214,19 +230,21 @@ void recordMetricKitMetrics(const std::string &documents, const std::string &pay
 void recordMetricKitDiagnostics(const std::string &documents, const std::string &payloadJSON)
 {
     nlohmann::json payload = parsePayload(payloadJSON);
-    std::string    end     = stringMember(payload, "timeStampEnd");
+    std::string end        = stringMember(payload, "timeStampEnd");
     if (end.empty())
     {
         return;
     }
+
     std::lock_guard<std::mutex> lock(fileMutex);
-    nlohmann::json              store = readStore(documents);
+    nlohmann::json store = readStore(documents);
     if (!markSeen(store, "diagnostics:" + end))
     {
         return;
     }
-    int64_t at    = parseMetricKitTimestamp(end);
-    auto    hangs = payload.find("hangDiagnostics");
+
+    int64_t at = parseMetricKitTimestamp(end);
+    auto hangs = payload.find("hangDiagnostics");
     if (hangs != payload.end() && hangs->is_array())
     {
         for (const nlohmann::json &hang : *hangs)
@@ -236,6 +254,7 @@ void recordMetricKitDiagnostics(const std::string &documents, const std::string 
                      parseMetricKitDuration(stringMember(metadata, "hangDuration")));
         }
     }
+
     writeStore(documents, store);
 }
 
@@ -243,11 +262,12 @@ void recordExit(const std::string &documents, const std::string &key, ExitKind k
                 int64_t durationMs)
 {
     std::lock_guard<std::mutex> lock(fileMutex);
-    nlohmann::json              store = readStore(documents);
+    nlohmann::json store = readStore(documents);
     if (!markSeen(store, key))
     {
         return;
     }
+
     addEvent(store, kind, at, durationMs);
     writeStore(documents, store);
 }
@@ -259,8 +279,9 @@ void recordFreeze(const std::string &documents, const std::string &addon, int64_
     {
         return;
     }
+
     std::lock_guard<std::mutex> lock(fileMutex);
-    nlohmann::json              store = readStore(documents);
+    nlohmann::json store = readStore(documents);
     addEvent(store, ExitKind::Freeze, at, durationMs);
     store["events"].back()["addon"] = addon;
     writeStore(documents, store);
@@ -269,8 +290,8 @@ void recordFreeze(const std::string &documents, const std::string &addon, int64_
 namespace {
     struct FrozenAddon {
         std::string name;
-        int64_t     count     = 0;
-        int64_t     longestMs = 0;
+        int64_t count     = 0;
+        int64_t longestMs = 0;
     };
 
     nlohmann::json frozenAddonsJSON(std::vector<FrozenAddon> addons)
@@ -283,12 +304,14 @@ namespace {
         {
             addons.resize(kMaximumFrozenAddons);
         }
+
         nlohmann::json list = nlohmann::json::array();
         for (const FrozenAddon &addon : addons)
         {
             list.push_back(
                 {{"name", addon.name}, {"count", addon.count}, {"longestMs", addon.longestMs}});
         }
+
         return list;
     }
 
@@ -299,6 +322,7 @@ namespace {
         {
             return;
         }
+
         auto found = std::find_if(addons.begin(), addons.end(), [&name](const FrozenAddon &addon) {
             return addon.name == name;
         });
@@ -307,6 +331,7 @@ namespace {
             addons.push_back({name});
             found = addons.end() - 1;
         }
+
         found->count++;
         found->longestMs = std::max(found->longestMs, event.value("ms", int64_t{0}));
     }
@@ -319,8 +344,9 @@ nlohmann::json summary(const std::string &documents, int64_t now)
         std::lock_guard<std::mutex> lock(fileMutex);
         store = readStore(documents);
     }
-    nlohmann::json           counts        = nlohmann::json::object();
-    int64_t                  longestHangMs = 0;
+
+    nlohmann::json counts = nlohmann::json::object();
+    int64_t longestHangMs = 0;
     std::vector<FrozenAddon> frozen;
     for (const nlohmann::json &event : store["events"])
     {
@@ -328,24 +354,29 @@ nlohmann::json summary(const std::string &documents, int64_t now)
         {
             continue;
         }
+
         std::string kind = event.value("kind", std::string());
         if (kind == "freeze")
         {
             countFreeze(frozen, event);
             continue;
         }
+
         std::string name = kind == "hang" ? "hangs" : kind;
         counts[name]     = counts.value(name, 0) + 1;
         longestHangMs    = std::max(longestHangMs, event.value("ms", int64_t{0}));
     }
+
     if (longestHangMs > 0)
     {
         counts["longestHangMs"] = longestHangMs;
     }
+
     if (!frozen.empty())
     {
         counts["freezes"] = frozenAddonsJSON(std::move(frozen));
     }
+
     return counts;
 }
 }

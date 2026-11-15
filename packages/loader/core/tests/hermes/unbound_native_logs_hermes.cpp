@@ -60,32 +60,36 @@ public:
         auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
         while (!settled() && std::chrono::steady_clock::now() < deadline)
         {
-            std::deque<std::function<void()>>               delayed;
+            std::deque<std::function<void()>> delayed;
             std::deque<std::function<void(jsi::Runtime &)>> work;
             {
                 std::lock_guard<std::mutex> lock(mutex_);
                 delayed.swap(delayed_);
             }
+
             for (auto &task : delayed)
             {
                 task();
             }
+
             {
                 std::lock_guard<std::mutex> lock(mutex_);
                 work.swap(queued_);
             }
+
             for (auto &task : work)
             {
                 task(runtime);
             }
+
             runtime.drainMicrotasks();
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     }
 
 private:
-    std::mutex                                      mutex_;
-    std::deque<std::function<void()>>               delayed_;
+    std::mutex mutex_;
+    std::deque<std::function<void()>> delayed_;
     std::deque<std::function<void(jsi::Runtime &)>> queued_;
 };
 
@@ -119,7 +123,8 @@ int main()
     evaluate(*runtime, "UnboundNative.log('warn', ['Logs', 'Test'], 'before subscribing')");
     require(!loader::logStream().active(), "nothing streams before a subscriber");
     require(evaluate(*runtime, "try { UnboundNative.log('loud', [], 'x'); 'accepted' } catch "
-                               "(error) { 'refused' }") == "refused",
+                               "(error) { 'refused' }")
+                == "refused",
             "an unknown level is refused");
 
     evaluate(*runtime, "globalThis.received = [];"
@@ -139,10 +144,10 @@ int main()
     require(evaluate(*runtime, "JSON.stringify(received.map(function (entry) {"
                                "  return [entry.src, entry.lvl, entry.scope.join('/'), entry.msg,"
                                "    typeof entry.t];"
-                               "}))") ==
-                "[[\"unbound\",\"error\",\"Logs\",\"live\",\"number\"],"
-                "[\"js\",\"warn\",\"\",\"from console\",\"number\"],"
-                "[\"react-native\",\"info\",\"RCTLog\",\"from native\",\"number\"]]",
+                               "}))")
+                == "[[\"unbound\",\"error\",\"Logs\",\"live\",\"number\"],"
+                   "[\"js\",\"warn\",\"\",\"from console\",\"number\"],"
+                   "[\"react-native\",\"info\",\"RCTLog\",\"from native\",\"number\"]]",
             "a subscriber receives every source in order, shaped as on disk");
 
     evaluate(*runtime, "unsubscribe(); unsubscribe(); UnboundNative.log('info', [], 'after');");
@@ -157,12 +162,12 @@ int main()
         loader::readTextFile((documents / "Logs" / "unbound.log").string()).value_or("");
     std::string native =
         loader::readTextFile((documents / "Logs" / "native.log").string()).value_or("");
-    require(unbound.find("\"msg\":\"before subscribing\"") != std::string::npos &&
-                unbound.find("\"msg\":\"from console\"") != std::string::npos &&
-                unbound.find("\"msg\":\"after\"") != std::string::npos,
+    require(unbound.find("\"msg\":\"before subscribing\"") != std::string::npos
+                && unbound.find("\"msg\":\"from console\"") != std::string::npos
+                && unbound.find("\"msg\":\"after\"") != std::string::npos,
             "Unbound and console lines go to unbound.log");
-    require(unbound.find("from native") == std::string::npos &&
-                native.find("\"src\":\"react-native\"") != std::string::npos,
+    require(unbound.find("from native") == std::string::npos
+                && native.find("\"src\":\"react-native\"") != std::string::npos,
             "React Native lines go to native.log");
     fs::remove_all(documents);
     std::printf("UnboundNative.logs: entries reach the files and live subscribers on Hermes\n");

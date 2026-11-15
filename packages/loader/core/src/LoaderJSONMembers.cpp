@@ -16,6 +16,7 @@ static size_t skipSpace(std::string_view text, size_t index)
     {
         index++;
     }
+
     return index;
 }
 
@@ -29,6 +30,7 @@ static size_t skipString(std::string_view text, size_t index)
         {
             return kEnd;
         }
+
         if (text[index] == '"')
         {
             return index + 1;
@@ -43,19 +45,22 @@ static size_t skipValue(std::string_view text, size_t index, size_t maximumDepth
     {
         return kEnd;
     }
+
     char first = text[index];
     if (first == '"')
     {
         return skipString(text, index);
     }
+
     if (first != '{' && first != '[')
     {
         size_t end = index;
-        while (end < text.size() && !isSpace(text[end]) && text[end] != ',' && text[end] != '}' &&
-               text[end] != ']')
+        while (end < text.size() && !isSpace(text[end]) && text[end] != ',' && text[end] != '}'
+               && text[end] != ']')
         {
             end++;
         }
+
         return end > index ? end : kEnd;
     }
 
@@ -70,6 +75,7 @@ static size_t skipValue(std::string_view text, size_t index, size_t maximumDepth
             {
                 return kEnd;
             }
+
             index--;
         }
         else if (character == '{' || character == '[')
@@ -78,6 +84,7 @@ static size_t skipValue(std::string_view text, size_t index, size_t maximumDepth
             {
                 return kEnd;
             }
+
             closers.push_back(character == '{' ? '}' : ']');
         }
         else if (character == '}' || character == ']')
@@ -86,6 +93,7 @@ static size_t skipValue(std::string_view text, size_t index, size_t maximumDepth
             {
                 return kEnd;
             }
+
             closers.pop_back();
             if (closers.empty())
             {
@@ -93,6 +101,7 @@ static size_t skipValue(std::string_view text, size_t index, size_t maximumDepth
             }
         }
     }
+
     return kEnd;
 }
 
@@ -117,11 +126,13 @@ std::optional<std::vector<JSONMember>> splitJSONObject(std::string_view text, si
         {
             return std::nullopt;
         }
+
         size_t keyEnd = skipString(text, index);
         if (keyEnd == kEnd)
         {
             return std::nullopt;
         }
+
         // nlohmann decodes escapes and rejects invalid UTF-8, as a whole-file parse would.
         nlohmann::json key =
             nlohmann::json::parse(text.begin() + index, text.begin() + keyEnd, nullptr, false);
@@ -135,12 +146,14 @@ std::optional<std::vector<JSONMember>> splitJSONObject(std::string_view text, si
         {
             return std::nullopt;
         }
+
         index           = skipSpace(text, index + 1);
         size_t valueEnd = skipValue(text, index, maximumDepth - 1);
         if (valueEnd == kEnd)
         {
             return std::nullopt;
         }
+
         members.push_back({key.get<std::string>(), text.substr(index, valueEnd - index)});
 
         index = skipSpace(text, valueEnd);
@@ -149,12 +162,15 @@ std::optional<std::vector<JSONMember>> splitJSONObject(std::string_view text, si
             index = skipSpace(text, index + 1);
             continue;
         }
+
         if (index < text.size() && text[index] == '}')
         {
             break;
         }
+
         return std::nullopt;
     }
+
     return skipSpace(text, index + 1) == text.size() ? std::optional(std::move(members))
                                                      : std::nullopt;
 }

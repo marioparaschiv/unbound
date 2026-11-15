@@ -8,8 +8,8 @@ constexpr double kCountdownLeewaySeconds = 0.1;
 
 struct CountdownFrame {
     std::string title;
-    bool        buttonsEnabled = true;
-    bool        running        = false;
+    bool buttonsEnabled = true;
+    bool running        = false;
 };
 
 std::string countdownTitle(const std::string &title, long remaining);
@@ -24,7 +24,7 @@ public:
 
 private:
     std::string title_;
-    long        remaining_ = 0;
-    bool        running_   = false;
+    long remaining_ = 0;
+    bool running_   = false;
 };
 }

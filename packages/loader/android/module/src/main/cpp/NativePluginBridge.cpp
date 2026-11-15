@@ -56,7 +56,7 @@ static void define(jsi::Runtime &runtime, jsi::Object &target, const char *name,
         runtime, name,
         loader::native::makeFunction(
             runtime, name, argumentCount,
-            [handler = std::move(handler)](jsi::Runtime     &rt, const jsi::Value &,
+            [handler = std::move(handler)](jsi::Runtime &rt, const jsi::Value &,
                                            const jsi::Value *args, size_t count) -> jsi::Value {
                 return handler(rt, args, count);
             }));
@@ -206,7 +206,7 @@ static jsi::Object makeJavaNamespace(jsi::Runtime &runtime, const JavaCallbacks 
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                requireArguments(count, 2, "A Java view search requires a view and a class name");
                const jsi::Value none;
-               const auto       options = loader::native::parseTraversalOptions(
+               const auto options = loader::native::parseTraversalOptions(
                    rt, count > 2 ? args[2] : none, loader::native::TraversalProfile::Search);
                nlohmann::json normalized = {
                    {"maxDepth", options.maxDepth},
@@ -304,9 +304,9 @@ static jsi::Object makeHooksNamespace(jsi::Runtime &runtime, const JavaCallbacks
             requireArguments(count, 3,
                              "Hooks require a class name, a method name and parameter types");
             std::string parameters = serializeJavaArguments(rt, args, count, 2);
-            std::string options  = count > 3 && args[3].isObject() ? serializeJavaValue(rt, args[3])
-                                                                   : std::string("{}");
-            bool        coalesce = false;
+            std::string options = count > 3 && args[3].isObject() ? serializeJavaValue(rt, args[3])
+                                                                  : std::string("{}");
+            bool coalesce       = false;
             if (count > 3 && args[3].isObject())
             {
                 jsi::Value value = args[3].asObject(rt).getProperty(rt, "coalesce");
@@ -316,26 +316,30 @@ static jsi::Object makeHooksNamespace(jsi::Runtime &runtime, const JavaCallbacks
                     {
                         throw std::invalid_argument("Hook coalescing must be set to receiver");
                     }
+
                     coalesce = true;
                 }
             }
-            if (coalesce &&
-                (count <= 4 || !args[4].isObject() || !args[4].asObject(rt).isFunction(rt)))
+
+            if (coalesce
+                && (count <= 4 || !args[4].isObject() || !args[4].asObject(rt).isFunction(rt)))
             {
                 throw std::invalid_argument("Receiver coalescing requires an observation callback");
             }
+
             jsi::Value rewriteOption =
                 count > 3 && args[3].isObject()
                     ? args[3].asObject(rt).getProperty(rt, "rewriteArguments")
                     : jsi::Value::undefined();
             bool rewritesArguments = rewriteOption.isBool() && rewriteOption.getBool();
-            if (rewritesArguments &&
-                (count <= 4 || !args[4].isObject() || !args[4].asObject(rt).isFunction(rt) ||
-                 !loader::native::currentUIScopeRuntime()))
+            if (rewritesArguments
+                && (count <= 4 || !args[4].isObject() || !args[4].asObject(rt).isFunction(rt)
+                    || !loader::native::currentUIScopeRuntime()))
             {
                 throw std::invalid_argument(
                     "Rewriting arguments requires a callback hooked from a UI scope");
             }
+
             loader::native::NativeResourceReservation reservation(
                 loader::native::nativeHookBudget(), "Too many native hooks are installed");
             std::string token =
@@ -347,33 +351,37 @@ static jsi::Object makeHooksNamespace(jsi::Runtime &runtime, const JavaCallbacks
             {
                 throw std::runtime_error("The Android hook adapter returned no token");
             }
+
             installedHooks().adopt(parsed["id"].get<std::string>(), reservation);
             if (count > 4)
             {
                 rememberHookListener(rt, parsed["id"].get<std::string>(), args[4], coalesce,
                                      rewritesArguments, false, callbacks);
             }
+
             return loader::toJSIValue(rt, parsed);
         });
     define(runtime, hooks, "proxy", 2,
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                requireArguments(count, 2, "Java proxies require interface names and a handler");
-               if (!args[1].isObject() || !args[1].asObject(rt).isFunction(rt) ||
-                   !loader::native::currentUIScopeRuntime())
+               if (!args[1].isObject() || !args[1].asObject(rt).isFunction(rt)
+                   || !loader::native::currentUIScopeRuntime())
                {
                    throw std::invalid_argument(
                        "Java proxies require a handler created in a UI scope");
                }
+
                loader::native::NativeResourceReservation reservation(
                    loader::native::nativeHookBudget(), "Too many native hooks are installed");
                std::string response  = callJavaString(callbacks, callbacks.hooksProxy,
                                                       {serializeJavaArguments(rt, args, count, 0)});
                nlohmann::json parsed = nlohmann::json::parse(response, nullptr, false);
-               if (parsed.is_discarded() || !parsed.contains("id") || !parsed["id"].is_string() ||
-                   !parsed.contains("object"))
+               if (parsed.is_discarded() || !parsed.contains("id") || !parsed["id"].is_string()
+                   || !parsed.contains("object"))
                {
                    throw std::runtime_error("The Android proxy adapter returned no proxy");
                }
+
                std::string id = parsed["id"].get<std::string>();
                installedHooks().adopt(id, reservation);
                rememberHookListener(rt, id, args[1], false, false, true, callbacks);
@@ -435,6 +443,7 @@ static bool scopeAllows(const loader::native::UIScope &scope, const std::string 
     {
         return false;
     }
+
     return scope.allows(path);
 }
 
@@ -442,7 +451,7 @@ static jsi::Object filterNamespace(jsi::Runtime &runtime, jsi::Object source,
                                    const loader::native::UIScope &scope, const std::string &prefix)
 {
     jsi::Object filtered(runtime);
-    jsi::Array  names = source.getPropertyNames(runtime);
+    jsi::Array names = source.getPropertyNames(runtime);
     for (size_t index = 0; index < names.size(runtime); index++)
     {
         std::string name = names.getValueAtIndex(runtime, index).getString(runtime).utf8(runtime);
@@ -451,12 +460,13 @@ static jsi::Object filterNamespace(jsi::Runtime &runtime, jsi::Object source,
             filtered.setProperty(runtime, name.c_str(), source.getProperty(runtime, name.c_str()));
         }
     }
+
     return filtered;
 }
 
-static jsi::Object makeScopedHooks(jsi::Runtime                                   &runtime,
+static jsi::Object makeScopedHooks(jsi::Runtime &runtime,
                                    const std::shared_ptr<loader::native::UIScope> &scope,
-                                   const JavaCallbacks                            &callbacks)
+                                   const JavaCallbacks &callbacks)
 {
     jsi::Object hooks =
         filterNamespace(runtime, makeHooksNamespace(runtime, callbacks), *scope, "hooks.");
@@ -468,7 +478,7 @@ static jsi::Object makeScopedHooks(jsi::Runtime                                 
                [scope, create, callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                    return scope->hook(
                        rt, [&]() -> std::pair<jsi::Value, loader::native::UIScope::Release> {
-                           jsi::Value  proxy = create->call(rt, args, count);
+                           jsi::Value proxy = create->call(rt, args, count);
                            std::string id =
                                hookTokenId(rt, proxy.asObject(rt).getProperty(rt, "token"));
                            return {std::move(proxy), [callbacks, id] {
@@ -480,17 +490,19 @@ static jsi::Object makeScopedHooks(jsi::Runtime                                 
                        });
                });
     }
+
     if (!hooks.hasProperty(runtime, "hook"))
     {
         return hooks;
     }
+
     auto install = std::make_shared<jsi::Function>(hooks.getPropertyAsFunction(runtime, "hook"));
     define(runtime, hooks, "hook", 5,
            [scope, install, callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                return scope->hook(rt,
                                   [&]() -> std::pair<jsi::Value, loader::native::UIScope::Release> {
-                                      jsi::Value  token = install->call(rt, args, count);
-                                      std::string id    = hookTokenId(rt, token);
+                                      jsi::Value token = install->call(rt, args, count);
+                                      std::string id   = hookTokenId(rt, token);
                                       return {std::move(token), [callbacks, id] {
                                                   if (installedHooks().contains(id))
                                                   {
@@ -503,12 +515,12 @@ static jsi::Object makeScopedHooks(jsi::Runtime                                 
 }
 
 struct UIRuntimeRecord {
-    jsi::Runtime                                          *runtime = nullptr;
+    jsi::Runtime *runtime = nullptr;
     std::weak_ptr<loader::native::RuntimeResourceRegistry> resources;
-    uint64_t                                               identity = 0;
+    uint64_t identity = 0;
 };
 
-static std::mutex      gUIRuntimeMutex;
+static std::mutex gUIRuntimeMutex;
 static UIRuntimeRecord gUIRuntime;
 
 static void rememberUIRuntime(jsi::Runtime &runtime)
@@ -517,6 +529,7 @@ static void rememberUIRuntime(jsi::Runtime &runtime)
     {
         return;
     }
+
     {
         std::lock_guard<std::mutex> lock(gUIRuntimeMutex);
         if (gUIRuntime.runtime == &runtime && !gUIRuntime.resources.expired())
@@ -524,7 +537,8 @@ static void rememberUIRuntime(jsi::Runtime &runtime)
             return;
         }
     }
-    auto                        resources = loader::native::runtimeResourceRegistry(runtime);
+
+    auto resources = loader::native::runtimeResourceRegistry(runtime);
     std::lock_guard<std::mutex> lock(gUIRuntimeMutex);
     gUIRuntime = {&runtime, resources, resources->identity()};
 }
@@ -536,10 +550,12 @@ static bool collectUIRuntimeGarbage()
         std::lock_guard<std::mutex> lock(gUIRuntimeMutex);
         record = gUIRuntime;
     }
+
     if (!record.runtime)
     {
         return false;
     }
+
     bool collected = false;
     loader::native::executeMainSynchronouslyUnlessMainWaits([&] {
         collected = loader::native::withRuntimeResource(
@@ -579,7 +595,7 @@ void registerNativePluginBridge(jsi::Runtime &runtime, const JavaCallbacks &call
 
     loader::native::NativePluginRootBuilder bridge(runtime,
                                                    loader::native::NativePluginPlatform::Android);
-    jsi::Object                             java = makeJavaNamespace(runtime, callbacks);
+    jsi::Object java = makeJavaNamespace(runtime, callbacks);
     define(runtime, java, "createUIScope", 1,
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                return createUIScope(rt, callbacks, args, count);

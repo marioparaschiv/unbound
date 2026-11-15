@@ -190,6 +190,7 @@ std::optional<std::string> appliedThemeId(const SettingsStore &settings)
     {
         return std::nullopt;
     }
+
     return value->get<std::string>();
 }
 
@@ -213,6 +214,7 @@ std::optional<ToolboxGesture> gestureNamed(const std::string &name)
             return gesture;
         }
     }
+
     return std::nullopt;
 }
 
@@ -233,6 +235,7 @@ bool setGestureEnabled(SettingsStore &settings, ToolboxGesture gesture, bool ena
     {
         settings.set(kStore, gestureKey(partner(gesture)), true);
     }
+
     return settings.save();
 }
 

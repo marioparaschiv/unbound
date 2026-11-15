@@ -18,6 +18,7 @@ static std::string rejection(const nlohmann::json &value, size_t stepIndex)
     {
         return error.what();
     }
+
     return "";
 }
 
@@ -32,18 +33,18 @@ int main()
     assert(*batchResultIndex({{"$nativeBatchResult", 2}}, 3) == 2);
     assert(*batchResultIndex({{"$nativeBatchResult", 2.0}}, 3) == 2);
 
-    assert(rejection({{"$nativeBatchResult", "0"}}, 3) ==
-           "Native batch result index must be an integer");
-    assert(rejection({{"$nativeBatchResult", nullptr}}, 3) ==
-           "Native batch result index must be an integer");
-    assert(rejection({{"$nativeBatchResult", 3}}, 3) ==
-           "Native batch can only reference earlier results");
-    assert(rejection({{"$nativeBatchResult", 0}}, 0) ==
-           "Native batch can only reference earlier results");
-    assert(rejection({{"$nativeBatchResult", -1}}, 3) ==
-           "Native batch can only reference earlier results");
-    assert(rejection({{"$nativeBatchResult", 1.5}}, 3) ==
-           "Native batch can only reference earlier results");
+    assert(rejection({{"$nativeBatchResult", "0"}}, 3)
+           == "Native batch result index must be an integer");
+    assert(rejection({{"$nativeBatchResult", nullptr}}, 3)
+           == "Native batch result index must be an integer");
+    assert(rejection({{"$nativeBatchResult", 3}}, 3)
+           == "Native batch can only reference earlier results");
+    assert(rejection({{"$nativeBatchResult", 0}}, 0)
+           == "Native batch can only reference earlier results");
+    assert(rejection({{"$nativeBatchResult", -1}}, 3)
+           == "Native batch can only reference earlier results");
+    assert(rejection({{"$nativeBatchResult", 1.5}}, 3)
+           == "Native batch can only reference earlier results");
 
     bool rejectedNaN = false;
     try
@@ -54,5 +55,6 @@ int main()
     {
         rejectedNaN = true;
     }
+
     assert(rejectedNaN);
 }

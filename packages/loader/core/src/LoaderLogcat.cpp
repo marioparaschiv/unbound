@@ -16,20 +16,23 @@ static bool containsInsensitive(std::string_view value, std::string_view needle)
     {
         return false;
     }
+
     for (std::size_t start = 0; start + needle.size() <= value.size(); start++)
     {
         std::size_t index = 0;
-        while (index < needle.size() &&
-               std::tolower(static_cast<unsigned char>(value[start + index])) ==
-                   std::tolower(static_cast<unsigned char>(needle[index])))
+        while (index < needle.size()
+               && std::tolower(static_cast<unsigned char>(value[start + index]))
+                      == std::tolower(static_cast<unsigned char>(needle[index])))
         {
             index++;
         }
+
         if (index == needle.size())
         {
             return true;
         }
     }
+
     return false;
 }
 
@@ -39,11 +42,13 @@ std::optional<LogSource> logcatTagSource(std::string_view tag)
     {
         return std::nullopt;
     }
+
     // FLog, React Native's Java logger, writes every tag as `unknown:<tag>`.
     if (startsWith(tag, "unknown:"))
     {
         return LogSource::ReactNative;
     }
+
     std::string_view name = tag;
     // Seen on a Discord launch; `jni_lib_merge` is SoLoader loading React Native's merged
     // libraries.
@@ -57,11 +62,13 @@ std::optional<LogSource> logcatTagSource(std::string_view tag)
             return LogSource::ReactNative;
         }
     }
-    if (startsWith(name, "React") || containsInsensitive(name, "Fabric") ||
-        containsInsensitive(name, "Hermes"))
+
+    if (startsWith(name, "React") || containsInsensitive(name, "Fabric")
+        || containsInsensitive(name, "Hermes"))
     {
         return LogSource::ReactNative;
     }
+
     return LogSource::Native;
 }
 
@@ -96,7 +103,7 @@ static void skipSpaces(std::string_view &rest)
 // Reads up to `maximumDigits` digits as a number and skips any further digits.
 static std::optional<long long> readNumber(std::string_view &rest, std::size_t maximumDigits = 18)
 {
-    long long   value  = 0;
+    long long value    = 0;
     std::size_t digits = 0;
     while (!rest.empty() && std::isdigit(static_cast<unsigned char>(rest.front())))
     {
@@ -104,13 +111,16 @@ static std::optional<long long> readNumber(std::string_view &rest, std::size_t m
         {
             value = value * 10 + (rest.front() - '0');
         }
+
         digits++;
         rest.remove_prefix(1);
     }
+
     if (digits == 0)
     {
         return std::nullopt;
     }
+
     return value;
 }
 
@@ -121,18 +131,21 @@ static std::optional<long long> readTime(std::string_view &rest)
     {
         return std::nullopt;
     }
+
     rest.remove_prefix(1);
     // `-v usec` and `-v nsec` print more fractional digits; only milliseconds are kept.
-    std::size_t              before       = rest.size();
+    std::size_t before                    = rest.size();
     std::optional<long long> milliseconds = readNumber(rest, 3);
     if (!milliseconds)
     {
         return std::nullopt;
     }
+
     for (std::size_t digits = before - rest.size(); digits < 3; digits++)
     {
         *milliseconds *= 10;
     }
+
     return *seconds * 1000 + *milliseconds;
 }
 
@@ -142,6 +155,7 @@ std::optional<LogEntry> logcatEntry(std::string_view line)
     {
         line.remove_suffix(1);
     }
+
     std::string_view rest = line;
     skipSpaces(rest);
     std::optional<long long> time = readTime(rest);
@@ -154,6 +168,7 @@ std::optional<LogEntry> logcatEntry(std::string_view line)
     {
         return std::nullopt;
     }
+
     std::optional<LogLevel> level = logcatLevel(rest.front());
     rest.remove_prefix(2);
     // logcat pads short tags with spaces before the `: ` separator.
@@ -164,18 +179,22 @@ std::optional<LogEntry> logcatEntry(std::string_view line)
         {
             return std::nullopt;
         }
+
         separator = rest.size() - 1;
     }
+
     std::string_view tag = rest.substr(0, separator);
     while (!tag.empty() && tag.back() == ' ')
     {
         tag.remove_suffix(1);
     }
+
     std::optional<LogSource> source = logcatTagSource(tag);
     if (tag.empty() || !source)
     {
         return std::nullopt;
     }
+
     std::string_view message = rest.substr(std::min(rest.size(), separator + 2));
     return LogEntry{*time, *source, *level, {std::string(tag)}, std::string(message)};
 }

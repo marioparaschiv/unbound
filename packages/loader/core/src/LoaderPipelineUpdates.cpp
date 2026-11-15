@@ -64,6 +64,7 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
             "On a metered network; the update check waits for Wi-Fi.");
         return;
     }
+
     waitingForWifi_.store(false);
     checking_.store(true);
     lastCheckMs_.store(nowMs());
@@ -89,49 +90,54 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
         }
         catch (const std::exception &error)
         {
-            const auto         *update  = dynamic_cast<const BundleUpdateError *>(&error);
+            const auto *update          = dynamic_cast<const BundleUpdateError *>(&error);
             BundleUpdateFailure failure = update ? update->failure : BundleUpdateFailure::Network;
             // Even a failed check counts, so an offline launch does not wait again next time.
             preferences::setCheckedByLoader(settings_, loaderVersion());
             recordUpdateCheck(epochMs(), "failed", error.what());
             log(hasSaved ? LogLevel::Warning : LogLevel::Error, LOG_CATEGORY_DEFAULT,
-                std::string("Bundle download failed. (") + error.what() + ")" +
-                    (hasSaved ? "; using the cached bundle" : ""));
+                std::string("Bundle download failed. (") + error.what() + ")"
+                    + (hasSaved ? "; using the cached bundle" : ""));
             if (waitForDownload)
             {
                 settleFirstDownload(token, std::nullopt);
             }
+
             if (!hasSaved && attempt == 0 && token == token_.load())
             {
                 host_->alert(bundleFailureNotice(failure));
             }
-            if (failure == BundleUpdateFailure::Network &&
-                attempt < std::size(kRetryDelaysSeconds) && token == token_.load())
+
+            if (failure == BundleUpdateFailure::Network && attempt < std::size(kRetryDelaysSeconds)
+                && token == token_.load())
             {
                 double delay =
                     retryDelay(attempt, update ? update->retryAfter : std::nullopt, randomUnit());
                 log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
-                    "Retrying the update check in " + std::to_string(static_cast<int>(delay)) +
-                        " s.");
+                    "Retrying the update check in " + std::to_string(static_cast<int>(delay))
+                        + " s.");
                 host_->runAfter(delay, [this, token, attempt]() {
                     checkForUpdate(token, attempt + 1);
                 });
             }
+
             return;
         }
 
         bool updated = downloaded != savedPath && fileExists(downloaded);
-        if (waitForDownload &&
-            settleFirstDownload(token,
-                                updated ? std::optional<std::string>(downloaded) : std::nullopt))
+        if (waitForDownload
+            && settleFirstDownload(token,
+                                   updated ? std::optional<std::string>(downloaded) : std::nullopt))
         {
             return;
         }
+
         if (updated && !reloadOnUpdate && token == token_.load())
         {
             // The client offers a restart; otherwise it runs at the next launch.
             bundleStaged_.store(true);
         }
+
         if (!updated || !reloadOnUpdate || token != token_.load())
         {
             return;
@@ -163,7 +169,7 @@ bool LoaderPipeline::isBundleUpdateAvailable()
 bool LoaderPipeline::updateBundleNow()
 {
     ExclusiveCheck check(checking_);
-    uint64_t       token = token_.load();
+    uint64_t token = token_.load();
     waitingForWifi_.store(false);
     lastCheckMs_.store(nowMs());
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "The client asked to download a newer bundle.");
@@ -187,6 +193,7 @@ bool LoaderPipeline::updateBundleNow()
     {
         bundleStaged_.store(true);
     }
+
     return hasStagedBundle();
 }
 
@@ -196,6 +203,7 @@ double LoaderPipeline::retryDelay(size_t attempt, std::optional<double> retryAft
     {
         return std::min(*retryAfter, kMaxRetryAfterSeconds);
     }
+
     size_t last = std::size(kRetryDelaysSeconds) - 1;
     return kRetryDelaysSeconds[std::min(attempt, last)] * (0.8 + 0.4 * unit);
 }
@@ -203,8 +211,8 @@ double LoaderPipeline::retryDelay(size_t attempt, std::optional<double> retryAft
 bool LoaderPipeline::waitsForWifi(bool hasSaved, bool waitForDownload)
 {
     // Only a launch that already has a bundle to run can put its update off.
-    return hasSaved && !waitForDownload && preferences::updatesWaitForWifi(settings_) &&
-           host_->onMeteredNetwork();
+    return hasSaved && !waitForDownload && preferences::updatesWaitForWifi(settings_)
+           && host_->onMeteredNetwork();
 }
 
 void LoaderPipeline::checkForUpdate(uint64_t token, size_t attempt)
@@ -213,6 +221,7 @@ void LoaderPipeline::checkForUpdate(uint64_t token, size_t attempt)
     {
         return;
     }
+
     std::string savedPath;
     try
     {
@@ -224,6 +233,7 @@ void LoaderPipeline::checkForUpdate(uint64_t token, size_t attempt)
             std::string("Failed to resolve the saved bundle: ") + error.what());
         return;
     }
+
     updateInBackground(savedPath, !savedPath.empty() && fileExists(savedPath), false, token,
                        attempt);
 }
@@ -234,12 +244,14 @@ bool LoaderPipeline::checkIfDue(const char *reason, double intervalSeconds)
     {
         return false;
     }
+
     int64_t last = lastCheckMs_.load();
-    bool    due  = last != 0 && nowMs() - last >= static_cast<int64_t>(intervalSeconds * 1000);
+    bool due     = last != 0 && nowMs() - last >= static_cast<int64_t>(intervalSeconds * 1000);
     if (!due && !waitingForWifi_.load())
     {
         return false;
     }
+
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, reason);
     checkForUpdate(token_.load(), 0);
     return true;

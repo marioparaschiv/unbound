@@ -10,6 +10,7 @@ std::string parentDirectory(const std::string &path)
     {
         return "";
     }
+
     return separator == 0 ? "/" : path.substr(0, separator);
 }
 
@@ -33,6 +34,7 @@ bool FileWatcher::watch(const std::string &path, FileWatchCallback onChange)
     {
         return false;
     }
+
     Monitor &monitor = monitors_[path];
     monitor.onChange = std::move(onChange);
 
@@ -42,6 +44,7 @@ bool FileWatcher::watch(const std::string &path, FileWatchCallback onChange)
     {
         backend_->watchDirectory(directory);
     }
+
     files->second.insert(path);
 
     arm(path, monitor);
@@ -51,23 +54,26 @@ bool FileWatcher::watch(const std::string &path, FileWatchCallback onChange)
 void FileWatcher::unwatch(const std::string &path)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    const auto                  monitor = monitors_.find(path);
+    const auto monitor = monitors_.find(path);
     if (monitor == monitors_.end())
     {
         return;
     }
+
     if (monitor->second.armed)
     {
         backend_->unwatchFile(path);
     }
+
     monitors_.erase(monitor);
 
     const std::string directory = parentDirectory(path);
-    const auto        files     = directories_.find(directory);
+    const auto files            = directories_.find(directory);
     if (files == directories_.end())
     {
         return;
     }
+
     files->second.erase(path);
     if (files->second.empty())
     {
@@ -87,11 +93,12 @@ void FileWatcher::fileChanged(const std::string &path, FileWatchEvent event)
     std::vector<Pending> pending;
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        const auto                  monitor = monitors_.find(path);
+        const auto monitor = monitors_.find(path);
         if (monitor == monitors_.end())
         {
             return;
         }
+
         pending.push_back(stamp(path, monitor->second));
         if (event == FileWatchEvent::Removed && monitor->second.armed)
         {
@@ -99,34 +106,39 @@ void FileWatcher::fileChanged(const std::string &path, FileWatchEvent event)
             backend_->unwatchFile(path);
         }
     }
+
     schedule(pending);
 }
 
-void FileWatcher::directoryChanged(const std::string                &directory,
+void FileWatcher::directoryChanged(const std::string &directory,
                                    const std::optional<std::string> &name)
 {
     std::vector<Pending> pending;
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        const auto                  files = directories_.find(directory);
+        const auto files = directories_.find(directory);
         if (files == directories_.end())
         {
             return;
         }
+
         for (const std::string &path : files->second)
         {
             if (name && lastPathComponent(path) != *name)
             {
                 continue;
             }
+
             Monitor &monitor = monitors_[path];
             if (!monitor.armed)
             {
                 arm(path, monitor);
             }
+
             pending.push_back(stamp(path, monitor));
         }
     }
+
     schedule(pending);
 }
 
@@ -160,13 +172,15 @@ void FileWatcher::notify(const std::string &path, uint64_t generation)
     FileWatchCallback onChange;
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        const auto                  monitor = monitors_.find(path);
+        const auto monitor = monitors_.find(path);
         if (monitor == monitors_.end() || monitor->second.generation != generation)
         {
             return;
         }
+
         onChange = monitor->second.onChange;
     }
+
     if (onChange)
     {
         onChange();

@@ -37,6 +37,7 @@ public:
         {
             return;
         }
+
         struct stat status{};
         if (fstat(descriptor, &status) == 0 && status.st_size > 0)
         {
@@ -48,6 +49,7 @@ public:
                 size_ = static_cast<size_t>(status.st_size);
             }
         }
+
         close(descriptor);
     }
 
@@ -68,11 +70,12 @@ public:
         {
             return std::nullopt;
         }
+
         return std::string_view(static_cast<const char *>(data_), size_);
     }
 
 private:
-    void  *data_ = nullptr;
+    void *data_  = nullptr;
     size_t size_ = 0;
 };
 
@@ -83,6 +86,7 @@ static std::optional<std::string> loadedLibraryPath()
     {
         return std::nullopt;
     }
+
     return std::string(info.dli_fname);
 }
 
@@ -93,22 +97,26 @@ static nlohmann::json evaluation()
     {
         return {{"failure", "unable to read the loaded library"}};
     }
-    const MappedFile                      file(path->c_str());
+
+    const MappedFile file(path->c_str());
     const std::optional<std::string_view> library = file.contents();
     if (!library)
     {
         return {{"failure", "unable to read the loaded library"}};
     }
+
     const attestation::Evaluation result = attestation::evaluate(*library, kLoadedMachine, 0);
     if (result.failure)
     {
         return {{"failure", *result.failure}};
     }
+
     const std::optional<std::string> point = attestation::publicKeyPoint();
     if (!point)
     {
         return {{"failure", "unable to read the pinned P-256 public key"}};
     }
+
     return {
         {"digest", loader::crypto::hex(result.digest)},
         {"signature", loader::crypto::hex(result.record.signature)},

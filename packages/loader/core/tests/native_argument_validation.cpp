@@ -22,6 +22,7 @@ static std::string failure(const std::function<void()> &validate)
     {
         return error.what();
     }
+
     return "";
 }
 
@@ -105,8 +106,8 @@ int main()
     assert(scalar(number(1.5), "double").empty());
     assert(scalar(signedInteger(INT64_MIN), "i64").empty());
     assert(scalar(unsignedInteger(INT64_MAX), "i64").empty());
-    assert(scalar(unsignedInteger(static_cast<uint64_t>(INT64_MAX) + 1), "i64") ==
-           "Native scalar argument is out of range");
+    assert(scalar(unsignedInteger(static_cast<uint64_t>(INT64_MAX) + 1), "i64")
+           == "Native scalar argument is out of range");
     assert(scalar(unsignedInteger(UINT64_MAX), "u64").empty());
     assert(scalar(signedInteger(0), "u64").empty());
     assert(scalar(signedInteger(-1), "u64") == "Native scalar argument is out of range");
@@ -137,10 +138,10 @@ int main()
 
     assert(batch(boxed("{CGPoint=dd}"), "{CGPoint=dd}").empty());
     assert(batch(boxed("{_CGPoint=dd}"), "{CGPoint=dd}").empty());
-    assert(batch(boxed("{CGSize=dd}"), "{CGPoint=dd}") ==
-           "Native batch struct argument has the wrong layout");
-    assert(batch(stringArgument(), "{CGPoint=dd}") ==
-           "Native batch struct argument has the wrong layout");
+    assert(batch(boxed("{CGSize=dd}"), "{CGPoint=dd}")
+           == "Native batch struct argument has the wrong layout");
+    assert(batch(stringArgument(), "{CGPoint=dd}")
+           == "Native batch struct argument has the wrong layout");
 
     assert(batch(boxedNumber(number(1), "d"), "B").empty());
     assert(batch(boxedNumber(number(300), "d"), "C") == "Native scalar argument is out of range");

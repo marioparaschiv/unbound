@@ -28,6 +28,7 @@ PreviousExit ExitRecord::take(bool nativeCrashRecorded) const
     {
         return PreviousExit::Crashed;
     }
+
     return ended ? PreviousExit::Ended : PreviousExit::Unknown;
 }
 }

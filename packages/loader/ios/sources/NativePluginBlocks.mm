@@ -30,8 +30,8 @@ namespace {
     constexpr int32_t kBlockCopyDispose  = 1 << 25;
     constexpr int32_t kBlockHasSignature = 1 << 30;
     constexpr int32_t kBlockOneReference = 2;
-    constexpr size_t  kRegisters         = 8;
-    constexpr size_t  kMaximumFloatSlots = 4;
+    constexpr size_t kRegisters          = 8;
+    constexpr size_t kMaximumFloatSlots  = 4;
 
     struct IntegerReturn {
         uint64_t first;
@@ -44,7 +44,7 @@ namespace {
 
     struct Registers {
         uint64_t x[kRegisters];
-        double   d[kRegisters];
+        double d[kRegisters];
     };
 
     enum class Passing
@@ -59,8 +59,8 @@ namespace {
 
     struct Slot {
         Passing passing;
-        size_t  count = 1;
-        size_t  size  = 0;
+        size_t count = 1;
+        size_t size  = 0;
     };
 
     struct BlockDescriptor {
@@ -72,29 +72,29 @@ namespace {
     };
 
     struct Callback {
-        loader::ffi::Signature    signature;
-        std::vector<Slot>         slots;
-        Slot                      result{Passing::Integer};
-        bool                      floatReturn  = false;
-        bool                      receivesSelf = false;
+        loader::ffi::Signature signature;
+        std::vector<Slot> slots;
+        Slot result{Passing::Integer};
+        bool floatReturn  = false;
+        bool receivesSelf = false;
         std::shared_ptr<Function> function;
-        uint64_t                  generation = 0;
-        std::string               encoding;
-        std::string               label;
+        uint64_t generation = 0;
+        std::string encoding;
+        std::string label;
     };
 
     struct BlockState {
-        BlockDescriptor           descriptor{};
+        BlockDescriptor descriptor{};
         std::shared_ptr<Callback> callback;
     };
 
     struct BlockLiteral {
-        void                *isa;
+        void *isa;
         std::atomic<int32_t> flags;
-        int32_t              reserved;
-        void                *invoke;
-        BlockDescriptor     *descriptor;
-        BlockState          *state;
+        int32_t reserved;
+        void *invoke;
+        BlockDescriptor *descriptor;
+        BlockState *state;
     };
 
     bool isFloating(loader::ffi::Kind kind)
@@ -103,7 +103,7 @@ namespace {
     }
 
     void flattenFields(const loader::ffi::StructLayout &layout,
-                       std::vector<loader::ffi::Kind>  &leaves)
+                       std::vector<loader::ffi::Kind> &leaves)
     {
         for (const loader::ffi::StructField &field : layout.fields)
         {
@@ -125,37 +125,43 @@ namespace {
         {
             return {Passing::Float, 1, sizeof(float)};
         }
+
         if (type.kind == Kind::Double)
         {
             return {Passing::Double, 1, sizeof(double)};
         }
+
         if (type.kind == Kind::Struct && type.layout)
         {
             std::vector<Kind> leaves;
             flattenFields(*type.layout, leaves);
-            bool aggregate = !leaves.empty() && leaves.size() <= kMaximumFloatSlots &&
-                             isFloating(leaves.front());
+            bool aggregate = !leaves.empty() && leaves.size() <= kMaximumFloatSlots
+                             && isFloating(leaves.front());
             for (Kind leaf : leaves)
             {
                 aggregate = aggregate && leaf == leaves.front();
             }
+
             if (aggregate)
             {
                 return {Passing::FloatAggregate, leaves.size(), type.layout->size};
             }
+
             if (type.layout->size <= 2 * sizeof(uint64_t))
             {
                 return {Passing::IntegerAggregate, (type.layout->size + 7) / 8, type.layout->size};
             }
+
             return {Passing::Indirect, 1, type.layout->size};
         }
+
         return {Passing::Integer, 1, loader::ffi::typeSize(type)};
     }
 
     bool usesFloatRegisters(const Slot &slot)
     {
-        return slot.passing == Passing::Float || slot.passing == Passing::Double ||
-               slot.passing == Passing::FloatAggregate;
+        return slot.passing == Passing::Float || slot.passing == Passing::Double
+               || slot.passing == Passing::FloatAggregate;
     }
 
     std::string typeEncoding(const loader::ffi::Type &type)
@@ -196,11 +202,13 @@ namespace {
                 {
                     return "{?=}";
                 }
+
                 std::string fields;
                 for (const loader::ffi::StructField &field : type.layout->fields)
                 {
                     fields += typeEncoding(field.type);
                 }
+
                 return "{" + type.layout->name + "=" + fields + "}";
             }
             case Kind::Extension:
@@ -208,16 +216,20 @@ namespace {
                 {
                     return "@";
                 }
+
                 if (type.name == "class")
                 {
                     return "#";
                 }
+
                 if (type.name == "selector")
                 {
                     return ":";
                 }
+
                 return "^v";
         }
+
         return "^v";
     }
 
@@ -228,6 +240,7 @@ namespace {
         {
             encoding += typeEncoding(type);
         }
+
         return encoding;
     }
 
@@ -255,6 +268,7 @@ namespace {
                 {
                     std::memcpy(buffer.data() + index * element, &registers.d[d++], element);
                 }
+
                 break;
             }
             case Passing::IntegerAggregate:
@@ -267,9 +281,11 @@ namespace {
                 {
                     std::memcpy(buffer.data(), source, slot.size);
                 }
+
                 break;
             }
         }
+
         return buffer;
     }
 
@@ -279,6 +295,7 @@ namespace {
         {
             return;
         }
+
         void *object = nullptr;
         std::memcpy(&object, result, sizeof(object));
         if (object)
@@ -296,18 +313,21 @@ namespace {
         {
             return result;
         }
-        size_t                            x = leading;
-        size_t                            d = 0;
+
+        size_t x = leading;
+        size_t d = 0;
         std::vector<std::vector<uint8_t>> arguments;
         for (const Slot &slot : callback->slots)
         {
             arguments.push_back(readArgument(slot, registers, x, d));
         }
+
         bool completed = executeRuntimeSynchronously([&](Runtime &runtime) {
             if (callback->generation != loader::native::runtimeGeneration())
             {
                 return;
             }
+
             std::vector<Value> values;
             values.reserve(arguments.size() + 1);
             if (callback->receivesSelf)
@@ -316,17 +336,20 @@ namespace {
                     loader::ffi::readValue(runtime, loader::ffi::resolveType("object"),
                                            reinterpret_cast<const uint8_t *>(&registers.x[0])));
             }
+
             for (size_t index = 0; index < arguments.size(); index++)
             {
                 values.push_back(loader::ffi::readValue(
                     runtime, callback->signature.arguments[index], arguments[index].data()));
             }
+
             Value returned = callback->function->call(
                 runtime, static_cast<const Value *>(values.data()), values.size());
             if (callback->signature.result.kind == loader::ffi::Kind::Void)
             {
                 return;
             }
+
             loader::ffi::ArgumentStorage storage;
             loader::ffi::writeValue(runtime, returned, callback->signature.result, result.data(),
                                     storage);
@@ -339,6 +362,7 @@ namespace {
                  format:@"Skipped the native callback %s: the JavaScript thread did not answer.",
                         callback->label.c_str()];
         }
+
         return result;
     }
 
@@ -355,6 +379,7 @@ namespace {
                    format:@"Failed to run the native callback %s: %s", callback->label.c_str(),
                           error.what()];
         }
+
         return std::vector<uint8_t>(kMaximumFloatSlots * sizeof(double));
     }
 
@@ -366,7 +391,7 @@ namespace {
     }
 
     FloatReturn floatResult(const std::shared_ptr<Callback> &callback,
-                            const std::vector<uint8_t>      &result)
+                            const std::vector<uint8_t> &result)
     {
         FloatReturn value{};
         const Slot &slot = callback->result;
@@ -383,6 +408,7 @@ namespace {
             std::memcpy(&value.values[0], result.data(),
                         slot.passing == Passing::Float ? sizeof(float) : sizeof(double));
         }
+
         return value;
     }
 
@@ -392,14 +418,14 @@ namespace {
         return literal && literal->state ? literal->state->callback : nullptr;
     }
 
-    std::mutex                                                 gMethodsMutex;
+    std::mutex gMethodsMutex;
     std::map<std::pair<Class, SEL>, std::shared_ptr<Callback>> gMethods;
-    std::map<std::string, std::vector<std::pair<Class, SEL>>>  gDefinedClasses;
+    std::map<std::string, std::vector<std::pair<Class, SEL>>> gDefinedClasses;
 
     std::shared_ptr<Callback> methodCallback(uint64_t self, uint64_t command)
     {
-        id                          object   = (__bridge id) reinterpret_cast<void *>(self);
-        SEL                         selector = reinterpret_cast<SEL>(command);
+        id object    = (__bridge id) reinterpret_cast<void *>(self);
+        SEL selector = reinterpret_cast<SEL>(command);
         std::lock_guard<std::mutex> lock(gMethodsMutex);
         for (Class cls = object_getClass(object); cls; cls = class_getSuperclass(cls))
         {
@@ -409,6 +435,7 @@ namespace {
                 return found->second;
             }
         }
+
         return nullptr;
     }
 
@@ -429,6 +456,7 @@ namespace {
         {
             return {0, 0};
         }
+
         Registers registers =
             capture(x0, x1, x2, x3, x4, x5, x6, x7, d0, d1, d2, d3, d4, d5, d6, d7);
         return integerResult(safelyRun(callback, registers, 1));
@@ -444,6 +472,7 @@ namespace {
         {
             return {};
         }
+
         Registers registers =
             capture(x0, x1, x2, x3, x4, x5, x6, x7, d0, d1, d2, d3, d4, d5, d6, d7);
         return floatResult(callback, safelyRun(callback, registers, 1));
@@ -459,6 +488,7 @@ namespace {
         {
             return {0, 0};
         }
+
         Registers registers =
             capture(x0, x1, x2, x3, x4, x5, x6, x7, d0, d1, d2, d3, d4, d5, d6, d7);
         return integerResult(safelyRun(callback, registers, 2));
@@ -474,6 +504,7 @@ namespace {
         {
             return {};
         }
+
         Registers registers =
             capture(x0, x1, x2, x3, x4, x5, x6, x7, d0, d1, d2, d3, d4, d5, d6, d7);
         return floatResult(callback, safelyRun(callback, registers, 2));
@@ -486,6 +517,7 @@ namespace {
         {
             throw JSError(runtime, label + " expects a function");
         }
+
         auto callback       = std::make_shared<Callback>();
         callback->label     = std::move(label);
         callback->signature = loader::ffi::signatureFromValue(runtime, signature);
@@ -497,19 +529,22 @@ namespace {
             (usesFloatRegisters(slot) ? floats : integers) += slot.count;
             callback->slots.push_back(slot);
         }
+
         if (integers > kRegisters || floats > kRegisters)
         {
-            throw JSError(runtime, callback->label +
-                                       " has more arguments than fit in registers; pass a struct "
-                                       "or fewer values");
+            throw JSError(runtime, callback->label
+                                       + " has more arguments than fit in registers; pass a struct "
+                                         "or fewer values");
         }
+
         callback->result = slotFor(callback->signature.result);
         if (callback->result.passing == Passing::Indirect)
         {
-            throw JSError(runtime, callback->label +
-                                       " cannot return a struct larger than 16 bytes unless it "
-                                       "holds only floats or only doubles");
+            throw JSError(runtime, callback->label
+                                       + " cannot return a struct larger than 16 bytes unless it "
+                                         "holds only floats or only doubles");
         }
+
         callback->floatReturn = usesFloatRegisters(callback->result);
         callback->function =
             std::make_shared<Function>(function.asObject(runtime).asFunction(runtime));
@@ -549,6 +584,7 @@ namespace {
         {
             throw JSError(runtime, "objc.block expects a signature and a function");
         }
+
         std::shared_ptr<Callback> callback =
             makeCallback(runtime, args[0], args[1], 1, "objc.block");
         callback->encoding =
@@ -567,15 +603,16 @@ namespace {
             delete state;
             throw JSError(runtime, "objc.block could not allocate the block");
         }
+
         literal->isa = _NSConcreteMallocBlock;
-        literal->flags.store(kBlockNeedsFree | kBlockCopyDispose | kBlockHasSignature |
-                             kBlockOneReference);
+        literal->flags.store(kBlockNeedsFree | kBlockCopyDispose | kBlockHasSignature
+                             | kBlockOneReference);
         literal->invoke = callback->floatReturn ? reinterpret_cast<void *>(blockFloatTrampoline)
                                                 : reinterpret_cast<void *>(blockIntegerTrampoline);
         literal->descriptor = &state->descriptor;
         literal->state      = state;
 
-        id    block  = (__bridge id) literal;
+        id block     = (__bridge id) literal;
         Value handle = objcHandleResult(runtime, block);
         CFRelease((__bridge CFTypeRef) block);
         return handle;
@@ -587,28 +624,32 @@ namespace {
         {
             throw JSError(runtime, "objc.callBlock expects a block and a signature");
         }
+
         id block = objcValue(runtime, args[0]);
         if (!block || ![block isKindOfClass:NSClassFromString(@"NSBlock")])
         {
             throw JSError(runtime, "objc.callBlock expects a block");
         }
-        auto                  *literal   = (__bridge BlockLiteral *) block;
+
+        auto *literal                    = (__bridge BlockLiteral *) block;
         loader::ffi::Signature signature = loader::ffi::signatureFromValue(runtime, args[1]);
         if (signature.arguments.size() != count - 2)
         {
             throw JSError(runtime, "objc.callBlock was given a different number of arguments than "
                                    "its signature lists");
         }
+
         std::vector<loader::ffi::Type> frame{objectType()};
         frame.insert(frame.end(), signature.arguments.begin(), signature.arguments.end());
         loader::ffi::CallFrame call(loader::ffi::callInterface(signature.result, frame));
-        void                  *self = (__bridge void *) block;
+        void *self = (__bridge void *) block;
         std::memcpy(call.argument(0), &self, sizeof(self));
         for (size_t index = 0; index < signature.arguments.size(); index++)
         {
             loader::ffi::writeValue(runtime, args[index + 2], signature.arguments[index],
                                     call.argument(index + 1), call.storage());
         }
+
         call.invoke(literal->invoke);
         return loader::ffi::readValue(runtime, signature.result, call.result());
     }
@@ -619,6 +660,7 @@ namespace {
         {
             return;
         }
+
         Array protocols = value.asObject(runtime).asArray(runtime);
         for (size_t index = 0; index < protocols.size(runtime); index++)
         {
@@ -627,12 +669,14 @@ namespace {
             {
                 continue;
             }
+
             std::string protocolName = name.getString(runtime).utf8(runtime);
-            Protocol   *protocol     = objc_getProtocol(protocolName.c_str());
+            Protocol *protocol       = objc_getProtocol(protocolName.c_str());
             if (!protocol)
             {
                 throw JSError(runtime, "objc.defineClass found no protocol named " + protocolName);
             }
+
             class_addProtocol(cls, protocol);
         }
     }
@@ -644,16 +688,17 @@ namespace {
             throw JSError(runtime,
                           "objc.defineClass expects a name, a superclass name and the methods");
         }
+
         std::string name       = args[0].getString(runtime).utf8(runtime);
         std::string superclass = args[1].getString(runtime).utf8(runtime);
-        Class       parent     = objc_getClass(superclass.c_str());
+        Class parent           = objc_getClass(superclass.c_str());
         if (!parent)
         {
             throw JSError(runtime, "objc.defineClass found no superclass named " + superclass);
         }
 
         Object table = args[2].asObject(runtime);
-        Array  keys  = table.getPropertyNames(runtime);
+        Array keys   = table.getPropertyNames(runtime);
         std::vector<std::pair<SEL, std::shared_ptr<Callback>>> methods;
         for (size_t index = 0; index < keys.size(runtime); index++)
         {
@@ -662,10 +707,11 @@ namespace {
             Value entry = table.getProperty(runtime, selectorName.c_str());
             if (!entry.isObject())
             {
-                throw JSError(runtime, "objc.defineClass: " + selectorName +
-                                           " needs a signature and an implementation");
+                throw JSError(runtime, "objc.defineClass: " + selectorName
+                                           + " needs a signature and an implementation");
             }
-            Object                    method   = entry.asObject(runtime);
+
+            Object method                      = entry.asObject(runtime);
             std::shared_ptr<Callback> callback = makeCallback(
                 runtime, method.getProperty(runtime, "signature"),
                 method.getProperty(runtime, "implementation"), 2, name + " " + selectorName);
@@ -676,22 +722,25 @@ namespace {
         }
 
         std::lock_guard<std::mutex> lock(gMethodsMutex);
-        Class                       existing = objc_getClass(name.c_str());
-        bool                        ours     = gDefinedClasses.count(name) > 0;
+        Class existing = objc_getClass(name.c_str());
+        bool ours      = gDefinedClasses.count(name) > 0;
         if (existing && !ours)
         {
             throw JSError(runtime, "objc.defineClass: a class named " + name + " already exists");
         }
+
         if (existing && class_getSuperclass(existing) != parent)
         {
-            throw JSError(runtime, "objc.defineClass: " + name +
-                                       " was defined before with another superclass");
+            throw JSError(runtime, "objc.defineClass: " + name
+                                       + " was defined before with another superclass");
         }
+
         Class cls = existing ?: objc_allocateClassPair(parent, name.c_str(), 0);
         if (!cls)
         {
             throw JSError(runtime, "objc.defineClass could not create " + name);
         }
+
         for (const std::pair<Class, SEL> &previous : gDefinedClasses[name])
         {
             auto found = gMethods.find(previous);
@@ -701,6 +750,7 @@ namespace {
                 gMethods.erase(found);
             }
         }
+
         std::vector<std::pair<Class, SEL>> defined;
         for (auto &[selector, callback] : methods)
         {
@@ -711,9 +761,11 @@ namespace {
             {
                 class_replaceMethod(cls, selector, implementation, callback->encoding.c_str());
             }
+
             gMethods[{cls, selector}] = callback;
             defined.emplace_back(cls, selector);
         }
+
         gDefinedClasses[name] = std::move(defined);
         if (!existing)
         {
@@ -721,8 +773,10 @@ namespace {
             {
                 addProtocols(runtime, cls, args[3]);
             }
+
             objc_registerClassPair(cls);
         }
+
         return objcHandleResult(runtime, cls);
     }
 

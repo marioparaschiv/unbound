@@ -18,6 +18,7 @@ const char *gestureActionName(GestureAction action)
         case GestureAction::CancelHold:
             return "cancel-hold";
     }
+
     return "none";
 }
 
@@ -32,6 +33,7 @@ GestureAction ShakeMotion::ended(double seconds, const GestureEnabled &enabled)
     {
         return GestureAction::None;
     }
+
     const double duration = seconds - *start_;
     start_.reset();
     return enabled() && isShakeGesture(duration) ? GestureAction::Open : GestureAction::None;
@@ -44,16 +46,19 @@ GestureAction ShakeSensor::sample(double x, double y, double z, int64_t millisec
     {
         return GestureAction::None;
     }
+
     const double force = std::sqrt(x * x + y * y + z * z) / kStandardGravity;
     if (force < kShakeGravity || milliseconds - last_ < kShakeCooldownMilliseconds)
     {
         return GestureAction::None;
     }
+
     if (start_ == 0 || milliseconds - start_ > kShakeWindowMilliseconds)
     {
         start_ = milliseconds;
         return GestureAction::None;
     }
+
     start_ = 0;
     last_  = milliseconds;
     return GestureAction::Open;
@@ -65,6 +70,7 @@ GestureAction ThreeFingerPress::pointerDown(int pointers, const GestureEnabled &
     {
         return GestureAction::None;
     }
+
     holding_ = true;
     return GestureAction::StartHold;
 }
@@ -75,6 +81,7 @@ GestureAction ThreeFingerPress::released()
     {
         return GestureAction::None;
     }
+
     holding_ = false;
     return GestureAction::CancelHold;
 }
@@ -85,6 +92,7 @@ GestureAction ThreeFingerPress::holdElapsed()
     {
         return GestureAction::None;
     }
+
     holding_ = false;
     return GestureAction::Open;
 }

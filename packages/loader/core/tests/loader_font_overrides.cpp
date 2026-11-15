@@ -19,9 +19,10 @@ static void plansRegistrationsAndTable()
     const FontOverridePlan first = registry.plan(targets);
     assert(first.registrations == std::vector<std::string>{"/fonts/inter.ttf"});
     assert(first.errors == std::vector<std::string>{"Mono is not installed."});
-    assert((first.table == FontOverrideTable{{"Inter", "Inter Display"},
-                                             {"Shared", "Inter Display"},
-                                             {"ggsans", "Comic Sans MS"}}));
+    assert((first.table
+            == FontOverrideTable{{"Inter", "Inter Display"},
+                                 {"Shared", "Inter Display"},
+                                 {"ggsans", "Comic Sans MS"}}));
 
     const FontOverridePlan second = registry.plan(targets);
     assert(second.registrations.empty());
@@ -33,16 +34,16 @@ static void plansRegistrationsAndTable()
 
 static void plansVariableInstances()
 {
-    FontOverrideRegistry   registry;
-    const nlohmann::json   bold = {{"wght", 700}};
+    FontOverrideRegistry registry;
+    const nlohmann::json bold   = {{"wght", 700}};
     const FontOverridePlan plan = registry.plan({
         {"ggsans-Bold", {{"name", "Vector-Bold"}, {"path", "/v.ttf"}, {"variations", bold}}},
         {"ggsans-Normal", {{"name", "Inter"}, {"path", "/inter.ttf"}}},
     });
     assert((plan.registrations == std::vector<std::string>{"/v.ttf", "/inter.ttf"}));
     assert(plan.instances.size() == 1);
-    assert((plan.instances.at("Vector-Bold") ==
-            nlohmann::json{{"path", "/v.ttf"}, {"variations", bold}}));
+    assert((plan.instances.at("Vector-Bold")
+            == nlohmann::json{{"path", "/v.ttf"}, {"variations", bold}}));
     assert(fontOverridePlanJSON(plan)["instances"]["Vector-Bold"]["variations"] == bold);
 
     const FontOverridePlan every = registry.plan({
@@ -54,7 +55,7 @@ static void plansVariableInstances()
 
 static void letsEveryFamilyWin()
 {
-    FontOverrideRegistry   registry;
+    FontOverrideRegistry registry;
     const FontOverridePlan plan = registry.plan({
         {"*", {{"name", "Comic Sans MS"}, {"path", "/fonts/comic.ttf"}}},
         {"ggsans", {{"name", "Inter"}, {"path", "/fonts/inter.ttf"}}},
@@ -88,10 +89,11 @@ static void serialisesPlans()
     plan.registrations = {"/fonts/a.ttf"};
     plan.errors        = {"missing"};
     plan.table         = {{"ggsans", "Inter"}};
-    assert(fontOverridePlanJSON(plan) == nlohmann::json({{"registrations", {"/fonts/a.ttf"}},
-                                                         {"errors", {"missing"}},
-                                                         {"table", {{"ggsans", "Inter"}}},
-                                                         {"instances", nlohmann::json::object()}}));
+    assert(fontOverridePlanJSON(plan)
+           == nlohmann::json({{"registrations", {"/fonts/a.ttf"}},
+                              {"errors", {"missing"}},
+                              {"table", {{"ggsans", "Inter"}}},
+                              {"instances", nlohmann::json::object()}}));
 }
 
 int main()

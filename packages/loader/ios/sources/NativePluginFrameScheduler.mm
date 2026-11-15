@@ -22,7 +22,7 @@ static loader::native::NativeFrameWorkQueue gFrameWork;
 + (instancetype)sharedScheduler
 {
     static IOSNativePluginFrameScheduler *scheduler;
-    static dispatch_once_t                once;
+    static dispatch_once_t once;
     dispatch_once(&once, ^{ scheduler = [IOSNativePluginFrameScheduler new]; });
     return scheduler;
 }
@@ -33,6 +33,7 @@ static loader::native::NativeFrameWorkQueue gFrameWork;
     {
         return;
     }
+
     self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(drain)];
     [self.displayLink addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
 }
@@ -56,5 +57,6 @@ bool loader::ios::scheduleNativePluginFrameWork(std::function<void()> work)
         dispatch_async(dispatch_get_main_queue(),
                        ^{ [[IOSNativePluginFrameScheduler sharedScheduler] start]; });
     }
+
     return true;
 }

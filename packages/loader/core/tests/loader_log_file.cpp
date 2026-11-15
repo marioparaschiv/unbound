@@ -10,7 +10,7 @@
 
 static std::string read(const std::string &path)
 {
-    std::ifstream     stream(path, std::ios::binary);
+    std::ifstream stream(path, std::ios::binary);
     std::stringstream buffer;
     buffer << stream.rdbuf();
     return buffer.str();
@@ -30,14 +30,14 @@ static void writesEntriesAsJSONLines()
                            loader::LogLevel::Warning,
                            {"Plugins", "Start"},
                            "slow \"start\""};
-    assert(loader::logEntryLine(entry) ==
-           "{\"t\":1793134800123,\"src\":\"react-native\",\"lvl\":\"warn\","
-           "\"scope\":[\"Plugins\",\"Start\"],\"msg\":\"slow \\\"start\\\"\"}\n");
+    assert(loader::logEntryLine(entry)
+           == "{\"t\":1793134800123,\"src\":\"react-native\",\"lvl\":\"warn\","
+              "\"scope\":[\"Plugins\",\"Start\"],\"msg\":\"slow \\\"start\\\"\"}\n");
     std::optional<loader::LogEntry> parsed =
         loader::logEntryFromJSON(nlohmann::json::parse(loader::logEntryLine(entry)));
-    assert(parsed && parsed->time == entry.time && parsed->source == entry.source &&
-           parsed->level == entry.level && parsed->scope == entry.scope &&
-           parsed->message == entry.message);
+    assert(parsed && parsed->time == entry.time && parsed->source == entry.source
+           && parsed->level == entry.level && parsed->scope == entry.scope
+           && parsed->message == entry.message);
     assert(!loader::logEntryFromJSON(nlohmann::json::parse("{\"msg\":\"no time\"}")));
 }
 
@@ -59,8 +59,8 @@ static void formatsEntriesAsPlainText()
                            loader::LogLevel::Warning,
                            {"Loader", "plugins"},
                            "slow start"};
-    assert(loader::formatLogEntry(entry) ==
-           "2026-10-27T21:00:00.123Z W unbound [Loader/plugins] slow start");
+    assert(loader::formatLogEntry(entry)
+           == "2026-10-27T21:00:00.123Z W unbound [Loader/plugins] slow start");
     entry.scope.clear();
     entry.source = loader::LogSource::JS;
     assert(loader::formatLogEntry(entry) == "2026-10-27T21:00:00.123Z W js slow start");
@@ -68,7 +68,7 @@ static void formatsEntriesAsPlainText()
 
 static void namesEachFileAfterItsStem()
 {
-    std::string             directory = scratchDirectory("unbound-log-names");
+    std::string directory = scratchDirectory("unbound-log-names");
     loader::RotatingLogFile file("native", 10, 3, 8);
     file.open(directory);
     file.append("aaaaaaaa\n");
@@ -79,7 +79,7 @@ static void namesEachFileAfterItsStem()
 
 static void buffersLinesUntilOpened()
 {
-    std::string             directory = scratchDirectory("unbound-log-buffer");
+    std::string directory = scratchDirectory("unbound-log-buffer");
     loader::RotatingLogFile file("unbound", 1024, 3, 2);
     file.append("first\n");
     file.append("second\n");
@@ -91,13 +91,14 @@ static void buffersLinesUntilOpened()
 
 static void rotatesAndKeepsOnlyTheNewestFiles()
 {
-    std::string             directory = scratchDirectory("unbound-log-rotate");
+    std::string directory = scratchDirectory("unbound-log-rotate");
     loader::RotatingLogFile file("unbound", 10, 3, 8);
     file.open(directory);
     for (const char *line : {"aaaaaaaa\n", "bbbbbbbb\n", "cccccccc\n", "dddddddd\n"})
     {
         file.append(line);
     }
+
     assert(read(file.path(0)) == "dddddddd\n");
     assert(read(file.path(1)) == "cccccccc\n");
     assert(read(file.path(2)) == "bbbbbbbb\n");
@@ -112,6 +113,7 @@ static void appendsToAnExistingFileAcrossLaunches()
         file.open(directory);
         file.append("launch one\n");
     }
+
     loader::RotatingLogFile file("unbound", 1024, 3, 8);
     file.open(directory);
     file.append("launch two\n");
@@ -120,8 +122,8 @@ static void appendsToAnExistingFileAcrossLaunches()
 
 static void placesLogsBesideTheOtherUnboundFiles()
 {
-    assert(loader::logFileDirectory("/var/mobile/Documents/Unbound") ==
-           "/var/mobile/Documents/Unbound/Logs");
+    assert(loader::logFileDirectory("/var/mobile/Documents/Unbound")
+           == "/var/mobile/Documents/Unbound/Logs");
 }
 
 int main()

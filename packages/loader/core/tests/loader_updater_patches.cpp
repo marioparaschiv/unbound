@@ -25,12 +25,13 @@ std::string baseBundle()
     {
         text += "const value" + std::to_string(index) + " = " + std::to_string(index * 7) + ";\n";
     }
+
     return text;
 }
 
 std::string targetBundle()
 {
-    std::string       text = baseBundle();
+    std::string text       = baseBundle();
     const std::string from = "value1500 = 10500";
     text.replace(text.find(from), from.size(), "value1500 = 42");
     return text + "globalThis.patched = true;\n";
@@ -41,9 +42,9 @@ void publishWithPatch(bundle_test::Server &server, const std::string &patch)
     std::string base     = loader::sha512Hex(baseBundle());
     std::string manifest = "{\n  \"revision\": \"def5678\",\n  \"channel\": \"beta\",\n"
                            "  \"buildTime\": \"2026-11-14T00:00:00.000Z\",\n"
-                           "  \"bytecodeVersions\": [98],\n  \"sha512\": {\"" +
-                           kBundle + "\":\"" + loader::sha512Hex(targetBundle()) +
-                           "\"},\n  \"patches\": {\"" + kBundle + "\":[\"" + base + "\"]}\n}";
+                           "  \"bytecodeVersions\": [98],\n  \"sha512\": {\""
+                           + kBundle + "\":\"" + loader::sha512Hex(targetBundle())
+                           + "\"},\n  \"patches\": {\"" + kBundle + "\":[\"" + base + "\"]}\n}";
     server.files[kBase + "manifest.json"]     = manifest;
     server.files[kBase + "manifest.json.sig"] = bundle_test::productionKey().sign(manifest) + "\n";
     server.files[kBase + kBundle]             = targetBundle();
@@ -52,7 +53,7 @@ void publishWithPatch(bundle_test::Server &server, const std::string &patch)
 
 void patchesTheActiveBundleInsteadOfDownloadingIt()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
     server.publish(kBase, "2026-11-13T00:00:00.000Z", {{kBundle, baseBundle()}});
     assert(server.install(updater, std::nullopt));
@@ -69,7 +70,7 @@ void patchesTheActiveBundleInsteadOfDownloadingIt()
 
 void downloadsTheWholeBundleWhenThePatchFails()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
     server.publish(kBase, "2026-11-13T00:00:00.000Z", {{kBundle, baseBundle()}});
     assert(server.install(updater, std::nullopt));

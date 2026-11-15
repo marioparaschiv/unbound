@@ -23,6 +23,7 @@ static std::vector<std::string> ids(const Menu &menu)
     {
         result.push_back(item.id);
     }
+
     return result;
 }
 
@@ -31,7 +32,7 @@ int main()
     std::string templatePath =
         (std::filesystem::temp_directory_path() / "loader-dev-overlay-XXXXXX").string();
     assert(mkdtemp(templatePath.data()));
-    const auto            path = (std::filesystem::path(templatePath) / "settings.json").string();
+    const auto path = (std::filesystem::path(templatePath) / "settings.json").string();
     loader::SettingsStore settings(path);
     settings.load();
 
@@ -40,8 +41,8 @@ int main()
     assert(
         (ids(plain) == std::vector<std::string>{"reload-bundle", "edit-settings", "open-toolbox"}));
     assert(plain.items[0].followUp == FollowUp::ReloadApp);
-    assert(plain.items[1].title == kSettingsEditorTitle &&
-           plain.items[1].followUp == FollowUp::EditSettings);
+    assert(plain.items[1].title == kSettingsEditorTitle
+           && plain.items[1].followUp == FollowUp::EditSettings);
     assert(plain.items[2].followUp == FollowUp::OpenToolbox);
 
     loader::preferences::setGestureEnabled(settings, loader::preferences::ToolboxGesture::Shake,
@@ -82,16 +83,18 @@ int main()
         });
     loader::toolbox::ToolboxContext context{settings, updater, templatePath, "Test", {}, {}, {}};
     assert(nlohmann::json::parse(loader::toolbox::perform(context, "developer-menu", ""))["items"]
-               .size() == 3);
-    assert(nlohmann::json::parse(
-               loader::toolbox::perform(context, "save-settings", "nope"))["saved"] == false);
-    assert(nlohmann::json::parse(
-               loader::toolbox::perform(context, "save-settings", "{}"))["saved"] == true);
+               .size()
+           == 3);
+    assert(
+        nlohmann::json::parse(loader::toolbox::perform(context, "save-settings", "nope"))["saved"]
+        == false);
+    assert(nlohmann::json::parse(loader::toolbox::perform(context, "save-settings", "{}"))["saved"]
+           == true);
     assert(!loader::preferences::developerMode(settings));
 
-    const Size   phone{375, 667};
+    const Size phone{375, 667};
     const Insets safe{20, 0, 34, 0};
-    const Point  defaults = position(settings);
+    const Point defaults = position(settings);
     assert(near(defaults.x, kDefaultPosition.x) && near(defaults.y, kDefaultPosition.y));
 
     const Point initial = buttonCenter(settings, phone, safe);

@@ -44,21 +44,21 @@ static std::string cachedDigest(const std::string &directory, const std::string 
                                 const std::string &contents, const char *field,
                                 std::string (*compute)(std::string_view))
 {
-    std::string                   cachePath = joinPath(directory, kDigestCacheFile);
-    std::optional<nlohmann::json> identity  = fileIdentity(path);
-    std::optional<std::string>    stored    = readTextFile(cachePath);
-    nlohmann::json                cache =
+    std::string cachePath                  = joinPath(directory, kDigestCacheFile);
+    std::optional<nlohmann::json> identity = fileIdentity(path);
+    std::optional<std::string> stored      = readTextFile(cachePath);
+    nlohmann::json cache =
         stored ? nlohmann::json::parse(*stored, nullptr, false) : nlohmann::json::object();
     if (!cache.is_object())
     {
         cache = nlohmann::json::object();
     }
 
-    std::string name    = fileName(path);
-    auto        entry   = cache.find(name);
-    bool        current = identity && entry != cache.end() && entry->is_object() &&
-                          entry->value("identity", nlohmann::json()) == *identity &&
-                          (*entry)["size"] == contents.size();
+    std::string name = fileName(path);
+    auto entry       = cache.find(name);
+    bool current     = identity && entry != cache.end() && entry->is_object()
+                       && entry->value("identity", nlohmann::json()) == *identity
+                       && (*entry)["size"] == contents.size();
     if (current && entry->contains(field) && (*entry)[field].is_string())
     {
         return (*entry)[field].get<std::string>();
@@ -71,9 +71,11 @@ static std::string cachedDigest(const std::string &directory, const std::string 
         {
             cache[name] = {{"identity", *identity}, {"size", contents.size()}};
         }
+
         cache[name][field] = digest;
         writeTextFileAtomically(cachePath, cache.dump());
     }
+
     return digest;
 }
 

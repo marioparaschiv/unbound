@@ -6,7 +6,7 @@
 @interface DCDAvatarView : UIView
 @end
 
-@interface                            DCDMessageTableViewCell : UITableViewCell
+@interface DCDMessageTableViewCell : UITableViewCell
 @property (nonatomic, strong) UIView *customBackgroundView;
 @property (nonatomic, strong) UIView *innerView;
 @end

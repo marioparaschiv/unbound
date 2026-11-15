@@ -15,9 +15,9 @@ enum class NativeOperationPhase
 class NativeOperationGate
 {
 public:
-    bool                 start();
-    bool                 expire();
-    void                 finish();
+    bool start();
+    bool expire();
+    void finish();
     NativeOperationPhase phase() const;
 
 private:

@@ -25,6 +25,7 @@ static std::string utf16(const std::string &text)
     {
         appendU16(encoded, static_cast<uint16_t>(character));
     }
+
     return encoded;
 }
 
@@ -33,22 +34,24 @@ static std::string syntheticFont(const std::string &fullName,
                                  const std::string &family         = "")
 {
     struct Record {
-        uint16_t    id;
+        uint16_t id;
         std::string text;
     };
+
     std::vector<Record> records = {{4, utf16(fullName)}};
     if (!postScriptName.empty())
     {
         records.push_back({6, utf16(postScriptName)});
     }
+
     if (!family.empty())
     {
         records.push_back({1, utf16(family)});
     }
 
     const uint16_t storage = static_cast<uint16_t>(6 + records.size() * 12);
-    std::string    strings;
-    std::string    table;
+    std::string strings;
+    std::string table;
     appendU16(table, 0);
     appendU16(table, static_cast<uint16_t>(records.size()));
     appendU16(table, storage);
@@ -62,6 +65,7 @@ static std::string syntheticFont(const std::string &fullName,
         appendU16(table, static_cast<uint16_t>(strings.size()));
         strings += record.text;
     }
+
     table += strings;
 
     std::string font;
@@ -79,8 +83,8 @@ static std::string syntheticFont(const std::string &fullName,
 
 int main()
 {
-    assert(loader::fontFullNameFromData(syntheticFont("Parity Sans Bold")) ==
-           std::optional<std::string>("Parity Sans Bold"));
+    assert(loader::fontFullNameFromData(syntheticFont("Parity Sans Bold"))
+           == std::optional<std::string>("Parity Sans Bold"));
     assert(!loader::fontFullNameFromData("not a font"));
     assert(!loader::fontFullNameFromData(""));
 
@@ -102,8 +106,8 @@ int main()
     assert(!loader::fontFullName(broken));
 
     nlohmann::json system = loader::systemFontsFromFiles({second, first, broken}, "system");
-    assert(system.size() == 1 && system[0]["name"] == "Parity Sans Bold" &&
-           system[0]["path"] == second);
+    assert(system.size() == 1 && system[0]["name"] == "Parity Sans Bold"
+           && system[0]["path"] == second);
     assert(system[0]["source"] == "system");
 
     const auto named = (directory / "ggsans-Bold.ttf").string();
@@ -113,14 +117,14 @@ int main()
     assert(names && names->postScript == std::optional<std::string>("ggsans-Bold"));
     assert(names->family == std::optional<std::string>("gg sans"));
     nlohmann::json entry = loader::fontEntry(named, "app");
-    assert(entry["name"] == "ggsans-Bold" && entry["displayName"] == "gg sans Bold" &&
-           entry["family"] == "gg sans");
+    assert(entry["name"] == "ggsans-Bold" && entry["displayName"] == "gg sans Bold"
+           && entry["family"] == "gg sans");
 
     nlohmann::json fromData =
         loader::fontEntryFromData(syntheticFont("gg sans Bold", "ggsans-Bold", "gg sans"),
                                   "asset:fonts/ggsans-Bold.ttf", "app", "ggsans-Bold");
-    assert(fromData["name"] == "ggsans-Bold" && fromData["displayName"] == "gg sans Bold" &&
-           fromData["source"] == "app");
+    assert(fromData["name"] == "ggsans-Bold" && fromData["displayName"] == "gg sans Bold"
+           && fromData["source"] == "app");
     nlohmann::json opaque = loader::fontEntryFromData("nope", "asset:fonts/x.ttf", "app", "x");
     assert(opaque["name"] == "x" && opaque["displayName"] == "x");
 

@@ -5,7 +5,7 @@
 
 namespace island = loader::dynamicisland;
 
-static UIView              *islandOverlayView = nil;
+static UIView *islandOverlayView = nil;
 static island::Presentation islandPresentation;
 
 static CGRect rectOf(const island::Frame &frame)
@@ -19,19 +19,20 @@ static island::ViewState islandViewState(void)
     {
         return {};
     }
+
     return {true, (bool) islandOverlayView.hidden, islandOverlayView.alpha};
 }
 
 static std::optional<island::Frame> systemCutout(void)
 {
-    UIScreen *screen         = UIScreen.mainScreen;
-    SEL       cutoutSelector = NSSelectorFromString(@"_exclusionArea");
+    UIScreen *screen   = UIScreen.mainScreen;
+    SEL cutoutSelector = NSSelectorFromString(@"_exclusionArea");
     if (![screen respondsToSelector:cutoutSelector])
     {
         return std::nullopt;
     }
 
-    id  shape        = ((id (*)(id, SEL)) objc_msgSend)(screen, cutoutSelector);
+    id shape         = ((id (*)(id, SEL)) objc_msgSend)(screen, cutoutSelector);
     SEL rectSelector = NSSelectorFromString(@"rect");
     if (![shape respondsToSelector:rectSelector])
     {
@@ -48,6 +49,7 @@ static std::optional<island::Cutout> deviceCutout(void)
     {
         return std::nullopt;
     }
+
     return island::cutoutFromSystem(systemCutout());
 }
 
@@ -310,6 +312,7 @@ static void addRect(UIBezierPath *path, CGFloat x, CGFloat y, CGFloat width, CGF
     {
         [self createDynamicIslandOverlayView];
     }
+
     if (!plan.reveal)
     {
         return;
@@ -362,6 +365,7 @@ static void addRect(UIBezierPath *path, CGFloat x, CGFloat y, CGFloat width, CGF
         [Logger error:LOG_CATEGORY_UTILITIES format:@"No screen cutout to cover"];
         return;
     }
+
     island::Frame frame = cutout->frame;
     if (!CGRectContainsRect(keyWindow.bounds, rectOf(frame)))
     {

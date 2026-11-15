@@ -13,10 +13,10 @@ inline constexpr const char *kCatchingCall       = "catching-call";
 
 using ScriptSource = std::function<std::optional<std::string>(const std::string &name)>;
 
-void                       setScriptSource(ScriptSource source);
+void setScriptSource(ScriptSource source);
 std::optional<std::string> script(const std::string &name);
 
 facebook::jsi::Value evaluate(facebook::jsi::Runtime &runtime, const std::string &name);
 std::optional<facebook::jsi::Function> function(facebook::jsi::Runtime &runtime,
-                                                const std::string      &name);
+                                                const std::string &name);
 }

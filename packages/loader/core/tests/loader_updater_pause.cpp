@@ -28,13 +28,13 @@ static std::string hermesBundle(uint32_t version)
 
 int main()
 {
-    const auto  root      = makeTemporaryDirectory();
-    const auto  documents = root.string();
-    const auto  active    = (root / "unbound.bundle").string();
-    const auto  candidate = active + ".candidate";
-    std::string body      = "bundle";
-    int         downloads = 0;
-    int         fetches   = 0;
+    const auto root      = makeTemporaryDirectory();
+    const auto documents = root.string();
+    const auto active    = (root / "unbound.bundle").string();
+    const auto candidate = active + ".candidate";
+    std::string body     = "bundle";
+    int downloads        = 0;
+    int fetches          = 0;
 
     loader::SettingsStore settings((root / "settings.json").string());
     settings.load();

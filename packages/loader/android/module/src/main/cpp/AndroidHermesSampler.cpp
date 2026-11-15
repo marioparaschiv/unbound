@@ -6,9 +6,9 @@
 namespace unbound::android {
 static constexpr const char *kSamplerClass = "app/unbound/android/HermesSampler";
 
-static jclass    gSamplerClass = nullptr;
-static jmethodID gStart        = nullptr;
-static jmethodID gStop         = nullptr;
+static jclass gSamplerClass = nullptr;
+static jmethodID gStart     = nullptr;
+static jmethodID gStop      = nullptr;
 
 static bool start()
 {
@@ -17,6 +17,7 @@ static bool start()
     {
         return false;
     }
+
     bool started = env->CallStaticBooleanMethod(gSamplerClass, gStart);
     return !clearPendingException(env) && started;
 }
@@ -28,11 +29,13 @@ static std::string stop()
     {
         return {};
     }
+
     auto trace = static_cast<jstring>(env->CallStaticObjectMethod(gSamplerClass, gStop));
     if (clearPendingException(env) || !trace)
     {
         return {};
     }
+
     std::string text = toStdString(env, trace);
     env->DeleteLocalRef(trace);
     return text;
@@ -46,6 +49,7 @@ bool registerHermesSampler(JNIEnv *env)
         clearPendingException(env);
         return false;
     }
+
     gSamplerClass = static_cast<jclass>(env->NewGlobalRef(sampler.get()));
     gStart        = env->GetStaticMethodID(sampler.get(), "start", "()Z");
     gStop         = env->GetStaticMethodID(sampler.get(), "stop", "()Ljava/lang/String;");
@@ -53,6 +57,7 @@ bool registerHermesSampler(JNIEnv *env)
     {
         return false;
     }
+
     loader::native::setJavaScriptProfiler({start, stop});
     return true;
 }

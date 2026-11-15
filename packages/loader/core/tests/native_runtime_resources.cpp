@@ -13,9 +13,9 @@ int main()
 {
     loader::native::RuntimeResourceRegistry resources;
     loader::native::RuntimeResourceRegistry otherResources;
-    bool                                    firstReleased    = false;
-    bool                                    secondReleased   = false;
-    bool                                    deferredReleased = false;
+    bool firstReleased    = false;
+    bool secondReleased   = false;
+    bool deferredReleased = false;
     assert(resources.identity() != otherResources.identity());
     assert(resources.active());
     auto operationResources = std::make_shared<loader::native::RuntimeResourceRegistry>();
@@ -130,7 +130,7 @@ int main()
     });
     assert(ownerThreadResources->retain("owner-thread", ownerThreadResource));
     ownerThreadResource.reset();
-    bool        releasedFromOtherThread = true;
+    bool releasedFromOtherThread = true;
     std::thread otherThread([&] {
         releasedFromOtherThread = loader::native::releaseRuntimeResourceOnOwnerThread(
             ownerThreadReference, "owner-thread");
@@ -155,14 +155,14 @@ int main()
     wrongThread.join();
     assert(!wrongThreadResourceReleased);
 
-    std::mutex                                                             leaseMutex;
-    std::condition_variable                                                leaseCondition;
-    bool                                                                   leaseEntered = false;
-    bool                                                                   releaseLease = false;
+    std::mutex leaseMutex;
+    std::condition_variable leaseCondition;
+    bool leaseEntered = false;
+    bool releaseLease = false;
     std::promise<std::shared_ptr<loader::native::RuntimeResourceRegistry>> leasePromise;
-    auto        leaseFuture = leasePromise.get_future();
+    auto leaseFuture = leasePromise.get_future();
     std::thread leaseOwner([&] {
-        auto     registry = std::make_shared<loader::native::RuntimeResourceRegistry>();
+        auto registry     = std::make_shared<loader::native::RuntimeResourceRegistry>();
         uint64_t identity = registry->identity();
         leasePromise.set_value(registry);
         loader::native::withRuntimeResource(registry, identity,
@@ -175,16 +175,17 @@ int main()
                                                 });
                                             });
     });
-    auto        leaseResources = leaseFuture.get();
+    auto leaseResources = leaseFuture.get();
     {
         std::unique_lock<std::mutex> lock(leaseMutex);
         leaseCondition.wait(lock, [&] {
             return leaseEntered;
         });
     }
+
     std::atomic_bool invalidationStarted{false};
     std::atomic_bool invalidationFinished{false};
-    std::thread      invalidator([&] {
+    std::thread invalidator([&] {
         invalidationStarted.store(true, std::memory_order_release);
         leaseResources->invalidate();
         invalidationFinished.store(true, std::memory_order_release);
@@ -193,12 +194,14 @@ int main()
     {
         std::this_thread::yield();
     }
+
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     assert(!invalidationFinished.load(std::memory_order_acquire));
     {
         std::lock_guard<std::mutex> lock(leaseMutex);
         releaseLease = true;
     }
+
     leaseCondition.notify_all();
     leaseOwner.join();
     invalidator.join();

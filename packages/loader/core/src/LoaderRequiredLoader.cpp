@@ -18,6 +18,7 @@ void recordRequiredLoader(const std::string &documents, const std::string &versi
         removeFile(path);
         return;
     }
+
     if (!writeTextFileAtomically(path, version))
     {
         log(LogLevel::Warning, LOG_CATEGORY_UPDATER,

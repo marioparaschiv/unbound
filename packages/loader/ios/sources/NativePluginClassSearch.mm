@@ -19,24 +19,25 @@ namespace {
     constexpr size_t kMaximumLimit = 1000;
 
     struct ClassQuery {
-        std::string             prefix;
-        std::string             image;
-        Class                   superclass = nil;
+        std::string prefix;
+        std::string image;
+        Class superclass = nil;
         std::vector<Protocol *> protocols;
-        std::vector<SEL>        methods;
-        std::vector<SEL>        ownMethods;
-        std::vector<SEL>        classMethods;
-        size_t                  limit = kDefaultLimit;
+        std::vector<SEL> methods;
+        std::vector<SEL> ownMethods;
+        std::vector<SEL> classMethods;
+        size_t limit = kDefaultLimit;
     };
 
     std::vector<std::string> stringList(Runtime &runtime, const Object &query, const char *name)
     {
         std::vector<std::string> list;
-        Value                    value = query.getProperty(runtime, name);
+        Value value = query.getProperty(runtime, name);
         if (!value.isObject() || !value.asObject(runtime).isArray(runtime))
         {
             return list;
         }
+
         Array array = value.asObject(runtime).asArray(runtime);
         for (size_t index = 0; index < array.size(runtime); index++)
         {
@@ -46,6 +47,7 @@ namespace {
                 list.push_back(item.getString(runtime).utf8(runtime));
             }
         }
+
         return list;
     }
 
@@ -62,6 +64,7 @@ namespace {
         {
             list.push_back(sel_registerName(name.c_str()));
         }
+
         return list;
     }
 
@@ -71,7 +74,8 @@ namespace {
         {
             throw JSError(runtime, "objc.findClasses expects a query object");
         }
-        Object     object = value.asObject(runtime);
+
+        Object object = value.asObject(runtime);
         ClassQuery query;
         query.prefix           = stringProperty(runtime, object, "prefix");
         query.image            = stringProperty(runtime, object, "image");
@@ -84,6 +88,7 @@ namespace {
                 throw JSError(runtime, "objc.findClasses found no superclass named " + superclass);
             }
         }
+
         for (const std::string &name : stringList(runtime, object, "protocols"))
         {
             Protocol *protocol = objc_getProtocol(name.c_str());
@@ -91,8 +96,10 @@ namespace {
             {
                 throw JSError(runtime, "objc.findClasses found no protocol named " + name);
             }
+
             query.protocols.push_back(protocol);
         }
+
         query.methods      = selectors(stringList(runtime, object, "methods"));
         query.ownMethods   = selectors(stringList(runtime, object, "ownMethods"));
         query.classMethods = selectors(stringList(runtime, object, "classMethods"));
@@ -101,6 +108,7 @@ namespace {
         {
             query.limit = std::min(kMaximumLimit, static_cast<size_t>(limit.getNumber()));
         }
+
         return query;
     }
 
@@ -114,18 +122,20 @@ namespace {
                 return true;
             }
         }
+
         return false;
     }
 
     bool declares(Class cls, SEL selector)
     {
-        unsigned int count   = 0;
-        Method      *methods = class_copyMethodList(cls, &count);
-        bool         found   = false;
+        unsigned int count = 0;
+        Method *methods    = class_copyMethodList(cls, &count);
+        bool found         = false;
         for (unsigned int index = 0; index < count && !found; index++)
         {
             found = method_getName(methods[index]) == selector;
         }
+
         std::free(methods);
         return found;
     }
@@ -133,11 +143,12 @@ namespace {
     bool matches(Class cls, const ClassQuery &query)
     {
         const char *name = class_getName(cls);
-        if (!query.prefix.empty() &&
-            std::strncmp(name, query.prefix.c_str(), query.prefix.size()) != 0)
+        if (!query.prefix.empty()
+            && std::strncmp(name, query.prefix.c_str(), query.prefix.size()) != 0)
         {
             return false;
         }
+
         if (!query.image.empty())
         {
             const char *image = class_getImageName(cls);
@@ -146,10 +157,12 @@ namespace {
                 return false;
             }
         }
+
         if (query.superclass && !inheritsFrom(cls, query.superclass))
         {
             return false;
         }
+
         for (Protocol *protocol : query.protocols)
         {
             if (!class_conformsToProtocol(cls, protocol))
@@ -157,6 +170,7 @@ namespace {
                 return false;
             }
         }
+
         for (SEL selector : query.methods)
         {
             if (!class_getInstanceMethod(cls, selector))
@@ -164,6 +178,7 @@ namespace {
                 return false;
             }
         }
+
         for (SEL selector : query.ownMethods)
         {
             if (!declares(cls, selector))
@@ -171,6 +186,7 @@ namespace {
                 return false;
             }
         }
+
         for (SEL selector : query.classMethods)
         {
             if (!class_getClassMethod(cls, selector))
@@ -178,16 +194,17 @@ namespace {
                 return false;
             }
         }
+
         return true;
     }
 
     Value findClasses(Runtime &runtime, const Value *args, size_t count)
     {
-        Value                    none;
-        ClassQuery               query = parseQuery(runtime, count ? args[0] : none);
+        Value none;
+        ClassQuery query = parseQuery(runtime, count ? args[0] : none);
         std::vector<std::string> found;
-        unsigned int             total   = 0;
-        Class                   *classes = objc_copyClassList(&total);
+        unsigned int total = 0;
+        Class *classes     = objc_copyClassList(&total);
         for (unsigned int index = 0; index < total && found.size() < query.limit; index++)
         {
             if (matches(classes[index], query))
@@ -195,6 +212,7 @@ namespace {
                 found.emplace_back(class_getName(classes[index]));
             }
         }
+
         std::free(classes);
         std::sort(found.begin(), found.end());
         Array result(runtime, found.size());
@@ -202,6 +220,7 @@ namespace {
         {
             result.setValueAtIndex(runtime, index, String::createFromUtf8(runtime, found[index]));
         }
+
         return result;
     }
 }

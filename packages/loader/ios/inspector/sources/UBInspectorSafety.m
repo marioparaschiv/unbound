@@ -23,7 +23,9 @@ static NSString *UBMemberKey(Class cls, NSString *kind, NSString *name)
 static NSArray<NSString *> *UBStrings(id value)
 {
     if (![value isKindOfClass:NSArray.class])
+    {
         return @[];
+    }
 
     NSIndexSet *indexes =
         [value indexesOfObjectsPassingTest:^BOOL(id item, NSUInteger index, BOOL *stop) {
@@ -34,7 +36,7 @@ static NSArray<NSString *> *UBStrings(id value)
 
 void UBRecoverCrashedGetters(void)
 {
-    NSUserDefaults                  *defaults = NSUserDefaults.standardUserDefaults;
+    NSUserDefaults *defaults = NSUserDefaults.standardUserDefaults;
     NSMutableOrderedSet<NSString *> *denied =
         [NSMutableOrderedSet orderedSetWithArray:UBStrings([defaults objectForKey:UBDenyListKey])];
     NSArray<NSString *> *crashed = UBStrings([defaults objectForKey:UBInFlightKey]);
@@ -43,7 +45,9 @@ void UBRecoverCrashedGetters(void)
     {
         [denied addObjectsFromArray:crashed];
         if (denied.count > UBDenyListLimit)
+        {
             [denied removeObjectsInRange:NSMakeRange(0, denied.count - UBDenyListLimit)];
+        }
 
         [defaults setObject:denied.array forKey:UBDenyListKey];
         [defaults removeObjectForKey:UBInFlightKey];
@@ -63,7 +67,9 @@ void UBBeginGetters(Class cls, NSString *kind, NSArray<NSString *> *names)
 {
     NSMutableArray<NSString *> *keys = [NSMutableArray arrayWithCapacity:names.count];
     for (NSString *name in names)
+    {
         [keys addObject:UBMemberKey(cls, kind, name)];
+    }
 
     // synchronize waits for cfprefsd to take the write, so the record survives a crash in the next
     // getter.
@@ -75,7 +81,9 @@ void UBEndGetters(void)
 {
     NSUserDefaults *defaults = NSUserDefaults.standardUserDefaults;
     if (![defaults objectForKey:UBInFlightKey])
+    {
         return;
+    }
 
     [defaults removeObjectForKey:UBInFlightKey];
     [defaults synchronize];
@@ -84,15 +92,23 @@ void UBEndGetters(void)
 BOOL UBClassIsSafe(Class cls)
 {
     if (FLEXClassIsSafe(cls))
+    {
         return YES;
+    }
+
     if (!cls || CFSetContainsValue(FLEXKnownUnsafeClasses, (__bridge void *) cls))
+    {
         return NO;
+    }
 
     // FLEX accepts only NSObject and NSProxy as roots; Swift classes root at SwiftObject, which
     // retains and reflects like NSObject.
     Class root = cls;
     while (class_getSuperclass(root))
+    {
         root = class_getSuperclass(root);
+    }
+
     const char *name = class_getName(root);
     return strcmp(name, "_TtCs12_SwiftObject") == 0 || strcmp(name, "SwiftObject") == 0;
 }
@@ -100,19 +116,28 @@ BOOL UBClassIsSafe(Class cls)
 BOOL UBPointerIsObject(const void *pointer)
 {
     if (FLEXPointerIsValidObjcObject(pointer))
+    {
         return YES;
+    }
 
     // FLEX also requires a heap allocation, which rejects static objects such as constant strings.
     // Accept a pointer inside a loaded image whose isa chain reads as a class.
     Dl_info info;
     if (!pointer || (uintptr_t) pointer % sizeof(uintptr_t) || !dladdr(pointer, &info))
+    {
         return NO;
+    }
+
     if (!FLEXPointerIsReadable(pointer))
+    {
         return NO;
+    }
 
     Class cls = object_getClass((__bridge id) pointer);
     if (!cls || !FLEXPointerIsReadable((__bridge void *) cls))
+    {
         return NO;
+    }
 
     Class metaclass = object_getClass(cls);
     return metaclass && FLEXPointerIsReadable((__bridge void *) metaclass) && object_isClass(cls);
@@ -122,19 +147,27 @@ BOOL UBPointerIsObject(const void *pointer)
 static BOOL UBLayoutScans(const uint8_t *layout, ptrdiff_t offset)
 {
     if (!layout || offset < 0)
+    {
         return NO;
+    }
 
     ptrdiff_t index = 0, target = offset / (ptrdiff_t) sizeof(void *);
-    uint8_t   byte;
+    uint8_t byte;
     while ((byte = *layout++))
     {
         index += byte >> 4;
         if (index > target)
+        {
             return NO;
+        }
+
         index += byte & 0x0F;
         if (index > target)
+        {
             return YES;
+        }
     }
+
     return NO;
 }
 
@@ -142,11 +175,14 @@ BOOL UBIvarIsWeak(Class cls, Ivar ivar)
 {
     // Layouts cover only the class's own ivars, from its aligned instance start: the superclass's
     // size.
-    Class     superclass = class_getSuperclass(cls);
+    Class superclass = class_getSuperclass(cls);
     ptrdiff_t local =
         ivar_getOffset(ivar) - (ptrdiff_t) (superclass ? class_getInstanceSize(superclass) : 0);
     if (UBLayoutScans(class_getIvarLayout(cls), local))
+    {
         return NO;
+    }
+
     return UBLayoutScans(class_getWeakIvarLayout(cls), local);
 }
 
@@ -159,9 +195,15 @@ static BOOL UBEncodingReadable(const char *encoding)
 NSString *UBIvarRead(Class cls, Ivar ivar)
 {
     if (!UBClassIsSafe(cls) || !FLEXIvarIsSafe(ivar))
+    {
         return UBReadNever;
+    }
+
     if (UBMemberDenied(cls, @"ivars", @(ivar_getName(ivar) ?: "")))
+    {
         return UBReadNever;
+    }
+
     return UBReadAuto;
 }
 
@@ -169,13 +211,21 @@ NSString *UBPropertyRead(Class cls, objc_property_t property, BOOL classProperty
 {
     NSString *name = @(property_getName(property));
     if (!UBClassIsSafe(cls) || UBMemberDenied(cls, @"properties", name))
+    {
         return UBReadNever;
+    }
+
     if (classProperty)
+    {
         return UBReadManual;
+    }
 
     NSString *backing = [FLEXPropertyAttributes attributesForProperty:property].backingIvar;
-    Ivar      ivar    = backing.length ? class_getInstanceVariable(cls, backing.UTF8String) : NULL;
+    Ivar ivar         = backing.length ? class_getInstanceVariable(cls, backing.UTF8String) : NULL;
     if (!ivar || !FLEXIvarIsSafe(ivar) || !UBEncodingReadable(ivar_getTypeEncoding(ivar)))
+    {
         return UBReadManual;
+    }
+
     return UBReadAuto;
 }

@@ -34,20 +34,20 @@ using namespace facebook::jsi;
 namespace loader::ios {
 namespace {
     struct HookInvocation {
-        std::shared_ptr<HookDispatcher>              dispatcher;
-        std::vector<std::vector<uint8_t>>            arguments;
+        std::shared_ptr<HookDispatcher> dispatcher;
+        std::vector<std::vector<uint8_t>> arguments;
         std::vector<std::shared_ptr<ObjCHandleHost>> retainedObjects;
-        std::vector<std::string>                     retainedStrings;
-        std::vector<uint8_t>                         originalResult;
-        void                                       **nativeArguments = nullptr;
-        void                                        *returnValue     = nullptr;
-        std::thread::id                              hookThread;
-        std::mutex                                   lifecycleMutex;
-        std::atomic_bool                             active{true};
-        std::atomic_bool                             originalCalled{false};
-        std::atomic_bool                             deferredOriginalRequested{false};
-        std::vector<std::pair<size_t, void *>>       deferredReplacements;
-        void                                        *originalObject = nullptr;
+        std::vector<std::string> retainedStrings;
+        std::vector<uint8_t> originalResult;
+        void **nativeArguments = nullptr;
+        void *returnValue      = nullptr;
+        std::thread::id hookThread;
+        std::mutex lifecycleMutex;
+        std::atomic_bool active{true};
+        std::atomic_bool originalCalled{false};
+        std::atomic_bool deferredOriginalRequested{false};
+        std::vector<std::pair<size_t, void *>> deferredReplacements;
+        void *originalObject = nullptr;
     };
 }
 
@@ -72,6 +72,7 @@ hookInvocation(const std::shared_ptr<HookDispatcher> &dispatcher, void **argumen
             memcpy(invocation->arguments.back().data(), arguments[invocation->arguments.size() - 1],
                    loader::ffi::typeSize(spec));
         }
+
         if (spec.name == "object" || spec.name == "class")
         {
             void *rawObject = nullptr;
@@ -95,6 +96,7 @@ hookInvocation(const std::shared_ptr<HookDispatcher> &dispatcher, void **argumen
             }
         }
     }
+
     return invocation;
 }
 
@@ -120,39 +122,53 @@ static void applyDeferredHookReplacements(const std::shared_ptr<HookInvocation> 
         void *value = rawObject;
         memcpy(invocation->nativeArguments[index], &value, sizeof(value));
     }
+
     invocation->deferredReplacements.clear();
 }
 
 static void recordHookOriginalObject(const std::shared_ptr<HookInvocation> &invocation)
 {
     if (invocation->dispatcher->signature->result.name != "object" || !invocation->returnValue)
+    {
         return;
+    }
+
     memcpy(&invocation->originalObject, invocation->returnValue, sizeof(void *));
 }
 
-static void balanceReplacedHookReturn(SEL                                    selector,
+static void balanceReplacedHookReturn(SEL selector,
                                       const std::shared_ptr<HookDispatcher> &dispatcher,
                                       id receiver, void *originalObject, bool originalRan,
                                       void *returnValue)
 {
     NativeMethodFamily family = nativeMethodFamily(selector);
-    if (family == NativeMethodFamilyNone || dispatcher->signature->result.name != "object" ||
-        !returnValue)
+    if (family == NativeMethodFamilyNone || dispatcher->signature->result.name != "object"
+        || !returnValue)
     {
         return;
     }
+
     void *replacement = nullptr;
     memcpy(&replacement, returnValue, sizeof(replacement));
     if (replacement)
+    {
         CFRetain(replacement);
+    }
+
     if (originalRan)
     {
         if (originalObject)
+        {
             CFRelease(originalObject);
+        }
+
         return;
     }
+
     if (family == NativeMethodFamilyInit && receiver)
+    {
         CFRelease((__bridge CFTypeRef) receiver);
+    }
 }
 
 static bool invokeDeferredHookOriginal(const std::shared_ptr<HookInvocation> &invocation)
@@ -178,9 +194,9 @@ hookReturnBuffer(const std::shared_ptr<HookInvocation> &invocation)
     return std::make_shared<std::vector<uint8_t>>(size);
 }
 
-static void copyHookReturnBuffer(const std::shared_ptr<HookInvocation>       &invocation,
+static void copyHookReturnBuffer(const std::shared_ptr<HookInvocation> &invocation,
                                  const std::shared_ptr<std::vector<uint8_t>> &buffer,
-                                 void                                        *returnValue)
+                                 void *returnValue)
 {
     if (invocation->dispatcher->signature->result.name == "void" || !returnValue)
     {
@@ -198,15 +214,16 @@ static Value hookValue(Runtime &runtime, const loader::ffi::Type &type,
     {
         throw JSError(runtime, "Native result buffer is too small");
     }
+
     return loader::ffi::readValue(runtime, type, bytes.data());
 }
 
 static bool firstHookWarning(loader::AddonSlot addon, const std::string &name,
                              const std::string &kind)
 {
-    static std::mutex            warnedMutex;
+    static std::mutex warnedMutex;
     static std::set<std::string> warned;
-    std::lock_guard<std::mutex>  lock(warnedMutex);
+    std::lock_guard<std::mutex> lock(warnedMutex);
     return warned.insert(std::to_string(addon) + " " + name + " " + kind).second;
 }
 
@@ -217,6 +234,7 @@ static void logDroppedHookCall(loader::AddonSlot addon, SEL selector, const std:
     {
         return;
     }
+
     std::string reason =
         "the " + name + " hook answered after its 100 ms limit, so its " + call + " was dropped";
     [Logger error:LOG_CATEGORY_PLUGINS
@@ -226,8 +244,8 @@ static void logDroppedHookCall(loader::AddonSlot addon, SEL selector, const std:
 static bool hookRuntimeMatches(const std::shared_ptr<HookState> &state, Runtime &runtime)
 {
     auto runtimeResources = loader::native::runtimeResourceRegistry(runtime);
-    return runtimeResources->active() &&
-           runtimeResources->identity() == state->callbackRuntimeIdentity;
+    return runtimeResources->active()
+           && runtimeResources->identity() == state->callbackRuntimeIdentity;
 }
 
 static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selector,
@@ -239,14 +257,16 @@ static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selecto
     {
         return false;
     }
+
     if (!state->operations->track(operation))
     {
         operation->cancel();
         return false;
     }
+
     bool invoked = false;
-    if (state->inlineRuntime && [NSThread isMainThread] &&
-        state->runtimeGeneration == loader::native::runtimeGeneration())
+    if (state->inlineRuntime && [NSThread isMainThread]
+        && state->runtimeGeneration == loader::native::runtimeGeneration())
     {
         loader::native::withRuntimeResource(
             state->callbackResources, state->callbackRuntimeIdentity, operation,
@@ -255,6 +275,7 @@ static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selecto
                 {
                     return;
                 }
+
                 resources.drainDeferredReleases();
                 callback(*state->inlineRuntime);
                 invoked = true;
@@ -271,11 +292,12 @@ static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selecto
         auto invokedForRuntime = std::make_shared<std::atomic_bool>(false);
         completed = executeRuntimeSynchronously([state, callback = std::move(callback), operation,
                                                  invokedForRuntime](Runtime &runtime) {
-            if (!state->active.load() ||
-                state->runtimeGeneration != loader::native::runtimeGeneration())
+            if (!state->active.load()
+                || state->runtimeGeneration != loader::native::runtimeGeneration())
             {
                 return;
             }
+
             loader::native::withRuntimeResource(
                 state->callbackResources, state->callbackRuntimeIdentity, operation,
                 [&](loader::native::RuntimeResourceRegistry &resources) {
@@ -283,6 +305,7 @@ static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selecto
                     {
                         return;
                     }
+
                     resources.drainDeferredReleases();
                     callback(runtime);
                     invokedForRuntime->store(true, std::memory_order_release);
@@ -292,14 +315,17 @@ static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selecto
         {
             operation->cancel();
         }
+
         completed = completed && invokedForRuntime->load(std::memory_order_acquire);
     }
+
     std::string name = sel_getName(selector);
     if (!completed && firstHookWarning(state->addon, name, "skipped"))
     {
         [Logger warning:LOG_CATEGORY_PLUGINS
                  format:@"%s", loader::threading::hookSkippedMessage(state->addon, name).c_str()];
     }
+
     return completed;
 }
 
@@ -314,10 +340,11 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
             runtime, "self",
             Object::createFromHostObject(runtime, std::make_shared<ObjCHandleHost>(object)));
     }
+
     context.setProperty(runtime, "selector",
                         String::createFromUtf8(runtime, sel_getName(selector)));
 
-    size_t              explicitCount = invocation->dispatcher->signature->arguments.size() - 2;
+    size_t explicitCount = invocation->dispatcher->signature->arguments.size() - 2;
     std::vector<size_t> argumentIndexes =
         loader::native::payloadArgumentIndexes(state->payload, explicitCount);
     Array values(runtime, argumentIndexes.size());
@@ -331,6 +358,7 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                       invocation->arguments[argumentIndex + 2]));
         indexValues.setValueAtIndex(runtime, index, Value(static_cast<double>(argumentIndex)));
     }
+
     context.setProperty(runtime, "args", std::move(values));
     context.setProperty(runtime, "argumentIndexes", std::move(indexValues));
     context.setProperty(runtime, "phase", String::createFromUtf8(runtime, phase));
@@ -349,13 +377,16 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                     {
                         logDroppedHookCall(addon, selector, "argument replacement");
                     }
+
                     throw JSError(rt,
                                   "Native hook arguments are unavailable after the hook returns");
                 }
+
                 if (!allowOriginal)
                 {
                     throw JSError(rt, "Native hook arguments can only be replaced synchronously");
                 }
+
                 if (count < 2 || !args[0].isNumber())
                 {
                     throw JSError(rt,
@@ -365,7 +396,7 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                 size_t selectedIndex = loader::native::selectedPayloadArgument(
                     rt, args[0].getNumber(), argumentIndexes.size());
 
-                size_t                   argumentIndex = argumentIndexes[selectedIndex] + 2;
+                size_t argumentIndex = argumentIndexes[selectedIndex] + 2;
                 const loader::ffi::Type &spec =
                     original->dispatcher->signature->arguments[argumentIndex];
                 if (spec.name != "object" && spec.name != "class")
@@ -373,19 +404,21 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                     throw JSError(rt, "Native hook argument is not an Objective-C object");
                 }
 
-                id    object    = args[1].isNull() ? nil : objcValue(rt, args[1]);
+                id object       = args[1].isNull() ? nil : objcValue(rt, args[1]);
                 void *rawObject = (__bridge void *) object;
                 if (object)
                 {
                     original->retainedObjects.emplace_back(
                         std::make_shared<ObjCHandleHost>(object, liveObjCRetains()));
                 }
+
                 memcpy(original->arguments[argumentIndex].data(), &rawObject, sizeof(rawObject));
                 if (std::this_thread::get_id() != original->hookThread)
                 {
                     original->deferredReplacements.emplace_back(argumentIndex, rawObject);
                     return Value::undefined();
                 }
+
                 memcpy(original->nativeArguments[argumentIndex], &rawObject, sizeof(rawObject));
                 return Value::undefined();
             }));
@@ -402,13 +435,16 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                     {
                         logDroppedHookCall(addon, selector, "original() call");
                     }
+
                     throw JSError(rt,
                                   "Native hook original() is unavailable after the hook returns");
                 }
+
                 if (!allowOriginal)
                 {
                     throw JSError(rt, "Native hook original() is only available synchronously");
                 }
+
                 if (!original->originalCalled.load())
                 {
                     if (std::this_thread::get_id() != original->hookThread)
@@ -418,6 +454,7 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                             throw JSError(rt,
                                           "Native hook original() cannot cross runtime threads");
                         }
+
                         original->deferredOriginalRequested.store(true);
                         return Value::undefined();
                     }
@@ -428,6 +465,7 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                     copyHookResult(original, original->returnValue);
                     original->originalCalled.store(true);
                 }
+
                 return hookValue(rt, original->dispatcher->signature->result,
                                  original->originalResult);
             }));
@@ -441,12 +479,13 @@ bool setHookReturn(Runtime &runtime, const loader::ffi::Type &spec, const Value 
     {
         return true;
     }
+
     if (!returnValue)
     {
         return false;
     }
 
-    std::vector<uint8_t>         bytes(loader::ffi::valueStorageSize(spec));
+    std::vector<uint8_t> bytes(loader::ffi::valueStorageSize(spec));
     loader::ffi::ArgumentStorage storage;
     loader::ffi::writeValue(runtime, value, spec, bytes.data(), storage);
     memcpy(returnValue, bytes.data(), loader::ffi::typeSize(spec));
@@ -466,7 +505,7 @@ namespace {
         }
 
         std::shared_ptr<HookDispatcher> dispatcher;
-        NativeOperationSignpost         signpost;
+        NativeOperationSignpost signpost;
     };
 }
 
@@ -484,14 +523,14 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
 {
     __unsafe_unretained id object = nil;
     memcpy(&object, arguments[0], sizeof(object));
-    SEL  selector   = *reinterpret_cast<SEL *>(arguments[1]);
+    SEL selector    = *reinterpret_cast<SEL *>(arguments[1]);
     auto dispatcher = findHookDispatcher(object, selector, userData);
     if (!dispatcher)
     {
         return;
     }
 
-    HookCallGuard                           guard(dispatcher);
+    HookCallGuard guard(dispatcher);
     std::vector<std::shared_ptr<HookState>> hooks = activeHookStates(dispatcher, object);
     if (hooks.empty())
     {
@@ -508,9 +547,10 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
             break;
         }
     }
+
     if (cacheOnly)
     {
-        bool                                    cachedReturn = false;
+        bool cachedReturn = false;
         std::vector<std::shared_ptr<HookState>> onceHooks;
         for (const std::shared_ptr<HookState> &state : hooks)
         {
@@ -523,6 +563,7 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
             {
                 cachedReturn = true;
             }
+
             if (state->once)
             {
                 onceHooks.push_back(state);
@@ -537,17 +578,19 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
         {
             balanceReplacedHookReturn(selector, dispatcher, object, nullptr, false, returnValue);
         }
+
         for (const std::shared_ptr<HookState> &state : onceHooks)
         {
             removeHook(state);
         }
+
         return;
     }
 
     auto invocation = hookInvocation(dispatcher, arguments, returnValue);
 
-    bool                                    replacementApplied = false;
-    bool                                    originalCalled     = false;
+    bool replacementApplied = false;
+    bool originalCalled     = false;
     std::vector<std::shared_ptr<HookState>> onceHooks;
 
     for (const std::shared_ptr<HookState> &state : hooks)
@@ -564,10 +607,12 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
             {
                 replacementApplied = true;
             }
+
             if (state->once)
             {
                 onceHooks.push_back(state);
             }
+
             continue;
         }
 
@@ -582,6 +627,7 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
                                     {
                                         return;
                                     }
+
                                     Object context = hookContext(runtime, invocation, object,
                                                                  selector, true, state, "before");
                                     callbacks->before->call(runtime, context);
@@ -591,8 +637,11 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
             {
                 logHookFailure(exception);
             }
+
             if (invokeDeferredHookOriginal(invocation))
+            {
                 originalCalled = true;
+            }
         }
 
         if (invocation->originalCalled.load() && !originalCalled)
@@ -614,9 +663,10 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
                         {
                             throw std::runtime_error("Native hook callback expired");
                         }
+
                         Object context = hookContext(runtime, invocation, object, selector, true,
                                                      state, "replace");
-                        Value  result  = callbacks->replace->call(runtime, context);
+                        Value result   = callbacks->replace->call(runtime, context);
                         if (!setHookReturn(runtime, invocation->dispatcher->signature->result,
                                            result, replacementResult->data()))
                         {
@@ -635,8 +685,11 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
             {
                 logHookFailure(exception);
             }
+
             if (invokeDeferredHookOriginal(invocation))
+            {
                 originalCalled = true;
+            }
         }
 
         if (state->once)
@@ -663,22 +716,27 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
             continue;
         }
 
-        loader::AddonScope             addonScope(state->addon);
-        __strong id                    retainedObject = object;
-        std::function<void(Runtime &)> afterWork      = [invocation, retainedObject, selector,
-                                                         state](Runtime &runtime) {
+        loader::AddonScope addonScope(state->addon);
+        __strong id retainedObject               = object;
+        std::function<void(Runtime &)> afterWork = [invocation, retainedObject, selector,
+                                                    state](Runtime &runtime) {
             if (state->runtimeGeneration != loader::native::runtimeGeneration())
             {
                 return;
             }
+
             bool pending = state->afterOncePending.exchange(false);
             if (!state->active.load() && !pending)
             {
                 return;
             }
+
             auto callbacks = state->callbacks.lock();
             if (!callbacks || !callbacks->after)
+            {
                 return;
+            }
+
             loader::AddonScope runtimeScope(state->addon);
             try
             {
@@ -690,6 +748,7 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
             {
                 logHookFailure(exception);
             }
+
             if (pending)
             {
                 loader::native::releaseRuntimeResource(runtime, state->callbackResourceKey);
@@ -701,11 +760,13 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
         {
             continue;
         }
+
         if (!state->operations->track(operation))
         {
             operation->cancel();
             continue;
         }
+
         if (state->coalesceAfter)
         {
             std::string key = loader::native::receiverCoalesceKey(
@@ -717,6 +778,7 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
                     {
                         return;
                     }
+
                     loader::native::withRuntimeResource(
                         state->callbackResources, state->callbackRuntimeIdentity, operation,
                         [&](loader::native::RuntimeResourceRegistry &resources) {
@@ -724,6 +786,7 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
                             {
                                 return;
                             }
+
                             resources.drainDeferredReleases();
                             afterWork(runtime);
                         });
@@ -736,6 +799,7 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
                 {
                     return;
                 }
+
                 loader::native::withRuntimeResource(
                     state->callbackResources, state->callbackRuntimeIdentity, operation,
                     [&](loader::native::RuntimeResourceRegistry &resources) {
@@ -743,6 +807,7 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
                         {
                             return;
                         }
+
                         resources.drainDeferredReleases();
                         afterWork(runtime);
                     });
@@ -757,6 +822,7 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
                     {
                         return;
                     }
+
                     resources.drainDeferredReleases();
                     afterWork(*state->inlineRuntime);
                 });
@@ -764,8 +830,8 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
         else
         {
             dispatch_async(dispatch_get_main_queue(), ^{
-                if (state->active.load() && state->inlineRuntime &&
-                    state->runtimeGeneration == loader::native::runtimeGeneration())
+                if (state->active.load() && state->inlineRuntime
+                    && state->runtimeGeneration == loader::native::runtimeGeneration())
                 {
                     loader::native::withRuntimeResource(
                         state->callbackResources, state->callbackRuntimeIdentity, operation,
@@ -774,6 +840,7 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
                             {
                                 return;
                             }
+
                             resources.drainDeferredReleases();
                             afterWork(*state->inlineRuntime);
                         });

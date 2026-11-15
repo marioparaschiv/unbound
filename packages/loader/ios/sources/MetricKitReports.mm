@@ -21,7 +21,7 @@ static std::string payloadText(NSData *json)
 + (void)start
 {
     static MetricKitReports *reports;
-    static dispatch_once_t   once;
+    static dispatch_once_t once;
     dispatch_once(&once, ^{
         dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
             reports                  = [MetricKitReports new];

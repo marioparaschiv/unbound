@@ -7,6 +7,7 @@
 @end
 
 @implementation DevOverlayPassthroughWindow
+
 // Touches would make this window key, and React Native then sizes Discord's layout to it.
 // Its menus present on Discord's window, so it never needs key status.
 - (BOOL)canBecomeKeyWindow
@@ -19,13 +20,14 @@
     UIView *hitView = [super hitTest:point withEvent:event];
     return hitView == self.rootViewController.view ? nil : hitView;
 }
+
 @end
 
 @interface DevOverlaySettingsEditorViewController : UIViewController <UIGestureRecognizerDelegate>
 @property (nonatomic, copy) NSDictionary *model;
-@property (nonatomic, strong) UIView     *cardView;
+@property (nonatomic, strong) UIView *cardView;
 @property (nonatomic, strong) UITextView *textView;
-@property (nonatomic, strong) UILabel    *errorLabel;
+@property (nonatomic, strong) UILabel *errorLabel;
 @end
 
 @implementation DevOverlaySettingsEditorViewController
@@ -222,9 +224,9 @@
 
 @implementation DevOverlay
 
-static UIWindow *devOverlayWindow   = nil;
-static UIButton *devOverlayButton   = nil;
-static UIView   *devOverlayBackdrop = nil;
+static UIWindow *devOverlayWindow = nil;
+static UIButton *devOverlayButton = nil;
+static UIView *devOverlayBackdrop = nil;
 
 static UIWindow *discordKeyWindow = nil;
 
@@ -234,7 +236,9 @@ static CGPoint devOverlayDragStartCenter = {0, 0};
 + (void)initialize
 {
     if (self != [DevOverlay class])
+    {
         return;
+    }
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(settingsDidChange:)
@@ -262,6 +266,7 @@ static CGPoint devOverlayDragStartCenter = {0, 0};
             return (UIWindowScene *) scene;
         }
     }
+
     return nil;
 }
 
@@ -304,6 +309,7 @@ static CGPoint devOverlayDragStartCenter = {0, 0};
         {
             [self ensureOverlayForWindow:window];
         }
+
         return;
     }
 
@@ -424,10 +430,12 @@ static CGPoint devOverlayDragStartCenter = {0, 0};
 + (void)applyButtonPosition
 {
     if (!devOverlayWindow || !devOverlayButton)
+    {
         return;
+    }
 
-    CGPoint origin      = devOverlayWindow.frame.origin;
-    CGRect  buttonFrame = CGRectOffset([self buttonFrameInScreen], -origin.x, -origin.y);
+    CGPoint origin     = devOverlayWindow.frame.origin;
+    CGRect buttonFrame = CGRectOffset([self buttonFrameInScreen], -origin.x, -origin.y);
 
     devOverlayButton.frame   = buttonFrame;
     devOverlayBackdrop.frame = buttonFrame;
@@ -437,7 +445,9 @@ static CGPoint devOverlayDragStartCenter = {0, 0};
 {
     UIWindowScene *scene = devOverlayWindow.windowScene;
     if (!scene)
+    {
         return;
+    }
 
     devOverlayWindow.frame = scene.screen.bounds;
     [devOverlayWindow layoutIfNeeded];
@@ -447,7 +457,9 @@ static CGPoint devOverlayDragStartCenter = {0, 0};
 + (void)shrinkOverlayWindow
 {
     if (!devOverlayWindow)
+    {
         return;
+    }
 
     devOverlayButtonCenter = [self clampedCenter:devOverlayButtonCenter];
     devOverlayWindow.frame = [self collapsedFrame];
@@ -507,7 +519,7 @@ static CGPoint devOverlayDragStartCenter = {0, 0};
 
 + (void)showDeveloperMenu
 {
-    NSDictionary      *model = [CoreBridge toolboxObject:@"developer-menu" argument:@""];
+    NSDictionary *model = [CoreBridge toolboxObject:@"developer-menu" argument:@""];
     UIAlertController *menu =
         [UIAlertController alertControllerWithTitle:model[@"title"]
                                             message:nil
@@ -522,6 +534,7 @@ static CGPoint devOverlayDragStartCenter = {0, 0};
                                                                            editor:model[@"editor"]];
                                                }]];
     }
+
     [menu addAction:[UIAlertAction actionWithTitle:model[@"cancel"]
                                              style:UIAlertActionStyleCancel
                                            handler:nil]];
@@ -531,8 +544,11 @@ static CGPoint devOverlayDragStartCenter = {0, 0};
     {
         presenter = presenter.presentedViewController;
     }
+
     if (!presenter)
+    {
         return;
+    }
 
     [presenter presentViewController:menu animated:YES completion:nil];
 }
@@ -541,7 +557,9 @@ static CGPoint devOverlayDragStartCenter = {0, 0};
 {
     UIViewController *presenter = [Utilities topViewController];
     if (!presenter)
+    {
         return;
+    }
 
     DevOverlaySettingsEditorViewController *editor =
         [[DevOverlaySettingsEditorViewController alloc] init];

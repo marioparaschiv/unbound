@@ -49,7 +49,7 @@ static IMP makeTypedHook(HookDispatcher *dispatcher)
 
 namespace {
     struct FallbackHook {
-        std::string_view              result;
+        std::string_view result;
         std::vector<std::string_view> arguments;
         IMP (*make)(HookDispatcher *dispatcher);
     };
@@ -132,11 +132,12 @@ static std::string_view fallbackTypeName(const std::string &name)
 
 static bool matchesFallbackHook(const HookSignature &signature, const FallbackHook &hook)
 {
-    if (fallbackTypeName(signature.result.name) != hook.result ||
-        signature.arguments.size() != hook.arguments.size() + 2)
+    if (fallbackTypeName(signature.result.name) != hook.result
+        || signature.arguments.size() != hook.arguments.size() + 2)
     {
         return false;
     }
+
     for (size_t index = 0; index < hook.arguments.size(); index++)
     {
         if (fallbackTypeName(signature.arguments[index + 2].name) != hook.arguments[index])
@@ -144,6 +145,7 @@ static bool matchesFallbackHook(const HookSignature &signature, const FallbackHo
             return false;
         }
     }
+
     return true;
 }
 
@@ -156,11 +158,13 @@ void *fallbackHookCode(HookDispatcher *dispatcher)
             return (void *) hook.make(dispatcher);
         }
     }
-    if (dispatcher->signature->result.name == "void" &&
-        dispatcher->signature->arguments.size() == 2)
+
+    if (dispatcher->signature->result.name == "void"
+        && dispatcher->signature->arguments.size() == 2)
     {
         return (void *) makeTypedHook<void>(dispatcher);
     }
+
     return nullptr;
 }
 }

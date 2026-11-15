@@ -71,18 +71,21 @@ public:
                 std::lock_guard<std::mutex> lock(mutex_);
                 work.swap(queued_);
             }
+
             for (auto &task : work)
             {
                 task(runtime);
             }
+
             runtime.drainMicrotasks();
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
+
         require(settled(), "every background download settles on the runtime");
     }
 
 private:
-    std::mutex                                      mutex_;
+    std::mutex mutex_;
     std::deque<std::function<void(jsi::Runtime &)>> queued_;
 };
 
@@ -93,6 +96,7 @@ static std::optional<std::string> bootstrapScript(const std::string &name)
     {
         return std::nullopt;
     }
+
     std::stringstream contents;
     contents << file.rdbuf();
     return contents.str();
@@ -116,12 +120,12 @@ static std::string compiledPlugin(const fs::path &documents, uint32_t &version)
     fs::path source = documents / "compiled-source.js";
     fs::path output = documents / "compiled.hbc";
     write(source, "((React) => { return ({ marker: React.tag + '-bytecode' }) })");
-    std::string command = std::string("\"") + UNBOUND_HERMESC + "\" --emit-binary -O -g0 --out \"" +
-                          output.string() + "\" \"" + source.string() + "\"";
+    std::string command = std::string("\"") + UNBOUND_HERMESC + "\" --emit-binary -O -g0 --out \""
+                          + output.string() + "\" \"" + source.string() + "\"";
     require(std::system(command.c_str()) == 0, "hermesc compiles the plugin");
     version = loader::hermesBytecodeVersionOfFile(output.string());
     require(version > 0, "hermesc writes Hermes bytecode");
-    std::ifstream     file(output, std::ios::binary);
+    std::ifstream file(output, std::ios::binary);
     std::stringstream contents;
     contents << file.rdbuf();
     return contents.str();
@@ -210,6 +214,7 @@ static void requireChecks(jsi::Runtime &runtime, const char *source, const char 
         std::fprintf(stderr, "UnboundNative check failed: %s\n",
                      failure.get<std::string>().c_str());
     }
+
     require(failures.empty(), std::string("every check in ") + name + " passes");
 }
 
@@ -232,6 +237,7 @@ int main()
     {
         deep += "{\"a\":";
     }
+
     deep += "1" + std::string(50000, '}') + "}";
     plugin(documents, "deep", deep, "module.exports = 3;");
     plugin(documents, "broken", "{\"id\":", "module.exports = 4;");
@@ -240,17 +246,17 @@ int main()
     write(documents / "Themes" / "list" / "manifest.json", R"({"id":"theme.list"})");
     write(documents / "Themes" / "list" / "bundle.json", "[]");
     write(documents / "settings.json", R"({"unbound":{"answer":42},"名前":{"ü":1}})");
-    uint32_t    version  = 0;
+    uint32_t version     = 0;
     std::string bytecode = compiledPlugin(documents, version);
     plugin(documents, "compiled",
-           R"({"id":"a.compiled","name":"Compiled","main":"index.js","bytecode":{")" +
-               std::to_string(version) + R"(":")" + loader::sha512Hex(bytecode) + R"("}})",
+           R"({"id":"a.compiled","name":"Compiled","main":"index.js","bytecode":{")"
+               + std::to_string(version) + R"(":")" + loader::sha512Hex(bytecode) + R"("}})",
            "module.exports = 5;");
     write(documents / "Plugins" / "compiled" / ("index." + std::to_string(version) + ".hbc"),
           bytecode);
     plugin(documents, "tampered",
-           R"({"id":"a.tampered","main":"index.js","bytecode":{")" + std::to_string(version) +
-               R"(":")" + loader::sha512Hex("something else") + R"("}})",
+           R"({"id":"a.tampered","main":"index.js","bytecode":{")" + std::to_string(version)
+               + R"(":")" + loader::sha512Hex("something else") + R"("}})",
            "module.exports = 6;");
     write(documents / "Plugins" / "tampered" / ("index." + std::to_string(version) + ".hbc"),
           bytecode);
@@ -270,6 +276,7 @@ int main()
             {
                 return loader::DownloadResult{404, ""};
             }
+
             std::ofstream(destination, std::ios::binary) << url;
             return loader::DownloadResult{200, ""};
         });
@@ -307,8 +314,8 @@ int main()
         return downloads.getPropertyNames(*runtime).size(*runtime) == 3;
     });
     requireChecks(*runtime, kDownloadChecks, "download-checks.js");
-    require(loader::readTextFile((documents / "Fonts" / "a.ttf").string()) ==
-                "https://fonts.invalid/a.ttf",
+    require(loader::readTextFile((documents / "Fonts" / "a.ttf").string())
+                == "https://fonts.invalid/a.ttf",
             "downloadFile writes the response to the path");
     require(!fs::exists(documents.parent_path() / "a.ttf"), "a refused path writes nothing");
     fs::remove_all(documents);

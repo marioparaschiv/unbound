@@ -7,39 +7,39 @@
 
 NSString *const UBAnimatedIconId = @"UnboundAnimated";
 
-static NSString *const      kInfoKey             = @"UnboundAnimatedIcon";
-static NSString *const      kEnabledKey          = @"UnboundAnimatedIconEnabled";
-static const char          *kChangedNotification = "app.unbound.animated-icon.changed";
-static const CFTimeInterval kTick                = 0.02;
-static const double         kSilenceSeconds      = 1.0;
-static const int            kSampleRate          = 8000;
+static NSString *const kInfoKey         = @"UnboundAnimatedIcon";
+static NSString *const kEnabledKey      = @"UnboundAnimatedIconEnabled";
+static const char *kChangedNotification = "app.unbound.animated-icon.changed";
+static const CFTimeInterval kTick       = 0.02;
+static const double kSilenceSeconds     = 1.0;
+static const int kSampleRate            = 8000;
 
-static CFRunLoopTimerRef             gTimer;
-static CFTimeInterval                gStart;
-static NSInteger                     gShown = -1;
-static BOOL                          gInFlight;
-static CFTimeInterval                gInFlightSince;
-static const CFTimeInterval          kStuckRequest = 1.0;
-static BOOL                          gBackgrounded;
-static BOOL                          gLocked;
-static UIBackgroundTaskIdentifier    gTask = UIBackgroundTaskInvalid;
-static AVAudioPlayer                *gSilence;
-static NSString                     *gRestoreCategory;
+static CFRunLoopTimerRef gTimer;
+static CFTimeInterval gStart;
+static NSInteger gShown = -1;
+static BOOL gInFlight;
+static CFTimeInterval gInFlightSince;
+static const CFTimeInterval kStuckRequest = 1.0;
+static BOOL gBackgrounded;
+static BOOL gLocked;
+static UIBackgroundTaskIdentifier gTask = UIBackgroundTaskInvalid;
+static AVAudioPlayer *gSilence;
+static NSString *gRestoreCategory;
 static AVAudioSessionCategoryOptions gRestoreOptions;
 
 NSDictionary *UBAnimatedIconInfo(void)
 {
-    static NSDictionary   *info;
+    static NSDictionary *info;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         NSString *path =
             [NSBundle.mainBundle.bundlePath stringByAppendingPathComponent:@"Info.plist"];
         NSDictionary *candidate = [NSDictionary dictionaryWithContentsOfFile:path][kInfoKey];
-        NSArray      *frames    = candidate[@"Frames"];
-        NSArray      *durations = candidate[@"Durations"];
+        NSArray *frames         = candidate[@"Frames"];
+        NSArray *durations      = candidate[@"Durations"];
         if ([candidate isKindOfClass:NSDictionary.class] && [frames isKindOfClass:NSArray.class] &&
-            [durations isKindOfClass:NSArray.class] && frames.count > 0 &&
-            frames.count == durations.count && [candidate[@"Rest"] isKindOfClass:NSString.class])
+            [durations isKindOfClass:NSArray.class] && frames.count > 0
+            && frames.count == durations.count && [candidate[@"Rest"] isKindOfClass:NSString.class])
         {
             info = candidate;
         }
@@ -60,6 +60,7 @@ static BOOL springBoardAnimates(void)
             return YES;
         }
     }
+
     return NO;
 }
 
@@ -80,6 +81,7 @@ static NSInteger frameAt(NSArray<NSNumber *> *durations, CFTimeInterval elapsed)
     {
         total += duration.doubleValue / 1000.0;
     }
+
     double position = total > 0 ? fmod(elapsed, total) : 0;
     for (NSUInteger index = 0; index < durations.count; index++)
     {
@@ -89,6 +91,7 @@ static NSInteger frameAt(NSArray<NSNumber *> *durations, CFTimeInterval elapsed)
             return (NSInteger) index;
         }
     }
+
     return (NSInteger) durations.count - 1;
 }
 
@@ -102,6 +105,7 @@ static void showFrame(NSString *frame, NSInteger index, void (^done)(void))
         {
             gShown = index;
         }
+
         if (done)
         {
             done();
@@ -118,10 +122,12 @@ static void tick(void)
                  format:@"An animated icon frame got no answer; trying the next one."];
         gInFlight = NO;
     }
+
     if (gInFlight || !info)
     {
         return;
     }
+
     NSInteger index = frameAt(info[@"Durations"], CACurrentMediaTime() - gStart);
     if (index != gShown)
     {
@@ -131,17 +137,17 @@ static void tick(void)
 
 static NSData *silentWave(void)
 {
-    uint32_t       samples  = (uint32_t) (kSampleRate * kSilenceSeconds);
-    uint32_t       bytes    = samples * 2;
-    NSMutableData *data     = [NSMutableData dataWithCapacity:44 + bytes];
-    uint32_t       riff     = 36 + bytes;
-    uint32_t       fmtSize  = 16;
-    uint16_t       format   = 1;
-    uint16_t       mono     = 1;
-    uint32_t       rate     = kSampleRate;
-    uint32_t       byteRate = kSampleRate * 2;
-    uint16_t       align    = 2;
-    uint16_t       depth    = 16;
+    uint32_t samples    = (uint32_t) (kSampleRate * kSilenceSeconds);
+    uint32_t bytes      = samples * 2;
+    NSMutableData *data = [NSMutableData dataWithCapacity:44 + bytes];
+    uint32_t riff       = 36 + bytes;
+    uint32_t fmtSize    = 16;
+    uint16_t format     = 1;
+    uint16_t mono       = 1;
+    uint32_t rate       = kSampleRate;
+    uint32_t byteRate   = kSampleRate * 2;
+    uint16_t align      = 2;
+    uint16_t depth      = 16;
     [data appendBytes:"RIFF" length:4];
     [data appendBytes:&riff length:4];
     [data appendBytes:"WAVEfmt " length:8];
@@ -164,6 +170,7 @@ static void startKeepAlive(void)
     {
         return;
     }
+
     AVAudioSession *session = AVAudioSession.sharedInstance;
     if ([session.category isEqualToString:AVAudioSessionCategorySoloAmbient])
     {
@@ -172,14 +179,15 @@ static void startKeepAlive(void)
         NSError *error;
         if (![session setCategory:AVAudioSessionCategoryPlayback
                       withOptions:AVAudioSessionCategoryOptionMixWithOthers
-                            error:&error] ||
-            ![session setActive:YES error:&error])
+                            error:&error]
+            || ![session setActive:YES error:&error])
         {
             [Logger error:LOG_CATEGORY_DEFAULT
                    format:@"Failed to start the animated icon's audio session: %@", error];
             return;
         }
     }
+
     gSilence = gSilence ?: [[AVAudioPlayer alloc] initWithData:silentWave() error:nil];
     gSilence.numberOfLoops = -1;
     [gSilence play];
@@ -192,6 +200,7 @@ static void stopKeepAlive(void)
     {
         return;
     }
+
     AVAudioSession *session = AVAudioSession.sharedInstance;
     [session setActive:NO
            withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
@@ -229,6 +238,7 @@ static void stopAnimation(BOOL showRest, BOOL expiring)
         endBackgroundTask();
         return;
     }
+
     gShown = -1;
     if (expiring)
     {
@@ -236,6 +246,7 @@ static void stopAnimation(BOOL showRest, BOOL expiring)
         endBackgroundTask();
         return;
     }
+
     showFrame(info[@"Rest"], -1, ^{ endBackgroundTask(); });
 }
 
@@ -245,6 +256,7 @@ static void startFrames(void)
     {
         return;
     }
+
     gStart = CACurrentMediaTime();
     gShown = -1;
     gTimer = CFRunLoopTimerCreateWithHandler(kCFAllocatorDefault, CFAbsoluteTimeGetCurrent(), kTick,
@@ -258,6 +270,7 @@ static void startAnimation(void)
     {
         return;
     }
+
     if (gTask == UIBackgroundTaskInvalid)
     {
         gTask = [UIApplication.sharedApplication beginBackgroundTaskWithName:@"UnboundAnimatedIcon"
@@ -267,9 +280,11 @@ static void startAnimation(void)
                                                                    endBackgroundTask();
                                                                    return;
                                                                }
+
                                                                stopAnimation(YES, YES);
                                                            }];
     }
+
     startKeepAlive();
     startFrames();
     [Logger info:LOG_CATEGORY_DEFAULT
@@ -301,6 +316,7 @@ static void observe(NSNotificationName name, void (^handler)(NSNotification *not
         });
         return;
     }
+
     if (animatedIconEnabled())
     {
         setAnimatedIconEnabled(NO);
@@ -314,6 +330,7 @@ static void observe(NSNotificationName name, void (^handler)(NSNotification *not
             }
         };
     }
+
     %orig(iconName, completion);
 }
 
@@ -356,8 +373,8 @@ static void observe(NSNotificationName name, void (^handler)(NSNotification *not
     });
     observe(AVAudioSessionInterruptionNotification, ^(NSNotification *note) {
         NSNumber *type = note.userInfo[AVAudioSessionInterruptionTypeKey];
-        if (type.unsignedIntegerValue == AVAudioSessionInterruptionTypeEnded && gBackgrounded &&
-            gRestoreCategory)
+        if (type.unsignedIntegerValue == AVAudioSessionInterruptionTypeEnded && gBackgrounded
+            && gRestoreCategory)
         {
             [gSilence play];
         }

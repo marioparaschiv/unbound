@@ -15,15 +15,15 @@
 // the pipe it reads, and a full pipe would block the thread that has to drain it.
 
 namespace {
-constexpr int    kCapturedStreamCount = 2;
-constexpr int    kIdleFlushMs         = 1000;
-constexpr size_t kReadSize            = 4096;
+constexpr int kCapturedStreamCount = 2;
+constexpr int kIdleFlushMs         = 1000;
+constexpr size_t kReadSize         = 4096;
 
 struct CapturedStream {
-    int                           target   = -1;
-    int                           original = -1;
-    int                           read     = -1;
-    int                           write    = -1;
+    int target   = -1;
+    int original = -1;
+    int read     = -1;
+    int write    = -1;
     loader::NativeLogLineSplitter lines;
 };
 
@@ -42,8 +42,10 @@ void forward(int fd, const char *bytes, size_t length)
             {
                 continue;
             }
+
             return;
         }
+
         bytes += written;
         length -= static_cast<size_t>(written);
     }
@@ -56,6 +58,7 @@ void record(std::string text)
     {
         return;
     }
+
     UnboundAppendNativeLog(static_cast<int>(line->source), static_cast<int>(line->level),
                            line->scope.c_str(), line->message.c_str());
 }
@@ -80,6 +83,7 @@ bool prepareStream(int target, CapturedStream &stream)
     {
         return false;
     }
+
     stream.target   = target;
     stream.read     = ends[0];
     stream.write    = ends[1];
@@ -89,10 +93,12 @@ bool prepareStream(int target, CapturedStream &stream)
         closeStream(stream);
         return false;
     }
+
     for (int fd : {stream.original, stream.read, stream.write})
     {
         fcntl(fd, F_SETFD, FD_CLOEXEC);
     }
+
     return true;
 }
 
@@ -104,8 +110,9 @@ void *readStreams(void *)
     {
         descriptors[index] = {gStreams[index].read, POLLIN, 0};
     }
+
     char buffer[kReadSize];
-    int  open = kCapturedStreamCount;
+    int open = kCapturedStreamCount;
     while (open > 0)
     {
         bool pending = false;
@@ -113,12 +120,14 @@ void *readStreams(void *)
         {
             pending = pending || stream.lines.hasPending();
         }
+
         // Waits without a timeout while no partial line is held, so an idle process never wakes.
         int ready = poll(descriptors, kCapturedStreamCount, pending ? kIdleFlushMs : -1);
         if (ready < 0 && errno != EINTR)
         {
             return nullptr;
         }
+
         for (int index = 0; index < kCapturedStreamCount; index++)
         {
             CapturedStream &stream = gStreams[index];
@@ -126,10 +135,12 @@ void *readStreams(void *)
             {
                 stream.lines.flush(record);
             }
+
             if (ready <= 0 || descriptors[index].fd < 0 || descriptors[index].revents == 0)
             {
                 continue;
             }
+
             ssize_t count = read(stream.read, buffer, sizeof(buffer));
             if (count > 0)
             {
@@ -147,13 +158,14 @@ void *readStreams(void *)
             }
         }
     }
+
     return nullptr;
 }
 
 bool startReader()
 {
     pthread_attr_t attributes;
-    pthread_t      thread;
+    pthread_t thread;
     pthread_attr_init(&attributes);
     pthread_attr_setdetachstate(&attributes, PTHREAD_CREATE_DETACHED);
     pthread_attr_set_qos_class_np(&attributes, QOS_CLASS_UTILITY, 0);
@@ -172,9 +184,11 @@ void startCapture()
             {
                 closeStream(stream);
             }
+
             return;
         }
     }
+
     // The reader runs before any write lands in a pipe, so a write can never block on a pipe that
     // nothing drains.
     if (!startReader())
@@ -183,8 +197,10 @@ void startCapture()
         {
             closeStream(stream);
         }
+
         return;
     }
+
     // A pipe would make stdio fully buffer stdout; keep printf lines arriving as they are written.
     fflush(stdout);
     setvbuf(stdout, nullptr, _IOLBF, 0);

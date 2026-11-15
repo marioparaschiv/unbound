@@ -28,6 +28,7 @@ static std::string rejection(const std::function<void()> &parse)
     {
         return error.what();
     }
+
     return "";
 }
 
@@ -49,10 +50,12 @@ int main()
     assert(!loose.once && !loose.cacheOnly && !loose.coalesceAfter);
     assert(rejection([] {
                parseHookFlags({{"coalesce", "self"}});
-           }) == "Native hook coalescing must be set to receiver");
+           })
+           == "Native hook coalescing must be set to receiver");
     assert(rejection([] {
                parseHookFlags({{"coalesce", true}});
-           }) == "Native hook coalescing must be set to receiver");
+           })
+           == "Native hook coalescing must be set to receiver");
 
     HookPayload absent = parseHookPayload(nlohmann::json::object(), 2);
     assert(absent.receiver && absent.allArguments && absent.argumentIndexes.empty());
@@ -65,54 +68,55 @@ int main()
     assert(!selected.receiver && !selected.allArguments);
     assert((selected.argumentIndexes == std::vector<size_t>{1, 0}));
     assert(selected.phase == HookPayloadPhase::after);
-    assert(parseHookPayload({{"payload", {{"phase", "before"}}}}, 0).phase ==
-           HookPayloadPhase::before);
+    assert(parseHookPayload({{"payload", {{"phase", "before"}}}}, 0).phase
+           == HookPayloadPhase::before);
     HookPayload none = parseHookPayload({{"payload", {{"arguments", nlohmann::json::array()}}}}, 2);
     assert(!none.allArguments && none.argumentIndexes.empty());
 
-    assert(payloadRejection(nlohmann::json::array()) ==
-           "Native hook payload options must be an object");
+    assert(payloadRejection(nlohmann::json::array())
+           == "Native hook payload options must be an object");
     assert(payloadRejection("receiver") == "Native hook payload options must be an object");
-    assert(payloadRejection({{"receiver", nullptr}}) ==
-           "Native hook payload receiver must be boolean");
-    assert(payloadRejection({{"arguments", 1}}) ==
-           "Native hook payload arguments must be an array");
-    assert(payloadRejection({{"arguments", {"0"}}}) ==
-           "Native hook payload argument indexes must be integers");
-    assert(payloadRejection({{"arguments", {2}}}) ==
-           "Native hook payload argument index is out of range");
-    assert(payloadRejection({{"arguments", {-1}}}) ==
-           "Native hook payload argument index is out of range");
-    assert(payloadRejection({{"arguments", {0.5}}}) ==
-           "Native hook payload argument index is out of range");
-    assert(payloadRejection({{"arguments", {std::numeric_limits<double>::infinity()}}}) ==
-           "Native hook payload argument index is out of range");
-    assert(payloadRejection({{"arguments", {1, 1}}}) ==
-           "Native hook payload argument indexes must be unique");
+    assert(payloadRejection({{"receiver", nullptr}})
+           == "Native hook payload receiver must be boolean");
+    assert(payloadRejection({{"arguments", 1}})
+           == "Native hook payload arguments must be an array");
+    assert(payloadRejection({{"arguments", {"0"}}})
+           == "Native hook payload argument indexes must be integers");
+    assert(payloadRejection({{"arguments", {2}}})
+           == "Native hook payload argument index is out of range");
+    assert(payloadRejection({{"arguments", {-1}}})
+           == "Native hook payload argument index is out of range");
+    assert(payloadRejection({{"arguments", {0.5}}})
+           == "Native hook payload argument index is out of range");
+    assert(payloadRejection({{"arguments", {std::numeric_limits<double>::infinity()}}})
+           == "Native hook payload argument index is out of range");
+    assert(payloadRejection({{"arguments", {1, 1}}})
+           == "Native hook payload argument indexes must be unique");
     assert(payloadRejection({{"phase", 1}}) == "Native hook payload phase must be a string");
-    assert(payloadRejection({{"phase", "both"}}) ==
-           "Native hook payload phase must be before or after");
+    assert(payloadRejection({{"phase", "both"}})
+           == "Native hook payload phase must be before or after");
 
     for (const char *result : {"bool", "i8", "u8", "i16", "u16", "i32", "u32", "i64", "u64",
                                "float", "double", "struct:CGRect"})
     {
         assert(cacheableHookResult(result));
     }
+
     for (const char *result : {"void", "object", "class", "selector", "pointer", "cstring"})
     {
         assert(!cacheableHookResult(result));
     }
 
-    HookFlags   coalescing{false, false, true};
-    HookFlags   cacheOnly{false, true, false};
+    HookFlags coalescing{false, false, true};
+    HookFlags cacheOnly{false, true, false};
     HookPayload everything;
     HookPayload beforeOnly;
     beforeOnly.phase = HookPayloadPhase::before;
     HookPayload anonymous;
     anonymous.receiver = false;
-    HookHandlers      after{false, true, false};
-    HookHandlers      replacing{false, true, true};
-    HookHandlers      nothing;
+    HookHandlers after{false, true, false};
+    HookHandlers replacing{false, true, true};
+    HookHandlers nothing;
     const std::string coalesceFailure =
         "Receiver coalescing requires a non-replacing after-observation hook with its receiver";
     const std::string cacheFailure =
@@ -122,25 +126,31 @@ int main()
            }).empty());
     assert(rejection([&] {
                validateHookHandlers(replacing, coalescing, everything, "void");
-           }) == coalesceFailure);
+           })
+           == coalesceFailure);
     assert(rejection([&] {
                validateHookHandlers(nothing, coalescing, everything, "void");
-           }) == coalesceFailure);
+           })
+           == coalesceFailure);
     assert(rejection([&] {
                validateHookHandlers(after, coalescing, beforeOnly, "void");
-           }) == coalesceFailure);
+           })
+           == coalesceFailure);
     assert(rejection([&] {
                validateHookHandlers(after, coalescing, anonymous, "void");
-           }) == coalesceFailure);
+           })
+           == coalesceFailure);
     assert(rejection([&] {
                validateHookHandlers(nothing, cacheOnly, everything, "i32");
            }).empty());
     assert(rejection([&] {
                validateHookHandlers(nothing, cacheOnly, everything, "object");
-           }) == cacheFailure);
+           })
+           == cacheFailure);
     assert(rejection([&] {
                validateHookHandlers(after, cacheOnly, everything, "i32");
-           }) == cacheFailure);
+           })
+           == cacheFailure);
 
     assert((payloadArgumentIndexes(everything, 3) == std::vector<size_t>{0, 1, 2}));
     assert(payloadArgumentIndexes(everything, 0).empty());
@@ -150,14 +160,18 @@ int main()
     assert(selectedPayloadArgument(1, 2) == 1);
     assert(rejection([] {
                selectedPayloadArgument(2, 2);
-           }) == "Native hook argument index is out of range");
+           })
+           == "Native hook argument index is out of range");
     assert(rejection([] {
                selectedPayloadArgument(-1, 2);
-           }) == "Native hook argument index is out of range");
+           })
+           == "Native hook argument index is out of range");
     assert(rejection([] {
                selectedPayloadArgument(std::nan(""), 2);
-           }) == "Native hook argument index is out of range");
+           })
+           == "Native hook argument index is out of range");
     assert(rejection([] {
                selectedPayloadArgument(0.5, 2);
-           }) == "Native hook argument index must be an integer");
+           })
+           == "Native hook argument index must be an integer");
 }

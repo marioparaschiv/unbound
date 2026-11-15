@@ -11,8 +11,8 @@
 using unbound::ios::toStdString;
 
 static const unsigned long kFileVnodeMask =
-    DISPATCH_VNODE_ATTRIB | DISPATCH_VNODE_DELETE | DISPATCH_VNODE_EXTEND | DISPATCH_VNODE_LINK |
-    DISPATCH_VNODE_RENAME | DISPATCH_VNODE_REVOKE | DISPATCH_VNODE_WRITE;
+    DISPATCH_VNODE_ATTRIB | DISPATCH_VNODE_DELETE | DISPATCH_VNODE_EXTEND | DISPATCH_VNODE_LINK
+    | DISPATCH_VNODE_RENAME | DISPATCH_VNODE_REVOKE | DISPATCH_VNODE_WRITE;
 
 static const unsigned long kFileGoneMask =
     DISPATCH_VNODE_DELETE | DISPATCH_VNODE_RENAME | DISPATCH_VNODE_REVOKE;
@@ -35,13 +35,15 @@ public:
         {
             return false;
         }
-        std::weak_ptr<loader::FileWatcher> watcher     = watcher_;
-        const std::string                  watchedPath = path;
+
+        std::weak_ptr<loader::FileWatcher> watcher = watcher_;
+        const std::string watchedPath              = path;
         dispatch_source_set_event_handler(source, ^{
             if (!isCurrent(files_, watchedPath, source))
             {
                 return;
             }
+
             const loader::FileWatchEvent event = (dispatch_source_get_data(source) & kFileGoneMask)
                                                      ? loader::FileWatchEvent::Removed
                                                      : loader::FileWatchEvent::Changed;
@@ -68,8 +70,9 @@ public:
                    format:@"Failed to open dir %s for monitoring (errno %d)", path.c_str(), errno];
             return false;
         }
-        std::weak_ptr<loader::FileWatcher> watcher     = watcher_;
-        const std::string                  watchedPath = path;
+
+        std::weak_ptr<loader::FileWatcher> watcher = watcher_;
+        const std::string watchedPath              = path;
         dispatch_source_set_event_handler(source, ^{
             if (auto active = watcher.lock())
             {
@@ -95,6 +98,7 @@ private:
         {
             return nil;
         }
+
         dispatch_source_t source =
             dispatch_source_create(DISPATCH_SOURCE_TYPE_VNODE, fd, mask,
                                    dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0));
@@ -105,7 +109,7 @@ private:
     bool isCurrent(Sources &sources, const std::string &path, dispatch_source_t source)
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        const auto                  found = sources.find(path);
+        const auto found = sources.find(path);
         return found != sources.end() && found->second == source;
     }
 
@@ -115,6 +119,7 @@ private:
             std::lock_guard<std::mutex> lock(mutex_);
             sources[path] = source;
         }
+
         dispatch_resume(source);
     }
 
@@ -123,27 +128,29 @@ private:
         dispatch_source_t source = nil;
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            const auto                  found = sources.find(path);
+            const auto found = sources.find(path);
             if (found == sources.end())
             {
                 return;
             }
+
             source = found->second;
             sources.erase(found);
         }
+
         dispatch_source_cancel(source);
     }
 
     std::weak_ptr<loader::FileWatcher> watcher_;
-    Sources                            files_;
-    Sources                            directories_;
-    std::mutex                         mutex_;
+    Sources files_;
+    Sources directories_;
+    std::mutex mutex_;
 };
 
 static loader::FileWatcher &fileWatcher(void)
 {
     static std::shared_ptr<loader::FileWatcher> watcher;
-    static dispatch_once_t                      once;
+    static dispatch_once_t once;
     dispatch_once(&once, ^{
         auto backend = std::make_shared<DispatchFileWatchBackend>();
         watcher      = std::make_shared<loader::FileWatcher>(
@@ -160,8 +167,8 @@ static loader::FileWatcher &fileWatcher(void)
 }
 
 @implementation FileSystem
-static NSFileManager *manager   = nil;
-static NSString      *documents = nil;
+static NSFileManager *manager = nil;
+static NSString *documents    = nil;
 
 + (BOOL)exists:(NSString *)path
 {
@@ -208,7 +215,7 @@ static NSString      *documents = nil;
     request.timeoutInterval      = requestTimeout;
 
     __block NSHTTPURLResponse *response;
-    __block NSException       *exception;
+    __block NSException *exception;
 
     for (NSString *header in headers)
     {
@@ -217,7 +224,7 @@ static NSString      *documents = nil;
     }
 
     NSString *resumePath = [path stringByAppendingString:@".resume"];
-    NSData   *resumeData = [NSData dataWithContentsOfFile:resumePath];
+    NSData *resumeData   = [NSData dataWithContentsOfFile:resumePath];
     [[NSFileManager defaultManager] removeItemAtPath:resumePath error:nil];
     if (resumeData)
     {
@@ -225,10 +232,10 @@ static NSString      *documents = nil;
                                                                         options:0
                                                                          format:nil
                                                                           error:nil];
-        id            savedURL =
+        id savedURL =
             [saved isKindOfClass:NSDictionary.class] ? saved[@"NSURLSessionDownloadURL"] : nil;
-        if (![savedURL isKindOfClass:NSString.class] ||
-            ![savedURL isEqualToString:url.absoluteString])
+        if (![savedURL isKindOfClass:NSString.class]
+            || ![savedURL isEqualToString:url.absoluteString])
         {
             resumeData = nil;
         }
@@ -245,6 +252,7 @@ static NSString      *documents = nil;
                 {
                     [partial writeToFile:resumePath atomically:YES];
                 }
+
                 NSString *reason =
                     [NSString stringWithFormat:@"%@ %d", error.domain, (int32_t) error.code];
                 exception = [[NSException alloc] initWithName:@"DownloadFailed"
@@ -270,7 +278,7 @@ static NSString      *documents = nil;
             dispatch_semaphore_signal(semaphore);
         };
 
-    NSURLSession             *session = [NSURLSession sharedSession];
+    NSURLSession *session = [NSURLSession sharedSession];
     NSURLSessionDownloadTask *task =
         resumeData ? [session downloadTaskWithResumeData:resumeData completionHandler:finished]
                    : [session downloadTaskWithRequest:request completionHandler:finished];
@@ -278,8 +286,8 @@ static NSString      *documents = nil;
     [task resume];
 
     if (dispatch_semaphore_wait(
-            semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t) (totalTimeout * NSEC_PER_SEC))) !=
-        0)
+            semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t) (totalTimeout * NSEC_PER_SEC)))
+        != 0)
     {
         [task cancelByProducingResumeData:^(NSData *partial) {
             if (partial)
@@ -331,4 +339,5 @@ static NSString      *documents = nil;
 {
     return documents;
 }
+
 @end

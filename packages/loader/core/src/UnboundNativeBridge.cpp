@@ -32,6 +32,7 @@ static void downloadInside(const std::string &documents, const FileDownloader &d
     {
         throw std::runtime_error("Refused to download to " + path + ": it leaves Unbound's folder");
     }
+
     std::string target = joinPath(documents, path);
     createDirectories(std::filesystem::path(target).parent_path().string());
     std::optional<DownloadResult> response = download(url, target, {}, kAddonDownloadPolicy);
@@ -39,14 +40,15 @@ static void downloadInside(const std::string &documents, const FileDownloader &d
     {
         throw std::runtime_error("Failed to download " + url);
     }
+
     if (response->status != 200)
     {
-        throw std::runtime_error("Failed to download " + url + ": HTTP " +
-                                 std::to_string(response->status));
+        throw std::runtime_error("Failed to download " + url + ": HTTP "
+                                 + std::to_string(response->status));
     }
 }
 
-UnboundNativeProvider makeUnboundNativeProvider(const AddonState                   &addons,
+UnboundNativeProvider makeUnboundNativeProvider(const AddonState &addons,
                                                 std::shared_ptr<fonts::FontService> fonts,
                                                 std::string origin, uint32_t bytecodeVersion,
                                                 std::string documents, FileDownloader download)
@@ -60,6 +62,7 @@ UnboundNativeProvider makeUnboundNativeProvider(const AddonState                
         {
             loader["requiredVersion"] = *required;
         }
+
         loader["launch"] =
             launchReportJSON(launchReport(), previousNativeCrash(), readCrashHistory(documents));
         nlohmann::json exits = system_exits::summary(
@@ -70,6 +73,7 @@ UnboundNativeProvider makeUnboundNativeProvider(const AddonState                
         {
             loader["launch"]["system"] = std::move(exits);
         }
+
         return loader;
     };
     provider.getPlugins = [&addons] {
@@ -86,6 +90,7 @@ UnboundNativeProvider makeUnboundNativeProvider(const AddonState                
             downloadInside(documents, download, url, path);
         };
     }
+
     return provider;
 }
 
@@ -101,7 +106,7 @@ static jsi::Function getter(jsi::Runtime &runtime, const char *name,
 }
 
 static jsi::Function
-homeScreenIconFunction(jsi::Runtime                                                 &runtime,
+homeScreenIconFunction(jsi::Runtime &runtime,
                        std::function<bool(const std::string &, const std::string &)> install)
 {
     return native::makeFunction(
@@ -112,6 +117,7 @@ homeScreenIconFunction(jsi::Runtime                                             
             {
                 throw jsi::JSError(rt, "installHomeScreenIcon expects a name and an image path");
             }
+
             return jsi::Value(
                 install(args[0].getString(rt).utf8(rt), args[1].getString(rt).utf8(rt)));
         });
@@ -139,28 +145,31 @@ static jsi::Function sha256Function(jsi::Runtime &runtime)
             {
                 throw jsi::JSError(rt, "getSha256 expects a string");
             }
+
             return jsi::String::createFromAscii(
                 rt, crypto::hex(crypto::sha256(args[0].getString(rt).utf8(rt))));
         });
 }
 
 static jsi::Function
-downloadFunction(jsi::Runtime                                                 &runtime,
+downloadFunction(jsi::Runtime &runtime,
                  std::function<void(const std::string &, const std::string &)> downloadFile)
 {
     return native::makeFunction(
         runtime, "downloadFile", 2,
-        [downloadFile = std::move(downloadFile)](jsi::Runtime     &rt, const jsi::Value &,
+        [downloadFile = std::move(downloadFile)](jsi::Runtime &rt, const jsi::Value &,
                                                  const jsi::Value *args,
-                                                 size_t            count) -> jsi::Value {
+                                                 size_t count) -> jsi::Value {
             if (count < 2 || !args[0].isString() || !args[1].isString())
             {
                 throw jsi::JSError(rt, "downloadFile expects a URL and a path");
             }
+
             if (!downloadFile)
             {
                 throw jsi::JSError(rt, "downloadFile is unavailable on this loader");
             }
+
             std::string url  = args[0].getString(rt).utf8(rt);
             std::string path = args[1].getString(rt).utf8(rt);
             return native::executeBackgroundAsynchronously(
@@ -218,7 +227,7 @@ static jsi::Function buildIconIPAFunction(jsi::Runtime &runtime, std::function<s
 void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
 {
     const nlohmann::json none = nlohmann::json::array();
-    jsi::Object          bridge(runtime);
+    jsi::Object bridge(runtime);
     bridge.setProperty(
         runtime, "getLoader",
         getter(runtime, "getLoader", std::move(provider.getLoader), nlohmann::json::object()));
@@ -234,51 +243,60 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
                            getter(runtime, "hasStagedBundle", std::move(provider.hasStagedBundle),
                                   nlohmann::json(false)));
     }
+
     if (provider.checkForBundleUpdate)
     {
         bridge.setProperty(runtime, "checkForBundleUpdate",
                            backgroundFlagFunction(runtime, "checkForBundleUpdate",
                                                   std::move(provider.checkForBundleUpdate)));
     }
+
     if (provider.updateBundle)
     {
         bridge.setProperty(
             runtime, "updateBundle",
             backgroundFlagFunction(runtime, "updateBundle", std::move(provider.updateBundle)));
     }
+
     if (provider.markRendered)
     {
         bridge.setProperty(
             runtime, "markRendered",
             actionFunction(runtime, "markRendered", std::move(provider.markRendered)));
     }
+
     if (provider.rescanThemes)
     {
         bridge.setProperty(
             runtime, "rescanThemes",
             actionFunction(runtime, "rescanThemes", std::move(provider.rescanThemes)));
     }
+
     if (provider.syncAppIcons)
     {
         bridge.setProperty(
             runtime, "syncAppIcons",
             actionFunction(runtime, "syncAppIcons", std::move(provider.syncAppIcons)));
     }
+
     if (provider.buildIconIPA)
     {
         bridge.setProperty(runtime, "buildIconIPA",
                            buildIconIPAFunction(runtime, std::move(provider.buildIconIPA)));
     }
+
     if (provider.installHomeScreenIcon)
     {
         bridge.setProperty(
             runtime, "installHomeScreenIcon",
             homeScreenIconFunction(runtime, std::move(provider.installHomeScreenIcon)));
     }
+
     if (provider.fonts)
     {
         bridge.setProperty(runtime, "fonts", makeFontsBridge(runtime, std::move(provider.fonts)));
     }
+
     bridge.setProperty(runtime, "getSha256", sha256Function(runtime));
     installLogBridge(runtime, bridge);
     bridge.setProperty(runtime, "downloadFile",

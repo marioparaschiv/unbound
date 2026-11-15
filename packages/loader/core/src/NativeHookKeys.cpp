@@ -36,18 +36,21 @@ std::optional<std::string> coalescedHookKey(std::string_view platform, std::stri
     {
         return std::nullopt;
     }
+
     auto self = parsed.find("self");
     if (self == parsed.end() || !self->is_object())
     {
         return std::nullopt;
     }
+
     auto type  = self->find("type");
     auto value = self->find("value");
-    if (type == self->end() || !type->is_string() || *type != "handle" || value == self->end() ||
-        !value->is_string())
+    if (type == self->end() || !type->is_string() || *type != "handle" || value == self->end()
+        || !value->is_string())
     {
         return std::nullopt;
     }
+
     return receiverCoalesceKey(platform, token, value->get_ref<const std::string &>());
 }
 }

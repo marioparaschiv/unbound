@@ -10,22 +10,25 @@ using namespace loader;
 
 struct RecordingBackend : FileWatchBackend {
     std::vector<std::string> calls;
-    std::set<std::string>    missing;
+    std::set<std::string> missing;
 
     bool watchFile(const std::string &path) override
     {
         calls.push_back("file+" + path);
         return !missing.count(path);
     }
+
     void unwatchFile(const std::string &path) override
     {
         calls.push_back("file-" + path);
     }
+
     bool watchDirectory(const std::string &path) override
     {
         calls.push_back("dir+" + path);
         return true;
     }
+
     void unwatchDirectory(const std::string &path) override
     {
         calls.push_back("dir-" + path);
@@ -55,15 +58,15 @@ struct ManualClock {
 
 struct Fixture {
     std::shared_ptr<RecordingBackend> backend = std::make_shared<RecordingBackend>();
-    ManualClock                       clock;
-    std::shared_ptr<FileWatcher>      watcher =
+    ManualClock clock;
+    std::shared_ptr<FileWatcher> watcher =
         std::make_shared<FileWatcher>(backend, clock.scheduler(), 0.25);
 };
 
 static void splitsPaths()
 {
-    assert(parentDirectory("/var/mobile/Documents/Unbound/settings.json") ==
-           "/var/mobile/Documents/Unbound");
+    assert(parentDirectory("/var/mobile/Documents/Unbound/settings.json")
+           == "/var/mobile/Documents/Unbound");
     assert(parentDirectory("/settings.json") == "/");
     assert(parentDirectory("settings.json") == "");
     assert(lastPathComponent("/var/Unbound/settings.json") == "settings.json");
@@ -77,15 +80,15 @@ static void watchesFileAndDirectoryOnce()
     assert(!fixture.watcher->watch("/docs/settings.json", [] {}));
     assert(fixture.watcher->watch("/docs/other.json", [] {}));
     assert(fixture.watcher->isWatching("/docs/other.json"));
-    assert(
-        (fixture.backend->calls == std::vector<std::string>{"dir+/docs", "file+/docs/settings.json",
-                                                            "file+/docs/other.json"}));
+    assert((fixture.backend->calls
+            == std::vector<std::string>{"dir+/docs", "file+/docs/settings.json",
+                                        "file+/docs/other.json"}));
 }
 
 static void coalescesBurstsIntoOneNotification()
 {
     Fixture fixture;
-    int     changes = 0;
+    int changes = 0;
     fixture.watcher->watch("/docs/settings.json", [&] {
         changes++;
     });
@@ -97,6 +100,7 @@ static void coalescesBurstsIntoOneNotification()
     {
         assert(seconds == 0.25);
     }
+
     fixture.clock.runAll();
     assert(changes == 1);
 
@@ -110,7 +114,7 @@ static void coalescesBurstsIntoOneNotification()
 static void rearmsAfterRemoval()
 {
     Fixture fixture;
-    int     changes = 0;
+    int changes = 0;
     fixture.watcher->watch("/docs/settings.json", [&] {
         changes++;
     });
@@ -141,9 +145,9 @@ static void retriesFilesThatDidNotExist()
     fixture.backend->missing.clear();
     fixture.watcher->directoryChanged("/docs");
     fixture.watcher->directoryChanged("/docs");
-    assert((fixture.backend->calls ==
-            std::vector<std::string>{"dir+/docs", "file+/docs/settings.json",
-                                     "file+/docs/settings.json", "file+/docs/settings.json"}));
+    assert((fixture.backend->calls
+            == std::vector<std::string>{"dir+/docs", "file+/docs/settings.json",
+                                        "file+/docs/settings.json", "file+/docs/settings.json"}));
     fixture.clock.runAll();
     assert(changes == 1);
 }
@@ -151,8 +155,8 @@ static void retriesFilesThatDidNotExist()
 static void filtersNamedDirectoryEvents()
 {
     Fixture fixture;
-    int     settings = 0;
-    int     other    = 0;
+    int settings = 0;
+    int other    = 0;
     fixture.watcher->watch("/docs/settings.json", [&] {
         settings++;
     });
@@ -172,7 +176,7 @@ static void filtersNamedDirectoryEvents()
 static void unwatchCancelsAndReleasesTheDirectory()
 {
     Fixture fixture;
-    int     changes = 0;
+    int changes = 0;
     fixture.watcher->watch("/docs/settings.json", [&] {
         changes++;
     });
@@ -186,9 +190,9 @@ static void unwatchCancelsAndReleasesTheDirectory()
     assert((fixture.backend->calls == std::vector<std::string>{"file-/docs/settings.json"}));
     fixture.watcher->unwatch("/docs/settings.json");
     fixture.watcher->unwatch("/docs/other.json");
-    assert(
-        (fixture.backend->calls == std::vector<std::string>{"file-/docs/settings.json",
-                                                            "file-/docs/other.json", "dir-/docs"}));
+    assert((fixture.backend->calls
+            == std::vector<std::string>{"file-/docs/settings.json", "file-/docs/other.json",
+                                        "dir-/docs"}));
     fixture.watcher->fileChanged("/docs/other.json", FileWatchEvent::Changed);
     fixture.watcher->directoryChanged("/docs");
     assert(fixture.clock.scheduled.empty());
@@ -203,9 +207,9 @@ static void unwatchCancelsAndReleasesTheDirectory()
 
 static void ignoresWorkAfterTheWatcherIsGone()
 {
-    auto        backend = std::make_shared<RecordingBackend>();
+    auto backend = std::make_shared<RecordingBackend>();
     ManualClock clock;
-    int         changes = 0;
+    int changes = 0;
     {
         auto watcher = std::make_shared<FileWatcher>(backend, clock.scheduler(), 0.3);
         watcher->watch("/docs/settings.json", [&] {
@@ -213,6 +217,7 @@ static void ignoresWorkAfterTheWatcherIsGone()
         });
         watcher->fileChanged("/docs/settings.json", FileWatchEvent::Changed);
     }
+
     clock.runAll();
     assert(changes == 0);
 }

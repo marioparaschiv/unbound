@@ -42,12 +42,14 @@ static std::vector<std::vector<std::uint8_t>> corpus()
     {
         inputs.push_back(seed(Target::TypeEncoding, encoding));
     }
+
     for (const char *name :
          {"void", "bool", "i8", "u64", "double", "pointer", "cstring", "struct:CGRect",
           "struct:NSRange", "struct:", "struct:timeval", "i32 "})
     {
         inputs.push_back(seed(Target::TypeName, name));
     }
+
     for (std::uint8_t type = 0; type < 18; type++)
     {
         inputs.push_back({static_cast<std::uint8_t>(Target::ValueRoundTrip),
@@ -74,6 +76,7 @@ static std::vector<std::vector<std::uint8_t>> corpus()
                           0x0e,
                           0x0f});
     }
+
     for (std::uint8_t type = 0; type < 14; type++)
     {
         inputs.push_back(
@@ -81,12 +84,14 @@ static std::vector<std::vector<std::uint8_t>> corpus()
         inputs.push_back(
             {static_cast<std::uint8_t>(Target::NumericValue), type, 0, 0, 0, 0, 0, 0, 0xe0, 0x43});
     }
+
     for (const char *name :
          {"setTitle:", "", "{\"id\":\"handle-1\"}", "{\"id\":7}", "[]", "{\"id\":\"\"}",
           "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"})
     {
         inputs.push_back(seed(Target::Names, name));
     }
+
     for (
         const char *manifest :
         {R"({"revision":"abc","channel":"release","buildTime":"2026-10-27T20:00:00Z","bytecodeVersions":[96,98],"sha512":{"unbound.98.bundle":"00"}})",
@@ -97,17 +102,18 @@ static std::vector<std::vector<std::uint8_t>> corpus()
     {
         inputs.push_back(seed(Target::BundleManifest, manifest));
     }
+
     return inputs;
 }
 
-static std::vector<std::uint8_t> mutate(std::vector<std::uint8_t>                     input,
+static std::vector<std::uint8_t> mutate(std::vector<std::uint8_t> input,
                                         const std::vector<std::vector<std::uint8_t>> &inputs,
-                                        std::mt19937                                 &random)
+                                        std::mt19937 &random)
 {
     static const char *const tokens[] = {"{",    "}",  "=",     "\"",          ":",
                                          ",",    "[",  "]",     "struct:",     "\\u0000",
                                          "null", "-0", "1e308", "{CGPoint=dd}"};
-    int                      edits    = 1 + static_cast<int>(random() % 4);
+    int edits                         = 1 + static_cast<int>(random() % 4);
     for (int edit = 0; edit < edits; edit++)
     {
         std::size_t position = input.size() > 1 ? 1 + random() % (input.size() - 1) : 1;
@@ -115,7 +121,10 @@ static std::vector<std::uint8_t> mutate(std::vector<std::uint8_t>               
         {
             case 0:
                 if (input.size() > 1)
+                {
                     input[position] ^= static_cast<std::uint8_t>(1u << (random() % 8));
+                }
+
                 break;
             case 1:
                 input.insert(input.begin() + std::min(position, input.size()),
@@ -123,7 +132,10 @@ static std::vector<std::uint8_t> mutate(std::vector<std::uint8_t>               
                 break;
             case 2:
                 if (input.size() > 1)
+                {
                     input.erase(input.begin() + position);
+                }
+
                 break;
             case 3: {
                 const char *token = tokens[random() % (sizeof(tokens) / sizeof(tokens[0]))];
@@ -139,6 +151,7 @@ static std::vector<std::uint8_t> mutate(std::vector<std::uint8_t>               
                     input.insert(input.begin() + std::min(position, input.size()),
                                  other.begin() + start, other.end());
                 }
+
                 break;
             }
             default:
@@ -146,29 +159,33 @@ static std::vector<std::uint8_t> mutate(std::vector<std::uint8_t>               
                 break;
         }
     }
+
     if (input.size() > 4096)
     {
         input.resize(4096);
     }
+
     return input;
 }
 
 int main()
 {
     const char *iterationsVariable = std::getenv("UNBOUND_FUZZ_ITERATIONS");
-    const long  iterations =
+    const long iterations =
         iterationsVariable ? std::strtol(iterationsVariable, nullptr, 10) : 200000;
-    std::mt19937                           random(0x5eed);
+    std::mt19937 random(0x5eed);
     std::vector<std::vector<std::uint8_t>> inputs = corpus();
     for (const std::vector<std::uint8_t> &input : inputs)
     {
         native_bridge_fuzz::fuzzOne(input.data(), input.size());
     }
+
     for (long iteration = 0; iteration < iterations; iteration++)
     {
         std::vector<std::uint8_t> input = mutate(inputs[random() % inputs.size()], inputs, random);
         native_bridge_fuzz::fuzzOne(input.data(), input.size());
     }
+
     std::printf("native bridge fuzz: %ld mutated inputs from %zu seeds\n", iterations,
                 inputs.size());
     return 0;

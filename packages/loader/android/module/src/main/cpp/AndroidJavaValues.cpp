@@ -100,12 +100,14 @@ std::string serializeJavaBatch(jsi::Runtime &runtime, const jsi::Value &value)
         {
             throw std::invalid_argument("Java batch steps require an operation name");
         }
+
         const std::string &operation = step["op"].get_ref<const std::string &>();
-        if (operation != "invoke" && operation != "getField" && operation != "setField" &&
-            operation != "respondsTo")
+        if (operation != "invoke" && operation != "getField" && operation != "setField"
+            && operation != "respondsTo")
         {
             throw std::invalid_argument("Unsupported Java batch operation: " + operation);
         }
+
         step["handle"] = {
             {"id", loader::native::parseHandleId(step.value("handle", nlohmann::json()),
                                                  "A Java batch handle")}};
@@ -113,20 +115,23 @@ std::string serializeJavaBatch(jsi::Runtime &runtime, const jsi::Value &value)
         {
             throw std::invalid_argument("Java batch steps require a member name");
         }
+
         loader::native::parseName(step["name"].get<std::string>(),
                                   loader::native::kMaximumNativeNameBytes,
                                   "A Java batch member name");
-        if (step.contains("args") &&
-            (!step["args"].is_array() || step["args"].size() > kMaximumNativeArguments))
+        if (step.contains("args")
+            && (!step["args"].is_array() || step["args"].size() > kMaximumNativeArguments))
         {
             throw std::invalid_argument(
                 "Java batch arguments must be an array of at most 16 values");
         }
+
         if (operation == "setField" && (!step.contains("value") || !step["value"].is_object()))
         {
             throw std::invalid_argument("A Java field write needs a value");
         }
     }
+
     return steps.dump();
 }
 
@@ -144,6 +149,7 @@ std::string serializeJavaArguments(jsi::Runtime &runtime, const jsi::Value *args
     {
         return "[]";
     }
+
     return loader::native::serializeBoundedArguments(runtime, args[index],
                                                      kNativeArgumentsConversion);
 }
@@ -154,17 +160,20 @@ std::string serializeJavaParameterTypes(jsi::Runtime &runtime, const jsi::Value 
     {
         throw std::invalid_argument("Java method parameter types must be an array");
     }
-    jsi::Array     types = value.asObject(runtime).asArray(runtime);
+
+    jsi::Array types     = value.asObject(runtime).asArray(runtime);
     nlohmann::json names = nlohmann::json::array();
-    const size_t   count = types.size(runtime);
+    const size_t count   = types.size(runtime);
     if (count > kMaximumNativeArguments)
     {
         throw std::invalid_argument("A prepared Java call has too many parameter types");
     }
+
     for (size_t index = 0; index < count; index++)
     {
         names.push_back(javaName(runtime, types.getValueAtIndex(runtime, index)));
     }
+
     return names.dump();
 }
 
@@ -179,17 +188,18 @@ static std::optional<std::string> javaHandleId(const nlohmann::json &value)
     auto id     = value.find(type == value.end() ? "id" : "value");
     bool tagged = type != value.end() && type->is_string() && *type == "handle";
     bool bare   = type == value.end() && value.size() == 1;
-    if ((tagged || bare) && id != value.end() && id->is_string() &&
-        id->get<std::string>().rfind("java-", 0) == 0)
+    if ((tagged || bare) && id != value.end() && id->is_string()
+        && id->get<std::string>().rfind("java-", 0) == 0)
     {
         return id->get<std::string>();
     }
+
     return std::nullopt;
 }
 
-static std::mutex                                    gJavaLeasesMutex;
+static std::mutex gJavaLeasesMutex;
 static std::shared_ptr<loader::native::HandleLeases> gJavaLeases;
-static std::optional<JavaCallbacks>                  gJavaReleaseCallbacks;
+static std::optional<JavaCallbacks> gJavaReleaseCallbacks;
 
 std::optional<JavaCallbacks> javaReleaseCallbacks()
 {
@@ -204,6 +214,7 @@ void leaseJavaHandles(const JavaCallbacks &callbacks)
     {
         return;
     }
+
     gJavaReleaseCallbacks = callbacks;
     gJavaLeases           = std::make_shared<loader::native::HandleLeases>(
         javaHandleId, [callbacks](const std::string &id, uint64_t issues) {
@@ -219,20 +230,22 @@ jsi::Value adoptJavaValue(jsi::Runtime &runtime, const nlohmann::json &value)
         std::lock_guard<std::mutex> lock(gJavaLeasesMutex);
         leases = gJavaLeases;
     }
+
     return leases ? leases->adopt(runtime, value) : loader::toJSIValue(runtime, value);
 }
 
-static jsi::Value adoptTaggedJavaValue(jsi::Runtime                      &runtime,
+static jsi::Value adoptTaggedJavaValue(jsi::Runtime &runtime,
                                        const loader::native::TaggedValue &tagged)
 {
-    if (tagged.kind == loader::native::TaggedValueKind::String && tagged.type == "handle" &&
-        tagged.text.rfind("java-", 0) == 0)
+    if (tagged.kind == loader::native::TaggedValueKind::String && tagged.type == "handle"
+        && tagged.text.rfind("java-", 0) == 0)
     {
         std::shared_ptr<loader::native::HandleLeases> leases;
         {
             std::lock_guard<std::mutex> lock(gJavaLeasesMutex);
             leases = gJavaLeases;
         }
+
         if (leases)
         {
             return leases->adoptTaggedHandle(runtime, tagged.type, tagged.text);
@@ -256,6 +269,7 @@ static jsi::Value adoptTaggedJavaValue(jsi::Runtime                      &runtim
             object.setProperty(runtime, "value", jsi::String::createFromUtf8(runtime, tagged.text));
             break;
     }
+
     return object;
 }
 
@@ -266,24 +280,28 @@ std::optional<jsi::Value> adoptTaggedJavaEvent(jsi::Runtime &runtime, const std:
     {
         return std::nullopt;
     }
+
     jsi::Array arguments(runtime, event->arguments.size());
     for (size_t index = 0; index < event->arguments.size(); index++)
     {
         arguments.setValueAtIndex(runtime, index,
                                   adoptTaggedJavaValue(runtime, event->arguments[index]));
     }
+
     jsi::Object object(runtime);
     object.setProperty(runtime, "args", arguments);
     if (event->self)
     {
         object.setProperty(runtime, "self", adoptTaggedJavaValue(runtime, *event->self));
     }
+
     jsi::Array indexes(runtime, event->argumentIndexes.size());
     for (size_t index = 0; index < event->argumentIndexes.size(); index++)
     {
         indexes.setValueAtIndex(runtime, index,
                                 jsi::Value(static_cast<double>(event->argumentIndexes[index])));
     }
+
     object.setProperty(runtime, "argumentIndexes", indexes);
     object.setProperty(runtime, "phase", jsi::String::createFromUtf8(runtime, event->phase));
     return object;
@@ -317,8 +335,8 @@ JavaHandleReleaser javaHandleReleaser(JavaCallbacks callbacks)
         catch (const std::exception &error)
         {
             loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
-                        std::string("Failed to release an undelivered Java handle: ") +
-                            error.what());
+                        std::string("Failed to release an undelivered Java handle: ")
+                            + error.what());
         }
         catch (...)
         {
@@ -329,7 +347,7 @@ JavaHandleReleaser javaHandleReleaser(JavaCallbacks callbacks)
 }
 
 std::shared_ptr<PendingJavaPayload> pendingJavaPayload(const JavaCallbacks &callbacks,
-                                                       std::string          payload)
+                                                       std::string payload)
 {
     return std::make_shared<PendingJavaPayload>(
         javaHandleReleaser(callbacks), loader::native::runtimeGeneration, std::move(payload));
@@ -350,6 +368,7 @@ jsi::Value javaAsynchronously(jsi::Runtime &runtime, const JavaCallbacks &callba
             {
                 return jsi::Value::undefined();
             }
+
             return parseJavaResult(completion, payload);
         });
 }

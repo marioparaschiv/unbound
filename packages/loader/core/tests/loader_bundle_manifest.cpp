@@ -30,6 +30,7 @@ static std::string manifestWithHashes(const std::vector<std::string> &files)
     {
         hashes[file] = loader::sha512Hex(file);
     }
+
     return nlohmann::json{{"revision", "r"},
                           {"channel", "beta"},
                           {"buildTime", "2026-10-27T12:06:15Z"},
@@ -40,11 +41,11 @@ static std::string manifestWithHashes(const std::vector<std::string> &files)
 
 static void parsesManifests()
 {
-    const std::string                     hash     = loader::sha512Hex("bundle");
+    const std::string hash                         = loader::sha512Hex("bundle");
     std::optional<loader::BundleManifest> manifest = loader::parseBundleManifest(
         R"({"revision":"b53f3860","channel":"beta","buildTime":"2026-10-27T12:06:15.507Z",)"
-        R"("bytecodeVersions":[98,96,-1,"94"],"sha512":{"unbound.98.bundle":")" +
-        hash + R"(","unbound.js":"not-a-hash"}})");
+        R"("bytecodeVersions":[98,96,-1,"94"],"sha512":{"unbound.98.bundle":")"
+        + hash + R"(","unbound.js":"not-a-hash"}})");
     assert(manifest);
     assert(manifest->isSignable());
     assert(manifest->revision == "b53f3860" && manifest->channel == "beta");
@@ -73,8 +74,8 @@ static void parsesManifests()
     assert(loader::bundleFlavourNamed("unbound.js") == loader::BundleFlavour::Default);
     assert(loader::bundleFlavourNamed("unbound.98.bundle") == loader::BundleFlavour::Default);
     assert(loader::bundleFlavourNamed("unbound-dev.js") == loader::BundleFlavour::Development);
-    assert(loader::bundleFlavourNamed("https://builds.unbound.rip/unbound-dev.98.bundle") ==
-           loader::BundleFlavour::Development);
+    assert(loader::bundleFlavourNamed("https://builds.unbound.rip/unbound-dev.98.bundle")
+           == loader::BundleFlavour::Development);
     assert(!loader::bundleFlavourNamed("manifest.json"));
 
     std::optional<loader::BundleManifest> legacy = loader::parseBundleManifest(
@@ -97,7 +98,7 @@ static loader::BundleManifest manifestAt(const std::string &buildTime,
 
 static void enforcesTheBaseline()
 {
-    const std::string      source = "https://builds.unbound.rip/";
+    const std::string source = "https://builds.unbound.rip/";
     loader::BundleBaseline baseline =
         loader::baselineFromManifest(manifestAt("2026-10-27T12:00:00Z"), source);
     std::optional<loader::BundleBaseline> stored =
@@ -120,8 +121,8 @@ static void enforcesTheBaseline()
 
 static loader::BundleManifest bridgeManifest(const std::string &api, const std::string &abi)
 {
-    return *loader::parseBundleManifest(R"({"nativeBridge":{"api":")" + api + R"(","abi":")" + abi +
-                                        R"("}})");
+    return *loader::parseBundleManifest(R"({"nativeBridge":{"api":")" + api + R"(","abi":")" + abi
+                                        + R"("}})");
 }
 
 static void checksTheNativeBridge()

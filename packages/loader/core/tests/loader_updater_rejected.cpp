@@ -21,7 +21,7 @@ static void installGoodThenTryCrashy(Server &server, loader::BundleUpdater &upda
 
 static void skipsTheBuildThatFailedUntilANewerOneShips()
 {
-    Server                server;
+    Server server;
     loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
     installGoodThenTryCrashy(server, updater);
     assert(loader::preferences::rejectedRevision(server.settings) == "bad2222");
@@ -37,7 +37,7 @@ static void skipsTheBuildThatFailedUntilANewerOneShips()
 
 static void aForcedUpdateStillFetchesTheFailedBuild()
 {
-    Server                server;
+    Server server;
     loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
     installGoodThenTryCrashy(server, updater);
 

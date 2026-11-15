@@ -17,14 +17,16 @@ static bool isSha512Hex(const std::string &value)
     {
         return false;
     }
+
     for (char character : value)
     {
-        if (!std::isdigit(static_cast<unsigned char>(character)) &&
-            (character < 'a' || character > 'f'))
+        if (!std::isdigit(static_cast<unsigned char>(character))
+            && (character < 'a' || character > 'f'))
         {
             return false;
         }
     }
+
     return true;
 }
 
@@ -34,6 +36,7 @@ static std::optional<int> digitsAt(std::string_view text, size_t offset, size_t 
     {
         return std::nullopt;
     }
+
     int value = 0;
     for (size_t index = offset; index < offset + count; index++)
     {
@@ -41,8 +44,10 @@ static std::optional<int> digitsAt(std::string_view text, size_t offset, size_t 
         {
             return std::nullopt;
         }
+
         value = value * 10 + (text[index] - '0');
     }
+
     return value;
 }
 
@@ -59,14 +64,14 @@ static int64_t daysSinceEpoch(int year, int month, int day)
 static int daysInMonth(int year, int month)
 {
     static constexpr int kDays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    const bool           leap    = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
+    const bool leap              = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
     return month == 2 && leap ? 29 : kDays[month - 1];
 }
 
 std::optional<int64_t> parseBuildTime(std::string_view text)
 {
-    if (text.size() < 20 || text[4] != '-' || text[7] != '-' || text[10] != 'T' ||
-        text[13] != ':' || text[16] != ':' || text.back() != 'Z')
+    if (text.size() < 20 || text[4] != '-' || text[7] != '-' || text[10] != 'T' || text[13] != ':'
+        || text[16] != ':' || text.back() != 'Z')
     {
         return std::nullopt;
     }
@@ -77,8 +82,9 @@ std::optional<int64_t> parseBuildTime(std::string_view text)
     std::optional<int> hour   = digitsAt(text, 11, 2);
     std::optional<int> minute = digitsAt(text, 14, 2);
     std::optional<int> second = digitsAt(text, 17, 2);
-    if (!year || !month || !day || !hour || !minute || !second || *month < 1 || *month > 12 ||
-        *day < 1 || *day > daysInMonth(*year, *month) || *hour > 23 || *minute > 59 || *second > 59)
+    if (!year || !month || !day || !hour || !minute || !second || *month < 1 || *month > 12
+        || *day < 1 || *day > daysInMonth(*year, *month) || *hour > 23 || *minute > 59
+        || *second > 59)
     {
         return std::nullopt;
     }
@@ -91,11 +97,13 @@ std::optional<int64_t> parseBuildTime(std::string_view text)
         {
             return std::nullopt;
         }
+
         std::optional<int> fraction = digitsAt(text, 20, fractionDigits);
         if (!fraction)
         {
             return std::nullopt;
         }
+
         milliseconds = *fraction * (fractionDigits == 1 ? 100 : fractionDigits == 2 ? 10 : 1);
     }
 
@@ -129,8 +137,8 @@ std::optional<BundleManifest> parseBundleManifest(const std::string &text)
     {
         for (const nlohmann::json &version : *versions)
         {
-            if (version.is_number_unsigned() &&
-                version.get<uint64_t>() <= std::numeric_limits<uint32_t>::max())
+            if (version.is_number_unsigned()
+                && version.get<uint64_t>() <= std::numeric_limits<uint32_t>::max())
             {
                 manifest.bytecodeVersions.push_back(version.get<uint32_t>());
             }
@@ -143,6 +151,7 @@ std::optional<BundleManifest> parseBundleManifest(const std::string &text)
         manifest.nativeBridgeApi = stringField(*bridge, "api");
         manifest.nativeBridgeAbi = stringField(*bridge, "abi");
     }
+
     manifest.minLoaderVersion = stringField(json, "minLoaderVersion");
 
     auto hashes = json.find("sha512");
@@ -166,6 +175,7 @@ std::optional<BundleManifest> parseBundleManifest(const std::string &text)
             {
                 continue;
             }
+
             for (const auto &base : bases)
             {
                 if (base.is_string() && isSha512Hex(base.get<std::string>()))
@@ -175,13 +185,14 @@ std::optional<BundleManifest> parseBundleManifest(const std::string &text)
             }
         }
     }
+
     return manifest;
 }
 
 bool BundleManifest::isSignable() const
 {
-    return buildTimeMilliseconds.has_value() && !revision.empty() && !channel.empty() &&
-           !sha512.empty();
+    return buildTimeMilliseconds.has_value() && !revision.empty() && !channel.empty()
+           && !sha512.empty();
 }
 
 std::string BundleManifest::bundleFile(uint32_t bytecodeVersion, bool developerMode) const
@@ -199,11 +210,13 @@ std::string BundleManifest::bundleFile(uint32_t bytecodeVersion, bool developerM
         {
             return development;
         }
+
         if (sha512.find("unbound-dev.js") != sha512.end())
         {
             return "unbound-dev.js";
         }
     }
+
     return hermes ? "unbound." + std::to_string(bytecodeVersion) + ".bundle" : "unbound.js";
 }
 
@@ -214,10 +227,12 @@ std::optional<std::string> BundleManifest::devtoolsFile(uint32_t bytecodeVersion
     {
         return bytecode;
     }
+
     if (sha512.find("devtools.js") != sha512.end())
     {
         return std::string("devtools.js");
     }
+
     return std::nullopt;
 }
 
@@ -233,6 +248,7 @@ std::optional<BundleFlavour> bundleFlavourNamed(std::string_view file)
             return flavour;
         }
     }
+
     return std::nullopt;
 }
 
@@ -251,6 +267,7 @@ std::optional<BundleBaseline> parseBaseline(const std::string &text)
     {
         return std::nullopt;
     }
+
     nlohmann::json json = parseBoundedJSON(text);
     if (json.is_discarded() || !json.is_object())
     {
@@ -267,6 +284,7 @@ std::optional<BundleBaseline> parseBaseline(const std::string &text)
     {
         return std::nullopt;
     }
+
     baseline.buildTimeMilliseconds = *buildTimeMilliseconds;
     return baseline;
 }
@@ -285,7 +303,7 @@ BundleBaseline baselineFromManifest(const BundleManifest &manifest, const std::s
 static std::optional<std::array<uint64_t, 3>> parseVersion(std::string_view text)
 {
     std::array<uint64_t, 3> parts{};
-    size_t                  index = 0;
+    size_t index = 0;
     for (size_t part = 0; part < parts.size(); part++)
     {
         size_t start = index;
@@ -296,27 +314,32 @@ static std::optional<std::array<uint64_t, 3>> parseVersion(std::string_view text
             {
                 return std::nullopt;
             }
+
             index++;
         }
+
         if (index == start)
         {
             return std::nullopt;
         }
+
         if (part + 1 < parts.size())
         {
             if (index >= text.size() || text[index] != '.')
             {
                 return std::nullopt;
             }
+
             index++;
         }
     }
+
     return index == text.size() ? std::optional(parts) : std::nullopt;
 }
 
 std::optional<std::string> nativeBridgeProblem(const BundleManifest &manifest,
-                                               std::string_view      loaderApi,
-                                               std::string_view      loaderAbi)
+                                               std::string_view loaderApi,
+                                               std::string_view loaderAbi)
 {
     if (manifest.nativeBridgeApi.empty() && manifest.nativeBridgeAbi.empty())
     {
@@ -329,28 +352,32 @@ std::optional<std::string> nativeBridgeProblem(const BundleManifest &manifest,
     auto installedAbi = parseVersion(loaderAbi);
     if (!requiredApi || !requiredAbi)
     {
-        return "the bundle declares an unreadable native bridge version (api " +
-               manifest.nativeBridgeApi + ", abi " + manifest.nativeBridgeAbi + ")";
+        return "the bundle declares an unreadable native bridge version (api "
+               + manifest.nativeBridgeApi + ", abi " + manifest.nativeBridgeAbi + ")";
     }
+
     if (!installedApi || !installedAbi)
     {
         return std::nullopt;
     }
+
     if ((*requiredAbi)[0] != (*installedAbi)[0])
     {
-        return "the bundle needs native bridge ABI " + manifest.nativeBridgeAbi +
-               " but this loader provides " + std::string(loaderAbi);
+        return "the bundle needs native bridge ABI " + manifest.nativeBridgeAbi
+               + " but this loader provides " + std::string(loaderAbi);
     }
+
     if ((*requiredApi)[0] != (*installedApi)[0] || *requiredApi > *installedApi)
     {
-        return "the bundle needs native bridge API " + manifest.nativeBridgeApi +
-               " but this loader provides " + std::string(loaderApi);
+        return "the bundle needs native bridge API " + manifest.nativeBridgeApi
+               + " but this loader provides " + std::string(loaderApi);
     }
+
     return std::nullopt;
 }
 
 std::optional<std::string> loaderVersionProblem(const BundleManifest &manifest,
-                                                std::string_view      loaderVersion)
+                                                std::string_view loaderVersion)
 {
     if (manifest.minLoaderVersion.empty())
     {
@@ -361,37 +388,42 @@ std::optional<std::string> loaderVersionProblem(const BundleManifest &manifest,
     auto installed = parseVersion(loaderVersion);
     if (!required)
     {
-        return "the bundle declares an unreadable minimum loader version (" +
-               manifest.minLoaderVersion + ")";
+        return "the bundle declares an unreadable minimum loader version ("
+               + manifest.minLoaderVersion + ")";
     }
+
     // A development loader's version is not semver; it is trusted to run any bundle.
     if (!installed || *installed >= *required)
     {
         return std::nullopt;
     }
-    return "the bundle needs loader " + manifest.minLoaderVersion + " but this is loader " +
-           std::string(loaderVersion);
+
+    return "the bundle needs loader " + manifest.minLoaderVersion + " but this is loader "
+           + std::string(loaderVersion);
 }
 
-std::optional<std::string> rollbackProblem(const BundleManifest                &manifest,
-                                           const std::string                   &source,
+std::optional<std::string> rollbackProblem(const BundleManifest &manifest,
+                                           const std::string &source,
                                            const std::optional<BundleBaseline> &baseline)
 {
     if (!baseline || baseline->source != source)
     {
         return std::nullopt;
     }
+
     if (manifest.channel != baseline->channel)
     {
-        return "its channel " + manifest.channel + " is not the active bundle's channel " +
-               baseline->channel;
+        return "its channel " + manifest.channel + " is not the active bundle's channel "
+               + baseline->channel;
     }
-    if (!manifest.buildTimeMilliseconds ||
-        *manifest.buildTimeMilliseconds < baseline->buildTimeMilliseconds)
+
+    if (!manifest.buildTimeMilliseconds
+        || *manifest.buildTimeMilliseconds < baseline->buildTimeMilliseconds)
     {
-        return "it was built at " + manifest.buildTime + ", before the active bundle (" +
-               baseline->revision + ", built at " + baseline->buildTime + ")";
+        return "it was built at " + manifest.buildTime + ", before the active bundle ("
+               + baseline->revision + ", built at " + baseline->buildTime + ")";
     }
+
     return std::nullopt;
 }
 }

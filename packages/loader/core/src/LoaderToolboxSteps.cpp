@@ -10,8 +10,8 @@ static std::string text(const nlohmann::json &item, const char *key)
 
 static bool flag(const nlohmann::json &item, const char *key)
 {
-    return item.is_object() && item.contains(key) && item[key].is_boolean() &&
-           item[key].get<bool>();
+    return item.is_object() && item.contains(key) && item[key].is_boolean()
+           && item[key].get<bool>();
 }
 
 MenuStep menuStep(const nlohmann::json &item, bool confirmed)
@@ -20,18 +20,22 @@ MenuStep menuStep(const nlohmann::json &item, bool confirmed)
     {
         return MenuStep::None;
     }
+
     if (flag(item, "destructive") && !confirmed)
     {
         return MenuStep::Confirm;
     }
+
     if (text(item, "kind") == "platform")
     {
         return MenuStep::Platform;
     }
+
     if (item.contains("prompt") && item["prompt"].is_object())
     {
         return MenuStep::Prompt;
     }
+
     return MenuStep::Run;
 }
 
@@ -41,6 +45,7 @@ MenuOutcome menuOutcome(const nlohmann::json &item, const std::string &result)
     {
         return MenuOutcome::Failed;
     }
+
     return flag(item, "restartsApp") ? MenuOutcome::Restart : MenuOutcome::Done;
 }
 
@@ -59,6 +64,7 @@ const char *menuStepName(MenuStep step)
         case MenuStep::Run:
             return "run";
     }
+
     return "none";
 }
 
@@ -73,6 +79,7 @@ const char *menuOutcomeName(MenuOutcome outcome)
         case MenuOutcome::Restart:
             return "restart";
     }
+
     return "done";
 }
 
@@ -112,6 +119,7 @@ std::vector<std::string> appFolderURLs(const std::string &documents, bool jailbr
     {
         urls.push_back("filza://view" + documents);
     }
+
     urls.push_back("shareddocuments://" + documents);
     return urls;
 }

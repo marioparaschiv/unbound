@@ -24,14 +24,14 @@ public:
 class FakeHost : public loader::LoaderHost
 {
 public:
-    std::optional<std::string>          devHost;
-    std::vector<std::string>            probed;
-    int                                 systemFontReads   = 0;
-    int                                 fontChanges       = 0;
-    int                                 themeRescans      = 0;
-    int                                 addonPreparations = 0;
-    int                                 bundlesExecuted   = 0;
-    int                                 reloads           = 0;
+    std::optional<std::string> devHost;
+    std::vector<std::string> probed;
+    int systemFontReads   = 0;
+    int fontChanges       = 0;
+    int themeRescans      = 0;
+    int addonPreparations = 0;
+    int bundlesExecuted   = 0;
+    int reloads           = 0;
     std::shared_ptr<RecordingTransport> transport;
 
     void runInBackground(std::function<void()> work) override
@@ -128,7 +128,7 @@ public:
 };
 
 std::shared_ptr<loader::Loader> startLoader(const std::filesystem::path &documents,
-                                            std::shared_ptr<FakeHost>    host)
+                                            std::shared_ptr<FakeHost> host)
 {
     auto provider      = std::make_shared<loader::NativePlatformProvider>();
     provider->platform = "android";
@@ -152,10 +152,10 @@ static void testSettingsLoadFromDocuments()
     auto loader = startLoader(documents, host);
 
     assert(loader->settings().path() == (documents / "settings.json").string());
-    assert(loader::preferences::updateURL(loader->settings()) ==
-           "https://example.com/unbound.bundle");
-    assert(loader->resolveUpdateURL() ==
-           std::optional<std::string>("https://example.com/unbound.bundle"));
+    assert(loader::preferences::updateURL(loader->settings())
+           == "https://example.com/unbound.bundle");
+    assert(loader->resolveUpdateURL()
+           == std::optional<std::string>("https://example.com/unbound.bundle"));
     assert(host->probed.empty());
     assert(loader::currentNativePlatformProvider()->documents == documents.string());
     assert(loader::currentNativePlatformProvider()->settings == &loader->settings());
@@ -165,7 +165,7 @@ static void testSettingsLoadFromDocuments()
 static void testUpdateURLProbesTheDevServer()
 {
     const auto root = bundle_test::makeTemporaryDirectory();
-    auto       host = std::make_shared<FakeHost>();
+    auto host       = std::make_shared<FakeHost>();
     host->devHost   = "10.0.2.2";
     auto loader     = startLoader(root, host);
     assert(loader->resolveUpdateURL() == std::optional<std::string>("http://10.0.2.2:3000/"));
@@ -183,9 +183,9 @@ static void testUpdateURLProbesTheDevServer()
 
 static void testNativeProviderIsComposedOnce()
 {
-    const auto root   = bundle_test::makeTemporaryDirectory();
-    auto       host   = std::make_shared<FakeHost>();
-    auto       loader = startLoader(root, host);
+    const auto root = bundle_test::makeTemporaryDirectory();
+    auto host       = std::make_shared<FakeHost>();
+    auto loader     = startLoader(root, host);
 
     loader::UnboundNativeProvider provider = loader->unboundNativeProvider();
     assert(provider.getLoader()["origin"] == "libunbound.so");
@@ -203,9 +203,9 @@ static void testNativeProviderIsComposedOnce()
 
 static void testFontsReadSystemFontsOnce()
 {
-    const auto root   = bundle_test::makeTemporaryDirectory();
-    auto       host   = std::make_shared<FakeHost>();
-    auto       loader = startLoader(root, host);
+    const auto root = bundle_test::makeTemporaryDirectory();
+    auto host       = std::make_shared<FakeHost>();
+    auto loader     = startLoader(root, host);
 
     loader->fontCatalog();
     loader->fontCatalog();
@@ -218,7 +218,7 @@ static void testFontsReadSystemFontsOnce()
 static void testHotReloadNeedsATransport()
 {
     const auto root = bundle_test::makeTemporaryDirectory();
-    auto       none = startLoader(root, std::make_shared<FakeHost>());
+    auto none       = startLoader(root, std::make_shared<FakeHost>());
     assert(!none->hotReload());
     none->onBundleExecuted();
 

@@ -16,6 +16,6 @@ inline NSString *toNSString(const std::string &value)
     return [NSString stringWithUTF8String:value.c_str()] ?: @"";
 }
 
-id             objectFromJSON(const nlohmann::json &value);
+id objectFromJSON(const nlohmann::json &value);
 nlohmann::json jsonFromObject(id value);
 }

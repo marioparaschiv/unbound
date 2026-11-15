@@ -19,12 +19,12 @@ using BackgroundDownloadCollector = std::function<void(const std::string &destin
 
 struct BackgroundDownloader {
     BackgroundDownloadCollector collect;
-    BackgroundDownloadStarter   start;
+    BackgroundDownloadStarter start;
 };
 
 std::optional<DownloadResult> adoptBackgroundDownload(const std::string &url,
                                                       const std::string &destination);
-bool           finishBackgroundDownload(const std::string &url, const std::string &destination,
-                                        const std::string &downloadedPath);
+bool finishBackgroundDownload(const std::string &url, const std::string &destination,
+                              const std::string &downloadedPath);
 FileDownloader withBackgroundHandoff(FileDownloader foreground, BackgroundDownloader background);
 }

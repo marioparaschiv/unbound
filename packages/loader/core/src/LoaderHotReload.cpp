@@ -23,12 +23,13 @@ static std::string_view trimmed(std::string_view value)
     {
         value.remove_suffix(1);
     }
+
     return value;
 }
 
-std::optional<std::string> resolveUpdateURL(const SettingsStore              &settings,
+std::optional<std::string> resolveUpdateURL(const SettingsStore &settings,
                                             const std::optional<std::string> &devServerHost,
-                                            const ReachabilityProbe          &isServing)
+                                            const ReachabilityProbe &isServing)
 {
     std::string configured = preferences::updateURL(settings);
     if (!configured.empty())
@@ -42,8 +43,8 @@ std::optional<std::string> resolveUpdateURL(const SettingsStore              &se
     }
 
     std::string base = "http://" + *devServerHost + ":" + std::to_string(kDevServerPort) + "/";
-    if (!isServing ||
-        !isServing(base + std::string(kDevServerProbePath), kDevServerProbeTimeoutSeconds))
+    if (!isServing
+        || !isServing(base + std::string(kDevServerProbePath), kDevServerProbeTimeoutSeconds))
     {
         log(LogLevel::Info, LOG_CATEGORY_UPDATER,
             "Dev server: " + base + " is not reachable; using the default update URL.");
@@ -62,16 +63,17 @@ std::optional<std::string> hotReloadURL(const std::string &base)
         return std::nullopt;
     }
 
-    size_t      authorityStart = schemeEnd + 3;
-    size_t      authorityEnd   = base.find_first_of("/?#", authorityStart);
-    std::string authority      = base.substr(authorityStart, authorityEnd == std::string::npos
-                                                                 ? std::string::npos
-                                                                 : authorityEnd - authorityStart);
-    size_t      credentials    = authority.rfind('@');
+    size_t authorityStart = schemeEnd + 3;
+    size_t authorityEnd   = base.find_first_of("/?#", authorityStart);
+    std::string authority = base.substr(authorityStart, authorityEnd == std::string::npos
+                                                            ? std::string::npos
+                                                            : authorityEnd - authorityStart);
+    size_t credentials    = authority.rfind('@');
     if (credentials != std::string::npos)
     {
         authority.erase(0, credentials + 1);
     }
+
     if (authority.empty() || authority.front() == ':')
     {
         return std::nullopt;
@@ -94,6 +96,7 @@ std::string normalizedEtag(std::string_view etag)
     {
         etag.remove_suffix(1);
     }
+
     return std::string(etag);
 }
 
@@ -104,7 +107,7 @@ std::optional<std::string> hotReloadEtag(std::string_view event)
 
     while (!event.empty())
     {
-        size_t           end  = event.find('\n');
+        size_t end            = event.find('\n');
         std::string_view line = event.substr(0, end);
         event.remove_prefix(end == std::string_view::npos ? event.size() : end + 1);
 
@@ -150,8 +153,8 @@ bool hotReloadEventRequiresReload(const SettingsStore &settings, std::string_vie
     }
 
     log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-        "Hot-reload: etag mismatch (stored " + (stored.empty() ? std::string("<none>") : stored) +
-            ", incoming " + *incoming + ") -> reloading.");
+        "Hot-reload: etag mismatch (stored " + (stored.empty() ? std::string("<none>") : stored)
+            + ", incoming " + *incoming + ") -> reloading.");
     return true;
 }
 
@@ -174,7 +177,7 @@ bool HotReloadStream::feed(std::string_view chunk)
     buffer_.append(chunk);
     buffer_.erase(std::remove(buffer_.begin(), buffer_.end(), '\r'), buffer_.end());
 
-    bool   reload = false;
+    bool reload = false;
     size_t separator;
     while ((separator = buffer_.find("\n\n")) != std::string::npos)
     {
@@ -182,6 +185,7 @@ bool HotReloadStream::feed(std::string_view chunk)
         buffer_.erase(0, separator + 2);
         reload = hotReloadEventRequiresReload(settings_, event) || reload;
     }
+
     return reload;
 }
 
@@ -195,8 +199,8 @@ static void logHotReload(const std::string &message)
     log(LogLevel::Info, LOG_CATEGORY_UPDATER, "Hot-reload: " + message);
 }
 
-HotReloadController::HotReloadController(SettingsStore                      &settings,
-                                         HotReloadURLResolver                resolveBaseURL,
+HotReloadController::HotReloadController(SettingsStore &settings,
+                                         HotReloadURLResolver resolveBaseURL,
                                          std::shared_ptr<HotReloadTransport> transport,
                                          HotReloadScheduler schedule, HotReloadAction reload)
     : settings_(settings), resolveBaseURL_(std::move(resolveBaseURL)),
@@ -226,8 +230,8 @@ bool HotReloadController::shouldRun() const
 void HotReloadController::refresh()
 {
     std::lock_guard<std::mutex> control(controlMutex_);
-    bool                        enabled = shouldRun();
-    bool                        running = isRunning();
+    bool enabled = shouldRun();
+    bool running = isRunning();
     if (enabled && !running)
     {
         start();
@@ -305,13 +309,14 @@ void HotReloadController::connect(uint64_t session)
 void HotReloadController::expireResponse(uint64_t connection)
 {
     std::lock_guard<std::mutex> control(controlMutex_);
-    uint64_t                    session;
+    uint64_t session;
     {
         std::lock_guard<std::mutex> lock(stateMutex_);
         if (connection_ != connection || responded_)
         {
             return;
         }
+
         connection_ = 0;
         session     = session_;
     }
@@ -330,6 +335,7 @@ void HotReloadController::scheduleReconnect(uint64_t session)
         {
             return;
         }
+
         delay = backoff_.next();
     }
 
@@ -342,7 +348,7 @@ void HotReloadController::scheduleReconnect(uint64_t session)
 
 bool HotReloadController::onResponse(uint64_t connection, int status)
 {
-    bool     accepted = status == 200;
+    bool accepted = status == 200;
     uint64_t session;
     {
         std::lock_guard<std::mutex> lock(stateMutex_);
@@ -350,6 +356,7 @@ bool HotReloadController::onResponse(uint64_t connection, int status)
         {
             return false;
         }
+
         if (accepted)
         {
             responded_ = true;
@@ -359,6 +366,7 @@ bool HotReloadController::onResponse(uint64_t connection, int status)
         {
             connection_ = 0;
         }
+
         session = session_;
     }
 
@@ -382,6 +390,7 @@ bool HotReloadController::onChunk(uint64_t connection, std::string_view chunk)
         {
             return false;
         }
+
         reload = stream_.feed(chunk);
     }
 
@@ -389,6 +398,7 @@ bool HotReloadController::onChunk(uint64_t connection, std::string_view chunk)
     {
         reload_();
     }
+
     return true;
 }
 
@@ -401,6 +411,7 @@ void HotReloadController::onClosed(uint64_t connection, const std::optional<std:
         {
             return;
         }
+
         connection_ = 0;
         session     = session_;
     }

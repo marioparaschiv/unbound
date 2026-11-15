@@ -26,9 +26,9 @@ int main()
     char *directory = mkdtemp(templatePath.data());
     assert(directory);
     const std::filesystem::path root(directory);
-    const auto                  candidate = root / "unbound.bundle.candidate";
-    const auto                  target    = root / "unbound.bundle";
-    const auto                  backup    = root / "unbound.bundle.previous";
+    const auto candidate = root / "unbound.bundle.candidate";
+    const auto target    = root / "unbound.bundle";
+    const auto backup    = root / "unbound.bundle.previous";
 
     writeFile(target, "old bundle");
     writeFile(candidate, "new bundle");

@@ -13,6 +13,6 @@ int main()
     assert((uiScopePaths(paths, "objc.") == std::vector<std::string>{"invoke", "hook"}));
     assert(uiScopePaths(paths, "") == paths);
     assert(uiScopePaths({}, "objc.").empty());
-    assert((uiScopePaths({"objc.", "objc.objc.call"}, "objc.") ==
-            std::vector<std::string>{"", "objc.call"}));
+    assert((uiScopePaths({"objc.", "objc.objc.call"}, "objc.")
+            == std::vector<std::string>{"", "objc.call"}));
 }

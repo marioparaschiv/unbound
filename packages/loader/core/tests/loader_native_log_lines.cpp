@@ -11,26 +11,28 @@ static std::vector<std::string> split(const std::vector<std::string> &chunks, st
                                       bool flush = false)
 {
     loader::NativeLogLineSplitter splitter(maximum);
-    std::vector<std::string>      lines;
-    auto                          emit = [&](std::string line) {
+    std::vector<std::string> lines;
+    auto emit = [&](std::string line) {
         lines.push_back(std::move(line));
     };
     for (const std::string &chunk : chunks)
     {
         splitter.feed(chunk, emit);
     }
+
     if (flush)
     {
         splitter.flush(emit);
     }
+
     return lines;
 }
 
 static void splitsLines()
 {
     assert((split({"one\ntw", "o\r\nthree"}, 64) == std::vector<std::string>{"one", "two"}));
-    assert((split({"one\ntw", "o\r\nthree"}, 64, true) ==
-            std::vector<std::string>{"one", "two", "three"}));
+    assert((split({"one\ntw", "o\r\nthree"}, 64, true)
+            == std::vector<std::string>{"one", "two", "three"}));
     assert((split({"abcdefgh\n"}, 3) == std::vector<std::string>{"abc", "def", "gh"}));
     // "é" is two bytes; a cut at byte 3 would split it, so the cut moves back one byte.
     assert((split({"ab\xC3\xA9xy\n"}, 3) == std::vector<std::string>{"ab", "\xC3\xA9x", "y"}));
@@ -44,8 +46,9 @@ static void replacesInvalidUtf8()
 {
     assert(loader::validUtf8("ok \xE2\x9C\x93") == "ok \xE2\x9C\x93");
     assert(loader::validUtf8("a\xFF"
-                             "b") == "a\xEF\xBF\xBD"
-                                     "b");
+                             "b")
+           == "a\xEF\xBF\xBD"
+              "b");
     assert(loader::validUtf8("\xC3") == "\xEF\xBF\xBD");
     assert(loader::validUtf8("\xED\xA0\x80") == "\xEF\xBF\xBD\xEF\xBF\xBD\xEF\xBF\xBD");
 }
@@ -76,8 +79,8 @@ static void sortsReactNative()
     assert(line->scope == "RCTModuleData.mm:42" && line->message == "Module requires setup");
 
     line = loader::classifyNativeLogLine("2024-05-01 10:11:12.345 [fatal][tid:main] [x] y");
-    assert(line && line->level == LogLevel::Error && line->scope.empty() &&
-           line->message == "[x] y");
+    assert(line && line->level == LogLevel::Error && line->scope.empty()
+           && line->message == "[x] y");
 
     line = loader::classifyNativeLogLine("2024-05-01 10:11:12.345 [tid:main] untagged");
     assert(line && line->source == LogSource::ReactNative && line->level == LogLevel::Info);
@@ -90,8 +93,8 @@ static void sortsReactNative()
     assert(line && line->source == LogSource::ReactNative && line->message == "Bridge loaded");
 
     line = loader::classifyNativeLogLine("[RCTRootView] attached");
-    assert(line && line->source == LogSource::ReactNative &&
-           line->message == "[RCTRootView] attached");
+    assert(line && line->source == LogSource::ReactNative
+           && line->message == "[RCTRootView] attached");
 }
 
 static void skipsLinesCapturedElsewhere()

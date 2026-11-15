@@ -9,8 +9,8 @@
 #include <string>
 
 namespace loader {
-nlohmann::json             scanPlugins(const std::string &documents, uint32_t bytecodeVersion = 0);
-nlohmann::json             scanThemes(const std::string &documents);
+nlohmann::json scanPlugins(const std::string &documents, uint32_t bytecodeVersion = 0);
+nlohmann::json scanThemes(const std::string &documents);
 std::optional<std::string> readPluginBytecode(const std::string &documents,
                                               const std::string &folder, uint32_t bytecodeVersion);
 std::optional<std::string> readPluginSource(const std::string &documents,
@@ -24,27 +24,27 @@ public:
     // Rereads only the themes, leaving the plugins from the last scan.
     void rescanThemes(const std::string &documents);
 
-    nlohmann::json                plugins() const;
-    nlohmann::json                themes() const;
+    nlohmann::json plugins() const;
+    nlohmann::json themes() const;
     std::optional<nlohmann::json> theme(const std::string &id) const;
 
 private:
     struct Scanned {
-        std::string    documents;
-        uint32_t       bytecodeVersion = 0;
+        std::string documents;
+        uint32_t bytecodeVersion = 0;
         nlohmann::json plugins;
         nlohmann::json themes;
     };
 
     static Scanned scanAll(const std::string &documents, uint32_t bytecodeVersion);
-    bool           adoptPrescan(const std::string &documents, uint32_t bytecodeVersion);
+    bool adoptPrescan(const std::string &documents, uint32_t bytecodeVersion);
 
-    std::mutex                  prescanMutex_;
+    std::mutex prescanMutex_;
     std::shared_future<Scanned> prescan_;
-    bool                        scanned_ = false;
+    bool scanned_ = false;
 
     mutable std::mutex mutex_;
-    nlohmann::json     plugins_ = nlohmann::json::array();
-    nlohmann::json     themes_  = nlohmann::json::array();
+    nlohmann::json plugins_ = nlohmann::json::array();
+    nlohmann::json themes_  = nlohmann::json::array();
 };
 }

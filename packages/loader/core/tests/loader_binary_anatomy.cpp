@@ -19,7 +19,7 @@ void put32(std::string &image, uint32_t value)
 std::string dylibCommand(const std::string &path)
 {
     std::string command;
-    uint32_t    size = static_cast<uint32_t>((24 + path.size() + 1 + 7) & ~size_t{7});
+    uint32_t size = static_cast<uint32_t>((24 + path.size() + 1 + 7) & ~size_t{7});
     put32(command, binary::kLoadDylib);
     put32(command, size);
     put32(command, 24);
@@ -40,6 +40,7 @@ std::string image()
     {
         commands += static_cast<char>(0xa0 + index);
     }
+
     put32(commands, binary::kEncryptionInfo64);
     put32(commands, 24);
     put32(commands, 0);
@@ -77,8 +78,8 @@ void readsLoadCommands()
     assert(anatomy->minimumOS == "15.0");
     assert(anatomy->sdk == "26.1");
     assert(anatomy->dylibs.size() == 3);
-    assert(binary::anatomyLine(*anatomy, "/var/containers/Bundle/Application/X/Discord.app") ==
-           "decrypted · min 15.0 · SDK 26.1 · 3 dylibs · 1 injected · UUID A0A1A2A3");
+    assert(binary::anatomyLine(*anatomy, "/var/containers/Bundle/Application/X/Discord.app")
+           == "decrypted · min 15.0 · SDK 26.1 · 3 dylibs · 1 injected · UUID A0A1A2A3");
 }
 
 void rejectsOtherFiles()
@@ -95,14 +96,14 @@ void findsTheLeafSigner()
     assert(signer->organizationalUnit == "TEAM123456");
     assert(signer->issuerCommonName == "Test Root CA");
     assert(signer->fingerprint == vectors::kSignerFingerprint);
-    assert(binary::signerLine(*signer) ==
-           std::string("sha256 ") + vectors::kSignerFingerprint + " · Test Root CA");
+    assert(binary::signerLine(*signer)
+           == std::string("sha256 ") + vectors::kSignerFingerprint + " · Test Root CA");
 }
 
 void shortensAppleIssuers()
 {
-    assert(binary::shortIssuer("Apple Worldwide Developer Relations Certification Authority") ==
-           "Apple WWDR CA");
+    assert(binary::shortIssuer("Apple Worldwide Developer Relations Certification Authority")
+           == "Apple WWDR CA");
     assert(binary::shortIssuer("Test Root CA") == "Test Root CA");
 }
 

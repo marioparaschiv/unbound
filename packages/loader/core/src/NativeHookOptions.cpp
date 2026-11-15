@@ -27,10 +27,12 @@ static bool receiverCoalescing(const nlohmann::json &options)
     {
         return false;
     }
+
     if (!value->is_string() || value->get_ref<const std::string &>() != "receiver")
     {
         throw std::invalid_argument("Native hook coalescing must be set to receiver");
     }
+
     return true;
 }
 
@@ -41,6 +43,7 @@ HookFlags parseHookFlags(const nlohmann::json &options)
     {
         return flags;
     }
+
     flags.once          = enabledFlag(options, "once");
     flags.cacheOnly     = enabledFlag(options, "cacheOnly");
     flags.coalesceAfter = receiverCoalescing(options);
@@ -53,6 +56,7 @@ static std::vector<size_t> argumentIndexes(const nlohmann::json &indexes, size_t
     {
         throw std::invalid_argument("Native hook payload arguments must be an array");
     }
+
     std::vector<size_t> selected;
     selected.reserve(indexes.size());
     for (const nlohmann::json &index : indexes)
@@ -61,19 +65,23 @@ static std::vector<size_t> argumentIndexes(const nlohmann::json &indexes, size_t
         {
             throw std::invalid_argument("Native hook payload argument indexes must be integers");
         }
+
         double requested = index.get<double>();
-        if (!std::isfinite(requested) || requested < 0 || std::trunc(requested) != requested ||
-            requested >= static_cast<double>(explicitArguments))
+        if (!std::isfinite(requested) || requested < 0 || std::trunc(requested) != requested
+            || requested >= static_cast<double>(explicitArguments))
         {
             throw std::invalid_argument("Native hook payload argument index is out of range");
         }
+
         size_t argument = static_cast<size_t>(requested);
         if (std::find(selected.begin(), selected.end(), argument) != selected.end())
         {
             throw std::invalid_argument("Native hook payload argument indexes must be unique");
         }
+
         selected.push_back(argument);
     }
+
     return selected;
 }
 
@@ -83,47 +91,56 @@ static HookPayloadPhase payloadPhase(const nlohmann::json &phase)
     {
         throw std::invalid_argument("Native hook payload phase must be a string");
     }
+
     const std::string &name = phase.get_ref<const std::string &>();
     if (name == "before")
     {
         return HookPayloadPhase::before;
     }
+
     if (name == "after")
     {
         return HookPayloadPhase::after;
     }
+
     throw std::invalid_argument("Native hook payload phase must be before or after");
 }
 
 HookPayload parseHookPayload(const nlohmann::json &options, size_t explicitArguments)
 {
-    HookPayload           payload;
+    HookPayload payload;
     const nlohmann::json *value = options.is_object() ? presentField(options, "payload") : nullptr;
     if (!value || value->is_null())
     {
         return payload;
     }
+
     if (!value->is_object())
     {
         throw std::invalid_argument("Native hook payload options must be an object");
     }
+
     if (const nlohmann::json *receiver = presentField(*value, "receiver"))
     {
         if (!receiver->is_boolean())
         {
             throw std::invalid_argument("Native hook payload receiver must be boolean");
         }
+
         payload.receiver = receiver->get<bool>();
     }
+
     if (const nlohmann::json *indexes = presentField(*value, "arguments"))
     {
         payload.allArguments    = false;
         payload.argumentIndexes = argumentIndexes(*indexes, explicitArguments);
     }
+
     if (const nlohmann::json *phase = presentField(*value, "phase"))
     {
         payload.phase = payloadPhase(*phase);
     }
+
     return payload;
 }
 
@@ -133,18 +150,22 @@ static nlohmann::json scalarField(jsi::Runtime &runtime, const jsi::Value &value
     {
         return nullptr;
     }
+
     if (value.isNumber())
     {
         return value.getNumber();
     }
+
     if (value.isBool())
     {
         return value.getBool();
     }
+
     if (value.isString())
     {
         return value.getString(runtime).utf8(runtime);
     }
+
     return nlohmann::json::object();
 }
 
@@ -154,13 +175,15 @@ static nlohmann::json scalarArray(jsi::Runtime &runtime, const jsi::Value &value
     {
         return scalarField(runtime, value);
     }
-    jsi::Array     items  = value.asObject(runtime).asArray(runtime);
+
+    jsi::Array items      = value.asObject(runtime).asArray(runtime);
     nlohmann::json result = nlohmann::json::array();
-    size_t         count  = items.size(runtime);
+    size_t count          = items.size(runtime);
     for (size_t index = 0; index < count; index++)
     {
         result.push_back(scalarField(runtime, items.getValueAtIndex(runtime, index)));
     }
+
     return result;
 }
 
@@ -181,11 +204,13 @@ static nlohmann::json payloadField(jsi::Runtime &runtime, const jsi::Value &valu
     {
         return scalarField(runtime, value);
     }
+
     jsi::Object object = value.asObject(runtime);
     if (object.isArray(runtime))
     {
         return nlohmann::json::array();
     }
+
     nlohmann::json fields = nlohmann::json::object();
     copyField(runtime, object, "receiver", fields);
     copyField(runtime, object, "arguments", fields, scalarArray);
@@ -229,23 +254,25 @@ HookPayload parseHookPayload(jsi::Runtime &runtime, const jsi::Object &options,
 
 bool cacheableHookResult(std::string_view result)
 {
-    return result == "bool" || result == "i8" || result == "u8" || result == "i16" ||
-           result == "u16" || result == "i32" || result == "u32" || result == "i64" ||
-           result == "u64" || result == "float" || result == "double" ||
-           result.starts_with("struct:");
+    return result == "bool" || result == "i8" || result == "u8" || result == "i16"
+           || result == "u16" || result == "i32" || result == "u32" || result == "i64"
+           || result == "u64" || result == "float" || result == "double"
+           || result.starts_with("struct:");
 }
 
 void validateHookHandlers(const HookHandlers &handlers, const HookFlags &flags,
                           const HookPayload &payload, std::string_view result)
 {
-    if (flags.coalesceAfter && (handlers.replace || !handlers.after ||
-                                payload.phase == HookPayloadPhase::before || !payload.receiver))
+    if (flags.coalesceAfter
+        && (handlers.replace || !handlers.after || payload.phase == HookPayloadPhase::before
+            || !payload.receiver))
     {
         throw std::invalid_argument(
             "Receiver coalescing requires a non-replacing after-observation hook with its receiver");
     }
-    if (flags.cacheOnly &&
-        (handlers.before || handlers.after || handlers.replace || !cacheableHookResult(result)))
+
+    if (flags.cacheOnly
+        && (handlers.before || handlers.after || handlers.replace || !cacheableHookResult(result)))
     {
         throw std::invalid_argument(
             "Native cache-only hooks require a scalar or struct return type");
@@ -267,11 +294,13 @@ std::vector<size_t> payloadArgumentIndexes(const HookPayload &payload, size_t ex
     {
         return payload.argumentIndexes;
     }
+
     std::vector<size_t> indexes(explicitArguments);
     for (size_t index = 0; index < explicitArguments; index++)
     {
         indexes[index] = index;
     }
+
     return indexes;
 }
 
@@ -281,11 +310,13 @@ size_t selectedPayloadArgument(double requested, size_t available)
     {
         throw std::invalid_argument("Native hook argument index is out of range");
     }
+
     size_t selected = static_cast<size_t>(requested);
     if (static_cast<double>(selected) != requested)
     {
         throw std::invalid_argument("Native hook argument index must be an integer");
     }
+
     return selected;
 }
 

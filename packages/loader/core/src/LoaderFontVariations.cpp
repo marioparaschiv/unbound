@@ -26,24 +26,26 @@ std::optional<FontVariations> instanceCoordinates(const std::vector<FontAxis> &a
             return std::nullopt;
         }
     }
+
     FontVariations coordinates;
     for (const FontAxis &axis : axes)
     {
-        const auto   found    = wanted.find(axis.tag);
+        const auto found      = wanted.find(axis.tag);
         const double value    = found == wanted.end() ? axis.defaultValue : found->second;
         coordinates[axis.tag] = std::clamp(value, axis.minimum, axis.maximum);
     }
+
     return coordinates;
 }
 
 static bool sameCoordinates(const FontVariations &left, const FontVariations &right)
 {
-    return left.size() == right.size() &&
-           std::all_of(left.begin(), left.end(), [&](const auto &entry) {
-               const auto other = right.find(entry.first);
-               return other != right.end() &&
-                      std::abs(other->second - entry.second) < kSameCoordinate;
-           });
+    return left.size() == right.size()
+           && std::all_of(left.begin(), left.end(), [&](const auto &entry) {
+                  const auto other = right.find(entry.first);
+                  return other != right.end()
+                         && std::abs(other->second - entry.second) < kSameCoordinate;
+              });
 }
 
 // `450`, `12.5` or `-10`: at most two decimals, no trailing zeros.
@@ -55,6 +57,7 @@ static std::string coordinateText(double value)
     {
         text.pop_back();
     }
+
     return text == "-0" ? "0" : text;
 }
 
@@ -78,6 +81,7 @@ FontFace instanceFace(const FontFace &font, const FontVariations &coordinates)
     {
         face.weight = std::clamp(static_cast<int>(std::lround(*weight)), 1, 1000);
     }
+
     const auto italic = value("ital");
     const auto slant  = value("slnt");
     if (italic || slant)
@@ -106,23 +110,26 @@ FontFace instanceFace(const FontFace &font, const FontVariations &coordinates)
         {
             continue;
         }
+
         suffix += withoutSpaces(axis.tag) + coordinateText(coordinate);
         label += (label.empty() ? "" : ", ") + axis.name + " " + coordinateText(coordinate);
     }
+
     // The default coordinates draw the face the file names itself.
     if (!suffix.empty())
     {
         face.postScriptName = withoutSpaces(font.family) + "-" + suffix;
         face.fullName       = font.family + " " + label;
     }
+
     return face;
 }
 
 // The coordinates that draw `variant`, or `std::nullopt` when the axes cannot reach it.
-static std::optional<FontVariations> variantCoordinates(const FontFace    &font,
+static std::optional<FontVariations> variantCoordinates(const FontFace &font,
                                                         const FontVariant &variant)
 {
-    std::string    error;
+    std::string error;
     FontVariations wanted;
     if (const FontAxis *weight = findAxis(font.axes, "wght"))
     {
@@ -130,6 +137,7 @@ static std::optional<FontVariations> variantCoordinates(const FontFace    &font,
         {
             return std::nullopt;
         }
+
         wanted["wght"] = variant.weight;
     }
     else if (variant.weight != font.weight)
@@ -145,6 +153,7 @@ static std::optional<FontVariations> variantCoordinates(const FontFace    &font,
         {
             return std::nullopt;
         }
+
         wanted["ital"] = variant.italic ? 1 : 0;
     }
     else if (slant)
@@ -161,14 +170,15 @@ static std::optional<FontVariations> variantCoordinates(const FontFace    &font,
     {
         return std::nullopt;
     }
+
     return instanceCoordinates(font.axes, wanted, error);
 }
 
-std::vector<FontFace> variableFaces(const FontFace                             &font,
+std::vector<FontFace> variableFaces(const FontFace &font,
                                     const std::optional<std::set<FontVariant>> &wanted)
 {
     std::vector<FontFace> faces;
-    const auto            add = [&](const FontVariations &coordinates) {
+    const auto add = [&](const FontVariations &coordinates) {
         FontFace face = instanceFace(font, coordinates);
         if (std::none_of(faces.begin(), faces.end(), [&](const FontFace &other) {
                 return other.postScriptName == face.postScriptName;
@@ -187,8 +197,10 @@ std::vector<FontFace> variableFaces(const FontFace                             &
                 add(*coordinates);
             }
         }
+
         return faces;
     }
+
     std::string error;
     for (const FontInstance &instance : font.instances)
     {
@@ -197,10 +209,12 @@ std::vector<FontFace> variableFaces(const FontFace                             &
             add(*coordinates);
         }
     }
+
     if (faces.empty())
     {
         add(*instanceCoordinates(font.axes, {}, error));
     }
+
     return faces;
 }
 }

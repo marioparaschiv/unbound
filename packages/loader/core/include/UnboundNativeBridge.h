@@ -31,8 +31,8 @@ struct UnboundNativeProvider {
     std::function<void()> markRendered;
     // Rereads the installed themes and reapplies the selected one; left out of the bridge when
     // empty. The platform sets it, as only it can recolour native views.
-    std::function<void()>        rescanThemes;
-    std::function<void()>        syncAppIcons;
+    std::function<void()> rescanThemes;
+    std::function<void()> syncAppIcons;
     std::function<std::string()> buildIconIPA;
     std::function<bool(const std::string &name, const std::string &imagePath)>
         installHomeScreenIcon;
@@ -45,7 +45,7 @@ struct UnboundNativeProvider {
 
 // Reads `addons` live at each call, so it must outlive every runtime the provider is installed in.
 // `documents` is Unbound's folder, the only place `downloadFile` writes.
-UnboundNativeProvider makeUnboundNativeProvider(const AddonState                   &addons,
+UnboundNativeProvider makeUnboundNativeProvider(const AddonState &addons,
                                                 std::shared_ptr<fonts::FontService> fonts,
                                                 std::string origin, uint32_t bytecodeVersion,
                                                 std::string documents, FileDownloader download);

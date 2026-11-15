@@ -60,13 +60,14 @@ void floatCallbacksReturnInFloatRegisters()
 void rebindingPointsImportsAtTheReplacement()
 {
     pid_t (*volatile pid)()                  = getpid;
-    pid_t                               real = pid();
+    pid_t real                               = pid();
     std::vector<loader::ffi::Rebinding> done = loader::ffi::rebindImportedSymbol(
         "getpid", reinterpret_cast<void *>(&replacementPid), nullptr);
     if (done.empty())
     {
         return;
     }
+
     assert(getpid() == 4242);
     assert(loader::ffi::restoreRebindings(done));
     assert(getpid() == real);

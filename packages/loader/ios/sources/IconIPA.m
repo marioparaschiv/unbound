@@ -11,14 +11,14 @@ static const uint32_t kCentralHeader = 0x02014b50;
 static const uint32_t kEndOfCentral  = 0x06054b50;
 static const uint16_t kZipVersion    = 20;
 static const uint16_t kMadeByUnix    = (3 << 8) | 20;
-static const size_t   kChunk         = 1 << 20;
+static const size_t kChunk           = 1 << 20;
 
-@interface                            UBZipEntry : NSObject
+@interface UBZipEntry : NSObject
 @property (nonatomic, copy) NSString *name;
-@property (nonatomic) uint32_t        crc;
-@property (nonatomic) uint32_t        size;
-@property (nonatomic) uint32_t        offset;
-@property (nonatomic) uint32_t        mode;
+@property (nonatomic) uint32_t crc;
+@property (nonatomic) uint32_t size;
+@property (nonatomic) uint32_t offset;
+@property (nonatomic) uint32_t mode;
 @end
 
 @implementation UBZipEntry
@@ -44,21 +44,24 @@ static BOOL fileCRC(NSString *path, uint32_t *crc, uint32_t *size)
     {
         return NO;
     }
-    uLong    value  = crc32(0, Z_NULL, 0);
+
+    uLong value     = crc32(0, Z_NULL, 0);
     uint64_t total  = 0;
     uint8_t *buffer = malloc(kChunk);
-    size_t   read;
+    size_t read;
     while ((read = fread(buffer, 1, kChunk, file)) > 0)
     {
         value = crc32(value, buffer, (uInt) read);
         total += read;
     }
+
     free(buffer);
     fclose(file);
     if (total > UINT32_MAX)
     {
         return NO;
     }
+
     *crc  = (uint32_t) value;
     *size = (uint32_t) total;
     return YES;
@@ -66,7 +69,7 @@ static BOOL fileCRC(NSString *path, uint32_t *crc, uint32_t *size)
 
 static NSData *localHeader(UBZipEntry *entry)
 {
-    NSData        *name = [entry.name dataUsingEncoding:NSUTF8StringEncoding];
+    NSData *name        = [entry.name dataUsingEncoding:NSUTF8StringEncoding];
     NSMutableData *data = [NSMutableData data];
     put32(data, kLocalHeader);
     put16(data, kZipVersion);
@@ -85,7 +88,7 @@ static NSData *localHeader(UBZipEntry *entry)
 
 static NSData *centralHeader(UBZipEntry *entry)
 {
-    NSData        *name = [entry.name dataUsingEncoding:NSUTF8StringEncoding];
+    NSData *name        = [entry.name dataUsingEncoding:NSUTF8StringEncoding];
     NSMutableData *data = [NSMutableData data];
     put32(data, kCentralHeader);
     put16(data, kMadeByUnix);
@@ -115,13 +118,15 @@ static BOOL appendFile(FILE *zip, NSString *path)
     {
         return NO;
     }
+
     uint8_t *buffer = malloc(kChunk);
-    size_t   read;
-    BOOL     written = YES;
+    size_t read;
+    BOOL written = YES;
     while (written && (read = fread(buffer, 1, kChunk, file)) > 0)
     {
         written = fwrite(buffer, 1, read, zip) == read;
     }
+
     free(buffer);
     fclose(file);
     return written;
@@ -146,13 +151,14 @@ static BOOL addFile(FILE *zip, NSString *name, NSString *source,
                     NSMutableArray<UBZipEntry *> *entries)
 {
     struct stat info;
-    uint32_t    crc, size;
-    if (stat(source.fileSystemRepresentation, &info) != 0 || !S_ISREG(info.st_mode) ||
-        !fileCRC(source, &crc, &size))
+    uint32_t crc, size;
+    if (stat(source.fileSystemRepresentation, &info) != 0 || !S_ISREG(info.st_mode)
+        || !fileCRC(source, &crc, &size))
     {
         NSLog(@"Unbound: Failed to add %@ to the icon IPA", name);
         return NO;
     }
+
     UBZipEntry *entry = [UBZipEntry new];
     entry.offset      = (uint32_t) ftello(zip);
     entry.mode        = S_IFREG | (info.st_mode & 0777) | 0644;
@@ -165,12 +171,13 @@ static BOOL addFile(FILE *zip, NSString *name, NSString *source,
 
 static BOOL addBundle(FILE *zip, NSString *bundle, NSString *prefix,
                       NSDictionary<NSString *, NSString *> *overrides,
-                      NSMutableArray<UBZipEntry *>         *entries)
+                      NSMutableArray<UBZipEntry *> *entries)
 {
     if (!addDirectory(zip, @"Payload", entries) || !addDirectory(zip, prefix, entries))
     {
         return NO;
     }
+
     NSDirectoryEnumerator *walker = [NSFileManager.defaultManager enumeratorAtPath:bundle];
     for (NSString *relative in walker)
     {
@@ -179,12 +186,14 @@ static BOOL addBundle(FILE *zip, NSString *bundle, NSString *prefix,
             [walker skipDescendants];
             continue;
         }
+
         if ([relative hasPrefix:@"UnboundCustom"] || overrides[relative])
         {
             continue;
         }
-        NSString *name   = [prefix stringByAppendingPathComponent:relative];
-        BOOL      folder = [walker.fileAttributes.fileType isEqualToString:NSFileTypeDirectory];
+
+        NSString *name = [prefix stringByAppendingPathComponent:relative];
+        BOOL folder    = [walker.fileAttributes.fileType isEqualToString:NSFileTypeDirectory];
         if (!(folder
                   ? addDirectory(zip, name, entries)
                   : addFile(zip, name, [bundle stringByAppendingPathComponent:relative], entries)))
@@ -192,6 +201,7 @@ static BOOL addBundle(FILE *zip, NSString *bundle, NSString *prefix,
             return NO;
         }
     }
+
     for (NSString *relative in overrides)
     {
         if (!addFile(zip, [prefix stringByAppendingPathComponent:relative], overrides[relative],
@@ -200,6 +210,7 @@ static BOOL addBundle(FILE *zip, NSString *bundle, NSString *prefix,
             return NO;
         }
     }
+
     return YES;
 }
 
@@ -211,16 +222,18 @@ static BOOL writeIPA(NSString *bundle, NSDictionary<NSString *, NSString *> *ove
     {
         return NO;
     }
+
     NSMutableArray<UBZipEntry *> *entries = [NSMutableArray array];
-    NSString *prefix       = [@"Payload" stringByAppendingPathComponent:bundle.lastPathComponent];
-    BOOL      written      = addBundle(zip, bundle, prefix, overrides, entries);
-    uint32_t  centralStart = (uint32_t) ftello(zip);
+    NSString *prefix      = [@"Payload" stringByAppendingPathComponent:bundle.lastPathComponent];
+    BOOL written          = addBundle(zip, bundle, prefix, overrides, entries);
+    uint32_t centralStart = (uint32_t) ftello(zip);
     for (UBZipEntry *entry in entries)
     {
         written = written && writeData(zip, centralHeader(entry));
     }
-    uint32_t       centralSize = (uint32_t) ftello(zip) - centralStart;
-    NSMutableData *end         = [NSMutableData data];
+
+    uint32_t centralSize = (uint32_t) ftello(zip) - centralStart;
+    NSMutableData *end   = [NSMutableData data];
     put32(end, kEndOfCentral);
     put16(end, 0);
     put16(end, 0);
@@ -249,6 +262,7 @@ static NSString *writePatchedInfo(NSString *bundle, NSString *iconDirectory,
     {
         return nil;
     }
+
     UBAddAlternateIcon(info, @"UnboundIcon");
     UBAddCustomIcons(info, UBRenderableIcons(iconDirectory, icons));
     NSData *patched =
@@ -262,11 +276,11 @@ static NSString *writePatchedInfo(NSString *bundle, NSString *iconDirectory,
 
 NSString *UBBuildIconIPA(NSString *documentsDirectory)
 {
-    NSFileManager *files  = NSFileManager.defaultManager;
-    NSString      *bundle = NSBundle.mainBundle.bundlePath;
-    NSString      *work = [NSTemporaryDirectory() stringByAppendingPathComponent:@"UnboundIconIPA"];
-    NSString      *icons = [work stringByAppendingPathComponent:@"Icons"];
-    NSString      *output =
+    NSFileManager *files = NSFileManager.defaultManager;
+    NSString *bundle     = NSBundle.mainBundle.bundlePath;
+    NSString *work  = [NSTemporaryDirectory() stringByAppendingPathComponent:@"UnboundIconIPA"];
+    NSString *icons = [work stringByAppendingPathComponent:@"Icons"];
+    NSString *output =
         [NSTemporaryDirectory() stringByAppendingPathComponent:@"Discord-Unbound-icons.ipa"];
     [files removeItemAtPath:work error:nil];
     [files removeItemAtPath:output error:nil];
@@ -277,6 +291,7 @@ NSString *UBBuildIconIPA(NSString *documentsDirectory)
     {
         return nil;
     }
+
     NSArray<NSDictionary *> *custom = UBCustomIcons(documentsDirectory);
     UBSyncCustomIconFiles(icons, custom);
     NSString *info = writePatchedInfo(bundle, icons, custom, work);
@@ -285,10 +300,12 @@ NSString *UBBuildIconIPA(NSString *documentsDirectory)
     {
         overrides[file] = [icons stringByAppendingPathComponent:file];
     }
+
     if (info)
     {
         overrides[@"Info.plist"] = info;
     }
+
     BOOL built = info && writeIPA(bundle, overrides, output);
     [files removeItemAtPath:work error:nil];
     if (!built)
@@ -297,5 +314,6 @@ NSString *UBBuildIconIPA(NSString *documentsDirectory)
         [files removeItemAtPath:output error:nil];
         return nil;
     }
+
     return output;
 }

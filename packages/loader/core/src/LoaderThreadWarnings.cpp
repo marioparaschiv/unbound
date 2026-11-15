@@ -11,13 +11,13 @@ namespace loader::threading {
 static constexpr auto kDeveloperModeRecheck = std::chrono::seconds(1);
 
 struct OffMainViewWarnings::State {
-    std::function<bool()>                 developerMode;
-    Clock                                 clock;
-    std::mutex                            mutex;
+    std::function<bool()> developerMode;
+    Clock clock;
+    std::mutex mutex;
     std::chrono::steady_clock::time_point checkedAt{};
-    bool                                  hasChecked = false;
-    bool                                  enabled    = false;
-    std::unordered_set<std::string>       warned;
+    bool hasChecked = false;
+    bool enabled    = false;
+    std::unordered_set<std::string> warned;
 };
 
 OffMainViewWarnings::OffMainViewWarnings(std::function<bool()> developerMode, Clock clock)
@@ -30,7 +30,7 @@ OffMainViewWarnings::OffMainViewWarnings(std::function<bool()> developerMode, Cl
 bool OffMainViewWarnings::enabled()
 {
     std::lock_guard<std::mutex> lock(state_->mutex);
-    const auto                  now = state_->clock();
+    const auto now = state_->clock();
     if (!state_->hasChecked || now - state_->checkedAt >= kDeveloperModeRecheck)
     {
         const bool wasEnabled = state_->enabled;
@@ -42,6 +42,7 @@ bool OffMainViewWarnings::enabled()
             state_->warned.clear();
         }
     }
+
     return state_->enabled;
 }
 
@@ -51,6 +52,7 @@ std::optional<std::string> OffMainViewWarnings::warning(AddonSlot addon, const s
     {
         return std::nullopt;
     }
+
     {
         std::lock_guard<std::mutex> lock(state_->mutex);
         if (!state_->warned.insert(std::to_string(addon) + " " + call).second)
@@ -58,9 +60,10 @@ std::optional<std::string> OffMainViewWarnings::warning(AddonSlot addon, const s
             return std::nullopt;
         }
     }
-    return addonName(addon) + " called " + call +
-           " off the main thread. Views are only safe on the main thread; use invokeAsync "
-           "instead.";
+
+    return addonName(addon) + " called " + call
+           + " off the main thread. Views are only safe on the main thread; use invokeAsync "
+             "instead.";
 }
 
 static constexpr auto kRepeatSummaryInterval = std::chrono::seconds(10);
@@ -68,11 +71,11 @@ static constexpr auto kRepeatSummaryInterval = std::chrono::seconds(10);
 struct HookFailureThrottle::State {
     struct Seen {
         std::chrono::steady_clock::time_point loggedAt;
-        size_t                                suppressed = 0;
+        size_t suppressed = 0;
     };
 
-    Clock                                 clock;
-    std::mutex                            mutex;
+    Clock clock;
+    std::mutex mutex;
     std::unordered_map<std::string, Seen> seen;
 };
 
@@ -84,7 +87,7 @@ HookFailureThrottle::HookFailureThrottle(Clock clock) : state_(std::make_shared<
 std::optional<std::string> HookFailureThrottle::admit(AddonSlot addon, const std::string &reason)
 {
     std::lock_guard<std::mutex> lock(state_->mutex);
-    const auto                  now = state_->clock();
+    const auto now         = state_->clock();
     auto [entry, inserted] = state_->seen.try_emplace(std::to_string(addon) + " " + reason);
     State::Seen &seen      = entry->second;
     if (inserted)
@@ -92,11 +95,13 @@ std::optional<std::string> HookFailureThrottle::admit(AddonSlot addon, const std
         seen.loggedAt = now;
         return hookFailureMessage(addon, reason);
     }
+
     if (now - seen.loggedAt < kRepeatSummaryInterval)
     {
         seen.suppressed++;
         return std::nullopt;
     }
+
     size_t repeats  = seen.suppressed + 1;
     seen.loggedAt   = now;
     seen.suppressed = 0;
@@ -121,9 +126,9 @@ std::string callbackFailureMessage(AddonSlot addon, const std::string &reason)
 
 std::string hookSkippedMessage(AddonSlot addon, const std::string &selector)
 {
-    return "Native plugin hook skipped in " + addonName(addon) +
-           ": the JavaScript thread did not answer the " + selector +
-           " hook within 100 ms, so it did not run";
+    return "Native plugin hook skipped in " + addonName(addon)
+           + ": the JavaScript thread did not answer the " + selector
+           + " hook within 100 ms, so it did not run";
 }
 
 std::string addonName(AddonSlot addon)

@@ -21,6 +21,7 @@ namespace {
         {
             from++;
         }
+
         return from;
     }
 
@@ -31,14 +32,15 @@ namespace {
             return index + offset < bytes.size() ? static_cast<unsigned char>(bytes[index + offset])
                                                  : 0;
         };
-        unsigned    lead = at(0);
+        unsigned lead = at(0);
         std::size_t length;
-        unsigned    low  = 0x80;
-        unsigned    high = 0xBF;
+        unsigned low  = 0x80;
+        unsigned high = 0xBF;
         if (lead < 0x80)
         {
             return 1;
         }
+
         if (lead >= 0xC2 && lead <= 0xDF)
         {
             length = 2;
@@ -59,10 +61,12 @@ namespace {
         {
             return 0;
         }
+
         if (at(1) < low || at(1) > high)
         {
             return 0;
         }
+
         for (std::size_t offset = 2; offset < length; offset++)
         {
             if (at(offset) < 0x80 || at(offset) > 0xBF)
@@ -70,6 +74,7 @@ namespace {
                 return 0;
             }
         }
+
         return length;
     }
 
@@ -82,6 +87,7 @@ namespace {
         {
             return 0;
         }
+
         for (std::size_t index = 0; index < shape.size(); index++)
         {
             if (shape[index] == '0' ? !isDigit(line[index]) : line[index] != shape[index])
@@ -89,16 +95,19 @@ namespace {
                 return 0;
             }
         }
+
         std::size_t end = shape.size();
         if (end < line.size() && line[end] == '.')
         {
             end = skipDigits(line, end + 1);
         }
-        if (end < line.size() && (line[end] == '+' || line[end] == '-') &&
-            skipDigits(line, end + 1) == end + 5)
+
+        if (end < line.size() && (line[end] == '+' || line[end] == '-')
+            && skipDigits(line, end + 1) == end + 5)
         {
             end += 5;
         }
+
         return end < line.size() && line[end] == ' ' ? end + 1 : 0;
     }
 
@@ -106,21 +115,24 @@ namespace {
     std::size_t processTagLength(std::string_view text)
     {
         std::size_t open = text.find('[');
-        if (open == 0 || open == std::string_view::npos ||
-            text.substr(0, open).find(' ') != std::string_view::npos)
+        if (open == 0 || open == std::string_view::npos
+            || text.substr(0, open).find(' ') != std::string_view::npos)
         {
             return 0;
         }
+
         std::size_t pid = skipDigits(text, open + 1);
         if (pid == open + 1 || pid >= text.size() || text[pid] != ':')
         {
             return 0;
         }
+
         std::size_t close = text.find(']', pid);
         if (close == std::string_view::npos || close == pid + 1)
         {
             return 0;
         }
+
         for (std::size_t index = pid + 1; index < close; index++)
         {
             if (!std::isalnum(static_cast<unsigned char>(text[index])))
@@ -128,6 +140,7 @@ namespace {
                 return 0;
             }
         }
+
         std::size_t end = close + 1;
         return end < text.size() && text[end] == ' ' ? end + 1 : end;
     }
@@ -140,6 +153,7 @@ namespace {
         {
             return std::nullopt;
         }
+
         return text.substr(1, close - 1);
     }
 
@@ -150,6 +164,7 @@ namespace {
         {
             text.remove_prefix(1);
         }
+
         return text;
     }
 
@@ -160,18 +175,22 @@ namespace {
         {
             return LogLevel::Debug;
         }
+
         if (name == "info")
         {
             return LogLevel::Info;
         }
+
         if (name == "warn")
         {
             return LogLevel::Warning;
         }
+
         if (name == "error" || name == "fatal")
         {
             return LogLevel::Error;
         }
+
         return std::nullopt;
     }
 
@@ -182,6 +201,7 @@ namespace {
         {
             return std::nullopt;
         }
+
         return NativeLogLine{source, level, std::string(scope), std::string(message)};
     }
 
@@ -194,9 +214,9 @@ namespace {
     // RCTFormatLog's `[<level>][tid:<thread>][<file>:<line>] message`, after its timestamp.
     std::optional<NativeLogLine> reactFormattedLine(std::string_view text)
     {
-        LogLevel                        level = LogLevel::Info;
-        std::string_view                thread;
-        std::string_view                file;
+        LogLevel level = LogLevel::Info;
+        std::string_view thread;
+        std::string_view file;
         std::optional<std::string_view> tag = leadingTag(text);
         if (tag && reactLevel(*tag))
         {
@@ -204,28 +224,33 @@ namespace {
             text.remove_prefix(tag->size() + 2);
             tag = leadingTag(text);
         }
+
         if (tag && tag->starts_with("tid:"))
         {
             thread = tag->substr(4);
             text.remove_prefix(tag->size() + 2);
             tag = leadingTag(text);
         }
+
         // The file tag follows the thread directly; the message starts after a space.
         if (tag)
         {
             file = *tag;
             text.remove_prefix(tag->size() + 2);
         }
+
         if (!text.empty() && text.front() == ' ')
         {
             text.remove_prefix(1);
         }
+
         // `console.*` reaches RCTLog from the JS thread without a file; it is captured as `js`
         // already.
         if (file.empty() && thread == kJavaScriptThread)
         {
             return std::nullopt;
         }
+
         return logLine(LogSource::ReactNative, level, file, text);
     }
 
@@ -238,22 +263,26 @@ namespace {
         {
             return logLine(LogSource::Native, LogLevel::Info, {}, text);
         }
-        std::size_t      colon     = tag->rfind(':');
+
+        std::size_t colon          = tag->rfind(':');
         std::string_view subsystem = colon == std::string_view::npos ? "" : tag->substr(0, colon);
         std::string_view category = colon == std::string_view::npos ? *tag : tag->substr(colon + 1);
-        if (category == "javascript" || subsystem.starts_with(kLoaderSubsystem) ||
-            (subsystem.empty() && isLogCategory(std::string(category))))
+        if (category == "javascript" || subsystem.starts_with(kLoaderSubsystem)
+            || (subsystem.empty() && isLogCategory(std::string(category))))
         {
             return std::nullopt;
         }
+
         if (subsystem.starts_with(kReactSubsystem) || (subsystem.empty() && category == "native"))
         {
             return logLine(LogSource::ReactNative, LogLevel::Info, {}, afterTag(text, *tag));
         }
+
         if (tag->starts_with("RCT") || tag->starts_with("React"))
         {
             return logLine(LogSource::ReactNative, LogLevel::Info, {}, text);
         }
+
         return logLine(LogSource::Native, LogLevel::Info, {}, text);
     }
 }
@@ -275,14 +304,17 @@ void NativeLogLineSplitter::feed(std::string_view bytes, const Emit &emit)
             {
                 cut--;
             }
+
             cut = cut == 0 ? maximum_ : cut;
             emit(validUtf8(std::string_view(pending_).substr(0, cut)));
             pending_.erase(0, cut);
         }
+
         if (newline == std::string_view::npos)
         {
             return;
         }
+
         flush(emit);
         bytes.remove_prefix(newline + 1);
     }
@@ -295,6 +327,7 @@ void NativeLogLineSplitter::flush(const Emit &emit)
     {
         line.remove_suffix(1);
     }
+
     emit(validUtf8(line));
     pending_.clear();
 }
@@ -315,6 +348,7 @@ std::string validUtf8(std::string_view bytes)
         valid.append(length ? bytes.substr(index, length) : kReplacement);
         index += length ? length : 1;
     }
+
     return valid;
 }
 
@@ -324,6 +358,7 @@ std::optional<NativeLogLine> classifyNativeLogLine(std::string_view line)
     {
         line.remove_suffix(1);
     }
+
     if (std::size_t stamp = timestampLength(line))
     {
         std::string_view rest = line.substr(stamp);
@@ -331,11 +366,13 @@ std::optional<NativeLogLine> classifyNativeLogLine(std::string_view line)
         {
             return reactFormattedLine(rest);
         }
+
         if (std::size_t process = processTagLength(rest))
         {
             return taggedLine(rest.substr(process));
         }
     }
+
     return taggedLine(line);
 }
 }

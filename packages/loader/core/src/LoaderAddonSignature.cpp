@@ -18,6 +18,7 @@ static bool isSha512Hex(const nlohmann::json &value)
     {
         return false;
     }
+
     const auto &digest = value.get_ref<const std::string &>();
     return digest.size() == 128 && std::all_of(digest.begin(), digest.end(), [](char c) {
                return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
@@ -30,6 +31,7 @@ bool isValidBytecodeDigests(const nlohmann::json &bytecode)
     {
         return false;
     }
+
     for (auto entry = bytecode.begin(); entry != bytecode.end(); ++entry)
     {
         if (!isBytecodeVersionKey(entry.key()) || !isSha512Hex(entry.value()))
@@ -37,6 +39,7 @@ bool isValidBytecodeDigests(const nlohmann::json &bytecode)
             return false;
         }
     }
+
     return true;
 }
 
@@ -47,10 +50,12 @@ static std::vector<std::pair<uint64_t, std::string>> sortedDigests(const nlohman
     {
         return digests;
     }
+
     for (auto entry = bytecode.begin(); entry != bytecode.end(); ++entry)
     {
         digests.emplace_back(std::stoull(entry.key()), entry.value().get<std::string>());
     }
+
     std::sort(digests.begin(), digests.end());
     return digests;
 }
@@ -59,12 +64,13 @@ std::string addonSigningMessage(const std::string &id, const std::string &versio
                                 const std::string &bundle, const nlohmann::json &bytecode,
                                 const std::string *bundleDigest)
 {
-    std::string message = "unbound-addon/v1\n" + id + "\n" + version + "\n" +
-                          (bundleDigest ? *bundleDigest : sha512Hex(bundle));
+    std::string message = "unbound-addon/v1\n" + id + "\n" + version + "\n"
+                          + (bundleDigest ? *bundleDigest : sha512Hex(bundle));
     for (const auto &[bytecodeVersion, digest] : sortedDigests(bytecode))
     {
         message += "\nbytecode " + std::to_string(bytecodeVersion) + " " + digest;
     }
+
     return message;
 }
 
@@ -82,8 +88,9 @@ AddonSignatureResult verifyAddonSignature(const nlohmann::json &manifest, const 
     {
         return {AddonSignatureStatus::Unsigned, TrustedSigner::None, {}};
     }
-    if (!signature->is_object() || !(*signature)["version"].is_number_integer() ||
-        (*signature)["version"].get<int64_t>() != 1)
+
+    if (!signature->is_object() || !(*signature)["version"].is_number_integer()
+        || (*signature)["version"].get<int64_t>() != 1)
     {
         return {AddonSignatureStatus::Invalid, TrustedSigner::None,
                 "the manifest signature has an unknown format"};
@@ -97,12 +104,14 @@ AddonSignatureResult verifyAddonSignature(const nlohmann::json &manifest, const 
         return {AddonSignatureStatus::Invalid, TrustedSigner::None,
                 "the manifest signature, id or version is missing"};
     }
+
     auto bytecode = manifest.find("bytecode");
     if (bytecode != manifest.end() && !isValidBytecodeDigests(*bytecode))
     {
         return {AddonSignatureStatus::Invalid, TrustedSigner::None,
                 "manifest.bytecode must map bytecode versions to SHA-512 digests"};
     }
+
     if (!trust.isEnabled())
     {
         return {AddonSignatureStatus::Unsigned, TrustedSigner::None,
@@ -119,6 +128,7 @@ AddonSignatureResult verifyAddonSignature(const nlohmann::json &manifest, const 
         return {AddonSignatureStatus::Invalid, TrustedSigner::None,
                 "the signature does not match the bundle"};
     }
+
     return {AddonSignatureStatus::Signed, signer, {}};
 }
 
@@ -133,6 +143,7 @@ const char *describeAddonSignature(AddonSignatureStatus status)
         case AddonSignatureStatus::Unsigned:
             return "unsigned";
     }
+
     return "unsigned";
 }
 }

@@ -5,11 +5,11 @@
 #include <optional>
 
 namespace loader::toolbox {
-constexpr double  kShakeGravity              = 2.6;
-constexpr double  kStandardGravity           = 9.80665;
+constexpr double kShakeGravity               = 2.6;
+constexpr double kStandardGravity            = 9.80665;
 constexpr int64_t kShakeWindowMilliseconds   = 900;
 constexpr int64_t kShakeCooldownMilliseconds = 1500;
-constexpr int     kThreeFingerPointers       = 3;
+constexpr int kThreeFingerPointers           = 3;
 
 enum class GestureAction
 {
@@ -26,7 +26,7 @@ const char *gestureActionName(GestureAction action);
 class ShakeMotion
 {
 public:
-    void          began(double seconds);
+    void began(double seconds);
     GestureAction ended(double seconds, const GestureEnabled &enabled);
 
 private:

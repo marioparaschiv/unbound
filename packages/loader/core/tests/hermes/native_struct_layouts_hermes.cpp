@@ -30,11 +30,11 @@ int main()
 {
     auto runtime = facebook::hermes::makeHermesRuntime();
 
-    require(loader::native::structLayoutForTypeName("{CGRect={CGPoint=dd}{CGSize=dd}}") ==
-                loader::native::structLayout("CGRect"),
+    require(loader::native::structLayoutForTypeName("{CGRect={CGPoint=dd}{CGSize=dd}}")
+                == loader::native::structLayout("CGRect"),
             "a CGRect encoding resolves to CGRect, not the CGPoint inside it");
-    require(loader::native::structLayoutForTypeName("_NSRange") ==
-                loader::native::structLayout("NSRange"),
+    require(loader::native::structLayoutForTypeName("_NSRange")
+                == loader::native::structLayout("NSRange"),
             "the _NSRange type name resolves to NSRange");
     require(loader::native::structLayout("CGVector") == nullptr, "an unknown struct has no layout");
 
@@ -48,18 +48,19 @@ int main()
         {
             end = std::max(end, field.offset + 8);
         }
+
         require(end == layout->size, std::string(name) + "'s fields fill its size");
     }
 
-    Rect       rect{1.5, 2.5, 300, 44};
+    Rect rect{1.5, 2.5, 300, 44};
     jsi::Value converted =
         loader::native::structToJS(*runtime, *loader::native::structLayout("CGRect"),
                                    reinterpret_cast<const uint8_t *>(&rect));
     runtime->global().setProperty(*runtime, "rect", converted);
     jsi::Value shape = runtime->evaluateJavaScript(
         std::make_shared<jsi::StringBuffer>("JSON.stringify(rect)"), "shape.js");
-    require(shape.getString(*runtime).utf8(*runtime) ==
-                R"({"origin":{"x":1.5,"y":2.5},"size":{"width":300,"height":44}})",
+    require(shape.getString(*runtime).utf8(*runtime)
+                == R"({"origin":{"x":1.5,"y":2.5},"size":{"width":300,"height":44}})",
             "a CGRect becomes nested origin and size objects");
 
     std::vector<uint8_t> bytes =
@@ -87,6 +88,7 @@ int main()
     {
         rejected = true;
     }
+
     require(rejected, "fields that are not an object are rejected");
 
     std::printf("native struct layouts: all checks passed on Hermes\n");

@@ -18,6 +18,7 @@ static void drainDeferredReleases(const HookCallbackOwner &owner, const MainThre
         });
         return;
     }
+
     executeRuntimeAsynchronously([resources, identity](jsi::Runtime &runtime) {
         withRuntimeResource(resources, identity, [&](RuntimeResourceRegistry &registry) {
             if (runtimeResourceRegistry(runtime)->identity() == identity)
@@ -42,10 +43,12 @@ void releaseHookCallbacks(const HookCallbackOwner &owner, const MainThreadPost &
     {
         return;
     }
+
     if (releaseRuntimeResourceOnOwnerThread(owner.resources, owner.key))
     {
         return;
     }
+
     deferHookCallbackRelease(owner, postToMain);
 }
 }

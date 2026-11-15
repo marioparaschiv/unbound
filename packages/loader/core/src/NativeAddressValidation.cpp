@@ -33,33 +33,36 @@ std::uintptr_t codeAddress(void *address)
 bool regionIsExecutable(std::uintptr_t address)
 {
     vm_address_t target = static_cast<vm_address_t>(address);
-    natural_t    depth  = 0;
+    natural_t depth     = 0;
     for (unsigned int attempt = 0; attempt < 16; attempt++)
     {
-        vm_address_t                          region = target;
-        vm_size_t                             size   = 0;
+        vm_address_t region = target;
+        vm_size_t size      = 0;
         vm_region_submap_short_info_data_64_t info{};
-        mach_msg_type_number_t                count = VM_REGION_SUBMAP_SHORT_INFO_COUNT_64;
-        kern_return_t                         result =
+        mach_msg_type_number_t count = VM_REGION_SUBMAP_SHORT_INFO_COUNT_64;
+        kern_return_t result =
             vm_region_recurse_64(mach_task_self(), &region, &size, &depth,
                                  reinterpret_cast<vm_region_recurse_info_t>(&info), &count);
         if (result != KERN_SUCCESS || !addressWithinRegion(target, region, size))
         {
             return false;
         }
+
         if (!info.is_submap)
         {
             return (info.protection & VM_PROT_EXECUTE) != 0;
         }
+
         depth++;
     }
+
     return false;
 }
 
 const load_command *nextCommand(const load_command *command)
 {
-    return reinterpret_cast<const load_command *>(reinterpret_cast<const std::uint8_t *>(command) +
-                                                  command->cmdsize);
+    return reinterpret_cast<const load_command *>(reinterpret_cast<const std::uint8_t *>(command)
+                                                  + command->cmdsize);
 }
 
 bool textSegmentSlide(const mach_header_64 *header, std::uintptr_t &slide)
@@ -71,23 +74,27 @@ bool textSegmentSlide(const mach_header_64 *header, std::uintptr_t &slide)
         {
             return false;
         }
+
         if (command->cmd == LC_SEGMENT_64)
         {
             const auto *segment = reinterpret_cast<const segment_command_64 *>(command);
-            if (command->cmdsize < sizeof(segment_command_64) ||
-                segment->nsects >
-                    (command->cmdsize - sizeof(segment_command_64)) / sizeof(section_64))
+            if (command->cmdsize < sizeof(segment_command_64)
+                || segment->nsects
+                       > (command->cmdsize - sizeof(segment_command_64)) / sizeof(section_64))
             {
                 return false;
             }
+
             if (std::strncmp(segment->segname, SEG_TEXT, sizeof(segment->segname)) == 0)
             {
                 slide = reinterpret_cast<std::uintptr_t>(header) - segment->vmaddr;
                 return true;
             }
         }
+
         command = nextCommand(command);
     }
+
     return false;
 }
 
@@ -106,17 +113,18 @@ bool withinInstructionSection(const mach_header_64 *header, std::uintptr_t slide
                 for (std::uint32_t sectionIndex = 0; sectionIndex < segment->nsects; sectionIndex++)
                 {
                     const section_64 &section = sections[sectionIndex];
-                    if ((section.flags & (S_ATTR_PURE_INSTRUCTIONS | S_ATTR_SOME_INSTRUCTIONS)) !=
-                            0 &&
-                        addressWithinRegion(address, section.addr + slide, section.size))
+                    if ((section.flags & (S_ATTR_PURE_INSTRUCTIONS | S_ATTR_SOME_INSTRUCTIONS)) != 0
+                        && addressWithinRegion(address, section.addr + slide, section.size))
                     {
                         return true;
                     }
                 }
             }
         }
+
         command = nextCommand(command);
     }
+
     return false;
 }
 
@@ -128,10 +136,10 @@ bool imageInstructionContains(std::uintptr_t address)
         return false;
     }
 
-    const auto    *header = reinterpret_cast<const mach_header_64 *>(image.dli_fbase);
-    std::uintptr_t slide  = 0;
-    return header->magic == MH_MAGIC_64 && textSegmentSlide(header, slide) &&
-           withinInstructionSection(header, slide, address);
+    const auto *header   = reinterpret_cast<const mach_header_64 *>(image.dli_fbase);
+    std::uintptr_t slide = 0;
+    return header->magic == MH_MAGIC_64 && textSegmentSlide(header, slide)
+           && withinInstructionSection(header, slide, address);
 }
 #else
 bool regionIsExecutable(std::uintptr_t address)
@@ -148,24 +156,26 @@ bool regionIsExecutable(std::uintptr_t address)
     {
         unsigned long start = 0;
         unsigned long end   = 0;
-        char          permissions[5]{};
+        char permissions[5]{};
         if (std::sscanf(line, "%lx-%lx %4s", &start, &end, permissions) != 3)
         {
             continue;
         }
+
         if (address >= start && address < end)
         {
             executable = permissions[2] == 'x';
             break;
         }
     }
+
     std::fclose(maps);
     return executable;
 }
 
 struct SegmentSearch {
     std::uintptr_t address;
-    bool           found;
+    bool found;
 };
 
 int findExecutableSegment(dl_phdr_info *info, std::size_t, void *context)
@@ -174,13 +184,15 @@ int findExecutableSegment(dl_phdr_info *info, std::size_t, void *context)
     for (ElfW(Half) index = 0; index < info->dlpi_phnum; index++)
     {
         const ElfW(Phdr) &header = info->dlpi_phdr[index];
-        if (header.p_type == PT_LOAD && (header.p_flags & PF_X) != 0 &&
-            addressWithinRegion(search->address, info->dlpi_addr + header.p_vaddr, header.p_memsz))
+        if (header.p_type == PT_LOAD && (header.p_flags & PF_X) != 0
+            && addressWithinRegion(search->address, info->dlpi_addr + header.p_vaddr,
+                                   header.p_memsz))
         {
             search->found = true;
             return 1;
         }
     }
+
     return 0;
 }
 
@@ -220,7 +232,7 @@ bool readMemorySafely(const void *address, void *destination, std::size_t size)
         return false;
     }
 #if defined(__APPLE__)
-    vm_size_t     copied = 0;
+    vm_size_t copied = 0;
     kern_return_t result =
         vm_read_overwrite(mach_task_self(), reinterpret_cast<vm_address_t>(address), size,
                           reinterpret_cast<vm_address_t>(destination), &copied);

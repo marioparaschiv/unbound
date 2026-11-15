@@ -79,7 +79,7 @@ static NSString *bundle = nil;
         return bundlePath;
     }
 
-    NSURL    *url      = [[NSBundle mainBundle] bundleURL];
+    NSURL *url         = [[NSBundle mainBundle] bundleURL];
     NSString *relative = [NSString stringWithFormat:@"%@/UnboundResources.bundle", [url path]];
     if ([FileSystem exists:relative])
     {
@@ -160,14 +160,14 @@ static NSString *bundle = nil;
 static NSMutableArray<NSDictionary *> *pendingAlerts(void)
 {
     static NSMutableArray<NSDictionary *> *alerts = nil;
-    static dispatch_once_t                 onceToken;
+    static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{ alerts = [NSMutableArray array]; });
     return alerts;
 }
 
-static NSString            *showingAlertKey     = nil;
-static BOOL                 alertRetryScheduled = NO;
-static const NSTimeInterval kAlertRetrySeconds  = 0.5;
+static NSString *showingAlertKey               = nil;
+static BOOL alertRetryScheduled                = NO;
+static const NSTimeInterval kAlertRetrySeconds = 0.5;
 
 + (void)presentAlert:(NSString *)message
                title:(NSString *)title
@@ -222,12 +222,13 @@ static const NSTimeInterval kAlertRetrySeconds  = 0.5;
                 loader::alerts::kCountdownLeewaySeconds * NSEC_PER_SEC);
 
             dispatch_source_set_event_handler(timer, ^{
-                BOOL                           presented = alert.presentingViewController != nil;
-                loader::alerts::CountdownFrame frame     = countdown->tick(presented);
+                BOOL presented                       = alert.presentingViewController != nil;
+                loader::alerts::CountdownFrame frame = countdown->tick(presented);
                 if (presented)
                 {
                     [self applyCountdownFrame:frame toAlert:alert title:title];
                 }
+
                 if (!frame.running)
                 {
                     dispatch_source_cancel(timer);
@@ -243,6 +244,7 @@ static const NSTimeInterval kAlertRetrySeconds  = 0.5;
         {
             return;
         }
+
         for (NSDictionary *pending in pendingAlerts())
         {
             if ([pending[@"key"] isEqualToString:key])
@@ -250,6 +252,7 @@ static const NSTimeInterval kAlertRetrySeconds  = 0.5;
                 return;
             }
         }
+
         [pendingAlerts() addObject:@{@"key" : key, @"alert" : alert, @"completion" : completion}];
         [self showNextAlert];
     });
@@ -264,7 +267,7 @@ static const NSTimeInterval kAlertRetrySeconds  = 0.5;
         if (scene.activationState == UISceneActivationStateForegroundActive)
         {
             UIWindowScene *windowScene = (UIWindowScene *) scene;
-            UIWindow      *keyWindow   = windowScene.windows.firstObject;
+            UIWindow *keyWindow        = windowScene.windows.firstObject;
             for (UIWindow *window in windowScene.windows)
             {
                 if (window.isKeyWindow)
@@ -273,6 +276,7 @@ static const NSTimeInterval kAlertRetrySeconds  = 0.5;
                     break;
                 }
             }
+
             controller = keyWindow.rootViewController;
             break;
         }
@@ -283,11 +287,12 @@ static const NSTimeInterval kAlertRetrySeconds  = 0.5;
         controller = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
     }
 
-    while (controller.presentedViewController &&
-           !controller.presentedViewController.isBeingDismissed)
+    while (controller.presentedViewController
+           && !controller.presentedViewController.isBeingDismissed)
     {
         controller = controller.presentedViewController;
     }
+
     return controller;
 }
 
@@ -312,6 +317,7 @@ static const NSTimeInterval kAlertRetrySeconds  = 0.5;
                     [self showNextAlert];
                 });
         }
+
         return;
     }
 
@@ -395,13 +401,14 @@ static const NSTimeInterval kAlertRetrySeconds  = 0.5;
               {
                   resultData = data;
               }
+
               dispatch_semaphore_signal(semaphore);
           }];
 
     [task resume];
     if (dispatch_semaphore_wait(
-            semaphore,
-            dispatch_time(DISPATCH_TIME_NOW, (int64_t) ((timeout + 1) * NSEC_PER_SEC))) != 0)
+            semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t) ((timeout + 1) * NSEC_PER_SEC)))
+        != 0)
     {
         [task cancel];
         return nil;
@@ -438,6 +445,7 @@ static const NSTimeInterval kAlertRetrySeconds  = 0.5;
     {
         return nil;
     }
+
     return appStoreReceiptURL.lastPathComponent;
 }
 
@@ -448,6 +456,7 @@ static const NSTimeInterval kAlertRetrySeconds  = 0.5;
     {
         return loader::environment::Receipt::None;
     }
+
     NSURL *appStoreReceiptURL = [[NSBundle mainBundle] appStoreReceiptURL];
     return loader::environment::receiptKind(
         toStdString(receiptName),
@@ -485,7 +494,7 @@ static const NSTimeInterval kAlertRetrySeconds  = 0.5;
         return NO;
     }
 
-    NSString     *bundlePath      = [[NSBundle mainBundle] bundlePath];
+    NSString *bundlePath          = [[NSBundle mainBundle] bundlePath];
     NSDictionary *trollStorePaths = [self checkTrollStorePaths:bundlePath];
 
     BOOL isTrollStore     = [trollStorePaths[@"isTrollStore"] boolValue];
@@ -591,8 +600,8 @@ static const NSTimeInterval kAlertRetrySeconds  = 0.5;
 
 + (NSString *)getDeviceModel
 {
-    MobileGestalt *mg                         = [MobileGestalt sharedInstance];
-    NSString      *physicalHardwareNameString = [mg getPhysicalHardwareNameString];
+    MobileGestalt *mg                    = [MobileGestalt sharedInstance];
+    NSString *physicalHardwareNameString = [mg getPhysicalHardwareNameString];
 
     if (physicalHardwareNameString)
     {
@@ -606,21 +615,21 @@ static const NSTimeInterval kAlertRetrySeconds  = 0.5;
 
 + (BOOL)isVPhone
 {
-    static BOOL            result;
+    static BOOL result;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        char   machine[64] = {0};
-        size_t size        = sizeof(machine);
+        char machine[64] = {0};
+        size_t size      = sizeof(machine);
 
-        result = sysctlbyname("hw.machine", machine, &size, NULL, 0) == 0 &&
-                 loader::environment::isVirtualDeviceMachine(machine);
+        result = sysctlbyname("hw.machine", machine, &size, NULL, 0) == 0
+                 && loader::environment::isVirtualDeviceMachine(machine);
     });
     return result;
 }
 
 static NSString *defaultGatewayAddress(void)
 {
-    int    mib[]  = {CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_FLAGS, RTF_GATEWAY};
+    int mib[]     = {CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_FLAGS, RTF_GATEWAY};
     size_t length = 0;
 
     if (sysctl(mib, 6, NULL, &length, NULL, 0) != 0 || length == 0)
@@ -645,7 +654,7 @@ static NSString *defaultGatewayAddress(void)
 
 + (NSString *)getVirtualDeviceHostAddress
 {
-    static NSString       *result;
+    static NSString *result;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         if (![Utilities isVPhone])
@@ -664,8 +673,8 @@ static NSString *defaultGatewayAddress(void)
 {
     UIDevice *device = [UIDevice currentDevice];
 
-    MobileGestalt *mg              = [MobileGestalt sharedInstance];
-    NSString      *iosBuildVersion = [mg getBuildVersion];
+    MobileGestalt *mg         = [MobileGestalt sharedInstance];
+    NSString *iosBuildVersion = [mg getBuildVersion];
 
     return toNSString(loader::environment::osVersionLabel(
         toStdString(device.systemVersion),
@@ -752,11 +761,11 @@ static NSString *defaultGatewayAddress(void)
 
 + (BOOL)isLiveContainerApp
 {
-    BOOL      hasSharedUtils  = NSClassFromString(@"LCSharedUtils") != nil;
-    BOOL      hasLCBridge     = hasSharedUtils || NSClassFromString(@"LCAppInfo") != nil;
-    BOOL      hostedElsewhere = NO;
-    char      path[PATH_MAX];
-    uint32_t  size       = sizeof(path);
+    BOOL hasSharedUtils  = NSClassFromString(@"LCSharedUtils") != nil;
+    BOOL hasLCBridge     = hasSharedUtils || NSClassFromString(@"LCAppInfo") != nil;
+    BOOL hostedElsewhere = NO;
+    char path[PATH_MAX];
+    uint32_t size        = sizeof(path);
     NSString *bundlePath = NSBundle.mainBundle.bundlePath.stringByStandardizingPath;
     if (_NSGetExecutablePath(path, &size) == 0 && bundlePath.length > 0)
     {
@@ -766,6 +775,7 @@ static NSString *defaultGatewayAddress(void)
         hostedElsewhere =
             executable.length > 0 && ![executable hasPrefix:[bundle stringByAppendingString:@"/"]];
     }
+
     BOOL isLiveContainer = hasLCBridge || hostedElsewhere;
 
     [Logger debug:LOG_CATEGORY_UTILITIES
@@ -788,18 +798,18 @@ static NSString *defaultGatewayAddress(void)
 
 + (NSString *)getInjectionFramework
 {
-    Dl_info hookProvider   = {0};
-    Dl_info libhookerAPI   = {0};
-    void   *messageHook    = dlsym(RTLD_DEFAULT, "MSHookMessageEx");
-    void   *libhookerHooks = dlsym(RTLD_DEFAULT, "LHHookFunctions");
+    Dl_info hookProvider = {0};
+    Dl_info libhookerAPI = {0};
+    void *messageHook    = dlsym(RTLD_DEFAULT, "MSHookMessageEx");
+    void *libhookerHooks = dlsym(RTLD_DEFAULT, "LHHookFunctions");
     if (!messageHook || !dladdr(messageHook, &hookProvider) || !hookProvider.dli_fname)
     {
         return @"";
     }
 
-    bool        sameImage = libhookerHooks && dladdr(libhookerHooks, &libhookerAPI) &&
-                            libhookerAPI.dli_fbase == hookProvider.dli_fbase;
-    char        resolved[PATH_MAX];
+    bool sameImage = libhookerHooks && dladdr(libhookerHooks, &libhookerAPI)
+                     && libhookerAPI.dli_fbase == hookProvider.dli_fbase;
+    char resolved[PATH_MAX];
     const char *path =
         realpath(hookProvider.dli_fname, resolved) ? resolved : hookProvider.dli_fname;
     auto framework = loader::environment::hookFrameworkForImage(path, sameImage);
@@ -820,7 +830,7 @@ static NSString *defaultGatewayAddress(void)
         NSString *text = [NSString stringWithContentsOfFile:status
                                                    encoding:NSUTF8StringEncoding
                                                       error:nil];
-        auto      version =
+        auto version =
             text ? loader::environment::dpkgPackageVersion(toStdString(text), framework.package)
                  : std::nullopt;
         if (version)
@@ -854,6 +864,7 @@ static NSString *defaultGatewayAddress(void)
                 loader::environment::isDiscordProductionTeam(toStdString((NSString *) team));
         }
     }
+
     return toNSString(loader::environment::appSource(facts));
 }
 
@@ -864,7 +875,7 @@ static NSString *defaultGatewayAddress(void)
                   style:UIAlertActionStyleDefault
                 handler:^(UIAlertAction *action) {
                     UIApplication *application = [UIApplication sharedApplication];
-                    NSURL         *discordURL =
+                    NSURL *discordURL =
                         [NSURL URLWithString:@"discord://discord.com/invite/rMdzhWUaGT"];
                     NSURL *webURL = [NSURL URLWithString:@"https://discord.com/invite/rMdzhWUaGT"];
 
@@ -914,7 +925,7 @@ static NSString *defaultGatewayAddress(void)
 
 // Both are read and written on the main queue only.
 static __weak DCDBundleUpdaterManager *gBundleUpdater = nil;
-static BOOL                            gReloadPending = NO;
+static BOOL gReloadPending                            = NO;
 
 + (void)setBundleUpdater:(id)bundleUpdater
 {
@@ -943,6 +954,7 @@ static BOOL                            gReloadPending = NO;
                   format:@"BundleUpdaterManager not captured yet; reloading once it is."];
             return;
         }
+
         [self reloadWithUpdater:updater];
     });
 }

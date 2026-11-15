@@ -19,21 +19,21 @@ enum class LogSource
 
 // One log line, as written to disk and delivered to `UnboundNative.logs` subscribers.
 struct LogEntry {
-    long long                time   = 0;
-    LogSource                source = LogSource::Unbound;
-    LogLevel                 level  = LogLevel::Info;
+    long long time   = 0;
+    LogSource source = LogSource::Unbound;
+    LogLevel level   = LogLevel::Info;
     std::vector<std::string> scope;
-    std::string              message;
+    std::string message;
 };
 
-long long                logNow();
-const char              *logSourceName(LogSource source);
+long long logNow();
+const char *logSourceName(LogSource source);
 std::optional<LogSource> logSourceFromName(const std::string &name);
-const char              *logLevelName(LogLevel level);
-std::optional<LogLevel>  logLevelFromName(const std::string &name);
+const char *logLevelName(LogLevel level);
+std::optional<LogLevel> logLevelFromName(const std::string &name);
 
 // `{"t":<epoch ms>,"src":"...","lvl":"...","scope":[...],"msg":"..."}`.
-nlohmann::json          logEntryJSON(const LogEntry &entry);
+nlohmann::json logEntryJSON(const LogEntry &entry);
 std::optional<LogEntry> logEntryFromJSON(const nlohmann::json &value);
 // The entry as one JSON line ending in a newline; invalid UTF-8 is replaced, never thrown on.
 std::string logEntryLine(const LogEntry &entry);

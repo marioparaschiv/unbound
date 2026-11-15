@@ -18,7 +18,7 @@ static const std::string kResolve = "https://api.test/api/v1/fonts/resolve?input
 
 struct Server {
     std::map<std::string, std::pair<int, std::string>> routes;
-    std::vector<std::string>                           requests;
+    std::vector<std::string> requests;
 
     loader::FileDownloader downloader()
     {
@@ -31,10 +31,12 @@ struct Server {
             {
                 return std::nullopt;
             }
+
             if (route->second.first == 200)
             {
                 std::ofstream(destination, std::ios::binary) << route->second.second;
             }
+
             return loader::DownloadResult{route->second.first, ""};
         };
     }
@@ -59,7 +61,7 @@ static nlohmann::json file(const std::string &url, nlohmann::json weight, nlohma
 
 static Server interServer()
 {
-    Server         server;
+    Server server;
     nlohmann::json inter                     = {{"provider", "google"},
                                                 {"id", "Inter"},
                                                 {"family", "Inter"},
@@ -75,7 +77,7 @@ static Server interServer()
                            {"id", "pack"},
                            {"family", "Pack"},
                            {"files", {file("https://d.test/pack", nullptr, nullptr, "archive")}}};
-    FaceSpec       lobster;
+    FaceSpec lobster;
     lobster.postScript                                                   = "Lobster-Regular";
     lobster.family                                                       = "Lobster";
     server.routes[kResolve + "https%3A%2F%2Fwww.dafont.com%2Fpack.font"] = {200, pack.dump()};
@@ -104,19 +106,19 @@ static void installsChosenVariants(FontService &service, Server &server)
         service.install("Inter", {{{"weight", 400.0}, {"style", "normal"}},
                                   {{"weight", 700}, {"style", "normal"}}});
     assert(result["installed"].size() == 2 && result["errors"].empty());
-    assert(std::count(server.requests.begin(), server.requests.end(), "https://g.test/400i.ttf") ==
-           0);
+    assert(std::count(server.requests.begin(), server.requests.end(), "https://g.test/400i.ttf")
+           == 0);
     const nlohmann::json listed = service.list();
     assert(listed["fonts"].size() == 2);
-    assert(listed["fonts"][0]["source"] ==
-           nlohmann::json({{"google", "Inter"}, {"weight", 400}, {"style", "normal"}}));
+    assert(listed["fonts"][0]["source"]
+           == nlohmann::json({{"google", "Inter"}, {"weight", 400}, {"style", "normal"}}));
     assert(fs::exists(listed["fonts"][0]["path"].get<std::string>()));
 }
 
 static void installsVariableWebFonts(FontService &service)
 {
-    const std::string    link = "https://v.test/vector.woff2";
-    const nlohmann::json all  = service.install(link, nullptr);
+    const std::string link   = "https://v.test/vector.woff2";
+    const nlohmann::json all = service.install(link, nullptr);
     assert(all["installed"].size() == 3 && all["errors"].empty());
     const nlohmann::json bold = all["installed"][1];
     assert(bold["postScriptName"] == "VectorSans-Bold" && bold["weight"] == 700);
@@ -143,6 +145,7 @@ static void installsVariableWebFonts(FontService &service)
         {
             threw = true;
         }
+
         assert(threw);
     }
 }
@@ -158,6 +161,7 @@ static void refusesPagesAndUnknownFonts(FontService &service)
         {
             return std::string(error.what()).find(reason) != std::string::npos;
         }
+
         return false;
     };
     assert(rejects("typo", "not a font or a zip"));
@@ -179,8 +183,8 @@ static void appliesPresetsLazily(FontService &service, Server &server)
     assert(service.list()["overrides"]["ggsans-NormalItalic"] == "Inter-Regular");
 
     const nlohmann::json snapshot = service.savePreset({{"name", "Snapshot"}});
-    assert(snapshot["overrides"]["ggsans-Bold"] ==
-           nlohmann::json({{"google", "Inter"}, {"weight", 700}, {"style", "normal"}}));
+    assert(snapshot["overrides"]["ggsans-Bold"]
+           == nlohmann::json({{"google", "Inter"}, {"weight", 700}, {"style", "normal"}}));
 
     const nlohmann::json pasted = service.savePreset(
         {{"name", "Pasted"},
@@ -201,8 +205,8 @@ static void appliesPresetsLazily(FontService &service, Server &server)
     assert(overrides["ggsans-NormalItalic"] == "Inter-Italic");
     assert(overrides["ggsans-Display"] == "Lobster-Regular");
     assert(!overrides.contains("ggsans-Bold"));
-    assert(std::count(server.requests.begin(), server.requests.end(), "https://g.test/700.ttf") ==
-           0);
+    assert(std::count(server.requests.begin(), server.requests.end(), "https://g.test/700.ttf")
+           == 0);
 
     service.removePreset(pasted["id"]);
     assert(service.listPresets().size() == 1);
@@ -219,6 +223,7 @@ static void validatesPresets(FontService &service)
         {
             return true;
         }
+
         return false;
     };
     assert(rejects(nlohmann::json::array()));
@@ -235,7 +240,7 @@ int main()
 {
     const fs::path root = fs::temp_directory_path() / "unbound-font-service";
     fs::remove_all(root);
-    Server      server = interServer();
+    Server server = interServer();
     FontService service(root.string(), server.downloader());
     service.setApiOrigin("https://api.test");
     service.store().open(nlohmann::json::object());

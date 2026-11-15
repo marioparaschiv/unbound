@@ -46,19 +46,19 @@ public:
 private:
     void releasePlanSlot();
 
-    Class                          ownerClass_;
-    SEL                            selector_;
-    bool                           classMethod_;
-    __strong NSMethodSignature    *signature_;
-    loader::ffi::Type              resultType_;
+    Class ownerClass_;
+    SEL selector_;
+    bool classMethod_;
+    __strong NSMethodSignature *signature_;
+    loader::ffi::Type resultType_;
     std::vector<loader::ffi::Type> argumentTypes_;
-    uint64_t                       runtimeIdentity_;
-    uint64_t                       runtimeGeneration_;
-    std::atomic_bool               active_{true};
-    std::atomic_bool               slotActive_{true};
+    uint64_t runtimeIdentity_;
+    uint64_t runtimeGeneration_;
+    std::atomic_bool active_{true};
+    std::atomic_bool slotActive_{true};
 };
 
-std::shared_ptr<ObjCCallPlanHost> objcCallPlanHost(facebook::jsi::Runtime     &runtime,
+std::shared_ptr<ObjCCallPlanHost> objcCallPlanHost(facebook::jsi::Runtime &runtime,
                                                    const facebook::jsi::Value &value);
 std::shared_ptr<ObjCCallPlanHost> prepareObjCCallPlan(facebook::jsi::Runtime &runtime, id target,
                                                       SEL selector);

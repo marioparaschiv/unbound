@@ -17,20 +17,20 @@ enum class BundleFlavour
 };
 
 struct BundleManifest {
-    std::string                        revision;
-    std::string                        channel;
-    std::string                        buildTime;
-    std::optional<int64_t>             buildTimeMilliseconds;
-    std::vector<uint32_t>              bytecodeVersions;
+    std::string revision;
+    std::string channel;
+    std::string buildTime;
+    std::optional<int64_t> buildTimeMilliseconds;
+    std::vector<uint32_t> bytecodeVersions;
     std::map<std::string, std::string> sha512;
     // Per bundle file, the SHA-512s of earlier bundles a patch in `patches/` turns into it.
     std::map<std::string, std::vector<std::string>> patches;
-    std::string                                     nativeBridgeApi;
-    std::string                                     nativeBridgeAbi;
+    std::string nativeBridgeApi;
+    std::string nativeBridgeAbi;
     // The oldest loader that runs this bundle; empty when any loader does.
     std::string minLoaderVersion;
 
-    bool        isSignable() const;
+    bool isSignable() const;
     std::string bundleFile(uint32_t bytecodeVersion, bool developerMode) const;
     // The DevTools backend's file for this runtime, or nothing when the build ships none.
     std::optional<std::string> devtoolsFile(uint32_t bytecodeVersion) const;
@@ -39,25 +39,25 @@ struct BundleManifest {
 std::optional<BundleFlavour> bundleFlavourNamed(std::string_view file);
 
 std::optional<BundleManifest> parseBundleManifest(const std::string &text);
-std::optional<int64_t>        parseBuildTime(std::string_view text);
+std::optional<int64_t> parseBuildTime(std::string_view text);
 
 struct BundleBaseline {
     std::string source;
     std::string channel;
     std::string buildTime;
     std::string revision;
-    int64_t     buildTimeMilliseconds = 0;
+    int64_t buildTimeMilliseconds = 0;
 };
 
-std::string                   serializeBaseline(const BundleBaseline &baseline);
+std::string serializeBaseline(const BundleBaseline &baseline);
 std::optional<BundleBaseline> parseBaseline(const std::string &text);
 BundleBaseline baselineFromManifest(const BundleManifest &manifest, const std::string &source);
 std::optional<std::string> nativeBridgeProblem(const BundleManifest &manifest,
-                                               std::string_view      loaderApi,
-                                               std::string_view      loaderAbi);
+                                               std::string_view loaderApi,
+                                               std::string_view loaderAbi);
 std::optional<std::string> loaderVersionProblem(const BundleManifest &manifest,
-                                                std::string_view      loaderVersion);
-std::optional<std::string> rollbackProblem(const BundleManifest                &manifest,
-                                           const std::string                   &source,
+                                                std::string_view loaderVersion);
+std::optional<std::string> rollbackProblem(const BundleManifest &manifest,
+                                           const std::string &source,
                                            const std::optional<BundleBaseline> &baseline);
 }

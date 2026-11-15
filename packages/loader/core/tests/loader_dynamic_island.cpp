@@ -12,8 +12,8 @@ static bool near(double left, double right, double tolerance = 1e-6)
 
 static bool sameFrame(const Frame &left, const Frame &right)
 {
-    return near(left.x, right.x) && near(left.y, right.y) && near(left.width, right.width) &&
-           near(left.height, right.height);
+    return near(left.x, right.x) && near(left.y, right.y) && near(left.width, right.width)
+           && near(left.height, right.height);
 }
 
 static void readsIslandsFromTheSystemCutout()
@@ -32,7 +32,7 @@ static void readsIslandsFromTheSystemCutout()
 
 static void readsNotchesFromTheSystemCutout()
 {
-    const Frame                 notch{90, 0, 210, 32};
+    const Frame notch{90, 0, 210, 32};
     const std::optional<Cutout> cutout = cutoutFromSystem(notch);
     assert(cutout && cutout->kind == CutoutKind::Notch && sameFrame(cutout->frame, notch));
     assert(near(cornerRadius(*cutout), 32 * kNotchCornerRatio));
@@ -40,7 +40,7 @@ static void readsNotchesFromTheSystemCutout()
 
 static void readsCameraHolesFromTheSystemCutout()
 {
-    const Frame                 duoClosed{399, 30, 37, 37};
+    const Frame duoClosed{399, 30, 37, 37};
     const std::optional<Cutout> cutout = cutoutFromSystem(duoClosed);
     assert(cutout && cutout->kind == CutoutKind::Hole && sameFrame(cutout->frame, duoClosed));
     assert(near(cornerRadius(*cutout), 18.5));
@@ -84,10 +84,10 @@ static void startsOnceOnIslandDevices()
 static void plansShowAndHide()
 {
     const Presentation presentation;
-    const ViewState    missing{};
-    const ViewState    hidden{true, true, 0};
-    const ViewState    fading{true, false, 0.4};
-    const ViewState    visible{true, false, 1};
+    const ViewState missing{};
+    const ViewState hidden{true, true, 0};
+    const ViewState fading{true, false, 0.4};
+    const ViewState visible{true, false, 1};
 
     Plan plan = presentation.show(missing);
     assert(plan.create && plan.reveal && !plan.conceal);

@@ -16,6 +16,7 @@ bool NativeConversionBudget::enter()
     {
         return false;
     }
+
     depth++;
     return true;
 }
@@ -34,6 +35,7 @@ bool NativeConversionBudget::reserveEntries(size_t count)
     {
         return false;
     }
+
     entries += count;
     return true;
 }
@@ -44,6 +46,7 @@ bool NativeConversionBudget::addBytes(size_t count)
     {
         return false;
     }
+
     bytes += count;
     return true;
 }

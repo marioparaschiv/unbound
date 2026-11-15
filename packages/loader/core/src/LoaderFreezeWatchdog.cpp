@@ -22,16 +22,16 @@ namespace jsi = facebook::jsi;
 using Clock = std::chrono::steady_clock;
 
 struct FreezeWatchdog::State {
-    std::string             directory;
-    FreezeHeartbeat         heartbeat;
-    FreezeListener          listener;
-    FreezeWatchdogOptions   options;
-    std::mutex              mutex;
+    std::string directory;
+    FreezeHeartbeat heartbeat;
+    FreezeListener listener;
+    FreezeWatchdogOptions options;
+    std::mutex mutex;
     std::condition_variable wake;
-    bool                    stopping = false;
-    std::atomic<int64_t>    answeredAt{0};
-    std::atomic<uintptr_t>  runtimeThread{0};
-    std::thread             thread;
+    bool stopping = false;
+    std::atomic<int64_t> answeredAt{0};
+    std::atomic<uintptr_t> runtimeThread{0};
+    std::thread thread;
 };
 
 static int64_t nowMilliseconds()
@@ -47,9 +47,9 @@ static std::string frozenPath(const std::string &directory)
 
 static void watch(const std::shared_ptr<FreezeWatchdog::State> &state)
 {
-    int64_t      sentAt   = 0;
-    bool         reported = false;
-    std::string  frozenRecord;
+    int64_t sentAt = 0;
+    bool reported  = false;
+    std::string frozenRecord;
     FreezeReport current;
 
     while (true)
@@ -75,22 +75,23 @@ static void watch(const std::shared_ptr<FreezeWatchdog::State> &state)
                 current.seconds  = static_cast<double>(answered - sentAt) / 1000.0;
                 current.resolved = true;
                 log(LogLevel::Warning, LOG_CATEGORY_PLUGINS,
-                    current.name + " froze Discord for " + std::to_string(current.seconds) +
-                        " seconds.");
+                    current.name + " froze Discord for " + std::to_string(current.seconds)
+                        + " seconds.");
                 system_exits::recordFreeze(state->directory, current.name, sentAt,
                                            answered - sentAt);
                 state->listener(current);
                 reported = false;
             }
-            std::weak_ptr<FreezeWatchdog::State> weak   = state;
-            bool                                 posted = state->heartbeat([weak] {
+
+            std::weak_ptr<FreezeWatchdog::State> weak = state;
+            bool posted                               = state->heartbeat([weak] {
                 if (auto alive = weak.lock())
                 {
                     alive->runtimeThread.store(currentActivityThread());
                     alive->answeredAt.store(nowMilliseconds());
                 }
             });
-            sentAt                                      = posted ? now : 0;
+            sentAt                                    = posted ? now : 0;
             continue;
         }
 
@@ -104,11 +105,13 @@ static void watch(const std::shared_ptr<FreezeWatchdog::State> &state)
         {
             continue;
         }
+
         nlohmann::json parsed = nlohmann::json::parse(record, nullptr, false);
         if (!parsed.is_object())
         {
             continue;
         }
+
         auto textOf = [&parsed](const char *key) {
             auto field = parsed.find(key);
             return field != parsed.end() && field->is_string() ? field->get<std::string>()
@@ -120,17 +123,18 @@ static void watch(const std::shared_ptr<FreezeWatchdog::State> &state)
         {
             continue;
         }
+
         createDirectories(state->directory);
         writeTextFileAtomically(frozenPath(state->directory), record);
-        auto call                        = nativeCallOnThread(state->runtimeThread.load());
-        current.detail                   = describeNativeCall(call, nativeCallClock());
-        std::vector<std::string> frames  = native::sampleJavaScriptStack(state->options.sampling);
-        std::string              sampled = native::describeSampledStack(frames, call.has_value());
-        current.stack                    = native::formatSampledStack(frames);
+        auto call                       = nativeCallOnThread(state->runtimeThread.load());
+        current.detail                  = describeNativeCall(call, nativeCallClock());
+        std::vector<std::string> frames = native::sampleJavaScriptStack(state->options.sampling);
+        std::string sampled             = native::describeSampledStack(frames, call.has_value());
+        current.stack                   = native::formatSampledStack(frames);
         log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
-            "Discord's JavaScript thread has been frozen in " + current.name + " for " +
-                std::to_string(now - sentAt) + " ms. " + current.detail +
-                (sampled.empty() ? "" : " " + sampled));
+            "Discord's JavaScript thread has been frozen in " + current.name + " for "
+                + std::to_string(now - sentAt) + " ms. " + current.detail
+                + (sampled.empty() ? "" : " " + sampled));
         reported = true;
     }
 }
@@ -155,6 +159,7 @@ FreezeWatchdog::~FreezeWatchdog()
         std::lock_guard<std::mutex> lock(state_->mutex);
         state_->stopping = true;
     }
+
     state_->wake.notify_all();
     if (state_->thread.joinable())
     {
@@ -176,6 +181,7 @@ void startFreezeWatchdog(const std::string &directory)
                 {
                     return false;
                 }
+
                 target->runOnRuntime([beat = std::move(beat)](jsi::Runtime &) {
                     beat();
                 });
@@ -188,6 +194,7 @@ void startFreezeWatchdog(const std::string &directory)
                     {
                         return;
                     }
+
                     jsi::Object event(runtime);
                     event.setProperty(runtime, "id",
                                       jsi::String::createFromUtf8(runtime, report.id));
@@ -201,6 +208,7 @@ void startFreezeWatchdog(const std::string &directory)
                         event.setProperty(runtime, "stack",
                                           jsi::String::createFromUtf8(runtime, report.stack));
                     }
+
                     listener.asObject(runtime).asFunction(runtime).call(runtime, event);
                 });
             });

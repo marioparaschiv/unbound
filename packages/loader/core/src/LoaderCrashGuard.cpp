@@ -15,7 +15,7 @@
 namespace loader {
 struct CrashRecord {
     CrashedAddon addon;
-    int          crashes = 0;
+    int crashes = 0;
 };
 
 static std::optional<CrashRecord> readRecord(const std::string &path)
@@ -79,8 +79,8 @@ std::string AddonCrashGuard::crashesPath() const
 static std::optional<CrashRecord> takeMarker(const std::string &path, CrashPhase phase,
                                              bool &unreadable)
 {
-    bool                       present = fileExists(path) && fileSize(path) > 0;
-    std::optional<CrashRecord> record  = readRecord(path);
+    bool present                      = fileExists(path) && fileSize(path) > 0;
+    std::optional<CrashRecord> record = readRecord(path);
     removeFile(path);
     if (record)
     {
@@ -90,6 +90,7 @@ static std::optional<CrashRecord> takeMarker(const std::string &path, CrashPhase
     {
         unreadable = true;
     }
+
     return record;
 }
 
@@ -104,12 +105,13 @@ static std::string crashActivity(CrashPhase phase)
         case CrashPhase::Starting:
             return "starting";
     }
+
     return "starting";
 }
 
 std::vector<CrashedAddon> AddonCrashGuard::recoverFromPreviousLaunch() const
 {
-    bool                       unreadable = false;
+    bool unreadable = false;
     std::optional<CrashRecord> starting =
         takeMarker(startingPath(), CrashPhase::Starting, unreadable);
     std::optional<CrashRecord> running = takeMarker(runningPath(), CrashPhase::Running, unreadable);
@@ -123,6 +125,7 @@ std::vector<CrashedAddon> AddonCrashGuard::recoverFromPreviousLaunch() const
             log(LogLevel::Warning, LOG_CATEGORY_PLUGINS,
                 "Ignoring an unreadable addon crash marker from the previous launch.");
         }
+
         removeFile(crashesPath());
         return {};
     }
@@ -134,8 +137,8 @@ std::vector<CrashedAddon> AddonCrashGuard::recoverFromPreviousLaunch() const
                              ? "Discord was closed while frozen in "
                              : "Discord exited while " + crashActivity(crashed->addon.phase) + " ";
     log(LogLevel::Warning, LOG_CATEGORY_PLUGINS,
-        exited + crashed->addon.name + " (" + crashed->addon.id + "), crash " +
-            std::to_string(crashes) + " of " + std::to_string(kCrashLimit) + ".");
+        exited + crashed->addon.name + " (" + crashed->addon.id + "), crash "
+            + std::to_string(crashes) + " of " + std::to_string(kCrashLimit) + ".");
 
     if (crashes >= kCrashLimit)
     {
@@ -148,6 +151,7 @@ std::vector<CrashedAddon> AddonCrashGuard::recoverFromPreviousLaunch() const
     {
         log(LogLevel::Error, LOG_CATEGORY_PLUGINS, "Addon crash count could not be saved.");
     }
+
     return {};
 }
 
@@ -161,9 +165,10 @@ public:
         {
             return false;
         }
-        bool written = pwrite(descriptor_, record.data(), record.size(), 0) ==
-                           static_cast<ssize_t>(record.size()) &&
-                       ftruncate(descriptor_, static_cast<off_t>(record.size())) == 0;
+
+        bool written = pwrite(descriptor_, record.data(), record.size(), 0)
+                           == static_cast<ssize_t>(record.size())
+                       && ftruncate(descriptor_, static_cast<off_t>(record.size())) == 0;
         id_          = written ? id : std::string();
         return written;
     }
@@ -174,6 +179,7 @@ public:
         {
             return false;
         }
+
         id_.clear();
         return ftruncate(descriptor_, 0) == 0;
     }
@@ -186,22 +192,24 @@ private:
         {
             return true;
         }
+
         if (descriptor_ >= 0)
         {
             close(descriptor_);
         }
+
         id_.clear();
         createDirectories(directory);
         descriptor_ = open(path.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, 0600);
         return descriptor_ >= 0;
     }
 
-    int         descriptor_ = -1;
+    int descriptor_ = -1;
     std::string id_;
 };
 
 struct StartMarkers {
-    std::mutex                         mutex;
+    std::mutex mutex;
     std::map<std::string, StartMarker> markers;
 };
 
@@ -219,44 +227,47 @@ bool AddonCrashGuard::beginStart(const std::string &id, const std::string &name)
     {
         return false;
     }
-    std::string                 record = recordJSON({id, name.empty() ? id : name}, 0).dump();
-    StartMarkers               &state  = startMarkers();
+
+    std::string record  = recordJSON({id, name.empty() ? id : name}, 0).dump();
+    StartMarkers &state = startMarkers();
     std::lock_guard<std::mutex> lock(state.mutex);
     return state.markers[startingPath()].write(directory_, startingPath(), id, record);
 }
 
 bool AddonCrashGuard::finishStart(const std::string &id) const
 {
-    StartMarkers               &state = startMarkers();
+    StartMarkers &state = startMarkers();
     std::lock_guard<std::mutex> lock(state.mutex);
-    auto                        marker = state.markers.find(startingPath());
+    auto marker = state.markers.find(startingPath());
     return marker != state.markers.end() && marker->second.clear(id);
 }
 
 std::vector<CrashedAddon> crashDisabledAddons(const std::string &directory)
 {
-    static std::mutex                                       mutex;
+    static std::mutex mutex;
     static std::map<std::string, std::vector<CrashedAddon>> verdicts;
 
     std::lock_guard<std::mutex> lock(mutex);
-    auto                        found = verdicts.find(directory);
+    auto found = verdicts.find(directory);
     if (found == verdicts.end())
     {
         found = verdicts.emplace(directory, AddonCrashGuard(directory).recoverFromPreviousLaunch())
                     .first;
     }
+
     return found->second;
 }
 
 bool armAddonCrashAttribution(const std::string &directory)
 {
-    static std::mutex            mutex;
+    static std::mutex mutex;
     static std::set<std::string> armed;
 
     if (directory.empty())
     {
         return false;
     }
+
     {
         std::lock_guard<std::mutex> lock(mutex);
         if (armed.count(directory))
@@ -264,6 +275,7 @@ bool armAddonCrashAttribution(const std::string &directory)
             return true;
         }
     }
+
     crashDisabledAddons(directory);
     createDirectories(directory);
     bool installed = installAddonCrashHandler(joinPath(directory, AddonCrashGuard::kRunningFile));
@@ -272,20 +284,22 @@ bool armAddonCrashAttribution(const std::string &directory)
         std::lock_guard<std::mutex> lock(mutex);
         armed.insert(directory);
     }
+
     return installed;
 }
 
 std::vector<CrashedAddon> takeUnannouncedCrashDisabledAddons(const std::string &directory)
 {
-    static std::mutex            mutex;
+    static std::mutex mutex;
     static std::set<std::string> announced;
 
-    std::vector<CrashedAddon>   addons = crashDisabledAddons(directory);
+    std::vector<CrashedAddon> addons = crashDisabledAddons(directory);
     std::lock_guard<std::mutex> lock(mutex);
     if (!announced.insert(directory).second)
     {
         return {};
     }
+
     return addons;
 }
 
@@ -295,8 +309,9 @@ std::string crashDisabledNotice(const CrashedAddon &addon)
     {
         return "Disabled " + addon.name + " because Discord froze in it and had to be closed.";
     }
-    return "Disabled " + addon.name + " because Discord crashed while " +
-           crashActivity(addon.phase) + " it.";
+
+    return "Disabled " + addon.name + " because Discord crashed while " + crashActivity(addon.phase)
+           + " it.";
 }
 
 nlohmann::json crashedAddonsJSON(const std::vector<CrashedAddon> &addons)
@@ -307,6 +322,7 @@ nlohmann::json crashedAddonsJSON(const std::vector<CrashedAddon> &addons)
         result.push_back(
             {{"id", addon.id}, {"name", addon.name}, {"phase", crashActivity(addon.phase)}});
     }
+
     return result;
 }
 }

@@ -28,8 +28,8 @@ void readsTheMainThreadOfAnAnrTrace()
     std::optional<std::string> stack = loader::anrTraceStack(kTrace);
     assert(stack);
     assert(stack->starts_with("ANR in thread 1 (main), from Android's ANR trace\n"));
-    assert(stack->find("at com.discord.chat.ChatView.onLayout(ChatView.kt:120)") !=
-           std::string::npos);
+    assert(stack->find("at com.discord.chat.ChatView.onLayout(ChatView.kt:120)")
+           != std::string::npos);
     assert(stack->find("- waiting to lock") != std::string::npos);
     assert(stack->find("__futex_wait") != std::string::npos);
     assert(stack->find("nativePollOnce") == std::string::npos);

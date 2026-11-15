@@ -41,6 +41,7 @@ static loader::diagnostics::ErrorReport errorReport(NSString *domain, NSInteger 
     {
         report.url = stringValue([url absoluteString]);
     }
+
     return report;
 }
 
@@ -50,12 +51,14 @@ static BOOL shouldIgnoreError(NSString *domain, NSInteger code, id info)
 }
 
 %hook NSError
+
 - (id)initWithDomain:(id)domain code:(int)code userInfo:(id)userInfo
 {
     if (!shouldIgnoreError(domain, code, userInfo))
     {
         [Logger error:LOG_CATEGORY_DEFAULT format:@"NSError %@ (%d) %@", domain, code, userInfo];
     }
+
     return %orig;
 }
 
@@ -65,8 +68,10 @@ static BOOL shouldIgnoreError(NSString *domain, NSInteger code, id info)
     {
         [Logger error:LOG_CATEGORY_DEFAULT format:@"NSError %@ (%d) %@", domain, code, userInfo];
     }
+
     return %orig;
 }
+
 %end
 
 static BOOL shouldIgnoreException(id name)
@@ -75,12 +80,14 @@ static BOOL shouldIgnoreException(id name)
 }
 
 %hook NSException
+
 - (id)initWithName:(id)name reason:(id)reason userInfo:(id)userInfo
 {
     if (!shouldIgnoreException(name))
     {
         [Logger error:LOG_CATEGORY_DEFAULT format:@"NSException %@: %@ %@", name, reason, userInfo];
     }
+
     return %orig;
 }
 
@@ -90,8 +97,10 @@ static BOOL shouldIgnoreException(id name)
     {
         [Logger error:LOG_CATEGORY_DEFAULT format:@"NSException %@: %@ %@", name, reason, userInfo];
     }
+
     return %orig;
 }
+
 %end
 
 %ctor

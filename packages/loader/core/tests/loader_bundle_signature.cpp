@@ -58,9 +58,9 @@ static void recognisesDevelopmentServers()
 
 static void hashesWithSha512()
 {
-    assert(loader::sha512Hex("abc") ==
-           "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a"
-           "2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f");
+    assert(loader::sha512Hex("abc")
+           == "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a"
+              "2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f");
     assert(loader::sha512Hex("").size() == 128);
 }
 
@@ -89,14 +89,14 @@ static void bindsPullRequestSignaturesToTheirNumber()
     assert(loader::verifyTrustedSignature(message, plainPR, pr5) == TrustedSigner::None);
 
     const std::string productionSigned = productionKey().sign(message);
-    assert(loader::verifyTrustedSignature(message, productionSigned, pr5) ==
-           TrustedSigner::Production);
-    assert(loader::verifyTrustedSignature(message, productionSigned, production) ==
-           TrustedSigner::Production);
-    assert(loader::verifyTrustedSignature(message, productionKey().sign(message, 5), pr5) ==
-           TrustedSigner::None);
-    assert(loader::verifyTrustedSignature(message, foreignKey().sign(message, 5), pr5) ==
-           TrustedSigner::None);
+    assert(loader::verifyTrustedSignature(message, productionSigned, pr5)
+           == TrustedSigner::Production);
+    assert(loader::verifyTrustedSignature(message, productionSigned, production)
+           == TrustedSigner::Production);
+    assert(loader::verifyTrustedSignature(message, productionKey().sign(message, 5), pr5)
+           == TrustedSigner::None);
+    assert(loader::verifyTrustedSignature(message, foreignKey().sign(message, 5), pr5)
+           == TrustedSigner::None);
     assert(loader::verifyTrustedSignature("other", forPR5, pr5) == TrustedSigner::None);
 
     assert(production.isEnabled() && !production.trustsPullRequestKey());
@@ -110,17 +110,18 @@ static void trustsEveryListedProductionKeyDuringARotation()
     using bundle_test::productionKey;
     using loader::TrustedSigner;
 
-    const std::string         message = "bundle bytes";
+    const std::string message = "bundle bytes";
     const loader::BundleTrust rotating{
         productionKey().publicKey + "," + foreignKey().publicKey + ",", "", 0};
 
     assert(rotating.productionKeys().size() == 2);
-    assert(loader::verifyTrustedSignature(message, productionKey().sign(message), rotating) ==
-           TrustedSigner::Production);
-    assert(loader::verifyTrustedSignature(message, foreignKey().sign(message), rotating) ==
-           TrustedSigner::Production);
+    assert(loader::verifyTrustedSignature(message, productionKey().sign(message), rotating)
+           == TrustedSigner::Production);
+    assert(loader::verifyTrustedSignature(message, foreignKey().sign(message), rotating)
+           == TrustedSigner::Production);
     assert(loader::verifyTrustedSignature(message, foreignKey().sign(message),
-                                          bundle_test::productionTrust()) == TrustedSigner::None);
+                                          bundle_test::productionTrust())
+           == TrustedSigner::None);
     const loader::BundleTrust separatorsOnly{",,", "", 0};
     assert(!separatorsOnly.isEnabled());
 }

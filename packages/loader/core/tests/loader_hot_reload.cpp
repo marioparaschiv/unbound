@@ -11,10 +11,10 @@ int main()
     std::string templatePath =
         (std::filesystem::temp_directory_path() / "loader-hot-reload-XXXXXX").string();
     const std::filesystem::path root(mkdtemp(templatePath.data()));
-    loader::SettingsStore       settings((root / "settings.json").string());
+    loader::SettingsStore settings((root / "settings.json").string());
 
     std::string probed;
-    auto        reachable = [&probed](const std::string &url, double timeout) {
+    auto reachable = [&probed](const std::string &url, double timeout) {
         probed = url;
         assert(timeout == loader::kDevServerProbeTimeoutSeconds);
         return true;
@@ -24,27 +24,27 @@ int main()
     };
 
     assert(!loader::resolveUpdateURL(settings, std::nullopt, reachable));
-    assert(loader::resolveUpdateURL(settings, std::string("10.0.2.2"), reachable) ==
-           std::optional<std::string>("http://10.0.2.2:3000/"));
+    assert(loader::resolveUpdateURL(settings, std::string("10.0.2.2"), reachable)
+           == std::optional<std::string>("http://10.0.2.2:3000/"));
     assert(probed == "http://10.0.2.2:3000/manifest.json");
     assert(!loader::resolveUpdateURL(settings, std::string("10.0.2.2"), unreachable));
     settings.set("unbound", "loader.update.url", "https://example.com/unbound.bundle");
-    assert(loader::resolveUpdateURL(settings, std::nullopt, unreachable) ==
-           std::optional<std::string>("https://example.com/unbound.bundle"));
+    assert(loader::resolveUpdateURL(settings, std::nullopt, unreachable)
+           == std::optional<std::string>("https://example.com/unbound.bundle"));
     settings.remove("unbound", "loader.update.url");
 
-    assert(loader::hotReloadURL("http://10.0.2.2:3000/unbound.bundle") ==
-           std::optional<std::string>("http://10.0.2.2:3000/__hot"));
-    assert(loader::hotReloadURL("https://user@example.com?x=1") ==
-           std::optional<std::string>("https://example.com/__hot"));
+    assert(loader::hotReloadURL("http://10.0.2.2:3000/unbound.bundle")
+           == std::optional<std::string>("http://10.0.2.2:3000/__hot"));
+    assert(loader::hotReloadURL("https://user@example.com?x=1")
+           == std::optional<std::string>("https://example.com/__hot"));
     assert(!loader::hotReloadURL("not a url"));
     assert(!loader::hotReloadURL("http:///path"));
 
     assert(loader::normalizedEtag("W/\"abc\"") == "abc");
     assert(loader::normalizedEtag("\"abc\"") == "abc");
 
-    assert(loader::hotReloadEtag("event: reload\ndata: {\"etag\":\"W/\\\"1\\\"\"}") ==
-           std::optional<std::string>("W/\"1\""));
+    assert(loader::hotReloadEtag("event: reload\ndata: {\"etag\":\"W/\\\"1\\\"\"}")
+           == std::optional<std::string>("W/\"1\""));
     assert(!loader::hotReloadEtag("event: ping\ndata: {\"etag\":\"1\"}"));
     assert(!loader::hotReloadEtag("event: reload\ndata: not json"));
     assert(!loader::hotReloadEtag(": comment"));
@@ -66,6 +66,7 @@ int main()
     {
         backoff.next();
     }
+
     assert(backoff.next() == loader::kHotReloadMaximumDelaySeconds);
     backoff.reset();
     assert(backoff.next() == 1.0);

@@ -19,6 +19,7 @@ static NativeFailure describeThrown(const std::function<void()> &body)
     {
         return describeFailure(std::current_exception());
     }
+
     return describeFailure(nullptr);
 }
 
@@ -52,8 +53,8 @@ int main()
     assert(none.code == "NATIVE_BRIDGE_ERROR");
 
     RuntimeGenerationTracker tracker;
-    int                      first  = 0;
-    int                      second = 0;
+    int first  = 0;
+    int second = 0;
     assert(tracker.generation() == 0);
     assert(tracker.advance(&first) == 1u);
     assert(!tracker.advance(&first));

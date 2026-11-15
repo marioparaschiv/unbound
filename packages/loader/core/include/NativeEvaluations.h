@@ -25,35 +25,35 @@ enum class EvaluationLogLevel
 
 struct EvaluationLogLine {
     EvaluationLogLevel level;
-    std::string        message;
+    std::string message;
 };
 
 struct EvaluationRecord {
-    std::string                           identifier;
-    std::string                           code;
-    bool                                  ok = false;
-    std::optional<std::string>            value;
-    std::optional<std::string>            error;
-    std::vector<EvaluationLogLine>        logs;
+    std::string identifier;
+    std::string code;
+    bool ok = false;
+    std::optional<std::string> value;
+    std::optional<std::string> error;
+    std::vector<EvaluationLogLine> logs;
     std::chrono::system_clock::time_point recordedAt;
 };
 
-std::string      truncatedText(const std::string &text, size_t limit);
+std::string truncatedText(const std::string &text, size_t limit);
 EvaluationRecord parseEvaluationRecord(const nlohmann::json &input);
-nlohmann::json   evaluationRecordJSON(const EvaluationRecord &record);
+nlohmann::json evaluationRecordJSON(const EvaluationRecord &record);
 
 class EvaluationHistory
 {
 public:
     static EvaluationHistory &shared();
 
-    bool                          record(const nlohmann::json &input);
+    bool record(const nlohmann::json &input);
     std::vector<EvaluationRecord> records() const;
-    nlohmann::json                json() const;
-    void                          clear();
+    nlohmann::json json() const;
+    void clear();
 
 private:
-    mutable std::mutex           mutex_;
+    mutable std::mutex mutex_;
     std::deque<EvaluationRecord> records_;
 };
 
