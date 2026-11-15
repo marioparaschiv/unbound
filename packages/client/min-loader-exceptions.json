@@ -1,0 +1,30 @@
+{
+	"loader": "1.4.0",
+	"exceptions": [
+		{
+			"file": "src/native/plugin-context.ts",
+			"error": "TS2353: Object literal may only specify known properties, and 'tempPath' does not exist in type 'PluginContext'.",
+			"reason": "The client builds tempPath itself; clearing it calls NativePlatform.files?.remove, which older loaders skip."
+		},
+		{
+			"file": "src/native/scope-objc-hook.ts",
+			"error": "TS2344: Type '\"findClasses\"' does not satisfy the constraint 'keyof NativeObjCBridge'.",
+			"reason": "findClasses is typed optional and called with ?., so subclass hooks fall back to the class alone."
+		},
+		{
+			"file": "src/native/scope-objc-hook.ts",
+			"error": "TS2339: Property 'subclasses' does not exist on type 'NativeHookOptions<Receiver>'.",
+			"reason": "The client handles subclasses itself and strips it before calling the loader's objc.hook."
+		},
+		{
+			"file": "src/native/scope-objc-hook.ts",
+			"error": "TS2339: Property 'waitForClass' does not exist on type 'NativeHookOptions<Receiver>'.",
+			"reason": "The client retries waitForClass hooks itself and strips the option before calling the loader."
+		},
+		{
+			"file": "src/native/scope-objc-hook.ts",
+			"error": "TS2349: This expression is not callable.",
+			"reason": "The optional findClasses call above; it returns no classes on older loaders."
+		}
+	]
+}
