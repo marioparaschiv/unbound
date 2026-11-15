@@ -27,6 +27,7 @@ declare function assignValue<T extends object, K extends keyof T>(
 ): () => void;
 /** The symbol a patched method carries, pointing at its patch state. */
 export declare const PATCH_SYMBOL: symbol;
+/** Every module the patcher has patched, with its live patches. */
 export declare const patches: PatchedModule[];
 /**
  * `before`, `instead` and `after` for React components. Each takes a `memo`, `forwardRef` or class component and

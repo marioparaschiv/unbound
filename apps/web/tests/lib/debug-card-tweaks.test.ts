@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { COLORS } from '~/lib/debug-card/spans';
 import { isConflictingTweak, tweakSpans } from '~/lib/debug-card/tweaks';
+import { COLORS } from '~/lib/debug-card/spans';
 
 describe('tweakSpans', () => {
 	test('shows conflicting tweaks first in red and the rest in yellow', () => {

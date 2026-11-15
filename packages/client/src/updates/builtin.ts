@@ -5,10 +5,10 @@ import { notifyClientUpdated, notifyStagedBundle, notifyUpdates } from '~/update
 import { CLIENT_VERSION, Screens } from '~/core/constants';
 import { hasStagedBundle } from '~/native/unbound-native';
 import type { SectionEntry } from '~/settings/section';
+import { getBucket, persist } from '~/storage/api';
 import { compareVersions } from '~/core/versions';
 import { getSetting } from '~/settings/unbound';
 import UpdatesStore from '~/updates/state';
-import { getBucket, persist } from '~/storage/api';
 
 // The loader downloads the next bundle in the background, usually within seconds of launch.
 const STAGED_CHECK_DELAY = 20_000;
