@@ -35,6 +35,7 @@ type WorkletClosure = {
 	runOnJS?: (callback: Settle) => Settle;
 	settle?: Settle;
 	listener?: (...args: NativeSerializable[]) => void;
+	done?: () => void;
 };
 
 type WorkletGuard = {
@@ -75,8 +76,8 @@ const JS_CALLBACK = {
 };
 
 const DISPOSE_SCOPES = {
-	hash: 0x75_6e_62_07,
-	code: "(function unboundDisposeScopes(){for(let index=0;index<arguments.length;index++){try{arguments[index].dispose();}catch(error){console.error('[Unbound] Failed to dispose a UI scope: '+String(error));}}})",
+	hash: 0x75_6e_62_09,
+	code: "(function unboundDisposeScopes(){const{runOnJS,done}=this.__closure;for(let index=0;index<arguments.length;index++){try{arguments[index].dispose();}catch(error){console.error('[Unbound] Failed to dispose a UI scope: '+String(error));}}runOnJS(done)();})",
 };
 
 const PREPARED_CALL_METHODS: ReadonlySet<NativeBridgeMethod> = new Set([
@@ -206,17 +207,38 @@ function disposeNow(scopes: readonly NativeUIScope[]) {
 	}
 }
 
-function disposeAfterQueuedWork(scopes: readonly NativeUIScope[]) {
+const DISPOSE_TIMEOUT_MS = 2000;
+
+function disposeAfterQueuedWork(scopes: readonly NativeUIScope[], owner: string) {
 	if (!scopes.length) return;
+
+	let finished = false;
+	const timeout = setTimeout(() => {
+		if (finished) return;
+
+		logger.error(
+			`Failed to dispose the UI scopes of ${owner}: the UI thread did not reach them within ${DISPOSE_TIMEOUT_MS} ms, so they are disposed here.`,
+		);
+		disposeNow(scopes);
+	}, DISPOSE_TIMEOUT_MS);
+	const done = () => {
+		finished = true;
+		clearTimeout(timeout);
+	};
 
 	try {
 		const runtime = uiRuntime();
 
-		runtime.runOnUI(guardWorklet<NativeUIScope[]>(DISPOSE_SCOPES, {}, runtime.version))(
-			...scopes,
-		);
+		runtime.runOnUI(
+			guardWorklet<NativeUIScope[]>(
+				DISPOSE_SCOPES,
+				{ runOnJS: runtime.runOnJS, done },
+				runtime.version,
+			),
+		)(...scopes);
 	} catch (error) {
-		logger.error('Failed to queue UI scope disposal:', error);
+		done();
+		logger.error(`Failed to queue UI scope disposal for ${owner}:`, error);
 		disposeNow(scopes);
 	}
 }
@@ -225,11 +247,13 @@ function disposeAfterQueuedWork(scopes: readonly NativeUIScope[]) {
  * @description Builds a plugin's UI-runtime bridge, which opens native scopes limited to its capabilities and removes their hooks when disposed.
  * @param capabilities The capabilities the plugin declares for this platform.
  * @param platform The host platform.
+ * @param owner The plugin's id, named when its scopes are slow to dispose.
  * @returns The bridge and its `dispose`.
  */
 export function createScopedUIBridge(
 	capabilities: readonly NativeBridgeCapability[],
 	platform?: NativeBridgePlatform,
+	owner = 'a plugin',
 ): ScopedUIBridge {
 	const scopes = new Set<NativeUIScope>();
 	let disposed = false;
@@ -344,7 +368,7 @@ export function createScopedUIBridge(
 			if (disposed) return;
 
 			disposed = true;
-			disposeAfterQueuedWork([...scopes]);
+			disposeAfterQueuedWork([...scopes], owner);
 			scopes.clear();
 		},
 	};
