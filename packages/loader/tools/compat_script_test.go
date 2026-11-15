@@ -246,6 +246,20 @@ export function later(objc: NativeObjCBridge) {
 	}
 }
 
+func TestCompatJavaStringValuesAreNotClasses(t *testing.T) {
+	set := scriptProgramReferences(t, map[string]string{
+		"packages/plugins/demo/src/native/android/speech.ts": `
+export function listen(java: NativeJavaBridge) {
+	java.getClass('android.speech.SpeechRecognizer');
+	return java.construct('android.content.Intent', [javaString('android.speech.action.RECOGNIZE_SPEECH')]);
+}
+`,
+	})
+	expectKeys(t, set,
+		[]string{"java-class  android.speech.SpeechRecognizer", "java-class  android.content.Intent"},
+		[]string{"java-class  android.speech.action.RECOGNIZE_SPEECH"})
+}
+
 func TestCompatBridgeReceivers(t *testing.T) {
 	set := scriptProgramReferences(t, map[string]string{
 		"packages/plugins-shared/src/native/message-info.ts": `
