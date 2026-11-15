@@ -7,7 +7,7 @@ const MESSAGE: StarredMessage = {
 	channelId: '950850316318933004',
 	url: 'https://discord.com/channels/1/950850316318933004/3',
 	createdAt: new Date('2025-04-11T02:32:06.000Z'),
-	author: { name: 'Sky.Bit', avatarUrl: 'https://cdn.discordapp.com/avatars/1/a.png' },
+	author: { name: 'Sky.Bit', emoji: { name: 'sb_1_abc', id: '42' } },
 	content: 'Petition to make one of these images a server emoji <@1>',
 	media: [{ url: 'https://cdn.discordapp.com/a.png', spoiler: true }],
 	files: [{ name: 'log.txt', url: 'https://cdn.discordapp.com/log.txt' }],
@@ -40,40 +40,44 @@ describe('starAccent', () => {
 
 describe('renderStarPost', () => {
 	const { body } = renderStarPost(MESSAGE, 15);
-	const [container] = body.components;
+	const [container, row] = body.components;
 
-	test('is a components v2 container that pings no one', () => {
+	test('is a components v2 card that pings no one', () => {
 		expect(body.flags).toBe(MessageFlags.IsComponentsV2);
 		expect(body.allowed_mentions).toEqual({ parse: [] });
 		expect(container.accent_color).toBe(starAccent(15));
 	});
 
-	test('shows the count, channel, author, content, media, files and jump link in order', () => {
+	test('shows the author and stars, content, media, files and time, then the jump button under the card', () => {
 		expect(container.components.map((component) => component.type)).toEqual([
-			ComponentType.Section,
+			ComponentType.TextDisplay,
 			ComponentType.MediaGallery,
 			ComponentType.TextDisplay,
-			ComponentType.ActionRow,
+			ComponentType.TextDisplay,
 		]);
+		expect(row.components[0]?.url).toBe(MESSAGE.url);
 
-		const text = JSON.stringify(body);
+		const text = JSON.stringify(container);
 
 		expect(text).toContain(
-			'-# <:mb_star_8:1571500057344352366> **15** · <#950850316318933004> · <t:1744338726:R>',
+			'<:sb_1_abc:42> **Sky.Bit** · <:mb_star_8:1571500057344352366> **15**\\nPetition',
 		);
-		expect(text).toContain('**Sky.Bit**\\nPetition');
 		expect(text).toContain('"spoiler":true');
 		expect(text).toContain('[log.txt](https://cdn.discordapp.com/log.txt)');
-		expect(text).toContain(MESSAGE.url);
+		expect(text).toContain('-# <t:1744338726:R>');
 	});
 
-	test('leaves out the gallery and file list when there are none', () => {
-		const bare = renderStarPost({ ...MESSAGE, media: [], files: [], content: '' }, 3);
+	test('leaves out the avatar, gallery and file list when there are none', () => {
+		const bare = renderStarPost(
+			{ ...MESSAGE, author: { name: 'Sky.Bit' }, media: [], files: [], content: '' },
+			3,
+		);
 		const [only] = bare.body.components;
 
 		expect(only.components.map((component) => component.type)).toEqual([
-			ComponentType.Section,
-			ComponentType.ActionRow,
+			ComponentType.TextDisplay,
+			ComponentType.TextDisplay,
 		]);
+		expect(JSON.stringify(only)).toContain('"**Sky.Bit** · <:mb_star_3:');
 	});
 });
