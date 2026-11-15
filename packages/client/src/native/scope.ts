@@ -100,12 +100,14 @@ function attributeBridge<T extends object>(source: T, attribute?: AddonAttributi
  * @param capabilities The capabilities the plugin declares for this platform.
  * @param platform The host platform.
  * @param attribute Marks the plugin as active in the loader's crash attribution while its native calls run.
+ * @param owner The plugin's id, named in errors about its native resources.
  * @returns The scoped bridge and its `dispose`.
  */
 export function createScopedNativeBridge(
 	capabilities: readonly NativeBridgeCapability[],
 	platform?: NativeBridgePlatform,
 	attribute?: AddonAttribution,
+	owner?: string,
 ): ScopedNativeBridge {
 	const fallbackBridge = unavailableNativeBridge();
 	const bridge = getNativeBridge() ?? fallbackBridge;
@@ -129,7 +131,7 @@ export function createScopedNativeBridge(
 	const runtimeTokens = new Set<NativeRuntimeEventToken>();
 	const pendingInvocations = new Set<NativeCancelablePromise<unknown>>();
 	const associations: AssociationBinding[] = [];
-	const ui = createScopedUIBridge(capabilities, platform);
+	const ui = createScopedUIBridge(capabilities, platform, owner);
 	const lifecycle: ScopeLifecycle = { disposed: false };
 	let stopping = false;
 	const mountAsync = fabricBridge.mountAsync.bind(fabricBridge);
