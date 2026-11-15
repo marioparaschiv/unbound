@@ -9,6 +9,7 @@ var compatEnvironmentClasses = map[string]string{
 	"UIPlaceholderColor":                        "a private UIKit class that the iOS SDK leaves out; it ships with iOS, not Discord, so a Discord update cannot remove it",
 	"android.os.SystemProperties":               "a hidden Android platform class that the public SDK stubs leave out; it exists on every device, and the loader falls back to `Build` values when reading it fails",
 	"org.lsposed.lspatch.loader.LSPApplication": "LSPatch's own class, present only when Discord was patched with LSPatch, so its absence is expected",
+	"sun.misc.Unsafe":                           "part of Android's core runtime (libcore) that the public SDK stubs leave out; it ships with every device, not Discord, so a Discord update cannot remove it",
 }
 
 var compatEnvironmentSelectors = map[string]string{
