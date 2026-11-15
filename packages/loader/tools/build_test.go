@@ -71,7 +71,10 @@ func TestValidateIPAExtensionsRequiresOriginalAndBuiltExtensions(t *testing.T) {
 		"Payload/Discord.app/PlugIns/Share.appex/Info.plist",
 	}
 
-	complete := append(append([]string{}, source...), "Payload/Discord.app/PlugIns/OpenInDiscord.appex/Info.plist")
+	complete := append(append([]string{}, source...),
+		"Payload/Discord.app/PlugIns/OpenInDiscord.appex/Info.plist",
+		"Payload/Discord.app/PlugIns/UnboundActivities.appex/Info.plist",
+	)
 	if err := validateIPAExtensions(source, complete); err != nil {
 		t.Fatalf("complete IPA rejected: %v", err)
 	}
@@ -80,6 +83,7 @@ func TestValidateIPAExtensionsRequiresOriginalAndBuiltExtensions(t *testing.T) {
 	if err := validateIPAExtensions(source, incomplete); err == nil ||
 		!strings.Contains(err.Error(), "BroadcastUpload") ||
 		!strings.Contains(err.Error(), "OpenInDiscord") ||
+		!strings.Contains(err.Error(), "UnboundActivities") ||
 		!strings.Contains(err.Error(), "Share") {
 		t.Fatalf("missing extension was not detected: %v", err)
 	}

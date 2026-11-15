@@ -598,6 +598,7 @@ func buildExtensions(options buildOptions, work string, runner commandRunner) ([
 
 	for _, extension := range []struct{ name, target, product, module string }{
 		{"OpenInDiscord", "OpenInDiscord Extension", "OpenInDiscord", "OpenInDiscordExt"},
+		{"UnboundActivities", "UnboundActivities", "UnboundActivities", "UnboundActivities"},
 	} {
 		source := filepath.Join(iosRoot(options.root), "extensions", extension.name)
 

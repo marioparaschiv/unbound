@@ -41,6 +41,7 @@ func validateIPAExtensions(sourceEntries, finalEntries []string) error {
 
 	required := ipaExtensions(sourceEntries)
 	required[appName+"/OpenInDiscord"] = struct{}{}
+	required[appName+"/UnboundActivities"] = struct{}{}
 	required[appName+"/Share"] = struct{}{}
 	installed := ipaExtensions(finalEntries)
 	missing := []string{}
