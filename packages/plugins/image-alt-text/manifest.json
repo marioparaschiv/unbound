@@ -1,0 +1,17 @@
+{
+	"id": "unbound.image-alt-text",
+	"name": "Image Alt Text",
+	"description": "Shows the descriptions people give their images right in the message, instead of behind the ALT badge.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ImageIcon",
+	"main": "index.ts"
+}
