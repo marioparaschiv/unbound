@@ -5,6 +5,7 @@ type IconProps = { icon?: ReactNode; children?: ReactNode };
 type NamedComponent = { displayName?: string; name?: string; type?: NamedComponent };
 
 const MAX_DEPTH = 3;
+const MAX_ROW_DEPTH = 4;
 
 function componentName(node: ReactNode): string | undefined {
 	if (!isValidElement(node)) return;
@@ -28,10 +29,36 @@ function carriesIcon(node: ReactNode, icons: Set<string>, depth = 0): boolean {
 	);
 }
 
+function pruneRow(
+	row: ReactNode,
+	icons: Set<string>,
+	depth: number,
+): ReactElement<IconProps> | undefined {
+	if (!isValidElement<IconProps>(row) || depth > MAX_ROW_DEPTH) return;
+
+	const children = Children.toArray(row.props.children);
+	let changed = false;
+	const kept = children.flatMap((child) => {
+		if (carriesIcon(child, icons)) {
+			changed = true;
+
+			return [];
+		}
+
+		const pruned = pruneRow(child, icons, depth + 1);
+
+		changed ||= pruned !== undefined;
+
+		return [pruned ?? child];
+	});
+
+	return changed ? cloneElement(row, undefined, ...kept) : undefined;
+}
+
 /**
- * @description Removes the buttons in a row that draw one of the given icons, such as a call button's `PhoneCallIcon`.
+ * @description Removes the buttons that draw one of the given icons, such as a call button's `PhoneCallIcon`, from a row or the rows nested inside it.
  * Matching by icon keeps it working in every language.
- * @param row The rendered row of buttons.
+ * @param row The rendered row of buttons, or a wrapper holding it.
  * @param icons The icon component names whose buttons to remove.
  * @returns A copy without those buttons, or `undefined` when there was none to remove.
  */
@@ -39,14 +66,9 @@ export function withoutIconButtons(
 	row: ReactNode,
 	icons: Set<string>,
 ): ReactElement<IconProps> | undefined {
-	if (!icons.size || !isValidElement<IconProps>(row)) return;
+	if (!icons.size) return;
 
-	const children = Children.toArray(row.props.children);
-	const kept = children.filter((child) => !carriesIcon(child, icons));
-
-	if (kept.length === children.length) return;
-
-	return cloneElement(row, undefined, ...kept);
+	return pruneRow(row, icons, 0);
 }
 
 export default withoutIconButtons;

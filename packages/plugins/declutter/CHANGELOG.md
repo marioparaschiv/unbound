@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3] - 2026-11-15
+
+### Fixed
+
+- Voice call buttons hides the call button on profiles again, where Discord moved it into a row beside Add Friend.
+
 ## [1.0.2] - 2026-11-14
 
 ### Fixed

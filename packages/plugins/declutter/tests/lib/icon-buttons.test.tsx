@@ -65,6 +65,32 @@ describe('icon buttons', () => {
 		expect(keys(withoutIconButtons(profile, new Set(['PhoneCallIcon'])))).toEqual(['message']);
 	});
 
+	test('finds the call button in the nested row of a profile beside Add Friend', () => {
+		const profile = (
+			<View>
+				<View>
+					<View key='friend'>
+						<Text />
+					</View>
+					<View key='actions'>
+						<Button key='message' text='Message' icon={<Text />} />
+						<Button key='call' text='Call' icon={<PhoneCallIcon />} />
+					</View>
+				</View>
+			</View>
+		);
+		const pruned = withoutIconButtons(profile, new Set(['PhoneCallIcon']));
+		const [inner] = Children.toArray(
+			isValidElement<{ children?: ReactNode }>(pruned) ? pruned.props.children : null,
+		);
+		const [, actions] = Children.toArray(
+			isValidElement<{ children?: ReactNode }>(inner) ? inner.props.children : null,
+		);
+
+		expect(keys(inner)).toEqual(['friend', 'actions']);
+		expect(keys(actions)).toEqual(['message']);
+	});
+
 	test('leaves a row alone when nothing matches', () => {
 		expect(withoutIconButtons(header, new Set(['GiftIcon']))).toBeUndefined();
 		expect(withoutIconButtons(header, new Set())).toBeUndefined();
