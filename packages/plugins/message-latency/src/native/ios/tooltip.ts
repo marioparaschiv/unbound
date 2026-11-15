@@ -13,8 +13,6 @@ import { layoutTooltipSurface } from '~/native/ios/tooltip-surface';
 import LatencyTooltip from '~/components/latency-tooltip';
 import { placeTooltip, tooltipTextWidth } from '~/lib/tooltip-layout';
 import { Icon, Tooltip } from '~/lib/constants';
-import { Tooltips } from '~/lib/modules';
-
 export type TooltipAnchor = {
 	cellKey: string;
 	icon: NativeObjectHandle;
@@ -39,15 +37,9 @@ type Shown = {
 /**
  * @description Creates the tooltip shown when an indicator is tapped. It closes on the next touch or after a few seconds.
  * @param native The `context.native` bridge: its Objective-C bridge, and Fabric bridge to mount Discord's tooltip.
- * @returns The tooltip controller, or `null` when Discord's tooltip component is missing.
+ * @returns The tooltip controller.
  */
-export function createTooltips({ objc, fabric }: Native): TooltipController | null {
-	if (!Tooltips) {
-		logger.warn('Tooltip skipped: Discord moved Tooltips.');
-
-		return null;
-	}
-
+export function createTooltips({ objc, fabric }: Native): TooltipController {
 	const tasks = new Set<Promise<void>>();
 	let shown: Shown | null = null;
 	let timer: ReturnType<typeof setTimeout> | null = null;

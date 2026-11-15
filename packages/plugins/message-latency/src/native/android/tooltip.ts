@@ -26,7 +26,6 @@ import registerAppSurface from '@unbound-plugins/shared/native/app-surface';
 import { placeTooltip, tooltipTextWidth } from '~/lib/tooltip-layout';
 import LatencyTooltip from '~/components/latency-tooltip';
 import { Icon, Tooltip } from '~/lib/constants';
-import { Tooltips } from '~/lib/modules';
 
 type Native = {
 	java: NativeJavaBridge;
@@ -60,15 +59,9 @@ type Metrics = {
 /**
  * @description Creates the tooltip shown when an Android indicator is tapped, Discord's tooltip on its own surface over the window. It closes on the next touch or after a few seconds, like the iOS one.
  * @param native The plugin's Java, hook and Fabric bridges.
- * @returns The tooltip controller, or `null` when Discord's tooltip component is missing.
+ * @returns The tooltip controller.
  */
-export function createAndroidTooltips({ java, hooks, fabric }: Native): AndroidTooltips | null {
-	if (!Tooltips) {
-		logger.warn('Tooltip skipped: Discord moved Tooltips.');
-
-		return null;
-	}
-
+export function createAndroidTooltips({ java, hooks, fabric }: Native): AndroidTooltips {
 	const tasks = new Set<Promise<void>>();
 	let shown: Shown | null = null;
 	let timer: ReturnType<typeof setTimeout> | null = null;

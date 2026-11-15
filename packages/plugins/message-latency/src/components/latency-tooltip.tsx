@@ -1,4 +1,6 @@
-import { Tooltips } from '~/lib/modules';
+import { Text, View } from 'react-native';
+
+import { Tooltip } from '~/lib/constants';
 import { resolveColor } from '~/lib/theme';
 
 export type LatencyTooltipProps = {
@@ -8,27 +10,63 @@ export type LatencyTooltipProps = {
 	width: number;
 };
 
+const ARROW_HALF_WIDTH = 8;
+const PADDING = { horizontal: 14, vertical: 10 };
+const RADIUS = 8;
+
+function Arrow({
+	direction,
+	offset,
+	color,
+}: {
+	direction: 'UP' | 'DOWN';
+	offset: number;
+	color: string;
+}) {
+	return (
+		<View
+			style={{
+				marginLeft: Math.max(RADIUS, offset),
+				width: 0,
+				height: 0,
+				borderLeftWidth: ARROW_HALF_WIDTH,
+				borderRightWidth: ARROW_HALF_WIDTH,
+				borderLeftColor: 'transparent',
+				borderRightColor: 'transparent',
+				...(direction === 'UP'
+					? { borderBottomWidth: Tooltip.arrowHeight, borderBottomColor: color }
+					: { borderTopWidth: Tooltip.arrowHeight, borderTopColor: color }),
+			}}
+		/>
+	);
+}
+
 /**
- * @description Discord's tooltip bubble, mounted on its own Fabric surface over the message list.
+ * @description A tooltip bubble in Discord's colors, mounted on its own Fabric surface over the message list. It draws without animations, since the surface can unmount at any moment.
  * @param props Where the arrow points, the text, and the bubble width.
- * @returns The tooltip, or nothing when Discord moved its tooltip module.
+ * @returns The tooltip.
  */
 function LatencyTooltip({ arrowDirection, arrowOffset, label, width }: LatencyTooltipProps) {
-	if (!Tooltips) return null;
-
 	const background = resolveColor('BACKGROUND_SURFACE_HIGHEST');
+	const arrow = <Arrow direction={arrowDirection} offset={arrowOffset} color={background} />;
 
 	return (
-		<Tooltips.Tooltip
-			arrowDirection={arrowDirection}
-			arrowOffset={arrowOffset}
-			arrowPosition={Tooltips.TooltipArrowPositions.LEFT}
-			arrowStyle={{ borderBottomColor: background, borderTopColor: background }}
-			containerStyle={{ backgroundColor: background }}
-			label={label}
-			labelStyle={{ color: resolveColor('TEXT_DEFAULT') }}
-			style={{ width }}
-		/>
+		<View style={{ width }}>
+			{arrowDirection === 'UP' ? arrow : null}
+			<View
+				style={{
+					backgroundColor: background,
+					borderRadius: RADIUS,
+					paddingHorizontal: PADDING.horizontal,
+					paddingVertical: PADDING.vertical,
+				}}
+			>
+				<Text style={{ color: resolveColor('TEXT_DEFAULT'), fontSize: Tooltip.fontSize }}>
+					{label}
+				</Text>
+			</View>
+			{arrowDirection === 'DOWN' ? arrow : null}
+		</View>
 	);
 }
 
