@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1] - 2026-11-15
+
+### Fixed
+
+- Scan QR Code reads pictures posted as attachments on iOS.
+
 ## [1.1.0] - 2026-11-15
 
 ### Added
