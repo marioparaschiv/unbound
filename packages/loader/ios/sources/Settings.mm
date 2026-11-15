@@ -44,7 +44,8 @@ loader::SettingsStore &UnboundSettingsStore()
 
 + (void)loadSettings
 {
-    UnboundSettingsStore().load();
+    // Not load(): it would drop changes JS staged but has not flushed yet.
+    UnboundSettingsStore().refresh();
     refreshSettingsCache();
 }
 

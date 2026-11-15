@@ -26,6 +26,8 @@ public:
     bool readable() const;
     // Loads again only when the file changed on disk or unsaved changes would be discarded.
     void reload();
+    // Takes edits another writer made to settings.json, keeping changes staged but not yet saved.
+    void refresh();
     bool save() const;
     // Rebuilds the binary cache when loading found it missing or stale. Slow; call it off the
     // main thread.
@@ -77,6 +79,7 @@ private:
     FileStamp stampOnDisk() const;
     void refreshLocked(bool beforeWrite = false) const;
     bool adoptLocked(const std::string &contents) const;
+    void loadLocked() const;
     void resetLocked() const;
     void parseStoreLocked(const std::string &store) const;
     void parseAllLocked() const;

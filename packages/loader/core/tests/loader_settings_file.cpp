@@ -234,6 +234,45 @@ void replacingIgnoresExternalEdits(const std::filesystem::path &root)
     assert(!reader.get("b", "external"));
 }
 
+void refreshKeepsChangesNotYetSaved(const std::filesystem::path &root)
+{
+    const std::string path = settingsPath(root);
+    assert(loader::writeTextFileAtomically(path, R"({"a":{"x":1}})"));
+    loader::SettingsStore store(path, std::chrono::hours(1));
+    store.load();
+    assert(store.stage(nlohmann::json::array({{{"store", "a"}, {"key", "x"}, {"value", 2}}})));
+
+    assert(loader::writeTextFileAtomically(path, R"({"a":{"x":1},"b":{"external":true}})"));
+    touchLater(path);
+    store.refresh();
+    assert(store.get("a", "x") == nlohmann::json(2));
+    assert(store.getBoolean("b", "external", false));
+    assert(store.flush());
+
+    loader::SettingsStore reader(path);
+    reader.load();
+    assert(reader.get("a", "x") == nlohmann::json(2));
+    assert(reader.getBoolean("b", "external", false));
+}
+
+void refreshReadsAnotherWritersEdits(const std::filesystem::path &root)
+{
+    const std::string path = settingsPath(root);
+    assert(loader::writeTextFileAtomically(path, R"({"a":{"x":1}})"));
+    loader::SettingsStore store(path, std::chrono::hours(1));
+    store.load();
+    assert(store.set("a", "x", 2));
+    assert(store.save());
+
+    store.refresh();
+    assert(store.get("a", "x") == nlohmann::json(2));
+
+    assert(loader::writeTextFileAtomically(path, R"({"a":{"x":3}})"));
+    touchLater(path);
+    store.refresh();
+    assert(store.get("a", "x") == nlohmann::json(3));
+}
+
 void reloadSkipsAnUnchangedFile(const std::filesystem::path &root)
 {
     const std::string path = settingsPath(root);
@@ -307,6 +346,8 @@ int main()
     run("external", writesPickUpExternalEditsFirst);
     run("pending", savesKeepExternalEditsMadeWhileChangesWerePending);
     run("replaced", replacingIgnoresExternalEdits);
+    run("refresh-pending", refreshKeepsChangesNotYetSaved);
+    run("refresh-external", refreshReadsAnotherWritersEdits);
     run("reload", reloadSkipsAnUnchangedFile);
     run("blocked", saveFailsWhenTheDirectoryIsAFile);
     run("unreadable", unreadableSettingsAreNeverOverwritten);
