@@ -1,0 +1,21 @@
+{
+	"id": "unbound.compact-mode",
+	"name": "Compact Mode",
+	"description": "Drops message headers and avatars and puts each author's name inline with their message, like desktop's compact layout.",
+	"authors": [
+		{
+			"name": "Cynosphere",
+			"id": "150745989836308480"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TextIcon",
+	"main": "index.ts"
+}
