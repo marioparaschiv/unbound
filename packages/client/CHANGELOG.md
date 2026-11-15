@@ -1,5 +1,32 @@
 # Changelog
 
+## [3.6.0](https://github.com/marioparaschiv/unbound/compare/client-v3.5.1...client-v3.6.0) (2026-11-15)
+
+
+### Features
+
+* **client:** name plugins whose UI scopes are slow to dispose ([#1530](https://github.com/marioparaschiv/unbound/issues/1530)) ([7c0be96](https://github.com/marioparaschiv/unbound/commit/7c0be960fdc05fa0e1dcd6d795a6ed442ef73172))
+* **client:** restore values plugins assign when they stop ([#1521](https://github.com/marioparaschiv/unbound/issues/1521)) ([04bb0ba](https://github.com/marioparaschiv/unbound/commit/04bb0ba6cda9ff8568e7ca658d0a32bcee9e9fc6))
+* **web:** show how long ago a dev bundle was built on the debug card ([#1531](https://github.com/marioparaschiv/unbound/issues/1531)) ([afcdcaa](https://github.com/marioparaschiv/unbound/commit/afcdcaa741e1b6edbeb444b4fdff17eb6bacf8c3))
+
+
+### Bug Fixes
+
+* **client:** run worklets queued in stop before disposing scopes ([#1524](https://github.com/marioparaschiv/unbound/issues/1524)) ([0fae1ef](https://github.com/marioparaschiv/unbound/commit/0fae1ef230e9eda97f27ed3e7dd8f13ab2ec01a1))
+* **client:** size settings tab pages to the sheet, not window ([#1549](https://github.com/marioparaschiv/unbound/issues/1549)) ([05a8dbd](https://github.com/marioparaschiv/unbound/commit/05a8dbdfec2e390bcb44e49a54a635ef523236eb))
+* **rollup-plugin-hermes:** give each build its own temp folder ([#1529](https://github.com/marioparaschiv/unbound/issues/1529)) ([497b32d](https://github.com/marioparaschiv/unbound/commit/497b32dea2ed506bccd895ae8099b11805d5bb28))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.6.0
+    * @unbound-app/debugger-protocol bumped to 2.2.2
+    * @unbound-app/types bumped to 1.6.0
+    * @unbound-app/utils bumped to 1.0.6
+    * @unbound-app/web bumped to 2.6.0
+
 ## [3.5.1](https://github.com/marioparaschiv/unbound/compare/client-v3.5.0...client-v3.5.1) (2026-11-15)
 
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.6.0](https://github.com/marioparaschiv/unbound/compare/contracts-v2.5.0...contracts-v2.6.0) (2026-11-15)
+
+
+### Features
+
+* **web:** show how long ago a dev bundle was built on the debug card ([#1531](https://github.com/marioparaschiv/unbound/issues/1531)) ([afcdcaa](https://github.com/marioparaschiv/unbound/commit/afcdcaa741e1b6edbeb444b4fdff17eb6bacf8c3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/types bumped to 1.6.0
+
 ## [2.5.0](https://github.com/marioparaschiv/unbound/compare/contracts-v2.4.0...contracts-v2.5.0) (2026-11-14)
 
 
