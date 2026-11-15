@@ -1,0 +1,18 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Public client keys that plugins ship in their bundles"
+regexTarget = "line"
+paths = ['''packages/plugins/(fix-gif-download|gif-provider-switcher|music-rich-presence)/''']
+
+[[allowlists]]
+description = "Discord's public signing certificate hash, compared at runtime"
+paths = [
+	'''packages/loader/android/module/src/main/kotlin/app/unbound/android/EnvironmentFacts\.kt''',
+	'''(packages/loader/)?\.github/workflows/(loader-)?android\.yml''',
+]
+
+[[allowlists]]
+description = "Fixtures and test ids"
+paths = ['''packages/loader/core/tests/''', '''apps/discord-bot/tests/''', '''\.agents/skills/''']

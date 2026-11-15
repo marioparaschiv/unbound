@@ -1,0 +1,70 @@
+name: Dependabot merge
+
+on:
+    workflow_run:
+        workflows:
+            - Client CI
+            - DevTools
+            - Loader Pull Request Build
+            - Plugins
+            - Pull request title
+            - Secret scan
+        types: [completed]
+
+permissions:
+    contents: read
+
+jobs:
+    merge:
+        name: Merge patch and minor updates once checks pass
+        if: >-
+            github.event.workflow_run.event == 'pull_request' &&
+            github.event.workflow_run.actor.login == 'dependabot[bot]' &&
+            github.event.workflow_run.conclusion == 'success'
+        runs-on: ubuntu-26.04
+        timeout-minutes: 5
+        permissions:
+            contents: write
+            pull-requests: write
+            checks: read
+        concurrency:
+            group: dependabot-merge-${{ github.event.workflow_run.head_sha }}
+        steps:
+            - name: Merge when every update is a patch or minor and every check passed
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+                  HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+              run: |
+                  set -euo pipefail
+                  pr=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$HEAD_BRANCH" --state open --author 'app/dependabot' --json number,headRefOid \
+                      --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | .number")
+                  if [ -z "$pr" ]; then
+                      echo "No open Dependabot pull request at $HEAD_SHA."
+                      exit 0
+                  fi
+
+                  message=$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA" --jq .commit.message)
+                  types=$(printf '%s\n' "$message" | sed -n 's/^ *update-type: *//p' | sort -u)
+                  if [ -z "$types" ]; then
+                      echo "#$pr carries no update metadata; leaving it for review."
+                      exit 0
+                  fi
+                  if printf '%s\n' "$types" | grep -qv -e '^version-update:semver-patch$' -e '^version-update:semver-minor$'; then
+                      echo "#$pr includes a major or unknown update ($types); leaving it for review."
+                      exit 0
+                  fi
+
+                  runs=$(gh api --paginate "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA/check-runs?per_page=100" \
+                      --jq '.check_runs[] | select(.name != "Merge patch and minor updates once checks pass") | "\(.status) \(.conclusion // "none") \(.name)"')
+                  if printf '%s\n' "$runs" | grep -qv '^completed '; then
+                      echo "#$pr still has checks running; a later run merges it."
+                      exit 0
+                  fi
+                  if printf '%s\n' "$runs" | grep -qvE '^completed (success|skipped|neutral) '; then
+                      echo "#$pr has failing checks:"
+                      printf '%s\n' "$runs" | grep -vE '^completed (success|skipped|neutral) '
+                      exit 0
+                  fi
+
+                  gh pr merge "$pr" --repo "$GITHUB_REPOSITORY" --squash --match-head-commit "$HEAD_SHA"
