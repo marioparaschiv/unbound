@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.11] - 2026-11-15
+
+### Fixed
+
+- Tapping a latency indicator no longer crashes Discord. The tooltip draws its own bubble without animations, which could still be running when the tooltip closed.
+
 ## [1.2.10] - 2026-11-15
 
 ### Fixed
