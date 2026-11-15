@@ -11,6 +11,7 @@ import {
 	waitFor,
 	type BotTestDatabase,
 } from '../helpers/database';
+import { createFakeDiscord, createFakeGateway } from '../helpers/fake-discord';
 import { FAKE_GUILD_ID, fakeDiscord } from '../helpers/roles-discord';
 import { createFakeReads, MEMBER } from '../helpers/fake-reads';
 
@@ -32,6 +33,7 @@ describe.skipIf(!DATABASE_URL)('startDispatchers', () => {
 
 		const fake = createFakeReads();
 		const discord = fakeDiscord({ members: { [MEMBER.discordId]: [] } });
+		const dms = createFakeDiscord();
 		const roles = createRolesDispatcher({
 			guildId: FAKE_GUILD_ID,
 			guilds: discord.guilds,
@@ -41,6 +43,8 @@ describe.skipIf(!DATABASE_URL)('startDispatchers', () => {
 				ADDON_DEVELOPER_ROLE_ID: 'r-a',
 				SPONSOR_ROLE_ID: 'r-s',
 			},
+			messages: createFakeGateway(dms),
+			siteUrl: 'https://unbound.rip',
 			now: Date.now,
 		});
 		let handled = 0;
@@ -78,6 +82,7 @@ describe.skipIf(!DATABASE_URL)('startDispatchers', () => {
 			await waitFor(() => handled === 5);
 		} finally {
 			await stop();
+			dms.stop();
 		}
 
 		expect(discord.added.map((grant) => grant.roleId).toSorted()).toEqual([
@@ -86,5 +91,6 @@ describe.skipIf(!DATABASE_URL)('startDispatchers', () => {
 			'r-s',
 		]);
 		expect(discord.fetched).toEqual([MEMBER.discordId]);
+		expect(dms.dms(MEMBER.discordId)).toHaveLength(1);
 	});
 });

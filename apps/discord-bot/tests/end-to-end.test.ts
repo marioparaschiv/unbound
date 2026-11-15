@@ -86,6 +86,8 @@ describe.skipIf(!DATABASE_URL)('the runtime against the web database and a fake 
 				guilds: guild.guilds,
 				ids: ROLE_IDS,
 				contributors: { get: async () => new Set<string>() },
+				messages: createFakeGateway(auditLog),
+				siteUrl: config.siteUrl,
 				now: Date.now,
 			}),
 		];
