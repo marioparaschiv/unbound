@@ -17,11 +17,12 @@ function withTransparentContent(
 		...options,
 		contentStyle: TRANSPARENT,
 		headerStyle: { ...headerStyle, ...TRANSPARENT },
+		headerTransparent: true,
 	};
 }
 
 /**
- * @description Makes screen options draw no background of their own, keeping every other option.
+ * @description Makes screen options draw no background of their own and lay the header over the content, keeping every other option.
  * @param options The options.
  * @returns Options whose content and header are transparent.
  */
@@ -33,10 +34,13 @@ export function transparentOptions(options: ScreenOptions): ScreenOptions {
 	return withTransparentContent(options);
 }
 
+export type ScreenLayout = (props: { children: ReactNode }) => ReactNode;
+
 type NavigatorProps = {
 	id?: string;
 	style?: unknown;
 	screenOptions?: ScreenOptions;
+	screenLayout?: ScreenLayout;
 	children?: ReactNode;
 };
 type ScreenProps = { options?: ScreenOptions };
@@ -49,14 +53,25 @@ function withTransparentScreens(children: ReactNode): ReactNode {
 			: children;
 }
 
+function wrapLayout(own: ScreenLayout | undefined, layout: ScreenLayout): ScreenLayout {
+	return ({ children }) => layout({ children: own ? own({ children }) : children });
+}
+
 /**
- * @description Finds the navigator with the given id in a rendered tree and makes its screens, and the views around it, transparent.
+ * @description Finds the navigator with the given id in a rendered tree, makes its screens and the views around it transparent,
+ * and wraps each screen in `layout`.
  * @param node The rendered tree.
  * @param id The navigator's id.
+ * @param layout Draws each screen, around Discord's own layout.
  * @param depth How deep the search already is.
  * @returns The tree with that navigator changed, or the tree as it was.
  */
-export function withTransparentNavigator(node: ReactNode, id: string, depth = 0): ReactNode {
+export function withTransparentNavigator(
+	node: ReactNode,
+	id: string,
+	layout: ScreenLayout,
+	depth = 0,
+): ReactNode {
 	if (!isValidElement<NavigatorProps>(node) || depth > MAX_DEPTH) return node;
 
 	const { props } = node;
@@ -64,6 +79,7 @@ export function withTransparentNavigator(node: ReactNode, id: string, depth = 0)
 	if (props.id === id) {
 		return cloneElement(node as ReactElement<NavigatorProps>, {
 			screenOptions: transparentOptions(props.screenOptions),
+			screenLayout: wrapLayout(props.screenLayout, layout),
 			children: withTransparentScreens(props.children),
 		});
 	}
@@ -71,8 +87,8 @@ export function withTransparentNavigator(node: ReactNode, id: string, depth = 0)
 	if (!props.children) return node;
 
 	const children = Array.isArray(props.children)
-		? props.children.map((child) => withTransparentNavigator(child, id, depth + 1))
-		: withTransparentNavigator(props.children, id, depth + 1);
+		? props.children.map((child) => withTransparentNavigator(child, id, layout, depth + 1))
+		: withTransparentNavigator(props.children, id, layout, depth + 1);
 
 	return cloneElement(node as ReactElement<NavigatorProps>, {
 		children,

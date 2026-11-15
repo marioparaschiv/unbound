@@ -1,4 +1,4 @@
-import { createElement } from 'react';
+import { createElement, type ReactNode } from 'react';
 import { describe, expect, test } from 'bun:test';
 
 import { transparentOptions, withTransparentNavigator } from '~/lib/navigator';
@@ -13,6 +13,7 @@ describe('transparent settings screens', () => {
 			title: 'A',
 			contentStyle: TRANSPARENT,
 			headerStyle: TRANSPARENT,
+			headerTransparent: true,
 		});
 
 		const options = transparentOptions(() => ({
@@ -25,6 +26,7 @@ describe('transparent settings screens', () => {
 			title: 'B',
 			contentStyle: TRANSPARENT,
 			headerStyle: { height: 40, ...TRANSPARENT },
+			headerTransparent: true,
 		});
 	});
 
@@ -38,11 +40,36 @@ describe('transparent settings screens', () => {
 				createElement(Screen, { name: 'Overview', options: { title: 'y' } }),
 			),
 		);
-		const changed = withTransparentNavigator(tree, 'settings-navigator') as any;
+		const layout = ({ children }: { children: ReactNode }) =>
+			createElement('Themed', null, children);
+		const changed = withTransparentNavigator(
+			tree,
+			'settings-navigator',
+			layout as never,
+		) as any;
 		const navigator = changed.props.children;
 
 		expect(changed.props.style).toEqual([{ backgroundColor: 'grey' }, TRANSPARENT]);
 		expect(navigator.props.screenOptions.contentStyle).toEqual(TRANSPARENT);
 		expect(navigator.props.children.props.options.contentStyle).toEqual(TRANSPARENT);
+		expect(navigator.props.screenLayout({ children: 'page' })).toEqual(
+			createElement('Themed', null, 'page'),
+		);
+	});
+
+	test('keeps a layout the navigator already had inside the new one', () => {
+		const own = ({ children }: { children: ReactNode }) => createElement('Own', null, children);
+		const tree = createElement(Navigator, { id: 'settings-navigator', screenLayout: own });
+		const layout = ({ children }: { children: ReactNode }) =>
+			createElement('Themed', null, children);
+		const changed = withTransparentNavigator(
+			tree,
+			'settings-navigator',
+			layout as never,
+		) as any;
+
+		expect(changed.props.screenLayout({ children: 'page' })).toEqual(
+			createElement('Themed', null, createElement('Own', null, 'page')),
+		);
 	});
 });
