@@ -183,17 +183,17 @@ describe('UI calls', () => {
 		dispose();
 	});
 
-	test('rejects pending calls when the plugin stops', async () => {
+	test('lets calls queued before the plugin stops finish, so stop can restore views', async () => {
 		const { bridge, dispose } = createScopedUIBridge([], 'ios');
-		const first = bridge.call(() => 1).catch((error: Error) => error);
-		const second = bridge.call(() => 2).catch((error: Error) => error);
+		const first = bridge.call(() => 1);
+		const second = bridge.call(() => 2);
 
 		dispose();
 		dispose();
 		completions[0]?.({ ok: true, value: 1 });
 		completions[1]?.({ ok: true, value: 2 });
-		expect(await first).toMatchObject({ code: 'NATIVE_PLUGIN_SCOPE_DISPOSED' });
-		expect(await second).toMatchObject({ code: 'NATIVE_PLUGIN_SCOPE_DISPOSED' });
+		expect(await first).toBe(1);
+		expect(await second).toBe(2);
 		expect(() => bridge.call(() => 3)).toThrow('disposed');
 	});
 
@@ -252,7 +252,7 @@ describe('UI calls', () => {
 		dispose();
 	});
 
-	test.each(['success', 'failure', 'cancel', 'dispose'] as const)(
+	test.each(['success', 'failure', 'cancel'] as const)(
 		'clears the timeout after %s',
 		async (outcome) => {
 			jest.useFakeTimers();
@@ -265,10 +265,8 @@ describe('UI calls', () => {
 				completions[0]?.({ ok: true, value: 42 });
 			} else if (outcome === 'failure') {
 				completions[0]?.({ ok: false, error: 'Worklet failed' });
-			} else if (outcome === 'cancel') {
-				pending.cancel();
 			} else {
-				dispose();
+				pending.cancel();
 			}
 
 			await finished;
