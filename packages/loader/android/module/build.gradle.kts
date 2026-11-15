@@ -281,7 +281,7 @@ kotlin {
 
 dependencies {
     compileOnly("io.github.libxposed:api:102.0.0")
-    implementation("io.github.libxposed:service:101.0.0")
+    implementation("io.github.libxposed:service:102.0.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.17")
 }
