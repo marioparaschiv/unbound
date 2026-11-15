@@ -206,7 +206,7 @@ bool refetchBundle(BundleUpdater &updater, const std::optional<std::string> &upd
     try
     {
         return fileExists(
-            updater.downloadBundle(updater.resolveBundlePath(), updateURL, bytecodeVersion, true));
+            updater.downloadBundle(updater.currentBundlePath(), updateURL, bytecodeVersion, true));
     }
     catch (const std::exception &error)
     {

@@ -1,7 +1,10 @@
+import { setTimeout as sleep } from 'node:timers/promises';
 import { safeParse } from '@unbound-app/contracts/schema';
 import { existsSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
+
+import type { TimedSpan } from './spans';
 
 import { agentReportSchema, type AgentReport } from './schema';
 
@@ -10,18 +13,28 @@ export type { AgentReport } from './schema';
 /** Answers each report; the agent waits on the response, so work done here happens before the agent continues. */
 export type ReportHandler = (report: AgentReport) => Promise<void>;
 
+/** How the server stands in for the release CDN. */
+export type ServeOptions = {
+	/** Held before answering each bundle-folder request, as a stand-in for the CDN's round trip. */
+	latencyMs: number;
+	/** Called with each answered bundle-folder request, named `http <status> /<variant>/<file>`, in host epoch ms. */
+	onRequest: (span: TimedSpan) => void;
+};
+
 /**
  * @description Serves each variant's bundle folder under `/<variant>/` with strong ETags, like the release CDN, and
  * takes the agent's reports at `/report`.
  * @param port The port; the emulator reaches the host's loopback at 10.0.2.2.
  * @param folders Each variant's bundle folder, by name.
  * @param onReport Handles a report.
+ * @param options The CDN stand-in's latency and request log.
  * @returns A function that stops the server.
  */
 export function startServer(
 	port: number,
 	folders: Map<string, string>,
 	onReport: ReportHandler,
+	{ latencyMs, onRequest }: ServeOptions,
 ): () => void {
 	const server = Bun.serve({
 		hostname: '127.0.0.1',
@@ -50,11 +63,24 @@ export function startServer(
 				return new Response('Not Found', { status: 404 });
 			}
 
+			const start = Date.now();
+
+			if (latencyMs > 0) {
+				await sleep(latencyMs);
+			}
+
 			const data = readFileSync(join(folder, name));
 			const etag = `"${createHash('sha1').update(data).digest('hex')}"`;
 			const headers = { ETag: etag, 'Cache-Control': 'no-cache' };
+			const fresh = request.headers.get('if-none-match') === etag;
 
-			return request.headers.get('if-none-match') === etag
+			onRequest({
+				name: `http ${fresh ? 304 : 200} ${url.pathname}`,
+				start,
+				end: Date.now(),
+			});
+
+			return fresh
 				? new Response(null, { status: 304, headers })
 				: new Response(data, { headers });
 		},

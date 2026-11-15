@@ -141,6 +141,7 @@ struct Server {
     std::map<std::string, std::string> lastHeaders;
     std::string lastDownload;
     int downloads = 0;
+    int fetches   = 0;
     // Answers the next bundle download with this instead of the file.
     std::optional<loader::DownloadResult> failNext;
 
@@ -175,6 +176,7 @@ struct Server {
         return loader::BundleUpdater(
             root.string(), settings,
             [this](const std::string &url, double) -> std::optional<std::string> {
+                fetches++;
                 auto file = files.find(url);
                 return file == files.end() ? std::nullopt
                                            : std::optional<std::string>(file->second);

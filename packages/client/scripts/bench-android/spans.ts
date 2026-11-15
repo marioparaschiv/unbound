@@ -1,6 +1,7 @@
 import type { LaunchRecord } from './report';
 
 import { summarize } from '../../../cli/src/bench/stats';
+import { nativeSpans } from './native';
 
 /** A timed piece of work in one launch, in epoch ms. */
 export type TimedSpan = { name: string; start: number; end: number };
@@ -41,6 +42,16 @@ export function launchSpans(record: LaunchRecord): TimedSpan[] {
 }
 
 /**
+ * @description Collects a launch's work off the JS thread: the loader's phases and the device's requests to the
+ * harness. Nest these apart from {@link launchSpans}, which run on the JS thread at the same time.
+ * @param record The launch.
+ * @returns The spans, in epoch ms.
+ */
+export function loaderSpans(record: LaunchRecord): TimedSpan[] {
+	return [...nativeSpans(record.native ?? []), ...(record.requests ?? [])];
+}
+
+/**
  * @description Nests spans by time: each sits under the latest-starting span that still contains it. The JS thread
  * runs one thing at a time, so synchronous spans nest cleanly.
  * @param spans The spans, in any order.
@@ -72,7 +83,7 @@ function totalsOf(record: LaunchRecord): Map<string, NameTotals> {
 	const totals = new Map<string, NameTotals>();
 	const origin = record.processStart ?? 0;
 
-	for (const span of nestSpans(launchSpans(record))) {
+	for (const span of [...nestSpans(launchSpans(record)), ...nestSpans(loaderSpans(record))]) {
 		const entry = totals.get(span.name) ?? {
 			total: 0,
 			self: 0,

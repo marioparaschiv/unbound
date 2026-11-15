@@ -107,6 +107,12 @@ bool BundleUpdater::isUpdateAvailable(const std::string &preferredPath,
     // An unsigned source, such as the dev server, has no manifest to compare; only a download
     // tells, so the check reports none rather than an update that may turn out unchanged.
     DownloadPlan plan = planDownload(updateURL, bytecodeVersion);
-    return plan.exemption.empty() && !plan.unchanged;
+    if (!plan.exemption.empty() || plan.unchanged)
+    {
+        return false;
+    }
+
+    verifyPlan(plan);
+    return true;
 }
 }

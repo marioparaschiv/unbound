@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.2.2](https://github.com/marioparaschiv/unbound/compare/cli-v3.2.1...cli-v3.2.2) (2026-11-15)
+
+
+### Continuous Integration
+
+* **plugins:** build addons in three processes when publishing ([#1512](https://github.com/marioparaschiv/unbound/issues/1512)) ([6b0f888](https://github.com/marioparaschiv/unbound/commit/6b0f888c2e1c843911f4c1cec0b363b6f4cf2342))
+* **plugins:** build two addons at a time when publishing ([#1503](https://github.com/marioparaschiv/unbound/issues/1503)) ([25d9c1a](https://github.com/marioparaschiv/unbound/commit/25d9c1af25244eca94f1ee23877bbdec0d34a6ce))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/rollup-plugin-hermes bumped to 3.0.2
+  * devDependencies
+    * @unbound-app/api bumped to 3.5.1
+
 ## [3.2.1](https://github.com/marioparaschiv/unbound/compare/cli-v3.2.0...cli-v3.2.1) (2026-11-14)
 
 

@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <future>
 #include <map>
 #include <optional>
 #include <stdexcept>
@@ -57,7 +58,12 @@ public:
     BundleUpdater(std::string documents, SettingsStore &settings, TextFetcher fetchText,
                   FileDownloader download, BundleTrust trust = compiledBundleTrust());
 
+    // The bundle a launch runs, after discarding what an earlier process left half done. Call it
+    // only before a runtime evaluates a bundle: mid-run, a candidate's `.attempting` marker is
+    // this launch's own.
     std::string resolveBundlePath();
+    // The bundle running or staged now, without resolveBundlePath's launch-time recovery.
+    std::string currentBundlePath() const;
     // `ignorePause` is for an explicit manual refetch, which checks even while client updates
     // are paused; launch-time updates leave it false.
     std::string downloadBundle(const std::string &preferredPath,
@@ -105,6 +111,8 @@ private:
 
     struct DownloadPlan {
         std::string url;
+        // The bundle's file name in the manifest, such as `unbound.98.bundle`.
+        std::string file;
         std::string source;
         std::string exemption;
         std::string manifestText;
@@ -112,6 +120,8 @@ private:
         std::string expectedSha512;
         std::vector<std::string> patchBases;
         bool unchanged = false;
+        // The manifest's signature, fetched while the bundle downloads; verifyPlan waits for it.
+        std::shared_future<std::optional<std::string>> signature;
     };
 
     std::optional<std::string> patchedCandidate(const DownloadPlan &plan,
@@ -124,8 +134,13 @@ private:
                           uint32_t bytecodeVersion) const;
     std::optional<std::string> exemptionFor(const std::string &url) const;
     bool isExemptionCurrent(const std::string &reason, const std::string &url) const;
+    // Fetches the manifest and starts fetching its signature; nothing in the plan is trusted until
+    // verifyPlan returns.
     DownloadPlan planDownload(const std::optional<std::string> &updateURL,
                               uint32_t bytecodeVersion);
+    // Checks the manifest's signature, rollback, loader and bridge versions, and fills in the
+    // bundle's expected hash; throws a BundleUpdateError for a manifest it refuses.
+    void verifyPlan(DownloadPlan &plan) const;
     std::optional<std::string> verifiedRecord(const DownloadPlan &plan,
                                               const std::string &candidatePath) const;
     std::optional<std::string> candidateProblem(const std::string &candidatePath) const;

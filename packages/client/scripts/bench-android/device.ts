@@ -82,6 +82,14 @@ export function createDevice(adb: string, serial: string) {
 				`rm -f ${BUNDLE} ${BUNDLE}.trust ${BUNDLE}.candidate ${BUNDLE}.candidate.trust`,
 			);
 		},
+		/** Grows the main log buffer, so a launch's loader lines outlast Discord's own logging until they are read. */
+		async growLog() {
+			await shell('logcat -G 16M');
+		},
+		/** The loader's logcat lines from one process, in `-v epoch` format. */
+		async loaderLog(processId: number): Promise<string> {
+			return shell(`logcat -d -v epoch --pid=${processId} -s Unbound:V`);
+		},
 		async bundleSha256(): Promise<string | undefined> {
 			const out = await shell(`sha256sum ${BUNDLE} 2>/dev/null || true`);
 

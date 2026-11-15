@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 import type { LaunchRecord } from './report';
 
-import { launchSpans, nestSpans, type TimedSpan } from './spans';
+import { launchSpans, loaderSpans, nestSpans, type TimedSpan } from './spans';
 
 type AttributeValue = { stringValue: string } | { doubleValue: number } | { boolValue: boolean };
 
@@ -68,16 +68,40 @@ function launchTrace(record: LaunchRecord, run: string) {
 			'bench.lag.blocked_ms': w.lag.blocked,
 		},
 	}));
-	const nested = nestSpans([root, ...windows, ...launchSpans(record)]);
-	const ids = nested.map(spanId);
+	const thread = nestSpans([root, ...windows, ...launchSpans(record)]);
+	// Off the JS thread, so nested on their own; their outermost spans hang off `launch`.
+	const loader = nestSpans(loaderSpans(record));
+	const threadIds = thread.map(spanId);
+	const loaderIds = loader.map(spanId);
 	const traceId = randomBytes(16).toString('hex');
-	const events = Object.entries(agent.marks)
-		.filter(([name]) => !/:(start|end)$/.test(name) || /^(ready|core|initialize)/.test(name))
-		.map(([name, at]) => ({ name, timeUnixNano: nanos(at) }));
-	const spans = nested.map((span, index) => ({
+	const events = [
+		...Object.entries(agent.marks)
+			.filter(
+				([name]) => !/:(start|end)$/.test(name) || /^(ready|core|initialize)/.test(name),
+			)
+			.map(([name, at]) => ({ name, timeUnixNano: nanos(at) })),
+		// Every loader line, so a phase the harness does not pair still shows on the timeline.
+		...(record.native ?? []).map(([at, message]) => ({
+			name: `loader: ${message}`,
+			timeUnixNano: nanos(at),
+		})),
+	];
+	const linked = [
+		...thread.map((span, index) => ({
+			span,
+			id: threadIds[index],
+			parent: span.parent === undefined ? '' : threadIds[span.parent],
+		})),
+		...loader.map((span, index) => ({
+			span,
+			id: loaderIds[index],
+			parent: span.parent === undefined ? threadIds[0] : loaderIds[span.parent],
+		})),
+	];
+	const spans = linked.map(({ span, id, parent }) => ({
 		traceId,
-		spanId: ids[index],
-		parentSpanId: span.parent === undefined ? '' : ids[span.parent],
+		spanId: id,
+		parentSpanId: parent,
 		name: span.name,
 		kind: 1,
 		startTimeUnixNano: nanos(span.start),

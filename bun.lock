@@ -157,7 +157,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "3.5.0-0109250d3b2e09b67a8ae99bb370192dcf5434bd7ab1fbfd914e9693f5dc3ae7",
+      "version": "3.5.1",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -171,7 +171,7 @@
     },
     "packages/cli": {
       "name": "@unbound-app/cli",
-      "version": "3.2.1",
+      "version": "3.2.2",
       "bin": {
         "ubd": "src/index.ts",
       },
@@ -228,7 +228,7 @@
     },
     "packages/client": {
       "name": "@unbound-app/client",
-      "version": "3.5.0",
+      "version": "3.5.1",
       "dependencies": {
         "@unbound-app/contracts": "workspace:*",
         "@unbound-app/debugger-protocol": "workspace:*",
@@ -2300,7 +2300,7 @@
     },
     "packages/rollup-plugin-hermes": {
       "name": "@unbound-app/rollup-plugin-hermes",
-      "version": "3.0.1",
+      "version": "3.0.2",
       "devDependencies": {
         "@types/bun": "catalog:",
         "tsdown": "^0.23.7",
