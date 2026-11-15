@@ -1,0 +1,12 @@
+{
+	"MODE": "When to run",
+	"MODE_SUBTITLE": "Automatic runs only when this install cannot receive Discord's push notifications.",
+	"MODE_AUTO": "Automatic",
+	"MODE_ALWAYS": "Always",
+	"DIRECT_MESSAGES": "Direct messages",
+	"DIRECT_MESSAGES_SUBTITLE": "Notify for every DM and group DM, not only mentions.",
+	"PREVIEW": "Show message text",
+	"PREVIEW_SUBTITLE": "Shows what the message says in the notification.",
+	"ATTACHMENT": "Sent an attachment",
+	"NEW_MESSAGE": "New message"
+}

@@ -1,0 +1,17 @@
+{
+	"id": "unbound.local-notifications",
+	"name": "Local Notifications",
+	"description": "Notifies you of mentions and DMs on installs where Discord's push notifications do not arrive, by keeping Discord connected in the background. iOS only.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "BellIcon",
+	"main": "index.ts"
+}
