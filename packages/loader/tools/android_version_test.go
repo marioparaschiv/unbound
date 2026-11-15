@@ -30,11 +30,14 @@ func TestAndroidVersionPairsStableByDiscordRelease(t *testing.T) {
 				if err == nil {
 					t.Fatalf("chose %+v, want a failure", choice)
 				}
+
 				return
 			}
+
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			if choice.Code != test.want || (choice.Warning != "") != test.warning {
 				t.Fatalf("chose %+v, want %d with warning %v", choice, test.want, test.warning)
 			}

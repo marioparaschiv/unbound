@@ -25,6 +25,7 @@ func TestCompareSemanticVersions(t *testing.T) {
 		if (err != nil) != test.wantError {
 			t.Fatalf("compareSemanticVersions(%q, %q) error = %v", test.left, test.right, err)
 		}
+
 		if err == nil && comparison != test.comparison {
 			t.Fatalf("compareSemanticVersions(%q, %q) = %d, want %d", test.left, test.right, comparison, test.comparison)
 		}

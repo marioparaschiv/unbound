@@ -38,65 +38,84 @@ func runReleasedAndroidCode(args []string) error {
 	channel := set.String("channel", "", "stable, beta or alpha")
 	githubAPIURL := set.String("github-api-url", defaultGithubAPI, "GitHub API base URL")
 	githubRepository := set.String("github-repository", os.Getenv("GITHUB_REPOSITORY"), "GitHub owner/repository")
+
 	trackerURL := set.String("android-tracker", envOr("DISCORD_TRACKER", defaultAndroidTracker), "Android package tracker base URL")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
+
 	if releasedAndroidTags[*channel] == nil {
 		return errors.New("usage: released-android-code --channel <stable|beta|alpha>")
 	}
+
 	if *githubRepository == "" || os.Getenv("GITHUB_TOKEN") == "" {
 		return errors.New("GITHUB_REPOSITORY and GITHUB_TOKEN are required")
 	}
+
 	ctx := context.Background()
 	client := lookupClient(releasePollRequestLimit)
+
 	version, err := latestReleasedAndroidVersion(ctx, client, strings.TrimRight(*githubAPIURL, "/"), *githubRepository, os.Getenv("GITHUB_TOKEN"), *channel)
 	if err != nil {
 		return err
 	}
+
 	code, err := releasedAndroidCode(ctx, client, strings.TrimRight(*trackerURL, "/"), *channel, version)
 	if err != nil {
 		return err
 	}
+
 	fmt.Println(code)
+
 	return nil
 }
 
 // latestReleasedAndroidVersion returns the newest Discord version the channel has a published Unbound release for.
 func latestReleasedAndroidVersion(ctx context.Context, client *http.Client, apiURL, repository, token, channel string) (releasedAndroidVersion, error) {
 	pattern := releasedAndroidTags[channel]
+
 	var best releasedAndroidVersion
+
 	for page := 1; page <= releasedAndroidPageLimit; page++ {
 		endpoint := fmt.Sprintf("%s/repos/%s/releases?per_page=100&page=%d", apiURL, repository, page)
+
 		body, status, err := fetchResponse(ctx, client, endpoint, token, map[string]string{"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"})
 		if err != nil {
 			return best, fmt.Errorf("Failed to list the releases of %s: %w", repository, err)
 		}
+
 		if status != http.StatusOK {
 			return best, fmt.Errorf("Failed to list the releases of %s: GitHub returned HTTP %d", repository, status)
 		}
+
 		var releases []githubReleaseSummary
 		if err := json.Unmarshal(body, &releases); err != nil {
 			return best, fmt.Errorf("Failed to decode the releases of %s: %w", repository, err)
 		}
+
 		for _, release := range releases {
 			match := pattern.FindStringSubmatch(release.TagName)
 			if release.Draft || match == nil {
 				continue
 			}
+
 			major, _ := strconv.Atoi(match[1])
+
 			minor, _ := strconv.Atoi(match[2])
 			if minor < 100 && (major > best.Major || major == best.Major && minor > best.Minor) {
 				best = releasedAndroidVersion{Major: major, Minor: minor}
 			}
 		}
+
 		if len(releases) < 100 {
 			break
 		}
 	}
+
 	if best.Major == 0 {
 		return best, fmt.Errorf("%s has no published Android %s release", repository, channel)
 	}
+
 	return best, nil
 }
 
@@ -106,14 +125,17 @@ func latestReleasedAndroidVersion(ctx context.Context, client *http.Client, apiU
 func releasedAndroidCode(ctx context.Context, client *http.Client, trackerURL, channel string, version releasedAndroidVersion) (int, error) {
 	for track := discordAndroidChannelRank(channel); track > 0; track-- {
 		code := version.Major*1000 + track*100 + version.Minor
+
 		available, err := trackerServesBase(ctx, client, trackerURL, code)
 		if err != nil {
 			return 0, err
 		}
+
 		if available {
 			return code, nil
 		}
 	}
+
 	return version.Major*1000 + version.Minor, nil
 }
 
@@ -121,24 +143,31 @@ func releasedAndroidCode(ctx context.Context, client *http.Client, trackerURL, c
 // which can stall on a large file.
 func trackerServesBase(ctx context.Context, client *http.Client, trackerURL string, code int) (bool, error) {
 	endpoint := fmt.Sprintf("%s/download/%d/base", trackerURL, code)
+
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return false, err
 	}
+
 	request.Header.Set("Range", "bytes=0-0")
 	request.Header.Set("User-Agent", releasePollUserAgent)
+
 	noRedirect := *client
 	noRedirect.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+
 	response, err := noRedirect.Do(request)
 	if err != nil {
 		return false, fmt.Errorf("Failed to check Android version %d on the tracker: %w", code, err)
 	}
+
 	response.Body.Close()
+
 	switch {
 	case response.StatusCode == http.StatusNotFound:
 		return false, nil
 	case response.StatusCode < 400:
 		return true, nil
 	}
+
 	return false, fmt.Errorf("Failed to check Android version %d on the tracker: HTTP %d", code, response.StatusCode)
 }

@@ -34,14 +34,18 @@ func downloadedArtifact(step workflowStep) string {
 	if name := step.With["name"]; name != "" {
 		return name
 	}
+
 	if step.With["merge-multiple"] != "true" {
 		return ""
 	}
+
 	return androidArtifactIDs[step.With["artifact-ids"]]
 }
 
-var stepArtifactID = regexp.MustCompile(`^\$\{\{ steps\.([a-z-]+)\.outputs\.artifact-id \}\}$`)
-var jobOutput = regexp.MustCompile(`^\$\{\{ jobs\.([a-z-]+)\.outputs\.([a-z_]+) \}\}$`)
+var (
+	stepArtifactID = regexp.MustCompile(`^\$\{\{ steps\.([a-z-]+)\.outputs\.artifact-id \}\}$`)
+	jobOutput      = regexp.MustCompile(`^\$\{\{ jobs\.([a-z-]+)\.outputs\.([a-z_]+) \}\}$`)
+)
 
 func TestParsedAndroidArtifactIDsNameTheirUploads(t *testing.T) {
 	var call struct {
@@ -56,30 +60,38 @@ func TestParsedAndroidArtifactIDsNameTheirUploads(t *testing.T) {
 	if err := yaml.Unmarshal(mustReadWorkflow(t, "loader-android.yml"), &call); err != nil {
 		t.Fatal(err)
 	}
+
 	android := loadWorkflow(t, "loader-android.yml")
+
 	for expression, artifact := range androidArtifactIDs {
 		parts := strings.Split(strings.Trim(expression, "${} "), ".")
 		output := parts[len(parts)-1]
+
 		jobName, jobOutputName := "", output
 		if parts[1] == "android" {
 			match := jobOutput.FindStringSubmatch(call.On.WorkflowCall.Outputs[output].Value)
 			if match == nil {
 				t.Fatalf("loader-android.yml must expose %s from a job output", output)
 			}
+
 			jobName, jobOutputName = match[1], match[2]
 		} else {
 			jobName = parts[1]
 		}
+
 		match := stepArtifactID.FindStringSubmatch(android.job(t, jobName).Outputs[jobOutputName])
 		if match == nil {
 			t.Fatalf("%s %s must be an upload step's artifact-id", jobName, jobOutputName)
 		}
+
 		var upload workflowStep
+
 		for _, step := range android.job(t, jobName).Steps {
 			if step.ID == match[1] {
 				upload = step
 			}
 		}
+
 		if !strings.HasPrefix(upload.Uses, "actions/upload-artifact@") || upload.With["name"] != artifact+androidChannelSuffix {
 			t.Fatalf("%s must be the ID of the %q upload named per channel, step %s uploads %q", expression, artifact, match[1], upload.With["name"])
 		}

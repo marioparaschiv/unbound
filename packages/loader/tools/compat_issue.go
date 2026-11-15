@@ -40,37 +40,46 @@ func compatIssueVersions(results *compatResults) string {
 	for _, target := range results.Targets {
 		parts = append(parts, compatPlatformLabels[target.Platform]+" "+target.Version)
 	}
+
 	return strings.Join(parts, ", ")
 }
 
 func planCompatIssue(open []compatIssue, channel, versions string, problems bool) compatIssuePlan {
 	prefix := compatIssuePrefix(channel)
 	plan := compatIssuePlan{Title: prefix + ": " + versions}
+
 	var relevant []compatIssue
+
 	for _, issue := range open {
 		if strings.HasPrefix(issue.Title, prefix) {
 			relevant = append(relevant, issue)
 		}
 	}
+
 	sortIssuesNewestFirst(relevant)
+
 	if !problems {
 		for _, issue := range relevant {
 			plan.Close = append(plan.Close, compatIssueClose{Number: issue.Number, Comment: resolvedComment(versions)})
 		}
+
 		return plan
 	}
+
 	for _, issue := range relevant {
 		if issue.Title == plan.Title {
 			plan.Update = issue.Number
 			break
 		}
 	}
+
 	plan.Create = plan.Update == 0
 	for _, issue := range relevant {
 		if issue.Number != plan.Update {
 			plan.Close = append(plan.Close, compatIssueClose{Number: issue.Number})
 		}
 	}
+
 	return plan
 }
 
@@ -98,6 +107,7 @@ type ghCLI struct{}
 func (ghCLI) run(args ...string) ([]byte, error) {
 	command := exec.Command("gh", args...)
 	command.Stderr = os.Stderr
+
 	return command.Output()
 }
 
@@ -106,7 +116,9 @@ func (cli ghCLI) openIssues(repository, label string) ([]compatIssue, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var issues []compatIssue
+
 	return issues, json.Unmarshal(output, &issues)
 }
 
@@ -120,11 +132,14 @@ func (cli ghCLI) createIssue(repository, title, label, bodyFile string) (int, er
 	if err != nil {
 		return 0, err
 	}
+
 	url := strings.TrimSpace(string(output))
+
 	number, err := strconv.Atoi(url[strings.LastIndex(url, "/")+1:])
 	if err != nil {
 		return 0, fmt.Errorf("unexpected gh issue create output %q", url)
 	}
+
 	return number, nil
 }
 
@@ -145,17 +160,21 @@ func applyCompatIssuePlan(github compatGitHub, repository, label, bodyFile strin
 		if err != nil {
 			return 0, err
 		}
+
 		current = number
 	}
+
 	for _, closing := range plan.Close {
 		comment := closing.Comment
 		if comment == "" {
 			comment = supersededComment(current)
 		}
+
 		if err := github.closeIssue(repository, closing.Number, comment); err != nil {
 			return current, err
 		}
 	}
+
 	return current, nil
 }
 
@@ -164,30 +183,39 @@ func runCompatIssue(args []string) error {
 	resultsPath := set.String("results", "", "results JSON from compat-scan")
 	reportPath := set.String("report", "", "markdown report from compat-scan")
 	channel := set.String("channel", "", "release channel label")
+
 	repository := set.String("repo", os.Getenv("GITHUB_REPOSITORY"), "owner/name of the repository")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
+
 	if *resultsPath == "" || *reportPath == "" || *channel == "" || *repository == "" {
 		return errors.New("usage: compat-issue --results <json> --report <md> --channel <name> [--repo <owner/name>]")
 	}
+
 	data, err := os.ReadFile(*resultsPath)
 	if err != nil {
 		return err
 	}
+
 	var results compatResults
 	if err := json.Unmarshal(data, &results); err != nil {
 		return fmt.Errorf("results: %w", err)
 	}
+
 	github := ghCLI{}
+
 	open, err := github.openIssues(*repository, compatIssueLabel)
 	if err != nil {
 		return err
 	}
+
 	plan := planCompatIssue(open, *channel, compatIssueVersions(&results), compatHasProblems(&results))
+
 	number, err := applyCompatIssuePlan(github, *repository, compatIssueLabel, *reportPath, plan)
 	if number != 0 {
 		fmt.Printf("Discord compatibility issue #%d is current\n", number)
 	}
+
 	return err
 }

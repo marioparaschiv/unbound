@@ -13,13 +13,16 @@ import (
 
 func writeSmokePlugin(t *testing.T, root, folder, manifest string, files ...string) {
 	t.Helper()
+
 	dist := filepath.Join(root, folder, "dist")
 	if err := os.MkdirAll(dist, 0o755); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := os.WriteFile(filepath.Join(dist, "manifest.json"), []byte(manifest), 0o644); err != nil {
 		t.Fatal(err)
 	}
+
 	for _, file := range files {
 		if err := os.WriteFile(filepath.Join(dist, file), []byte("module.exports = {};"), 0o644); err != nil {
 			t.Fatal(err)
@@ -32,13 +35,16 @@ func TestDiscoverSmokePluginsKeepsThePlatformsBuiltPlugins(t *testing.T) {
 	writeSmokePlugin(t, root, "view-raw", `{"id":"unbound.view-raw","main":"index.js"}`, "index.js")
 	writeSmokePlugin(t, root, "moyai", `{"id":"unbound.moyai","main":"index.js","platforms":{"ios":{},"android":{}}}`, "index.js")
 	writeSmokePlugin(t, root, "ios-only", `{"id":"unbound.ios-only","main":"index.js","platforms":{"ios":{"capabilities":["native.objc.classes"]}}}`, "index.js")
+
 	if err := os.MkdirAll(filepath.Join(root, "shared", "src"), 0o755); err != nil {
 		t.Fatal(err)
 	}
+
 	plugins, err := discoverSmokePlugins(root, "android")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	var ids []string
 	for _, plugin := range plugins {
 		ids = append(ids, plugin.id)
@@ -46,6 +52,7 @@ func TestDiscoverSmokePluginsKeepsThePlatformsBuiltPlugins(t *testing.T) {
 			t.Fatalf("%s must copy its built files, got %v", plugin.id, plugin.files)
 		}
 	}
+
 	if !reflect.DeepEqual(ids, []string{"unbound.moyai", "unbound.view-raw"}) {
 		t.Fatalf("unexpected Android plugins %v", ids)
 	}
@@ -54,13 +61,17 @@ func TestDiscoverSmokePluginsKeepsThePlatformsBuiltPlugins(t *testing.T) {
 func TestDiscoverSmokePluginsRejectsUnbuiltPlugins(t *testing.T) {
 	root := t.TempDir()
 	writeSmokePlugin(t, root, "view-raw", `{"id":"unbound.view-raw","main":"index.js"}`)
+
 	if _, err := discoverSmokePlugins(root, "ios"); err == nil || !strings.Contains(err.Error(), "not built") {
 		t.Fatalf("a plugin without its bundle must be rejected, got %v", err)
 	}
+
 	if _, err := discoverSmokePlugins(t.TempDir(), "ios"); err == nil {
 		t.Fatal("a directory without built plugins must be rejected")
 	}
+
 	writeSmokePlugin(t, root, "unsafe", `{"id":"../escape","main":"index.js"}`, "index.js")
+
 	if _, err := discoverSmokePlugins(root, "ios"); err == nil || !strings.Contains(err.Error(), "unusable plugin id") {
 		t.Fatalf("an id that is not a folder name must be rejected, got %v", err)
 	}
@@ -71,10 +82,12 @@ func TestSmokeSettingsEnableEveryPluginAndTheDebugger(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	var settings map[string]any
 	if err := json.Unmarshal(data, &settings); err != nil {
 		t.Fatal(err)
 	}
+
 	expected := map[string]any{
 		"unbound": map[string]any{
 			"debugger":       map[string]any{"enabled": true, "address": "10.0.2.2:9090"},
@@ -86,10 +99,12 @@ func TestSmokeSettingsEnableEveryPluginAndTheDebugger(t *testing.T) {
 	if !reflect.DeepEqual(settings, expected) {
 		t.Fatalf("unexpected settings %s", data)
 	}
+
 	data, err = smokeSettings(nil, "127.0.0.1:9090", "")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if strings.Contains(string(data), "loader") {
 		t.Fatalf("without a served client the default bundle URL must stay, got %s", data)
 	}
@@ -105,18 +120,23 @@ func TestSmokeLogWatcherReadsLogcat(t *testing.T) {
 	} {
 		watcher.observe(line)
 	}
+
 	plugins := []smokePlugin{{id: "unbound.moyai"}}
 	if !watcher.loadedAll(plugins) {
 		t.Fatal("the loader line must count as loaded")
 	}
+
 	if watcher.loadedAll([]smokePlugin{{id: "unbound.moyai"}, {id: "unbound.view-raw"}}) {
 		t.Fatal("only the loader's own log lines count")
 	}
+
 	result := &smokeResult{loaded: map[string]bool{}, failures: map[string][]string{}}
 	watcher.snapshot(result)
+
 	if result.count != 1 || len(result.failures["unbound.moyai"]) != 1 {
 		t.Fatalf("unexpected watcher state %+v", result)
 	}
+
 	if watcher.crashed() {
 		t.Fatal("no crash was logged")
 	}
@@ -126,6 +146,7 @@ func TestSmokeLogWatcherReadsTheUnifiedLog(t *testing.T) {
 	watcher := newSmokeLogWatcher(&iosSmokeTarget{})
 	watcher.observe("2026-10-26 21:00:00.000 I  Discord[4242:1a2b] [app.unbound:plugins] Loaded unbound.view-raw from /Users/runner/Library/Developer/CoreSimulator/Devices/X/data/Containers/Data/Application/Y/Documents/Unbound/Plugins/unbound.view-raw/index.js.")
 	watcher.observe("2026-10-26 21:00:00.001 I  Discord[4242:1a2b] [app.unbound:plugins] Loaded 1 plugin.")
+
 	if !watcher.loadedAll([]smokePlugin{{id: "unbound.view-raw"}}) {
 		t.Fatal("the unified log line must count as loaded")
 	}
@@ -151,12 +172,15 @@ func TestParseSmokeEvalOutput(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if !reflect.DeepEqual(statuses, []smokePluginStatus{{ID: "unbound.moyai", Started: true}}) {
 		t.Fatalf("unexpected statuses %+v", statuses)
 	}
+
 	if _, err := parseSmokeEvalOutput([]byte(`{"type":"eval-result","id":"1","ok":false,"error":"ReferenceError: unbound is not defined"}`), errors.New("exit status 1")); err == nil || !strings.Contains(err.Error(), "unbound is not defined") {
 		t.Fatalf("a device-side error must be reported, got %v", err)
 	}
+
 	if _, err := parseSmokeEvalOutput([]byte("bridge exploded"), errors.New("exit status 1")); err == nil || !strings.Contains(err.Error(), "bridge exploded") {
 		t.Fatalf("unreadable output must be reported, got %v", err)
 	}
@@ -174,6 +198,7 @@ func TestSmokeProblemsRequireEveryPluginLoadedAndStarted(t *testing.T) {
 			{ID: "unbound.view-raw", Failed: true, Error: "boom"},
 		},
 	}
+
 	problems := smokeProblems(result)
 	for _, expected := range []string{
 		"the loader never logged Loaded unbound.translate",
@@ -186,10 +211,13 @@ func TestSmokeProblemsRequireEveryPluginLoadedAndStarted(t *testing.T) {
 			t.Errorf("problems are missing %q: %v", expected, problems)
 		}
 	}
+
 	if strings.Contains(strings.Join(problems, "\n"), "unbound.moyai") {
 		t.Fatalf("a started plugin is not a problem: %v", problems)
 	}
+
 	result.problems = problems
+
 	report := renderSmokeReport(result)
 	for _, expected := range []string{"## ", "| `unbound.moyai` | yes | started |", "| `unbound.translate` | no | unknown to the client |"} {
 		if !strings.Contains(report, expected) {
@@ -200,6 +228,7 @@ func TestSmokeProblemsRequireEveryPluginLoadedAndStarted(t *testing.T) {
 
 func TestSmokeProblemsPassACleanRun(t *testing.T) {
 	plugins := []smokePlugin{{id: "unbound.moyai"}}
+
 	result := &smokeResult{
 		platform: "android",
 		plugins:  plugins,
@@ -211,6 +240,7 @@ func TestSmokeProblemsPassACleanRun(t *testing.T) {
 	if problems := smokeProblems(result); len(problems) != 0 {
 		t.Fatalf("a clean run has no problems, got %v", problems)
 	}
+
 	if report := renderSmokeReport(result); !strings.Contains(report, "## Android smoke test\n\nDiscord loaded and started all 1 first-party plugins without signing in.") {
 		t.Fatalf("unexpected report:\n%s", report)
 	}
@@ -223,17 +253,21 @@ func TestSelectAndroidSplitsPicksTheEmulatorsABI(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+
 	splits, err := selectAndroidSplits(directory, "x86_64")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	var names []string
 	for _, split := range splits {
 		names = append(names, filepath.Base(split))
 	}
+
 	if !reflect.DeepEqual(names, []string{"base-487-lspatched.apk", "config.x86_64-487-lspatched.apk", "config.en-487-lspatched.apk", "config.xxhdpi-487-lspatched.apk"}) {
 		t.Fatalf("unexpected splits %v", names)
 	}
+
 	if _, err := selectAndroidSplits(directory, "x86"); err == nil {
 		t.Fatal("a missing ABI split must be reported")
 	}
@@ -247,13 +281,16 @@ func TestSelectSimulatorPicksTheNewestNumberedIPhone(t *testing.T) {
 		{"identifier":"com.apple.CoreSimulator.SimRuntime.iOS-19-0","platform":"iOS","version":"19.0","isAvailable":false,"supportedDeviceTypes":[]},
 		{"identifier":"com.apple.CoreSimulator.SimRuntime.watchOS-11-0","platform":"watchOS","version":"11.0","isAvailable":true,"supportedDeviceTypes":[]}
 	]}`)
+
 	choice, err := selectSimulator(listing)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if choice.runtime != "com.apple.CoreSimulator.SimRuntime.iOS-18-10" || choice.deviceType != "iPhone-16-Pro" || choice.description != "iPhone 16 Pro on iOS 18.10" {
 		t.Fatalf("unexpected simulator %+v", choice)
 	}
+
 	if _, err := selectSimulator([]byte(`{"runtimes":[]}`)); err == nil {
 		t.Fatal("no runtime must be reported")
 	}
@@ -263,6 +300,7 @@ func TestParseSimctlLaunchPID(t *testing.T) {
 	if pid := parseSimctlLaunchPID("com.hammerandchisel.discord: 4242\n"); pid != 4242 {
 		t.Fatalf("unexpected pid %d", pid)
 	}
+
 	if pid := parseSimctlLaunchPID(""); pid != 0 {
 		t.Fatalf("unexpected pid %d", pid)
 	}
@@ -272,10 +310,12 @@ func TestHostProcessAlive(t *testing.T) {
 	if !hostProcessAlive(os.Getpid()) {
 		t.Fatal("the test's own process is running")
 	}
+
 	exited := exec.Command("true")
 	if err := exited.Run(); err != nil {
 		t.Fatal(err)
 	}
+
 	if hostProcessAlive(exited.Process.Pid) {
 		t.Fatal("a reaped process is not running")
 	}
@@ -283,27 +323,34 @@ func TestHostProcessAlive(t *testing.T) {
 
 func TestSmokeTestsSkipUnsupportedDiscordBuilds(t *testing.T) {
 	repository := t.TempDir()
+
 	policy := filepath.Join(repository, "packages", "loader", "compat-policy.json")
 	if err := os.MkdirAll(filepath.Dir(policy), 0o755); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := os.WriteFile(policy, []byte(`{"minimumDiscordVersion":{"android":"350.8","ios":"350.0"},"raiseReminderDays":30}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
+
 	reason, err := unsupportedDiscordReason(repository, "ios", "205.0")
 	if err != nil || !strings.Contains(reason, "Discord 205.0, older than 350.0") {
 		t.Fatalf("an unsupported build must be skipped with a reason, got %q, %v", reason, err)
 	}
+
 	for _, version := range []string{"350.0", "352.1"} {
 		if reason, err := unsupportedDiscordReason(repository, "ios", version); err != nil || reason != "" {
 			t.Fatalf("Discord %s is supported, got %q, %v", version, reason, err)
 		}
 	}
+
 	summary := filepath.Join(t.TempDir(), "summary.md")
+
 	options := &smokeOptions{artifacts: filepath.Join(t.TempDir(), "artifacts"), summary: summary}
 	if err := skipSmokeTest("ios", options, reason); err != nil {
 		t.Fatal(err)
 	}
+
 	written, err := os.ReadFile(summary)
 	if err != nil || !strings.HasPrefix(string(written), "## iOS smoke test\n\nSkipped: ") {
 		t.Fatalf("the skip must be explained in the job summary, got %q, %v", written, err)
@@ -314,15 +361,19 @@ func TestSmokeLogWatcherForgetsAFirstLaunchCrash(t *testing.T) {
 	watcher := newSmokeLogWatcher(&androidSmokeTarget{})
 	watcher.observe("10-26 21:00:00.000  4242  4242 I Unbound : [plugins] Loaded unbound.moyai from /x.")
 	watcher.observe("10-26 21:00:00.001   600   700 I ActivityManager: Process com.discord (pid 4242) has died: fg  TOP")
+
 	if crash := watcher.takeCrashBeforeLoads(); !strings.Contains(crash, "has died") {
 		t.Fatalf("the first crash must be handed over, got %q", crash)
 	}
+
 	if watcher.crashed() || watcher.loadedAll([]smokePlugin{{id: "unbound.moyai"}}) {
 		t.Fatal("a relaunch must start from a clean slate")
 	}
+
 	if crash := watcher.takeCrashBeforeLoads(); crash != "" {
 		t.Fatalf("nothing is left to hand over, got %q", crash)
 	}
+
 	report := renderSmokeReport(&smokeResult{platform: "android", relaunch: "boom", loaded: map[string]bool{}})
 	if !strings.Contains(report, "Warning: Discord crashed on the first launch and was relaunched once: `boom`") {
 		t.Fatalf("a relaunch must be reported, got:\n%s", report)
@@ -334,6 +385,7 @@ func TestParseSmokeEvalOutputMarksTimeoutsAsRetryable(t *testing.T) {
 	if !errors.Is(err, errSmokeEvalTimedOut) {
 		t.Fatalf("a timed-out evaluation must be retryable, got %v", err)
 	}
+
 	_, err = parseSmokeEvalOutput([]byte(`{"type":"eval-result","id":"1","ok":false,"error":"ReferenceError: unbound is not defined"}`+"\n"), nil)
 	if err == nil || errors.Is(err, errSmokeEvalTimedOut) || !strings.Contains(err.Error(), "threw on the device") {
 		t.Fatalf("an evaluation that threw must fail at once, got %v", err)
@@ -342,11 +394,13 @@ func TestParseSmokeEvalOutputMarksTimeoutsAsRetryable(t *testing.T) {
 
 func TestRetrySmokeCommandRetriesUntilSuccess(t *testing.T) {
 	calls := 0
+
 	output, err := retrySmokeCommand(3, func() (string, error) {
 		calls++
 		if calls < 3 {
 			return "", errors.New("signal: killed")
 		}
+
 		return "listed", nil
 	})
 	if err != nil || output != "listed" || calls != 3 {
@@ -356,6 +410,7 @@ func TestRetrySmokeCommandRetriesUntilSuccess(t *testing.T) {
 
 func TestRetrySmokeCommandReturnsTheLastError(t *testing.T) {
 	calls := 0
+
 	_, err := retrySmokeCommand(2, func() (string, error) {
 		calls++
 		return "", errors.New("signal: killed")

@@ -24,11 +24,14 @@ func producerOutcome(jobs []actionsJob, job string) string {
 		if candidate.Name != job && !strings.HasSuffix(candidate.Name, " / "+job) {
 			continue
 		}
+
 		if candidate.Status != "completed" {
 			return ""
 		}
+
 		return candidate.Conclusion
 	}
+
 	return ""
 }
 
@@ -41,17 +44,21 @@ func runWaitArtifact(args []string) error {
 	name := set.String("name", "", "artifact to wait for")
 	job := set.String("job", "", "id of the job that uploads it")
 	timeout := set.Duration("timeout", 40*time.Minute, "fail after waiting this long")
+
 	interval := set.Duration("interval", 10*time.Second, "time between checks")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
+
 	if *repository == "" || *run == "" || *attempt == "" || *name == "" || *job == "" {
 		return errors.New("usage: wait-artifact --name <artifact> --job <job id> [--repo <owner/name>] [--run <id>] [--attempt <n>]")
 	}
+
 	artifactsPath := fmt.Sprintf("repos/%s/actions/runs/%s/artifacts?name=%s", *repository, *run, url.QueryEscape(*name))
 	jobsPath := fmt.Sprintf("repos/%s/actions/runs/%s/attempts/%s/jobs?per_page=100", *repository, *run, *attempt)
 	started := time.Now()
 	producerSucceeded := false
+
 	for {
 		if found, err := artifactUploaded(artifactsPath); err != nil {
 			fmt.Printf("Failed to list the artifacts of run %s: %v\n", *run, err)
@@ -63,10 +70,12 @@ func runWaitArtifact(args []string) error {
 		if producerSucceeded {
 			return fmt.Errorf("%s succeeded without uploading %s", *job, *name)
 		}
+
 		jobs, err := listActionsPages[actionsJob](jobsPath, "jobs")
 		if err != nil {
 			fmt.Printf("Failed to list the jobs of run %s: %v\n", *run, err)
 		}
+
 		switch outcome := producerOutcome(jobs, *job); outcome {
 		case "":
 		case "success":
@@ -74,9 +83,11 @@ func runWaitArtifact(args []string) error {
 		default:
 			return fmt.Errorf("%s finished %s, so %s will not be uploaded", *job, outcome, *name)
 		}
+
 		if time.Since(started) > *timeout {
 			return fmt.Errorf("%s was not uploaded within %s", *name, *timeout)
 		}
+
 		time.Sleep(*interval)
 	}
 }
@@ -86,11 +97,13 @@ func artifactUploaded(path string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	var listing struct {
 		TotalCount int `json:"total_count"`
 	}
 	if err := json.Unmarshal(output, &listing); err != nil {
 		return false, err
 	}
+
 	return listing.TotalCount > 0, nil
 }

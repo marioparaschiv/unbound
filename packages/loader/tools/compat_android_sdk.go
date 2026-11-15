@@ -36,16 +36,19 @@ func discoverAndroidJar() string {
 	for _, home := range androidSDKSearchPath() {
 		matches, _ := filepath.Glob(filepath.Join(home, "platforms", "android-*", "android.jar"))
 		best, bestLevel := "", -1
+
 		for _, match := range matches {
 			level, err := strconv.Atoi(strings.TrimPrefix(filepath.Base(filepath.Dir(match)), "android-"))
 			if err == nil && level > bestLevel {
 				best, bestLevel = match, level
 			}
 		}
+
 		if best != "" {
 			return best
 		}
 	}
+
 	return ""
 }
 
@@ -55,21 +58,27 @@ func loadJavaFrameworkIndex(path string) (*javaFrameworkIndex, error) {
 		return nil, err
 	}
 	defer archive.Close()
+
 	index := newJavaFrameworkIndex()
+
 	for _, file := range archive.File {
 		if !strings.HasSuffix(file.Name, ".class") {
 			continue
 		}
+
 		data, err := readZipEntry(file)
 		if err != nil {
 			return nil, err
 		}
+
 		class, err := parseJavaClassFile(data)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", file.Name, err)
 		}
+
 		index.add(class)
 	}
+
 	return index, nil
 }
 
@@ -78,6 +87,7 @@ func (index *javaFrameworkIndex) add(class *javaFrameworkClass) {
 	for name := range class.Methods {
 		index.MethodNames[name] = true
 	}
+
 	for name := range class.Fields {
 		index.FieldNames[name] = true
 	}
@@ -94,8 +104,10 @@ func (reader *javaClassReader) u1() int {
 		reader.err = errors.New("class file is truncated")
 		return 0
 	}
+
 	value := reader.data[reader.position]
 	reader.position++
+
 	return int(value)
 }
 
@@ -104,8 +116,10 @@ func (reader *javaClassReader) u2() int {
 		reader.err = errors.New("class file is truncated")
 		return 0
 	}
+
 	value := binary.BigEndian.Uint16(reader.data[reader.position:])
 	reader.position += 2
+
 	return int(value)
 }
 
@@ -114,8 +128,10 @@ func (reader *javaClassReader) u4() int {
 		reader.err = errors.New("class file is truncated")
 		return 0
 	}
+
 	value := binary.BigEndian.Uint32(reader.data[reader.position:])
 	reader.position += 4
+
 	return int(value)
 }
 
@@ -124,6 +140,7 @@ func (reader *javaClassReader) skip(count int) {
 		reader.err = errors.New("class file is truncated")
 		return
 	}
+
 	reader.position += count
 }
 
@@ -132,9 +149,11 @@ func parseJavaClassFile(data []byte) (*javaFrameworkClass, error) {
 	if reader.u4() != 0xCAFEBABE {
 		return nil, errors.New("not a class file")
 	}
+
 	reader.skip(4)
 	count := reader.u2()
 	utf8 := make([]string, count)
+
 	classes := make([]int, count)
 	for slot := 1; slot < count && reader.err == nil; slot++ {
 		switch tag := reader.u1(); tag {
@@ -142,6 +161,7 @@ func parseJavaClassFile(data []byte) (*javaFrameworkClass, error) {
 			length := reader.u2()
 			start := reader.position
 			reader.skip(length)
+
 			if reader.err == nil {
 				utf8[slot] = string(data[start : start+length])
 			}
@@ -155,39 +175,49 @@ func parseJavaClassFile(data []byte) (*javaFrameworkClass, error) {
 			reader.skip(4)
 		case 5, 6:
 			reader.skip(8)
+
 			slot++
 		default:
 			return nil, fmt.Errorf("unknown constant pool tag %d", tag)
 		}
 	}
+
 	text := func(slot int) string {
 		if slot > 0 && slot < len(utf8) {
 			return utf8[slot]
 		}
+
 		return ""
 	}
 	className := func(slot int) string {
 		if slot > 0 && slot < len(classes) {
 			return strings.ReplaceAll(text(classes[slot]), "/", ".")
 		}
+
 		return ""
 	}
+
 	reader.skip(2)
+
 	class := &javaFrameworkClass{Methods: map[string][]string{}, Fields: map[string]bool{}}
 	class.Name = className(reader.u2())
+
 	class.Super = className(reader.u2())
 	for interfaces := reader.u2(); interfaces > 0 && reader.err == nil; interfaces-- {
 		class.Interfaces = append(class.Interfaces, className(reader.u2()))
 	}
+
 	members := func(record func(name, descriptor string)) {
 		for members := reader.u2(); members > 0 && reader.err == nil; members-- {
 			reader.skip(2)
 			name := text(reader.u2())
+
 			descriptor := text(reader.u2())
 			for attributes := reader.u2(); attributes > 0 && reader.err == nil; attributes-- {
 				reader.skip(2)
 				reader.skip(reader.u4())
 			}
+
 			record(name, descriptor)
 		}
 	}
@@ -195,9 +225,11 @@ func parseJavaClassFile(data []byte) (*javaFrameworkClass, error) {
 	members(func(name, descriptor string) {
 		class.Methods[name] = append(class.Methods[name], javaDescriptorParameters(descriptor))
 	})
+
 	if reader.err != nil {
 		return nil, reader.err
 	}
+
 	return class, nil
 }
 
@@ -205,42 +237,54 @@ func javaDescriptorParameters(descriptor string) string {
 	if !strings.HasPrefix(descriptor, "(") {
 		return ""
 	}
+
 	if end := strings.IndexByte(descriptor, ')'); end > 0 {
 		return descriptor[1:end]
 	}
+
 	return ""
 }
 
 func (index *javaFrameworkIndex) lookupMethod(className, method, parameters string) (dexLookup, string) {
 	visited := map[string]bool{}
 	nameSeen := false
+
 	queue := []string{className}
 	for len(queue) > 0 {
 		name := queue[0]
 		queue = queue[1:]
+
 		class := index.Classes[name]
 		if class == nil || visited[name] {
 			continue
 		}
+
 		visited[name] = true
+
 		if signatures, ok := class.Methods[method]; ok {
 			if parameters == "" {
 				return dexFound, name
 			}
+
 			for _, signature := range signatures {
 				if signature == parameters {
 					return dexFound, name
 				}
 			}
+
 			nameSeen = true
 		}
+
 		if class.Super != "" {
 			queue = append(queue, class.Super)
 		}
+
 		queue = append(queue, class.Interfaces...)
 	}
+
 	if nameSeen {
 		return dexSignatureMismatch, ""
 	}
+
 	return dexMissing, ""
 }

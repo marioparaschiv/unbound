@@ -13,27 +13,35 @@ import (
 
 func TestPublishLoaderReleasesSendsBothPlatformRequests(t *testing.T) {
 	requests := map[string]loaderReleasePublishRequest{}
+
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if request.Method == http.MethodGet {
 			if request.URL.Path != "/api/v1/loader/updates" || request.URL.Query().Get("version") != "0.0.0" {
 				t.Fatalf("unexpected latest loader request: %s %s", request.Method, request.URL.String())
 			}
+
 			fmt.Fprint(writer, "{\"update\":{\"version\":\"1.0.0\"}}")
+
 			return
 		}
+
 		if request.Method != http.MethodPost || request.URL.Path != "/api/v1/loader/releases" {
 			t.Fatalf("unexpected loader release request: %s %s", request.Method, request.URL.Path)
 		}
+
 		if request.Header.Get("X-API-Key") != "ci-key" {
 			t.Fatal("loader release request omitted its API key")
 		}
+
 		if request.Header.Get("Content-Type") != "application/json" {
 			t.Fatal("loader release request omitted its JSON content type")
 		}
+
 		var body loaderReleasePublishRequest
 		if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
 			t.Fatal(err)
 		}
+
 		requests[body.Platform] = body
 		fmt.Fprintf(writer, "{\"platform\":%q,\"version\":%q,\"url\":%q}", body.Platform, body.Version, body.URL)
 	}))
@@ -50,14 +58,17 @@ func TestPublishLoaderReleasesSendsBothPlatformRequests(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if strings.Join(result.published, ",") != "ios,android" {
 		t.Fatalf("published = %v, want both platforms", result.published)
 	}
+
 	for _, platform := range []string{"ios", "android"} {
 		body, exists := requests[platform]
 		if !exists || body.Version != "1.0.1" {
 			t.Fatalf("unexpected %s request: %#v", platform, body)
 		}
+
 		if body.Changelog == nil || !strings.Contains(*body.Changelog, "Loader version 1.0.1") {
 			t.Fatalf("unexpected %s changelog: %#v", platform, body.Changelog)
 		}
@@ -66,11 +77,13 @@ func TestPublishLoaderReleasesSendsBothPlatformRequests(t *testing.T) {
 
 func TestPublishLoaderReleasesSkipsUnchangedVersions(t *testing.T) {
 	postCount := 0
+
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if request.Method == http.MethodGet {
 			fmt.Fprint(writer, "{\"update\":{\"version\":\"1.0.1\"}}")
 			return
 		}
+
 		postCount++
 	}))
 	defer server.Close()
@@ -85,6 +98,7 @@ func TestPublishLoaderReleasesSkipsUnchangedVersions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if len(result.published) != 0 || postCount != 0 {
 		t.Fatalf("unchanged loader version published: %#v, POST count %d", result.published, postCount)
 	}
@@ -92,6 +106,7 @@ func TestPublishLoaderReleasesSkipsUnchangedVersions(t *testing.T) {
 
 func TestPublishLoaderReleasesReadsChangelogFile(t *testing.T) {
 	temporary := t.TempDir()
+
 	changelogPath := temporary + "/changelog.md"
 	if err := os.WriteFile(changelogPath, []byte("  Loader version 1.0.1 adds native plugin reliability.\n"), 0o600); err != nil {
 		t.Fatal(err)
@@ -102,16 +117,20 @@ func TestPublishLoaderReleasesReadsChangelogFile(t *testing.T) {
 			fmt.Fprint(writer, "{\"update\":null}")
 			return
 		}
+
 		var body loaderReleasePublishRequest
 		if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
 			t.Fatal(err)
 		}
+
 		if body.Changelog == nil || *body.Changelog != "Loader version 1.0.1 adds native plugin reliability." {
 			t.Fatalf("unexpected changelog: %#v", body.Changelog)
 		}
+
 		fmt.Fprintf(writer, "{\"platform\":%q,\"version\":%q,\"url\":%q}", body.Platform, body.Version, body.URL)
 	}))
 	defer server.Close()
+
 	t.Setenv("UNBOUND_API_KEY", "ci-key")
 
 	if err := runPublishLoaderReleases([]string{
@@ -172,22 +191,28 @@ func TestPublishLoaderReleasesPreflightsBothPlatforms(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			getCounts := map[string]int{}
 			postCounts := map[string]int{}
+
 			server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 				if request.Method == http.MethodGet {
 					platform := request.URL.Query().Get("platform")
 					getCounts[platform]++
+
 					latest, exists := test.latest[platform]
 					if !exists {
 						fmt.Fprint(writer, "{\"update\":null}")
 						return
 					}
+
 					fmt.Fprintf(writer, "{\"update\":{\"version\":%q}}", latest)
+
 					return
 				}
+
 				var body loaderReleasePublishRequest
 				if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
 					t.Fatal(err)
 				}
+
 				postCounts[body.Platform]++
 				fmt.Fprintf(writer, "{\"platform\":%q,\"version\":%q,\"url\":%q}", body.Platform, test.version, body.URL)
 			}))
@@ -204,22 +229,28 @@ func TestPublishLoaderReleasesPreflightsBothPlatforms(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			if result.skippedPlatform != test.wantSkipped {
 				t.Fatalf("skipped platform = %q, want %q", result.skippedPlatform, test.wantSkipped)
 			}
+
 			if strings.Join(result.published, ",") != strings.Join(test.wantPublished, ",") {
 				t.Fatalf("published = %v, want %v", result.published, test.wantPublished)
 			}
+
 			for _, platform := range []string{"ios", "android"} {
 				if getCounts[platform] != 1 {
 					t.Fatalf("%s GET count = %d, want 1", platform, getCounts[platform])
 				}
+
 				want := 0
+
 				for _, published := range test.wantPublished {
 					if published == platform {
 						want = 1
 					}
 				}
+
 				if postCounts[platform] != want {
 					t.Fatalf("%s POST count = %d, want %d", platform, postCounts[platform], want)
 				}
@@ -240,12 +271,14 @@ func TestPublishLoaderReleasesRejectsConfigurationAndAPIErrors(t *testing.T) {
 	}
 
 	config.apiKey = "ci-key"
+
 	config.endpoint = "ftp://unbound.rip/api/v1/loader/releases"
 	if _, err := publishLoaderReleases(context.Background(), config); err == nil || !strings.Contains(err.Error(), "API URL") {
 		t.Fatalf("expected invalid API URL error, got %v", err)
 	}
 
 	config.endpoint = "https://unbound.rip/api/v1/loader/releases"
+
 	config.iosURL = "file:///loader.deb"
 	if _, err := publishLoaderReleases(context.Background(), config); err == nil || !strings.Contains(err.Error(), "iOS loader release asset URL") {
 		t.Fatalf("expected invalid iOS asset URL error, got %v", err)
@@ -256,12 +289,14 @@ func TestPublishLoaderReleasesRejectsConfigurationAndAPIErrors(t *testing.T) {
 			fmt.Fprint(writer, "{\"update\":null}")
 			return
 		}
+
 		writer.WriteHeader(http.StatusForbidden)
 	}))
 	defer server.Close()
 
 	config.endpoint = server.URL + "/api/v1/loader/releases"
 	config.iosURL = "https://example.com/Unbound.deb"
+
 	config.androidURL = "https://example.com/Unbound.apk"
 	if _, err := publishLoaderReleases(context.Background(), config); err == nil || !strings.Contains(err.Error(), "HTTP 403") {
 		t.Fatalf("expected API authorization failure, got %v", err)
@@ -273,6 +308,7 @@ func TestPublishLoaderReleasesDryRunPostsNothing(t *testing.T) {
 		if request.Method != http.MethodGet {
 			t.Fatalf("a dry run sent %s %s", request.Method, request.URL.Path)
 		}
+
 		fmt.Fprint(writer, "{\"update\":{\"version\":\"1.0.0\"}}")
 	}))
 	defer server.Close()
@@ -287,6 +323,7 @@ func TestPublishLoaderReleasesDryRunPostsNothing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if strings.Join(result.published, ",") != "ios,android" {
 		t.Fatalf("published = %v, want both platforms listed", result.published)
 	}

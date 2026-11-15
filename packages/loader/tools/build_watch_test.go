@@ -10,14 +10,17 @@ import (
 
 func loaderBuildFilters(t *testing.T) []pathFilter {
 	t.Helper()
+
 	data, err := os.ReadFile(filepath.Join("..", "..", "..", ".github", "workflows", "loader-build.yml"))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	filters, err := pushPathFilters(string(data))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	return filters
 }
 
@@ -42,6 +45,7 @@ func TestBuildWatchFlagsOnlyOldEnoughCommitsWithoutRuns(t *testing.T) {
 		"\x1ebbb " + itoa(now.Add(-2*time.Hour)) + "\n\npackages/loader/tools/b.go\n" +
 		"\x1eccc " + itoa(now.Add(-5*time.Minute)) + "\n\npackages/loader/tools/c.go\n" +
 		"\x1eddd " + itoa(now.Add(-3*time.Hour)) + "\n\npackages/client/src/x.ts\n"
+
 	missing := commitsWithoutBuilds(parseMainCommits(log), loaderBuildFilters(t), map[string]bool{"bbb": true}, now, 30*time.Minute)
 	if len(missing) != 1 || missing[0].SHA != "aaa" {
 		t.Fatalf("missing builds %+v, want only aaa", missing)

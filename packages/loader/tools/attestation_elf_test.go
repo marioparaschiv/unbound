@@ -22,6 +22,7 @@ func testELF() []byte {
 	binary.LittleEndian.PutUint16(data[58:], 64)
 	binary.LittleEndian.PutUint16(data[60:], 3)
 	binary.LittleEndian.PutUint16(data[62:], 2)
+
 	names := []byte("\x00.unbound.attestation\x00.shstrtab\x00")
 	copy(data[400:], names)
 	binary.LittleEndian.PutUint32(data[512+64:], 1)
@@ -31,6 +32,7 @@ func testELF() []byte {
 	binary.LittleEndian.PutUint64(data[512+128+24:], 400)
 	binary.LittleEndian.PutUint64(data[512+128+32:], uint64(len(names)))
 	copy(data[900:], "code!")
+
 	return data
 }
 
@@ -43,6 +45,7 @@ func withRecord(data []byte) []byte {
 	binary.LittleEndian.PutUint32(record[140:], attestationKeyID)
 	binary.LittleEndian.PutUint32(record[144:], 183)
 	copy(record[128+156:], "abc1234")
+
 	return record
 }
 
@@ -51,9 +54,11 @@ func TestELFCanonicalDigestMatchesCore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if info.section.offset != 128 || info.cpuType != 183 {
 		t.Fatalf("unexpected layout: %#v", info)
 	}
+
 	digest := sha256.Sum256(canonical)
 	if hex.EncodeToString(digest[:]) != elfCanonicalDigest {
 		t.Fatalf("canonical digest %x", digest)
@@ -65,32 +70,41 @@ func TestSignAndVerifyELF(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	directory := t.TempDir()
+
 	path := filepath.Join(directory, "arm64-v8a", "libunbound.so")
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := os.WriteFile(path, testELF(), 0o644); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := signFile(path, private, "abc1234", "1.0.0"); err != nil {
 		t.Fatal(err)
 	}
+
 	results, err := verifyFile(path, &private.PublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if len(results) != 1 || results[0]["cpuType"] != int32(183) || results[0]["packageVersion"] != "1.0.0" {
 		t.Fatalf("unexpected result: %#v", results)
 	}
+
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	data[900] ^= 1
 	if err := os.WriteFile(path, data, 0o644); err != nil {
 		t.Fatal(err)
 	}
+
 	if _, err := verifyFile(path, &private.PublicKey); err == nil {
 		t.Fatal("expected tamper failure")
 	}
@@ -98,6 +112,7 @@ func TestSignAndVerifyELF(t *testing.T) {
 
 func TestELFWithoutAttestationSectionIsRejected(t *testing.T) {
 	data := testELF()
+
 	data[401] = 'x'
 	if _, err := parseELF(data); err == nil {
 		t.Fatal("expected a missing section error")

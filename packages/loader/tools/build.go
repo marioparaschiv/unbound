@@ -40,42 +40,51 @@ func runBuild(args []string) error {
 	if len(args) == 0 {
 		return errors.New("usage: build <tweak|ipa|simulator|all>")
 	}
+
 	switch args[0] {
 	case "tweak":
 		options, err := parseBuildOptions(args[1:], false)
 		if err != nil {
 			return err
 		}
+
 		if err := validateWorkspace(options.root); err != nil {
 			return err
 		}
+
 		return buildTweak(options, defaultRunner)
 	case "ipa":
 		options, err := parseBuildOptions(args[1:], false)
 		if err != nil {
 			return err
 		}
+
 		if err := validateWorkspace(options.root); err != nil {
 			return err
 		}
+
 		return buildIPA(options, defaultRunner)
 	case "simulator":
 		options, err := parseBuildOptions(args[1:], false)
 		if err != nil {
 			return err
 		}
+
 		if err := validateWorkspace(options.root); err != nil {
 			return err
 		}
+
 		return buildSimulator(options, defaultRunner)
 	case "all":
 		options, err := parseBuildOptions(args[1:], true)
 		if err != nil {
 			return err
 		}
+
 		if err := validateWorkspace(options.root); err != nil {
 			return err
 		}
+
 		return buildAll(options, defaultRunner)
 	default:
 		return fmt.Errorf("unknown build command %q", args[0])
@@ -94,23 +103,30 @@ func parseBuildOptions(args []string, all bool) (buildOptions, error) {
 	set.BoolVar(&options.simulator, "simulator", false, "build simulator artifact")
 	set.BoolVar(&options.nonInteractive, "non-interactive", false, "disable prompts")
 	set.BoolVar(&options.keepWork, "keep-work", false, "preserve temporary workspace")
+
 	if err := set.Parse(args); err != nil {
 		return options, err
 	}
+
 	if options.configuration != "debug" && options.configuration != "release" {
 		return options, errors.New("configuration must be debug or release")
 	}
+
 	if options.channel != "appstore" && options.channel != "testflight" {
 		return options, errors.New("channel must be appstore or testflight")
 	}
+
 	if !all && options.simulator {
 		return options, errors.New("--simulator is only valid with build all")
 	}
+
 	root, err := filepath.Abs(options.root)
 	if err != nil {
 		return options, err
 	}
+
 	options.root = root
+
 	return options, nil
 }
 
@@ -118,38 +134,48 @@ func buildAll(options buildOptions, runner commandRunner) error {
 	if err := preflight(options, runner); err != nil {
 		return err
 	}
+
 	if err := buildTweak(options, runner); err != nil {
 		return err
 	}
+
 	if options.deb == "" {
 		deb, err := defaultDeb(filepath.Join(iosRoot(options.root), "packages"), options.configuration)
 		if err != nil {
 			return err
 		}
+
 		options.deb = deb
 	}
+
 	if options.output == "" {
 		name, err := packageName(options.root)
 		if err != nil {
 			return err
 		}
+
 		options.output = filepath.Join(options.root, name+".ipa")
 	}
+
 	if err := buildIPA(options, runner); err != nil {
 		return err
 	}
+
 	if options.simulator {
 		simulator := options.output
 		if strings.HasSuffix(simulator, ".ipa") {
 			simulator = strings.TrimSuffix(simulator, ".ipa")
 		}
+
 		simulator += "-simulator.zip"
 		options.ipa = options.output
+
 		options.output = simulator
 		if err := buildSimulator(options, runner); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -157,14 +183,17 @@ func preflight(options buildOptions, runner commandRunner) error {
 	if err := ensureSubmodules(options.root, runner); err != nil {
 		return err
 	}
+
 	if options.configuration == "release" {
 		if _, _, err := attestationKeys(); err != nil {
 			if !errors.Is(err, os.ErrNotExist) {
 				return err
 			}
+
 			fmt.Println("no attestation private key found; release artifact will carry a runtime warning")
 		}
 	}
+
 	return nil
 }
 
@@ -172,16 +201,21 @@ func buildTweak(options buildOptions, runner commandRunner) error {
 	if err := ensureSubmodules(options.root, runner); err != nil {
 		return err
 	}
+
 	makeName := "make"
 	if runtime.GOOS == "darwin" {
 		makeName = "gmake"
 	}
+
 	args := []string{"package"}
 	if options.configuration == "debug" {
 		args = append(args, "DEBUG=1")
 	}
+
 	env := append(os.Environ(), "TOOLS_COMMAND="+toolsCommand())
+
 	fmt.Printf("building tweak (%s)\n", options.configuration)
+
 	return runner(iosRoot(options.root), makeName, args, env, os.Stdout, os.Stderr)
 }
 
@@ -191,31 +225,39 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 		if err != nil {
 			return err
 		}
+
 		options.ipa = resolved
 	}
+
 	if options.deb == "" {
 		deb, err := defaultDeb(filepath.Join(iosRoot(options.root), "packages"), options.configuration)
 		if err != nil {
 			return fmt.Errorf("tweak package path is required: %w", err)
 		}
+
 		options.deb = deb
 	}
+
 	if options.output == "" {
 		name, err := packageName(options.root)
 		if err != nil {
 			return err
 		}
+
 		options.output = filepath.Join(options.root, name+".ipa")
 	}
+
 	work, err := os.MkdirTemp("", "loader-tools-")
 	if err != nil {
 		return err
 	}
+
 	if !options.keepWork {
 		defer os.RemoveAll(work)
 	} else {
 		fmt.Println("preserving workspace:", work)
 	}
+
 	input := options.ipa
 	if strings.HasPrefix(input, "http://") || strings.HasPrefix(input, "https://") {
 		input = filepath.Join(work, "source.ipa")
@@ -223,52 +265,65 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 			return err
 		}
 	}
+
 	if _, err := os.Stat(input); err != nil {
 		return fmt.Errorf("IPA not found: %s", input)
 	}
+
 	inspector, err := debInspector(options.deb, work, runner, options.root)
 	if err != nil {
 		return err
 	}
+
 	loader, err := loaderVersion(options.root)
 	if err != nil {
 		return err
 	}
+
 	unboundArgs, unboundFiles, err := cyanInputs(input, work, loader, options.channel != "testflight")
 	if err != nil {
 		return fmt.Errorf("preparing the Unbound Info.plist failed: %w", err)
 	}
+
 	patched := input
 	if err := rejectInjectedIPA(patched, work, runner); err != nil {
 		return err
 	}
+
 	sourceEntries, err := zipList(patched, runner, options.root)
 	if err != nil {
 		return err
 	}
+
 	extensionPaths, err := buildExtensions(options, work, runner)
 	if err != nil {
 		return err
 	}
+
 	cyan, err := provisionCyan(options.root, runner)
 	if err != nil {
 		return err
 	}
+
 	injectionOutput := options.output
 	if samePath(input, options.output) {
 		injectionOutput = filepath.Join(work, "injected.ipa")
 	}
+
 	args := []string{"-duwsgq"}
 	if options.channel == "testflight" {
 		args = append(args, "-b", "com.hammerandchisel.discord.testflight")
 	}
+
 	args = append(args, unboundArgs...)
 	args = append(args, "-i", patched, "-o", injectionOutput, "-f", options.deb)
 	args = append(args, extensionPaths...)
+
 	args = append(args, unboundFiles...)
 	if err := runner(options.root, cyan, args, os.Environ(), os.Stdout, os.Stderr); err != nil {
 		return fmt.Errorf("IPA injection failed: %w", err)
 	}
+
 	if injectionOutput != options.output {
 		if err := os.Rename(injectionOutput, options.output); err != nil {
 			return err
@@ -278,29 +333,37 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 	if err := addInspectorToIPA(options.output, inspector); err != nil {
 		return fmt.Errorf("adding the inspector to the IPA failed: %w", err)
 	}
+
 	if err := validateIPAInspector(options.output); err != nil {
 		return err
 	}
+
 	groups, err := buildGroupRemap(options, work, runner)
 	if err != nil {
 		return err
 	}
+
 	if err := addGroupRemapToIPA(options.output, groups, work); err != nil {
 		return err
 	}
+
 	finalEntries, err := zipList(options.output, runner, options.root)
 	if err != nil {
 		return err
 	}
+
 	if err := validateIPAExtensions(sourceEntries, finalEntries); err != nil {
 		return err
 	}
+
 	if err := validateIPAExtensionExecutables(options.output); err != nil {
 		return err
 	}
+
 	if err := validateIPAExtensionWiring(options.output); err != nil {
 		return err
 	}
+
 	if options.configuration == "release" {
 		if _, _, keyErr := attestationKeys(); keyErr == nil {
 			if err := verifyIPA(options.output, work, runner); err != nil {
@@ -312,7 +375,9 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 			fmt.Println("no attestation private key found; final IPA will warn at runtime")
 		}
 	}
+
 	fmt.Println("created", options.output)
+
 	return nil
 }
 
@@ -320,64 +385,82 @@ func buildSimulator(options buildOptions, runner commandRunner) error {
 	if runtime.GOOS != "darwin" {
 		return errors.New("simulator builds require macOS")
 	}
+
 	if options.ipa == "" {
 		return errors.New("--ipa is required for simulator builds")
 	}
+
 	if options.output == "" {
 		return errors.New("--output is required for simulator builds")
 	}
+
 	if !filepath.IsAbs(options.output) {
 		options.output = filepath.Join(options.root, options.output)
 	}
+
 	work, err := os.MkdirTemp("", "loader-simulator-")
 	if err != nil {
 		return err
 	}
+
 	if !options.keepWork {
 		defer os.RemoveAll(work)
 	}
+
 	if err := unzip(options.ipa, work, runner, options.root); err != nil {
 		return err
 	}
+
 	simforge, err := provisionSimforge(options.root, runner)
 	if err != nil {
 		return err
 	}
+
 	app := filepath.Join(work, "Payload", "Discord.app")
 	if err := runner(options.root, simforge, []string{"convert", app}, os.Environ(), os.Stdout, os.Stderr); err != nil {
 		return err
 	}
+
 	if err := retargetLegacyFrameworks(app, runner, options.root); err != nil {
 		return err
 	}
+
 	frameworks, _ := filepath.Glob(filepath.Join(app, "Frameworks", "*"))
 	for _, framework := range frameworks {
 		_ = runner(options.root, "codesign", []string{"-f", "-s", "-", framework}, os.Environ(), os.Stdout, os.Stderr)
 	}
+
 	if err := runner(options.root, "codesign", []string{"-f", "-s", "-", app}, os.Environ(), os.Stdout, os.Stderr); err != nil {
 		return err
 	}
+
 	if err := validateAppInspector(app); err != nil {
 		return err
 	}
+
 	dylib, err := findFile(app, "Unbound.dylib")
 	if err != nil {
 		return err
 	}
+
 	if options.configuration != "debug" {
 		private, public, keyErr := attestationKeys()
 		if keyErr == nil {
 			commit, _ := gitOutput(options.root, runner, "rev-parse", "HEAD")
+
 			version, versionErr := packageVersion(options.root)
 			if versionErr != nil {
 				return versionErr
 			}
+
 			if err := signFile(dylib, private, strings.TrimSpace(commit), version); err != nil {
 				return err
 			}
+
 			if err := runner(options.root, "codesign", []string{"-f", "-s", "-", dylib}, os.Environ(), os.Stdout, os.Stderr); err != nil {
 				return err
 			}
+
 			if _, err := verifyFile(dylib, public); err != nil {
 				return err
 			}
@@ -387,10 +470,13 @@ func buildSimulator(options buildOptions, runner commandRunner) error {
 			fmt.Println("no attestation private key found; simulator artifact will carry a runtime warning")
 		}
 	}
+
 	if err := zipDirectory(filepath.Join(work, "Payload"), options.output, runner, options.root); err != nil {
 		return err
 	}
+
 	fmt.Println("created", options.output)
+
 	return nil
 }
 
@@ -399,24 +485,31 @@ func resolveIPA(options buildOptions) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	if len(matches) == 1 {
 		return matches[0], nil
 	}
+
 	if len(matches) > 1 {
 		return "", errors.New("multiple root-level IPA files found; pass --ipa explicitly")
 	}
+
 	if options.nonInteractive || !isTerminal(os.Stdin) {
 		return "", errors.New("--ipa is required in non-interactive mode")
 	}
+
 	fmt.Print("Discord IPA path or URL: ")
+
 	line, err := bufio.NewReader(os.Stdin).ReadString('\n')
 	if err != nil {
 		return "", err
 	}
+
 	line = strings.TrimSpace(line)
 	if line == "" {
 		return "", errors.New("no IPA input provided")
 	}
+
 	return line, nil
 }
 
@@ -433,6 +526,7 @@ func packageName(root string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	for _, line := range strings.Split(string(data), "\n") {
 		if strings.HasPrefix(line, "Name:") {
 			value := strings.TrimSpace(strings.TrimPrefix(line, "Name:"))
@@ -441,6 +535,7 @@ func packageName(root string) (string, error) {
 			}
 		}
 	}
+
 	return "", errors.New("package name not found in control")
 }
 
@@ -449,6 +544,7 @@ func packageVersion(root string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return packageVersionFromControl(string(data))
 }
 
@@ -461,6 +557,7 @@ func packageVersionFromControl(contents string) (string, error) {
 			}
 		}
 	}
+
 	return "", errors.New("package version not found in control")
 }
 
@@ -469,17 +566,21 @@ func attestationKeys() (*ecdsa.PrivateKey, *ecdsa.PublicKey, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
 	private, err := parsePrivateKey(privateBytes)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	public, err := pinnedPublicKey()
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if !publicKeysEqual(&private.PublicKey, public) {
 		return nil, nil, errors.New("attestation private key does not match the pinned public key")
 	}
+
 	return private, public, nil
 }
 
@@ -487,31 +588,40 @@ func buildExtensions(options buildOptions, work string, runner commandRunner) ([
 	if runtime.GOOS != "darwin" {
 		return nil, errors.New("extensions require macOS")
 	}
+
 	paths := []string{}
+
 	bundleBase := "com.hammerandchisel.discord"
 	if options.channel == "testflight" {
 		bundleBase += ".testflight"
 	}
+
 	for _, extension := range []struct{ name, target, product, module string }{
 		{"OpenInDiscord", "OpenInDiscord Extension", "OpenInDiscord", "OpenInDiscordExt"},
 	} {
 		source := filepath.Join(iosRoot(options.root), "extensions", extension.name)
+
 		destination := filepath.Join(work, "extensions", extension.name)
 		if err := copyTree(source, destination); err != nil {
 			return nil, err
 		}
+
 		buildDir := filepath.Join(destination, "build")
 		if err := os.MkdirAll(buildDir, 0o755); err != nil {
 			return nil, err
 		}
+
 		project := extension.name + ".xcodeproj"
+
 		args := []string{"-project", project, "build", "-target", extension.target, "-configuration", "Release", "-sdk", "iphoneos", "CONFIGURATION_BUILD_DIR=" + buildDir, "PRODUCT_NAME=" + extension.product, "PRODUCT_BUNDLE_IDENTIFIER=" + bundleBase + "." + extension.product, "PRODUCT_MODULE_NAME=" + extension.module, "SKIP_INSTALL=NO", "DEVELOPMENT_TEAM=", "CODE_SIGN_IDENTITY=", "CODE_SIGNING_REQUIRED=NO", "CODE_SIGNING_ALLOWED=NO", "ONLY_ACTIVE_ARCH=NO"}
 		if err := runXcodebuild(runner, destination, args); err != nil {
 			return nil, err
 		}
+
 		path := filepath.Join(buildDir, extension.product+".appex")
 		paths = append(paths, path)
 	}
+
 	return paths, nil
 }
 
@@ -520,6 +630,7 @@ func xcbeautifyArguments(ci bool) []string {
 	if ci {
 		arguments = append(arguments, "--disable-colored-output")
 	}
+
 	return arguments
 }
 
@@ -528,21 +639,27 @@ func runXcodebuild(runner commandRunner, directory string, args []string) error 
 	if err != nil {
 		return runner(directory, "xcodebuild", args, os.Environ(), os.Stdout, os.Stderr)
 	}
+
 	beautify := exec.Command(formatter, xcbeautifyArguments(os.Getenv("CI") != "")...)
 	beautify.Stdout = os.Stdout
 	beautify.Stderr = os.Stderr
+
 	input, err := beautify.StdinPipe()
 	if err != nil {
 		return err
 	}
+
 	if err := beautify.Start(); err != nil {
 		return err
 	}
+
 	buildErr := runner(directory, "xcodebuild", args, os.Environ(), input, input)
 	input.Close()
+
 	if err := beautify.Wait(); err != nil && buildErr == nil {
 		return fmt.Errorf("xcbeautify failed: %w", err)
 	}
+
 	return buildErr
 }
 
@@ -551,26 +668,35 @@ func defaultDeb(root, configuration string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	debug := configuration == "debug"
-	var selected string
-	var newest os.FileInfo
+
+	var (
+		selected string
+		newest   os.FileInfo
+	)
+
 	for _, entry := range entries {
 		name := entry.Name()
 		if entry.IsDir() || !strings.HasSuffix(name, ".deb") || strings.Contains(name, "+debug_") != debug {
 			continue
 		}
+
 		info, err := entry.Info()
 		if err != nil {
 			return "", err
 		}
+
 		if newest == nil || info.ModTime().After(newest.ModTime()) {
 			selected = filepath.Join(root, name)
 			newest = info
 		}
 	}
+
 	if selected == "" {
 		return "", fmt.Errorf("no %s tweak package found", configuration)
 	}
+
 	return selected, nil
 }
 
@@ -578,10 +704,12 @@ func toolsCommand() string {
 	if value := os.Getenv("TOOLS_COMMAND"); value != "" {
 		return value
 	}
+
 	value, err := os.Executable()
 	if err == nil {
 		return value
 	}
+
 	return "go run ./tools"
 }
 
@@ -593,6 +721,7 @@ func executableExists(path string) bool {
 func samePath(left, right string) bool {
 	leftAbs, leftErr := filepath.Abs(left)
 	rightAbs, rightErr := filepath.Abs(right)
+
 	return leftErr == nil && rightErr == nil && filepath.Clean(leftAbs) == filepath.Clean(rightAbs)
 }
 
@@ -607,6 +736,7 @@ func defaultRunner(root, name string, args []string, env []string, stdout, stder
 	command.Env = env
 	command.Stdout = stdout
 	command.Stderr = stderr
+
 	return command.Run()
 }
 
@@ -615,6 +745,7 @@ func captureCommand(root string, runner commandRunner, name string, args []strin
 	if err := runner(root, name, args, env, &output, os.Stderr); err != nil {
 		return "", err
 	}
+
 	return output.String(), nil
 }
 

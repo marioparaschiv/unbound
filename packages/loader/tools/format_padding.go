@@ -18,43 +18,55 @@ func padBlocks(source []byte) []byte {
 	closing := ""
 	previous := ""
 	disabled := false
+
 	for _, line := range lines {
 		if strings.Contains(line, "clang-format off") {
 			disabled = true
 		}
+
 		if disabled {
 			disabled = !strings.Contains(line, "clang-format on")
 			padded = append(padded, line)
 			previous = ""
+
 			continue
 		}
+
 		if closing != "" {
 			if index := strings.Index(line, closing); index >= 0 {
 				closing = openedLiteral(line[index+len(closing):])
 			}
+
 			padded = append(padded, line)
 			previous = ""
+
 			continue
 		}
+
 		if needsPadding(previous, line) {
 			padded = append(padded, "")
 		}
+
 		padded = append(padded, line)
 		previous = line
 		closing = openedLiteral(line)
 	}
+
 	return []byte(strings.Join(padded, "\n"))
 }
 
 func needsPadding(previous, line string) bool {
 	body := strings.TrimLeft(previous, " \t")
+
 	next := strings.TrimLeft(line, " \t")
 	if body != "}" || next == "" {
 		return false
 	}
+
 	if previous[:len(previous)-len(body)] != line[:len(line)-len(next)] {
 		return false
 	}
+
 	return !blockContinuation.MatchString(next)
 }
 
@@ -62,20 +74,26 @@ func needsPadding(previous, line string) bool {
 func openedLiteral(line string) string {
 	for line != "" {
 		comment := strings.Index(line, "/*")
+
 		raw := rawStringOpening.FindStringSubmatchIndex(line)
 		if comment < 0 && raw == nil {
 			return ""
 		}
+
 		start, opener, closing := comment, 2, "*/"
 		if raw != nil && (comment < 0 || raw[0] < comment) {
 			start, opener, closing = raw[0], raw[1]-raw[0], ")"+line[raw[2]:raw[3]]+`"`
 		}
+
 		rest := line[start+opener:]
+
 		index := strings.Index(rest, closing)
 		if index < 0 {
 			return closing
 		}
+
 		line = rest[index+len(closing):]
 	}
+
 	return ""
 }

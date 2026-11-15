@@ -28,43 +28,57 @@ type testDexClass struct {
 func appendUleb128(data []byte, value uint32) []byte {
 	for {
 		next := byte(value & 0x7F)
+
 		value >>= 7
 		if value == 0 {
 			return append(data, next)
 		}
+
 		data = append(data, next|0x80)
 	}
 }
 
 func buildTestDex(classes []testDexClass) []byte {
 	var texts, types []string
+
 	stringIndex, typeIndex := map[string]int{}, map[string]int{}
 	text := func(value string) int {
 		if index, ok := stringIndex[value]; ok {
 			return index
 		}
+
 		stringIndex[value] = len(texts)
 		texts = append(texts, value)
+
 		return stringIndex[value]
 	}
 	typeOf := func(descriptor string) int {
 		if index, ok := typeIndex[descriptor]; ok {
 			return index
 		}
+
 		text(descriptor)
 		typeIndex[descriptor] = len(types)
 		types = append(types, descriptor)
+
 		return typeIndex[descriptor]
 	}
+
 	type fieldID struct{ class, fieldType, name int }
+
 	type methodID struct{ class, proto, name int }
+
 	type protoID struct {
 		parameters []string
 		returns    string
 	}
-	var protos []protoID
-	var fields []fieldID
-	var methods []methodID
+
+	var (
+		protos  []protoID
+		fields  []fieldID
+		methods []methodID
+	)
+
 	type classLayout struct {
 		class, super       int
 		interfaces         []int
@@ -76,17 +90,21 @@ func buildTestDex(classes []testDexClass) []byte {
 		staticFieldFlags   []uint32
 		instanceFieldFlags []uint32
 	}
+
 	var layouts []classLayout
+
 	for _, class := range classes {
 		layout := classLayout{class: typeOf(javaTypeDescriptor(class.name)), super: typeOf(javaTypeDescriptor(class.super))}
 		for _, name := range class.interfaces {
 			layout.interfaces = append(layout.interfaces, typeOf(javaTypeDescriptor(name)))
 		}
+
 		for _, static := range []bool{true, false} {
 			for _, field := range class.fields {
 				if field.static != static {
 					continue
 				}
+
 				fields = append(fields, fieldID{class: layout.class, fieldType: typeOf(field.descriptor), name: text(field.name)})
 				if static {
 					layout.staticFields = append(layout.staticFields, len(fields)-1)
@@ -97,26 +115,32 @@ func buildTestDex(classes []testDexClass) []byte {
 				}
 			}
 		}
+
 		for _, direct := range []bool{true, false} {
 			for _, method := range class.methods {
 				isDirect := method.static || method.name == dexConstructorName
 				if isDirect != direct {
 					continue
 				}
+
 				for _, parameter := range method.parameters {
 					typeOf(parameter)
 				}
+
 				returns := method.descriptor
 				if returns == "" {
 					returns = "V"
 				}
+
 				typeOf(returns)
 				protos = append(protos, protoID{parameters: method.parameters, returns: returns})
 				methods = append(methods, methodID{class: layout.class, proto: len(protos) - 1, name: text(method.name)})
+
 				flags := uint32(0)
 				if method.static {
 					flags = dexStaticFlag
 				}
+
 				if direct {
 					layout.direct = append(layout.direct, len(methods)-1)
 					layout.directFlags = append(layout.directFlags, flags)
@@ -126,6 +150,7 @@ func buildTestDex(classes []testDexClass) []byte {
 				}
 			}
 		}
+
 		layouts = append(layouts, layout)
 	}
 
@@ -138,9 +163,11 @@ func buildTestDex(classes []testDexClass) []byte {
 	classesOffset := methodsOffset + 8*len(methods)
 	data := make([]byte, classesOffset+32*len(layouts))
 	copy(data, "dex\n035\x00")
+
 	for index, value := range []int{len(texts), stringsOffset, len(types), typesOffset, len(protos), protosOffset, len(fields), fieldsOffset, len(methods), methodsOffset, len(layouts), classesOffset} {
 		order.PutUint32(data[0x38+4*index:], uint32(value))
 	}
+
 	align := func() {
 		for len(data)%4 != 0 {
 			data = append(data, 0)
@@ -150,60 +177,75 @@ func buildTestDex(classes []testDexClass) []byte {
 		if len(items) == 0 {
 			return 0
 		}
+
 		align()
+
 		offset := len(data)
+
 		data = order.AppendUint32(data, uint32(len(items)))
 		for _, item := range items {
 			data = order.AppendUint16(data, uint16(item))
 		}
+
 		return offset
 	}
+
 	for index, value := range texts {
 		order.PutUint32(data[stringsOffset+4*index:], uint32(len(data)))
 		data = appendUleb128(data, uint32(len(value)))
 		data = append(append(data, value...), 0)
 	}
+
 	for index, descriptor := range types {
 		order.PutUint32(data[typesOffset+4*index:], uint32(stringIndex[descriptor]))
 	}
+
 	for index, proto := range protos {
 		var items []int
 		for _, parameter := range proto.parameters {
 			items = append(items, typeIndex[parameter])
 		}
+
 		base := protosOffset + 12*index
 		order.PutUint32(data[base+4:], uint32(typeIndex[proto.returns]))
 		order.PutUint32(data[base+8:], uint32(typeList(items)))
 	}
+
 	for index, field := range fields {
 		base := fieldsOffset + 8*index
 		order.PutUint16(data[base:], uint16(field.class))
 		order.PutUint16(data[base+2:], uint16(field.fieldType))
 		order.PutUint32(data[base+4:], uint32(field.name))
 	}
+
 	for index, method := range methods {
 		base := methodsOffset + 8*index
 		order.PutUint16(data[base:], uint16(method.class))
 		order.PutUint16(data[base+2:], uint16(method.proto))
 		order.PutUint32(data[base+4:], uint32(method.name))
 	}
+
 	for index, layout := range layouts {
 		base := classesOffset + 32*index
 		order.PutUint32(data[base:], uint32(layout.class))
 		order.PutUint32(data[base+8:], uint32(layout.super))
 		order.PutUint32(data[base+12:], uint32(typeList(layout.interfaces)))
+
 		classData := len(data)
 		for _, count := range []int{len(layout.staticFields), len(layout.instanceFields), len(layout.direct), len(layout.virtual)} {
 			data = appendUleb128(data, uint32(count))
 		}
+
 		encode := func(ids []int, flags []uint32, method bool) {
 			previous := 0
 			for position, id := range ids {
 				data = appendUleb128(data, uint32(id-previous))
+
 				data = appendUleb128(data, flags[position])
 				if method {
 					data = appendUleb128(data, 0)
 				}
+
 				previous = id
 			}
 		}
@@ -213,6 +255,7 @@ func buildTestDex(classes []testDexClass) []byte {
 		encode(layout.virtual, layout.virtualFlags, true)
 		order.PutUint32(data[base+24:], uint32(classData))
 	}
+
 	return data
 }
 
@@ -231,17 +274,21 @@ func TestDexDeclaredMembers(t *testing.T) {
 			{name: "create", descriptor: "Lcom/discord/View;", parameters: nil, static: true},
 		},
 	}})
+
 	index := newDexIndex()
 	if err := addDexToIndex(index, data); err != nil {
 		t.Fatal(err)
 	}
+
 	class := index.Classes["com.discord.View"]
 	if class == nil || class.Super != "android.widget.LinearLayout" || !reflect.DeepEqual(class.Interfaces, []string{"android.text.style.LineBackgroundSpan"}) {
 		t.Fatalf("unexpected class %+v", class)
 	}
+
 	if !reflect.DeepEqual(class.Constructors, [][]string{{"int", "[I"}}) {
 		t.Fatalf("constructors must use Java runtime names: %+v", class.Constructors)
 	}
+
 	want := []dexMember{
 		{Name: "COUNT", Field: true, Static: true, Type: "int"},
 		{Name: "messageId", Field: true, Type: "java.lang.String"},
@@ -251,6 +298,7 @@ func TestDexDeclaredMembers(t *testing.T) {
 	if !reflect.DeepEqual(class.Declared, want) {
 		t.Fatalf("got %+v, want %+v", class.Declared, want)
 	}
+
 	if got := class.Methods["bind"]; !reflect.DeepEqual(got, []string{"Lcom/discord/Message;Z"}) {
 		t.Fatalf("method signatures must keep their descriptors: %v", got)
 	}
@@ -265,6 +313,7 @@ func shapeTestTarget(shapes map[string]discordShape, classes ...*dexClass) *comp
 	for _, class := range classes {
 		dex.Classes[class.Name] = class
 	}
+
 	return &compatTarget{Platform: "android", Version: "1", dex: dex, shapes: shapes}
 }
 
@@ -296,6 +345,7 @@ func TestEvaluateShapeReference(t *testing.T) {
 
 	expect := func(target *compatTarget, name, status, reason string) {
 		t.Helper()
+
 		got, why := evaluateShapeReference(&compatReference{Kind: referenceJavaShape, Name: name}, target)
 		if got != status || !strings.Contains(why, reason) {
 			t.Fatalf("shape %s: got %q (%s), want %q containing %q", name, got, why, status, reason)
@@ -306,6 +356,7 @@ func TestEvaluateShapeReference(t *testing.T) {
 	for _, name := range []string{"bind", "messageId", "setter", "background", "reaction"} {
 		expect(matching, name, compatOK, "")
 	}
+
 	expect(matching, "missing", compatBroken, "has no shape `missing`")
 	expect(shapeTestTarget(shapes), "bind", compatBroken, "class `com.discord.MessageView` is not in Discord's dex")
 
@@ -321,6 +372,7 @@ func TestEvaluateShapeReference(t *testing.T) {
 	expect(ambiguous, "setter", compatBroken, "has no method `setText` with 1 parameter")
 
 	expect(shapeTestTarget(shapes, drawer), "background", compatBroken, "no class implementing `android.text.style.LineBackgroundSpan` has one constructor")
+
 	twoSpans := &dexClass{Name: "lh.c", Interfaces: span.Interfaces, Constructors: span.Constructors}
 	expect(shapeTestTarget(shapes, span, twoSpans), "background", compatBroken, "`lh.b`, `lh.c`, so the lookup is ambiguous")
 	expect(shapeTestTarget(shapes, other), "reaction", compatBroken, "with `java.lang.Integer` fields")
@@ -342,21 +394,26 @@ func TestEvaluateCompatShapes(t *testing.T) {
 	if got := statusOf(results, "android", referenceJavaShape, "messageId"); got.Status != compatBroken || !strings.Contains(got.Reason, "has no field") {
 		t.Fatalf("a shape nothing fits must be broken: %+v", got)
 	}
+
 	if got := statusOf(results, "android", referenceResource, "author_name"); got.Status != compatOK {
 		t.Fatalf("a resource Discord has must resolve: %+v", got)
 	}
+
 	if got := statusOf(results, "android", referenceResource, "gone"); got.Status != compatBroken || !strings.Contains(got.Reason, "no `id` resource named `gone`") {
 		t.Fatalf("a missing resource must be broken: %+v", got)
 	}
+
 	if compatBreakageError(results) == nil {
 		t.Fatal("broken shapes and resources must fail the release gate")
 	}
+
 	report := renderCompatReport(results)
 	for _, line := range []string{"- shape `messageId` (Android)", "- resource `id/gone` (Android)", "discord-views.ts:3"} {
 		if !strings.Contains(report, line) {
 			t.Fatalf("report is missing %q:\n%s", line, report)
 		}
 	}
+
 	if state := results.Platforms["android"]; state.Statuses[references[0].key()] != compatBroken || !slices.Contains(state.Seen, references[1].key()) {
 		t.Fatalf("shapes and resources must feed the baseline: %+v", state)
 	}
@@ -406,10 +463,12 @@ export function start(java: NativeJavaBridge, view: NativeJavaReference, name: s
 		"android-resource id author_name",
 	}, []string{"java-shape  shape", "android-resource id name"})
 	expectNoDynamic(t, set)
+
 	for _, reference := range set.sorted() {
 		if reference.Kind == referenceJavaShape && reference.Name == "messageBind" && (reference.Component != "plugins-shared" || reference.Locations[0].Line != 5) {
 			t.Fatalf("a shape must be reported where the helper names it: %+v", reference)
 		}
+
 		if reference.Kind == referenceJavaShape && reference.Name == "reactionEmoji" && reference.Component != "plugin:demo" {
 			t.Fatalf("a shape named through a forwarder belongs to its caller: %+v", reference)
 		}
@@ -426,15 +485,18 @@ type testResourceType struct {
 func buildTestStringPool(values []string) []byte {
 	header := 28
 	pool := make([]byte, header+4*len(values))
+
 	var storage []byte
 	for index, value := range values {
 		binary.LittleEndian.PutUint32(pool[header+4*index:], uint32(len(storage)))
 		storage = append(storage, byte(len(value)), byte(len(value)))
 		storage = append(append(storage, value...), 0)
 	}
+
 	for len(storage)%4 != 0 {
 		storage = append(storage, 0)
 	}
+
 	binary.LittleEndian.PutUint16(pool, resourceStringPool)
 	binary.LittleEndian.PutUint16(pool[2:], uint16(header))
 	binary.LittleEndian.PutUint32(pool[8:], uint32(len(values)))
@@ -442,16 +504,19 @@ func buildTestStringPool(values []string) []byte {
 	binary.LittleEndian.PutUint32(pool[20:], uint32(len(pool)))
 	pool = append(pool, storage...)
 	binary.LittleEndian.PutUint32(pool[4:], uint32(len(pool)))
+
 	return pool
 }
 
 func buildTestResourceType(id int, kind testResourceType, keys map[string]int) []byte {
 	order := binary.LittleEndian
 	header := 20 + 64
+
 	width := 4
 	if kind.flags&resourceOffset16Flag != 0 {
 		width = 2
 	}
+
 	count := len(kind.entries) + 1
 	entriesStart := header + count*width
 	chunk := make([]byte, entriesStart)
@@ -461,12 +526,14 @@ func buildTestResourceType(id int, kind testResourceType, keys map[string]int) [
 	order.PutUint32(chunk[12:], uint32(count))
 	order.PutUint32(chunk[16:], uint32(entriesStart))
 	order.PutUint32(chunk[20:], 64)
+
 	if kind.flags&resourceSparseFlag != 0 {
 		order.PutUint32(chunk[12:], uint32(len(kind.entries)))
 		entriesStart = header + len(kind.entries)*4
 		order.PutUint32(chunk[16:], uint32(entriesStart))
 		chunk = chunk[:entriesStart]
 	}
+
 	var entries []byte
 	for index, name := range append([]string{""}, kind.entries...) {
 		slot := header + index*width
@@ -475,6 +542,7 @@ func buildTestResourceType(id int, kind testResourceType, keys map[string]int) [
 			if index == 0 {
 				continue
 			}
+
 			slot = header + (index-1)*4
 			order.PutUint16(chunk[slot:], uint16(index))
 			order.PutUint16(chunk[slot+2:], uint16(len(entries)/4))
@@ -489,6 +557,7 @@ func buildTestResourceType(id int, kind testResourceType, keys map[string]int) [
 		default:
 			order.PutUint32(chunk[slot:], uint32(len(entries)))
 		}
+
 		entry := make([]byte, 16)
 		if kind.compact {
 			order.PutUint16(entry, uint16(keys[name]))
@@ -498,17 +567,23 @@ func buildTestResourceType(id int, kind testResourceType, keys map[string]int) [
 			order.PutUint16(entry, 8)
 			order.PutUint32(entry[4:], uint32(keys[name]))
 		}
+
 		entries = append(entries, entry...)
 	}
+
 	chunk = append(chunk, entries...)
 	order.PutUint32(chunk[4:], uint32(len(chunk)))
+
 	return chunk
 }
 
 func buildTestResourceTable(packageName string, kinds []testResourceType) []byte {
 	order := binary.LittleEndian
+
 	var typeNames, keyNames []string
+
 	keys := map[string]int{}
+
 	for _, kind := range kinds {
 		typeNames = append(typeNames, kind.name)
 		for _, entry := range kind.entries {
@@ -518,21 +593,27 @@ func buildTestResourceTable(packageName string, kinds []testResourceType) []byte
 			}
 		}
 	}
+
 	pkg := make([]byte, resourcePackageMinSize)
 	order.PutUint16(pkg, resourcePackageChunk)
 	order.PutUint16(pkg[2:], resourcePackageMinSize)
 	order.PutUint32(pkg[8:], 0x7f)
+
 	for index, unit := range packageName {
 		order.PutUint16(pkg[12+2*index:], uint16(unit))
 	}
+
 	order.PutUint32(pkg[268:], uint32(len(pkg)))
 	pkg = append(pkg, buildTestStringPool(typeNames)...)
 	order.PutUint32(pkg[276:], uint32(len(pkg)))
+
 	pkg = append(pkg, buildTestStringPool(keyNames)...)
 	for index, kind := range kinds {
 		pkg = append(pkg, buildTestResourceType(index+1, kind, keys)...)
 	}
+
 	order.PutUint32(pkg[4:], uint32(len(pkg)))
+
 	table := make([]byte, 12)
 	order.PutUint16(table, resourceTableChunk)
 	order.PutUint16(table[2:], 12)
@@ -540,6 +621,7 @@ func buildTestResourceTable(packageName string, kinds []testResourceType) []byte
 	table = append(table, buildTestStringPool(nil)...)
 	table = append(table, pkg...)
 	order.PutUint32(table[4:], uint32(len(table)))
+
 	return table
 }
 
@@ -550,19 +632,23 @@ func TestParseResourceTable(t *testing.T) {
 		{name: "string", entries: []string{"title"}, flags: resourceSparseFlag},
 		{name: "color", entries: []string{"brand_dark"}, compact: true},
 	})
+
 	resources, err := parseResourceTable(data)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	for _, name := range []string{"id/author_name", "id/header", "layout/accessories_view", "string/title", "color/brand_dark"} {
 		kind, entry, _ := strings.Cut(name, "/")
 		if !resources.has(discordPackageName, kind, entry) {
 			t.Errorf("missing %s in %v", name, resources.names)
 		}
 	}
+
 	if resources.has(discordPackageName, "id", "accessories_view") || resources.has("com.other", "id", "header") {
 		t.Fatalf("resources must be told apart by type and package: %v", resources.names)
 	}
+
 	if _, err := parseResourceTable([]byte("not a table")); err == nil {
 		t.Fatal("garbage must not parse as a resource table")
 	}
@@ -573,27 +659,35 @@ func TestDiscordShapesMatchTheHelpers(t *testing.T) {
 	if !ok {
 		t.Fatal("could not locate test source")
 	}
+
 	root := filepath.Join(filepath.Dir(filename), "..", "..", "..")
+
 	shapes, err := loadDiscordShapes(root)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if len(shapes) == 0 {
 		t.Fatalf("%v hold no shapes", discordShapesPaths)
 	}
+
 	sources, err := collectCompatReferences(root)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	used := map[string]bool{}
+
 	for _, reference := range sources.sorted() {
 		if reference.Kind == referenceJavaShape {
 			if _, ok := shapes[reference.Name]; !ok {
 				t.Errorf("%s:%d names the unknown shape %q", reference.Locations[0].File, reference.Locations[0].Line, reference.Name)
 			}
+
 			used[reference.Name] = true
 		}
 	}
+
 	for name := range shapes {
 		if !used[name] {
 			t.Errorf("no code looks up the shape %q", name)
@@ -618,6 +712,7 @@ func TestDiscordShapeValidation(t *testing.T) {
 			t.Errorf("shape %+v must not validate", shape)
 		}
 	}
+
 	for _, shapes := range []map[string]discordShape{
 		{"field": {OwnerShape: "missing", Member: shapeField, Pick: shapePickOnly}},
 		{
@@ -630,6 +725,7 @@ func TestDiscordShapeValidation(t *testing.T) {
 			t.Errorf("shapes %+v must not validate", shapes)
 		}
 	}
+
 	valid := map[string]discordShape{
 		"surface": {ParameterOf: "a.B", Member: shapeConstructor, Pick: shapePickOnly},
 		"handler": {OwnerShape: "surface", Member: shapeField, Count: intPointer(2), Pick: shapePickAll},
@@ -674,6 +770,7 @@ func TestEvaluateStructuralShapes(t *testing.T) {
 
 	expect := func(target *compatTarget, name, status, reason string) {
 		t.Helper()
+
 		got, why := evaluateShapeReference(&compatReference{Kind: referenceJavaShape, Name: name}, target)
 		if got != status || !strings.Contains(why, reason) {
 			t.Fatalf("shape %s: got %q (%s), want %q containing %q", name, got, why, status, reason)
@@ -719,6 +816,7 @@ func TestEvaluateStructuralShapes(t *testing.T) {
 	if compatBreakageError(results) != nil {
 		t.Fatal("a shape Discord does not need yet must not fail the release gate")
 	}
+
 	if report := renderCompatReport(results); !strings.Contains(report, "only unused while Discord still has the class") || !strings.Contains(report, "ReactSurfaces.kt:48") {
 		t.Fatalf("the report must explain why a shape is skipped and where it is used:\n%s", report)
 	}
@@ -745,15 +843,18 @@ object ReactSurfaces {
 	extractNativeReferences(set, file, source)
 
 	lines := map[string]int{}
+
 	for _, reference := range set.sorted() {
 		if reference.Kind == referenceJavaShape {
 			lines[reference.Name] = reference.Locations[0].Line
 		}
 	}
+
 	want := map[string]int{"reactSurface": 5, "reactFabric": 7, "reactSurfaceReferences": 9, "reactSurfaceHost": 10}
 	if !reflect.DeepEqual(lines, want) {
 		t.Fatalf("Kotlin shape lookups must be reported at the line naming the shape: got %v, want %v", lines, want)
 	}
+
 	for _, reference := range set.sorted() {
 		if reference.Kind == referenceJavaShape && (reference.Component != "loader-android" || reference.platforms()[0] != "android") {
 			t.Fatalf("a Kotlin shape belongs to the Android loader: %+v", reference)
@@ -771,6 +872,7 @@ func TestDexAssignability(t *testing.T) {
 	} {
 		dex.Classes[class.Name] = class
 	}
+
 	for _, test := range []struct {
 		from, to string
 		want     bool

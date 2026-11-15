@@ -48,10 +48,12 @@ func TestPlanCompatIssue(t *testing.T) {
 	}
 
 	clean := planCompatIssue(open, "stable", "iOS 352.0, Android 351.0", false)
+
 	want := resolvedComment("iOS 352.0, Android 351.0")
 	if clean.Update != 0 || clean.Create || !reflect.DeepEqual(clean.Close, []compatIssueClose{{Number: 15, Comment: want}, {Number: 12, Comment: want}}) {
 		t.Fatalf("a clean scan must close every open compat issue for the channel: %+v", clean)
 	}
+
 	if !strings.Contains(want, "reports no breakages") || !strings.Contains(want, "iOS 352.0, Android 351.0") {
 		t.Fatalf("unexpected resolved comment %q", want)
 	}
@@ -60,10 +62,12 @@ func TestPlanCompatIssue(t *testing.T) {
 func TestApplyCompatIssuePlan(t *testing.T) {
 	fake := &fakeGitHub{created: 21}
 	plan := planCompatIssue([]compatIssue{{Number: 15, Title: "Discord compatibility (beta): iOS 1, Android 1"}}, "beta", "iOS 2, Android 2", true)
+
 	number, err := applyCompatIssuePlan(fake, "unbound-app/unbound", compatIssueLabel, "report.md", plan)
 	if err != nil || number != 21 {
 		t.Fatalf("got #%d, %v", number, err)
 	}
+
 	want := []string{"create Discord compatibility (beta): iOS 2, Android 2 [discord-compat]", "close #15 Superseded by #21"}
 	if !reflect.DeepEqual(fake.actions, want) {
 		t.Fatalf("got %v, want %v", fake.actions, want)

@@ -15,9 +15,11 @@ func matchesSHA256(path, expected string) bool {
 		return false
 	}
 	defer file.Close()
+
 	digest := sha256.New()
 	if _, err := io.Copy(digest, file); err != nil {
 		return false
 	}
+
 	return strings.EqualFold(hex.EncodeToString(digest.Sum(nil)), expected)
 }

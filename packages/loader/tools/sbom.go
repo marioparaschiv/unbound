@@ -66,53 +66,67 @@ func readVendoredComponents(root string) ([]vendoredComponent, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var components []vendoredComponent
 	if err := json.Unmarshal(data, &components); err != nil {
 		return nil, fmt.Errorf("vendor/versions.json: %w", err)
 	}
+
 	for _, component := range components {
 		if component.Path == "" || component.Name == "" || component.License == "" || component.URL == "" {
 			return nil, fmt.Errorf("vendor/versions.json: %q needs a path, name, license and url", component.Name)
 		}
 	}
+
 	return components, nil
 }
 
 func directoryDigest(directory string) (string, error) {
 	var lines []string
+
 	err := filepath.WalkDir(directory, func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
+
 		if entry.IsDir() {
 			if entry.Name() == ".git" {
 				return filepath.SkipDir
 			}
+
 			return nil
 		}
+
 		if !entry.Type().IsRegular() {
 			return nil
 		}
+
 		data, err := os.ReadFile(path)
 		if err != nil {
 			return err
 		}
+
 		relative, err := filepath.Rel(directory, path)
 		if err != nil {
 			return err
 		}
+
 		sum := sha256.Sum256(data)
 		lines = append(lines, filepath.ToSlash(relative)+" "+hex.EncodeToString(sum[:]))
+
 		return nil
 	})
 	if err != nil {
 		return "", err
 	}
+
 	if len(lines) == 0 {
 		return "", fmt.Errorf("%s has no files", directory)
 	}
+
 	sort.Strings(lines)
 	sum := sha256.Sum256([]byte(strings.Join(lines, "\n")))
+
 	return hex.EncodeToString(sum[:]), nil
 }
 
@@ -120,19 +134,23 @@ func submoduleVersion(root, path string) string {
 	if _, err := os.Stat(filepath.Join(root, path, ".git")); err != nil {
 		return ""
 	}
+
 	commit, err := commandOutput(root, "git", "-C", filepath.Join(root, path), "rev-parse", "HEAD")
 	if err != nil {
 		return ""
 	}
+
 	version := strings.TrimSpace(string(commit))
 	if tag, err := commandOutput(root, "git", "-C", filepath.Join(root, path), "describe", "--tags", "--exact-match"); err == nil {
 		version = strings.TrimSpace(string(tag)) + " (" + version + ")"
 	}
+
 	return version
 }
 
 func spdxIdentifier(name string) string {
 	var builder strings.Builder
+
 	for _, character := range name {
 		if (character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z') || (character >= '0' && character <= '9') || character == '.' || character == '-' {
 			builder.WriteRune(character)
@@ -140,6 +158,7 @@ func spdxIdentifier(name string) string {
 			builder.WriteRune('-')
 		}
 	}
+
 	return "SPDXRef-Package-" + builder.String()
 }
 
@@ -148,10 +167,12 @@ func buildLoaderSBOM(root, version, commit string, created time.Time) (spdxDocum
 	if err != nil {
 		return spdxDocument{}, err
 	}
+
 	components, err := readVendoredComponents(root)
 	if err != nil {
 		return spdxDocument{}, err
 	}
+
 	document := spdxDocument{
 		SPDXVersion:       "SPDX-2.3",
 		DataLicense:       "CC0-1.0",
@@ -173,15 +194,18 @@ func buildLoaderSBOM(root, version, commit string, created time.Time) (spdxDocum
 	}
 	document.Packages = append(document.Packages, loader)
 	document.Relationships = append(document.Relationships, spdxRelationship{Element: "SPDXRef-DOCUMENT", Type: "DESCRIBES", Related: loader.SPDXID})
+
 	for _, component := range components {
 		digest, err := directoryDigest(filepath.Join(root, component.Path))
 		if err != nil {
 			return spdxDocument{}, err
 		}
+
 		version := component.Version
 		if version == "" {
 			version = submoduleVersion(root, component.Path)
 		}
+
 		pkg := spdxPackage{
 			SPDXID:           spdxIdentifier(component.Name),
 			Name:             component.Name,
@@ -196,6 +220,7 @@ func buildLoaderSBOM(root, version, commit string, created time.Time) (spdxDocum
 		document.Packages = append(document.Packages, pkg)
 		document.Relationships = append(document.Relationships, spdxRelationship{Element: loader.SPDXID, Type: "CONTAINS", Related: pkg.SPDXID})
 	}
+
 	return document, nil
 }
 
@@ -204,20 +229,25 @@ func runSBOM(args []string) error {
 	root := set.String("root", ".", "loader root")
 	version := set.String("version", "", "loader version the document describes")
 	commit := set.String("commit", "", "commit the loader was built from")
+
 	output := set.String("output", "loader-sbom.spdx.json", "where to write the SPDX document")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
+
 	if *version == "" || *commit == "" {
 		return errors.New("usage: sbom --version <loader version> --commit <sha> [--output <path>]")
 	}
+
 	document, err := buildLoaderSBOM(*root, *version, *commit, time.Now())
 	if err != nil {
 		return err
 	}
+
 	data, err := json.MarshalIndent(document, "", "\t")
 	if err != nil {
 		return err
 	}
+
 	return os.WriteFile(*output, append(data, '\n'), 0o644)
 }

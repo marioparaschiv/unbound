@@ -6,10 +6,12 @@ import (
 	"flag"
 	"fmt"
 	"go/build"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -39,6 +41,17 @@ var formatSourceExtensions = map[string]string{
 
 const logosPragma = "#pragma unbound_logos "
 
+// Every anti-slop-go rule except errsemantics and fullstructcomp: the tests assert error text on purpose, and cmp.Diff needs go-cmp, which the loader's C vendor directory blocks.
+var antiSlopRules = []string{"-safetyassert", "-nountypedmap", "-noanyreturn", "-nolaundering", "-noadhoctypeswitch", "-noreflect", "-nomonkeypatch", "-noerrorassert", "-noanyparam", "-nointerfacereturn", "-justifypanic", "-separategotwant"}
+
+const (
+	gofumptModule = "mvdan.cc/gofumpt@v0.12.0"
+	// v5.9.0 builds against an x/tools that cannot read Go 1.27.4's export data, and then misreports spacing.
+	wslModule = "github.com/bombsimon/wsl/v5/cmd/wsl@v5.9.1-0.20261016141542-cfd2b0357934"
+)
+
+var wslFinding = regexp.MustCompile(`(?m)^(.+\.go):\d+:\d+: `)
+
 var vendoredSourceDirectories = []string{"ios/headers/ReactCommon"}
 
 const vendoredLicenseMarker = "Copyright (c) Meta Platforms"
@@ -57,10 +70,12 @@ func runFormat(args []string) error {
 	set := flag.NewFlagSet("format", flag.ContinueOnError)
 	root := set.String("root", ".", "loader root")
 	check := set.Bool("check", false, "report unformatted files instead of rewriting them")
+
 	set.Usage = func() { fmt.Fprintln(set.Output(), "usage: go run ./tools format [--check] [--root <path>] [file...]") }
 	if err := set.Parse(args); err != nil {
 		return err
 	}
+
 	rootPath, err := filepath.Abs(*root)
 	if err != nil {
 		return err
@@ -72,11 +87,13 @@ func runFormat(args []string) error {
 	}
 
 	var failures []string
+
 	if only == nil || only.hasExtension(formatSourceExtensions) {
 		unformatted, err := formatNativeSources(rootPath, *check, only)
 		if err != nil {
 			return err
 		}
+
 		failures = append(failures, unformatted...)
 	}
 
@@ -85,6 +102,7 @@ func runFormat(args []string) error {
 		if err != nil {
 			return err
 		}
+
 		failures = append(failures, goFiles...)
 	}
 
@@ -98,15 +116,18 @@ func runFormat(args []string) error {
 		sort.Strings(failures)
 		return fmt.Errorf("unformatted loader sources; run `bun run loader:fmt`:\n  %s", strings.Join(failures, "\n  "))
 	}
+
 	return nil
 }
 
 func runLint(args []string) error {
 	set := flag.NewFlagSet("lint", flag.ContinueOnError)
+
 	root := set.String("root", ".", "loader root")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
+
 	rootPath, err := filepath.Abs(*root)
 	if err != nil {
 		return err
@@ -115,48 +136,65 @@ func runLint(args []string) error {
 	if err := runQuiet(rootPath, "go", "vet", "./tools"); err != nil {
 		return fmt.Errorf("go vet: %w", err)
 	}
+
 	if err := runQuiet(filepath.Join(rootPath, workflowTestsModule), "go", "vet", "./..."); err != nil {
 		return fmt.Errorf("go vet %s: %w", workflowTestsModule, err)
 	}
+
+	if err := lintAntiSlop(rootPath); err != nil {
+		return fmt.Errorf("antislop: %w", err)
+	}
+
 	if err := lintWorkflows(rootPath); err != nil {
 		return fmt.Errorf("actionlint: %w", err)
 	}
+
 	if err := auditWorkflows(rootPath); err != nil {
 		return fmt.Errorf("zizmor: %w", err)
 	}
-	if err := lintSlop(rootPath); err != nil {
+
+	if err := lintNativeSlop(rootPath); err != nil {
 		return fmt.Errorf("aislop: %w", err)
 	}
+
 	return runFormat([]string{"--root", rootPath, "--check"})
 }
 
 func nativeSourceFiles(root string) ([]string, error) {
 	var files []string
+
 	for _, directory := range formatSourceRoots {
 		err := filepath.Walk(filepath.Join(root, directory), func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				if errors.Is(err, os.ErrNotExist) {
 					return nil
 				}
+
 				return err
 			}
+
 			if info.IsDir() {
 				rel, _ := filepath.Rel(root, path)
 				if strings.HasPrefix(info.Name(), ".") || info.Name() == "build" || isVendoredDirectory(rel) {
 					return filepath.SkipDir
 				}
+
 				return nil
 			}
+
 			if _, ok := formatSourceExtensions[filepath.Ext(path)]; ok {
 				files = append(files, path)
 			}
+
 			return nil
 		})
 		if err != nil {
 			return nil, err
 		}
 	}
+
 	sort.Strings(files)
+
 	return files, nil
 }
 
@@ -168,14 +206,18 @@ func selectedFiles(paths []string) (fileSelection, error) {
 	if len(paths) == 0 {
 		return nil, nil
 	}
+
 	selection := fileSelection{}
+
 	for _, path := range paths {
 		absolute, err := filepath.Abs(path)
 		if err != nil {
 			return nil, err
 		}
+
 		selection[absolute] = true
 	}
+
 	return selection, nil
 }
 
@@ -185,6 +227,7 @@ func (selection fileSelection) hasExtension(extensions map[string]string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -194,6 +237,7 @@ func isVendoredDirectory(rel string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -208,33 +252,41 @@ func formatNativeSources(root string, check bool, only fileSelection) ([]string,
 	}
 
 	var unformatted []string
+
 	for _, path := range files {
 		if only != nil && !only[path] {
 			continue
 		}
+
 		original, err := os.ReadFile(path)
 		if err != nil {
 			return nil, err
 		}
+
 		if strings.Contains(string(original), vendoredLicenseMarker) {
 			continue
 		}
+
 		formatted, err := formatNativeSource(root, path, original)
 		if err != nil {
 			return nil, err
 		}
+
 		if bytes.Equal(original, formatted) {
 			continue
 		}
+
 		rel, _ := filepath.Rel(root, path)
 		if check {
 			unformatted = append(unformatted, rel)
 			continue
 		}
+
 		if err := os.WriteFile(path, formatted, 0o644); err != nil {
 			return nil, err
 		}
 	}
+
 	return unformatted, nil
 }
 
@@ -243,28 +295,35 @@ func requireClangFormat() error {
 	if err != nil {
 		return errors.New("clang-format " + clangFormatVersion + "x is required; install it with `pip install clang-format==23.1.3`")
 	}
+
 	if !strings.Contains(string(output), "version "+clangFormatVersion) {
 		return fmt.Errorf("clang-format %sx is required, found %s", clangFormatVersion, strings.TrimSpace(string(output)))
 	}
+
 	return nil
 }
 
 func formatNativeSource(root, path string, original []byte) ([]byte, error) {
 	isLogos := filepath.Ext(path) == ".x" || filepath.Ext(path) == ".xm"
+
 	input := original
 	if isLogos {
 		protected, err := protectLogos(original)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", path, err)
 		}
+
 		input = protected
 	}
 
 	assumed := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)) + formatSourceExtensions[filepath.Ext(path)]
 	command := exec.Command("clang-format", "--style=file:"+filepath.Join(root, ".clang-format"), "--assume-filename="+assumed)
 	command.Stdin = bytes.NewReader(input)
+
 	var output, errorOutput bytes.Buffer
+
 	command.Stdout = &output
+
 	command.Stderr = &errorOutput
 	if err := command.Run(); err != nil {
 		return nil, fmt.Errorf("clang-format %s: %v: %s", path, err, errorOutput.String())
@@ -276,11 +335,13 @@ func formatNativeSource(root, path string, original []byte) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", path, err)
 		}
+
 		formatted = restored
 		if !sameTokens(original, formatted) || strings.Join(logosDirectives(original), "\n") != strings.Join(logosDirectives(formatted), "\n") {
 			return nil, fmt.Errorf("%s: formatting would change Logos code, not just whitespace", path)
 		}
 	}
+
 	return formatted, nil
 }
 
@@ -290,30 +351,37 @@ func protectLogos(source []byte) ([]byte, error) {
 			return nil, fmt.Errorf("source already contains the placeholder %s", placeholder)
 		}
 	}
+
 	if strings.Contains(string(source), logosPragma) {
 		return nil, fmt.Errorf("source already contains %q", strings.TrimSpace(logosPragma))
 	}
 
 	lines := strings.Split(string(source), "\n")
 	directive := 0
+
 	for index, line := range lines {
 		if logosDirectiveLine.MatchString(line) {
 			lines[index] = fmt.Sprintf("%s%d", logosPragma, directive)
 			directive++
+
 			continue
 		}
+
 		lines[index] = replaceOutsideLiterals(line, logosInline)
 	}
+
 	return []byte(strings.Join(lines, "\n")), nil
 }
 
 func logosDirectives(source []byte) []string {
 	var directives []string
+
 	for _, line := range strings.Split(string(source), "\n") {
 		if logosDirectiveLine.MatchString(line) {
 			directives = append(directives, strings.TrimSpace(line))
 		}
 	}
+
 	return directives
 }
 
@@ -321,6 +389,7 @@ func restoreLogos(formatted []byte, original []byte) ([]byte, error) {
 	directives := logosDirectives(original)
 	lines := strings.Split(string(formatted), "\n")
 	used := 0
+
 	for index, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if strings.HasPrefix(trimmed, logosPragma) {
@@ -328,62 +397,86 @@ func restoreLogos(formatted []byte, original []byte) ([]byte, error) {
 			if _, err := fmt.Sscanf(strings.TrimPrefix(trimmed, logosPragma), "%d", &position); err != nil || position != used || position >= len(directives) {
 				return nil, errors.New("clang-format moved or rewrote a Logos directive")
 			}
+
 			lines[index] = directives[position]
 			used++
+
 			continue
 		}
+
 		for directive, placeholder := range logosInline {
 			lines[index] = strings.ReplaceAll(lines[index], placeholder, directive)
 		}
 	}
+
 	if used != len(directives) {
 		return nil, errors.New("clang-format dropped a Logos directive")
 	}
+
 	return []byte(strings.Join(lines, "\n")), nil
 }
 
 func replaceOutsideLiterals(line string, replacements map[string]string) string {
 	var result strings.Builder
+
 	inString := false
+
 	for index := 0; index < len(line); {
 		character := line[index]
 		if inString {
 			result.WriteByte(character)
+
 			if character == '\\' && index+1 < len(line) {
 				result.WriteByte(line[index+1])
 				index += 2
+
 				continue
 			}
+
 			if character == '"' {
 				inString = false
 			}
+
 			index++
+
 			continue
 		}
+
 		if character == '"' {
 			inString = true
+
 			result.WriteByte(character)
+
 			index++
+
 			continue
 		}
+
 		if strings.HasPrefix(line[index:], "//") {
 			result.WriteString(line[index:])
 			break
 		}
+
 		replaced := false
+
 		for directive, placeholder := range replacements {
 			if strings.HasPrefix(line[index:], directive) && !continuesIdentifier(line, index+len(directive), directive) {
 				result.WriteString(placeholder)
+
 				index += len(directive)
 				replaced = true
+
 				break
 			}
 		}
+
 		if !replaced {
 			result.WriteByte(character)
+
 			index++
 		}
 	}
+
 	return result.String()
 }
 
@@ -391,56 +484,117 @@ func continuesIdentifier(line string, next int, directive string) bool {
 	if strings.HasSuffix(directive, "(") || next >= len(line) {
 		return false
 	}
+
 	character := line[next]
+
 	return character == '_' || character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z' || character >= '0' && character <= '9'
 }
 
 func sameTokens(original, formatted []byte) bool {
 	strip := func(source []byte) (string, []string) {
-		var code strings.Builder
-		var includes []string
+		var (
+			code     strings.Builder
+			includes []string
+		)
+
 		for _, line := range strings.Split(string(source), "\n") {
 			if includeLine.MatchString(line) {
 				includes = append(includes, strings.Join(strings.Fields(line), ""))
 				continue
 			}
+
 			code.WriteString(strings.Join(strings.Fields(line), ""))
 		}
+
 		sort.Strings(includes)
+
 		return code.String(), includes
 	}
 	originalCode, originalIncludes := strip(original)
 	formattedCode, formattedIncludes := strip(formatted)
+
 	return originalCode == formattedCode && strings.Join(originalIncludes, "\n") == strings.Join(formattedIncludes, "\n")
 }
 
 const workflowTestsModule = "workflow-tests"
 
+// formatGoSources spaces statements into groups with wsl, then formats with gofumpt; with check it lists the files either would change.
 func formatGoSources(root string, check bool) ([]string, error) {
+	spacing, err := spaceGoSources(root, check)
+	if err != nil {
+		return nil, err
+	}
+
 	mode := "-w"
 	if check {
 		mode = "-l"
 	}
-	command := exec.Command("gofmt", mode, "tools", workflowTestsModule)
-	command.Dir = root
-	output, err := command.CombinedOutput()
+
+	output, err := goTool(root, gofumptModule, mode, "tools", workflowTestsModule)
 	if err != nil {
-		return nil, fmt.Errorf("gofmt: %v: %s", err, output)
+		return nil, fmt.Errorf("gofumpt: %v: %s", err, output)
 	}
-	if !check {
-		return nil, nil
+
+	files := map[string]bool{}
+	for _, file := range spacing {
+		files[file] = true
 	}
-	var files []string
-	for _, line := range strings.Split(strings.TrimSpace(string(output)), "\n") {
-		if line != "" {
-			files = append(files, line)
+
+	// `go run` adds its own lines, such as `go: downloading`, before gofumpt's file list.
+	for _, line := range strings.Split(string(output), "\n") {
+		if strings.HasSuffix(line, ".go") {
+			files[line] = true
 		}
 	}
+
+	return slices.Sorted(maps.Keys(files)), nil
+}
+
+// spaceGoSources runs wsl over both Go modules: it fixes them, or with check returns the files it would change.
+func spaceGoSources(root string, check bool) ([]string, error) {
+	var files []string
+
+	for directory, packages := range map[string]string{".": "./tools", workflowTestsModule: "./..."} {
+		args := []string{packages}
+		if !check {
+			args = []string{"-fix", packages}
+		}
+
+		output, err := goTool(filepath.Join(root, directory), wslModule, args...)
+		if err == nil {
+			continue
+		}
+
+		// wsl fails when it reports findings, which is the check's answer; any other failure prints none.
+		findings := wslFinding.FindAllStringSubmatch(string(output), -1)
+		if !check || len(findings) == 0 {
+			return nil, fmt.Errorf("wsl: %v: %s", err, output)
+		}
+
+		for _, match := range findings {
+			relative, err := filepath.Rel(root, match[1])
+			if err != nil {
+				relative = match[1]
+			}
+
+			files = append(files, relative+" (wsl)")
+		}
+	}
+
 	return files, nil
+}
+
+// goTool runs a pinned Go tool with `go run`, so formatting needs nothing installed beyond Go.
+func goTool(directory, module string, args ...string) ([]byte, error) {
+	command := exec.Command("go", append([]string{"run", module}, args...)...)
+	command.Dir = directory
+
+	return command.CombinedOutput()
 }
 
 func (selection fileSelection) withExtensions(extensions ...string) []string {
 	var files []string
+
 	for path := range selection {
 		for _, extension := range extensions {
 			if filepath.Ext(path) == extension {
@@ -448,7 +602,9 @@ func (selection fileSelection) withExtensions(extensions ...string) []string {
 			}
 		}
 	}
+
 	sort.Strings(files)
+
 	return files
 }
 
@@ -457,10 +613,13 @@ func kotlinFormatterRuns(env func(string) string, javaWorks func(string) bool) b
 	if home := env("JAVA_HOME"); home != "" {
 		java = filepath.Join(home, "bin", "java")
 	}
+
 	if env("CI") != "" || javaWorks(java) {
 		return true
 	}
+
 	fmt.Fprintln(os.Stderr, "loader format: skipped the Kotlin sources, no Java runtime starts here; CI still checks them")
+
 	return false
 }
 
@@ -473,9 +632,11 @@ func runKotlinFormatter(root string, check bool, files []string) error {
 	if check {
 		task = ":ktlintCheck"
 	}
+
 	if len(files) == 0 {
 		return runGradle(root, task)
 	}
+
 	return runGradle(root, task, "-PktlintFiles="+strings.Join(files, ","))
 }
 
@@ -483,12 +644,16 @@ func runGradle(root, task string, arguments ...string) error {
 	// Configuring on demand leaves :module, and so the Android SDK, out of the root project's ktlint tasks.
 	command := exec.Command("./gradlew", append([]string{"--quiet", "--configure-on-demand", task}, arguments...)...)
 	command.Dir = filepath.Join(root, "android")
+
 	var output bytes.Buffer
+
 	command.Stdout = &output
+
 	command.Stderr = &output
 	if err := command.Run(); err != nil {
 		return fmt.Errorf("%s failed:\n%s", task, strings.TrimSpace(output.String()))
 	}
+
 	return nil
 }
 
@@ -498,14 +663,35 @@ func lintWorkflows(root string) error {
 		// `go install` puts it in GOPATH/bin, which is often not on PATH.
 		binary, err = exec.LookPath(filepath.Join(build.Default.GOPATH, "bin", "actionlint"))
 	}
+
 	if err != nil {
 		return errors.New("actionlint is required to lint the GitHub workflows")
 	}
+
 	workflows, err := filepath.Glob(filepath.Join(root, "..", "..", ".github", "workflows", "*.yml"))
 	if err != nil || len(workflows) == 0 {
 		return err
 	}
+
 	return runQuiet(root, binary, workflows...)
+}
+
+func lintAntiSlop(root string) error {
+	binary, err := exec.LookPath("antislop")
+	if err != nil {
+		// `go install` puts it in GOPATH/bin, which is often not on PATH.
+		binary, err = exec.LookPath(filepath.Join(build.Default.GOPATH, "bin", "antislop"))
+	}
+
+	if err != nil {
+		return errors.New("antislop is required to lint the Go sources")
+	}
+
+	if err := runQuiet(root, binary, append(antiSlopRules, "./tools")...); err != nil {
+		return err
+	}
+
+	return runQuiet(filepath.Join(root, workflowTestsModule), binary, append(antiSlopRules, "./...")...)
 }
 
 func auditWorkflows(root string) error {
@@ -513,29 +699,35 @@ func auditWorkflows(root string) error {
 	if err != nil {
 		return errors.New("zizmor is required to audit the GitHub workflows")
 	}
+
 	github := filepath.Join(root, "..", "..", ".github")
+
 	return runQuiet(root, binary, "--offline", "--quiet", "--min-severity", "medium", "--config", filepath.Join(github, "zizmor.yml"), filepath.Join(github, "workflows"))
 }
 
-// lintSlop fails on AI-slop findings in the native sources that .aislop/ci-baseline.json does not accept.
-func lintSlop(root string) error {
+// lintNativeSlop fails on aislop findings in the C, C++ and Objective-C sources that .aislop/ci-baseline.json does not accept.
+func lintNativeSlop(root string) error {
 	binary, err := exec.LookPath("aislop")
 	if err != nil {
 		// `bun install` puts the pinned devDependency in the repo's node_modules, which is rarely on PATH.
 		binary, err = exec.LookPath(filepath.Join(root, "..", "..", "node_modules", ".bin", "aislop"))
 	}
+
 	if err != nil {
 		return errors.New("aislop is required to lint the native sources; run `bun install`")
 	}
+
 	return runQuiet(root, binary, "ci", "--human", ".")
 }
 
 func runQuiet(directory, name string, args ...string) error {
 	command := exec.Command(name, args...)
 	command.Dir = directory
+
 	output, err := command.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%v:\n%s", err, strings.TrimSpace(string(output)))
 	}
+
 	return nil
 }

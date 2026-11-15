@@ -36,20 +36,27 @@ func readAPKSigner(path string) (apkSigner, error) {
 	if err != nil {
 		return apkSigner{}, err
 	}
-	var key crypto.Signer
-	var certificates []*x509.Certificate
+
+	var (
+		key          crypto.Signer
+		certificates []*x509.Certificate
+	)
+
 	for {
 		var block *pem.Block
+
 		block, data = pem.Decode(data)
 		if block == nil {
 			break
 		}
+
 		switch block.Type {
 		case "CERTIFICATE":
 			certificate, err := x509.ParseCertificate(block.Bytes)
 			if err != nil {
 				return apkSigner{}, fmt.Errorf("unreadable certificate: %w", err)
 			}
+
 			certificates = append(certificates, certificate)
 		case "PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY":
 			key, err = parseSigningKey(block)
@@ -58,26 +65,34 @@ func readAPKSigner(path string) (apkSigner, error) {
 			}
 		}
 	}
+
 	if key == nil {
 		return apkSigner{}, fmt.Errorf("%s has no private key", path)
 	}
+
 	for _, certificate := range certificates {
 		public, ok := certificate.PublicKey.(interface{ Equal(crypto.PublicKey) bool })
 		if !ok || !public.Equal(key.Public()) {
 			continue
 		}
+
 		algorithm, err := apkSignatureAlgorithm(key)
 		if err != nil {
 			return apkSigner{}, err
 		}
+
 		return apkSigner{key: key, certificate: certificate.Raw, algorithm: algorithm}, nil
 	}
+
 	return apkSigner{}, fmt.Errorf("%s has no certificate for its private key", path)
 }
 
 func parseSigningKey(block *pem.Block) (crypto.Signer, error) {
-	var key any
-	var err error
+	var (
+		key any
+		err error
+	)
+
 	switch block.Type {
 	case "RSA PRIVATE KEY":
 		key, err = x509.ParsePKCS1PrivateKey(block.Bytes)
@@ -86,13 +101,16 @@ func parseSigningKey(block *pem.Block) (crypto.Signer, error) {
 	default:
 		key, err = x509.ParsePKCS8PrivateKey(block.Bytes)
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("unreadable private key: %w", err)
 	}
+
 	signer, ok := key.(crypto.Signer)
 	if !ok {
 		return nil, errors.New("the private key cannot sign")
 	}
+
 	return signer, nil
 }
 
@@ -103,6 +121,7 @@ func apkSignatureAlgorithm(key crypto.Signer) (uint32, error) {
 	case *ecdsa.PublicKey:
 		return apkSigECDSASHA256, nil
 	}
+
 	return 0, fmt.Errorf("unsupported signing key %T", key.Public())
 }
 
@@ -117,15 +136,19 @@ func apkSigningBlock(signer apkSigner, entries, centralDirectory, endOfCentralDi
 	signedData := concatBytes(digests, certificates, lengthPrefixed())
 
 	hash := sha256.Sum256(signedData)
+
 	var options crypto.SignerOpts = crypto.SHA256
+
 	signature, err := signer.key.Sign(rand.Reader, hash[:], options)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to sign the APK digest: %w", err)
 	}
+
 	publicKey, err := x509.MarshalPKIXPublicKey(signer.key.Public())
 	if err != nil {
 		return nil, err
 	}
+
 	signatures := lengthPrefixed(lengthPrefixed(binary.LittleEndian.AppendUint32(nil, signer.algorithm), lengthPrefixed(signature)))
 	value := lengthPrefixed(lengthPrefixed(lengthPrefixed(signedData), signatures, lengthPrefixed(publicKey)))
 
@@ -136,12 +159,15 @@ func apkSigningBlock(signer apkSigner, entries, centralDirectory, endOfCentralDi
 	block := binary.LittleEndian.AppendUint64(nil, size)
 	block = append(block, pair...)
 	block = binary.LittleEndian.AppendUint64(block, size)
+
 	return append(block, apkSigningBlockMagic...), nil
 }
 
 func apkContentDigest(sections ...[]byte) []byte {
 	var chunks []byte
+
 	count := 0
+
 	for _, section := range sections {
 		for start := 0; start < len(section); start += apkContentChunkSize {
 			chunk := section[start:min(start+apkContentChunkSize, len(section))]
@@ -152,9 +178,11 @@ func apkContentDigest(sections ...[]byte) []byte {
 			count++
 		}
 	}
+
 	hash := sha256.New()
 	hash.Write(binary.LittleEndian.AppendUint32([]byte{apkContentDigestPrefix}, uint32(count)))
 	hash.Write(chunks)
+
 	return hash.Sum(nil)
 }
 
@@ -168,5 +196,6 @@ func concatBytes(parts ...[]byte) []byte {
 	for _, part := range parts {
 		out = append(out, part...)
 	}
+
 	return out
 }

@@ -23,6 +23,7 @@ func TestDeviceLogChunkFeedsTheConsoleChecks(t *testing.T) {
 	if chunk != "2026-10-27T21:00:00.123Z W [plugins] slow start\nmore\n" {
 		t.Fatalf("got %q", chunk)
 	}
+
 	entry, ok := deviceConsoleEntry("2026-10-27T21:00:00.123Z W [plugins] slow start")
 	if !ok || entry != (smokeConsoleEntry{"warning", "[plugins] slow start"}) {
 		t.Fatalf("got %+v, %v", entry, ok)

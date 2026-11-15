@@ -11,6 +11,7 @@ func groupedReference(references []*compatReference, kind, name string, grouped 
 			return reference
 		}
 	}
+
 	return nil
 }
 
@@ -33,26 +34,33 @@ object Themes {
 	references := set.sorted()
 
 	current := groupedReference(references, referenceJavaClass, "com.discord.theme.next.ThemeManager", true)
+
 	legacy := groupedReference(references, referenceJavaClass, "com.discord.theme.ThemeManager", true)
 	if current == nil || legacy == nil {
 		t.Fatalf("multi-line HostClass names were not grouped: %+v", references)
 	}
+
 	if current.Group != file.path+":4" || legacy.Group != current.Group || current.Alternative != 0 || legacy.Alternative != 1 {
 		t.Fatalf("HostClass alternatives are wrong: %+v %+v", current, legacy)
 	}
+
 	if current.Locations[0].Line != 5 || legacy.Locations[0].Line != 6 {
 		t.Fatalf("grouped names must point at their own lines: %+v %+v", current.Locations, legacy.Locations)
 	}
+
 	if groupedReference(references, referenceJavaClass, "com.discord.theme.next.ThemeManager", false) != nil {
 		t.Fatal("a name inside HostClass must not also be checked on its own")
 	}
+
 	if standalone := groupedReference(references, referenceJavaClass, "com.discord.theme.ThemeManager", false); standalone == nil || standalone.Locations[0].Line != 10 {
 		t.Fatalf("the same name outside HostClass must still be checked on its own: %+v", standalone)
 	}
+
 	surface := groupedReference(references, referenceJavaClass, "com.facebook.react.ReactSurface", true)
 	if surface == nil || surface.Alternative != 1 || surface.Group != file.path+":8" {
 		t.Fatalf("single-line HostClass names were not grouped: %+v", surface)
 	}
+
 	if groupedReference(references, referenceJavaClass, "com.discord.theme.DiscordTheme", true) != nil ||
 		groupedReference(references, referenceJavaClass, "com.discord.theme.DiscordTheme", false) == nil {
 		t.Fatal("a HostClass with one name has nothing to fall back to and must be checked on its own")
@@ -76,22 +84,29 @@ const plain = findByProps('FormSliderRow');
 	references := scriptReferences(t, "packages/plugins/demo/src/android/index.ts", source)
 
 	slider := groupedReference(references, referenceProps, "FormSlider", true)
+
 	row := groupedReference(references, referenceProps, "FormSliderRow", true)
 	if slider == nil || row == nil || slider.Group != row.Group || slider.Alternative != 0 || row.Alternative != 1 {
 		t.Fatalf("metro lookups inside firstOf were not grouped: %+v %+v", slider, row)
 	}
+
 	if slider.Group != "packages/plugins/demo/src/android/index.ts:6" {
 		t.Fatalf("the group must be named after the firstOf call, got %q", slider.Group)
 	}
+
 	if groupedReference(references, referenceProps, "FormSliderRow", false) == nil {
 		t.Fatal("a lookup outside firstOf must still be checked on its own")
 	}
+
 	current := groupedReference(references, referenceJavaClass, "com.discord.span.next.ClickableSpan", true)
+
 	legacy := groupedReference(references, referenceJavaClass, "com.discord.span.utilities.spannable.ClickableSpan", true)
 	if current == nil || legacy == nil || current.Group != legacy.Group || current.Alternative != 0 || legacy.Alternative != 1 {
 		t.Fatalf("bridge lookups through constants were not grouped: %+v %+v", current, legacy)
 	}
+
 	next := groupedReference(references, referenceJavaClass, "com.discord.view.next.MessageView", true)
+
 	old := groupedReference(references, referenceJavaClass, "com.discord.chat.presentation.message.MessageView", true)
 	if next == nil || old == nil || next.Group != old.Group || next.Alternative != 0 || old.Alternative != 1 {
 		t.Fatalf("lookups through a forwarder were not grouped: %+v %+v", next, old)
@@ -105,6 +120,7 @@ func fallbackFinding(results *compatResults, name, group string) compatFinding {
 			return finding
 		}
 	}
+
 	return compatFinding{}
 }
 
@@ -128,6 +144,7 @@ func TestEvaluateCompatFallbacks(t *testing.T) {
 
 	expect := func(name, group, status, reason string) {
 		t.Helper()
+
 		finding := fallbackFinding(results, name, group)
 		if finding.Status != status || !strings.Contains(finding.Reason, reason) {
 			t.Fatalf("%s in %q: got %q (%s), want %q containing %q", name, group, finding.Status, finding.Reason, status, reason)
@@ -146,6 +163,7 @@ func TestEvaluateCompatFallbacks(t *testing.T) {
 	if !strings.Contains(report, "<details><summary>Covered by a fallback (3)</summary>") || !strings.Contains(report, "A name listed here on every channel can be removed.") {
 		t.Fatalf("the report must list names covered by a fallback:\n%s", report)
 	}
+
 	if !compatHasProblems(results) {
 		t.Fatal("a name outside any fallback that is gone must still be a problem")
 	}
@@ -154,6 +172,7 @@ func TestEvaluateCompatFallbacks(t *testing.T) {
 	if compatHasProblems(covered) {
 		t.Fatalf("names covered by a fallback must not be problems: %+v", covered.Findings)
 	}
+
 	if status := covered.Platforms["android"].Statuses[references[0].key()]; status != compatFallback {
 		t.Fatalf("the baseline must record covered names as covered, got %q", status)
 	}
@@ -165,6 +184,7 @@ func TestEvaluateCompatFallbackWithNothingLeft(t *testing.T) {
 		{Kind: referenceProps, Terms: []string{"FormSlider"}, Group: "forms", Component: "client", Locations: location},
 		{Kind: referenceProps, Terms: []string{"FormSliderRow"}, Group: "forms", Alternative: 1, Component: "client", Locations: location},
 	}
+
 	results := evaluateCompat(references, compatTestTargets()[:1], nil)
 	for _, name := range []string{"FormSlider", "FormSliderRow"} {
 		finding := fallbackFinding(results, name, "forms")
@@ -178,6 +198,7 @@ func TestCompatBreakageError(t *testing.T) {
 	location := []compatLocation{{File: "a.ts", Line: 1}}
 	android := compatTestTargets()[1]
 	android.Version = "350.8"
+
 	clean := evaluateCompat([]*compatReference{
 		{Kind: referenceStore, Name: "UserStore", Component: "client", Locations: location},
 		{Kind: referenceProps, Terms: []string{"FormSlider"}, Group: "forms", Component: "client", Locations: location},
@@ -191,6 +212,7 @@ func TestCompatBreakageError(t *testing.T) {
 		{Kind: referenceStore, Name: "GoneStore", Component: "client", Locations: location},
 		{Kind: referenceProps, Terms: []string{"transitionToGuild", "plainOnly"}, Component: "client", Locations: location},
 	}, []*compatTarget{android}, nil)
+
 	err := compatBreakageError(broken)
 	if err == nil || err.Error() != "Android 350.8: 1 broken and 1 possibly broken lookups" {
 		t.Fatalf("a broken build must fail the release check, got %v", err)
@@ -204,16 +226,19 @@ import OwnNotice from './own-notice';
 export const Notice = firstOf(() => findByName('HelpMessage'), () => OwnNotice);
 `
 	references := scriptReferences(t, "packages/client/src/api/metro/components.ts", source)
+
 	notice := groupedReference(references, referenceName, "HelpMessage", true)
 	if notice == nil || notice.Alternatives != 2 {
 		t.Fatalf("the lookup must know its group has two alternatives: %+v", notice)
 	}
 
 	results := evaluateCompat([]*compatReference{notice}, compatTestTargets()[:1], nil)
+
 	finding := fallbackFinding(results, "HelpMessage", notice.Group)
 	if finding.Status != compatFallback || !strings.Contains(finding.Reason, "Unbound's own implementation") {
 		t.Fatalf("a lookup Unbound implements itself must be covered, got %q (%s)", finding.Status, finding.Reason)
 	}
+
 	if compatHasProblems(results) {
 		t.Fatalf("a covered lookup must not be a problem: %+v", results.Findings)
 	}

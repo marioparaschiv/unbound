@@ -13,6 +13,7 @@ func TestDefaultBundleURLCanBeOverriddenAtBuildTime(t *testing.T) {
 	if !ok {
 		t.Fatal("could not locate test source")
 	}
+
 	root := filepath.Dir(filepath.Dir(filename))
 	for path, required := range map[string][]string{
 		"core/src/LoaderUpdater.cpp": {
@@ -42,17 +43,21 @@ func TestDefaultBundleURLCanBeOverriddenAtBuildTime(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		for _, snippet := range required {
 			if !strings.Contains(string(data), snippet) {
 				t.Errorf("%s is missing %q", path, snippet)
 			}
 		}
 	}
+
 	cmake, err := os.ReadFile(filepath.Join(root, "android/module/src/main/cpp/CMakeLists.txt"))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	definition := strings.Index(string(cmake), "set(UNBOUND_DEFAULT_BUNDLE_URL")
+
 	core := strings.Index(string(cmake), "add_subdirectory(${UNBOUND_REPOSITORY_ROOT}/core")
 	if definition < 0 || core < definition {
 		t.Fatal("the bundle URL must be defined before the shared core is added")

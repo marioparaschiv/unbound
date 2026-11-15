@@ -60,9 +60,11 @@ func (reference compatReference) platforms() []string {
 	case referenceJavaClass, referenceJavaMethod, referenceJavaField, referenceJavaShape, referenceResource:
 		return []string{"android"}
 	}
+
 	if reference.Platform != "" {
 		return []string{reference.Platform}
 	}
+
 	return []string{"ios", "android"}
 }
 
@@ -87,6 +89,7 @@ func (set *compatSourceSet) add(reference compatReference, location compatLocati
 	if reference.Platform == "" && reference.Kind == referenceModulePath {
 		reference.Platform = compatPlatform(reference.Name)
 	}
+
 	identity := reference.Component + "#" + reference.Platform + "#" + reference.key() + "#" + reference.Group + "#" + strconv.Itoa(reference.Alternative) + "#" + strconv.FormatBool(reference.Legacy)
 	if existing := set.references[identity]; existing != nil {
 		existing.Strict = existing.Strict || reference.Strict
@@ -95,9 +98,12 @@ func (set *compatSourceSet) add(reference compatReference, location compatLocati
 				return
 			}
 		}
+
 		existing.Locations = append(existing.Locations, location)
+
 		return
 	}
+
 	reference.Locations = []compatLocation{location}
 	set.references[identity] = &reference
 }
@@ -107,19 +113,24 @@ func (set *compatSourceSet) sorted() []*compatReference {
 	for _, reference := range set.references {
 		references = append(references, reference)
 	}
+
 	sort.Slice(references, func(left, right int) bool {
 		a, b := references[left], references[right]
 		if a.Component != b.Component {
 			return a.Component < b.Component
 		}
+
 		if a.Locations[0].File != b.Locations[0].File {
 			return a.Locations[0].File < b.Locations[0].File
 		}
+
 		if a.Locations[0].Line != b.Locations[0].Line {
 			return a.Locations[0].Line < b.Locations[0].Line
 		}
+
 		return a.key() < b.key()
 	})
+
 	return references
 }
 
@@ -143,6 +154,7 @@ func compatComponent(relative string) (string, bool) {
 	case len(parts) > 3 && parts[0] == "packages" && parts[1] == "plugins" && parts[3] == "src":
 		return "plugin:" + parts[2], true
 	}
+
 	return "", false
 }
 
@@ -156,6 +168,7 @@ func compatPlatform(relative string) string {
 			return "android"
 		}
 	}
+
 	base := filepath.Base(relative)
 	switch {
 	case strings.Contains(base, ".ios."), strings.Contains(base, "-ios."):
@@ -163,6 +176,7 @@ func compatPlatform(relative string) string {
 	case strings.Contains(base, ".android."), strings.Contains(base, "-android."):
 		return "android"
 	}
+
 	return ""
 }
 
@@ -174,30 +188,38 @@ func isCompatTestPath(relative string) bool {
 
 func collectCompatReferences(root string) (*compatSourceSet, error) {
 	var files []compatSourceFile
+
 	err := filepath.WalkDir(filepath.Join(root, "packages"), func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
+
 		if entry.IsDir() {
 			switch entry.Name() {
 			case "node_modules", "dist", "build", ".theos", "vendor", ".gradle":
 				return filepath.SkipDir
 			}
+
 			return nil
 		}
+
 		relative, err := filepath.Rel(root, path)
 		if err != nil {
 			return err
 		}
+
 		relative = filepath.ToSlash(relative)
+
 		component, ok := compatComponent(relative)
 		if !ok || isCompatTestPath(relative) {
 			return nil
 		}
+
 		switch filepath.Ext(relative) {
 		case ".ts", ".tsx", ".x", ".xm", ".m", ".mm", ".kt", ".cpp", ".h":
 			files = append(files, compatSourceFile{path: relative, component: component, platform: compatPlatform(relative)})
 		}
+
 		return nil
 	})
 	if err != nil {
@@ -205,12 +227,15 @@ func collectCompatReferences(root string) (*compatSourceSet, error) {
 	}
 
 	set := newCompatSourceSet()
+
 	var scripts []*scriptFile
+
 	for _, file := range files {
 		content, err := os.ReadFile(filepath.Join(root, file.path))
 		if err != nil {
 			return nil, err
 		}
+
 		switch filepath.Ext(file.path) {
 		case ".ts", ".tsx":
 			scripts = append(scripts, newScriptFile(file, scriptSourceRoot(file.path), tokenizeScript(string(content))))
@@ -218,7 +243,9 @@ func collectCompatReferences(root string) (*compatSourceSet, error) {
 			extractNativeReferences(set, file, string(content))
 		}
 	}
+
 	analyzeScripts(set, scripts)
+
 	return set, nil
 }
 
@@ -239,8 +266,10 @@ type compatToken struct {
 
 func tokenizeScript(source string) []compatToken {
 	var tokens []compatToken
+
 	line := 1
 	regexAllowed := true
+
 	for index := 0; index < len(source); {
 		character := source[index]
 		switch {
@@ -258,6 +287,7 @@ func tokenizeScript(source string) []compatToken {
 			if end < 0 {
 				return tokens
 			}
+
 			line += strings.Count(source[index:index+2+end], "\n")
 			index += end + 4
 		case character == '\'' || character == '"':
@@ -266,33 +296,41 @@ func tokenizeScript(source string) []compatToken {
 				tokens = append(tokens, compatToken{kind: tokenString, value: value, line: line})
 				regexAllowed = false
 			}
+
 			index = next
 		case character == '`':
 			start := index
+
 			index++
 			for index < len(source) && source[index] != '`' {
 				if source[index] == '\\' {
 					index++
 				}
+
 				index++
 			}
+
 			body := source[start+1 : min(index, len(source))]
 			line += strings.Count(body, "\n")
 			index++
+
 			kind := tokenOther
 			if !strings.Contains(body, "${") {
 				kind = tokenString
 			}
+
 			tokens = append(tokens, compatToken{kind: kind, value: body, line: line})
 			regexAllowed = false
 		case character == '/' && regexAllowed:
 			index++
 			inClass := false
+
 			for index < len(source) && source[index] != '\n' {
 				if source[index] == '\\' {
 					index += 2
 					continue
 				}
+
 				if source[index] == '[' {
 					inClass = true
 				} else if source[index] == ']' {
@@ -301,8 +339,10 @@ func tokenizeScript(source string) []compatToken {
 					index++
 					break
 				}
+
 				index++
 			}
+
 			tokens = append(tokens, compatToken{kind: tokenOther, value: "/regex/", line: line})
 			regexAllowed = false
 		case isIdentifierStart(character):
@@ -310,6 +350,7 @@ func tokenizeScript(source string) []compatToken {
 			for index < len(source) && isIdentifierPart(source[index]) {
 				index++
 			}
+
 			word := source[start:index]
 			tokens = append(tokens, compatToken{kind: tokenIdentifier, value: word, line: line})
 			regexAllowed = word == "return" || word == "typeof" || word == "case" || word == "in" || word == "of"
@@ -318,6 +359,7 @@ func tokenizeScript(source string) []compatToken {
 			for index < len(source) && (isIdentifierPart(source[index]) || source[index] == '.') {
 				index++
 			}
+
 			tokens = append(tokens, compatToken{kind: tokenOther, value: source[start:index], line: line})
 			regexAllowed = false
 		default:
@@ -326,18 +368,22 @@ func tokenizeScript(source string) []compatToken {
 			index++
 		}
 	}
+
 	return tokens
 }
 
 func readQuoted(source string, start int) (string, int, bool) {
 	quote := source[start]
+
 	var builder strings.Builder
+
 	for index := start + 1; index < len(source); index++ {
 		switch source[index] {
 		case '\\':
 			if index+1 < len(source) {
 				builder.WriteByte(source[index+1])
 			}
+
 			index++
 		case '\n':
 			return "", index, false
@@ -347,6 +393,7 @@ func readQuoted(source string, start int) (string, int, bool) {
 			builder.WriteByte(source[index])
 		}
 	}
+
 	return "", len(source), false
 }
 
@@ -393,10 +440,12 @@ func logosSelector(name, rest string) string {
 	if !logosFirstPart.MatchString(rest) {
 		return name
 	}
+
 	selector := name + ":"
 	for _, match := range logosSelectorPart.FindAllStringSubmatch(rest, -1) {
 		selector += match[1] + ":"
 	}
+
 	return selector
 }
 
@@ -406,11 +455,16 @@ func lineAt(content string, offset int) int {
 
 func extractKotlinFallbacks(set *compatSourceSet, base compatReference, file compatSourceFile, content string) map[int]map[string]bool {
 	grouped := map[int]map[string]bool{}
+
 	for _, span := range kotlinHostClassPattern.FindAllStringSubmatchIndex(content, -1) {
 		arguments := content[span[2]:span[3]]
 		matches := kotlinStringPattern.FindAllStringSubmatchIndex(arguments, -1)
-		var names []string
-		var lines []int
+
+		var (
+			names []string
+			lines []int
+		)
+
 		for _, match := range matches {
 			name := arguments[match[2]:match[3]]
 			if javaClassPattern.MatchString(name) {
@@ -418,34 +472,44 @@ func extractKotlinFallbacks(set *compatSourceSet, base compatReference, file com
 				lines = append(lines, lineAt(content, span[2]+match[0]))
 			}
 		}
+
 		if len(names) < 2 {
 			continue
 		}
+
 		group := fmt.Sprintf("%s:%d", file.path, lineAt(content, span[0]))
+
 		for alternative, name := range names {
 			reference := base
 			reference.Kind, reference.Name, reference.Group, reference.Alternative = referenceJavaClass, name, group, alternative
 			set.add(reference, compatLocation{File: file.path, Line: lines[alternative]})
+
 			if grouped[lines[alternative]] == nil {
 				grouped[lines[alternative]] = map[string]bool{}
 			}
+
 			grouped[lines[alternative]][name] = true
 		}
 	}
+
 	for _, match := range kotlinLegacyPattern.FindAllStringSubmatchIndex(content, -1) {
 		name := content[match[2]:match[3]]
 		if !javaClassPattern.MatchString(name) {
 			continue
 		}
+
 		line := lineAt(content, match[2])
 		reference := base
 		reference.Kind, reference.Name, reference.Legacy = referenceJavaClass, name, true
 		set.add(reference, compatLocation{File: file.path, Line: line})
+
 		if grouped[line] == nil {
 			grouped[line] = map[string]bool{}
 		}
+
 		grouped[line][name] = true
 	}
+
 	return grouped
 }
 
@@ -459,22 +523,27 @@ func extractKotlinShapes(set *compatSourceSet, base compatReference, file compat
 
 func extractNativeReferences(set *compatSourceSet, file compatSourceFile, content string) {
 	base := compatReference{Component: file.component, Platform: file.platform}
+
 	var grouped map[int]map[string]bool
 	if filepath.Ext(file.path) == ".kt" {
 		grouped = extractKotlinFallbacks(set, base, file, content)
 		extractKotlinShapes(set, base, file, content)
 	}
+
 	hooked := ""
 	addsMethod := false
+
 	lines := strings.Split(content, "\n")
 	for number, line := range lines {
 		location := compatLocation{File: file.path, Line: number + 1}
+
 		trimmed := strings.TrimSpace(line)
 		if hooked != "" && (strings.HasPrefix(trimmed, "-") || strings.HasPrefix(trimmed, "+")) {
 			for next := number + 1; next < len(lines) && !strings.ContainsAny(trimmed, "{;"); next++ {
 				trimmed += " " + strings.TrimSpace(lines[next])
 			}
 		}
+
 		add := func(kind, class, name string) {
 			reference := base
 			reference.Kind, reference.Class, reference.Name = kind, class, name
@@ -488,26 +557,33 @@ func extractNativeReferences(set *compatSourceSet, file compatSourceFile, conten
 				reference := base
 				reference.Kind, reference.Name, reference.Strict = referenceObjCClass, hooked, true
 				set.add(reference, location)
+
 				continue
 			}
+
 			if strings.HasPrefix(trimmed, "%end") {
 				hooked = ""
 				continue
 			}
+
 			if hooked != "" {
 				if match := logosMethodPattern.FindStringSubmatch(trimmed); match != nil && !addsMethod {
 					add(referenceObjCMethod, hooked, logosSelector(match[1], match[2]))
 				}
+
 				if match := logosMethodPattern.FindStringSubmatch(trimmed); match != nil {
 					addsMethod = false
 				}
+
 				if strings.HasPrefix(trimmed, "%new") {
 					addsMethod = true
 				}
 			}
+
 			for _, match := range objcStringClassPattern.FindAllStringSubmatch(line, -1) {
 				add(referenceObjCClass, "", match[1])
 			}
+
 			for _, match := range logosClassPattern.FindAllStringSubmatch(line, -1) {
 				add(referenceObjCClass, "", match[1])
 			}
@@ -517,14 +593,17 @@ func extractNativeReferences(set *compatSourceSet, file compatSourceFile, conten
 					add(referenceJavaClass, "", match[1])
 				}
 			}
+
 			for _, match := range kotlinMethodPattern.FindAllStringSubmatch(line, -1) {
 				add(referenceJavaMethod, "", match[1])
 			}
+
 			for _, match := range kotlinLegacyMethod.FindAllStringSubmatch(line, -1) {
 				reference := base
 				reference.Kind, reference.Name, reference.Legacy = referenceJavaMethod, match[1], true
 				set.add(reference, location)
 			}
+
 			for _, match := range kotlinFieldPattern.FindAllStringSubmatch(line, -1) {
 				add(referenceJavaField, "", match[1])
 			}

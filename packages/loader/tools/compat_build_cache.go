@@ -41,9 +41,11 @@ func defaultCompatCache() string {
 	if directory := os.Getenv("UNBOUND_DISCORD_CACHE"); directory != "" {
 		return directory
 	}
+
 	if directory, err := os.UserCacheDir(); err == nil {
 		return filepath.Join(directory, "unbound", "discord")
 	}
+
 	return filepath.Join(os.TempDir(), "unbound-discord")
 }
 
@@ -62,33 +64,42 @@ func fetchCompatBuilds(ctx context.Context, channel, cache string, wanted compat
 	if discordAndroidChannelRank(channel) < 0 {
 		return compatBuilds{}, fmt.Errorf("compat-scan fetches builds for stable, beta or alpha, not %q", channel)
 	}
+
 	var builds compatBuilds
+
 	if wanted.android {
 		apk, version, err := cachedAndroidBuild(ctx, channel, filepath.Join(cache, "android", channel))
 		if err != nil {
 			return compatBuilds{}, fmt.Errorf("Android %s build: %w", channel, err)
 		}
+
 		builds.apk, builds.androidVersion = apk, version
 	}
+
 	if !wanted.ios {
 		return builds, nil
 	}
+
 	source := iosSourceForChannel(channel)
 	if source == "" {
 		fmt.Fprintf(os.Stderr, "compat-scan: Discord ships no iOS %s build, scanning Android only\n", channel)
 		return builds, nil
 	}
+
 	apiKey := dkryptAPIKey()
 	if apiKey == "" {
 		fmt.Fprintln(os.Stderr, "compat-scan: DKRYPT_API_KEY is not set, scanning Android only")
 		return builds, nil
 	}
+
 	ipa, err := cachedIOSBuild(ctx, envOr("DKRYPT_BASE_URL", defaultDkryptURL), apiKey, source, filepath.Join(cache, "ios", source))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "compat-scan: dkrypt could not provide the iOS %s build (%v), scanning Android only\n", source, err)
 		return builds, nil
 	}
+
 	builds.ipa = ipa
+
 	return builds, nil
 }
 
@@ -98,34 +109,45 @@ func cachedAndroidBuild(ctx context.Context, channel, cache string) (string, str
 		trackerURL: strings.TrimRight(envOr("DISCORD_TRACKER", defaultAndroidTracker), "/"),
 		client:     lookupClient(discordAPKLookupLimit),
 	}
+
 	code, err := sources.latestCode(ctx, channel)
 	if err != nil {
 		return "", "", err
 	}
+
 	release, err := newDiscordAPKRelease(channel, code)
 	if err != nil {
 		return "", "", err
 	}
+
 	directory := filepath.Join(cache, fmt.Sprint(code))
 	path := filepath.Join(directory, "base.apk")
+
 	defer pruneCacheExcept(cache, fmt.Sprint(code))
+
 	if _, err := verifyDiscordSplit(path, code); err == nil {
 		fmt.Fprintf(os.Stderr, "compat-scan: using cached Android %s %s\n", channel, release.Version)
 		return path, release.Version, nil
 	}
+
 	if err := os.MkdirAll(directory, 0o755); err != nil {
 		return "", "", err
 	}
+
 	fmt.Fprintf(os.Stderr, "compat-scan: downloading Android %s %s\n", channel, release.Version)
 	endpoint := sources.splitURLs(ctx, channel, code, []string{"base"})["base"]
+
 	partial := path + ".part"
 	defer os.Remove(partial)
+
 	if _, err := downloadDiscordSplit(ctx, &http.Client{Timeout: discordAPKDownloadLimit}, endpoint, partial, code); err != nil {
 		return "", "", err
 	}
+
 	if err := os.Rename(partial, path); err != nil {
 		return "", "", err
 	}
+
 	return path, release.Version, nil
 }
 
@@ -134,6 +156,7 @@ func pruneCacheExcept(directory, keep string) {
 	if err != nil {
 		return
 	}
+
 	for _, entry := range entries {
 		if entry.Name() != keep {
 			os.RemoveAll(filepath.Join(directory, entry.Name()))
@@ -143,32 +166,42 @@ func pruneCacheExcept(directory, keep string) {
 
 func cachedIOSBuild(ctx context.Context, baseURL, apiKey, source, cache string) (string, error) {
 	base := strings.TrimRight(baseURL, "/")
+
 	body, status, err := fetchResponse(ctx, lookupClient(discordAPKLookupLimit), base+"/v1/artifacts", apiKey, nil)
 	if err != nil {
 		return "", fmt.Errorf("list dkrypt artifacts: %w", err)
 	}
+
 	if status != http.StatusOK {
 		return "", fmt.Errorf("list dkrypt artifacts returned HTTP %d", status)
 	}
+
 	artifact, err := latestDkryptArtifact(body, defaultBundleID, source)
 	if err != nil {
 		return "", err
 	}
+
 	name := unsafeCacheName.ReplaceAllString(fmt.Sprintf("%s-%s-%s.ipa", source, artifact.VersionLabel, artifact.BuildNumber), "_")
+
 	path := filepath.Join(cache, name)
 	defer pruneCacheExcept(cache, name)
+
 	if matchesSHA256(path, artifact.SHA256) {
 		fmt.Fprintf(os.Stderr, "compat-scan: using cached iOS %s %s (%s)\n", source, artifact.VersionLabel, artifact.BuildNumber)
 		return path, nil
 	}
+
 	fmt.Fprintf(os.Stderr, "compat-scan: downloading iOS %s %s (%s)\n", source, artifact.VersionLabel, artifact.BuildNumber)
+
 	if err := downloadDirect(dkryptFileURL(base, artifact.FileURL), apiKey, path); err != nil {
 		return "", err
 	}
+
 	if !matchesSHA256(path, artifact.SHA256) {
 		os.Remove(path)
 		return "", fmt.Errorf("the downloaded IPA does not match dkrypt's SHA-256 for %s", artifact.ID)
 	}
+
 	return path, nil
 }
 
@@ -179,16 +212,21 @@ func latestDkryptArtifact(body []byte, bundleID, channel string) (dkryptArtifact
 	if err := json.Unmarshal(body, &listing); err != nil {
 		return dkryptArtifact{}, fmt.Errorf("decode dkrypt artifacts: %w", err)
 	}
+
 	matches := []dkryptArtifact{}
+
 	for _, artifact := range listing.Artifacts {
 		if artifact.BundleID == bundleID && artifact.Channel == channel && artifact.FileURL != "" && artifact.SHA256 != "" {
 			matches = append(matches, artifact)
 		}
 	}
+
 	if len(matches) == 0 {
 		return dkryptArtifact{}, fmt.Errorf("dkrypt has no %s artifact for %s", channel, bundleID)
 	}
+
 	sort.SliceStable(matches, func(left, right int) bool { return matches[left].CreatedAt > matches[right].CreatedAt })
+
 	return matches[0], nil
 }
 
@@ -196,6 +234,7 @@ func dkryptFileURL(base, fileURL string) string {
 	if strings.HasPrefix(fileURL, "http://") || strings.HasPrefix(fileURL, "https://") {
 		return fileURL
 	}
+
 	return base + "/" + strings.TrimLeft(fileURL, "/")
 }
 

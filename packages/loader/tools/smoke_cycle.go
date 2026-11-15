@@ -72,16 +72,20 @@ const smokeCycleExpression = `(async function () {
 
 func cycleSmokePlugins(ctx context.Context, options *smokeOptions, before *smokeResources) *smokeCycle {
 	cycle := &smokeCycle{before: before}
+
 	value, err := evaluateSmokeExpressionWithin(ctx, options, smokeCycleExpression, smokeCycleEvalTimeout)
 	if err != nil {
 		cycle.err = err.Error()
 		return cycle
 	}
+
 	if err := json.Unmarshal([]byte(value), &cycle.plugins); err != nil {
 		cycle.err = fmt.Sprintf("unreadable cycle results %q: %v", value, err)
 		return cycle
 	}
+
 	cycle.after = measureSmokeResources(ctx, options)
+
 	return cycle
 }
 
@@ -89,10 +93,13 @@ func cycleProblems(cycle *smokeCycle) []string {
 	if cycle == nil {
 		return nil
 	}
+
 	if cycle.err != "" {
 		return []string{"plugin stop and start cycle: " + cycle.err}
 	}
+
 	problems := []string{}
+
 	for _, plugin := range cycle.plugins {
 		switch {
 		case plugin.Error != "":
@@ -109,12 +116,15 @@ func cycleProblems(cycle *smokeCycle) []string {
 			problems = append(problems, updateProblems(plugin)...)
 		}
 	}
+
 	if cycle.before == nil || cycle.after == nil {
 		return problems
 	}
+
 	if cycle.after.Handles > cycle.before.Handles*cycleHandleGrowthRatio && cycle.after.Handles-cycle.before.Handles > cycleHandleGrowthMinimum {
 		problems = append(problems, fmt.Sprintf("restarting every plugin left %.0f native handles referenced, up from %.0f", cycle.after.Handles, cycle.before.Handles))
 	}
+
 	return problems
 }
 
@@ -133,6 +143,7 @@ func updateProblems(plugin smokeCycleResult) []string {
 	case ownHooks(plugin) > 0 && plugin.HooksUpdated <= plugin.HooksAfter-ownHooks(plugin):
 		return []string{fmt.Sprintf("%s did not re-apply its %.0f hooks after its update", plugin.ID, ownHooks(plugin))}
 	}
+
 	return nil
 }
 
@@ -140,17 +151,21 @@ func renderSmokeCycle(cycle *smokeCycle) string {
 	if cycle == nil || cycle.err != "" || len(cycle.plugins) == 0 {
 		return ""
 	}
+
 	slowest := cycle.plugins[0]
 	for _, plugin := range cycle.plugins {
 		if plugin.StopMs > slowest.StopMs {
 			slowest = plugin
 		}
 	}
+
 	var report strings.Builder
 	fmt.Fprintf(&report, "Stopped, restarted and updated %d plugins. Slowest stop: `%s` %.0f ms.\n\n", len(cycle.plugins), slowest.ID, slowest.StopMs)
+
 	if cycle.before != nil && cycle.after != nil {
 		fmt.Fprintf(&report, "| After the cycle | Before | After |\n| --- | --- | --- |\n| Native handles | %.0f | %.0f |\n| Hooks | %.0f | %.0f |\n| Surfaces | %.0f | %.0f |\n\n",
 			cycle.before.Handles, cycle.after.Handles, cycle.before.Hooks, cycle.after.Hooks, cycle.before.Surfaces, cycle.after.Surfaces)
 	}
+
 	return report.String()
 }

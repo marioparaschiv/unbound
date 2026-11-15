@@ -48,25 +48,32 @@ func runIOSDeviceSmoke(args []string) error {
 	options := registerSmokeFlags(set)
 	udid := set.String("udid", "", "UDID of the jailbroken iPhone, as jb-p1lot lists it")
 	host := set.String("host", "", "the address the iPhone reaches this machine at; found from the default route when empty")
+
 	pilot := set.String("pilot", "jb-p1lot", "the jb-p1lot binary")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
+
 	if *udid == "" {
 		return errors.New("usage: smoke ios-device --udid <udid> [--host <address>] [--client <dir>] [--plugins <dir>] [--artifacts <dir>]")
 	}
+
 	address := *host
 	if address == "" {
 		detected, err := lanAddress()
 		if err != nil {
 			return fmt.Errorf("find this machine's address for the iPhone, or pass --host: %w", err)
 		}
+
 		address = detected
 	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
 	target := &deviceSmokeTarget{udid: *udid, pilot: *pilot, host: address}
 	defer target.restore()
+
 	return runSmokeTest(ctx, "ios", options, target)
 }
 
@@ -76,10 +83,12 @@ func lanAddress() (string, error) {
 		return "", err
 	}
 	defer connection.Close()
+
 	address, ok := connection.LocalAddr().(*net.UDPAddr)
 	if !ok || address.IP.IsLoopback() {
 		return "", errors.New("no routable local address")
 	}
+
 	return address.IP.String(), nil
 }
 
@@ -101,6 +110,7 @@ func (target *deviceSmokeTarget) shell(ctx context.Context, timeout time.Duratio
 	if err != nil {
 		return "", err
 	}
+
 	return parsePilotShell(output)
 }
 
@@ -112,9 +122,11 @@ func parsePilotShell(output string) (string, error) {
 	if err := json.Unmarshal([]byte(output), &result); err != nil {
 		return "", fmt.Errorf("jb-p1lot answered with something other than JSON: %s", strings.TrimSpace(output))
 	}
+
 	if result.ExitCode != 0 {
 		return result.Output, fmt.Errorf("device command exited with %d: %s", result.ExitCode, strings.TrimSpace(result.Output))
 	}
+
 	return result.Output, nil
 }
 
@@ -133,6 +145,7 @@ func parseDeviceRoot(output string) string {
 			return root
 		}
 	}
+
 	return ""
 }
 
@@ -141,29 +154,37 @@ func (target *deviceSmokeTarget) prepare(ctx context.Context, plugins []smokePlu
 	if err != nil {
 		return fmt.Errorf("find Discord's Unbound folder; launch Discord with Unbound once: %w", err)
 	}
+
 	target.root = parseDeviceRoot(output)
 	if target.root == "" {
 		return errors.New("no Discord data container has an Unbound folder")
 	}
+
 	if _, err := target.shell(ctx, 3*time.Minute, "killall -9 Discord 2>/dev/null; cd "+shellQuote(target.root)+" && "+deviceTar+" -cf - . | "+deviceGzip+" > "+deviceBackupArchive); err != nil {
 		return fmt.Errorf("back up the Unbound folder: %w", err)
 	}
+
 	target.backedUp = true
+
 	current, err := target.shell(ctx, time.Minute, "cat "+shellQuote(target.root+"/settings.json")+" 2>/dev/null || true")
 	if err != nil {
 		return err
 	}
+
 	merged, err := mergeDeviceSettings([]byte(current), settings)
 	if err != nil {
 		return err
 	}
+
 	archive, err := smokeArchive(plugins, merged)
 	if err != nil {
 		return err
 	}
+
 	if err := target.pushArchive(ctx, archive); err != nil {
 		return err
 	}
+
 	install := strings.Join([]string{
 		"cd " + shellQuote(target.root),
 		"rm -rf Plugins",
@@ -174,69 +195,98 @@ func (target *deviceSmokeTarget) prepare(ctx context.Context, plugins []smokePlu
 	if _, err := target.shell(ctx, 3*time.Minute, install); err != nil {
 		return fmt.Errorf("install the smoke plugins: %w", err)
 	}
+
 	size, err := target.shell(ctx, time.Minute, "wc -c < "+shellQuote(target.root+"/"+deviceLogFile)+" 2>/dev/null || echo 0")
 	if err != nil {
 		return err
 	}
+
 	target.logStart, _ = strconv.ParseInt(strings.TrimSpace(size), 10, 64)
+
 	return nil
 }
 
 func mergeDeviceSettings(current, smoke []byte) ([]byte, error) {
-	merged := map[string]any{}
+	merged := map[string]json.RawMessage{}
 	if len(bytes.TrimSpace(current)) > 0 {
 		if err := json.Unmarshal(current, &merged); err != nil {
 			return nil, fmt.Errorf("read the iPhone's settings.json: %w", err)
 		}
 	}
-	var overlay map[string]any
+
+	var overlay map[string]json.RawMessage
 	if err := json.Unmarshal(smoke, &overlay); err != nil {
 		return nil, err
 	}
-	mergeSettingsInto(merged, overlay)
+
+	if err := mergeSettingsInto(merged, overlay); err != nil {
+		return nil, err
+	}
+
 	return json.MarshalIndent(merged, "", "\t")
 }
 
-func mergeSettingsInto(base, overlay map[string]any) {
+// mergeSettingsInto merges objects key by key; any other value, and "states", replaces the base's whole.
+func mergeSettingsInto(base, overlay map[string]json.RawMessage) error {
 	for key, value := range overlay {
-		nested, isObject := value.(map[string]any)
-		existing, hasObject := base[key].(map[string]any)
-		if isObject && hasObject && key != "states" {
-			mergeSettingsInto(existing, nested)
+		var nested, existing map[string]json.RawMessage
+		if key != "states" && json.Unmarshal(value, &nested) == nil && nested != nil && json.Unmarshal(base[key], &existing) == nil && existing != nil {
+			if err := mergeSettingsInto(existing, nested); err != nil {
+				return err
+			}
+
+			combined, err := json.Marshal(existing)
+			if err != nil {
+				return err
+			}
+
+			base[key] = combined
+
 			continue
 		}
+
 		base[key] = value
 	}
+
+	return nil
 }
 
 func smokeArchive(plugins []smokePlugin, settings []byte) ([]byte, error) {
 	var buffer bytes.Buffer
+
 	compressed := gzip.NewWriter(&buffer)
 	writer := tar.NewWriter(compressed)
+
 	add := func(name string, data []byte) error {
 		if err := writer.WriteHeader(&tar.Header{Name: name, Mode: 0o644, Size: int64(len(data)), Typeflag: tar.TypeReg}); err != nil {
 			return err
 		}
+
 		_, err := writer.Write(data)
+
 		return err
 	}
 	if err := add("settings.json", settings); err != nil {
 		return nil, err
 	}
+
 	for _, plugin := range plugins {
 		for _, file := range plugin.files {
 			data, err := os.ReadFile(filepath.Join(plugin.directory, file))
 			if err != nil {
 				return nil, err
 			}
+
 			if err := add("Plugins/"+plugin.id+"/"+file, data); err != nil {
 				return nil, err
 			}
 		}
 	}
+
 	if err := errors.Join(writer.Close(), compressed.Close()); err != nil {
 		return nil, err
 	}
+
 	return buffer.Bytes(), nil
 }
 
@@ -246,6 +296,7 @@ func splitParts(data []byte, size int) [][]byte {
 		parts = append(parts, data[:size])
 		data = data[size:]
 	}
+
 	return append(parts, data)
 }
 
@@ -255,34 +306,45 @@ func (target *deviceSmokeTarget) pushArchive(ctx context.Context, archive []byte
 		return err
 	}
 	defer os.RemoveAll(local)
+
 	if _, err := target.shell(ctx, time.Minute, "rm -rf "+deviceStagingDir+" && mkdir -p "+deviceStagingDir); err != nil {
 		return err
 	}
+
 	parts := splitParts(archive, devicePartBytes)
+
 	names := make([]string, 0, len(parts))
 	for index, part := range parts {
 		name := fmt.Sprintf("part-%03d", index)
+
 		path := filepath.Join(local, name)
 		if err := os.WriteFile(path, part, 0o644); err != nil {
 			return err
 		}
+
 		if _, err := target.run(ctx, 2*time.Minute, "file_transfer", "--direction", "host_to_device", "--source", path, "--destination", deviceStagingDir+"/"+name); err != nil {
 			return fmt.Errorf("transfer the smoke archive: %w", err)
 		}
+
 		names = append(names, deviceStagingDir+"/"+name)
 	}
+
 	_, err = target.shell(ctx, time.Minute, "cat "+strings.Join(names, " ")+" > "+deviceStagingDir+"/smoke.tgz && rm -f "+strings.Join(names, " "))
+
 	return err
 }
 
 func (target *deviceSmokeTarget) streamLogs(ctx context.Context) (io.ReadCloser, func() error, error) {
 	reader, writer := io.Pipe()
 	streamCtx, cancel := context.WithCancel(ctx)
+
 	var done sync.WaitGroup
+
 	done.Add(1)
 	go func() {
 		defer done.Done()
 		defer writer.Close()
+
 		offset := target.logStart
 		for streamCtx.Err() == nil {
 			chunk, err := target.shell(streamCtx, 30*time.Second, fmt.Sprintf("tail -c +%d %s 2>/dev/null", offset+1, shellQuote(target.root+"/"+deviceLogFile)))
@@ -292,27 +354,33 @@ func (target *deviceSmokeTarget) streamLogs(ctx context.Context) (io.ReadCloser,
 					if _, err := io.WriteString(writer, deviceLogChunk(chunk[:complete])); err != nil {
 						return
 					}
+
 					offset += int64(complete)
 				}
 			}
+
 			select {
 			case <-streamCtx.Done():
 			case <-time.After(deviceLogPoll):
 			}
 		}
 	}()
+
 	stop := func() error {
 		cancel()
 		reader.Close()
 		done.Wait()
+
 		return nil
 	}
+
 	return reader, stop, nil
 }
 
 func (target *deviceSmokeTarget) launch(ctx context.Context) error {
 	_, _ = target.run(ctx, time.Minute, "ui_action", "--action", "button", "--button", "unlock")
 	_, err := target.shell(ctx, 2*time.Minute, "killall -9 Discord 2>/dev/null; sleep 1; /var/jb/usr/bin/uiopen --bundleid "+smokeIOSBundleID)
+
 	return err
 }
 
@@ -326,7 +394,9 @@ func (target *deviceSmokeTarget) running(ctx context.Context) bool {
 	if err != nil {
 		return true
 	}
+
 	count, _ := strconv.Atoi(strings.TrimSpace(output))
+
 	return count > 0
 }
 
@@ -348,9 +418,11 @@ func (target *deviceSmokeTarget) collect(ctx context.Context, artifacts string) 
 			_ = os.WriteFile(filepath.Join(artifacts, "screenshot.png"), png, 0o644)
 		}
 	}
+
 	if target.root == "" {
 		return
 	}
+
 	if settings, err := target.shell(ctx, time.Minute, "cat "+shellQuote(target.root+"/settings.json")); err == nil {
 		_ = os.WriteFile(filepath.Join(artifacts, "settings-after.json"), []byte(settings), 0o644)
 	}
@@ -361,6 +433,7 @@ func screenCapturePNG(output string) []byte {
 	if json.Unmarshal([]byte(output), &capture) != nil {
 		return nil
 	}
+
 	for _, key := range []string{"png", "data", "image"} {
 		if encoded, ok := capture[key].(string); ok {
 			if data, err := base64.StdEncoding.DecodeString(encoded); err == nil {
@@ -368,6 +441,7 @@ func screenCapturePNG(output string) []byte {
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -375,8 +449,10 @@ func (target *deviceSmokeTarget) restore() {
 	if !target.backedUp {
 		return
 	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
+
 	script := strings.Join([]string{
 		"killall -9 Discord 2>/dev/null",
 		"cd " + shellQuote(target.root),
@@ -389,7 +465,9 @@ func (target *deviceSmokeTarget) restore() {
 		fmt.Fprintf(os.Stderr, "smoke: restoring the iPhone's Unbound folder failed, its backup is at %s: %v\n", deviceBackupArchive, err)
 		return
 	}
+
 	_, _ = target.shell(ctx, time.Minute, "/var/jb/usr/bin/uiopen --bundleid "+smokeIOSBundleID)
+
 	fmt.Println("Restored the iPhone's Unbound folder")
 }
 

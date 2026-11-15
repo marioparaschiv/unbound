@@ -54,13 +54,16 @@ func runIOSSmoke(args []string) error {
 	set := flag.NewFlagSet("smoke ios", flag.ContinueOnError)
 	options := registerSmokeFlags(set)
 	app := set.String("app", "", "the simulator build's Discord.app")
+
 	device := set.String("device", "", "UDID of a booted simulator; empty creates and boots a fresh iPhone")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
+
 	if *app == "" {
 		return errors.New("usage: smoke ios --app <Discord.app> [--device <udid>] [--plugins <dir>] [--client <dir>] [--artifacts <dir>]")
 	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	// A sideloaded build's short version names the loader too; Discord's own sits under discordVersionKey.
@@ -68,13 +71,16 @@ func runIOSSmoke(args []string) error {
 	if err != nil {
 		version, err = runSmokeCommand(ctx, time.Minute, "plutil", "-extract", "CFBundleShortVersionString", "raw", filepath.Join(*app, "Info.plist"))
 	}
+
 	if err != nil {
 		return err
 	}
+
 	if reason, err := unsupportedDiscordReason(options.repository, "ios", strings.TrimSpace(version)); err != nil || reason != "" {
 		if err != nil {
 			return err
 		}
+
 		return skipSmokeTest("ios", options, reason)
 	}
 	// TestFlight builds ship as com.hammerandchisel.discord.testflight, so the app is addressed by its own identifier.
@@ -82,8 +88,10 @@ func runIOSSmoke(args []string) error {
 	if err != nil {
 		return err
 	}
+
 	target := &iosSmokeTarget{app: *app, bundleID: strings.TrimSpace(bundleID), device: *device}
 	defer target.cleanup()
+
 	return runSmokeTest(ctx, "ios", options, target)
 }
 
@@ -98,13 +106,16 @@ func (target *iosSmokeTarget) hostAddress() string {
 const simctlListAttempts = 3
 
 func retrySmokeCommand(attempts int, run func() (string, error)) (string, error) {
-	var output string
-	var err error
+	var (
+		output string
+		err    error
+	)
 	for attempt := 0; attempt < attempts; attempt++ {
 		if output, err = run(); err == nil {
 			return output, nil
 		}
 	}
+
 	return output, err
 }
 
@@ -118,38 +129,47 @@ func (target *iosSmokeTarget) prepare(ctx context.Context, plugins []smokePlugin
 			return err
 		}
 	}
+
 	if _, err := target.simctl(ctx, 10*time.Minute, "bootstatus", target.device, "-b"); err != nil {
 		return err
 	}
+
 	if _, err := target.simctl(ctx, 10*time.Minute, "install", target.device, target.app); err != nil {
 		return err
 	}
+
 	container, err := target.simctl(ctx, time.Minute, "get_app_container", target.device, target.bundleID, "data")
 	if err != nil {
 		return err
 	}
+
 	documents := filepath.Join(strings.TrimSpace(container), "Documents", "Unbound")
 	if err := os.MkdirAll(filepath.Join(documents, "Plugins"), 0o755); err != nil {
 		return err
 	}
+
 	if err := os.WriteFile(filepath.Join(documents, "settings.json"), settings, 0o644); err != nil {
 		return err
 	}
+
 	for _, plugin := range plugins {
 		destination := filepath.Join(documents, "Plugins", plugin.id)
 		if err := os.MkdirAll(destination, 0o755); err != nil {
 			return err
 		}
+
 		for _, file := range plugin.files {
 			data, err := os.ReadFile(filepath.Join(plugin.directory, file))
 			if err != nil {
 				return err
 			}
+
 			if err := os.WriteFile(filepath.Join(destination, file), data, 0o644); err != nil {
 				return err
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -160,18 +180,23 @@ func (target *iosSmokeTarget) createDevice(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	choice, err := selectSimulator([]byte(output))
 	if err != nil {
 		return err
 	}
+
 	fmt.Printf("Creating the smoke simulator: %s.\n", choice.description)
+
 	created, err := target.simctl(ctx, 2*time.Minute, "create", "Unbound smoke", choice.deviceType, choice.runtime)
 	if err != nil {
 		return err
 	}
+
 	target.device = strings.TrimSpace(created)
 	target.created = true
 	_, err = target.simctl(ctx, 5*time.Minute, "boot", target.device)
+
 	return err
 }
 
@@ -190,80 +215,100 @@ func selectSimulator(listing []byte) (simulatorChoice, error) {
 	if err := json.Unmarshal(listing, &parsed); err != nil {
 		return simulatorChoice{}, fmt.Errorf("unreadable simulator runtimes: %w", err)
 	}
+
 	var runtimes []simctlRuntime
+
 	for _, runtime := range parsed.Runtimes {
 		if runtime.Platform == "iOS" && runtime.IsAvailable {
 			runtimes = append(runtimes, runtime)
 		}
 	}
+
 	if len(runtimes) == 0 {
 		return simulatorChoice{}, errors.New("no iOS simulator runtime is installed")
 	}
+
 	sort.SliceStable(runtimes, func(left, right int) bool {
 		return compareVersions(runtimes[left].Version, runtimes[right].Version) > 0
 	})
+
 	for _, runtime := range runtimes {
 		if device, name := numberedIPhoneOf(runtime); device != "" {
 			return simulatorChoice{runtime.Identifier, device, name + " on iOS " + runtime.Version}, nil
 		}
 	}
+
 	return simulatorChoice{}, errors.New("no installed iOS runtime offers a numbered iPhone simulator")
 }
 
 func numberedIPhoneOf(runtime simctlRuntime) (string, string) {
 	bestNumber, bestPro := -1, false
 	device, name := "", ""
+
 	for _, candidate := range runtime.SupportedDeviceTypes {
 		match := numberedIPhone.FindStringSubmatch(candidate.Name)
 		if candidate.ProductFamily != "iPhone" || match == nil {
 			continue
 		}
+
 		number, _ := strconv.Atoi(match[1])
+
 		pro := match[2] != ""
 		if number > bestNumber || (number == bestNumber && pro && !bestPro) {
 			bestNumber, bestPro = number, pro
 			device, name = candidate.Identifier, candidate.Name
 		}
 	}
+
 	return device, name
 }
 
 func compareVersions(left, right string) int {
 	leftParts := strings.Split(left, ".")
+
 	rightParts := strings.Split(right, ".")
 	for index := 0; index < len(leftParts) || index < len(rightParts); index++ {
 		var leftValue, rightValue int
 		if index < len(leftParts) {
 			leftValue, _ = strconv.Atoi(leftParts[index])
 		}
+
 		if index < len(rightParts) {
 			rightValue, _ = strconv.Atoi(rightParts[index])
 		}
+
 		if leftValue != rightValue {
 			if leftValue < rightValue {
 				return -1
 			}
+
 			return 1
 		}
 	}
+
 	return 0
 }
 
 func (target *iosSmokeTarget) streamLogs(ctx context.Context) (io.ReadCloser, func() error, error) {
 	command := exec.CommandContext(ctx, "xcrun", "simctl", "spawn", target.device, "log", "stream", "--level", "info", "--style", "compact", "--predicate", smokeIOSLogPredicate)
+
 	output, err := command.StdoutPipe()
 	if err != nil {
 		return nil, nil, err
 	}
+
 	command.Stderr = command.Stdout
 	if err := command.Start(); err != nil {
 		return nil, nil, err
 	}
+
 	time.Sleep(3 * time.Second)
+
 	stop := func() error {
 		stopSmokeProcess(command)
 		return nil
 	}
+
 	return output, stop, nil
 }
 
@@ -272,10 +317,12 @@ func (target *iosSmokeTarget) launch(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	target.pid = parseSimctlLaunchPID(output)
 	if target.pid > 0 && len(target.samples) == 0 {
 		go target.sampleLaunch(ctx, target.pid)
 	}
+
 	return nil
 }
 
@@ -284,28 +331,34 @@ func sampleProcess(ctx context.Context, pid int, path string) error {
 	if err == nil {
 		return nil
 	}
+
 	_, sudoErr := runSmokeCommand(ctx, time.Minute, "sudo", "-n", "sample", strconv.Itoa(pid), "3", "-file", path)
 	if sudoErr == nil {
 		return nil
 	}
+
 	return fmt.Errorf("%w\n%w", err, sudoErr)
 }
 
 func (target *iosSmokeTarget) sampleLaunch(ctx context.Context, pid int) {
 	started := time.Now()
+
 	for _, delay := range launchSampleDelays {
 		select {
 		case <-ctx.Done():
 			return
 		case <-time.After(time.Until(started.Add(delay))):
 		}
+
 		path := filepath.Join(os.TempDir(), fmt.Sprintf("discord-launch-sample-%d-%ds.txt", pid, int(delay.Seconds())))
 		if err := sampleProcess(ctx, pid, path); err != nil {
 			_ = os.WriteFile(path, []byte(err.Error()+"\n"), 0o644)
 		}
+
 		screenshot := strings.TrimSuffix(path, ".txt") + ".png"
 		_, screenshotErr := target.simctl(ctx, time.Minute, "io", target.device, "screenshot", screenshot)
 		target.samplesMutex.Lock()
+
 		target.samples = append(target.samples, path)
 		if screenshotErr == nil {
 			target.samples = append(target.samples, screenshot)
@@ -324,7 +377,9 @@ func parseSimctlLaunchPID(output string) int {
 	if len(fields) == 0 {
 		return 0
 	}
+
 	pid, _ := strconv.Atoi(fields[len(fields)-1])
+
 	return pid
 }
 
@@ -332,6 +387,7 @@ func (target *iosSmokeTarget) running(ctx context.Context) bool {
 	if target.pid <= 0 {
 		return true
 	}
+
 	return hostProcessAlive(target.pid)
 }
 
@@ -358,6 +414,7 @@ func (target *iosSmokeTarget) collect(ctx context.Context, artifacts string) {
 	if target.device == "" {
 		return
 	}
+
 	_, _ = target.simctl(ctx, time.Minute, "io", target.device, "screenshot", filepath.Join(artifacts, "screenshot.png"))
 	target.samplesMutex.Lock()
 	for _, sample := range target.samples {
@@ -367,19 +424,25 @@ func (target *iosSmokeTarget) collect(ctx context.Context, artifacts string) {
 	}
 	target.samplesMutex.Unlock()
 	saveSmokeOutput(ctx, filepath.Join(artifacts, "ios-log-show.txt"), 2*time.Minute, "xcrun", "simctl", "spawn", target.device, "log", "show", "--last", "30m", "--info", "--style", "compact", "--predicate", smokeIOSLogPredicate)
+
 	if container, err := target.simctl(ctx, time.Minute, "get_app_container", target.device, target.bundleID, "data"); err == nil {
 		saveSmokeOutput(ctx, filepath.Join(artifacts, "settings-after.json"), time.Minute, "cat", filepath.Join(strings.TrimSpace(container), "Documents", "Unbound", "settings.json"))
 	}
+
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return
 	}
+
 	pattern := filepath.Join(home, "Library", "Logs", "DiagnosticReports", "Discord*")
+
 	reports, _ := filepath.Glob(pattern)
 	for attempt := 0; len(reports) == 0 && !target.running(ctx) && attempt < 15; attempt++ {
 		time.Sleep(smokePollInterval)
+
 		reports, _ = filepath.Glob(pattern)
 	}
+
 	for _, report := range reports {
 		if data, err := os.ReadFile(report); err == nil {
 			_ = os.WriteFile(filepath.Join(artifacts, filepath.Base(report)), data, 0o644)
@@ -391,6 +454,7 @@ func (target *iosSmokeTarget) cleanup() {
 	if !target.created {
 		return
 	}
+
 	ctx := context.Background()
 	_, _ = target.simctl(ctx, 2*time.Minute, "shutdown", target.device)
 	_, _ = target.simctl(ctx, 2*time.Minute, "delete", target.device)
