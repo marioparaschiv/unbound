@@ -1,6 +1,6 @@
 # Plugins
 
-146 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+147 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -65,6 +65,7 @@
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Image Alt Text](https://unbound.rip/addons/unbound.image-alt-text): Shows the descriptions people give their images right in the message, instead of behind the ALT badge.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Image Link](https://unbound.rip/addons/unbound.image-link): Keeps the link in a message that is only an image or video link, instead of showing the embed alone.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [IRC Colors](https://unbound.rip/addons/unbound.irc-colors): Gives everyone in chat their own username color, picked from their user id like in IRC clients.
+- <img src="../../assets/plugins/readme-icons/voice-normal-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Join Sounds](https://unbound.rip/addons/unbound.join-sounds): Plays a sound only you hear when chosen friends join your voice channel.
 - <img src="../../assets/plugins/readme-icons/chevron-large-right-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Jump To Top](https://unbound.rip/addons/unbound.jump-to-top): Adds a button above Discord's jump-to-present arrow that jumps to the first message in the channel.
 - <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Kaomoji](https://unbound.rip/addons/unbound.kaomoji): Adds slash commands that send a kaomoji, after an optional message, like /shrug does.
 - <img src="../../assets/plugins/readme-icons/forum-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Keep Current Channel](https://unbound.rip/addons/unbound.keep-current-channel): Brings you back to the channel you had open after switching accounts or restarting Discord.
