@@ -7,6 +7,7 @@ import type {
 
 import type { ScopeGate, ScopeLifecycle } from '~/native/scope-gate';
 import { NativeBridgeDisposedError } from '~/native/errors';
+import { hookTarget, recordHookFailure } from '~/diagnostics/hook-failures';
 import { retryUntilInstalled } from '~/native/hook-retry';
 
 type ObjCSource = Pick<NativeObjCBridge, 'hook' | 'getClass'> &
@@ -19,6 +20,7 @@ type ObjCSource = Pick<NativeObjCBridge, 'hook' | 'getClass'> &
  * @param tokens The scope's installed hooks, which it removes on dispose.
  * @param lifecycle Whether the scope is disposed.
  * @param requireGranted Throws when the plugin did not declare a method's capability.
+ * @param owner The plugin's id, named when a hook fails to install.
  * @returns The scoped `hook`.
  */
 export function createScopedObjCHook(
@@ -26,6 +28,7 @@ export function createScopedObjCHook(
 	tokens: Set<NativeHookToken>,
 	lifecycle: ScopeLifecycle,
 	requireGranted: ScopeGate['requireGranted'],
+	owner = 'unknown',
 ) {
 	return <Receiver extends boolean = true>(
 		className: string,
@@ -43,7 +46,14 @@ export function createScopedObjCHook(
 		const installed: NativeHookToken[] = [];
 
 		function install(name: string) {
-			const token = objcBridge.hook<Receiver>(name, selector, handlers, nativeOptions);
+			let token: NativeHookToken;
+
+			try {
+				token = objcBridge.hook<Receiver>(name, selector, handlers, nativeOptions);
+			} catch (error) {
+				recordHookFailure(owner, hookTarget(name, selector), error);
+				throw error;
+			}
 
 			tokens.add(token);
 			installed.push(token);

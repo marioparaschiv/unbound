@@ -370,6 +370,15 @@ export function memorySummary(memory: DebugCardMemory): string {
 }
 
 /**
+ * @description Lists hooks that failed to install newest first, each as `addon: target`.
+ * @param failures The hook failures.
+ * @returns One note per failure.
+ */
+export function hookNotes(failures: DebugInfo['hookFailures'] = []): string[] {
+	return failures.toReversed().map((failure) => `${failure.addon}: ${failure.target}`);
+}
+
+/**
  * @description Lists recent errors newest first, each prefixed with its addon.
  * @param errors The recent errors.
  * @returns One note per error.
@@ -385,6 +394,7 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 	const launch = launchNotes(info.launch);
 	const memory = memoryNotes(info.memory);
 	const errors = errorNotes(info.errors);
+	const hooks = hookNotes(info.hookFailures);
 	const storage = storageMatters(info.storage) ? storageSummary(info.storage) : undefined;
 	const updates = updateNotes(context, info.addonUpdates);
 	const tweaks = cleanNames(info.injected ?? []);
@@ -405,6 +415,7 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 			extensionNotes(info).length ? [warn(fittedList(extensionNotes(info), VALUE_ROOM))] : [],
 		],
 		['errors', errors.length ? [warn(fittedList(errors, VALUE_ROOM))] : []],
+		['hooks', hooks.length ? [warn(fittedList(hooks, VALUE_ROOM))] : []],
 		['launch', launch.length ? [warn(fittedList(launch, VALUE_ROOM))] : []],
 		['gateway', gateway ? [warn(fittedList([gateway], VALUE_ROOM))] : []],
 		['push', push ? [warn(fittedList([push], VALUE_ROOM))] : []],

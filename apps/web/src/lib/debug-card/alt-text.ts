@@ -6,6 +6,7 @@ import { parsePlist } from '@unbound-app/contracts/plist';
 import {
 	displaySummary,
 	errorNotes,
+	hookNotes,
 	lastCheckSummary,
 	memorySummary,
 	networkSummary,
@@ -45,6 +46,7 @@ const DROP_ORDER = [
 	'session',
 	'display',
 	'push',
+	'hooks',
 	'errors',
 	'disabled',
 	'crashes',
@@ -109,6 +111,7 @@ export function debugAltText(
 		}),
 		...(info.launch?.settings && { settings: info.launch.settings }),
 		...(info.errors?.length && { errors: errorNotes(info.errors) }),
+		...(info.hookFailures?.length && { hooks: hookNotes(info.hookFailures) }),
 		...(storageSummary(info.storage) && { storage: storageSummary(info.storage) }),
 		...(info.patches?.length && {
 			patches: info.patches.map((patch) => `${patch.caller} ${patch.count}`),

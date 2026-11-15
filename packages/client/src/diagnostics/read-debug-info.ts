@@ -27,6 +27,7 @@ import { privateDnsName, resolverName } from './dns-provider';
 import { readExperiments } from './experiments';
 import { readAppSession } from './app-session';
 import { recentErrors } from './recent-errors';
+import { hookFailures } from './hook-failures';
 import { pushStateOf } from './push-state';
 import { readGateway } from './gateway';
 import { redactReport } from './redact';
@@ -424,6 +425,7 @@ export function readDebugInfo(): DebugInfo {
 		account: attempt(accountOf, undefined),
 		storage: attempt(() => storageOf(state), undefined),
 		errors: recentErrors(),
+		hookFailures: hookFailures(),
 		patches: attempt(patchCounts, undefined),
 		native: attempt(nativeCounts, undefined),
 		enabledPlugins: attempt(enabledPlugins, undefined),

@@ -29,6 +29,7 @@ import { retryUntilInstalled, type HookRetry } from '~/native/hook-retry';
 import { createFluxRuntimeBridge } from '~/flux/runtime-bridge';
 import { unavailableNativeBridge } from '~/native/capabilities';
 import { createScopedObjCHook } from '~/native/scope-objc-hook';
+import { hookTarget, recordHookFailure } from '~/diagnostics/hook-failures';
 import { createObjectFactory } from '~/native/object-factory';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { createScopedJavaBridge } from '~/native/scope-java';
@@ -343,7 +344,7 @@ export function createScopedNativeBridge(
 				),
 				protocols,
 			),
-		hook: createScopedObjCHook(objcBridge, tokens, lifecycle, requireGranted),
+		hook: createScopedObjCHook(objcBridge, tokens, lifecycle, requireGranted, owner),
 	};
 
 	const scopedFFI = createScopedFFIBridge(ffiSource, scopeBridgeMethod, lifecycle);
@@ -549,7 +550,11 @@ export function createScopedNativeBridge(
 							try {
 								return [install(name)];
 							} catch (error) {
-								logger.warn(`Failed to hook ${name}.${methodName}:`, error);
+								recordHookFailure(
+									owner ?? 'unknown',
+									hookTarget(name, methodName, parameterTypes),
+									error,
+								);
 
 								return [];
 							}
@@ -570,6 +575,11 @@ export function createScopedNativeBridge(
 				return token;
 			} catch (error) {
 				if (!waitForClass) {
+					recordHookFailure(
+						owner ?? 'unknown',
+						hookTarget(className, methodName, parameterTypes),
+						error,
+					);
 					throw error;
 				}
 
