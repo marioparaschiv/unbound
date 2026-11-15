@@ -140,9 +140,15 @@ declare module '@unbound-app/settings' {
 		/**
 		 * Locked badge
 		 *
-		 * Marks channels @everyone cannot see, and locked or archived threads.
+		 * Marks channels you can see but not post or talk in, and locked or archived threads.
 		 */
 		locked: boolean;
+		/**
+		 * Private badge
+		 *
+		 * Marks channels hidden from @everyone that you can still see.
+		 */
+		private: boolean;
 		/**
 		 * Rules badge
 		 *
@@ -174,9 +180,15 @@ declare module '@unbound-app/settings' {
 		/**
 		 * Locked badge
 		 *
-		 * Marks channels @everyone cannot see, and locked or archived threads.
+		 * Marks channels you can see but not post or talk in, and locked or archived threads.
 		 */
 		"locked": boolean;
+		/**
+		 * Private badge
+		 *
+		 * Marks channels hidden from @everyone that you can still see.
+		 */
+		"private": boolean;
 		/**
 		 * Rules badge
 		 *
@@ -206,7 +218,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "nsfw" | "locked" | "rules" | "type" | "oneBadge";
+	export type BooleanSettingKey = "nsfw" | "locked" | "private" | "rules" | "type" | "oneBadge";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

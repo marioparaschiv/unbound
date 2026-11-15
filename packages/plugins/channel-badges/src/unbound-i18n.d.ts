@@ -9,8 +9,12 @@ declare module '@unbound-app/i18n' {
 		readonly SHOW_NSFW_SUBTITLE: string;
 		/** Locked badge */
 		readonly SHOW_LOCKED: string;
-		/** Marks channels @everyone cannot see, and locked or archived threads. */
+		/** Marks channels you can see but not post or talk in, and locked or archived threads. */
 		readonly SHOW_LOCKED_SUBTITLE: string;
+		/** Private badge */
+		readonly SHOW_PRIVATE: string;
+		/** Marks channels hidden from @everyone that you can still see. */
+		readonly SHOW_PRIVATE_SUBTITLE: string;
 		/** Rules badge */
 		readonly SHOW_RULES: string;
 		/** Marks the server's rules channel. */
@@ -27,6 +31,8 @@ declare module '@unbound-app/i18n' {
 		readonly BADGE_NSFW: string;
 		/** Locked */
 		readonly BADGE_LOCKED: string;
+		/** Private */
+		readonly BADGE_PRIVATE: string;
 		/** Rules */
 		readonly BADGE_RULES: string;
 		/** Text */

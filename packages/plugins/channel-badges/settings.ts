@@ -7,6 +7,11 @@ export default defineSettings({
 		title: 'SHOW_LOCKED',
 		subtitle: 'SHOW_LOCKED_SUBTITLE',
 	}),
+	private: setting.boolean({
+		default: true,
+		title: 'SHOW_PRIVATE',
+		subtitle: 'SHOW_PRIVATE_SUBTITLE',
+	}),
 	rules: setting.boolean({ default: true, title: 'SHOW_RULES', subtitle: 'SHOW_RULES_SUBTITLE' }),
 	type: setting.boolean({ default: false, title: 'SHOW_TYPE', subtitle: 'SHOW_TYPE_SUBTITLE' }),
 	oneBadge: setting.boolean({

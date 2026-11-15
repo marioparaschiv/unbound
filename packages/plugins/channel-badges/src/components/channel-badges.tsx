@@ -5,7 +5,7 @@ import { flux } from '@unbound-app/api';
 import { View } from 'react-native';
 
 import styles from '~/components/channel-badges.style';
-import { DiscordConstants, PermissionUtils } from '~/lib/modules';
+import { DiscordConstants, PermissionStore, PermissionUtils } from '~/lib/modules';
 import { badgesFor } from '~/lib/badges';
 import type { Channel } from '~/lib/types';
 
@@ -17,12 +17,29 @@ function rulesChannelOf(guild: object | undefined): string | undefined {
 		: undefined;
 }
 
+const VOICE_TYPES = new Set([2, 13]);
+const CATEGORY = 4;
+
+function permission(name: string): bigint | undefined {
+	return DiscordConstants?.Permissions?.[name];
+}
+
 function isLocked(channel: Channel): boolean {
 	if (LOCKED_THREAD_TYPES.has(channel.type ?? -1)) {
 		return Boolean(channel.threadMetadata?.locked || channel.threadMetadata?.archived);
 	}
 
-	const view = DiscordConstants?.Permissions?.VIEW_CHANNEL;
+	if (channel.type === CATEGORY) return false;
+
+	const needed = permission(VOICE_TYPES.has(channel.type ?? -1) ? 'CONNECT' : 'SEND_MESSAGES');
+
+	return needed !== undefined && PermissionStore.can(needed, channel) === false;
+}
+
+function isPrivate(channel: Channel): boolean {
+	if (!channel.guild_id || LOCKED_THREAD_TYPES.has(channel.type ?? -1)) return false;
+
+	const view = permission('VIEW_CHANNEL');
 
 	return view !== undefined && PermissionUtils?.canEveryoneRole?.(view, channel) === false;
 }
@@ -42,6 +59,7 @@ export function ChannelBadges({ channel }: { channel: Channel }) {
 			type: channel.type,
 			nsfw: Boolean(channel.nsfw || channel.isNSFW?.()),
 			locked: isLocked(channel),
+			private: isPrivate(channel),
 			isRules: rulesChannelId === channel.id,
 		},
 		settings,
