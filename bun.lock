@@ -820,6 +820,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/custom-status-timeouts": {
+      "name": "custom-status-timeouts",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/custom-timestamps": {
       "name": "custom-timestamps",
       "dependencies": {
@@ -3866,6 +3880,8 @@
     "custom-commands": ["custom-commands@workspace:packages/plugins/custom-commands"],
 
     "custom-rpc": ["custom-rpc@workspace:packages/plugins/custom-rpc"],
+
+    "custom-status-timeouts": ["custom-status-timeouts@workspace:packages/plugins/custom-status-timeouts"],
 
     "custom-timestamps": ["custom-timestamps@workspace:packages/plugins/custom-timestamps"],
 
