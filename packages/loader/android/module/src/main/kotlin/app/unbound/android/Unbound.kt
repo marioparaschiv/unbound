@@ -83,6 +83,7 @@ class Unbound : XposedModule() {
         DevOverlay.debugBuild = moduleInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
         SettingsWatcher.start(documents)
         SettingsWatcher.onChange(::onSettingsChanged)
+        MainThreadWatchdog.start()
         hookActivityLifecycle()
         if (BuildConfig.ATTESTATION_ENABLED && !attestationVerified()) return
         val hooked = runCatching { hookBundleLoading(param.classLoader) }

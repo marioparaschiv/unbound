@@ -8,11 +8,12 @@ import type {
 	NativeSerializable,
 } from '@unbound-app/types';
 import { NATIVE_BRIDGE_METHOD_CAPABILITIES } from '@unbound-app/types/native';
+import { createLogger } from '@unbound-app/logger';
 
 import { NativeBridgeDisposedError, NativeBridgeUnavailableError } from '~/native/errors';
+import type { AddonAttribution } from '~/addons/crash-guard';
 import { getNativeBridge } from '~/native/bridge';
 import { findByProps } from '~/metro/lookups';
-import { createLogger } from '@unbound-app/logger';
 
 type UIWorklet<A extends NativeUIArgument[], R> = (...args: A) => R;
 
@@ -221,10 +222,11 @@ function disposeAfterQueuedWork(scopes: readonly NativeUIScope[], owner: string)
 		);
 		disposeNow(scopes);
 	}, DISPOSE_TIMEOUT_MS);
-	const done = () => {
+
+	function done() {
 		finished = true;
 		clearTimeout(timeout);
-	};
+	}
 
 	try {
 		const runtime = uiRuntime();
@@ -248,12 +250,14 @@ function disposeAfterQueuedWork(scopes: readonly NativeUIScope[], owner: string)
  * @param capabilities The capabilities the plugin declares for this platform.
  * @param platform The host platform.
  * @param owner The plugin's id, named when its scopes are slow to dispose.
+ * @param attribute Marks the plugin active while a scope opens, so the loader blames its hooks for main-thread stalls.
  * @returns The bridge and its `dispose`.
  */
 export function createScopedUIBridge(
 	capabilities: readonly NativeBridgeCapability[],
 	platform?: NativeBridgePlatform,
 	owner = 'a plugin',
+	attribute?: AddonAttribution,
 ): ScopedUIBridge {
 	const scopes = new Set<NativeUIScope>();
 	let disposed = false;
@@ -268,7 +272,8 @@ export function createScopedUIBridge(
 		bridge: {
 			createScope() {
 				requireActive();
-				const scope = createUIScope(platform, uiScopePaths(capabilities));
+				const open = () => createUIScope(platform, uiScopePaths(capabilities));
+				const scope = attribute ? attribute(open)() : open();
 
 				scopes.add(scope);
 

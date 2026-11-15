@@ -24,12 +24,12 @@ import type {
 import { createLogger } from '@unbound-app/logger';
 
 import { NativeBridgeDisposedError, NativeBridgeUnavailableError } from '~/native/errors';
+import { hookTarget, recordHookFailure } from '~/diagnostics/hook-failures';
 import { createScopeGate, type ScopeLifecycle } from '~/native/scope-gate';
 import { retryUntilInstalled, type HookRetry } from '~/native/hook-retry';
 import { createFluxRuntimeBridge } from '~/flux/runtime-bridge';
 import { unavailableNativeBridge } from '~/native/capabilities';
 import { createScopedObjCHook } from '~/native/scope-objc-hook';
-import { hookTarget, recordHookFailure } from '~/diagnostics/hook-failures';
 import { createObjectFactory } from '~/native/object-factory';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { createScopedJavaBridge } from '~/native/scope-java';
@@ -132,7 +132,7 @@ export function createScopedNativeBridge(
 	const runtimeTokens = new Set<NativeRuntimeEventToken>();
 	const pendingInvocations = new Set<NativeCancelablePromise<unknown>>();
 	const associations: AssociationBinding[] = [];
-	const ui = createScopedUIBridge(capabilities, platform, owner);
+	const ui = createScopedUIBridge(capabilities, platform, owner, attribute);
 	const lifecycle: ScopeLifecycle = { disposed: false };
 	let stopping = false;
 	const mountAsync = fabricBridge.mountAsync.bind(fabricBridge);
