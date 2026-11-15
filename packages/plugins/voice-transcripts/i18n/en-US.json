@@ -1,0 +1,12 @@
+{
+	"TRANSCRIBE": "Transcribe",
+	"TRANSCRIPT": "Transcript",
+	"TRANSCRIBING": "Transcribing…",
+	"COPY": "Copy",
+	"COPIED": "Copied the transcript.",
+	"NO_SPEECH": "No speech found in this message.",
+	"NOT_ALLOWED": "Speech recognition is turned off for Discord in Settings.",
+	"NEEDS_SIDELOAD": "Transcripts need Unbound installed as an app; this install cannot ask for speech recognition.",
+	"UNAVAILABLE": "Speech recognition is not available on this device.",
+	"FAILED": "Could not transcribe this message."
+}
