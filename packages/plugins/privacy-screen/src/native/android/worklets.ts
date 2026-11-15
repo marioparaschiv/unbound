@@ -1,14 +1,24 @@
-import type { NativeJavaBridge, NativeUIScope } from '@unbound-app/api/native';
+import type { NativeJavaBridge, NativeJavaReference, NativeUIScope } from '@unbound-app/api/native';
 import { javaInt, javaReference } from '@unbound-plugins/shared/native/android/java-values';
 
 const FLAG_SECURE = 8192;
+
+function trackedActivity(java: NativeJavaBridge, tracker: NativeJavaReference) {
+	'worklet';
+
+	try {
+		return javaReference(java.invoke(tracker, 'lastActivity', []));
+	} catch {
+		return javaReference(java.invoke(tracker, 'currentActivity', []));
+	}
+}
 
 function activityWindow(java: NativeJavaBridge) {
 	'worklet';
 	const tracker = javaReference(
 		java.getField(java.getClass('app.unbound.android.ActivityTracker'), 'INSTANCE'),
 	);
-	const activity = tracker ? javaReference(java.invoke(tracker, 'currentActivity', [])) : null;
+	const activity = tracker ? trackedActivity(java, tracker) : null;
 
 	return activity ? javaReference(java.invoke(activity, 'getWindow', [])) : null;
 }
