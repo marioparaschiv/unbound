@@ -1,0 +1,7 @@
+{
+	"MOCK_DESC": "Sends your text in aLtErNaTiNg CaSe",
+	"UPSIDE_DESC": "Sends your text upside down",
+	"ZALGO_DESC": "Sends your text with Z̷a̸l̵g̶o̴ marks stacked on it",
+	"SMALLCAPS_DESC": "Sends your text in sᴍᴀʟʟ ᴄᴀᴘs",
+	"TEXT_DESC": "The text to restyle"
+}

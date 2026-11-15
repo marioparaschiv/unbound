@@ -1,6 +1,6 @@
 # Plugins
 
-150 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+151 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -137,6 +137,7 @@
 - <img src="../../assets/plugins/readme-icons/super-reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Super Reaction Tweaks](https://unbound.rip/addons/unbound.super-reaction-tweaks): Opens the reaction picker on Super Reactions and caps how many Super Reaction animations play at once.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [SVG Embeds](https://unbound.rip/addons/unbound.svg-embeds): Shows SVG attachments in chat as pictures, like any other image, instead of as a file.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Text Replace](https://unbound.rip/addons/unbound.text-replace): Replace text in messages before you send them.
+- <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Text Styles](https://unbound.rip/addons/unbound.text-styles): Adds /mock, /upside, /zalgo and /smallcaps, which restyle your text before sending it.
 - <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Timezones](https://unbound.rip/addons/unbound.timezones): Shows each user's local time on their profile and beside their messages, from TimezoneDB or a timezone you set.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Tone Indicators](https://unbound.rip/addons/unbound.tone-indicators): Turns tone tags such as /j and /srs into pills that spell out what they mean.
 - <img src="../../assets/plugins/readme-icons/language-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Translate](https://unbound.rip/addons/unbound.translate): Translate messages.
