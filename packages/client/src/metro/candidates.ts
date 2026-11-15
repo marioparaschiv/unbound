@@ -19,7 +19,25 @@ export function isAssetModule(mdl: MetroModuleRecord | undefined): boolean {
 		return false;
 	}
 
-	return typeof window.modules.get(deps[0])?.publicModule.exports?.registerAsset === 'function';
+	return isRegistry(window.modules.get(deps[0]));
+}
+
+function exportsRegistry(mdl: MetroModuleRecord | undefined): boolean {
+	return typeof mdl?.publicModule.exports?.registerAsset === 'function';
+}
+
+function isRegistry(mdl: MetroModuleRecord | undefined): boolean {
+	if (!mdl) {
+		return false;
+	}
+
+	if (mdl.isInitialized) {
+		return exportsRegistry(mdl);
+	}
+
+	const deps = mdl.dependencyMap;
+
+	return deps?.length === 1 && exportsRegistry(window.modules.get(deps[0]));
 }
 
 /**

@@ -21,7 +21,7 @@ export function getModuleIds(): readonly number[] {
 }
 
 /** Version of the stored module cache's layout; a stored cache with another version is discarded. */
-export const CACHE_VERSION = 2;
+export const CACHE_VERSION = 3;
 
 const CurrentCacheInfo = {
 	cacheVersion: CACHE_VERSION,
