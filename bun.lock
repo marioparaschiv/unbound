@@ -1698,6 +1698,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/new-member-sprout": {
+      "name": "new-member-sprout",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/no-pending-count": {
       "name": "no-pending-count",
       "dependencies": {
@@ -4980,6 +4994,8 @@
     "nerf-dart": ["nerf-dart@1.0.0", "", {}, "sha512-EZSPZB70jiVsivaBLYDCyntd5eH8NTSMOn3rB+HxwdmKThGELLdYv8qVIMWvZEFy9w8ZZpW9h9OB32l1rGtj7g=="],
 
     "new-guild-settings": ["new-guild-settings@workspace:packages/plugins/new-guild-settings"],
+
+    "new-member-sprout": ["new-member-sprout@workspace:packages/plugins/new-member-sprout"],
 
     "nextgen-events": ["nextgen-events@1.5.3", "", {}, "sha512-P6qw6kenNXP+J9XlKJNi/MNHUQ+Lx5K8FEcSfX7/w8KJdZan5+BB5MKzuNgL2RTjHG1Svg8SehfseVEp8zAqwA=="],
 
