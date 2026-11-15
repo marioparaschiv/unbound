@@ -1,0 +1,31 @@
+version: 1
+
+# Only the AI-slop rules run here; clang-format, gofmt, ktlint, go vet and the workflow linters cover the rest.
+engines:
+    format: false
+    lint: false
+    code-quality: false
+    ai-slop: true
+    architecture: false
+    security: false
+
+# The native sources; the Go tools ignore probe errors on purpose.
+include:
+    - 'core/**'
+    - 'android/**'
+    - 'ios/**'
+
+exclude:
+    - '**/vendor/**'
+    - '**/build/**'
+
+rules:
+    # Build flags override these defaults with -D, which constexpr cannot take.
+    ai-slop/cpp-define-constant: off
+
+ci:
+    failBelow: 0
+    baseline: .aislop/ci-baseline.json
+
+telemetry:
+    enabled: false

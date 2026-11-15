@@ -124,6 +124,9 @@ func runLint(args []string) error {
 	if err := auditWorkflows(rootPath); err != nil {
 		return fmt.Errorf("zizmor: %w", err)
 	}
+	if err := lintSlop(rootPath); err != nil {
+		return fmt.Errorf("aislop: %w", err)
+	}
 	return runFormat([]string{"--root", rootPath, "--check"})
 }
 
@@ -267,7 +270,7 @@ func formatNativeSource(root, path string, original []byte) ([]byte, error) {
 		return nil, fmt.Errorf("clang-format %s: %v: %s", path, err, errorOutput.String())
 	}
 
-	formatted := output.Bytes()
+	formatted := padBlocks(output.Bytes())
 	if isLogos {
 		restored, err := restoreLogos(formatted, original)
 		if err != nil {
@@ -512,6 +515,15 @@ func auditWorkflows(root string) error {
 	}
 	github := filepath.Join(root, "..", "..", ".github")
 	return runQuiet(root, binary, "--offline", "--quiet", "--min-severity", "medium", "--config", filepath.Join(github, "zizmor.yml"), filepath.Join(github, "workflows"))
+}
+
+// lintSlop fails on AI-slop findings in the native sources that .aislop/ci-baseline.json does not accept.
+func lintSlop(root string) error {
+	binary, err := exec.LookPath("aislop")
+	if err != nil {
+		return errors.New("aislop is required to lint the native sources")
+	}
+	return runQuiet(root, binary, "ci", "--human", ".")
 }
 
 func runQuiet(directory, name string, args ...string) error {

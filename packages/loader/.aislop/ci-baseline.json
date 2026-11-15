@@ -1,0 +1,33 @@
+{
+	"version": 1,
+	"entries": [
+		{
+			"rule": "ai-slop/trivial-comment",
+			"engine": "ai-slop",
+			"file": "core/include/LoaderLogStream.h",
+			"fingerprint": "6b27ea2c2b833416",
+			"count": 1
+		},
+		{
+			"rule": "ai-slop/trivial-comment",
+			"engine": "ai-slop",
+			"file": "core/include/LoaderNativeLogLines.h",
+			"fingerprint": "5bad2cf2f91a955a",
+			"count": 1
+		},
+		{
+			"rule": "ai-slop/trivial-comment",
+			"engine": "ai-slop",
+			"file": "ios/inspector/sources/UBInspectorInternal.h",
+			"fingerprint": "667f173a00d92883",
+			"count": 1
+		},
+		{
+			"rule": "ai-slop/trivial-comment",
+			"engine": "ai-slop",
+			"file": "ios/inspector/sources/UBInspectorInternal.h",
+			"fingerprint": "bbcbb087366dc5a0",
+			"count": 1
+		}
+	]
+}

@@ -14,10 +14,11 @@ BreakStringLiterals: false
 
 # Alignment
 AlignConsecutiveAssignments: Consecutive
-AlignConsecutiveDeclarations: Consecutive
+AlignConsecutiveDeclarations: None
 AlignConsecutiveMacros: Consecutive
 AlignTrailingComments: true
 AlignOperands: true
+BreakBeforeBinaryOperators: NonAssignment
 AlignAfterOpenBracket: Align
 
 # Breaking and wrapping
@@ -38,6 +39,10 @@ BraceWrapping:
     BeforeCatch: true
     BeforeElse: true
     IndentBraces: false
+
+# Blocks
+InsertBraces: true
+SeparateDefinitionBlocks: Always
 
 # Spaces
 SpaceAfterCStyleCast: true
