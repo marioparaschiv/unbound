@@ -1,9 +1,9 @@
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
+import { dirname, join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
 
 import type { ManifestContext, ManifestOptions } from './manifest';
 
@@ -148,7 +148,9 @@ async function compileTargets(
 
 		const compiled = await compile(ctx, target.dir, js, flags);
 
-		if (!compiled) continue;
+		if (!compiled) {
+			continue;
+		}
 
 		ctx.emitFile({ type: 'asset', fileName, source: compiled.bytecode });
 

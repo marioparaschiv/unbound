@@ -6,8 +6,8 @@ import { patchWhenLoaded, unpatchKeepingReplacement } from '~/patcher/apply';
 import type { ReactPatcher, PatchPlace } from '~/patcher/react';
 import type { after, before, instead } from '~/patcher/api';
 import { createReactPatcher } from '~/patcher/react';
-import { assignValue } from '~/patcher/assign';
 import { patch } from '~/hot-refresh/live-patch';
+import { assignValue } from '~/patcher/assign';
 
 /** The patcher `createPatcher` returns. */
 export type PatcherInstance = {

@@ -4,6 +4,8 @@ import { mockLookups } from '../helpers/lookups';
 
 type Scheduled = { closure: { done?: () => void }; args: unknown[] };
 
+type Worklet = { __closure: Scheduled['closure'] };
+
 const scheduled: Scheduled[] = [];
 let disposed = 0;
 
@@ -12,7 +14,7 @@ mockLookups({
 		ReanimatedModule: {},
 		runOnJS: (callback: () => void) => callback,
 		runOnUI:
-			(worklet: { __closure: Scheduled['closure'] }) =>
+			(worklet: Worklet) =>
 			(...args: unknown[]) => {
 				scheduled.push({ closure: worklet.__closure, args });
 			},

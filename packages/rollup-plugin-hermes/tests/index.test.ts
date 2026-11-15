@@ -8,8 +8,8 @@ import {
 	writeFileSync,
 } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 import type { HermesContext } from '~/index';
 import hermes from '~/index';

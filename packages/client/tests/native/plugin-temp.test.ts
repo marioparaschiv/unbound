@@ -8,16 +8,24 @@ afterEach(() => {
 	globalThis.NativePlatform = original;
 });
 
-function platformRecording(removed: string[], fail = false): typeof globalThis.NativePlatform {
-	return {
-		files: {
-			remove: (path: string) => {
-				if (fail) throw new Error('read-only');
-				removed.push(path);
-				return true;
+function installPlatform(removed: string[], fail = false): void {
+	Object.defineProperty(globalThis, 'NativePlatform', {
+		configurable: true,
+		writable: true,
+		value: {
+			files: {
+				remove: (path: string) => {
+					if (fail) {
+						throw new Error('read-only');
+					}
+
+					removed.push(path);
+
+					return true;
+				},
 			},
 		},
-	} as unknown as typeof globalThis.NativePlatform;
+	});
 }
 
 describe('pluginTempPath', () => {
@@ -30,14 +38,14 @@ describe('clearPluginTemp', () => {
 	test('removes the plugin folder relative to the Unbound folder', () => {
 		const removed: string[] = [];
 
-		globalThis.NativePlatform = platformRecording(removed);
+		installPlatform(removed);
 		clearPluginTemp('adrian.clips');
 
 		expect(removed).toEqual(['Temp/adrian.clips']);
 	});
 
 	test('survives a failing remove', () => {
-		globalThis.NativePlatform = platformRecording([], true);
+		installPlatform([], true);
 
 		expect(() => clearPluginTemp('adrian.clips')).not.toThrow();
 	});
