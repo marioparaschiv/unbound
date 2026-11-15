@@ -13,5 +13,4 @@ export const PermissionUtils = metro.findByProps('computePermissions', 'canEvery
 /** Discord's constants, which hold the permission bits. */
 export const DiscordConstants = metro.findByProps('Permissions', 'ThemeTypes', { lazy: true });
 
-/** The current user's permissions in each channel. */
 export const PermissionStore = flux.getStore('Permission') as PermissionStore;

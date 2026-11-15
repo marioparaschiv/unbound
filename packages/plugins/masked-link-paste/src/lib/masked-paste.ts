@@ -1,9 +1,7 @@
 const URL_PATTERN = /^https?:\/\/[^\s<>()[\]]+$/i;
 
-/** The message box's text and selection. */
 export type InputState = { text: string; start: number; end: number };
 
-/** The text to put in the message box, and where the caret goes. */
 export type MaskedEdit = { text: string; caret: number };
 
 /**

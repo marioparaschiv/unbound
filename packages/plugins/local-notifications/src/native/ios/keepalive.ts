@@ -37,7 +37,6 @@ function session(objc: ObjC): NativeObjectHandle {
 	return objc.call(objc.getClass('AVAudioSession')!, 'sharedInstance') as NativeObjectHandle;
 }
 
-/** A running keep-alive: stop it when Discord comes back. */
 export type KeepAlive = { stop(): void };
 
 /**

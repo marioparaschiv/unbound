@@ -2,7 +2,6 @@ import type { NativeBridge } from '@unbound-app/api/native';
 
 const SCANNER_VIEW = 'com.budiyev.android.codescanner.CodeScannerView';
 
-/** The obfuscated classes of the ZXing build Discord's QR scanner carries, found by shape. */
 export type ZXingClasses = {
 	reader: string;
 	task: string;

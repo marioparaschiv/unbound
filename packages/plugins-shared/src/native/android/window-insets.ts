@@ -2,7 +2,6 @@ import type { NativeJavaBridge, NativeJavaReference } from '@unbound-app/api/nat
 
 import { javaInt, javaNumber, javaReference } from './java-values';
 
-/** How far the status bar, navigation bar and display cutout reach into a window from each side, in pixels. */
 export type WindowInsetsPx = { left: number; top: number; right: number; bottom: number };
 
 const NONE: WindowInsetsPx = { left: 0, top: 0, right: 0, bottom: 0 };
@@ -41,7 +40,6 @@ export async function systemBarInsets(
 
 	const Type = java.getClass('android.view.WindowInsets$Type');
 
-	// WindowInsets.Type arrived in Android 11; older versions only report the system window insets.
 	if (!Type) return legacyInsets(java, root);
 
 	const bars = javaNumber(java.invoke(Type, 'systemBars', [])) ?? 0;

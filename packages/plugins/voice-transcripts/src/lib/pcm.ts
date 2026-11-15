@@ -1,4 +1,3 @@
-/** The rate speech recognizers expect. */
 export const SPEECH_RATE = 16_000;
 
 /**

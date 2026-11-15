@@ -447,7 +447,6 @@ func (program *scriptProgram) classifyString(file *scriptFile, index int) {
 		return
 	}
 
-	// A string handed to `javaString` is a Java string value, such as an intent action, never a class name.
 	if previous == "(" && file.value(index-2) == "javaString" {
 		return
 	}

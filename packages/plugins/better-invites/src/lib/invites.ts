@@ -3,7 +3,6 @@ const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
-/** How long an invite has left. */
 export type Expiry =
 	| { kind: 'never' }
 	| { kind: 'expired' }

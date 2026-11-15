@@ -1,6 +1,5 @@
 import { cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
 
-/** A React Navigation screen's options: an object, or a function of the route that returns one. */
 export type ScreenOptions =
 	| Record<string, unknown>
 	| ((...args: never[]) => Record<string, unknown>)

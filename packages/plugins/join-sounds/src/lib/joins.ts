@@ -1,4 +1,3 @@
-/** One user's voice state in a `VOICE_STATE_UPDATES` action. */
 export type VoiceStateUpdate = { userId?: string; channelId?: string | null };
 
 /**

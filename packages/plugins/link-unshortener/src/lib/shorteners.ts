@@ -43,7 +43,6 @@ export function isShortLink(link: string): boolean {
 	return host !== undefined && SHORTENERS.has(host);
 }
 
-/** Where a link ends up, and how many redirects it took. */
 export type Resolved = { url: string; redirects: number };
 
 type Fetch = (

@@ -1,7 +1,5 @@
-/** One option of Discord's link long-press sheet. */
 export type SheetOption = { label: string; onPress: () => void };
 
-/** The props Discord opens its link long-press sheet with. */
 export type LinkSheetProps = { header?: { subtitle?: unknown }; options?: SheetOption[] };
 
 /**

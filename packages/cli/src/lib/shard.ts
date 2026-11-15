@@ -1,4 +1,3 @@
-/** One part of a job split into equal parts: this is part `index` (from 1) of `count`. */
 export type Shard = { index: number; count: number };
 
 /**

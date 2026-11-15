@@ -1,4 +1,3 @@
-/** A notification the plugin posted, oldest first. */
 export type Posted<T> = { id: string; target: T };
 
 /**

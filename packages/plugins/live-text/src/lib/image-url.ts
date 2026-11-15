@@ -1,6 +1,5 @@
 const CDN = /^https:\/\/cdn\.discordapp\.com\//;
 
-/** What the media viewer's share menu knows about the item it shows. */
 export type ShareSource = { uri?: string; sourceURI?: string; videoURI?: string };
 
 /**

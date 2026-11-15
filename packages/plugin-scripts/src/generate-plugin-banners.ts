@@ -174,7 +174,6 @@ export function renderBanner(svg: string): Uint8Array {
 
 const FALLBACK_ICON = 'SettingsIcon';
 
-/** Which banners a run writes: the named plugins, every generated banner, or only missing ones. */
 export type BannerSelection = { names: Set<string>; all: boolean };
 
 /**

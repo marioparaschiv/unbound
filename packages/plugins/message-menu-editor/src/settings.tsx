@@ -21,7 +21,6 @@ type SortableListProps = {
 
 const DRAG_DELAY_MS = 150;
 
-/** The handlers `SortableListView` clones onto each row, as `sortHandlers`, so a long press starts dragging it. */
 type SortHandlers = { sortHandlers?: { onLongPress?: () => void; onPressOut?: () => void } };
 
 const SortableList = metro.findByFilePath('components_native/common/SortableListView.tsx', {
@@ -40,7 +39,6 @@ function setHidden(label: string, shown: boolean) {
 type OptionRowProps = { label: string; hidden: boolean; start: boolean; end: boolean };
 
 function OptionRow({ label, hidden, start, end, sortHandlers }: OptionRowProps & SortHandlers) {
-	// The row has no press of its own, so the wrapper gets the long press that starts a drag; the switch keeps its taps.
 	return (
 		<Pressable
 			onLongPress={sortHandlers?.onLongPress}
@@ -98,10 +96,8 @@ function SettingsPanel() {
 		</ui.Section>
 	);
 
-	// The sortable list is the page's scroller, as in Discord's own use; inside a ScrollView the drag would scroll the page.
 	return List ? (
 		<List
-			// The list caches rows by their items, so each item carries its switch state for a toggle to redraw it.
 			data={labels.map((label) => ({ label, hidden: hidden.has(label) }))}
 			keyExtractor={(option) => option.label}
 			onRowMoved={({ from, to }) => {

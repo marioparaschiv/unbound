@@ -2,10 +2,6 @@ package app.unbound.android
 
 import java.io.File
 
-/**
- * Resource ids looked up by name, kept between launches for one Discord build so a launch skips `getIdentifier`.
- * A cache written for another build is ignored and replaced on the next save.
- */
 internal class ResourceIdCache(private val file: File, private val build: String) {
     private val ids = HashMap<String, Int>()
     private var changed = false
@@ -24,7 +20,6 @@ internal class ResourceIdCache(private val file: File, private val build: String
         }.onFailure { Logger.error(LogCategory.DEFAULT, "Failed to read the resource id cache ${file.path}", it) }
     }
 
-    /** The id of the [type] resource [name], from the cache or from [lookup]; a missing resource caches as 0. */
     fun id(type: String, name: String, lookup: () -> Int): Int = synchronized(this) {
         ids.getOrPut("$type/$name") {
             changed = true
