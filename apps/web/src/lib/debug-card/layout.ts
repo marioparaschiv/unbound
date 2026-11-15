@@ -11,12 +11,13 @@ import { launchNotes } from '@unbound-app/contracts/debug-card-launch';
 import type { DebugCardContext } from '~/lib/debug-card/context';
 
 import { accent, cleanNames, COLORS, dim, joined, value, warn, type Span } from './spans';
-import { tweakSpans } from './tweaks';
-import { accountNotes } from './account';
 import { dnsNote, gatewayNote, powerNote, pushNote } from './device-notes';
 import { storageMatters, storageSummary } from './storage';
+import { errorNotes, hookNotes } from './issue-notes';
 import { environmentRows } from './environment-rows';
 import { clipped, wrapped } from './wrap-lines';
+import { accountNotes } from './account';
+import { tweakSpans } from './tweaks';
 
 export { joined } from './spans';
 
@@ -133,7 +134,9 @@ function builtAgo(builtAt: string | undefined, now: Date): string | undefined {
 
 	const minutes = Math.max(0, Math.round((now.getTime() - at) / 60_000));
 
-	if (minutes < 60) return `built ${minutes} min ago`;
+	if (minutes < 60) {
+		return `built ${minutes} min ago`;
+	}
 
 	const hours = Math.round(minutes / 60);
 
@@ -367,26 +370,6 @@ export function memorySummary(memory: DebugCardMemory): string {
 		memory.memoryWarnings ? `${memory.memoryWarnings} warnings` : undefined,
 		memory.thermal ? `thermal ${memory.thermal}` : undefined,
 	]);
-}
-
-/**
- * @description Lists hooks that failed to install newest first, each as `addon: target`.
- * @param failures The hook failures.
- * @returns One note per failure.
- */
-export function hookNotes(failures: DebugInfo['hookFailures'] = []): string[] {
-	return failures.toReversed().map((failure) => `${failure.addon}: ${failure.target}`);
-}
-
-/**
- * @description Lists recent errors newest first, each prefixed with its addon.
- * @param errors The recent errors.
- * @returns One note per error.
- */
-export function errorNotes(errors: DebugInfo['errors'] = []): string[] {
-	return errors
-		.toReversed()
-		.map((error) => (error.addon ? `${error.addon}: ${error.message}` : error.message));
 }
 
 function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): [string, Span[]][] {

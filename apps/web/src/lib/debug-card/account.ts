@@ -8,7 +8,9 @@ const NEW_ACCOUNT_DAYS = 30;
  * @returns The notes; empty for an established, verified account.
  */
 export function accountNotes(account: DebugInfo['account']): string[] {
-	if (!account) return [];
+	if (!account) {
+		return [];
+	}
 
 	return [
 		account.ageDays < NEW_ACCOUNT_DAYS ? `new (${account.ageDays} d)` : undefined,

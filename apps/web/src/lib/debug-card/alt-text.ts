@@ -5,8 +5,6 @@ import { parsePlist } from '@unbound-app/contracts/plist';
 
 import {
 	displaySummary,
-	errorNotes,
-	hookNotes,
 	lastCheckSummary,
 	memorySummary,
 	networkSummary,
@@ -21,6 +19,7 @@ import {
 	powerSummary,
 	pushSummary,
 } from '~/lib/debug-card/device-notes';
+import { errorNotes, hookNotes } from '~/lib/debug-card/issue-notes';
 import type { DebugCardContext } from '~/lib/debug-card/context';
 import { storageSummary } from '~/lib/debug-card/storage';
 import { cleanNames } from '~/lib/debug-card/spans';
