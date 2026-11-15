@@ -1,0 +1,21 @@
+{
+	"id": "unbound.masked-link-paste",
+	"name": "Masked Link Paste",
+	"description": "Pasting a link over selected text in the message box turns it into a masked link, like [text](link).",
+	"authors": [
+		{
+			"name": "sunnie",
+			"id": "406028027768733696"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "LinkIcon",
+	"main": "index.ts"
+}
