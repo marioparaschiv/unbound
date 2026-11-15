@@ -1,0 +1,17 @@
+{
+	"id": "unbound.custom-status-timeouts",
+	"name": "Custom Status Timeouts",
+	"description": "Adds your own durations, like 15 minutes, 8 hours or a week, to the Clear after list of your custom status.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TimerIcon",
+	"main": "index.ts"
+}

@@ -1,0 +1,8 @@
+{
+	"DURATIONS": "Durations",
+	"DURATIONS_SUBTITLE": "Comma-separated, using m for minutes, h for hours, d for days and w for weeks, like 15m, 8h, 3d.",
+	"MINUTES": "{count, plural, one {# minute} other {# minutes}}",
+	"HOURS": "{count, plural, one {# hour} other {# hours}}",
+	"DAYS": "{count, plural, one {# day} other {# days}}",
+	"WEEKS": "{count, plural, one {# week} other {# weeks}}"
+}

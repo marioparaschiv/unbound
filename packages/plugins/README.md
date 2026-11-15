@@ -1,6 +1,6 @@
 # Plugins
 
-135 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+136 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -33,6 +33,7 @@
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Copy Image](https://unbound.rip/addons/unbound.copy-image): Adds Copy Image to the media viewer's share menu, which copies the picture itself as a PNG that any app can paste.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom Commands](https://unbound.rip/addons/unbound.custom-commands): Create slash commands that send saved text, images, and videos.
 - <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom RPC](https://unbound.rip/addons/unbound.custom-rpc): Shows a Rich Presence of your own on your profile: any name, text, images, timer and buttons.
+- <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom Status Timeouts](https://unbound.rip/addons/unbound.custom-status-timeouts): Adds your own durations, like 15 minutes, 8 hours or a week, to the Clear after list of your custom status.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom Timestamps](https://unbound.rip/addons/unbound.custom-timestamps): Writes message times your way, with separate formats for today and older messages.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Dearrow](https://unbound.rip/addons/unbound.dearrow): Makes YouTube embed titles and thumbnails less sensationalist, powered by DeArrow.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Declutter](https://unbound.rip/addons/unbound.declutter): Hides buttons, upsells and profile decorations you never use: gift and call buttons, Quests, Nitro, avatar decorations, server tags and more.
