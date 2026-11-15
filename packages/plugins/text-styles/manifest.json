@@ -1,0 +1,17 @@
+{
+	"id": "unbound.text-styles",
+	"name": "Text Styles",
+	"description": "Adds /mock, /upside, /zalgo and /smallcaps, which restyle your text before sending it.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TextIcon",
+	"main": "index.ts"
+}
