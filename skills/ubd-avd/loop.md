@@ -27,7 +27,7 @@ A change counts as **proven** only when Discord on the AVD ran this checkout's b
 
 ## Driving the screen over adb
 
-Coordinates are device pixels. `scripts/shot <png> --bounds` prints each label with its centre, ready to pass to `input tap`. Set `adb="$ANDROID_HOME/platform-tools/adb -s emulator-5554"` (your serial is in `up.sh`'s output).
+Coordinates are device pixels. `scripts/shot <png> --bounds` prints each label with its centre, ready to pass to `input tap`. It warns when Discord's window is secure (the PNG is black; the labels still work) and when the keyboard is open (taps on the lower screen hit keys). Set `adb="$ANDROID_HOME/platform-tools/adb -s emulator-5554"` (your serial is in `up.sh`'s output).
 
 | Action     | Command                                                                  |
 | ---------- | ------------------------------------------------------------------------ |
