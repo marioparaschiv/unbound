@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.5.1](https://github.com/marioparaschiv/unbound/compare/client-v3.5.0...client-v3.5.1) (2026-11-15)
+
+
+### Bug Fixes
+
+* **client:** mark addons for another platform instead of failing ([#1498](https://github.com/marioparaschiv/unbound/issues/1498)) ([1b28e70](https://github.com/marioparaschiv/unbound/commit/1b28e702ed15fe279c1d9f89b131ad6b9c5ea04e))
+* **loader:** keep the running bundle, overlap first download ([#1513](https://github.com/marioparaschiv/unbound/issues/1513)) ([2457330](https://github.com/marioparaschiv/unbound/commit/2457330abb67f4e0ab1739d6ceb57fcc1f1707d4))
+
 ## [3.5.0](https://github.com/marioparaschiv/unbound/compare/client-v3.4.0...client-v3.5.0) (2026-11-14)
 
 
