@@ -1,6 +1,6 @@
 # Plugins
 
-137 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+138 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -111,6 +111,7 @@
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Round Corners](https://unbound.rip/addons/unbound.round-corners): Undoes the redesign's squares: round server icons and buttons, a pill You bar and message box, and the older corners elsewhere.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Send Timestamps](https://unbound.rip/addons/unbound.send-timestamps): Turns times like `17:30` in your messages into timestamps everyone sees in their own time zone.
 - <img src="../../assets/plugins/readme-icons/settings-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Settings Demo](https://unbound.rip/addons/unbound.settings-demo): Shows every generated settings row.
+- <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Settings Theme](https://unbound.rip/addons/unbound.settings-theme): Shows your Nitro or custom app theme behind User Settings and every page in it, which Discord leaves plain.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Shiki Codeblocks](https://unbound.rip/addons/unbound.shiki-codeblocks): Highlights code blocks with VS Code-style syntax colors.
 - <img src="../../assets/plugins/readme-icons/eye-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Show Hidden Things](https://unbound.rip/addons/unbound.show-hidden-things): Displays hidden and moderator-only features regardless of permissions.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Show Me Your Name](https://unbound.rip/addons/unbound.show-me-your-name): Display usernames next to display names, or show usernames only.

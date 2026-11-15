@@ -1902,6 +1902,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/settings-theme": {
+      "name": "settings-theme",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/shiki-codeblocks": {
       "name": "shiki-codeblocks",
       "dependencies": {
@@ -5130,6 +5144,8 @@
     "setprototypeof": ["setprototypeof@1.2.0", "", {}, "sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw=="],
 
     "settings-demo": ["settings-demo@workspace:packages/plugins/settings-demo"],
+
+    "settings-theme": ["settings-theme@workspace:packages/plugins/settings-theme"],
 
     "seventh": ["seventh@0.9.4", "", { "dependencies": { "setimmediate": "^1.0.5" } }, "sha512-O85mosi4sOfxG+slvqy0j7zLuFD4ylUgEMt7Pvt9Q/wnwNwG/6MNnHKzV9JkAoPoPM26t/DLFn17p7o7u5kIBA=="],
 

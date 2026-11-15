@@ -1,0 +1,17 @@
+{
+	"id": "unbound.settings-theme",
+	"name": "Settings Theme",
+	"description": "Shows your Nitro or custom app theme behind User Settings and every page in it, which Discord leaves plain.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "PaintPaletteIcon",
+	"main": "index.tsx"
+}
