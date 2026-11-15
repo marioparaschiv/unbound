@@ -41,4 +41,58 @@ describe('roundTree', () => {
 
 		expect(tree.props.style[1]).toEqual({ borderRadius: FULL });
 	});
+
+	test('replaces the corner radii a fully rounded view sets', () => {
+		const bar = {
+			type: 'View',
+			props: {
+				style: { borderRadius: FULL, borderTopLeftRadius: 28, borderBottomLeftRadius: 28 },
+			},
+		};
+		const tree = roundTree(bar, rules.fullRoundIf(8)) as { props: { style: unknown[] } };
+
+		expect(tree.props.style[1]).toEqual({
+			borderRadius: FULL,
+			borderTopLeftRadius: FULL,
+			borderBottomLeftRadius: FULL,
+		});
+	});
+
+	test('rounds the mask a MaskedView draws its shape from', () => {
+		const masked = {
+			type: 'MaskedView',
+			props: {
+				maskElement: {
+					type: 'View',
+					props: { style: { borderRadius: FULL, borderTopLeftRadius: 28 } },
+				},
+			},
+		};
+		const tree = roundTree(masked, rules.fullRoundIf(8)) as {
+			props: { maskElement: { props: { style: unknown[] } } };
+		};
+
+		expect(tree.props.maskElement.props.style[1]).toEqual({
+			borderRadius: FULL,
+			borderTopLeftRadius: FULL,
+		});
+	});
+
+	test('does not wrap a component it already wrapped', () => {
+		function Inner() {
+			return square(30, 12);
+		}
+
+		const once = roundTree({ type: Inner, props: {} }, rules.fullRoundIf(8), {
+			deep: true,
+		}) as {
+			type: unknown;
+		};
+		const twice = roundTree({ type: once.type, props: {} }, rules.fullRoundIf(8), {
+			deep: true,
+		}) as { type: unknown };
+
+		expect(once.type).not.toBe(Inner);
+		expect(twice.type).toBe(once.type);
+	});
 });

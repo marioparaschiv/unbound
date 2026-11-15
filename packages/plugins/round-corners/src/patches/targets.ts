@@ -14,7 +14,9 @@ function hookComponent(target: Target, module: AnyProps, exportName: string) {
 	if (!render) return;
 
 	patcher.after(render.holder, render.key, ({ args: [props], result }) =>
-		settings[target.setting] ? roundTree(result, target.rule, { owner: props }) : result,
+		settings[target.setting]
+			? roundTree(result, target.rule, { owner: props, deep: target.deep })
+			: result,
 	);
 }
 

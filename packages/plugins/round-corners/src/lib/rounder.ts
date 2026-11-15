@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 
 /** A view's size and corner as its style sets them. */
-export type Box = { width?: number; height?: number; radius: number };
+export type Box = { width?: number; height?: number; radius: number; corners: string[] };
 
 /** What corner a view with this box gets, or `undefined` to leave it as Discord drew it. */
 // UNKNOWN: the owner's props are whatever Discord passed the component.
@@ -15,9 +15,20 @@ type ElementLike = { type?: unknown; props?: Record<string, unknown> };
 /** A radius React Native clamps to as round as the view can be. */
 export const FULL = 9999;
 
+const CORNER_KEYS = [
+	'borderTopLeftRadius',
+	'borderTopRightRadius',
+	'borderBottomLeftRadius',
+	'borderBottomRightRadius',
+	'borderTopStartRadius',
+	'borderTopEndRadius',
+	'borderBottomStartRadius',
+	'borderBottomEndRadius',
+];
 const MAX_DEPTH = 14;
 const MAX_LEVELS = 6;
 const wrappers = new WeakMap<object, Map<Rule, unknown>>();
+const ownWrappers = new WeakSet<object>();
 
 function isElement(node: Node): node is ElementLike {
 	return typeof node === 'object' && node !== null && !Array.isArray(node) && 'props' in node;
@@ -60,6 +71,7 @@ function boxOf(style: unknown): Box | undefined {
 		width: typeof flat?.width === 'number' ? flat.width : undefined,
 		height: typeof flat?.height === 'number' ? flat.height : undefined,
 		radius,
+		corners: CORNER_KEYS.filter((key) => typeof flat?.[key] === 'number'),
 	};
 }
 
@@ -94,6 +106,9 @@ function renderOf(type: unknown): ((props: unknown) => Node) | undefined {
 function wrapperFor(type: unknown, rule: Rule, level: number): unknown {
 	if (/REA|Animated|Reanimated|Workaround/i.test(componentName(type))) return undefined;
 
+	// A wrapper already rounds what it renders; wrapping it again would round the same tree once per enclosing target.
+	if (typeof type === 'function' && ownWrappers.has(type)) return undefined;
+
 	const render = renderOf(type);
 
 	if (!render || (typeof type !== 'object' && typeof type !== 'function')) return undefined;
@@ -115,6 +130,7 @@ function wrapperFor(type: unknown, rule: Rule, level: number): unknown {
 				displayName: `RoundCorners(${componentName(type) || 'inner'})`,
 			},
 		);
+		ownWrappers.add(wrapped as object);
 		byRule.set(rule, wrapped);
 	}
 
@@ -133,13 +149,19 @@ function roundedStyle(
 
 	if (!box) return style;
 
-	const next = box.radius > FULL ? FULL : rule(box, owner ?? props);
+	const next = box.radius >= FULL ? FULL : rule(box, owner ?? props);
 
-	if (typeof next !== 'number' || next === box.radius) return style;
+	if (typeof next !== 'number' || (next === box.radius && !box.corners.length)) return style;
+
+	// A corner radius wins over `borderRadius`, so each one the view sets is replaced too.
+	const rounded = Object.fromEntries([
+		['borderRadius', next],
+		...box.corners.map((key) => [key, next]),
+	]);
 
 	return typeof style === 'function'
-		? (state: object) => [(style as (state: object) => unknown)(state), { borderRadius: next }]
-		: [style, { borderRadius: next }];
+		? (state: object) => [(style as (state: object) => unknown)(state), rounded]
+		: [style, rounded];
 }
 
 /**
@@ -174,14 +196,30 @@ export function roundTree(
 	const { props } = node;
 	const style = roundedStyle(props.style, rule, owner, props);
 	const children = roundTree(props.children, rule, { depth: depth + 1, level, owner, deep });
+	// A MaskedView draws the shape of its mask, such as the You bar's background, from `maskElement` rather than its children.
+	const maskElement = roundTree(props.maskElement, rule, {
+		depth: depth + 1,
+		level,
+		owner,
+		deep,
+	});
 	const type =
 		deep && level < MAX_LEVELS && typeof node.type !== 'string'
 			? wrapperFor(node.type, rule, level)
 			: undefined;
 
-	if (style === props.style && children === props.children && !type) return node;
+	if (
+		style === props.style &&
+		children === props.children &&
+		maskElement === props.maskElement &&
+		!type
+	) {
+		return node;
+	}
 
-	return { ...node, ...(type ? { type } : {}), props: { ...props, style, children } };
+	const masked = maskElement === props.maskElement ? {} : { maskElement };
+
+	return { ...node, ...(type ? { type } : {}), props: { ...props, style, children, ...masked } };
 }
 
 /** The corner rules targets share. */
