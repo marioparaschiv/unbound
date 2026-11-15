@@ -29,6 +29,8 @@ import {
 	Grouping,
 	MediaCorners,
 	Quote,
+	ReplyBubble,
+	ReplyStyle,
 	SQUARED_CORNER_RATIO,
 } from '~/lib/constants';
 
@@ -90,6 +92,7 @@ export type RowPaint = {
 	color: number;
 	outline?: { path: string; color: number; width: number };
 	quote?: { box: Box; color: number; radius: number };
+	replyBubble?: { color: number; radius: number; padding: number };
 	/** How far the chat background behind the bubble blurs, in pixels. */
 	blur?: number;
 	name: Move;
@@ -295,6 +298,15 @@ export function rowPaint(input: PaintInput): RowPaint {
 		...(measured.mediaRadius === undefined
 			? {}
 			: { mediaRadius: measured.mediaRadius * scale }),
+		...(style.reply === ReplyStyle.bubble && !measured.quoted
+			? {
+					replyBubble: {
+						color: argb(input.color),
+						radius: shape.radius * ReplyBubble.radiusRatio * scale,
+						padding: ReplyBubble.padding * scale,
+					},
+				}
+			: {}),
 	};
 }
 

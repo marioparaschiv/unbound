@@ -101,7 +101,7 @@ function flag(value: unknown, fallback: boolean): boolean {
  * @description Reads where a reply's preview sits.
  * @param value The stored setting.
  * @param avatarLast Whether the avatar sits by a group's last bubble, which makes `icon` the default.
- * @returns `quote` or `icon`.
+ * @returns `quote`, `icon` or `bubble`.
  */
 export function replyStyle(
 	value: unknown,
