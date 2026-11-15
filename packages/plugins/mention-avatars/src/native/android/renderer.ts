@@ -14,6 +14,7 @@ import {
 import { hasSpan, spansOf } from '@unbound-plugins/shared/native/android/spans';
 import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewrite-retry';
 import { resourceDensity } from '@unbound-plugins/shared/native/android/views';
+import { sharedImageCache } from '@unbound-plugins/shared/media/shared-image-cache';
 import { watchTextViews } from '@unbound-plugins/shared/native/android/text-views';
 import {
 	javaFlag,
@@ -93,8 +94,7 @@ export function createAndroidRenderer(
 		let bitmap: NativeJavaReference | null = null;
 
 		try {
-			const response = await fetch(url);
-			const bytes = response.ok ? new Uint8Array(await response.arrayBuffer()) : null;
+			const bytes = await sharedImageCache().bytes(url);
 			const source =
 				bytes && bytes.length <= MAX_IMAGE_BYTES ? decodeBitmap(java, bytes) : null;
 

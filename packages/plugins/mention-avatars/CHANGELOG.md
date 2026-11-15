@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-15
+
+### Changed
+
+- Avatars come from the image cache all plugins share, so they load from disk after a restart instead of downloading again.
+
 ## [1.1.0] - 2026-11-10
 
 ### Added
