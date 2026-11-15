@@ -7,7 +7,7 @@
 	"dependencies": {
 		"@unbound-app/contracts": "workspace:*",
 		"@unbound-app/logger": "workspace:*",
-		"typebox": "^1.4.6"
+		"typebox": "^1.4.7"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.29.7",
