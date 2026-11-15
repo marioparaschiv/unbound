@@ -1,4 +1,5 @@
 -- Carl-bot's tags, as it answered them in #bots; embeds are flattened to Markdown, since a tag is text.
+-- Run once on the live database after `db:migrate`: `psql "$DATABASE_DIRECT_URL" -f scripts/carl-tags.sql`. Rerunnable.
 INSERT INTO "bot"."tag" ("name", "content") VALUES
 	('addons', $tag$## [Enmity Addons](https://enmity-addons.github.io/)
 
