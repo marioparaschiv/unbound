@@ -84,6 +84,8 @@ static const std::vector<FallbackHook> &fallbackHooks()
         fallbackHook<id, CGRect>("object", {"struct:CGRect"}),
         fallbackHook<id, CGPoint, id>("object", {"struct:CGPoint", "object"}),
         fallbackHook<id, id>("object", {"object"}),
+        fallbackHook<id, id, id>("object", {"object", "object"}),
+        fallbackHook<id, id, id, id>("object", {"object", "object", "object"}),
         fallbackHook<id, int64_t>("object", {"i64"}),
         fallbackHook<id, id, int64_t>("object", {"object", "i64"}),
         fallbackHook<int64_t, id>("i64", {"object"}),
