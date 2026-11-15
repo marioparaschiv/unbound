@@ -150,7 +150,7 @@ describe('plugin signatures', () => {
 			'utf8',
 		);
 
-		expect(core).toContain('"unbound-addon/v1\\n" + id + "\\n" + version + "\\n" +');
+		expect(core).toContain('"unbound-addon/v1\\n" + id + "\\n" + version + "\\n"');
 		expect(core).toContain('(bundleDigest ? *bundleDigest : sha512Hex(bundle))');
 		expect(core).toContain('"\\nbytecode " + std::to_string(bytecodeVersion) + " " + digest');
 	});

@@ -248,5 +248,4 @@ inline constexpr std::array<const char *, 18> kAndroidNativePluginCapabilities =
     "native.debug.environment",
 };
 }
-
 // clang-format on

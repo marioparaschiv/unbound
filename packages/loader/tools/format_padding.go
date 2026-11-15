@@ -11,13 +11,23 @@ var rawStringOpening = regexp.MustCompile(`R"([^\s()\\]{0,16})\(`)
 var blockContinuation = regexp.MustCompile(`^(}|\)|\]|else\b|catch\b|while\b|case\b|default\s*:|#)`)
 
 // padBlocks puts a blank line between a closing brace and the statement after it at the same indent.
-// Raw strings and block comments pass through untouched, so only whitespace between statements changes.
+// Raw strings, block comments and clang-format off regions pass through untouched.
 func padBlocks(source []byte) []byte {
 	lines := strings.Split(string(source), "\n")
 	padded := make([]string, 0, len(lines))
 	closing := ""
 	previous := ""
+	disabled := false
 	for _, line := range lines {
+		if strings.Contains(line, "clang-format off") {
+			disabled = true
+		}
+		if disabled {
+			disabled = !strings.Contains(line, "clang-format on")
+			padded = append(padded, line)
+			previous = ""
+			continue
+		}
 		if closing != "" {
 			if index := strings.Index(line, closing); index >= 0 {
 				closing = openedLiteral(line[index+len(closing):])

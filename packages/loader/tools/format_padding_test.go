@@ -53,8 +53,13 @@ func TestPadBlocksLeavesContinuationsJoined(t *testing.T) {
 	}
 }
 
-func TestPadBlocksSkipsRawStringsAndBlockComments(t *testing.T) {
+func TestPadBlocksSkipsRawStringsCommentsAndDisabledRegions(t *testing.T) {
 	source := strings.Join([]string{
+		"// clang-format off",
+		"    }",
+		"    run();",
+		"}",
+		"// clang-format on",
 		`const char *script = R"JS((function () {`,
 		"    if (a) {",
 		"    }",
@@ -67,6 +72,6 @@ func TestPadBlocksSkipsRawStringsAndBlockComments(t *testing.T) {
 		"",
 	}, "\n")
 	if padded := string(padBlocks([]byte(source))); padded != source {
-		t.Fatalf("raw strings and comments must not change:\n%s", padded)
+		t.Fatalf("raw strings, comments and disabled regions must not change:\n%s", padded)
 	}
 }
