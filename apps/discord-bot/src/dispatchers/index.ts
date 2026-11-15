@@ -106,6 +106,8 @@ export function createDispatchers(options: DispatchersOptions): Dispatcher[] {
 				guilds: discord.guilds,
 				contributors: createContributorCache({ token: config.env.GITHUB_TOKEN }),
 				ids,
+				messages,
+				siteUrl: config.siteUrl,
 				now,
 			}),
 		),

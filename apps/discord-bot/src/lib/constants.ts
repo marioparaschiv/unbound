@@ -20,6 +20,7 @@ export const EMOJIS = {
 	download: { name: 'mb_download', id: '1570532777038712832' },
 	globe: { name: 'mb_globe', id: '1570532781791117442' },
 	codeBranch: { name: 'mb_code_branch', id: '1570532786706579616' },
+	heart: { name: 'mb_heart', id: '1571506917833183394' },
 	linkWhite: { name: 'mb_link_white', id: '1571498747924582451' },
 	msgsWhite: { name: 'mb_msgs_white', id: '1571498746745720882' },
 } as const satisfies Record<string, AppEmoji>;
