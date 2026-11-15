@@ -1,0 +1,48 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "4b48fb0f-fca6-40e5-a8f3-1709b31bc78e",
+  "prevIds": [
+    "1b7fab63-8aa6-4302-a749-6ebb0a6e328a"
+  ],
+  "footprints": [
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "bot",
+        "mod_case",
+        "id"
+      ],
+      "writes": [
+        "s|colprop|bot.mod_case.id.identity",
+        "s|colprop|bot.mod_case.id.default",
+        "s|colprop|bot.mod_case.id.notNull"
+      ],
+      "reads": [
+        "n|tbl|bot.mod_case",
+        "n|sch|bot",
+        "n|col|bot.mod_case.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"bot\",\"mod_case\",\"id\"]",
+      "set": {
+        "identity": {
+          "type": "always",
+          "name": "mod_case_id_seq",
+          "increment": "1",
+          "startWith": "2728",
+          "minValue": "1",
+          "maxValue": "2147483647",
+          "cache": 1,
+          "cycle": false
+        }
+      }
+    }
+  ]
+}

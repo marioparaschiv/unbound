@@ -71,4 +71,18 @@ describe('renderCaseNotice', () => {
 			].join('\n'),
 		);
 	});
+
+	test('names the moderator of a warning, as Carl-bot did', () => {
+		const { body } = renderCaseNotice(
+			{ ...CASE, action: 'warn', expiresAt: null },
+			'Unbound',
+			ICONS,
+		);
+
+		expect(messageText(body)).toBe(
+			['**You were warned in Unbound**', '> Posting scams', '-# Moderator: mod (200)'].join(
+				'\n',
+			),
+		);
+	});
 });

@@ -5,11 +5,10 @@ import { Subcommand } from '@sapphire/plugin-subcommands';
 import { ApplyOptions } from '@sapphire/decorators';
 import { asc, eq } from 'drizzle-orm';
 
+import { findTag, type Tag } from '~/tags/tags';
 import { getDatabase } from '~/db/instance';
 import { COLOURS } from '~/lib/constants';
 import { tag } from '~/db/schema';
-
-type Tag = typeof tag.$inferSelect;
 
 const TAGS_PER_PAGE = 5;
 // Discord rejects autocomplete responses with more choices than this.
@@ -258,10 +257,8 @@ export class TagCommand extends Subcommand {
 		return pager;
 	}
 
-	private async getTag(name: string): Promise<Tag | undefined> {
-		const [row] = await getDatabase().select().from(tag).where(eq(tag.name, name));
-
-		return row;
+	private getTag(name: string): Promise<Tag | undefined> {
+		return findTag(name);
 	}
 
 	private getTags(): Promise<Tag[]> {

@@ -37,6 +37,8 @@ describe.skipIf(!DATABASE_URL)('moderation cases', () => {
 
 		await insertCase(db, { ...DRAFT, action: 'warn', userId: '300' });
 
+		// Numbering continues Carl-bot's last case, 2727.
+		expect(warn.id).toBeGreaterThanOrEqual(2728);
 		expect(kick.id).toBe(warn.id + 1);
 		expect((await listCases(db, '100')).map(({ id }) => id)).toEqual([kick.id, warn.id]);
 		expect((await listCases(db, '100', 'warn')).map(({ id }) => id)).toEqual([warn.id]);

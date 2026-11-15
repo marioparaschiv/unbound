@@ -15,8 +15,13 @@ type ActionMeta = {
 	/** Completes "You were … in", "… **user**". */
 	past: string;
 	colour: number;
-	/** Whether the user is told by DM; after an unban or unmute the bot may share no server with them. */
+	/**
+	 * Whether the user is told by DM, as Carl-bot was set up: warnings and mutes, never kicks or bans.
+	 * After an unban or unmute the bot may share no server with them.
+	 */
 	notifies: boolean;
+	/** Whether the DM names the moderator, as Carl-bot's warning DM did. */
+	namesModerator?: boolean;
 };
 
 /** How each action reads and looks. */
@@ -27,6 +32,7 @@ export const CASE_ACTIONS: Readonly<Record<CaseAction, ActionMeta>> = {
 		past: 'warned',
 		colour: COLOURS.warning,
 		notifies: true,
+		namesModerator: true,
 	},
 	mute: {
 		label: 'Mute',
@@ -47,21 +53,21 @@ export const CASE_ACTIONS: Readonly<Record<CaseAction, ActionMeta>> = {
 		icon: 'IconArrowDoorOut',
 		past: 'kicked',
 		colour: COLOURS.danger,
-		notifies: true,
+		notifies: false,
 	},
 	softban: {
 		label: 'Softban',
 		icon: 'IconBroom',
 		past: 'softbanned',
 		colour: COLOURS.danger,
-		notifies: true,
+		notifies: false,
 	},
 	ban: {
 		label: 'Ban',
 		icon: 'IconGavel',
 		past: 'banned',
 		colour: COLOURS.danger,
-		notifies: true,
+		notifies: false,
 	},
 	unban: {
 		label: 'Unban',
@@ -74,11 +80,17 @@ export const CASE_ACTIONS: Readonly<Record<CaseAction, ActionMeta>> = {
 
 const FIELD_VALUE_LIMIT = 1024;
 
+/** How long a mute lasts when no duration is given, as Carl-bot's timeout default was. */
+export const DEFAULT_MUTE_MS = 3_600_000;
+
 /** Discord's limit on the audit log reason a moderation request carries. */
 export const AUDIT_REASON_LIMIT = 512;
 
 /** What a case DM needs, known before the case is recorded. */
-export type CaseNotice = Pick<ModCase, 'action' | 'reason' | 'createdAt' | 'expiresAt'>;
+export type CaseNotice = Pick<
+	ModCase,
+	'action' | 'reason' | 'createdAt' | 'expiresAt' | 'moderatorId' | 'moderatorName'
+>;
 
 /**
  * @description Measures how long a temporary case lasts.
@@ -134,6 +146,7 @@ export function renderCaseField(entry: ModCase): APIEmbedField {
 
 export default {
 	CASE_ACTIONS,
+	DEFAULT_MUTE_MS,
 	AUDIT_REASON_LIMIT,
 	durationOf,
 	stamp,

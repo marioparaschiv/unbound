@@ -9,7 +9,8 @@ export type CaseAction = 'warn' | 'mute' | 'unmute' | 'kick' | 'softban' | 'ban'
 export const modCase = botSchema.table(
 	'mod_case',
 	{
-		id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+		// Numbering continues Carl-bot's, whose last case in #infractions was 2727.
+		id: integer('id').primaryKey().generatedAlwaysAsIdentity({ startWith: 2728 }),
 		action: text('action').$type<CaseAction>().notNull(),
 		userId: text('user_id').notNull(),
 		/** The username at the time, so the log reads without a fetch after a rename or deletion. */

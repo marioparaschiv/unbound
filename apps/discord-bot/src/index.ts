@@ -1,24 +1,28 @@
 import './lib/setup';
 
-import { Events, GatewayIntentBits, Partials, type Client } from 'discord.js';
+import { Events, GatewayIntentBits, Partials, REST, type Client } from 'discord.js';
 import { container, LogLevel, SapphireClient } from '@sapphire/framework';
 import { createBotReads } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
 
 import { createModeration, type Moderation } from '~/moderation/moderation';
 import { createStarboard, type Starboard } from '~/starboard/starboard';
+import { createServerLog, type ServerLog } from '~/logging/server-log';
 import { createStarboardEmojis } from '~/starboard/starboard-emojis';
+import { createAutomod, type Automod } from '~/automod/automod';
 import { createDatabase, POOLED_OPTIONS } from '~/db/database';
 import { createMessageGateway } from '~/lib/discord-messages';
 import { createAuditTelemetry } from '~/lib/audit-telemetry';
+import { hasMembersIntent } from '~/lib/privileged-intents';
 import { loadConfig, type BotConfig } from '~/lib/config';
+import { PREFIX, PREFIXES } from '~/lib/constants';
 import { syncIconEmojis } from '~/lib/icon-emojis';
 import { startDispatchers } from '~/runtime/start';
 import { createDispatchers } from '~/dispatchers';
 import { checkTriggers } from '~/db/triggers';
 import { CASE_ACTIONS } from '~/lib/mod-case';
 import { setDatabase } from '~/db/instance';
-import { PREFIX } from '~/lib/constants';
+import { AUTOMOD } from '~/automod/config';
 
 declare module '@sapphire/pieces' {
 	// oxlint-disable-next-line typescript/consistent-type-definitions -- declaration merging needs an interface
@@ -29,6 +33,10 @@ declare module '@sapphire/pieces' {
 		starboard?: Starboard;
 		/** Set once the client is ready. */
 		moderation?: Moderation;
+		/** Set once the client is ready. */
+		serverLog?: ServerLog;
+		/** Set once the client is ready. */
+		automod?: Automod;
 	}
 }
 
@@ -60,10 +68,19 @@ try {
 	logger.error('Failed to check the triggers on the web tables:', error);
 }
 
+// Joins and leaves need the privileged members intent; asking for it unapproved stops the login.
+const membersIntent = await hasMembersIntent(new REST().setToken(env.DISCORD_TOKEN));
+
+if (!membersIntent) {
+	logger.warn(
+		'The Server Members intent is off in the developer portal; joins and leaves are not logged.',
+	);
+}
+
 const client = new SapphireClient({
 	// Sapphire otherwise derives the piece root from the package entry point, which Bun does not set.
 	baseUserDirectory: import.meta.dirname,
-	defaultPrefix: PREFIX,
+	defaultPrefix: PREFIXES,
 	caseInsensitiveCommands: true,
 	logger: { level: LogLevel.Debug },
 	intents: [
@@ -72,6 +89,12 @@ const client = new SapphireClient({
 		// The `/debug` help waits for a reaction once the asker opens their DMs.
 		GatewayIntentBits.GuildMessageReactions,
 		GatewayIntentBits.Guilds,
+		// Emoji created and deleted, for the server log.
+		GatewayIntentBits.GuildExpressions,
+		// Voice channel joins, leaves and moves, for the server log.
+		GatewayIntentBits.GuildVoiceStates,
+		// Privileged: joins and leaves, for the server log.
+		...(membersIntent ? [GatewayIntentBits.GuildMembers] : []),
 		// Audit log entries, so bans, kicks and timeouts taken outside the bot become cases.
 		GatewayIntentBits.GuildModeration,
 		// Privileged: the `/debug` help reads questions and the `/debug` card's alt text.
@@ -105,6 +128,22 @@ function startRuntime(ready: Client<true>) {
 
 	container.moderation = moderation;
 	moderation.start(ready);
+	container.serverLog = createServerLog({
+		messages,
+		channels: {
+			moderation: config.ids.MODERATION_LOGS_CHANNEL_ID,
+			messages: config.ids.MESSAGE_LOGS_CHANNEL_ID,
+			misc: config.ids.MISC_LOGS_CHANNEL_ID,
+			joins: config.ids.JOIN_LOGS_CHANNEL_ID,
+		},
+	});
+	container.automod = createAutomod({
+		db,
+		moderation,
+		client: ready,
+		guildId: config.guildId,
+		config: AUTOMOD,
+	});
 
 	if (starboardChannelId) {
 		container.starboard = createStarboard({

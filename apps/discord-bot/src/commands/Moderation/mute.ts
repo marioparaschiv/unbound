@@ -3,6 +3,7 @@ import type { Command } from '@sapphire/framework';
 import type { Guild } from 'discord.js';
 
 import { ModerationActionCommand, type ActionInput } from '~/moderation/action-command';
+import { DEFAULT_MUTE_MS } from '~/lib/mod-case';
 
 /** Discord's longest timeout. */
 const MAX_TIMEOUT_MS = 28 * 86_400_000;
@@ -18,10 +19,9 @@ const MAX_TIMEOUT_MS = 28 * 86_400_000;
 export class MuteCommand extends ModerationActionCommand {
 	protected readonly action = 'mute';
 	protected override readonly maxDurationMs = MAX_TIMEOUT_MS;
-	// Carl-bot's mute lasted until an unmute; Discord's longest timeout is the nearest.
-	protected override readonly defaultDurationMs = MAX_TIMEOUT_MS;
+	protected override readonly defaultDurationMs = DEFAULT_MUTE_MS;
 
 	protected async apply(_guild: Guild, { member, durationMs, auditReason }: ActionInput) {
-		await member?.timeout(durationMs ?? MAX_TIMEOUT_MS, auditReason);
+		await member?.timeout(durationMs ?? DEFAULT_MUTE_MS, auditReason);
 	}
 }

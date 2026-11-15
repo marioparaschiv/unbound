@@ -1,6 +1,9 @@
 /** The message command prefix, as Carl-bot's was. */
 export const PREFIX = '!';
 
+/** Every prefix a message command takes: Carl-bot also answered `.`, which its tags were asked with. */
+export const PREFIXES = [PREFIX, '.'];
+
 export const COLOURS = {
 	positive: 0x00_ff_00,
 	danger: 0xff_00_00,
@@ -42,4 +45,4 @@ export const STAR_EMOJIS = {
 	8: { name: 'mb_star_8', id: '1571500057344352366' },
 } as const satisfies Record<number, AppEmoji>;
 
-export default { PREFIX, COLOURS, EMOJIS, STAR_EMOJIS };
+export default { PREFIX, PREFIXES, COLOURS, EMOJIS, STAR_EMOJIS };
