@@ -1,6 +1,14 @@
 import type { CommandInteraction, ContextMenuCommandInteraction, Guild, Message } from 'discord.js';
 import { Precondition } from '@sapphire/framework';
 
+declare module '@sapphire/framework' {
+	// oxlint-disable-next-line typescript/consistent-type-definitions -- declaration merging needs an interface
+	interface Preconditions {
+		/** Runs a command only in Unbound's server; Sapphire names it after this file. */
+		unbound: never;
+	}
+}
+
 export class UnboundPrecondition extends Precondition {
 	public override messageRun(message: Message) {
 		return this.checkEligibility(message.guild);

@@ -236,6 +236,10 @@ _Avoid_: Official, built-in, deploy
 One recorded staff or system action on an addon or user, such as an approval or a ban; the moderation log is their sequence.
 _Avoid_: Audit event, audit log entry
 
+**Case**:
+One numbered action a Discord moderator took on a member of Unbound's server, such as a warning or a ban; the bot posts each to the mod log, as Carl-bot did.
+_Avoid_: Infraction, strike, moderation event
+
 ### Discord bot
 
 **Dispatcher**:

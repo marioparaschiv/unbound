@@ -5,16 +5,20 @@ import { container, LogLevel, SapphireClient } from '@sapphire/framework';
 import { createBotReads } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
 
+import { createModeration, type Moderation } from '~/moderation/moderation';
 import { createStarboard, type Starboard } from '~/starboard/starboard';
 import { createStarboardEmojis } from '~/starboard/starboard-emojis';
 import { createDatabase, POOLED_OPTIONS } from '~/db/database';
 import { createMessageGateway } from '~/lib/discord-messages';
 import { createAuditTelemetry } from '~/lib/audit-telemetry';
 import { loadConfig, type BotConfig } from '~/lib/config';
+import { syncIconEmojis } from '~/lib/icon-emojis';
 import { startDispatchers } from '~/runtime/start';
 import { createDispatchers } from '~/dispatchers';
 import { checkTriggers } from '~/db/triggers';
+import { CASE_ACTIONS } from '~/lib/mod-case';
 import { setDatabase } from '~/db/instance';
+import { PREFIX } from '~/lib/constants';
 
 declare module '@sapphire/pieces' {
 	// oxlint-disable-next-line typescript/consistent-type-definitions -- declaration merging needs an interface
@@ -23,6 +27,8 @@ declare module '@sapphire/pieces' {
 		config: BotConfig;
 		/** Set once the client is ready; unset while `STARBOARD_CHANNEL_ID` is. */
 		starboard?: Starboard;
+		/** Set once the client is ready. */
+		moderation?: Moderation;
 	}
 }
 
@@ -57,7 +63,7 @@ try {
 const client = new SapphireClient({
 	// Sapphire otherwise derives the piece root from the package entry point, which Bun does not set.
 	baseUserDirectory: import.meta.dirname,
-	defaultPrefix: '!',
+	defaultPrefix: PREFIX,
 	caseInsensitiveCommands: true,
 	logger: { level: LogLevel.Debug },
 	intents: [
@@ -66,6 +72,8 @@ const client = new SapphireClient({
 		// The `/debug` help waits for a reaction once the asker opens their DMs.
 		GatewayIntentBits.GuildMessageReactions,
 		GatewayIntentBits.Guilds,
+		// Audit log entries, so bans, kicks and timeouts taken outside the bot become cases.
+		GatewayIntentBits.GuildModeration,
 		// Privileged: the `/debug` help reads questions and the `/debug` card's alt text.
 		GatewayIntentBits.MessageContent,
 	],
@@ -85,11 +93,23 @@ async function exit(code: number): Promise<never> {
 
 function startRuntime(ready: Client<true>) {
 	const starboardChannelId = config.ids.STARBOARD_CHANNEL_ID;
+	const messages = createMessageGateway(ready.rest, ready.user.id);
+	const moderation = createModeration({
+		db,
+		messages,
+		guildId: config.guildId,
+		logChannelId: config.ids.MOD_LOG_CHANNEL_ID,
+		prefix: PREFIX,
+		loadIcons: () => syncIconEmojis(ready.rest, ready.application.id, 'mb_case_', CASE_ACTIONS),
+	});
+
+	container.moderation = moderation;
+	moderation.start(ready);
 
 	if (starboardChannelId) {
 		container.starboard = createStarboard({
 			db,
-			messages: createMessageGateway(ready.rest, ready.user.id),
+			messages,
 			emojis: createStarboardEmojis(ready.rest, ready.application.id),
 			guildId: config.guildId,
 			channelId: starboardChannelId,
@@ -116,6 +136,7 @@ function startRuntime(ready: Client<true>) {
 	);
 
 	async function shutdown() {
+		moderation.stop();
 		await stopDispatchers();
 		await exit(0);
 	}

@@ -19,6 +19,7 @@ const BRAND = '#c84151';
 const TILE = 256;
 const TILE_ICON = 150;
 const AVATAR = 128;
+const EMOJI = 128;
 
 /** A screenshot scaled to the strip's height, ready to place. */
 type Shot = { png: Buffer; width: number };
@@ -170,6 +171,21 @@ export function renderIconTile(svg: string): Promise<Buffer> {
 }
 
 /**
+ * @description Draws a website icon alone on a transparent square, for an application emoji.
+ * @param svg The icon's `<svg>` markup, drawn in `currentColor`.
+ * @param colour The icon's colour, from `COLOURS`.
+ * @returns The PNG.
+ */
+export function renderIconEmoji(svg: string, colour: number): Promise<Buffer> {
+	const icon = svg
+		.replaceAll('currentColor', `#${colour.toString(16).padStart(6, '0')}`)
+		.replace(/\swidth="[^"]*"/, ` width="${EMOJI}"`)
+		.replace(/\sheight="[^"]*"/, ` height="${EMOJI}"`);
+
+	return sharp(Buffer.from(icon)).png().toBuffer();
+}
+
+/**
  * @description Downloads an avatar and cuts it into a circle.
  * @param url The avatar's URL.
  * @returns The round PNG.
@@ -186,4 +202,4 @@ export async function renderRoundAvatar(url: string): Promise<Buffer> {
 		.toBuffer();
 }
 
-export default { renderGallery, renderIconTile, renderRoundAvatar };
+export default { renderGallery, renderIconTile, renderIconEmoji, renderRoundAvatar };
