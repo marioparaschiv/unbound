@@ -521,7 +521,11 @@ func auditWorkflows(root string) error {
 func lintSlop(root string) error {
 	binary, err := exec.LookPath("aislop")
 	if err != nil {
-		return errors.New("aislop is required to lint the native sources")
+		// `bun install` puts the pinned devDependency in the repo's node_modules, which is rarely on PATH.
+		binary, err = exec.LookPath(filepath.Join(root, "..", "..", "node_modules", ".bin", "aislop"))
+	}
+	if err != nil {
+		return errors.New("aislop is required to lint the native sources; run `bun install`")
 	}
 	return runQuiet(root, binary, "ci", "--human", ".")
 }
