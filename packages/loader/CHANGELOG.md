@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.7.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.6.1...loader-v1.7.0) (2026-11-15)
+
+
+### Features
+
+* **loader:** declare speech recognition in sideloaded builds ([#1544](https://github.com/marioparaschiv/unbound/issues/1544)) ([06bd7ef](https://github.com/marioparaschiv/unbound/commit/06bd7efaf4acba239d02f3685f45a438dbbe4d8b))
+* **loader:** hook Objective-C class methods ([#1543](https://github.com/marioparaschiv/unbound/issues/1543)) ([7daa824](https://github.com/marioparaschiv/unbound/commit/7daa824b09e3000d4eb7064912b61f1d5900decd))
+
+
+### Bug Fixes
+
+* **loader:** drop the on-device claim from the speech prompt ([#1546](https://github.com/marioparaschiv/unbound/issues/1546)) ([d8f6743](https://github.com/marioparaschiv/unbound/commit/d8f674359e17cb6614a9cf792815c29c28967d24))
+* **loader:** name what to install when the loader is too old ([#1552](https://github.com/marioparaschiv/unbound/issues/1552)) ([b6bf35e](https://github.com/marioparaschiv/unbound/commit/b6bf35e87d8c247171451ff83713cafc887588a7))
+* **loader:** skip antislop locally when it is not installed ([#1528](https://github.com/marioparaschiv/unbound/issues/1528)) ([c9a853a](https://github.com/marioparaschiv/unbound/commit/c9a853ad4b4f0ed125780952e4100486e8bd532b))
+* **privacy-screen:** unblock screenshots when stopped while paused ([#1525](https://github.com/marioparaschiv/unbound/issues/1525)) ([c212e7d](https://github.com/marioparaschiv/unbound/commit/c212e7ddf794b36a1846fb6c017be08a78209a29))
+
 ## [1.6.1](https://github.com/marioparaschiv/unbound/compare/loader-v1.6.0...loader-v1.6.1) (2026-11-15)
 
 
