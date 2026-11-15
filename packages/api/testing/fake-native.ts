@@ -216,6 +216,7 @@ export function createFakeNative(): FakeNative {
 				id: manifest.id,
 				platform: state.platform,
 				capabilities,
+				tempPath: `Unbound/Temp/${manifest.id}`,
 				dispose: () => {},
 				...rest,
 				native: bridge,

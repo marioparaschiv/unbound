@@ -58,6 +58,7 @@ Imports from `@unbound-app/api` read the scoped `unbound`, so `patcher` is the p
 - `flux.onStoreChange`, `flux.onAction` and `flux.interceptAction` listeners.
 - `settings.registerSection` sections.
 - `assets.onAssetRegistered` listeners.
+- Files in `context.tempPath`, the plugin's temporary folder. It is emptied before `start` too, so files left by a crash never reach the next run. Write to it with ``fs.writeFile(`${context.tempPath}/clip.m4a`, data)``.
 
 This feature needs no `stop`; the scope removes its Flux listener.
 
