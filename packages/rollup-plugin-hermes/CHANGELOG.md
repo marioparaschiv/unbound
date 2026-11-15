@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.3](https://github.com/marioparaschiv/unbound/compare/rollup-plugin-hermes-v3.0.2...rollup-plugin-hermes-v3.0.3) (2026-11-15)
+
+
+### Bug Fixes
+
+* **rollup-plugin-hermes:** give each build its own temp folder ([#1529](https://github.com/marioparaschiv/unbound/issues/1529)) ([497b32d](https://github.com/marioparaschiv/unbound/commit/497b32dea2ed506bccd895ae8099b11805d5bb28))
+
 ## [3.0.2](https://github.com/marioparaschiv/unbound/compare/rollup-plugin-hermes-v3.0.1...rollup-plugin-hermes-v3.0.2) (2026-11-15)
 
 

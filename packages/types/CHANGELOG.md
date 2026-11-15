@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/marioparaschiv/unbound/compare/types-v1.5.0...types-v1.6.0) (2026-11-15)
+
+
+### Features
+
+* **loader:** hook Objective-C class methods ([#1543](https://github.com/marioparaschiv/unbound/issues/1543)) ([7daa824](https://github.com/marioparaschiv/unbound/commit/7daa824b09e3000d4eb7064912b61f1d5900decd))
+
 ## [1.5.0](https://github.com/marioparaschiv/unbound/compare/types-v1.4.0...types-v1.5.0) (2026-11-14)
 
 

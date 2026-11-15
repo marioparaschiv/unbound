@@ -1,5 +1,27 @@
 # Changelog
 
+## [3.2.3](https://github.com/marioparaschiv/unbound/compare/cli-v3.2.2...cli-v3.2.3) (2026-11-15)
+
+
+### Bug Fixes
+
+* **cli:** inspect classes whose methods shadow Class methods ([#1547](https://github.com/marioparaschiv/unbound/issues/1547)) ([10e066e](https://github.com/marioparaschiv/unbound/commit/10e066ed548b969fb415e8d776c3fe12af5e6e0e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger bumped to 1.2.2
+    * @unbound-app/debugger-protocol bumped to 2.2.2
+    * @unbound-app/rollup-plugin-hermes bumped to 3.0.3
+  * devDependencies
+    * @unbound-app/api bumped to 3.6.0
+    * @unbound-app/contracts bumped to 2.6.0
+    * @unbound-app/types bumped to 1.6.0
+    * @unbound-app/utils bumped to 1.0.6
+    * @unbound-app/web bumped to 2.6.0
+
 ## [3.2.2](https://github.com/marioparaschiv/unbound/compare/cli-v3.2.1...cli-v3.2.2) (2026-11-15)
 
 

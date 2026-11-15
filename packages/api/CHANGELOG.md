@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.6.0](https://github.com/marioparaschiv/unbound/compare/api-v3.5.1...api-v3.6.0) (2026-11-15)
+
+
+### Features
+
+* **client:** restore values plugins assign when they stop ([#1521](https://github.com/marioparaschiv/unbound/issues/1521)) ([04bb0ba](https://github.com/marioparaschiv/unbound/commit/04bb0ba6cda9ff8568e7ca658d0a32bcee9e9fc6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 3.6.0
+    * @unbound-app/sdk-generator bumped to 1.0.6
+
 ## [3.5.1](https://github.com/marioparaschiv/unbound/compare/api-v3.5.0...api-v3.5.1) (2026-11-15)
 
 
