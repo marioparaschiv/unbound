@@ -3,10 +3,11 @@ import { createLogger } from '@unbound-app/logger';
 import { PermissionFlagsBits } from 'discord.js';
 import { inArray } from 'drizzle-orm';
 
+import { discordFailure, type MessageGateway } from '~/lib/discord-messages';
 import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
 import type { ContributorCache } from '~/lib/github-contributors';
 import { IDS_SOURCE, type IdConstantName } from '~/lib/config';
-import { discordFailure } from '~/lib/discord-messages';
+import { thankSponsor } from '~/dispatchers/sponsor-thanks';
 import type { Database } from '~/db/database';
 import { roleGrant } from '~/db/schema';
 
@@ -74,6 +75,10 @@ export type RolesOptions = {
 	guilds: RolesGuilds;
 	contributors: ContributorCache;
 	ids: Readonly<Record<RoleConstant, string>>;
+	/** Sends the thank-you DM on each Sponsor grant. */
+	messages: MessageGateway;
+	/** The site origin the thank-you DM links to. */
+	siteUrl: string;
 	/** The clock, in epoch milliseconds. */
 	now: () => number;
 };
@@ -145,7 +150,7 @@ function pendingRoles(claim: Claim, roles: Grantable, held: ReadonlySet<string>)
  * @returns The `member_changed` dispatcher.
  */
 export function createRolesDispatcher(options: RolesOptions): Dispatcher {
-	const { guildId, guilds, contributors, ids, now } = options;
+	const { guildId, guilds, contributors, ids, messages, siteUrl, now } = options;
 	const allRoles: Grantable = new Map(ROLES.map(({ key, constant }) => [key, ids[constant]]));
 	// `discordId:roleId` pairs seen held by hand; per process, so a restart checks them once more.
 	const held = new Set<string>();
@@ -334,6 +339,11 @@ export function createRolesDispatcher(options: RolesOptions): Dispatcher {
 
 			try {
 				await grantRole(db, target, claim.discordId, role);
+
+				// One grant per account, whether the sponsorship or the GitHub link came last, so one thank-you.
+				if (key === 'sponsor') {
+					await thankSponsor(messages, siteUrl, claim.discordId);
+				}
 			} catch (error) {
 				if (discordFailure(error) !== 'forbidden') {
 					logger.error(

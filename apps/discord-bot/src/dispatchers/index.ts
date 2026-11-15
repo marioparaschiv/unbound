@@ -5,11 +5,14 @@ import { IDS_SOURCE, type BotConfig, type DiscordIds, type IdConstantName } from
 import { createRolesDispatcher, ROLE_CONSTANTS, type RolesGuilds } from '~/dispatchers/roles';
 import { addonChannels, createAddonsDispatcher } from '~/dispatchers/addons';
 import { createReviewNoticesDispatcher } from '~/dispatchers/review-notices';
+import { createApiReleasesDispatcher } from '~/dispatchers/api-releases';
 import { createContributorCache } from '~/lib/github-contributors';
 import { createReleasesDispatcher } from '~/dispatchers/releases';
+import { createBundlesDispatcher } from '~/dispatchers/bundles';
 import { createMessageGateway } from '~/lib/discord-messages';
 import { createAuditDispatcher } from '~/dispatchers/audit';
 import type { AuditTelemetry } from '~/lib/audit-telemetry';
+import { createCommitSubjects } from '~/lib/github-commits';
 import { createAuthorEmojis } from '~/lib/author-emojis';
 import type { Dispatcher } from '~/dispatchers/types';
 
@@ -80,10 +83,21 @@ export function createDispatchers(options: DispatchersOptions): Dispatcher[] {
 			['PLUGINS_CHANNEL_ID', 'THEMES_CHANNEL_ID', 'ICON_PACKS_CHANNEL_ID'],
 			(ids) => createAddonsDispatcher({ channels: addonChannels(ids), messages, emojis }),
 		),
-		entry('releases', ['RELEASES_CHANNEL_ID', 'RELEASES_ROLE_ID'], (ids) =>
-			createReleasesDispatcher({
-				channelId: ids.RELEASES_CHANNEL_ID,
-				roleId: ids.RELEASES_ROLE_ID,
+		entry('releases', ['LOADER_RELEASES_CHANNEL_ID'], (ids) =>
+			createReleasesDispatcher({ channelId: ids.LOADER_RELEASES_CHANNEL_ID, messages, now }),
+		),
+		entry('bundles', ['BUNDLE_RELEASES_CHANNEL_ID'], (ids) =>
+			createBundlesDispatcher({
+				channelId: ids.BUNDLE_RELEASES_CHANNEL_ID,
+				messages,
+				commits: createCommitSubjects({ token: config.env.GITHUB_TOKEN }),
+				now,
+			}),
+		),
+		entry('api-releases', ['API_RELEASES_CHANNEL_ID'], (ids) =>
+			createApiReleasesDispatcher({
+				channelId: ids.API_RELEASES_CHANNEL_ID,
+				cdnUrl: config.cdnUrl,
 				messages,
 				now,
 			}),
@@ -106,6 +120,8 @@ export function createDispatchers(options: DispatchersOptions): Dispatcher[] {
 				guilds: discord.guilds,
 				contributors: createContributorCache({ token: config.env.GITHUB_TOKEN }),
 				ids,
+				messages,
+				siteUrl: config.siteUrl,
 				now,
 			}),
 		),

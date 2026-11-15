@@ -582,3 +582,28 @@ describe('sourceLabel', () => {
 		expect(sourceLabel(launch, '2026-11-15T11:57:00Z', now)).toBeUndefined();
 	});
 });
+
+describe('row labels', () => {
+	test('never run into their values, even with every diagnostic row shown', () => {
+		const card = layoutDebugCard({
+			...info,
+			isolatedExtensions: ['OpenInDiscord'],
+			missingExtensions: ['Share'],
+			disabledAddons: ['unbound.example'],
+		});
+		const rows = new Map<number, CardText[]>();
+
+		for (const run of texts(card)) rows.set(run.y, [...(rows.get(run.y) ?? []), run]);
+
+		for (const runs of rows.values()) {
+			const sorted = [...runs].sort((a, b) => a.x - b.x);
+
+			for (let index = 1; index < sorted.length; index++) {
+				const before = sorted[index - 1]!;
+				const end = before.x + before.text.length * before.size * 0.6;
+
+				expect(end).toBeLessThanOrEqual(sorted[index]!.x + 0.5);
+			}
+		}
+	});
+});

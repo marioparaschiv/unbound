@@ -28,6 +28,7 @@ const {
 	addon,
 	addonMaintainer,
 	addonVersion,
+	bundleRelease,
 	loaderRelease,
 	moderationEvent,
 	sponsorship,
@@ -119,6 +120,30 @@ describe.skipIf(!DATABASE_URL)('triggers on the web tables', () => {
 				set: { url },
 			});
 	}
+
+	function insertBundle(version: string, minLoaderVersion: string) {
+		return database.web.db
+			.insert(bundleRelease)
+			.values({ channel: 'beta', version, minLoaderVersion, publishedAt: new Date() })
+			.onConflictDoUpdate({
+				target: [bundleRelease.channel, bundleRelease.version],
+				set: { minLoaderVersion },
+			});
+	}
+
+	test('a first bundle publish wakes bundle_release; a CI retry does not', async () => {
+		const version = uniqueId('sha');
+
+		await insertBundle(version, '1.0.0');
+
+		expect(await received()).toEqual([
+			{ channel: 'bundle_release', payload: `beta:${version}` },
+		]);
+
+		await insertBundle(version, '1.1.0');
+
+		expect(await received()).toEqual([]);
+	});
 
 	test('a Discord sign-in and a GitHub link each wake the member by user id', async () => {
 		const { userId } = await signUp();

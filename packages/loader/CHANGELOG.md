@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/marioparaschiv/unbound/compare/loader-v1.7.0...loader-v1.7.1) (2026-11-15)
+
+
+### Bug Fixes
+
+* **loader:** keep unsaved settings when iOS reloads settings.json ([02816ee](https://github.com/marioparaschiv/unbound/commit/02816ee30537f4a0d0a998461d68703c552b7b79))
+
 ## [1.7.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.6.1...loader-v1.7.0) (2026-11-15)
 
 

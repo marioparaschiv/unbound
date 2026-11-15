@@ -1,6 +1,7 @@
 import type {
 	AuditEvent,
 	BotReads,
+	Bundle,
 	Member,
 	MemberQuery,
 	PublicAddon,
@@ -13,6 +14,7 @@ export type FakeReads = {
 	addons: Map<string, PublicAddon>;
 	events: AuditEvent[];
 	releases: Release[];
+	bundles: Bundle[];
 	members: Member[];
 	/** User ids per addon id, for `{ by: 'addon' }`. */
 	maintainers: Map<string, string[]>;
@@ -55,6 +57,13 @@ export const RELEASE: Release = {
 	publishedAt: new Date('2026-10-01T00:00:00.000Z'),
 };
 
+export const BUNDLE: Bundle = {
+	channel: 'beta',
+	version: 'b6bf35e87d8c247171451ff83713cafc887588a7',
+	previousVersion: 'a813a50ba01c4d8169b83be098908180fc370edf',
+	publishedAt: new Date('2026-10-01T00:00:00.000Z'),
+};
+
 export const MEMBER: Member = {
 	userId: 'user-1',
 	discordId: '1',
@@ -92,6 +101,7 @@ export function createFakeReads(): FakeReads {
 		addons: new Map(),
 		events: [],
 		releases: [],
+		bundles: [],
 		members: [],
 		maintainers: new Map(),
 		reads: {
@@ -113,6 +123,14 @@ export function createFakeReads(): FakeReads {
 			releasesSince: async (since) =>
 				fake.releases
 					.filter((release) => release.publishedAt >= since)
+					.toSorted((a, b) => a.publishedAt.getTime() - b.publishedAt.getTime()),
+			bundle: async (key) =>
+				fake.bundles.find(
+					(bundle) => bundle.channel === key.channel && bundle.version === key.version,
+				),
+			bundlesSince: async (since) =>
+				fake.bundles
+					.filter((bundle) => bundle.publishedAt >= since)
 					.toSorted((a, b) => a.publishedAt.getTime() - b.publishedAt.getTime()),
 			members: async (query) => fake.members.filter((member) => matches(fake, member, query)),
 		},

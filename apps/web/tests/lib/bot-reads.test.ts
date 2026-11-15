@@ -2,7 +2,14 @@ import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { afterAll, describe, expect, test } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 
-import { account, addon, addonMaintainer, addonVersion, moderationEvent } from '~/db/schema';
+import {
+	account,
+	addon,
+	addonMaintainer,
+	addonVersion,
+	bundleRelease,
+	moderationEvent,
+} from '~/db/schema';
 import { publishLoaderRelease, withdrawLoaderRelease } from '~/lib/loader-releases';
 import { renderAddonIcon } from '~/lib/addon-icons';
 import { createStaffNote } from '~/lib/staff-notes';
@@ -315,6 +322,45 @@ describe('releases', () => {
 		await withdrawLoaderRelease(ctx, ci.caller, 'ios', '3.0.0');
 
 		expect(await reads.release({ platform: 'ios', version: '3.0.0' })).toBeUndefined();
+	});
+});
+
+describe('bundles', () => {
+	test('reads each bundle with the one published before it on its channel', async () => {
+		const since = new Date(NOW.getTime() - DAY_MS);
+		const bundle = (channel: 'stable' | 'beta', version: string, minutes: number) => ({
+			channel,
+			version,
+			minLoaderVersion: '1.0.0',
+			publishedAt: new Date(NOW.getTime() - DAY_MS + minutes * 60_000),
+		});
+
+		await ctx.db
+			.insert(bundleRelease)
+			.values([
+				bundle('beta', 'old000', -10),
+				bundle('beta', 'aaa111', 1),
+				bundle('stable', 'sss111', 2),
+				bundle('beta', 'bbb222', 3),
+			]);
+
+		expect(await reads.bundle({ channel: 'beta', version: 'bbb222' })).toEqual({
+			channel: 'beta',
+			version: 'bbb222',
+			previousVersion: 'aaa111',
+			publishedAt: expect.any(Date),
+		});
+		expect(
+			(await reads.bundlesSince(since)).map((bundle) => [
+				bundle.version,
+				bundle.previousVersion,
+			]),
+		).toEqual([
+			['aaa111', 'old000'],
+			['sss111', null],
+			['bbb222', 'aaa111'],
+		]);
+		expect(await reads.bundle({ channel: 'beta', version: 'missing' })).toBeUndefined();
 	});
 });
 

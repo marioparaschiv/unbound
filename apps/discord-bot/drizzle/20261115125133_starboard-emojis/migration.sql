@@ -1,0 +1,1 @@
+ALTER TABLE "bot"."star_post" ADD COLUMN "emojis" text[] DEFAULT '{}'::text[] NOT NULL;

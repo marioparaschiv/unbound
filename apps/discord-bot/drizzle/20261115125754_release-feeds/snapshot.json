@@ -2,9 +2,9 @@
   "type": "diff",
   "version": "9",
   "dialect": "postgres",
-  "id": "2d2efdcb-a5a0-49d9-ad19-88f84db9ea14",
+  "id": "b138a7b8-a911-45e2-b24d-ca6645eb276b",
   "prevIds": [
-    "f0bbb014-694f-44b7-826e-e73b2f3cd8d9"
+    "a12cb649-334b-4db5-a32d-5121ff20240c"
   ],
   "footprints": [
     {
@@ -12,38 +12,37 @@
       "statementTarget": [
         "table",
         "bot",
-        "mod_case"
+        "api_release_post"
       ],
       "writes": [
-        "s|tbl|bot.mod_case",
-        "n|tbl|bot.mod_case",
-        "e|tbl|bot.mod_case",
-        "n|rel|bot.mod_case",
-        "n|type|bot.mod_case",
-        "n|rel|bot.mod_case_pkey"
+        "s|tbl|bot.api_release_post",
+        "n|tbl|bot.api_release_post",
+        "e|tbl|bot.api_release_post",
+        "n|rel|bot.api_release_post",
+        "n|type|bot.api_release_post",
+        "n|rel|bot.api_release_post_pkey"
       ],
       "reads": [
         "n|sch|bot"
       ]
     },
     {
-      "statementType": "create_index",
+      "statementType": "create_table",
       "statementTarget": [
-        "index",
+        "table",
         "bot",
-        "mod_case",
-        "mod_case_user_id_idx"
+        "bundle_post"
       ],
       "writes": [
-        "s|idx|bot.mod_case_user_id_idx",
-        "n|idx|bot.mod_case_user_id_idx",
-        "e|idx|bot.mod_case_user_id_idx",
-        "n|rel|bot.mod_case_user_id_idx"
+        "s|tbl|bot.bundle_post",
+        "n|tbl|bot.bundle_post",
+        "e|tbl|bot.bundle_post",
+        "n|rel|bot.bundle_post",
+        "n|type|bot.bundle_post",
+        "n|rel|bot.bundle_post_pkey"
       ],
       "reads": [
-        "n|tbl|bot.mod_case",
-        "n|sch|bot",
-        "n|col|bot.mod_case.user_id"
+        "n|sch|bot"
       ]
     }
   ],
@@ -52,7 +51,7 @@
       "op": "create",
       "row": {
         "schema": "bot",
-        "name": "mod_case",
+        "name": "api_release_post",
         "isRlsEnabled": false,
         "entityType": "tables"
       }
@@ -61,33 +60,17 @@
       "op": "create",
       "row": {
         "schema": "bot",
-        "table": "mod_case",
-        "name": "id",
-        "type": "integer",
-        "typeSchema": null,
-        "notNull": true,
-        "dimensions": 0,
-        "default": null,
-        "generated": null,
-        "identity": {
-          "type": "always",
-          "name": "mod_case_id_seq",
-          "increment": "1",
-          "startWith": "1",
-          "minValue": "1",
-          "maxValue": "2147483647",
-          "cache": 1,
-          "cycle": false
-        },
-        "entityType": "columns"
+        "name": "bundle_post",
+        "isRlsEnabled": false,
+        "entityType": "tables"
       }
     },
     {
       "op": "create",
       "row": {
         "schema": "bot",
-        "table": "mod_case",
-        "name": "action",
+        "table": "api_release_post",
+        "name": "version",
         "type": "text",
         "typeSchema": null,
         "notNull": true,
@@ -102,8 +85,8 @@
       "op": "create",
       "row": {
         "schema": "bot",
-        "table": "mod_case",
-        "name": "user_id",
+        "table": "api_release_post",
+        "name": "channel_id",
         "type": "text",
         "typeSchema": null,
         "notNull": true,
@@ -118,56 +101,8 @@
       "op": "create",
       "row": {
         "schema": "bot",
-        "table": "mod_case",
-        "name": "user_name",
-        "type": "text",
-        "typeSchema": null,
-        "notNull": true,
-        "dimensions": 0,
-        "default": null,
-        "generated": null,
-        "identity": null,
-        "entityType": "columns"
-      }
-    },
-    {
-      "op": "create",
-      "row": {
-        "schema": "bot",
-        "table": "mod_case",
-        "name": "moderator_id",
-        "type": "text",
-        "typeSchema": null,
-        "notNull": true,
-        "dimensions": 0,
-        "default": null,
-        "generated": null,
-        "identity": null,
-        "entityType": "columns"
-      }
-    },
-    {
-      "op": "create",
-      "row": {
-        "schema": "bot",
-        "table": "mod_case",
-        "name": "moderator_name",
-        "type": "text",
-        "typeSchema": null,
-        "notNull": true,
-        "dimensions": 0,
-        "default": null,
-        "generated": null,
-        "identity": null,
-        "entityType": "columns"
-      }
-    },
-    {
-      "op": "create",
-      "row": {
-        "schema": "bot",
-        "table": "mod_case",
-        "name": "reason",
+        "table": "api_release_post",
+        "name": "message_id",
         "type": "text",
         "typeSchema": null,
         "notNull": false,
@@ -182,72 +117,8 @@
       "op": "create",
       "row": {
         "schema": "bot",
-        "table": "mod_case",
-        "name": "expires_at",
-        "type": "timestamp with time zone",
-        "typeSchema": null,
-        "notNull": false,
-        "dimensions": 0,
-        "default": null,
-        "generated": null,
-        "identity": null,
-        "entityType": "columns"
-      }
-    },
-    {
-      "op": "create",
-      "row": {
-        "schema": "bot",
-        "table": "mod_case",
-        "name": "closed_at",
-        "type": "timestamp with time zone",
-        "typeSchema": null,
-        "notNull": false,
-        "dimensions": 0,
-        "default": null,
-        "generated": null,
-        "identity": null,
-        "entityType": "columns"
-      }
-    },
-    {
-      "op": "create",
-      "row": {
-        "schema": "bot",
-        "table": "mod_case",
-        "name": "log_channel_id",
-        "type": "text",
-        "typeSchema": null,
-        "notNull": false,
-        "dimensions": 0,
-        "default": null,
-        "generated": null,
-        "identity": null,
-        "entityType": "columns"
-      }
-    },
-    {
-      "op": "create",
-      "row": {
-        "schema": "bot",
-        "table": "mod_case",
-        "name": "log_message_id",
-        "type": "text",
-        "typeSchema": null,
-        "notNull": false,
-        "dimensions": 0,
-        "default": null,
-        "generated": null,
-        "identity": null,
-        "entityType": "columns"
-      }
-    },
-    {
-      "op": "create",
-      "row": {
-        "schema": "bot",
-        "table": "mod_case",
-        "name": "created_at",
+        "table": "api_release_post",
+        "name": "posted_at",
         "type": "timestamp with time zone",
         "typeSchema": null,
         "notNull": true,
@@ -262,34 +133,104 @@
       "op": "create",
       "row": {
         "schema": "bot",
-        "table": "mod_case",
-        "name": "mod_case_user_id_idx",
-        "nameExplicit": true,
-        "columns": [
-          {
-            "value": "user_id",
-            "isExpression": false,
-            "asc": true,
-            "nullsFirst": false,
-            "opclass": null
-          }
-        ],
-        "isUnique": false,
-        "where": null,
-        "with": "",
-        "method": "btree",
-        "concurrently": false,
-        "entityType": "indexes"
+        "table": "bundle_post",
+        "name": "bundle_channel",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
       }
     },
     {
       "op": "create",
       "row": {
         "schema": "bot",
-        "table": "mod_case",
-        "name": "mod_case_pkey",
+        "table": "bundle_post",
+        "name": "version",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "bundle_post",
+        "name": "channel_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "bundle_post",
+        "name": "message_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "bundle_post",
+        "name": "posted_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "bundle_post",
+        "name": "bundle_post_pkey",
         "columns": [
-          "id"
+          "bundle_channel",
+          "version"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "api_release_post",
+        "name": "api_release_post_pkey",
+        "columns": [
+          "version"
         ],
         "nameExplicit": false,
         "entityType": "pks"

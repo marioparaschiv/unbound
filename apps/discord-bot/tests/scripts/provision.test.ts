@@ -196,6 +196,8 @@ describe.skipIf(!SUPERUSER_URL)('provision.sql', () => {
 		expect(await reads.reviewNoticesAfter(0, 10)).toEqual([]);
 		expect(await reads.release({ platform: 'ios', version: '1.0.0' })).toBeUndefined();
 		expect(await reads.releasesSince(new Date(0))).toEqual([]);
+		expect(await reads.bundle({ channel: 'beta', version: 'abc' })).toBeUndefined();
+		expect(await reads.bundlesSince(new Date(0))).toEqual([]);
 
 		await wakes('audit_event', insertEvent);
 		expect(await reads.eventsAfter(0, 10)).toHaveLength(1);

@@ -11,7 +11,7 @@ export const COLOURS = {
 	deploy: 0x1a_bc_9c,
 } as const;
 
-export type AppEmoji = { name: string; id: string };
+export type AppEmoji = { name: string; id: string; animated?: boolean };
 
 /** The bot application's own emojis: Nucleo Micro Bold icons in the brand colour, or white where named. */
 export const EMOJIS = {
@@ -23,6 +23,7 @@ export const EMOJIS = {
 	download: { name: 'mb_download', id: '1570532777038712832' },
 	globe: { name: 'mb_globe', id: '1570532781791117442' },
 	codeBranch: { name: 'mb_code_branch', id: '1570532786706579616' },
+	heart: { name: 'mb_heart', id: '1571506917833183394' },
 	linkWhite: { name: 'mb_link_white', id: '1571498747924582451' },
 	msgsWhite: { name: 'mb_msgs_white', id: '1571498746745720882' },
 } as const satisfies Record<string, AppEmoji>;

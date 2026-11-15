@@ -21,6 +21,11 @@ import { createContributorCache } from '~/lib/github-contributors';
 import { roleGrant } from '~/db/schema';
 
 import {
+	createFakeDiscord as createFakeDms,
+	createFakeGateway,
+	type FakeDiscord as FakeDms,
+} from '../helpers/fake-discord';
+import {
 	FAKE_GUILD_ID,
 	GUILD_ROLES,
 	fakeDiscord,
@@ -38,6 +43,9 @@ const ROLE_IDS = {
 	SPONSOR_ROLE_ID: 'r-s',
 };
 const CONTRIBUTORS = new Set(['42']);
+const SITE = 'https://unbound.rip';
+
+let dms: FakeDms;
 
 const ROW: Member = {
 	userId: 'user-1',
@@ -58,6 +66,8 @@ function dispatcher(discord: Pick<FakeDiscord, 'guilds'>, overrides: Partial<Rol
 		guilds: discord.guilds,
 		ids: ROLE_IDS,
 		contributors: { get: async () => CONTRIBUTORS },
+		messages: createFakeGateway(dms),
+		siteUrl: SITE,
 		now: Date.now,
 		...overrides,
 	});
@@ -113,9 +123,11 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 	beforeEach(async () => {
 		await database.db.delete(roleGrant);
 		fake = createFakeReads();
+		dms = createFakeDms();
 	});
 
 	afterEach(() => {
+		dms.stop();
 		error.mockClear();
 		info.mockClear();
 	});
@@ -517,5 +529,63 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 			]),
 		);
 		expect(await grants()).toHaveLength(2);
+		expect(thanks(member.discordId)).toHaveLength(1);
+	});
+
+	function thanks(discordId: string) {
+		return dms
+			.dms(discordId)
+			.filter((message) => message.embeds[0]?.title === 'Thank you for sponsoring Unbound');
+	}
+
+	test('thanks a sponsor by DM once, when the Sponsor role is granted', async () => {
+		seed({ githubId: '7', isSponsor: true });
+		const discord = fakeDiscord({ members: { '1': [] } });
+		const roles = dispatcher(discord);
+
+		await roles.reconcile(context());
+		await roles.handle(USER_PAYLOAD, context());
+		await dispatcher(discord).reconcile(context());
+
+		expect(thanks('1')).toHaveLength(1);
+		expect(thanks('1')[0]?.embeds[0]?.url).toBe(`${SITE}/account`);
+	});
+
+	test('thanks a sponsor who links GitHub only after sponsoring', async () => {
+		seed({ githubId: null, isSponsor: true });
+		const discord = fakeDiscord({ members: { '1': [] } });
+		const roles = dispatcher(discord);
+
+		await roles.handle(USER_PAYLOAD, context());
+		expect(thanks('1')).toEqual([]);
+
+		seed({ githubId: '7', isSponsor: true });
+		await roles.handle(USER_PAYLOAD, context());
+
+		expect(thanks('1')).toHaveLength(1);
+	});
+
+	test('sends no thanks for other roles or a Sponsor role held by hand', async () => {
+		seed(
+			{ userId: 'a', discordId: '1', isAddonDeveloper: true },
+			{ userId: 'b', discordId: '2', githubId: '7', isSponsor: true },
+		);
+		const discord = fakeDiscord({ members: { '1': [], '2': ['r-s'] } });
+
+		await dispatcher(discord).reconcile(context());
+
+		expect(dms.messages).toEqual([]);
+	});
+
+	test('a sponsor with closed DMs still gets the role, and nothing is logged as an error', async () => {
+		seed({ githubId: '7', isSponsor: true });
+		dms.closedDms.add('1');
+		const discord = fakeDiscord({ members: { '1': [] } });
+
+		await dispatcher(discord).reconcile(context());
+
+		expect(discord.added).toEqual([{ discordId: '1', roleId: 'r-s' }]);
+		expect(thanks('1')).toEqual([]);
+		expect(error).not.toHaveBeenCalled();
 	});
 });

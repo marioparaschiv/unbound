@@ -1,5 +1,5 @@
+import type { BundleChannel, LoaderPlatform } from '@unbound-app/contracts/loader';
 import { bigint, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
-import type { LoaderPlatform } from '@unbound-app/contracts/loader';
 
 import { botSchema } from './bot';
 
@@ -47,6 +47,8 @@ export const starPost = botSchema.table('star_post', {
 	messageId: text('message_id').notNull().unique(),
 	/** The hash of the post's body; a new star count or edit changes it. */
 	postedHash: text('posted_hash').notNull(),
+	/** The starboard app emojis the post shows, kept while any post names them. */
+	emojis: text('emojis').array().notNull().default([]),
 	postedAt: timestamp('posted_at', { withTimezone: true }).notNull().defaultNow(),
 	editedAt: timestamp('edited_at', { withTimezone: true }),
 });
@@ -63,3 +65,32 @@ export const releasePost = botSchema.table(
 	},
 	(table) => [primaryKey({ columns: [table.platform, table.version] })],
 );
+
+/**
+ * One row per announced client bundle and per floor row, never deleted, so a bundle is never announced twice.
+ * The floor is every fresh bundle when the feed first ran, recorded unposted so a first deploy posts none.
+ */
+export const bundlePost = botSchema.table(
+	'bundle_post',
+	{
+		bundleChannel: text('bundle_channel').$type<BundleChannel>().notNull(),
+		version: text('version').notNull(),
+		channelId: text('channel_id').notNull(),
+		/** `null` marks a floor row, never posted. */
+		messageId: text('message_id'),
+		postedAt: timestamp('posted_at', { withTimezone: true }).notNull().defaultNow(),
+	},
+	(table) => [primaryKey({ columns: [table.bundleChannel, table.version] })],
+);
+
+/**
+ * One row per announced `@unbound-app/api` release and per floor row, never deleted. The floor is every
+ * version the docs listed when the feed first ran, recorded unposted so a first deploy posts none.
+ */
+export const apiReleasePost = botSchema.table('api_release_post', {
+	version: text('version').primaryKey(),
+	channelId: text('channel_id').notNull(),
+	/** `null` marks a floor row, never posted. */
+	messageId: text('message_id'),
+	postedAt: timestamp('posted_at', { withTimezone: true }).notNull().defaultNow(),
+});
