@@ -1,5 +1,7 @@
 import type { NativeBridge, NativeObjectHandle } from '@unbound-app/api/native';
 
+import { declaresUsage } from '@unbound-plugins/shared/native/ios/usage-keys';
+
 import type { TranscriptResult } from '~/lib/voice';
 
 const SPEECH_KEY = 'NSSpeechRecognitionUsageDescription';
@@ -14,12 +16,6 @@ function cls(objc: ObjC, name: string): NativeObjectHandle {
 	if (!handle) throw new Error(`no ${name}`);
 
 	return handle as unknown as NativeObjectHandle;
-}
-
-function canAsk(objc: ObjC): boolean {
-	const bundle = objc.call(cls(objc, 'NSBundle'), 'mainBundle') as NativeObjectHandle;
-
-	return typeof objc.invoke(bundle, 'objectForInfoDictionaryKey:', [SPEECH_KEY]) === 'string';
 }
 
 function authorization(objc: ObjC): Promise<number> {
@@ -115,7 +111,7 @@ export async function transcribeOnIOS(
 	{ objc }: NativeBridge,
 	url: string,
 ): Promise<TranscriptResult> {
-	if (!canAsk(objc)) return { failure: 'needs-sideload' };
+	if (!declaresUsage(objc, SPEECH_KEY)) return { failure: 'needs-sideload' };
 	if ((await authorization(objc)) !== AUTHORIZED) return { failure: 'not-allowed' };
 
 	return recognize(objc, await download(objc, url));
