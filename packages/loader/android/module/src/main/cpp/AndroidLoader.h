@@ -84,6 +84,13 @@ public:
     void extendNativeProvider(loader::UnboundNativeProvider &provider) override;
     void onBundleExecuted() override;
     void alert(const std::string &message) override;
+
+    // An Xposed module and an LSPatch-patched Discord both update by installing a new APK.
+    loader::LoaderInstall loaderInstall() override
+    {
+        return loader::LoaderInstall::Apk;
+    }
+
     void crashAlert(const std::string &message) override;
     void stuckLaunch(const std::string &message) override;
     loader::PreviousExit previousExit() override;

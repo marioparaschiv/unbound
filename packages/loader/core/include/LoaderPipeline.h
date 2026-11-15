@@ -47,6 +47,12 @@ public:
 
     virtual void alert(const std::string &message) {}
 
+    // What the user installs to get a newer loader, which the "out of date" alert names.
+    virtual LoaderInstall loaderInstall()
+    {
+        return LoaderInstall::Unknown;
+    }
+
     // An alert about a crash the loader recovered from, offering to open a prefilled report.
     virtual void crashAlert(const std::string &message)
     {

@@ -87,6 +87,11 @@ public:
         alerts.push_back(message);
     }
 
+    loader::LoaderInstall loaderInstall() override
+    {
+        return install;
+    }
+
     void stuckLaunch(const std::string &message) override
     {
         stuck.push_back(message);
@@ -94,6 +99,7 @@ public:
 
     std::vector<std::string> alerts;
     std::vector<std::string> stuck;
+    loader::LoaderInstall install = loader::LoaderInstall::Unknown;
 };
 
 // Marks the running loader as having checked before, so a launch models a loader that was not just

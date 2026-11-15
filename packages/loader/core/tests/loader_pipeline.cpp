@@ -242,12 +242,31 @@ void explainsWhyAFirstLaunchHasNoBundle()
            == loader::bundleFailureNotice(loader::BundleUpdateFailure::Network));
 
     Launch outdated;
+    outdated.host->install = loader::LoaderInstall::Apk;
     outdated.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "next"}}, {}, "beta",
                             "abc1234", "999.0.0");
     outdated.pipeline.prepare();
     assert(outdated.host->alerts.size() == 1);
     assert(outdated.host->alerts[0]
-           == loader::bundleFailureNotice(loader::BundleUpdateFailure::LoaderTooOld));
+           == loader::bundleFailureNotice(loader::BundleUpdateFailure::LoaderTooOld,
+                                          loader::LoaderInstall::Apk));
+}
+
+void namesWhatToInstallForAnOutdatedLoader()
+{
+    using loader::BundleUpdateFailure;
+    using loader::LoaderInstall;
+    auto notice = [](LoaderInstall install) {
+        return loader::bundleFailureNotice(BundleUpdateFailure::LoaderTooOld, install);
+    };
+
+    assert(notice(LoaderInstall::Apk).find("Install the latest Unbound APK") != std::string::npos);
+    assert(notice(LoaderInstall::Ipa).find("Install the latest Unbound IPA") != std::string::npos);
+    assert(notice(LoaderInstall::Tweak).find("package manager") != std::string::npos);
+    assert(notice(LoaderInstall::Unknown).find("newer loader") != std::string::npos);
+    // Only the loader message depends on the install.
+    assert(loader::bundleFailureNotice(BundleUpdateFailure::Network, LoaderInstall::Apk)
+           == loader::bundleFailureNotice(BundleUpdateFailure::Network));
 }
 
 void guardsTheLaunchOncePerProcess()
@@ -376,6 +395,7 @@ int main()
     doesNothingWhenDisabled();
     mapsBytecodeAndReadsSource();
     explainsWhyAFirstLaunchHasNoBundle();
+    namesWhatToInstallForAnOutdatedLoader();
     guardsTheLaunchOncePerProcess();
     turnsOnRecoveryModeAfterRepeatedFailedLaunches();
     ignoresAnEarlyExitThatWasNotACrash();

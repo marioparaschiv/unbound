@@ -413,6 +413,18 @@ public:
         dispatch_async(dispatch_get_main_queue(), ^{ [Utilities alert:text]; });
     }
 
+    // Mirrors the client's `classifyInstall`: only a jailbroken store install is a tweak.
+    loader::LoaderInstall loaderInstall() override
+    {
+        BOOL store = [Utilities isAppStoreApp] || [Utilities isTestFlightApp];
+        if ([Utilities isJailbroken] && store)
+        {
+            return loader::LoaderInstall::Tweak;
+        }
+
+        return loader::LoaderInstall::Ipa;
+    }
+
     void stuckLaunch(const std::string &message) override
     {
         NSString *text = toNSString(message);

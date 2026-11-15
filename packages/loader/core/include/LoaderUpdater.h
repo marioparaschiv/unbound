@@ -10,6 +10,7 @@
 
 #include "LoaderBundleManifest.h"
 #include "LoaderBundleSignature.h"
+#include "LoaderInstall.h"
 #include "LoaderSettings.h"
 #include "LoaderTransport.h"
 
@@ -43,8 +44,10 @@ public:
     std::optional<double> retryAfter;
 };
 
-// The alert for a launch that has no saved bundle and could not download one.
-std::string bundleFailureNotice(BundleUpdateFailure failure);
+// The alert for a launch that has no saved bundle and could not download one; a loader too old for
+// the bundle names what to install for `install`.
+std::string bundleFailureNotice(BundleUpdateFailure failure,
+                                LoaderInstall install = LoaderInstall::Unknown);
 
 constexpr const char *kBundleTrustSuffix = ".trust";
 // A downloaded bundle waiting to be promoted is `unbound.<extension>.candidate`.
