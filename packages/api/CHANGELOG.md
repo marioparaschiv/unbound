@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.5.1](https://github.com/marioparaschiv/unbound/compare/api-v3.5.0...api-v3.5.1) (2026-11-15)
+
+
+### Bug Fixes
+
+* **client:** mark addons for another platform instead of failing ([#1498](https://github.com/marioparaschiv/unbound/issues/1498)) ([1b28e70](https://github.com/marioparaschiv/unbound/commit/1b28e702ed15fe279c1d9f89b131ad6b9c5ea04e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 3.5.1
+
 ## [3.5.0](https://github.com/marioparaschiv/unbound/compare/api-v3.4.0...api-v3.5.0) (2026-11-14)
 
 
