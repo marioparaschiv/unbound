@@ -26,6 +26,7 @@ struct EarlyStart {
         assert(loader::AddonCrashGuard(earlyRoot.string()).beginStart("plugins:early", "Early"));
     }
 };
+
 static EarlyStart earlyStart;
 
 static void crashWhileStarting(const loader::AddonCrashGuard &guard, const std::string &id)
@@ -146,8 +147,8 @@ static void verdictIsComputedOncePerProcess(const std::filesystem::path &root)
     std::vector<loader::CrashedAddon> announced =
         loader::takeUnannouncedCrashDisabledAddons(root.string());
     assert(announced.size() == 1);
-    assert(loader::crashDisabledNotice(announced[0]) ==
-           "Disabled Plugin themes:t because Discord crashed while starting it.");
+    assert(loader::crashDisabledNotice(announced[0])
+           == "Disabled Plugin themes:t because Discord crashed while starting it.");
     assert(loader::takeUnannouncedCrashDisabledAddons(root.string()).empty());
 
     nlohmann::json json = loader::crashedAddonsJSON(second);
@@ -167,8 +168,8 @@ static void secondCrashWhileRunningDisables(const std::filesystem::path &root)
     std::vector<loader::CrashedAddon> disabled = guard.recoverFromPreviousLaunch();
     assert(disabled.size() == 1 && disabled[0].id == "plugins:hooky");
     assert(disabled[0].phase == loader::CrashPhase::Running);
-    assert(loader::crashDisabledNotice(disabled[0]) ==
-           "Disabled Plugin plugins:hooky because Discord crashed while running it.");
+    assert(loader::crashDisabledNotice(disabled[0])
+           == "Disabled Plugin plugins:hooky because Discord crashed while running it.");
 
     nlohmann::json json = loader::crashedAddonsJSON(disabled);
     assert(json[0]["phase"] == "running");

@@ -16,6 +16,7 @@ int main()
     {
         assert(isNativeScalarType(type));
     }
+
     for (const char *type : {"", "void", "object", "pointer", "struct:CGRect", "i128", "Bool"})
     {
         assert(!isNativeScalarType(type));
@@ -26,8 +27,8 @@ int main()
     assert(std::strcmp(nativeStructEncoding("CGSize"), "{CGSize=dd}") == 0);
     assert(std::strcmp(nativeStructEncoding("CGRect"), "{CGRect={CGPoint=dd}{CGSize=dd}}") == 0);
     assert(std::strcmp(nativeStructEncoding("UIEdgeInsets"), "{UIEdgeInsets=dddd}") == 0);
-    assert(std::strcmp(nativeStructEncoding("CGAffineTransform"), "{CGAffineTransform=dddddd}") ==
-           0);
+    assert(std::strcmp(nativeStructEncoding("CGAffineTransform"), "{CGAffineTransform=dddddd}")
+           == 0);
     assert(!nativeStructEncoding("CGVector"));
     assert(!nativeStructEncoding(""));
     for (const char *name : {"CGPoint", "CGSize", "CGRect", "NSRange", "UIEdgeInsets"})

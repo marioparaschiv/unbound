@@ -15,16 +15,16 @@
 
 namespace loader {
 struct AddonRecord {
-    char     text[kAddonRecordByteLimit];
+    char text[kAddonRecordByteLimit];
     uint32_t length;
 };
 
 struct ThreadActivity {
     std::atomic<uintptr_t> owner;
-    uint32_t               addon;
+    uint32_t addon;
 };
 
-static AddonRecord    gRecords[kAddonSlotCapacity];
+static AddonRecord gRecords[kAddonSlotCapacity];
 static ThreadActivity gThreads[kActivityThreadLimit];
 
 static std::mutex &registryMutex()
@@ -69,8 +69,8 @@ static AddonSlot loadAddon(const uint32_t *cell)
 static constexpr size_t kAlternateSignalStackBytes = 64 * 1024;
 
 struct ThreadClaim {
-    ThreadActivity *entry          = nullptr;
-    void           *alternateStack = nullptr;
+    ThreadActivity *entry = nullptr;
+    void *alternateStack  = nullptr;
 
     ~ThreadClaim()
     {
@@ -79,6 +79,7 @@ struct ThreadClaim {
             storeAddon(&entry->addon, kNoAddon);
             entry->owner.store(0, std::memory_order_release);
         }
+
         if (alternateStack)
         {
             stack_t disabled  = {};
@@ -114,6 +115,7 @@ static void ensureAlternateSignalStack()
         munmap(memory, kAlternateSignalStackBytes);
         return;
     }
+
     tClaim.alternateStack = memory;
 }
 
@@ -136,6 +138,7 @@ static ThreadActivity *claimThreadActivity()
             return &activity;
         }
     }
+
     return nullptr;
 }
 
@@ -153,8 +156,8 @@ AddonSlot registerAddonSlot(const std::string &id, const std::string &name)
     }
 
     std::lock_guard<std::mutex> lock(registryMutex());
-    auto                       &slots = registeredSlots();
-    auto                        found = slots.find(id);
+    auto &slots = registeredSlots();
+    auto found  = slots.find(id);
     if (found != slots.end())
     {
         return found->second;
@@ -171,6 +174,7 @@ AddonSlot registerAddonSlot(const std::string &id, const std::string &name)
     {
         text = renderRecord(id, id);
     }
+
     if (text.size() >= kAddonRecordByteLimit)
     {
         return kNoAddon;
@@ -189,8 +193,9 @@ std::string addonRecord(AddonSlot slot)
     {
         return std::string();
     }
+
     const AddonRecord &record = gRecords[slot];
-    uint32_t           length = __atomic_load_n(&record.length, __ATOMIC_ACQUIRE);
+    uint32_t length           = __atomic_load_n(&record.length, __ATOMIC_ACQUIRE);
     return std::string(record.text, length);
 }
 
@@ -217,6 +222,7 @@ AddonSlot addonOnThread(uintptr_t thread)
     {
         return kNoAddon;
     }
+
     for (const ThreadActivity &activity : gThreads)
     {
         if (activity.owner.load(std::memory_order_acquire) == thread)
@@ -224,6 +230,7 @@ AddonSlot addonOnThread(uintptr_t thread)
             return loadAddon(&activity.addon);
         }
     }
+
     return kNoAddon;
 }
 
@@ -241,9 +248,9 @@ bool writeCrashingAddonRecord(int descriptor)
     }
 
     const AddonRecord &record = gRecords[slot];
-    uint32_t           length = __atomic_load_n(&record.length, __ATOMIC_ACQUIRE);
-    const char        *cursor = record.text;
-    off_t              offset = 0;
+    uint32_t length           = __atomic_load_n(&record.length, __ATOMIC_ACQUIRE);
+    const char *cursor        = record.text;
+    off_t offset              = 0;
     while (length > 0)
     {
         ssize_t written = pwrite(descriptor, cursor, length, offset);
@@ -251,14 +258,17 @@ bool writeCrashingAddonRecord(int descriptor)
         {
             continue;
         }
+
         if (written <= 0)
         {
             return false;
         }
+
         cursor += written;
         offset += written;
         length -= static_cast<uint32_t>(written);
     }
+
     return true;
 }
 
@@ -270,18 +280,18 @@ bool writeCrashingAddonLine(int descriptor)
         return false;
     }
 
-    const AddonRecord &record   = gRecords[slot];
-    uint32_t           length   = __atomic_load_n(&record.length, __ATOMIC_ACQUIRE);
-    const char         prefix[] = "Addon ";
-    const char         newline  = '\n';
-    return write(descriptor, prefix, sizeof(prefix) - 1) > 0 &&
-           write(descriptor, record.text, length) > 0 && write(descriptor, &newline, 1) > 0;
+    const AddonRecord &record = gRecords[slot];
+    uint32_t length           = __atomic_load_n(&record.length, __ATOMIC_ACQUIRE);
+    const char prefix[]       = "Addon ";
+    const char newline        = '\n';
+    return write(descriptor, prefix, sizeof(prefix) - 1) > 0
+           && write(descriptor, record.text, length) > 0 && write(descriptor, &newline, 1) > 0;
 }
 
 size_t crashingAddonMessage(char *out, size_t capacity)
 {
-    AddonSlot        slot          = crashingThreadAddon();
-    constexpr char   kPrefix[]     = "Unbound addon ";
+    AddonSlot slot                 = crashingThreadAddon();
+    constexpr char kPrefix[]       = "Unbound addon ";
     constexpr size_t kPrefixLength = sizeof(kPrefix) - 1;
     if (!out || slot == kNoAddon || slot >= kAddonSlotCapacity || capacity <= kPrefixLength + 1)
     {
@@ -289,8 +299,8 @@ size_t crashingAddonMessage(char *out, size_t capacity)
     }
 
     const AddonRecord &record = gRecords[slot];
-    uint32_t           length = __atomic_load_n(&record.length, __ATOMIC_ACQUIRE);
-    size_t             copied = std::min<size_t>(length, capacity - kPrefixLength - 1);
+    uint32_t length           = __atomic_load_n(&record.length, __ATOMIC_ACQUIRE);
+    size_t copied             = std::min<size_t>(length, capacity - kPrefixLength - 1);
     std::memcpy(out, kPrefix, kPrefixLength);
     std::memcpy(out + kPrefixLength, record.text, copied);
     out[kPrefixLength + copied] = '\0';
@@ -303,11 +313,13 @@ AddonScope::AddonScope(AddonSlot slot)
     {
         return;
     }
+
     cell_ = claimActivityCell();
     if (!cell_)
     {
         return;
     }
+
     previous_ = loadAddon(cell_);
     storeAddon(cell_, slot);
 }

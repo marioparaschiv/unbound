@@ -31,8 +31,8 @@ static void putHost(std::vector<uint8_t> &bytes, size_t offset, uint32_t value)
 }
 
 struct Slot {
-    uint32_t    type;
-    uint32_t    magic;
+    uint32_t type;
+    uint32_t magic;
     std::string payload;
 };
 
@@ -44,6 +44,7 @@ static std::vector<uint8_t> machO(const std::vector<Slot> &slots, bool withSigna
     {
         appendHost(bytes, 0);
     }
+
     appendHost(bytes, withSignature ? 2 : 1);
     appendHost(bytes, 0);
     appendHost(bytes, 0);
@@ -70,6 +71,7 @@ static std::vector<uint8_t> machO(const std::vector<Slot> &slots, bool withSigna
     {
         bytes.push_back(0);
     }
+
     const size_t signature = bytes.size();
     if (withSignature)
     {
@@ -77,7 +79,7 @@ static std::vector<uint8_t> machO(const std::vector<Slot> &slots, bool withSigna
     }
 
     std::vector<uint8_t> blobs;
-    uint32_t             blobOffset = 12 + 8 * static_cast<uint32_t>(slots.size());
+    uint32_t blobOffset = 12 + 8 * static_cast<uint32_t>(slots.size());
     std::vector<uint8_t> index;
     for (const Slot &slot : slots)
     {
@@ -88,6 +90,7 @@ static std::vector<uint8_t> machO(const std::vector<Slot> &slots, bool withSigna
         blobs.insert(blobs.end(), slot.payload.begin(), slot.payload.end());
         blobOffset += static_cast<uint32_t>(slot.payload.size() + 8);
     }
+
     appendBig(bytes, kEmbeddedSignatureMagic);
     appendBig(bytes, blobOffset);
     appendBig(bytes, static_cast<uint32_t>(slots.size()));
@@ -152,11 +155,13 @@ int main()
             {
                 appendBig(fat, 0);
             }
+
             appendBig(fat, offset);
             if (wide)
             {
                 appendBig(fat, 0);
             }
+
             appendBig(fat, static_cast<uint32_t>(slice.size()));
             appendBig(fat, 14);
             if (wide)
@@ -164,10 +169,11 @@ int main()
                 appendBig(fat, 0);
             }
         }
+
         fat.resize(sliceOffset, 0);
         fat.insert(fat.end(), slice.begin(), slice.end());
-        assert(entitlementBlobs(write(root, wide ? "fat64" : "fat", fat).string()) ==
-               std::vector<std::string>{plist});
+        assert(entitlementBlobs(write(root, wide ? "fat64" : "fat", fat).string())
+               == std::vector<std::string>{plist});
     }
 
     std::vector<uint8_t> fatTruncated;
@@ -197,9 +203,9 @@ int main()
     truncated.resize(truncated.size() - 10);
     assert(entitlementBlobs(write(root, "truncated", truncated).string()).empty());
 
-    std::vector<uint8_t> undersized  = machO({{kEntitlementsSlot, kEntitlementsBlobMagic, ""}});
-    const size_t         lengthField = undersized.size() - 4;
-    undersized[lengthField + 3]      = 4;
+    std::vector<uint8_t> undersized = machO({{kEntitlementsSlot, kEntitlementsBlobMagic, ""}});
+    const size_t lengthField        = undersized.size() - 4;
+    undersized[lengthField + 3]     = 4;
     assert(entitlementBlobs(write(root, "undersized", undersized).string()).empty());
 
     assert(entitlementBlobs(write(root, "short", {0xcf, 0xfa}).string()).empty());

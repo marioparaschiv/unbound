@@ -16,7 +16,7 @@ static std::string standardBase64(std::string_view bytes)
     for (size_t index = 0; index < bytes.size(); index += 3)
     {
         const size_t remaining = std::min<size_t>(3, bytes.size() - index);
-        uint32_t     chunk     = 0;
+        uint32_t chunk         = 0;
         for (size_t offset = 0; offset < 3; offset++)
         {
             chunk <<= 8;
@@ -25,12 +25,14 @@ static std::string standardBase64(std::string_view bytes)
                 chunk |= static_cast<uint8_t>(bytes[index + offset]);
             }
         }
+
         for (size_t offset = 0; offset < 4; offset++)
         {
             encoded +=
                 offset <= remaining ? kBase64Alphabet[(chunk >> (18 - 6 * offset)) & 0x3F] : '=';
         }
     }
+
     return encoded;
 }
 
@@ -81,16 +83,19 @@ CallbackCheck checkCallback(const Session &session, const Callback &callback)
     {
         return CallbackCheck::NoSession;
     }
+
     if (session.state != callback.state)
     {
         return CallbackCheck::StateMismatch;
     }
+
     const bool validSession = session.secretLength == kSecretBytes && isFresh(session.ageSeconds);
-    if (!validSession || callback.ivLength != kIVBytes || callback.ciphertextLength == 0 ||
-        callback.macLength != kMACBytes)
+    if (!validSession || callback.ivLength != kIVBytes || callback.ciphertextLength == 0
+        || callback.macLength != kMACBytes)
     {
         return CallbackCheck::Invalid;
     }
+
     return CallbackCheck::Valid;
 }
 
@@ -111,6 +116,7 @@ std::optional<Handoff> createHandoff()
     {
         return std::nullopt;
     }
+
     return Handoff{base64URLEncode(*state), *secret, base64URLEncode(*secret)};
 }
 
@@ -121,19 +127,22 @@ OpenedCallback openCallback(std::string_view secret, const std::string &state, s
     {
         return {OpenStatus::Unverified, {}};
     }
+
     const std::string_view encryptionKey = secret.substr(0, kKeyBytes);
     const std::string_view signingKey    = secret.substr(kKeyBytes, kKeyBytes);
-    const std::string      expectedMAC =
+    const std::string expectedMAC =
         crypto::hmacSHA256(signingKey, authenticatedData(state, iv, ciphertext));
     if (!crypto::constantTimeEqual(expectedMAC, mac))
     {
         return {OpenStatus::Unverified, {}};
     }
+
     std::optional<std::string> token = crypto::aes256CBCDecrypt(encryptionKey, iv, ciphertext);
     if (!token)
     {
         return {OpenStatus::Unreadable, {}};
     }
+
     return {OpenStatus::Opened, std::move(*token)};
 }
 
@@ -143,6 +152,7 @@ bool PendingLogin::submit(const std::string &token)
     {
         return false;
     }
+
     std::lock_guard<std::mutex> lock(mutex_);
     token_    = token;
     failures_ = 0;
@@ -156,6 +166,7 @@ std::optional<std::string> PendingLogin::begin(bool canApply)
     {
         return std::nullopt;
     }
+
     applying_ = true;
     return token_;
 }
@@ -170,9 +181,11 @@ ApplyResult PendingLogin::finish(const std::string &token, bool applied)
         {
             token_.clear();
         }
+
         failures_ = 0;
         return ApplyResult::Applied;
     }
+
     failures_++;
     return failures_ <= kMaximumRetries ? ApplyResult::Retry : ApplyResult::GaveUp;
 }

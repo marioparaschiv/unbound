@@ -33,13 +33,14 @@ static std::string lowercase(std::string value)
 
 static std::string urlPathExtension(const std::string &url)
 {
-    std::string path  = url.substr(0, url.find_first_of("?#"));
-    size_t      slash = path.find_last_of('/');
-    size_t      dot   = path.find_last_of('.');
+    std::string path = url.substr(0, url.find_first_of("?#"));
+    size_t slash     = path.find_last_of('/');
+    size_t dot       = path.find_last_of('.');
     if (dot == std::string::npos || (slash != std::string::npos && dot < slash))
     {
         return "";
     }
+
     return lowercase(path.substr(dot + 1));
 }
 
@@ -51,17 +52,19 @@ static std::string pathExtension(const std::string &path)
     {
         return "";
     }
+
     return lowercase(path.substr(dot + 1));
 }
 
 static std::string directoryOfURL(const std::string &url)
 {
-    std::string path  = url.substr(0, url.find_first_of("?#"));
-    size_t      slash = path.find_last_of('/');
+    std::string path = url.substr(0, url.find_first_of("?#"));
+    size_t slash     = path.find_last_of('/');
     if (slash == std::string::npos)
     {
         return path;
     }
+
     return path.substr(0, slash + 1);
 }
 
@@ -79,8 +82,8 @@ BundleUpdater::BundleUpdater(std::string documents, SettingsStore &settings, Tex
 
 static std::string urlFileName(const std::string &url)
 {
-    std::string path  = url.substr(0, url.find_first_of("?#"));
-    size_t      slash = path.find_last_of('/');
+    std::string path = url.substr(0, url.find_first_of("?#"));
+    size_t slash     = path.find_last_of('/');
     return slash == std::string::npos ? path : path.substr(slash + 1);
 }
 
@@ -154,19 +157,20 @@ BundleUpdater::bundleSource(const std::optional<std::string> &updateURL) const
     {
         source.baseURL += "/";
     }
+
     return source;
 }
 
-std::string BundleUpdater::selectURL(const BundleSource                  &source,
+std::string BundleUpdater::selectURL(const BundleSource &source,
                                      const std::optional<BundleManifest> &manifest,
-                                     uint32_t                             bytecodeVersion) const
+                                     uint32_t bytecodeVersion) const
 {
     if (!manifest)
     {
         std::string fallback = source.directURL.value_or(source.baseURL + "unbound.js");
         log(LogLevel::Warning, LOG_CATEGORY_UPDATER,
-            "No usable manifest at " + source.baseURL + kBundleManifestName + "; falling back to " +
-                fallback);
+            "No usable manifest at " + source.baseURL + kBundleManifestName + "; falling back to "
+                + fallback);
         return fallback;
     }
 
@@ -175,9 +179,10 @@ std::string BundleUpdater::selectURL(const BundleSource                  &source
     {
         versions += (versions.empty() ? "" : ",") + std::to_string(version);
     }
+
     log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-        "Manifest bytecode versions: [" + versions +
-            "], Current bytecode version: " + std::to_string(bytecodeVersion));
+        "Manifest bytecode versions: [" + versions
+            + "], Current bytecode version: " + std::to_string(bytecodeVersion));
 
     std::string file = manifest->bundleFile(bytecodeVersion, developerMode());
     log(LogLevel::Info, LOG_CATEGORY_UPDATER,
@@ -186,9 +191,9 @@ std::string BundleUpdater::selectURL(const BundleSource                  &source
 }
 
 std::string BundleUpdater::downloadURL(const std::optional<std::string> &updateURL,
-                                       uint32_t                          bytecodeVersion)
+                                       uint32_t bytecodeVersion)
 {
-    BundleSource               source       = bundleSource(updateURL);
+    BundleSource source                     = bundleSource(updateURL);
     std::optional<std::string> manifestText = fetch(source.baseURL + kBundleManifestName);
     return selectURL(source, manifestText ? parseBundleManifest(*manifestText) : std::nullopt,
                      bytecodeVersion);
@@ -197,9 +202,9 @@ std::string BundleUpdater::downloadURL(const std::optional<std::string> &updateU
 BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std::string> &updateURL,
                                                         uint32_t bytecodeVersion)
 {
-    BundleSource                  source       = bundleSource(updateURL);
-    std::string                   manifestURL  = source.baseURL + kBundleManifestName;
-    std::optional<std::string>    manifestText = fetch(manifestURL);
+    BundleSource source                     = bundleSource(updateURL);
+    std::string manifestURL                 = source.baseURL + kBundleManifestName;
+    std::optional<std::string> manifestText = fetch(manifestURL);
     std::optional<BundleManifest> manifest =
         manifestText ? parseBundleManifest(*manifestText) : std::nullopt;
 
@@ -214,12 +219,12 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
         return plan;
     }
 
-    if (manifest && !manifest->revision.empty() && !preferences::forceUpdate(settings_) &&
-        manifest->revision == preferences::rejectedRevision(settings_))
+    if (manifest && !manifest->revision.empty() && !preferences::forceUpdate(settings_)
+        && manifest->revision == preferences::rejectedRevision(settings_))
     {
         log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-            "Skipped build " + manifest->revision +
-                ", which failed on this device; waiting for a newer one.");
+            "Skipped build " + manifest->revision
+                + ", which failed on this device; waiting for a newer one.");
         plan.unchanged = true;
         return plan;
     }
@@ -237,6 +242,7 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
         log(LogLevel::Error, LOG_CATEGORY_UPDATER, "Could not fetch " + manifestURL + ".");
         throw BundleUpdateError(BundleUpdateFailure::Network, "Could not fetch " + manifestURL);
     }
+
     plan.manifestText = *manifestText;
     if (manifest)
     {
@@ -251,6 +257,7 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
             plan.patchBases = patches->second;
         }
     }
+
     return plan;
 }
 
@@ -261,15 +268,17 @@ bool BundleUpdater::isActiveManifest(const std::string &url, const std::string &
     {
         return false;
     }
+
     std::string target = bundlePath(extension);
     if (!fileExists(target) || fileExists(target + kBundleCandidateSuffix))
     {
         return false;
     }
+
     nlohmann::json record = parseBundleRecord(readTextFile(target + kBundleTrustSuffix));
-    return bundleRecordField(record, "kind") == "manifest" &&
-           bundleRecordField(record, "file") == urlFileName(url) &&
-           bundleRecordField(record, "manifest") == manifestText;
+    return bundleRecordField(record, "kind") == "manifest"
+           && bundleRecordField(record, "file") == urlFileName(url)
+           && bundleRecordField(record, "manifest") == manifestText;
 }
 
 std::string bundleFailureNotice(BundleUpdateFailure failure)
@@ -288,17 +297,19 @@ std::string bundleFailureNotice(BundleUpdateFailure failure)
         case BundleUpdateFailure::Verification:
             break;
     }
+
     return "Unbound's bundle failed verification, so Discord started without it. Reopen Discord "
            "to try again, and report this to the developers if it keeps happening.";
 }
 
 std::optional<double> retryAfterSeconds(const std::string &header)
 {
-    if (header.empty() || header.size() > 9 ||
-        header.find_first_not_of("0123456789") != std::string::npos)
+    if (header.empty() || header.size() > 9
+        || header.find_first_not_of("0123456789") != std::string::npos)
     {
         return std::nullopt;
     }
+
     return std::stod(header);
 }
 
@@ -309,17 +320,18 @@ bool isAcceptedDownloadStatus(int status)
 
 std::optional<std::string> BundleUpdater::spaceProblem() const
 {
-    std::error_code             error;
+    std::error_code error;
     std::filesystem::space_info space = std::filesystem::space(documents_, error);
     if (error || space.available >= kMinimumFreeBytes)
     {
         return std::nullopt;
     }
-    return "Not enough space to download the bundle (" +
-           std::to_string(space.available / (1024 * 1024)) + " MB free)";
+
+    return "Not enough space to download the bundle ("
+           + std::to_string(space.available / (1024 * 1024)) + " MB free)";
 }
 
-std::string BundleUpdater::downloadBundle(const std::string                &preferredPath,
+std::string BundleUpdater::downloadBundle(const std::string &preferredPath,
                                           const std::optional<std::string> &updateURL,
                                           uint32_t bytecodeVersion, bool ignorePause)
 {
@@ -341,9 +353,9 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
         return *cachedPath;
     }
 
-    std::string  storedEtag = preferences::bundleEtag(settings_);
-    DownloadPlan plan       = planDownload(updateURL, bytecodeVersion);
-    std::string  url        = plan.url;
+    std::string storedEtag = preferences::bundleEtag(settings_);
+    DownloadPlan plan      = planDownload(updateURL, bytecodeVersion);
+    std::string url        = plan.url;
     if (plan.unchanged)
     {
         log(LogLevel::Info, LOG_CATEGORY_UPDATER, "No update found; the manifest is unchanged.");
@@ -363,19 +375,20 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
     std::string candidatePath = targetPath + kBundleCandidateSuffix;
 
     std::map<std::string, std::string> headers;
-    bool                               forceUpdate = preferences::forceUpdate(settings_);
-    bool                               isVerified  = fileExists(targetPath + kBundleTrustSuffix);
+    bool forceUpdate = preferences::forceUpdate(settings_);
+    bool isVerified  = fileExists(targetPath + kBundleTrustSuffix);
     if (fileExists(targetPath) && !isVerified)
     {
         log(LogLevel::Info, LOG_CATEGORY_UPDATER,
             "The active bundle has no verification record; downloading a verified copy.");
     }
+
     // The stored ETag belongs to whichever file the active bundle came from, so it only
     // describes the download when the plan selects that same file.
     std::string activeFile =
         bundleRecordField(parseBundleRecord(readTextFile(targetPath + kBundleTrustSuffix)), "file");
-    if (fileExists(targetPath) && isVerified && !forceUpdate && !storedEtag.empty() &&
-        activeFile == urlFileName(url))
+    if (fileExists(targetPath) && isVerified && !forceUpdate && !storedEtag.empty()
+        && activeFile == urlFileName(url))
     {
         headers["If-None-Match"] = storedEtag;
     }
@@ -392,13 +405,14 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
         verifyPlan(plan);
         if (std::optional<std::string> record = patchedCandidate(plan, targetPath, candidatePath))
         {
-            if (writeTextFileAtomically(candidatePath + kBundleTrustSuffix, *record) &&
-                writeTextFileAtomically(candidatePath + ".etag", ""))
+            if (writeTextFileAtomically(candidatePath + kBundleTrustSuffix, *record)
+                && writeTextFileAtomically(candidatePath + ".etag", ""))
             {
                 log(LogLevel::Info, LOG_CATEGORY_UPDATER,
                     "Bundle candidate is ready for validation, patched from the active bundle.");
                 return candidatePath;
             }
+
             removeFile(candidatePath);
         }
     }
@@ -414,6 +428,7 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
         removeFile(candidatePath);
         throw;
     }
+
     if (!response)
     {
         throw BundleUpdateError(BundleUpdateFailure::Network, "Could not download " + url);
@@ -447,8 +462,8 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
                                 "Downloaded bundle failed signature verification");
     }
 
-    if (!writeTextFileAtomically(candidatePath + kBundleTrustSuffix, *record) ||
-        !writeTextFileAtomically(candidatePath + ".etag", response->etag))
+    if (!writeTextFileAtomically(candidatePath + kBundleTrustSuffix, *record)
+        || !writeTextFileAtomically(candidatePath + ".etag", response->etag))
     {
         rejectBundle(candidatePath);
         throw BundleUpdateError(BundleUpdateFailure::Storage,
@@ -461,18 +476,20 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
 
 // A patch turns the active bundle into the new one; any failure leaves the full download to run.
 std::optional<std::string> BundleUpdater::patchedCandidate(const DownloadPlan &plan,
-                                                           const std::string  &targetPath,
-                                                           const std::string  &candidatePath) const
+                                                           const std::string &targetPath,
+                                                           const std::string &candidatePath) const
 {
     if (plan.patchBases.empty() || !download_)
     {
         return std::nullopt;
     }
+
     std::optional<std::string> active = readTextFile(targetPath);
     if (!active)
     {
         return std::nullopt;
     }
+
     std::optional<std::string> base = patchBaseFor(plan.patchBases, sha512Hex(*active));
     if (!base)
     {
@@ -502,9 +519,10 @@ std::optional<std::string> BundleUpdater::patchedCandidate(const DownloadPlan &p
             "The patched bundle did not match the signed manifest; downloading it whole.");
         return std::nullopt;
     }
+
     log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-        "Patched the bundle with " + std::to_string(patch->size()) + " bytes instead of " +
-            std::to_string(patched->size()) + ".");
+        "Patched the bundle with " + std::to_string(patch->size()) + " bytes instead of "
+            + std::to_string(patched->size()) + ".");
     return record;
 }
 

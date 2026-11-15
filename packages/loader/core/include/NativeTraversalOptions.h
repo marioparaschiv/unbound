@@ -20,31 +20,31 @@ enum class TraversalDirection
 
 struct TraversalLimit {
     const char *key;
-    uint32_t    fallback;
-    uint32_t    minimum;
-    uint32_t    maximum;
+    uint32_t fallback;
+    uint32_t minimum;
+    uint32_t maximum;
 };
 
 struct TraversalLimits {
     TraversalLimit depth;
     TraversalLimit nodes;
     TraversalLimit results;
-    bool           searchFlags;
+    bool searchFlags;
 };
 
 struct TraversalOptions {
-    uint32_t           maxDepth     = 0;
-    uint32_t           maxNodes     = 0;
-    uint32_t           maxResults   = 0;
-    bool               attachedOnly = false;
-    bool               stopAtMatch  = false;
-    TraversalDirection direction    = TraversalDirection::Descendants;
+    uint32_t maxDepth            = 0;
+    uint32_t maxNodes            = 0;
+    uint32_t maxResults          = 0;
+    bool attachedOnly            = false;
+    bool stopAtMatch             = false;
+    TraversalDirection direction = TraversalDirection::Descendants;
 };
 
 const TraversalLimits &traversalLimits(TraversalProfile profile);
 
 TraversalOptions parseTraversalOptions(const nlohmann::json &options, TraversalProfile profile);
-TraversalOptions parseTraversalOptions(facebook::jsi::Runtime     &runtime,
+TraversalOptions parseTraversalOptions(facebook::jsi::Runtime &runtime,
                                        const facebook::jsi::Value &options,
-                                       TraversalProfile            profile);
+                                       TraversalProfile profile);
 }

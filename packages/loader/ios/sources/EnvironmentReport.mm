@@ -13,8 +13,8 @@
 using unbound::ios::toStdString;
 namespace report = loader::environment_report;
 
-static NSString *const kHttpsProbeURL     = @"https://discord.com/api/v9/gateway";
-static const int64_t   kHttpsCheckDelayNs = 20 * NSEC_PER_SEC;
+static NSString *const kHttpsProbeURL   = @"https://discord.com/api/v9/gateway";
+static const int64_t kHttpsCheckDelayNs = 20 * NSEC_PER_SEC;
 
 @interface HttpsChainRecorder : NSObject <NSURLSessionDelegate>
 @end
@@ -32,23 +32,26 @@ static const int64_t   kHttpsCheckDelayNs = 20 * NSEC_PER_SEC;
         report::HttpsCheck check;
         check.completed  = true;
         CFArrayRef chain = SecTrustCopyCertificateChain(trust);
-        CFIndex    count = chain ? CFArrayGetCount(chain) : 0;
+        CFIndex count    = chain ? CFArrayGetCount(chain) : 0;
         for (CFIndex index = 1; index < count; index++)
         {
-            auto        certificate = (SecCertificateRef) CFArrayGetValueAtIndex(chain, index);
-            CFStringRef summary     = SecCertificateCopySubjectSummary(certificate);
+            auto certificate    = (SecCertificateRef) CFArrayGetValueAtIndex(chain, index);
+            CFStringRef summary = SecCertificateCopySubjectSummary(certificate);
             if (summary)
             {
                 check.issuers.push_back(toStdString((__bridge NSString *) summary));
                 CFRelease(summary);
             }
         }
+
         if (chain)
         {
             CFRelease(chain);
         }
+
         report::recordHttpsCheck(std::move(check));
     }
+
     completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, nil);
 }
 
@@ -56,19 +59,20 @@ static const int64_t   kHttpsCheckDelayNs = 20 * NSEC_PER_SEC;
 
 static std::optional<bool> developerMode()
 {
-    int    status = 0;
-    size_t size   = sizeof(status);
+    int status  = 0;
+    size_t size = sizeof(status);
     if (sysctlbyname("security.mac.amfi.developer_mode_status", &status, &size, nullptr, 0) != 0)
     {
         return std::nullopt;
     }
+
     return status != 0;
 }
 
 static std::string osBuild()
 {
-    char   build[32] = {0};
-    size_t size      = sizeof(build);
+    char build[32] = {0};
+    size_t size    = sizeof(build);
     return sysctlbyname("kern.osversion", build, &size, nullptr, 0) == 0 ? std::string(build) : "";
 }
 
@@ -91,13 +95,14 @@ static report::AppleDeviceFacts deviceFacts()
 
 static nlohmann::json binaryReport()
 {
-    nlohmann::json                         report = nlohmann::json::object();
+    nlohmann::json report = nlohmann::json::object();
     std::optional<loader::binary::Anatomy> anatomy =
         loader::binary::readAnatomy(toStdString(NSBundle.mainBundle.executablePath));
     if (!anatomy)
     {
         return report;
     }
+
     report["binary"] =
         loader::binary::anatomyLine(*anatomy, toStdString(NSBundle.mainBundle.bundlePath));
     if (std::optional<loader::binary::Certificate> signer =
@@ -105,12 +110,13 @@ static nlohmann::json binaryReport()
     {
         report["signer"] = loader::binary::signerLine(*signer);
     }
+
     return report;
 }
 
 nlohmann::json UnboundEnvironmentReport()
 {
-    static nlohmann::json  cached;
+    static nlohmann::json cached;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         cached            = binaryReport();
@@ -144,10 +150,11 @@ void UnboundStartHttpsCheck()
                                        if (error && !report::currentHttpsCheck().completed)
                                        {
                                            report::HttpsCheck failed;
-                                           failed.failure = toStdString(error.domain) + " " +
-                                                            std::to_string((long) error.code);
+                                           failed.failure = toStdString(error.domain) + " "
+                                                            + std::to_string((long) error.code);
                                            report::recordHttpsCheck(std::move(failed));
                                        }
+
                                        [session finishTasksAndInvalidate];
                                    }] resume];
                    });

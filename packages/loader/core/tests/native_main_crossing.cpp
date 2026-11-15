@@ -47,6 +47,7 @@ public:
             std::lock_guard<std::mutex> lock(mutex_);
             queue_.push_back(std::move(work));
         }
+
         ready_.notify_one();
     }
 
@@ -77,15 +78,16 @@ private:
                 work = std::move(queue_.front());
                 queue_.pop_front();
             }
+
             work();
         }
     }
 
-    std::mutex                        mutex_;
-    std::condition_variable           ready_;
+    std::mutex mutex_;
+    std::condition_variable ready_;
     std::deque<std::function<void()>> queue_;
-    bool                              stopping_ = false;
-    std::thread                       main_;
+    bool stopping_ = false;
+    std::thread main_;
 };
 
 class MainBlocker
@@ -94,7 +96,7 @@ public:
     explicit MainBlocker(QueueExecutor &executor)
     {
         std::promise<void> entered;
-        auto               started = entered.get_future();
+        auto started = entered.get_future();
         executor.runOnMain([this, &entered] {
             entered.set_value();
             release_.get_future().wait();
@@ -121,6 +123,7 @@ static std::string codeOf(const std::function<void()> &body)
     {
         return loader::native::describeFailure(std::current_exception()).code;
     }
+
     return "";
 }
 
@@ -150,8 +153,10 @@ static void crossingIsRefusedWhileMainWaits(QueueExecutor &executor)
                    loader::native::executeMainSynchronouslyUnlessMainWaits([&] {
                        ran = true;
                    });
-               }) == "NATIVE_WRONG_THREAD");
+               })
+               == "NATIVE_WRONG_THREAD");
     }
+
     assert(!loader::native::mainThreadIsWaitingForRuntime());
     executor.drain();
     assert(!ran);
@@ -159,9 +164,9 @@ static void crossingIsRefusedWhileMainWaits(QueueExecutor &executor)
 
 static void crossingNoticesMainStartingToWait(QueueExecutor &executor)
 {
-    MainBlocker        blocker(executor);
+    MainBlocker blocker(executor);
     std::promise<void> release;
-    std::thread        main([&release] {
+    std::thread main([&release] {
         std::this_thread::sleep_for(50ms);
         loader::native::MainThreadRuntimeWait waiting;
         release.get_future().wait();
@@ -173,7 +178,8 @@ static void crossingNoticesMainStartingToWait(QueueExecutor &executor)
                loader::native::executeMainSynchronouslyUnlessMainWaits([&] {
                    ran = true;
                });
-           }) == "NATIVE_WRONG_THREAD");
+           })
+           == "NATIVE_WRONG_THREAD");
     assert(std::chrono::steady_clock::now() - started < 900ms);
 
     release.set_value();
@@ -186,7 +192,7 @@ static void crossingNoticesMainStartingToWait(QueueExecutor &executor)
 static void unguardedCrossingKeepsWaiting(QueueExecutor &executor)
 {
     loader::native::MainThreadRuntimeWait waiting;
-    bool                                  ran = false;
+    bool ran = false;
     loader::native::executeMainSynchronously([&] {
         ran = true;
     });
@@ -197,14 +203,15 @@ static void unguardedCrossingKeepsWaiting(QueueExecutor &executor)
 static void crossingStillTimesOut(QueueExecutor &executor)
 {
     MainBlocker blocker(executor);
-    bool        ran = false;
+    bool ran = false;
     assert(codeOf([&] {
                loader::native::executeMainSynchronouslyUnlessMainWaits(
                    [&] {
                        ran = true;
                    },
                    50ms);
-           }) == "NATIVE_MAIN_THREAD_TIMEOUT");
+           })
+           == "NATIVE_MAIN_THREAD_TIMEOUT");
     blocker.release();
     executor.drain();
     assert(!ran);
@@ -213,7 +220,7 @@ static void crossingStillTimesOut(QueueExecutor &executor)
 static void postedCallsKeepMainQueueOrder(QueueExecutor &executor)
 {
     std::vector<std::string> order;
-    MainBlocker              blocker(executor);
+    MainBlocker blocker(executor);
     loader::native::postMainOperation(
         [&] {
             order.push_back("first");
@@ -239,7 +246,7 @@ static void postedCallsKeepMainQueueOrder(QueueExecutor &executor)
 
 static void postedFailuresAreLoggedWithTheAddon(QueueExecutor &executor)
 {
-    std::mutex               mutex;
+    std::mutex mutex;
     std::vector<std::string> errors;
     loader::setLogSink([&](loader::LogLevel level, const std::string &, const std::string &text) {
         if (level == loader::LogLevel::Error)
@@ -260,13 +267,15 @@ static void postedFailuresAreLoggedWithTheAddon(QueueExecutor &executor)
             },
             "objc.invoke setHidden:");
     }
+
     executor.drain();
     loader::setLogSink(nullptr);
 
     assert(observed == slot);
     assert(errors.size() == 1);
-    assert(errors[0] == loader::native::postedMainFailureMessage(
-                            slot, "objc.invoke setHidden:", "selector failed"));
+    assert(errors[0]
+           == loader::native::postedMainFailureMessage(
+               slot, "objc.invoke setHidden:", "selector failed"));
     assert(errors[0].find("Posted Plugin") != std::string::npos);
     assert(errors[0].find("setHidden:") != std::string::npos);
 }
@@ -296,6 +305,7 @@ static const nlohmann::json *findWaits(const nlohmann::json &waits, const std::s
             return &entry;
         }
     }
+
     return nullptr;
 }
 
@@ -304,7 +314,7 @@ static void crossingsAreTimedPerAddonAndLabel(QueueExecutor &executor)
     loader::native::resetMainWorkCounts();
     loader::AddonSlot slot = loader::registerAddonSlot("plugins:timed", "Timed Plugin");
     {
-        loader::AddonScope      addon(slot);
+        loader::AddonScope addon(slot);
         loader::NativeCallScope call("invoke", "setHidden:");
         for (int index = 0; index < 3; index++)
         {
@@ -312,12 +322,14 @@ static void crossingsAreTimedPerAddonAndLabel(QueueExecutor &executor)
                 std::this_thread::sleep_for(2ms);
             });
         }
+
         loader::native::postMainOperation([] {}, "objc.invoke layoutIfNeeded");
     }
+
     executor.drain();
 
-    nlohmann::json        waits = loader::native::mainWaitCounts();
-    const nlohmann::json *sync  = findWaits(waits, "Timed Plugin", "sync", "invoke(setHidden:)");
+    nlohmann::json waits       = loader::native::mainWaitCounts();
+    const nlohmann::json *sync = findWaits(waits, "Timed Plugin", "sync", "invoke(setHidden:)");
     assert(sync);
     assert((*sync)["posted"] == 3 && (*sync)["started"] == 3 && (*sync)["finished"] == 3);
     assert((*sync)["expired"] == 0);
@@ -338,7 +350,7 @@ static void expiredCrossingsAreCounted(QueueExecutor &executor)
 {
     loader::native::resetMainWorkCounts();
     {
-        MainBlocker             blocker(executor);
+        MainBlocker blocker(executor);
         loader::NativeCallScope call("invoke", "slow");
         try
         {
@@ -347,14 +359,16 @@ static void expiredCrossingsAreCounted(QueueExecutor &executor)
         catch (const loader::native::NativeCodedError &)
         {
         }
+
         blocker.release();
     }
+
     executor.drain();
-    nlohmann::json        counts = loader::native::mainWaitCounts();
+    nlohmann::json counts = loader::native::mainWaitCounts();
     const nlohmann::json *waits =
         findWaits(counts, loader::threading::addonName(loader::kNoAddon), "sync", "invoke(slow)");
-    assert(waits && (*waits)["posted"] == 1 && (*waits)["expired"] == 1 &&
-           (*waits)["started"] == 0);
+    assert(waits && (*waits)["posted"] == 1 && (*waits)["expired"] == 1
+           && (*waits)["started"] == 0);
 }
 
 static void mainDrainsAreCounted()
@@ -379,16 +393,18 @@ static void cachedLabelsFollowTheCurrentCall(QueueExecutor &executor)
         loader::NativeCallScope first("invoke", "first");
         loader::native::executeMainSynchronously([] {});
     }
+
     {
         loader::NativeCallScope second("invoke", "second");
         loader::native::executeMainSynchronously([] {});
         loader::native::postMainOperation([] {}, "");
     }
+
     loader::native::executeMainSynchronously([] {});
     executor.drain();
 
     nlohmann::json counts = loader::native::mainWaitCounts();
-    std::string    none   = loader::threading::addonName(loader::kNoAddon);
+    std::string none      = loader::threading::addonName(loader::kNoAddon);
     assert(findWaits(counts, none, "sync", "invoke(first)"));
     assert(findWaits(counts, none, "sync", "invoke(second)"));
     assert(findWaits(counts, none, "posted", "invoke(second)"));

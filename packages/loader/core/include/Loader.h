@@ -56,13 +56,13 @@ public:
     void onVisible();
     bool isCheckingForUpdate() const;
 
-    SettingsStore                       &settings();
-    BundleUpdater                       &updater();
-    AddonState                          &addons();
-    std::shared_ptr<fonts::FontService>  fonts();
+    SettingsStore &settings();
+    BundleUpdater &updater();
+    AddonState &addons();
+    std::shared_ptr<fonts::FontService> fonts();
     std::shared_ptr<HotReloadController> hotReload();
-    const std::string                   &documents() const;
-    bool                                 isBundleReady() const;
+    const std::string &documents() const;
+    bool isBundleReady() const;
     // Every font a plugin can pick: the downloaded ones, then the device's and Discord's.
     nlohmann::json fontCatalog();
     // The JSON overrides target for `family`, or "{}" when it has none.
@@ -71,33 +71,33 @@ public:
     nlohmann::json themeColors(const std::string &themeId);
 
     toolbox::ToolboxContext toolboxContext();
-    std::string             toolbox(const std::string &action, const std::string &argument);
+    std::string toolbox(const std::string &action, const std::string &argument);
 
     // The dev server or custom bundle URL, else none for the default.
     std::optional<std::string> resolveUpdateURL();
-    uint32_t                   runtimeBytecodeVersion();
+    uint32_t runtimeBytecodeVersion();
     // `UnboundNative` as the client sees it: the core members plus the platform's.
     UnboundNativeProvider unboundNativeProvider();
-    void                  installNativeModules(facebook::jsi::Runtime &runtime);
-    void                  onAddonsPrepared();
-    void                  onBundleExecuted();
-    LoaderHost           &host();
+    void installNativeModules(facebook::jsi::Runtime &runtime);
+    void onAddonsPrepared();
+    void onBundleExecuted();
+    LoaderHost &host();
 
 private:
     class Pipeline;
 
     const nlohmann::json &systemFonts();
 
-    LoaderOptions                           options_;
-    std::shared_ptr<LoaderHost>             host_;
+    LoaderOptions options_;
+    std::shared_ptr<LoaderHost> host_;
     std::shared_ptr<NativePlatformProvider> provider_;
-    SettingsStore                           settings_;
-    std::unique_ptr<BundleUpdater>          updater_;
-    std::unique_ptr<LoaderPipeline>         pipeline_;
-    std::shared_ptr<HotReloadController>    hotReload_;
-    std::shared_ptr<fonts::FontService>     fonts_;
-    AddonState                              addons_;
-    std::mutex                              systemFontsMutex_;
-    std::optional<nlohmann::json>           systemFonts_;
+    SettingsStore settings_;
+    std::unique_ptr<BundleUpdater> updater_;
+    std::unique_ptr<LoaderPipeline> pipeline_;
+    std::shared_ptr<HotReloadController> hotReload_;
+    std::shared_ptr<fonts::FontService> fonts_;
+    AddonState addons_;
+    std::mutex systemFontsMutex_;
+    std::optional<nlohmann::json> systemFonts_;
 };
 }

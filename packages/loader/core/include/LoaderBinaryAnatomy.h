@@ -18,13 +18,13 @@ constexpr uint32_t kReexportDylib      = 0x8000001f;
 constexpr uint32_t kCodeSignature      = 0x1d;
 
 struct Anatomy {
-    std::string              uuid;
-    std::optional<uint32_t>  cryptid;
-    std::string              minimumOS;
-    std::string              sdk;
-    uint32_t                 loadCommands = 0;
+    std::string uuid;
+    std::optional<uint32_t> cryptid;
+    std::string minimumOS;
+    std::string sdk;
+    uint32_t loadCommands = 0;
     std::vector<std::string> dylibs;
-    std::string              signature;
+    std::string signature;
 };
 
 struct Certificate {
@@ -35,9 +35,9 @@ struct Certificate {
     std::string fingerprint;
 };
 
-std::optional<Anatomy>     readAnatomy(const std::string &executablePath);
-std::optional<Anatomy>     parseAnatomy(const std::string &image);
-std::vector<std::string>   cmsCertificates(const std::string &cms);
+std::optional<Anatomy> readAnatomy(const std::string &executablePath);
+std::optional<Anatomy> parseAnatomy(const std::string &image);
+std::vector<std::string> cmsCertificates(const std::string &cms);
 std::optional<Certificate> describeCertificate(const std::string &der);
 std::optional<Certificate> signer(const std::string &cms);
 

@@ -27,6 +27,7 @@ static std::string row(const loader::toolbox::IssueReport &report, const std::st
             return value;
         }
     }
+
     return "<missing>";
 }
 
@@ -62,15 +63,15 @@ int main()
 
     const auto report = loader::toolbox::issueReport(ios, "iOS", "300.0 (1234)");
     assert(report.platform == "iOS");
-    assert(row(report, "Unbound") ==
-           std::string("loader ") + loader::loaderVersion() + " (`Unbound.dylib`, `ElleKit`)");
+    assert(row(report, "Unbound")
+           == std::string("loader ") + loader::loaderVersion() + " (`Unbound.dylib`, `ElleKit`)");
     assert(std::isdigit(static_cast<unsigned char>(loader::loaderVersion()[0])));
     assert(row(report, "Discord") == "300.0 stable, build 1234 (TrollStore)");
     assert(row(report, "Device") == "iPhone SE on iOS 26.0.1");
     assert(row(report, "State") == "Jailbroken · system app");
     assert(report.attachments.size() == 1);
-    assert(report.attachments[0].first == "Entitlements" &&
-           report.attachments[0].second == "<plist/>");
+    assert(report.attachments[0].first == "Entitlements"
+           && report.attachments[0].second == "<plist/>");
 
     loader::NativePlatformProvider android;
     android.platform    = "android";
@@ -95,8 +96,8 @@ int main()
 
     const auto androidReport =
         loader::toolbox::issueReport(android, "Android", "352.10 - Beta (352110)");
-    assert(row(androidReport, "Unbound") ==
-           std::string("loader ") + loader::loaderVersion() + " (`libunbound.so`, `Vector`)");
+    assert(row(androidReport, "Unbound")
+           == std::string("loader ") + loader::loaderVersion() + " (`libunbound.so`, `Vector`)");
     assert(row(androidReport, "Discord") == "352.10 beta, build 352110 (Google Play)");
     assert(row(androidReport, "Device") == "Google Pixel 9 on Android 16");
     assert(row(androidReport, "State") == "Stock · emulator");
@@ -106,12 +107,12 @@ int main()
     assert(row(bare, "Device") == "unknown on Android unknown");
     assert(row(bare, "Discord") == "unknown");
     assert(loader::toolbox::discordLine("351.0", "App Store") == "351.0 (App Store)");
-    assert(loader::toolbox::discordLine("352.0 (52)", "TestFlight") ==
-           "352.0 beta, build 52 (TestFlight)");
-    assert(loader::toolbox::discordLine("352.0 (52)", "Sideloaded (TestFlight build)") ==
-           "352.0 beta, build 52 (Sideloaded (TestFlight build))");
+    assert(loader::toolbox::discordLine("352.0 (52)", "TestFlight")
+           == "352.0 beta, build 52 (TestFlight)");
+    assert(loader::toolbox::discordLine("352.0 (52)", "Sideloaded (TestFlight build)")
+           == "352.0 beta, build 52 (Sideloaded (TestFlight build))");
 
-    const auto            root = makeTemporaryDirectory();
+    const auto root = makeTemporaryDirectory();
     loader::SettingsStore settings((root / "settings.json").string());
     settings.load();
     loader::BundleUpdater updater(

@@ -20,7 +20,10 @@ NativeOperationSignpost::NativeOperationSignpost(const char *operation)
     : log_(nativePerformanceLog()), enabled_(os_signpost_enabled(log_))
 {
     if (!enabled_)
+    {
         return;
+    }
+
     identifier_ = os_signpost_id_generate(log_);
     os_signpost_interval_begin(log_, identifier_, "Native Operation", "operation=%{public}s",
                                operation);
@@ -29,7 +32,9 @@ NativeOperationSignpost::NativeOperationSignpost(const char *operation)
 NativeOperationSignpost::~NativeOperationSignpost()
 {
     if (enabled_)
+    {
         os_signpost_interval_end(log_, identifier_, "Native Operation");
+    }
 }
 
 [[noreturn]] void throwWrongThread(Runtime &runtime, const char *message)
@@ -44,6 +49,7 @@ std::function<void(void)> objcGuarded(std::function<void(void)> operation)
         {
             operation();
         }
+
         @catch (NSException *exception)
         {
             throw std::runtime_error(exception.reason.UTF8String ?: "Native operation failed");

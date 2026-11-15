@@ -35,9 +35,10 @@ public:
         {
             return enqueue(std::move(task));
         }
-        std::optional<Task>         replaced;
+
+        std::optional<Task> replaced;
         std::lock_guard<std::mutex> lock(mutex_);
-        auto                        found = coalesced_.find(key);
+        auto found = coalesced_.find(key);
         if (found != coalesced_.end())
         {
             replaced.emplace(std::move(found->second->task));
@@ -45,6 +46,7 @@ public:
             deferred_.splice(deferred_.end(), deferred_, found->second);
             return false;
         }
+
         deferred_.push_back({std::move(task), std::move(key)});
         coalesced_.emplace(deferred_.back().key, std::prev(deferred_.end()));
         return !std::exchange(scheduled_, true);
@@ -54,8 +56,8 @@ public:
     bool drain(Consumer consume, Clock clock,
                std::chrono::steady_clock::duration budget = std::chrono::milliseconds(2))
     {
-        const auto deadline  = clock() + budget;
-        bool       processed = false;
+        const auto deadline = clock() + budget;
+        bool processed      = false;
         for (;;)
         {
             std::optional<Entry> task;
@@ -77,6 +79,7 @@ public:
                             coalesced_.erase(found);
                         }
                     }
+
                     task.emplace(std::move(*current));
                     deferred_.pop_front();
                 }
@@ -86,6 +89,7 @@ public:
                     return scheduled_;
                 }
             }
+
             consume(std::move(task->task));
             processed = true;
         }
@@ -105,17 +109,17 @@ public:
 
 private:
     struct Entry {
-        Task        task;
+        Task task;
         std::string key;
     };
 
     using Queue    = std::list<Entry>;
     using Iterator = typename Queue::iterator;
 
-    mutable std::mutex                        mutex_;
-    Queue                                     deferred_;
-    Queue                                     critical_;
+    mutable std::mutex mutex_;
+    Queue deferred_;
+    Queue critical_;
     std::unordered_map<std::string, Iterator> coalesced_;
-    bool                                      scheduled_ = false;
+    bool scheduled_ = false;
 };
 }

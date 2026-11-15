@@ -16,6 +16,7 @@ template <typename Parse> static bool rejects(Parse parse)
     {
         return true;
     }
+
     return false;
 }
 
@@ -23,8 +24,8 @@ int main()
 {
     NativeFrame frame = parseFrame({{"x", -20.5}, {"y", 40}, {"width", 320}, {"height", 0}});
     assert(frame.x == -20.5 && frame.y == 40 && frame.width == 320 && frame.height == 0);
-    assert(toJSON(frame) ==
-           nlohmann::json({{"x", -20.5}, {"y", 40}, {"width", 320}, {"height", 0}}));
+    assert(toJSON(frame)
+           == nlohmann::json({{"x", -20.5}, {"y", 40}, {"width", 320}, {"height", 0}}));
 
     NativeSize size = parseSize({{"width", 32768}, {"height", 1}});
     assert(size.width == 32768 && size.height == 1);

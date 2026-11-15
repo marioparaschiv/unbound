@@ -39,7 +39,7 @@ static void recognisesAccelerometerShakes()
 {
     const double strong = kStandardGravity * 3;
     const double weak   = kStandardGravity * 2.5;
-    ShakeSensor  sensor;
+    ShakeSensor sensor;
 
     assert(sensor.sample(strong, 0, 0, 10'000, kOff) == GestureAction::None);
     assert(sensor.sample(weak, 0, 0, 10'000, kOn) == GestureAction::None);
@@ -67,7 +67,7 @@ static void recognisesThreeFingerHolds()
     assert(press.holdElapsed() == GestureAction::None);
     assert(press.released() == GestureAction::None);
 
-    int                  checks  = 0;
+    int checks                   = 0;
     const GestureEnabled counted = [&checks] {
         checks++;
         return true;

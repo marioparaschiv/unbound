@@ -9,5 +9,5 @@ struct ImageIdentity {
 };
 
 ImageIdentity loaderImageIdentity();
-std::string   imageIdentityLine(const ImageIdentity &identity);
+std::string imageIdentityLine(const ImageIdentity &identity);
 }

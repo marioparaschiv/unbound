@@ -20,8 +20,8 @@ int main()
     assert(receiverCoalesceKey(kIOSHookPlatform, "7", "4096") == "ios-hook:7:4096");
 
     assert(*coalescedHookKey(kAndroidHookPlatform, "hook-1",
-                             R"({"self":{"type":"handle","value":"java-9"},"args":[]})") ==
-           "android-hook:hook-1:java-9");
+                             R"({"self":{"type":"handle","value":"java-9"},"args":[]})")
+           == "android-hook:hook-1:java-9");
     assert(!coalescedHookKey(kAndroidHookPlatform, "hook-1", "not json"));
     assert(!coalescedHookKey(kAndroidHookPlatform, "hook-1", "[]"));
     assert(!coalescedHookKey(kAndroidHookPlatform, "hook-1", R"({"args":[]})"));

@@ -14,10 +14,12 @@ Receipt receiptKind(const std::optional<std::string> &receiptName, bool receiptE
     {
         return Receipt::None;
     }
+
     if (*receiptName == kSandboxReceiptName)
     {
         return Receipt::TestFlight;
     }
+
     return receiptExists ? Receipt::AppStore : Receipt::None;
 }
 
@@ -32,6 +34,7 @@ std::string trollStoreVariant(bool trollStore, bool trollStoreLite)
     {
         return "TrollStore";
     }
+
     return trollStoreLite ? "TrollStore Lite" : "Unknown";
 }
 
@@ -41,20 +44,24 @@ std::string appSource(const InstallFacts &facts)
     {
         return "iOS Simulator";
     }
+
     if (isTrollStoreInstall(facts.receipt, facts.trollStore, facts.trollStoreLite))
     {
         return trollStoreVariant(facts.trollStore, facts.trollStoreLite);
     }
+
     if (facts.liveContainer)
     {
         const bool jit = facts.jitAvailable && facts.jitAvailable();
         return jit ? "LiveContainer (JIT)" : "LiveContainer (Signed)";
     }
+
     if (facts.receipt != Receipt::None && facts.discordSigned == false)
     {
         return facts.receipt == Receipt::TestFlight ? "Sideloaded (TestFlight build)"
                                                     : "Sideloaded (App Store build)";
     }
+
     switch (facts.receipt)
     {
         case Receipt::AppStore:
@@ -64,13 +71,14 @@ std::string appSource(const InstallFacts &facts)
         case Receipt::None:
             break;
     }
+
     return "Sideloaded";
 }
 
 std::string signingDetails(const SigningFacts &facts)
 {
     std::vector<std::string> parts;
-    const bool               discord = isDiscordProductionTeam(facts.teamIdentifier);
+    const bool discord = isDiscordProductionTeam(facts.teamIdentifier);
     if (discord)
     {
         parts.emplace_back("Distribution");
@@ -95,14 +103,17 @@ std::string signingDetails(const SigningFacts &facts)
     {
         parts.emplace_back("Unprovisioned");
     }
+
     if (facts.teamIdentifier && !facts.teamIdentifier->empty())
     {
         parts.front() += " (`" + *facts.teamIdentifier + "`)";
     }
+
     if (facts.profileExpiry && !discord)
     {
         parts.push_back("exp " + *facts.profileExpiry);
     }
+
     if (facts.altStore)
     {
         parts.emplace_back("AltStore/SideStore");
@@ -113,6 +124,7 @@ std::string signingDetails(const SigningFacts &facts)
     {
         joined += (joined.empty() ? "" : " · ") + part;
     }
+
     return joined;
 }
 
@@ -123,12 +135,14 @@ std::optional<std::string> provisioningProfilePlist(const std::string &profile)
     {
         return std::nullopt;
     }
+
     static const std::string kEnd = "</plist>";
-    const size_t             end  = profile.find(kEnd, start);
+    const size_t end              = profile.find(kEnd, start);
     if (end == std::string::npos)
     {
         return std::nullopt;
     }
+
     return profile.substr(start, end + kEnd.size() - start);
 }
 
@@ -148,15 +162,15 @@ std::string osVersionLabel(const std::string &version, const std::optional<std::
 }
 
 namespace {
-    constexpr size_t  kRouteMessageHeaderSize = 92;
-    constexpr size_t  kRouteAddressMaskOffset = 12;
-    constexpr size_t  kRouteAddressCount      = 8;
-    constexpr size_t  kDestinationIndex       = 0;
-    constexpr size_t  kGatewayIndex           = 1;
-    constexpr size_t  kSocketAddressAlignment = sizeof(uint32_t);
-    constexpr size_t  kIPv4AddressSize        = 16;
-    constexpr size_t  kIPv4AddressOffset      = 4;
-    constexpr uint8_t kIPv4Family             = 2;
+    constexpr size_t kRouteMessageHeaderSize = 92;
+    constexpr size_t kRouteAddressMaskOffset = 12;
+    constexpr size_t kRouteAddressCount      = 8;
+    constexpr size_t kDestinationIndex       = 0;
+    constexpr size_t kGatewayIndex           = 1;
+    constexpr size_t kSocketAddressAlignment = sizeof(uint32_t);
+    constexpr size_t kIPv4AddressSize        = 16;
+    constexpr size_t kIPv4AddressOffset      = 4;
+    constexpr uint8_t kIPv4Family            = 2;
 
     template <typename T> T readValue(const uint8_t *bytes)
     {
@@ -179,14 +193,14 @@ namespace {
     std::string dottedQuad(const uint8_t *address)
     {
         const uint8_t *octets = address + kIPv4AddressOffset;
-        return std::to_string(octets[0]) + "." + std::to_string(octets[1]) + "." +
-               std::to_string(octets[2]) + "." + std::to_string(octets[3]);
+        return std::to_string(octets[0]) + "." + std::to_string(octets[1]) + "."
+               + std::to_string(octets[2]) + "." + std::to_string(octets[3]);
     }
 
     std::optional<std::string> defaultRouteGateway(const uint8_t *message, const uint8_t *end)
     {
         std::array<const uint8_t *, kRouteAddressCount> addresses{};
-        const int      mask   = readValue<int>(message + kRouteAddressMaskOffset);
+        const int mask        = readValue<int>(message + kRouteAddressMaskOffset);
         const uint8_t *cursor = message + kRouteMessageHeaderSize;
 
         for (size_t index = 0; index < kRouteAddressCount; index++)
@@ -195,26 +209,30 @@ namespace {
             {
                 continue;
             }
+
             if (cursor >= end)
             {
                 return std::nullopt;
             }
+
             const size_t length = socketAddressLength(cursor[0]);
             if (length > static_cast<size_t>(end - cursor))
             {
                 return std::nullopt;
             }
+
             addresses[index] = cursor;
             cursor += length;
         }
 
         const uint8_t *destination = addresses[kDestinationIndex];
         const uint8_t *gateway     = addresses[kGatewayIndex];
-        if (!isIPv4Address(destination) || !isIPv4Address(gateway) ||
-            readValue<uint32_t>(destination + kIPv4AddressOffset) != 0)
+        if (!isIPv4Address(destination) || !isIPv4Address(gateway)
+            || readValue<uint32_t>(destination + kIPv4AddressOffset) != 0)
         {
             return std::nullopt;
         }
+
         return dottedQuad(gateway);
     }
 }
@@ -225,28 +243,32 @@ std::optional<std::string> defaultIPv4Gateway(const uint8_t *table, size_t lengt
     {
         return std::nullopt;
     }
+
     const uint8_t *cursor = table;
     const uint8_t *end    = table + length;
     while (static_cast<size_t>(end - cursor) >= kRouteMessageHeaderSize)
     {
         const uint16_t messageLength = readValue<uint16_t>(cursor);
-        if (messageLength < kRouteMessageHeaderSize ||
-            messageLength > static_cast<size_t>(end - cursor))
+        if (messageLength < kRouteMessageHeaderSize
+            || messageLength > static_cast<size_t>(end - cursor))
         {
             break;
         }
+
         const uint8_t *next = cursor + messageLength;
         if (auto gateway = defaultRouteGateway(cursor, next))
         {
             return gateway;
         }
+
         cursor = next;
     }
+
     return std::nullopt;
 }
 
 std::optional<HookFramework> hookFrameworkForImage(const std::string &imagePath,
-                                                   bool               exportsLibhookerAPI)
+                                                   bool exportsLibhookerAPI)
 {
     static const std::vector<std::pair<std::string, HookFramework>> markers = {
         {"ellekit", {"ElleKit", "ellekit"}},
@@ -266,20 +288,22 @@ std::optional<HookFramework> hookFrameworkForImage(const std::string &imagePath,
             return elleKitShim ? markers.front().second : framework;
         }
     }
+
     return std::nullopt;
 }
 
 std::optional<std::string> dpkgPackageVersion(const std::string &status, const std::string &package)
 {
     std::istringstream lines(status);
-    std::string        line;
-    bool               inPackage = false;
+    std::string line;
+    bool inPackage = false;
     while (std::getline(lines, line))
     {
         if (!line.empty() && line.back() == '\r')
         {
             line.pop_back();
         }
+
         if (line.empty())
         {
             inPackage = false;
@@ -293,6 +317,7 @@ std::optional<std::string> dpkgPackageVersion(const std::string &status, const s
             return line.substr(9);
         }
     }
+
     return std::nullopt;
 }
 
@@ -302,6 +327,7 @@ std::string frameworkLabel(const std::string &name, const std::string &version)
     {
         return name;
     }
+
     return name + " " + version;
 }
 
@@ -309,18 +335,31 @@ std::string jailbreakName(const std::string &root, const std::vector<std::string
                           const std::vector<std::string> &images, bool roothide)
 {
     if (root.empty())
+    {
         return "";
+    }
+
     const bool hidden = roothide || root.find("/.jbroot-") != std::string::npos;
     if (std::find(markers.begin(), markers.end(), ".installed_relaxin") != markers.end())
+    {
         return "Relaxin";
+    }
+
     for (const auto &image : images)
     {
-        if (image.rfind(root + "/", 0) == 0 && (image.find("/relaxin") != std::string::npos ||
-                                                image.find("/librelaxin") != std::string::npos))
+        if (image.rfind(root + "/", 0) == 0
+            && (image.find("/relaxin") != std::string::npos
+                || image.find("/librelaxin") != std::string::npos))
+        {
             return "Relaxin";
+        }
     }
+
     if (std::find(markers.begin(), markers.end(), ".xia0o0o0o_jb_installed") != markers.end())
+    {
         return hidden ? "roothide" : "";
+    }
+
     const std::vector<std::pair<std::string, std::string>> names = {
         {".installed_nekojb", "nekoJB"},      {".installed_nathanlr", "nathanlr"},
         {".palecursus_strapped", "palera1n"}, {".installed_palera1n", "palera1n"},
@@ -329,23 +368,32 @@ std::string jailbreakName(const std::string &root, const std::vector<std::string
     for (const auto &[marker, name] : names)
     {
         if (std::find(markers.begin(), markers.end(), marker) != markers.end())
+        {
             return hidden ? name + " (roothide)" : name;
+        }
     }
+
     return hidden ? "roothide" : "";
 }
 
 std::string jailbreakLabel(const std::string &name, const std::string &version)
 {
     if (name != "Dopamine" || version.empty())
+    {
         return name;
+    }
+
     bool previousDot = true;
-    int  parts       = 1;
+    int parts        = 1;
     for (char character : version)
     {
         if (character == '.')
         {
             if (previousDot || ++parts > 4)
+            {
                 return name;
+            }
+
             previousDot = true;
         }
         else if (character >= '0' && character <= '9')
@@ -357,6 +405,7 @@ std::string jailbreakLabel(const std::string &name, const std::string &version)
             return name;
         }
     }
+
     return previousDot || parts < 2 ? name : name + " " + version;
 }
 }

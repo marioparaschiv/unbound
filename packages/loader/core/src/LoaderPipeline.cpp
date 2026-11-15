@@ -128,12 +128,13 @@ void LoaderPipeline::prepare()
         if (savedVersion != 0 && runtimeVersion != 0 && savedVersion != runtimeVersion)
         {
             log(LogLevel::Warning, LOG_CATEGORY_DEFAULT,
-                "Discord now runs Hermes bytecode " + std::to_string(runtimeVersion) +
-                    ", but the saved bundle was built for " + std::to_string(savedVersion) +
-                    "; waiting for a matching bundle.");
+                "Discord now runs Hermes bytecode " + std::to_string(runtimeVersion)
+                    + ", but the saved bundle was built for " + std::to_string(savedVersion)
+                    + "; waiting for a matching bundle.");
             bundle.reset();
         }
     }
+
     bool hasSaved = bundle && !bundle->empty();
     // A saved bundle from the other flavour runs at the next launch anyway, so this launch waits
     // for its replacement rather than leaving the switch to a second restart.
@@ -155,6 +156,7 @@ void LoaderPipeline::prepare()
         {
             saved_ = std::move(*bundle);
         }
+
         if (waitForDownload)
         {
             firstDownload_.pending = true;
@@ -171,11 +173,13 @@ std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::readSavedBundle(const
     {
         return SavedBundle{"", path, std::move(mapped)};
     }
+
     std::optional<std::string> source = readTextFile(path);
     if (!source)
     {
         return std::nullopt;
     }
+
     return SavedBundle{std::move(*source), path, nullptr};
 }
 
@@ -273,6 +277,7 @@ bool LoaderPipeline::settleFirstDownload(uint64_t token, std::optional<std::stri
     {
         return false;
     }
+
     firstDownload_.settled = true;
     firstDownload_.path    = std::move(path);
     firstDownloadSettled_.notify_all();
@@ -286,11 +291,13 @@ std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::awaitFirstDownload(ui
     {
         return std::nullopt;
     }
+
     bool waiting = !firstDownload_.settled;
     if (waiting)
     {
         host_->showUpdateProgress(true);
     }
+
     bool settled = firstDownloadSettled_.wait_for(lock, kFirstDownloadWait, [this, token]() {
         return firstDownload_.token != token || firstDownload_.settled;
     });
@@ -298,16 +305,19 @@ std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::awaitFirstDownload(ui
     {
         host_->showUpdateProgress(false);
     }
+
     if (firstDownload_.token != token)
     {
         return std::nullopt;
     }
+
     std::optional<SavedBundle> fallback = std::move(firstDownload_.fallback);
     if (!settled)
     {
         firstDownload_.abandoned = true;
         return fallback;
     }
+
     if (!firstDownload_.path)
     {
         return fallback;
@@ -319,6 +329,7 @@ std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::awaitFirstDownload(ui
         firstDownload_.abandoned = true;
         return fallback;
     }
+
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
         "Downloaded Unbound's first bundle in time to run it before Discord's.");
     return bundle;
@@ -354,6 +365,7 @@ bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t
         std::lock_guard<std::mutex> lock(promotionMutex_);
         pendingPromotion_ = saved.path;
     }
+
     if (isDevelopmentBundleURL(preferences::updateURL(settings_)))
     {
         promotePendingBundle();
@@ -364,6 +376,7 @@ bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t
             promotePendingBundle();
         });
     }
+
     recordRunningBundle(saved.path);
     bundleExecutedMs_.store(nowMs());
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Unbound's bundle was successfully executed.");
@@ -372,6 +385,7 @@ bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t
         bundleReady_.store(true);
         host_->onBundleExecuted();
     }
+
     return true;
 }
 
@@ -384,6 +398,7 @@ void LoaderPipeline::recordRunningBundle(const std::string &path)
     {
         setRunningBundle(manifest->revision, manifest->channel);
     }
+
     std::string updateURL = preferences::updateURL(settings_);
     setBundleSource(bundleSourceOf(updateURL, isDevelopmentBundleURL(updateURL)),
                     pullRequestOf(updateURL));
@@ -396,15 +411,18 @@ void LoaderPipeline::promotePendingBundle()
         std::lock_guard<std::mutex> lock(promotionMutex_);
         path.swap(pendingPromotion_);
     }
+
     if (!path)
     {
         return;
     }
+
     if (!updater_.acceptBundle(*path))
     {
         log(LogLevel::Error, LOG_CATEGORY_DEFAULT, "Validated bundle could not be promoted.");
         return;
     }
+
     if (path->ends_with(kBundleCandidateSuffix))
     {
         setBundleState(BundleState::Active);
@@ -421,9 +439,9 @@ void LoaderPipeline::guardLaunch()
         return;
     }
 
-    LaunchGuard   guard(updater_.documents());
-    PreviousExit  previous = host_->previousExit();
-    LaunchVerdict verdict  = guard.begin(previous);
+    LaunchGuard guard(updater_.documents());
+    PreviousExit previous = host_->previousExit();
+    LaunchVerdict verdict = guard.begin(previous);
     if (host_->tracksVisibility() && host_->visibleNow())
     {
         noteVisible();
@@ -436,6 +454,7 @@ void LoaderPipeline::guardLaunch()
             guard.markShown();
         }
     }
+
     if (verdict.rollBack && updater_.rollBackToPrevious())
     {
         setBundleState(BundleState::RolledBack);
@@ -443,6 +462,7 @@ void LoaderPipeline::guardLaunch()
         recordCrashSummary(launchRollBackNotice(verdict.failures));
         host_->crashAlert(launchRollBackNotice(verdict.failures));
     }
+
     if (verdict.enterRecovery)
     {
         preferences::setRecoveryEnabled(settings_, true);
@@ -451,6 +471,7 @@ void LoaderPipeline::guardLaunch()
         recordCrashSummary(launchRecoveryNotice(verdict.failures));
         host_->crashAlert(launchRecoveryNotice(verdict.failures));
     }
+
     recordLaunchVerdict(verdict.failures, preferences::recoveryEnabled(settings_), previous);
     host_->runAfter(kHealthySeconds, [this]() {
         markHealthy();
@@ -472,10 +493,12 @@ void LoaderPipeline::noteVisible()
     {
         return;
     }
+
     if (launchGuarded_.load())
     {
         LaunchGuard(updater_.documents()).markShown();
     }
+
     host_->runAfter(kHealthySeconds, [this]() {
         markHealthy();
     });
@@ -490,10 +513,12 @@ void LoaderPipeline::offerHelpIfStuck()
     {
         return;
     }
+
     if (rendered_.load() || stuckOffered_.exchange(true))
     {
         return;
     }
+
     log(LogLevel::Warning, LOG_CATEGORY_DEFAULT, kStuckLaunchNotice);
     host_->stuckLaunch(kStuckLaunchNotice);
 }
@@ -504,25 +529,29 @@ void LoaderPipeline::markHealthy()
     {
         return;
     }
+
     int64_t created = std::max(runtimeCreatedMs_.load(), visibleMs_.load());
-    if (bundleExecutedMs_.load() != 0 && !rendered_.load() && created != 0 &&
-        nowMs() - created >= static_cast<int64_t>((kHealthySeconds - 1) * 1000))
+    if (bundleExecutedMs_.load() != 0 && !rendered_.load() && created != 0
+        && nowMs() - created >= static_cast<int64_t>((kHealthySeconds - 1) * 1000))
     {
         if (!launchHealthy_.load() && !frozen_.exchange(true))
         {
             log(LogLevel::Warning, LOG_CATEGORY_DEFAULT,
-                "Discord has not rendered its first screen after " +
-                    std::to_string(static_cast<int>(kHealthySeconds)) +
-                    " seconds; this launch counts as frozen until it does.");
+                "Discord has not rendered its first screen after "
+                    + std::to_string(static_cast<int>(kHealthySeconds))
+                    + " seconds; this launch counts as frozen until it does.");
             LaunchGuard(updater_.documents()).markFrozen();
         }
+
         return;
     }
+
     promotePendingBundle();
     if (!launchGuarded_.load() || launchHealthy_.exchange(true))
     {
         return;
     }
+
     healthyMs_.store(nowMs());
     LaunchGuard(updater_.documents()).succeed();
     leaveAutomaticRecoveryIfChanged();
@@ -538,11 +567,12 @@ std::string LoaderPipeline::recoveryKey() const
 void LoaderPipeline::leaveAutomaticRecoveryIfChanged()
 {
     std::string enteredWith = preferences::automaticRecoveryKey(settings_);
-    if (!preferences::recoveryEnabled(settings_) || enteredWith.empty() ||
-        enteredWith == recoveryKey())
+    if (!preferences::recoveryEnabled(settings_) || enteredWith.empty()
+        || enteredWith == recoveryKey())
     {
         return;
     }
+
     preferences::setRecoveryEnabled(settings_, false);
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
         "Left Recovery Mode for the next launch: the loader or bundle changed since it turned on "
@@ -555,6 +585,7 @@ void LoaderPipeline::markRendered()
     {
         return;
     }
+
     int64_t rendered = nowMs();
     renderedMs_.store(rendered);
     if (int64_t created = runtimeCreatedMs_.load(); created != 0)
@@ -562,6 +593,7 @@ void LoaderPipeline::markRendered()
         int64_t executed = bundleExecutedMs_.load();
         recordLaunchTiming(executed ? executed - created : 0, rendered - created);
     }
+
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Discord's first screen rendered.");
     host_->runAfter(kRenderedHealthySeconds, [this]() {
         markHealthy();

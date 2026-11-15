@@ -3,7 +3,7 @@
 @interface FileSystem : NSObject
 {
     NSFileManager *manager;
-    NSString      *documents;
+    NSString *documents;
 }
 
 + (BOOL)createDirectory:(NSString *)path;

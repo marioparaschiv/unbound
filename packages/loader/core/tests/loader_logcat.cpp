@@ -83,6 +83,7 @@ static void classifiesReactNativeTags()
     {
         assert(loader::logcatTagSource(tag) == loader::LogSource::ReactNative);
     }
+
     for (const char *tag : {"libc", "OpenGLRenderer", "chromium", "AndroidRuntime", "DEBUG"})
     {
         assert(loader::logcatTagSource(tag) == loader::LogSource::Native);

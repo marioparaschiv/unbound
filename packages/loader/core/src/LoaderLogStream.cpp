@@ -39,27 +39,32 @@ void LogStream::publish(const LogEntry &entry)
     {
         return;
     }
+
     LogScheduler schedule;
-    uint64_t     session = 0;
+    uint64_t session = 0;
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (!active_)
         {
             return;
         }
+
         pending_.push_back(entry);
         if (pending_.size() > limit_)
         {
             pending_.pop_front();
         }
+
         if (scheduled_)
         {
             return;
         }
+
         scheduled_ = true;
         schedule   = schedule_;
         session    = session_;
     }
+
     schedule([this, session] {
         flush(session);
     });
@@ -68,19 +73,21 @@ void LogStream::publish(const LogEntry &entry)
 void LogStream::flush(uint64_t session)
 {
     std::vector<LogEntry> batch;
-    LogBatchSink          sink;
+    LogBatchSink sink;
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (session != session_)
         {
             return;
         }
+
         scheduled_ = false;
         batch.assign(std::make_move_iterator(pending_.begin()),
                      std::make_move_iterator(pending_.end()));
         pending_.clear();
         sink = sink_;
     }
+
     if (sink && !batch.empty())
     {
         sink(std::move(batch));

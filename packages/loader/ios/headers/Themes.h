@@ -9,7 +9,7 @@
 @interface Themes : NSObject
 {
     NSMutableDictionary<NSString *, NSValue *> *originalRawImplementations;
-    NSString                                   *currentThemeId;
+    NSString *currentThemeId;
 }
 
 + (BOOL)isValidCustomTheme:(NSString *)manifestId;

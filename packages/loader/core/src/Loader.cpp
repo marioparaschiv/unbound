@@ -121,7 +121,7 @@ public:
     }
 
 private:
-    std::weak_ptr<Loader>       loader_;
+    std::weak_ptr<Loader> loader_;
     std::shared_ptr<LoaderHost> host_;
 };
 
@@ -176,7 +176,7 @@ void Loader::start()
         withBackgroundHandoff(
             [host = host_](const std::string &url, const std::string &destination,
                            const std::map<std::string, std::string> &headers,
-                           const DownloadPolicy                     &policy) {
+                           const DownloadPolicy &policy) {
                 return host->download(url, destination, headers, policy);
             },
             BackgroundDownloader{[host = host_](const std::string &destination) {
@@ -305,6 +305,7 @@ const nlohmann::json &Loader::systemFonts()
     {
         systemFonts_ = loader::fontCatalog(nlohmann::json::array(), host_->systemFonts());
     }
+
     return *systemFonts_;
 }
 
@@ -377,7 +378,7 @@ UnboundNativeProvider Loader::unboundNativeProvider()
         addons_, fonts_, options_.origin, runtimeBytecodeVersion(), options_.documents,
         [host = host_](const std::string &url, const std::string &destination,
                        const std::map<std::string, std::string> &headers,
-                       const DownloadPolicy                     &policy) {
+                       const DownloadPolicy &policy) {
             return host->download(url, destination, headers, policy);
         });
     // The scan finishes before the call returns, so the client's next `getThemes` lists the theme.
@@ -410,6 +411,7 @@ void Loader::onBundleExecuted()
     {
         hotReload_->sync();
     }
+
     host_->onBundleExecuted();
 }
 }

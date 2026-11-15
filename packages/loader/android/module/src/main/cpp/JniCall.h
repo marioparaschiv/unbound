@@ -19,8 +19,10 @@ namespace jni {
     {
     public:
         explicit LocalReferences(JNIEnv *env) : env_(env) {}
+
         LocalReferences(const LocalReferences &)            = delete;
         LocalReferences &operator=(const LocalReferences &) = delete;
+
         ~LocalReferences()
         {
             for (jobject reference : references_)
@@ -40,7 +42,7 @@ namespace jni {
         }
 
     private:
-        JNIEnv              *env_;
+        JNIEnv *env_;
         std::vector<jobject> references_;
     };
 
@@ -64,6 +66,7 @@ template <typename... Args> bool callStaticVoid(jclass type, jmethodID method, c
     {
         return false;
     }
+
     jni::LocalReferences locals(env);
     env->CallStaticVoidMethod(type, method, jni::argument(locals, args)...);
     return !clearPendingException(env);
@@ -78,6 +81,7 @@ bool callStaticBoolean(jclass type, jmethodID method, const Args &...args)
     {
         return false;
     }
+
     jni::LocalReferences locals(env);
     jboolean result = env->CallStaticBooleanMethod(type, method, jni::argument(locals, args)...);
     return !clearPendingException(env) && result == JNI_TRUE;
@@ -92,12 +96,14 @@ std::optional<jint> callStaticInt(jclass type, jmethodID method, const Args &...
     {
         return std::nullopt;
     }
+
     jni::LocalReferences locals(env);
     jint result = env->CallStaticIntMethod(type, method, jni::argument(locals, args)...);
     if (clearPendingException(env))
     {
         return std::nullopt;
     }
+
     return result;
 }
 
@@ -110,8 +116,9 @@ std::optional<std::string> callStaticString(jclass type, jmethodID method, const
     {
         return std::nullopt;
     }
+
     jni::LocalReferences locals(env);
-    auto                 result = static_cast<jstring>(
+    auto result = static_cast<jstring>(
         env->CallStaticObjectMethod(type, method, jni::argument(locals, args)...));
     if (clearPendingException(env) || !result)
     {
@@ -119,8 +126,10 @@ std::optional<std::string> callStaticString(jclass type, jmethodID method, const
         {
             env->DeleteLocalRef(result);
         }
+
         return std::nullopt;
     }
+
     std::string text = toStdString(env, result);
     env->DeleteLocalRef(result);
     return text;
@@ -136,6 +145,7 @@ namespace jni {
         {
             throw std::runtime_error("The Android Java adapter is unavailable");
         }
+
         return env;
     }
 
@@ -151,7 +161,7 @@ namespace jni {
 template <typename... Args>
 void invokeStaticVoid(jclass type, jmethodID method, const Args &...args)
 {
-    JNIEnv              *env = jni::requireEnvironment(type, method);
+    JNIEnv *env = jni::requireEnvironment(type, method);
     jni::LocalReferences locals(env);
     env->CallStaticVoidMethod(type, method, jni::argument(locals, args)...);
     jni::throwPendingException(env);
@@ -160,7 +170,7 @@ void invokeStaticVoid(jclass type, jmethodID method, const Args &...args)
 template <typename... Args>
 bool invokeStaticBoolean(jclass type, jmethodID method, const Args &...args)
 {
-    JNIEnv              *env = jni::requireEnvironment(type, method);
+    JNIEnv *env = jni::requireEnvironment(type, method);
     jni::LocalReferences locals(env);
     jboolean result = env->CallStaticBooleanMethod(type, method, jni::argument(locals, args)...);
     jni::throwPendingException(env);
@@ -171,9 +181,9 @@ bool invokeStaticBoolean(jclass type, jmethodID method, const Args &...args)
 template <typename... Args>
 std::string invokeStaticString(jclass type, jmethodID method, const Args &...args)
 {
-    JNIEnv              *env = jni::requireEnvironment(type, method);
+    JNIEnv *env = jni::requireEnvironment(type, method);
     jni::LocalReferences locals(env);
-    auto                 result = static_cast<jstring>(
+    auto result = static_cast<jstring>(
         env->CallStaticObjectMethod(type, method, jni::argument(locals, args)...));
     if (env->ExceptionCheck())
     {
@@ -181,12 +191,15 @@ std::string invokeStaticString(jclass type, jmethodID method, const Args &...arg
         {
             env->DeleteLocalRef(result);
         }
+
         jni::throwPendingException(env);
     }
+
     if (!result)
     {
         throw std::runtime_error("The Android Java operation returned nothing");
     }
+
     std::string text = toStdString(env, result);
     env->DeleteLocalRef(result);
     return text;

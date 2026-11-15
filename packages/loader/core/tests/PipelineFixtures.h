@@ -18,8 +18,8 @@ const std::string kDev    = "unbound-dev.98.bundle";
 class CountingHost : public loader::PipelineHost
 {
 public:
-    int                      addonPreparations = 0;
-    int                      reloads           = 0;
+    int addonPreparations = 0;
+    int reloads           = 0;
     std::vector<std::string> events;
 
     void runInBackground(std::function<void()> work) override
@@ -43,9 +43,9 @@ public:
         return metered;
     }
 
-    std::vector<double>  delays;
-    loader::PreviousExit exit    = loader::PreviousExit::Unknown;
-    bool                 metered = false;
+    std::vector<double> delays;
+    loader::PreviousExit exit = loader::PreviousExit::Unknown;
+    bool metered              = false;
 
     std::vector<std::function<void()>> delayed;
 
@@ -105,10 +105,10 @@ inline bool checkedBy(bundle_test::Server &server, const std::string &version)
 }
 
 struct Launch {
-    bundle_test::Server           server;
-    bool                          checked = checkedBy(server, loader::loaderVersion());
-    loader::BundleUpdater         updater = server.updater(bundle_test::productionTrust());
-    std::shared_ptr<CountingHost> host    = std::make_shared<CountingHost>();
-    loader::LoaderPipeline        pipeline{host, server.settings, updater};
+    bundle_test::Server server;
+    bool checked                       = checkedBy(server, loader::loaderVersion());
+    loader::BundleUpdater updater      = server.updater(bundle_test::productionTrust());
+    std::shared_ptr<CountingHost> host = std::make_shared<CountingHost>();
+    loader::LoaderPipeline pipeline{host, server.settings, updater};
 };
 }

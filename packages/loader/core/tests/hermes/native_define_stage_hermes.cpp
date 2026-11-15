@@ -56,6 +56,7 @@ public:
         {
             return std::nullopt;
         }
+
         std::stringstream contents;
         contents << file.rdbuf();
         return contents.str();
@@ -101,7 +102,7 @@ static void runsTheSavedBundleBeforeDiscords()
     server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, kUnbound}});
     loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
     require(server.download(updater, std::nullopt), "the bundle downloads");
-    auto                   host = std::make_shared<Host>();
+    auto host = std::make_shared<Host>();
     loader::LoaderPipeline pipeline(host, server.settings, updater);
 
     std::string order = launch(pipeline);
@@ -117,9 +118,9 @@ static void runsTheSavedBundleBeforeDiscords()
 
 static void runsNothingEarlyWithoutASavedBundle()
 {
-    bundle_test::Server    server;
-    loader::BundleUpdater  updater = server.updater(bundle_test::productionTrust());
-    auto                   host    = std::make_shared<Host>();
+    bundle_test::Server server;
+    loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
+    auto host                     = std::make_shared<Host>();
     loader::LoaderPipeline pipeline(host, server.settings, updater);
 
     std::string order = launch(pipeline);
@@ -132,8 +133,8 @@ static void runsTheFirstDownloadBeforeDiscordsWithoutAReload()
 {
     bundle_test::Server server;
     server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, kUnbound}});
-    loader::BundleUpdater  updater = server.updater(bundle_test::productionTrust());
-    auto                   host    = std::make_shared<Host>();
+    loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
+    auto host                     = std::make_shared<Host>();
     loader::LoaderPipeline pipeline(host, server.settings, updater);
 
     std::string order = launch(pipeline);
@@ -152,7 +153,7 @@ static void doesNotReloadIntoABundleAfterOneFailed()
     server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "throw new Error('broken');"}});
     loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
     require(server.download(updater, std::nullopt), "the broken bundle downloads");
-    auto                   host = std::make_shared<Host>();
+    auto host = std::make_shared<Host>();
     loader::LoaderPipeline pipeline(host, server.settings, updater);
 
     std::string order = launch(pipeline);

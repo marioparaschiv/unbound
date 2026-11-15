@@ -16,12 +16,12 @@ static dispatch_queue_t _logQueue;
 static os_log_t getLoggerForCategory(const char *category)
 {
     static NSMutableDictionary<NSString *, os_log_t> *loggers = nil;
-    static dispatch_once_t                            onceToken;
+    static dispatch_once_t onceToken;
 
     dispatch_once(&onceToken, ^{ loggers = [NSMutableDictionary dictionary]; });
 
     NSString *categoryKey = [NSString stringWithUTF8String:category];
-    os_log_t  logger      = nil;
+    os_log_t logger       = nil;
 
     @synchronized(loggers)
     {

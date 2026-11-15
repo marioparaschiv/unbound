@@ -51,11 +51,12 @@ public:
                                              "rgb(-5, 999, 3.5)",
                                              "red",
                                              ""};
-        std::string              value    = colors[next(sizeof(colors) / sizeof(colors[0]))];
+        std::string value                 = colors[next(sizeof(colors) / sizeof(colors[0]))];
         if (next(4) == 0 && !value.empty())
         {
             value[next(static_cast<uint32_t>(value.size()))] = static_cast<char>(random_());
         }
+
         return value;
     }
 
@@ -94,6 +95,7 @@ public:
         {
             raw[key() + std::to_string(index)] = next(5) ? nlohmann::json(color()) : scalar();
         }
+
         for (uint32_t index = next(12); index > 0; index--)
         {
             nlohmann::json entry = nlohmann::json::object();
@@ -113,19 +115,24 @@ public:
                     {
                         entry["opacity"] = scalar();
                     }
+
                     break;
             }
+
             semantic[key() + std::to_string(index)] = entry;
         }
+
         nlohmann::json bundle = {{"raw", raw}, {"semantic", semantic}};
         if (next(5) == 0)
         {
             bundle["raw"] = scalar();
         }
+
         if (next(5) == 0)
         {
             bundle["semantic"] = scalar();
         }
+
         nlohmann::json manifest = {
             {"id", next(5) ? nlohmann::json("theme." + std::to_string(next(9))) : scalar()}};
         nlohmann::json theme = {{"manifest", manifest}, {"bundle", bundle}};
@@ -133,10 +140,12 @@ public:
         {
             theme["bundle"] = scalar();
         }
+
         if (next(8) == 0)
         {
             theme["manifest"] = scalar();
         }
+
         return next(10) == 0 ? scalar() : theme;
     }
 
@@ -150,8 +159,9 @@ static void checkColor(const std::optional<loader::RGBAColor> &color, const std:
     {
         return;
     }
-    require(std::isfinite(color->red) && std::isfinite(color->green) &&
-                std::isfinite(color->blue) && std::isfinite(color->alpha),
+
+    require(std::isfinite(color->red) && std::isfinite(color->green) && std::isfinite(color->blue)
+                && std::isfinite(color->alpha),
             "a parsed colour has finite channels", input);
     loader::toARGB(*color);
     loader::isDarkColor(*color);
@@ -160,8 +170,8 @@ static void checkColor(const std::optional<loader::RGBAColor> &color, const std:
 int main()
 {
     const char *roundsVariable = std::getenv("UNBOUND_FUZZ_ITERATIONS");
-    const long  rounds         = roundsVariable ? std::strtol(roundsVariable, nullptr, 10) : 5000;
-    Generator   generator(0x7e3e);
+    const long rounds          = roundsVariable ? std::strtol(roundsVariable, nullptr, 10) : 5000;
+    Generator generator(0x7e3e);
 
     for (long round = 0; round < rounds; round++)
     {
@@ -173,6 +183,7 @@ int main()
         {
             themes.push_back(generator.theme());
         }
+
         try
         {
             for (const nlohmann::json &theme : themes)
@@ -184,22 +195,26 @@ int main()
                     loader::themeColorAccessor(name);
                     loader::themeColorResource(name);
                 }
+
                 for (const auto &[name, color] : colors.raw)
                 {
                     checkColor(color, name);
                 }
+
                 loader::themeColorsByAccessor(colors);
             }
+
             loader::findTheme(themes, "theme." + std::to_string(generator.next(9)));
             loader::themeIdFrom(generator.key());
         }
         catch (const std::exception &error)
         {
             require(false, "applying a theme never throws",
-                    std::string(error.what()) + " for " +
-                        themes.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace));
+                    std::string(error.what()) + " for "
+                        + themes.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace));
         }
     }
+
     std::printf("theme fuzz: %ld themes and colours\n", rounds);
     return 0;
 }

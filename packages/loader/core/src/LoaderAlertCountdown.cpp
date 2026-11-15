@@ -19,6 +19,7 @@ CountdownFrame Countdown::frame() const
     {
         return {title_, remaining_ <= 0, false};
     }
+
     return {countdownTitle(title_, remaining_), false, true};
 }
 
@@ -28,16 +29,19 @@ CountdownFrame Countdown::tick(bool presented)
     {
         return frame();
     }
+
     if (!presented)
     {
         running_ = false;
         return {countdownTitle(title_, remaining_), false, false};
     }
+
     remaining_--;
     if (remaining_ <= 0)
     {
         running_ = false;
     }
+
     return frame();
 }
 }

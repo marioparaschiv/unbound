@@ -19,6 +19,7 @@ static nlohmann::json installerJSON(const Installer &installer, const char *acti
     {
         throw std::runtime_error(std::string("Failed to run installer action ") + action);
     }
+
     return nlohmann::json::parse(*text, nullptr, false);
 }
 
@@ -40,10 +41,10 @@ static jsi::Function installerGetter(jsi::Runtime &runtime, const char *name, co
         });
 }
 
-jsi::Object androidPlatformObject(jsi::Runtime                           &runtime,
+jsi::Object androidPlatformObject(jsi::Runtime &runtime,
                                   std::shared_ptr<NativePlatformProvider> provider)
 {
-    Installer   installer = provider->androidInstaller;
+    Installer installer = provider->androidInstaller;
     jsi::Object object(runtime);
 
     object.setProperty(runtime, "status", installerGetter(runtime, "status", "status", installer));
@@ -81,6 +82,7 @@ jsi::Object androidPlatformObject(jsi::Runtime                           &runtim
                 {
                     throw jsi::JSError(rt, "install expects the build's splits as an array");
                 }
+
                 std::optional<std::string> started =
                     installer("install", fromJSIValue(rt, args[0]).dump());
                 if (!started)
@@ -88,6 +90,7 @@ jsi::Object androidPlatformObject(jsi::Runtime                           &runtim
                     throw jsi::JSError(
                         rt, "Failed to start installing the build: its splits are invalid");
                 }
+
                 return jsi::Value(*started == "true");
             }));
 

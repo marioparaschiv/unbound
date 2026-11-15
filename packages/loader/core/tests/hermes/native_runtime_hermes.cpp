@@ -35,6 +35,7 @@ static std::optional<std::string> bootstrapScript(const std::string &name)
     {
         return std::nullopt;
     }
+
     std::stringstream contents;
     contents << file.rdbuf();
     return contents.str();
@@ -73,14 +74,14 @@ static void installProbes(jsi::Runtime &runtime)
     jsi::Object ffi(runtime);
     ffi.setProperty(runtime, "symbol",
                     loader::native::makeFunction(runtime, "symbol", 2,
-                                                 [](jsi::Runtime     &rt, const jsi::Value &,
+                                                 [](jsi::Runtime &rt, const jsi::Value &,
                                                     const jsi::Value *args, size_t count) {
                                                      return loader::ffi::lookupSymbol(rt, args,
                                                                                       count);
                                                  }));
     ffi.setProperty(runtime, "call",
                     loader::native::makeFunction(runtime, "call", 3,
-                                                 [](jsi::Runtime     &rt, const jsi::Value &,
+                                                 [](jsi::Runtime &rt, const jsi::Value &,
                                                     const jsi::Value *args, size_t count) {
                                                      return loader::ffi::callFunction(rt, args,
                                                                                       count);
@@ -160,16 +161,17 @@ static void runChecks(loader::native::NativeErrorDelivery delivery, const char *
     {
         std::fprintf(stderr, "%s: %s\n", mode, failure.get<std::string>().c_str());
     }
+
     require(failures.empty(), std::string(mode) + ": every JavaScript check passes");
 }
 
 static void freshRuntimesAdvanceTheGeneration()
 {
     const void *previousAddress = nullptr;
-    bool        reusedAnAddress = false;
+    bool reusedAnAddress        = false;
     for (int round = 0; round < 8; round++)
     {
-        auto     runtime = facebook::hermes::makeHermesRuntime();
+        auto runtime     = facebook::hermes::makeHermesRuntime();
         uint64_t before  = loader::native::runtimeGeneration();
         uint64_t current = loader::native::registerRuntime(*runtime);
         require(current > before, "a fresh runtime advances the generation");
@@ -178,6 +180,7 @@ static void freshRuntimesAdvanceTheGeneration()
         reusedAnAddress |= runtime.get() == previousAddress;
         previousAddress = runtime.get();
     }
+
     std::printf("native runtime: fresh runtimes advance the generation%s\n",
                 reusedAnAddress ? ", including one at a reused address" : "");
 }
@@ -185,7 +188,7 @@ static void freshRuntimesAdvanceTheGeneration()
 static void runtimeResourcesFollowHermesLifetime()
 {
     std::weak_ptr<loader::native::RuntimeResourceRegistry> firstResources;
-    bool                                                   released = false;
+    bool released = false;
     {
         auto runtime   = facebook::hermes::makeHermesRuntime();
         auto resources = loader::native::runtimeResourceRegistry(*runtime);
@@ -197,6 +200,7 @@ static void runtimeResourcesFollowHermesLifetime()
                                               }));
         resources.reset();
     }
+
     require(released, "destroying Hermes releases runtime-owned resources");
     require(firstResources.expired(), "destroying Hermes expires its runtime registry");
 

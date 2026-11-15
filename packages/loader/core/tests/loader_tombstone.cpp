@@ -36,6 +36,7 @@ std::string frame(uint64_t relativePC, uint64_t pc, const std::string &function,
     {
         encoded += bytes(4, function) + number(5, offset);
     }
+
     return encoded + bytes(6, file) + bytes(8, "abcdef");
 }
 
@@ -53,29 +54,31 @@ std::string threadEntry(uint32_t id, const std::string &encodedThread)
 
 int main()
 {
-    std::string crashing = thread(1234, "mqt_js",
-                                  bytes(4, frame(0x1a2b, 0x7100001a2b, "hermes::vm::Runtime::crash",
-                                                 12, "/data/app/libhermes.so")) +
-                                      bytes(4, frame(0x20, 0x7200000020, "", 0, "/apex/libc.so")));
-    std::string other    = thread(1000, "main", bytes(4, frame(1, 2, "main", 0, "/system/app")));
+    std::string crashing =
+        thread(1234, "mqt_js",
+               bytes(4, frame(0x1a2b, 0x7100001a2b, "hermes::vm::Runtime::crash", 12,
+                              "/data/app/libhermes.so"))
+                   + bytes(4, frame(0x20, 0x7200000020, "", 0, "/apex/libc.so")));
+    std::string other = thread(1000, "main", bytes(4, frame(1, 2, "main", 0, "/system/app")));
 
-    std::string tombstone = number(1, 1) + bytes(2, "google/fingerprint") + number(5, 1000) +
-                            number(6, 1234) + bytes(10, number(1, 11) + bytes(2, "SIGSEGV")) +
-                            bytes(14, "assertion failed") + threadEntry(1000, other) +
-                            threadEntry(1234, crashing) + varint((99 << 3) | 1) +
-                            std::string(8, '\x01');
+    std::string tombstone = number(1, 1) + bytes(2, "google/fingerprint") + number(5, 1000)
+                            + number(6, 1234) + bytes(10, number(1, 11) + bytes(2, "SIGSEGV"))
+                            + bytes(14, "assertion failed") + threadEntry(1000, other)
+                            + threadEntry(1234, crashing) + varint((99 << 3) | 1)
+                            + std::string(8, '\x01');
 
     std::optional<std::string> stack = loader::tombstoneStack(tombstone);
     assert(stack);
-    assert(*stack == "Signal 11 (SIGSEGV) in thread 1234 (mqt_js), from Android's tombstone\n"
-                     "Abort message: assertion failed\n"
-                     "#0 0x7100001a2b /data/app/libhermes.so + 0x1a2b "
-                     "hermes::vm::Runtime::crash+12\n"
-                     "#1 0x7200000020 /apex/libc.so + 0x20\n");
+    assert(*stack
+           == "Signal 11 (SIGSEGV) in thread 1234 (mqt_js), from Android's tombstone\n"
+              "Abort message: assertion failed\n"
+              "#0 0x7100001a2b /data/app/libhermes.so + 0x1a2b "
+              "hermes::vm::Runtime::crash+12\n"
+              "#1 0x7200000020 /apex/libc.so + 0x20\n");
 
     assert(!loader::tombstoneStack(number(6, 5) + threadEntry(1000, other)));
-    assert(!loader::tombstoneStack(tombstone.substr(0, tombstone.size() / 2)) ||
-           loader::tombstoneStack(tombstone.substr(0, tombstone.size() / 2))->find("#0") == 0);
+    assert(!loader::tombstoneStack(tombstone.substr(0, tombstone.size() / 2))
+           || loader::tombstoneStack(tombstone.substr(0, tombstone.size() / 2))->find("#0") == 0);
     assert(!loader::tombstoneStack(""));
     assert(
         !loader::tombstoneStack(std::string("\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff", 11)));

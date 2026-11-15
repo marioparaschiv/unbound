@@ -30,7 +30,7 @@ public:
 
 private:
     void *value_;
-    bool  callable_;
+    bool callable_;
 };
 
 class TypeCodec
@@ -40,7 +40,7 @@ public:
     virtual void write(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value,
                        std::uint8_t *target, ArgumentStorage &storage) const = 0;
     virtual facebook::jsi::Value read(facebook::jsi::Runtime &runtime,
-                                      const std::uint8_t     *source) const  = 0;
+                                      const std::uint8_t *source) const      = 0;
 };
 
 using PointerResolver =
@@ -51,13 +51,13 @@ using StructResultFactory = std::function<std::optional<facebook::jsi::Value>(
 void setPointerResolver(PointerResolver resolver);
 void setStructResultFactory(StructResultFactory factory);
 
-Type                         resolveType(const std::string &name);
-facebook::jsi::Value         pointerValue(facebook::jsi::Runtime &runtime, void *pointer,
-                                          bool callable = false);
-std::shared_ptr<PointerHost> pointerHost(facebook::jsi::Runtime     &runtime,
+Type resolveType(const std::string &name);
+facebook::jsi::Value pointerValue(facebook::jsi::Runtime &runtime, void *pointer,
+                                  bool callable = false);
+std::shared_ptr<PointerHost> pointerHost(facebook::jsi::Runtime &runtime,
                                          const facebook::jsi::Value &value);
-void                 writeValue(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value,
-                                const Type &type, std::uint8_t *target, ArgumentStorage &storage);
+void writeValue(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value,
+                const Type &type, std::uint8_t *target, ArgumentStorage &storage);
 facebook::jsi::Value readValue(facebook::jsi::Runtime &runtime, const Type &type,
                                const std::uint8_t *source);
 

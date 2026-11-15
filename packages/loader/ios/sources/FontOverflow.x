@@ -4,8 +4,8 @@
 // such a line on the box's bottom and React Native clips the paragraph to its frame, cutting the
 // ink's top. Each line is instead centred on its own ink, and the paragraph draws past its frame.
 
-static NSString *const kInkSample        = @"ABLWbdfhjkltgpqy";
-static const void     *kRequestedClipKey = &kRequestedClipKey;
+static NSString *const kInkSample    = @"ABLWbdfhjkltgpqy";
+static const void *kRequestedClipKey = &kRequestedClipKey;
 
 // Ink of a font's Latin letters per point: `top` above the baseline, `bottom` below it, and
 // `side`, how far a letter reaches past its advance on either side.
@@ -30,10 +30,10 @@ static FontInk sampleInkOf(UIFont *font)
     }
 
     NSUInteger length = kInkSample.length;
-    UniChar    characters[length];
-    CGGlyph    glyphs[length];
-    CGRect     bounds[length];
-    CGSize     advances[length];
+    UniChar characters[length];
+    CGGlyph glyphs[length];
+    CGRect bounds[length];
+    CGSize advances[length];
     [kInkSample getCharacters:characters range:NSMakeRange(0, length)];
     CTFontRef ct = (__bridge CTFontRef) font;
     CTFontGetGlyphsForCharacters(ct, characters, glyphs, length);
@@ -46,9 +46,9 @@ static FontInk sampleInkOf(UIFont *font)
     {
         ink.top    = MAX(ink.top, CGRectGetMaxY(bounds[i]) / size);
         ink.bottom = MAX(ink.bottom, -CGRectGetMinY(bounds[i]) / size);
-        ink.side   = MAX(
-            ink.side,
-            MAX(-CGRectGetMinX(bounds[i]), CGRectGetMaxX(bounds[i]) - advances[i].width) / size);
+        ink.side = MAX(ink.side,
+                       MAX(-CGRectGetMinX(bounds[i]), CGRectGetMaxX(bounds[i]) - advances[i].width)
+                           / size);
     }
 
     @synchronized([FontLineCentring class])
@@ -56,6 +56,7 @@ static FontInk sampleInkOf(UIFont *font)
         cache                = cache ?: [NSMutableDictionary dictionary];
         cache[font.fontName] = [NSValue valueWithBytes:&ink objCType:@encode(FontInk)];
     }
+
     return ink;
 }
 
@@ -68,6 +69,7 @@ static BOOL centredBaseline(CGFloat box, CGFloat baseline, CGFloat top, CGFloat 
     {
         return NO;
     }
+
     *centred = (box + top - bottom) / 2;
     return YES;
 }
@@ -75,15 +77,15 @@ static BOOL centredBaseline(CGFloat box, CGFloat baseline, CGFloat top, CGFloat 
 // The union of the bounds of the glyphs `layout` drew for `range` in `font`, from their baseline.
 static CGRect glyphInk(NSLayoutManager *layout, NSRange range, UIFont *font)
 {
-    CGGlyph         *glyphs     = malloc(sizeof(CGGlyph) * range.length);
+    CGGlyph *glyphs             = malloc(sizeof(CGGlyph) * range.length);
     NSGlyphProperty *properties = malloc(sizeof(NSGlyphProperty) * range.length);
-    NSUInteger       count      = [layout getGlyphsInRange:range
+    NSUInteger count            = [layout getGlyphsInRange:range
                                                     glyphs:glyphs
                                                 properties:properties
                                           characterIndexes:NULL
                                                 bidiLevels:NULL];
-    CGRect           ink        = CGRectNull;
-    CTFontRef        ct         = (__bridge CTFontRef) font;
+    CGRect ink                  = CGRectNull;
+    CTFontRef ct                = (__bridge CTFontRef) font;
     for (NSUInteger i = 0; i < count; i++)
     {
         // Control characters such as newlines have no glyph; theirs is the font's .notdef box.
@@ -91,10 +93,12 @@ static CGRect glyphInk(NSLayoutManager *layout, NSRange range, UIFont *font)
         {
             continue;
         }
+
         CGRect bounds =
             CTFontGetBoundingRectsForGlyphs(ct, kCTFontOrientationHorizontal, &glyphs[i], NULL, 1);
         ink = CGRectUnion(ink, bounds);
     }
+
     free(glyphs);
     free(properties);
     return ink;
@@ -125,10 +129,11 @@ static CGFloat outsetOf(NSAttributedString *text)
                       {
                           return;
                       }
+
                       NSParagraphStyle *style = [text attribute:NSParagraphStyleAttributeName
                                                         atIndex:range.location
                                                  effectiveRange:NULL];
-                      CGFloat           box =
+                      CGFloat box =
                           style.maximumLineHeight > 0 ? style.maximumLineHeight : font.lineHeight;
                       FontInk ink  = sampleInkOf(font);
                       CGFloat size = font.pointSize;
@@ -139,6 +144,7 @@ static CGFloat outsetOf(NSAttributedString *text)
 }
 
 @implementation FontLineCentring
+
 - (BOOL)layoutManager:(NSLayoutManager *)layoutManager
     shouldSetLineFragmentRect:(inout CGRect *)lineFragmentRect
          lineFragmentUsedRect:(inout CGRect *)lineFragmentUsedRect
@@ -146,10 +152,10 @@ static CGFloat outsetOf(NSAttributedString *text)
               inTextContainer:(NSTextContainer *)textContainer
                 forGlyphRange:(NSRange)glyphRange
 {
-    NSTextStorage *storage    = layoutManager.textStorage;
-    NSRange        characters = [layoutManager characterRangeForGlyphRange:glyphRange
-                                                          actualGlyphRange:NULL];
-    __block CGRect ink        = CGRectNull;
+    NSTextStorage *storage = layoutManager.textStorage;
+    NSRange characters     = [layoutManager characterRangeForGlyphRange:glyphRange
+                                                       actualGlyphRange:NULL];
+    __block CGRect ink     = CGRectNull;
     [storage enumerateAttribute:NSFontAttributeName
                         inRange:characters
                         options:0
@@ -158,20 +164,24 @@ static CGFloat outsetOf(NSAttributedString *text)
                          {
                              return;
                          }
+
                          NSRange glyphs = [layoutManager glyphRangeForCharacterRange:range
                                                                 actualCharacterRange:NULL];
                          ink            = CGRectUnion(ink, glyphInk(layoutManager, glyphs, font));
                      }];
 
     CGFloat centred;
-    if (CGRectIsNull(ink) || !centredBaseline(lineFragmentRect->size.height, *baselineOffset,
-                                              CGRectGetMaxY(ink), -CGRectGetMinY(ink), &centred))
+    if (CGRectIsNull(ink)
+        || !centredBaseline(lineFragmentRect->size.height, *baselineOffset, CGRectGetMaxY(ink),
+                            -CGRectGetMinY(ink), &centred))
     {
         return NO;
     }
+
     *baselineOffset = centred;
     return YES;
 }
+
 @end
 
 static FontLineCentring *centring = nil;
@@ -180,7 +190,7 @@ static FontLineCentring *centring = nil;
 // keeping its drawing in place, and lifts the clip of the view holding it. 0 puts both back.
 static void applyOutset(UIView *textView, CGRect frame, CGFloat outset)
 {
-    UIView   *clip      = textView.superview;
+    UIView *clip        = textView.superview;
     NSNumber *requested = objc_getAssociatedObject(clip, kRequestedClipKey);
     if (outset > 0 && !requested)
     {
@@ -206,34 +216,39 @@ static void applyOutset(UIView *textView, CGRect frame, CGFloat outset)
 }
 
 %hook RCTTextLayoutManager
+
 // `paragraphAttributes` is a C++ struct passed by value, which arm64 passes as a pointer.
 - (NSTextStorage *)_textStorageAndLayoutManagerWithAttributesString:(NSAttributedString *)string
                                                 paragraphAttributes:(void *)attributes
                                                                size:(CGSize)size
 {
-    NSTextStorage   *storage = %orig;
-    NSLayoutManager *layout  = storage.layoutManagers.firstObject;
+    NSTextStorage *storage  = %orig;
+    NSLayoutManager *layout = storage.layoutManagers.firstObject;
     if (layout && !layout.delegate && drawsReplacement(storage))
     {
         layout.delegate = centring;
         [layout invalidateLayoutForCharacterRange:NSMakeRange(0, storage.length)
                              actualCharacterRange:NULL];
     }
+
     return storage;
 }
+
 %end
 
 %hook RCTParagraphComponentView
+
 - (void)layoutSubviews
 {
     %orig;
-    Ivar    ivar     = class_getInstanceVariable(object_getClass(self), "_textView");
+    Ivar ivar        = class_getInstanceVariable(object_getClass(self), "_textView");
     UIView *textView = ivar ? object_getIvar(self, ivar) : nil;
     if (!textView.superview || ![self respondsToSelector:@selector(attributedText)])
     {
         return;
     }
-    CGRect  frame  = [self convertRect:self.bounds toView:textView.superview];
+
+    CGRect frame   = [self convertRect:self.bounds toView:textView.superview];
     CGFloat outset = [Fonts overrides].count ? outsetOf(self.attributedText) : 0;
     applyOutset(textView, frame, outset);
 }
@@ -247,8 +262,10 @@ static void applyOutset(UIView *textView, CGRect frame, CGFloat outset)
                                  OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         return;
     }
+
     %orig;
 }
+
 %end
 
 %ctor
@@ -256,8 +273,8 @@ static void applyOutset(UIView *textView, CGRect frame, CGFloat outset)
     centring = [FontLineCentring new];
     SEL storage =
         @selector(_textStorageAndLayoutManagerWithAttributesString:paragraphAttributes:size:);
-    if (![objc_getClass("RCTTextLayoutManager") instancesRespondToSelector:storage] ||
-        !class_getInstanceVariable(objc_getClass("RCTParagraphComponentView"), "_textView"))
+    if (![objc_getClass("RCTTextLayoutManager") instancesRespondToSelector:storage]
+        || !class_getInstanceVariable(objc_getClass("RCTParagraphComponentView"), "_textView"))
     {
         [Logger warning:LOG_CATEGORY_FONTS
                  format:@"React Native's text classes changed; tall fonts may be clipped."];

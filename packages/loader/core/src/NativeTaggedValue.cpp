@@ -15,6 +15,7 @@ static bool isTypeName(std::string_view type)
     {
         return false;
     }
+
     for (char character : type)
     {
         bool letter =
@@ -24,6 +25,7 @@ static bool isTypeName(std::string_view type)
             return false;
         }
     }
+
     return true;
 }
 
@@ -33,8 +35,9 @@ static std::optional<std::string> unescaped(std::string_view quoted)
     {
         return std::nullopt;
     }
+
     std::string_view body = quoted.substr(1, quoted.size() - 2);
-    std::string      text;
+    std::string text;
     text.reserve(body.size());
     for (size_t index = 0; index < body.size(); index++)
     {
@@ -43,15 +46,18 @@ static std::optional<std::string> unescaped(std::string_view quoted)
         {
             return std::nullopt;
         }
+
         if (character != '\\')
         {
             text += character;
             continue;
         }
+
         if (++index >= body.size())
         {
             return std::nullopt;
         }
+
         switch (body[index])
         {
             case '"':
@@ -78,6 +84,7 @@ static std::optional<std::string> unescaped(std::string_view quoted)
                 return std::nullopt;
         }
     }
+
     return text;
 }
 
@@ -87,53 +94,60 @@ static bool isNumberLiteral(std::string_view literal)
     {
         return false;
     }
+
     for (char character : literal)
     {
-        bool allowed = (character >= '0' && character <= '9') || character == '-' ||
-                       character == '+' || character == '.' || character == 'e' || character == 'E';
+        bool allowed = (character >= '0' && character <= '9') || character == '-'
+                       || character == '+' || character == '.' || character == 'e'
+                       || character == 'E';
         if (!allowed)
         {
             return false;
         }
     }
+
     return literal.front() == '-' || (literal.front() >= '0' && literal.front() <= '9');
 }
 
 std::optional<TaggedValue> parseTaggedValue(std::string_view json)
 {
-    if (json.size() < kTypePrefix.size() + kValueMarker.size() + 2 ||
-        json.substr(0, kTypePrefix.size()) != kTypePrefix || json.back() != '}')
-    {
-        return std::nullopt;
-    }
-    size_t typeEnd = json.find('"', kTypePrefix.size());
-    if (typeEnd == std::string_view::npos ||
-        json.substr(typeEnd, kValueMarker.size()) != kValueMarker)
+    if (json.size() < kTypePrefix.size() + kValueMarker.size() + 2
+        || json.substr(0, kTypePrefix.size()) != kTypePrefix || json.back() != '}')
     {
         return std::nullopt;
     }
 
-    TaggedValue      value;
+    size_t typeEnd = json.find('"', kTypePrefix.size());
+    if (typeEnd == std::string_view::npos
+        || json.substr(typeEnd, kValueMarker.size()) != kValueMarker)
+    {
+        return std::nullopt;
+    }
+
+    TaggedValue value;
     std::string_view type = json.substr(kTypePrefix.size(), typeEnd - kTypePrefix.size());
     if (!isTypeName(type))
     {
         return std::nullopt;
     }
+
     value.type = std::string(type);
 
-    size_t           literalStart = typeEnd + kValueMarker.size();
-    std::string_view literal      = json.substr(literalStart, json.size() - literalStart - 1);
+    size_t literalStart      = typeEnd + kValueMarker.size();
+    std::string_view literal = json.substr(literalStart, json.size() - literalStart - 1);
     if (literal == "null")
     {
         value.kind = TaggedValueKind::Null;
         return value;
     }
+
     if (literal == "true" || literal == "false")
     {
         value.kind    = TaggedValueKind::Boolean;
         value.boolean = literal == "true";
         return value;
     }
+
     if (!literal.empty() && literal.front() == '"')
     {
         std::optional<std::string> text = unescaped(literal);
@@ -141,21 +155,25 @@ std::optional<TaggedValue> parseTaggedValue(std::string_view json)
         {
             return std::nullopt;
         }
+
         value.kind = TaggedValueKind::String;
         value.text = std::move(*text);
         return value;
     }
+
     if (!isNumberLiteral(literal))
     {
         return std::nullopt;
     }
+
     std::string terminated(literal);
-    char       *end    = nullptr;
-    double      number = std::strtod(terminated.c_str(), &end);
+    char *end     = nullptr;
+    double number = std::strtod(terminated.c_str(), &end);
     if (end != terminated.c_str() + terminated.size() || !std::isfinite(number))
     {
         return std::nullopt;
     }
+
     value.kind   = TaggedValueKind::Number;
     value.number = number;
     return value;
@@ -167,11 +185,13 @@ static std::optional<size_t> taggedValueEnd(std::string_view json, size_t start)
     {
         return std::nullopt;
     }
+
     size_t marker = json.find(kValueMarker, start + kTypePrefix.size());
     if (marker == std::string_view::npos)
     {
         return std::nullopt;
     }
+
     size_t position = marker + kValueMarker.size();
     if (position < json.size() && json[position] == '"')
     {
@@ -186,10 +206,12 @@ static std::optional<size_t> taggedValueEnd(std::string_view json, size_t start)
                 break;
             }
         }
+
         if (position >= json.size())
         {
             return std::nullopt;
         }
+
         position++;
     }
     else
@@ -200,10 +222,12 @@ static std::optional<size_t> taggedValueEnd(std::string_view json, size_t start)
             return std::nullopt;
         }
     }
+
     if (position >= json.size() || json[position] != '}')
     {
         return std::nullopt;
     }
+
     return position + 1;
 }
 
@@ -214,6 +238,7 @@ static std::optional<TaggedValue> taggedValueAt(std::string_view json, size_t &p
     {
         return std::nullopt;
     }
+
     std::optional<TaggedValue> value = parseTaggedValue(json.substr(position, *end - position));
     position                         = *end;
     return value;
@@ -228,7 +253,7 @@ std::optional<TaggedEvent> parseTaggedEvent(std::string_view json)
     static constexpr std::string_view kPhase           = ",\"phase\":\"";
 
     TaggedEvent event;
-    size_t      position = 0;
+    size_t position = 0;
     if (json.substr(0, kSelfPrefix.size()) == kSelfPrefix)
     {
         position += kSelfPrefix.size();
@@ -237,6 +262,7 @@ std::optional<TaggedEvent> parseTaggedEvent(std::string_view json)
         {
             return std::nullopt;
         }
+
         position += kArgsWithSelf.size();
     }
     else if (json.substr(0, kArgsWithoutSelf.size()) == kArgsWithoutSelf)
@@ -256,34 +282,42 @@ std::optional<TaggedEvent> parseTaggedEvent(std::string_view json)
             {
                 return std::nullopt;
             }
+
             position++;
         }
+
         std::optional<TaggedValue> argument = taggedValueAt(json, position);
         if (!argument)
         {
             return std::nullopt;
         }
+
         event.arguments.push_back(std::move(*argument));
     }
+
     if (position >= json.size() || json[position++] != ']')
     {
         return std::nullopt;
     }
+
     event.argumentIndexes.resize(event.arguments.size());
     for (size_t index = 0; index < event.argumentIndexes.size(); index++)
     {
         event.argumentIndexes[index] = index;
     }
+
     event.phase = "before";
     if (position < json.size() && json[position] == '}')
     {
         return position + 1 == json.size() ? std::optional<TaggedEvent>(std::move(event))
                                            : std::nullopt;
     }
+
     if (json.substr(position, kArgumentIndexes.size()) != kArgumentIndexes)
     {
         return std::nullopt;
     }
+
     position += kArgumentIndexes.size();
     event.argumentIndexes.clear();
     while (position < json.size() && json[position] != ']')
@@ -295,45 +329,53 @@ std::optional<TaggedEvent> parseTaggedEvent(std::string_view json)
                 return std::nullopt;
             }
         }
+
         size_t start = position;
         while (position < json.size() && json[position] >= '0' && json[position] <= '9')
         {
             position++;
         }
-        size_t value  = 0;
-        auto   parsed = std::from_chars(json.data() + start, json.data() + position, value);
-        if (start == position || parsed.ec != std::errc{} || parsed.ptr != json.data() + position ||
-            std::find(event.argumentIndexes.begin(), event.argumentIndexes.end(), value) !=
-                event.argumentIndexes.end())
+
+        size_t value = 0;
+        auto parsed  = std::from_chars(json.data() + start, json.data() + position, value);
+        if (start == position || parsed.ec != std::errc{} || parsed.ptr != json.data() + position
+            || std::find(event.argumentIndexes.begin(), event.argumentIndexes.end(), value)
+                   != event.argumentIndexes.end())
         {
             return std::nullopt;
         }
+
         event.argumentIndexes.push_back(value);
     }
-    if (position >= json.size() || json[position++] != ']' ||
-        event.argumentIndexes.size() != event.arguments.size() ||
-        json.substr(position, kPhase.size()) != kPhase)
+
+    if (position >= json.size() || json[position++] != ']'
+        || event.argumentIndexes.size() != event.arguments.size()
+        || json.substr(position, kPhase.size()) != kPhase)
     {
         return std::nullopt;
     }
+
     position += kPhase.size();
     size_t phaseEnd = json.find('"', position);
     if (phaseEnd == std::string_view::npos)
     {
         return std::nullopt;
     }
+
     std::optional<std::string> phase =
         unescaped(json.substr(position - 1, phaseEnd - position + 2));
     if (!phase || (*phase != "before" && *phase != "after"))
     {
         return std::nullopt;
     }
+
     event.phase = std::move(*phase);
     position    = phaseEnd + 1;
     if (position + 1 != json.size() || json[position] != '}')
     {
         return std::nullopt;
     }
+
     return event;
 }
 }

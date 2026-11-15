@@ -44,11 +44,12 @@ public:
 
 static std::optional<std::string> taggedHandle(const nlohmann::json &value)
 {
-    if (value.value("type", "") == "handle" && value.contains("value") &&
-        value["value"].is_string())
+    if (value.value("type", "") == "handle" && value.contains("value")
+        && value["value"].is_string())
     {
         return value["value"].get<std::string>();
     }
+
     return std::nullopt;
 }
 
@@ -81,8 +82,8 @@ int main()
         std::make_shared<jsi::StringBuffer>(
             "JSON.stringify([event.self, event.args[0].value, event.args[2], 'value' in event.self])"),
         "shape.js");
-    require(shape.getString(*runtime).utf8(*runtime) ==
-                R"([{"type":"handle","value":"java-1"},"java-2",{"type":"int","value":7},true])",
+    require(shape.getString(*runtime).utf8(*runtime)
+                == R"([{"type":"handle","value":"java-1"},"java-2",{"type":"int","value":7},true])",
             "leased handles keep their plain shape");
 
     runtime->evaluateJavaScript(std::make_shared<jsi::StringBuffer>(

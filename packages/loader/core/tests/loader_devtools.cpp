@@ -17,18 +17,18 @@ static std::filesystem::path makeTemporaryDirectory()
 
 static std::string manifestListing(const std::string &file, const std::string &contents)
 {
-    return R"({"bytecodeVersions":[98],"sha512":{"unbound.98.bundle":")" +
-           loader::sha512Hex("bundle") + R"(",")" + file + R"(":")" + loader::sha512Hex(contents) +
-           R"("}})";
+    return R"({"bytecodeVersions":[98],"sha512":{"unbound.98.bundle":")"
+           + loader::sha512Hex("bundle") + R"(",")" + file + R"(":")" + loader::sha512Hex(contents)
+           + R"("}})";
 }
 
 int main()
 {
-    const auto  root      = makeTemporaryDirectory();
-    const auto  documents = root.string();
-    std::string manifest  = R"({"bytecodeVersions":[98],"sha512":{}})";
-    std::string served    = "backend";
-    int         downloads = 0;
+    const auto root      = makeTemporaryDirectory();
+    const auto documents = root.string();
+    std::string manifest = R"({"bytecodeVersions":[98],"sha512":{}})";
+    std::string served   = "backend";
+    int downloads        = 0;
     std::string requestedURL;
 
     loader::SettingsStore settings((root / "settings.json").string());

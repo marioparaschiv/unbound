@@ -15,10 +15,10 @@ void forget(FabricSurface *surface);
 void destroyIdle(const std::vector<SurfacePointer> &evicted);
 bool park(const SurfacePointer &surface);
 std::optional<uint64_t> parkBeforeDetaching(const SurfacePointer &surface);
-void                    finishParking(const SurfacePointer &surface, uint64_t ticket);
-SurfacePointer          takeIdle(const std::string &key, uint64_t generation);
-void                    watchRuntimeGenerations();
-void                    evictIdleUntilSurfaceFits();
+void finishParking(const SurfacePointer &surface, uint64_t ticket);
+SurfacePointer takeIdle(const std::string &key, uint64_t generation);
+void watchRuntimeGenerations();
+void evictIdleUntilSurfaceFits();
 bool adoptReused(const SurfacePointer &surface, const SurfacePointer &idle, uint64_t generation,
                  const std::string &reuseKey);
 void countMissedSurface();

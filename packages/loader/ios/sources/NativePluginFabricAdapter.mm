@@ -16,7 +16,7 @@
                 initialProperties:(NSDictionary *)properties;
 @end
 
-@interface                          FabricContainer : UIView
+@interface FabricContainer : UIView
 @property (nonatomic, weak) UIView *surfaceView;
 - (void)setFabricFrame:(CGRect)frame;
 @end
@@ -34,6 +34,7 @@
     {
         return;
     }
+
     [super setFrame:frame];
 }
 
@@ -108,12 +109,13 @@ static void fabricWaitForFirstRender(id surface)
     {
         return;
     }
+
     using Function = BOOL (*)(id, SEL, NSTimeInterval);
     ((Function) objc_msgSend)(surface, @selector(synchronouslyWaitFor:), kFabricFirstRenderWait);
 }
 
 struct IOSFabricSurface {
-    __strong id      surface     = nil;
+    __strong id surface          = nil;
     __strong UIView *view        = nil;
     __strong UIView *surfaceView = nil;
 };
@@ -156,6 +158,7 @@ static IOSFabricSurface fabricMountNative(id host, UIView *containerView, NSStri
     {
         fabricWaitForFirstRender(surface);
     }
+
     return {surface, surfaceContainer, view};
 }
 
@@ -165,6 +168,7 @@ static bool fabricUpdateNative(id surface, NSDictionary *properties)
     {
         return false;
     }
+
     fabricSetProperties(surface, properties);
     return true;
 }
@@ -188,6 +192,7 @@ static void fabricSetFrameNative(UIView *view, UIView *surfaceView, CGRect frame
     {
         view.frame = frame;
     }
+
     [view setNeedsLayout];
     [view layoutIfNeeded];
     if (surfaceView)
@@ -247,7 +252,7 @@ public:
     {
     }
 
-    std::shared_ptr<loader::native::FabricView> view(facebook::jsi::Runtime     &runtime,
+    std::shared_ptr<loader::native::FabricView> view(facebook::jsi::Runtime &runtime,
                                                      const facebook::jsi::Value &handle) override
     {
         id object = resolver_(runtime, handle);
@@ -255,6 +260,7 @@ public:
         {
             throw facebook::jsi::JSError(runtime, "Fabric expects a UIView");
         }
+
         return std::make_shared<IOSFabricView>((UIView *) object);
     }
 
@@ -271,15 +277,15 @@ public:
             });
         });
         std::lock_guard<std::mutex> lock(mutex_);
-        std::string                 id = "surface-" + std::to_string(next_++);
-        surfaces_[id]                  = mounted;
+        std::string id = "surface-" + std::to_string(next_++);
+        surfaces_[id]  = mounted;
         return id;
     }
 
     bool update(const std::string &surface, const nlohmann::json &properties) override
     {
         IOSFabricSurface mounted = find(surface);
-        bool             updated = false;
+        bool updated             = false;
         guard_([&]() {
             updated = fabricUpdateNative(mounted.surface, fabricDictionary(properties));
         });
@@ -340,8 +346,8 @@ public:
 
     bool attach(const std::string &surface, const loader::native::FabricView &container) override
     {
-        IOSFabricSurface mounted       = find(surface);
-        UIView          *containerView = static_cast<const IOSFabricView &>(container).view();
+        IOSFabricSurface mounted = find(surface);
+        UIView *containerView    = static_cast<const IOSFabricView &>(container).view();
         guard_([&]() {
             mounted.view.frame = containerView.bounds;
             [containerView addSubview:mounted.view];
@@ -355,14 +361,16 @@ public:
         IOSFabricSurface mounted;
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            auto                        found = surfaces_.find(surface);
+            auto found = surfaces_.find(surface);
             if (found == surfaces_.end())
             {
                 return;
             }
+
             mounted = found->second;
             surfaces_.erase(found);
         }
+
         guard_([&]() {
             fabricUnmountNative(mounted.surface, mounted.view);
         });
@@ -372,20 +380,21 @@ private:
     IOSFabricSurface find(const std::string &surface)
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        auto                        found = surfaces_.find(surface);
+        auto found = surfaces_.find(surface);
         if (found == surfaces_.end())
         {
             throw std::runtime_error("The Fabric surface is no longer mounted");
         }
+
         return found->second;
     }
 
-    loader::ios::NativeObjCResolver                   resolver_;
-    loader::ios::NativeObjCGuard                      guard_;
-    loader::ios::NativeOperationSignposter            signposter_;
-    std::mutex                                        mutex_;
+    loader::ios::NativeObjCResolver resolver_;
+    loader::ios::NativeObjCGuard guard_;
+    loader::ios::NativeOperationSignposter signposter_;
+    std::mutex mutex_;
     std::unordered_map<std::string, IOSFabricSurface> surfaces_;
-    uint64_t                                          next_ = 1;
+    uint64_t next_ = 1;
 };
 
 std::shared_ptr<loader::native::FabricAdapter>

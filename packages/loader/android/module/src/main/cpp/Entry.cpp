@@ -48,6 +48,7 @@ static int androidPriority(loader::LogLevel level)
         case loader::LogLevel::Error:
             return ANDROID_LOG_ERROR;
     }
+
     return ANDROID_LOG_INFO;
 }
 
@@ -92,8 +93,8 @@ static void nativeInitialize(JNIEnv *env, jclass, jstring documents, jstring boo
 
     const std::string documentsPath = configuration.documents;
     const std::string originName    = configuration.origin;
-    auto              host = std::make_shared<AndroidLoader>(std::move(configuration), gCallbacks);
-    auto              loader = std::make_shared<loader::Loader>(
+    auto host   = std::make_shared<AndroidLoader>(std::move(configuration), gCallbacks);
+    auto loader = std::make_shared<loader::Loader>(
         loader::LoaderOptions{documentsPath, "Android", originName}, host,
         host->platformProvider());
     loader->start();
@@ -143,7 +144,8 @@ static jboolean nativeAdoptAnrTrace(JNIEnv *env, jclass, jbyteArray trace, jlong
     {
         return JNI_FALSE;
     }
-    jsize       length = env->GetArrayLength(trace);
+
+    jsize length = env->GetArrayLength(trace);
     std::string bytes(static_cast<size_t>(length), '\0');
     env->GetByteArrayRegion(trace, 0, length, reinterpret_cast<jbyte *>(bytes.data()));
     std::optional<std::string> stack = loader::anrTraceStack(bytes);
@@ -151,10 +153,12 @@ static jboolean nativeAdoptAnrTrace(JNIEnv *env, jclass, jbyteArray trace, jlong
     {
         return JNI_FALSE;
     }
+
     if (auto loader = currentLoader())
     {
         loader::recordCrash(loader->documents(), *stack, static_cast<int64_t>(at));
     }
+
     return JNI_TRUE;
 }
 
@@ -164,7 +168,8 @@ static jboolean nativeAdoptTombstone(JNIEnv *env, jclass, jbyteArray tombstone)
     {
         return JNI_FALSE;
     }
-    jsize       length = env->GetArrayLength(tombstone);
+
+    jsize length = env->GetArrayLength(tombstone);
     std::string bytes(static_cast<size_t>(length), '\0');
     env->GetByteArrayRegion(tombstone, 0, length, reinterpret_cast<jbyte *>(bytes.data()));
     std::optional<std::string> stack = loader::tombstoneStack(bytes);
@@ -249,6 +254,7 @@ static void nativeRecordHttpsCheck(JNIEnv *env, jclass, jstring json)
     {
         return;
     }
+
     loader::environment_report::HttpsCheck check;
     check.completed = result.value("completed", false);
     check.failure   = result.value("failure", std::string());
@@ -259,6 +265,7 @@ static void nativeRecordHttpsCheck(JNIEnv *env, jclass, jstring json)
             check.issuers.push_back(issuer.get<std::string>());
         }
     }
+
     loader::environment_report::recordHttpsCheck(std::move(check));
 }
 
@@ -269,8 +276,8 @@ static jint nativeHermesBytecodeVersion(JNIEnv *env, jclass, jbyteArray header)
         return 0;
     }
 
-    jsize  length = env->GetArrayLength(header);
-    jbyte *bytes  = env->GetByteArrayElements(header, nullptr);
+    jsize length = env->GetArrayLength(header);
+    jbyte *bytes = env->GetByteArrayElements(header, nullptr);
     if (!bytes)
     {
         return 0;
@@ -288,6 +295,7 @@ static jstring nativeHookReturnValue(JNIEnv *env, jclass, jstring token, jstring
     {
         return nullptr;
     }
+
     std::optional<std::string> value = unbound::android::hookReturnValue(
         toStdString(env, token), toStdString(env, self), toStdString(env, arguments));
     return value ? toJavaString(env, *value) : nullptr;
@@ -300,6 +308,7 @@ static jstring nativeToolbox(JNIEnv *env, jclass, jstring action, jstring argume
     {
         return nullptr;
     }
+
     return toJavaString(env,
                         loader->toolbox(toStdString(env, action),
                                         argument ? toStdString(env, argument) : std::string()));
@@ -320,6 +329,7 @@ static void nativeWarnOffMainViewCall(JNIEnv *env, jclass, jstring call)
     {
         return;
     }
+
     if (auto warning = warnings.warning(loader::currentAddon(), toStdString(env, call)))
     {
         loader::log(loader::LogLevel::Warning, LOG_CATEGORY_PLUGINS, *warning);
@@ -364,8 +374,9 @@ static jboolean nativeDevOverlayVisible(JNIEnv *, jclass, jboolean virtualDevice
                                         jboolean debugBuild)
 {
     auto loader = currentLoader();
-    return loader && loader::preferences::devOverlayVisible(
-                         loader->settings(), virtualDevice == JNI_TRUE, debugBuild == JNI_TRUE)
+    return loader
+                   && loader::preferences::devOverlayVisible(
+                       loader->settings(), virtualDevice == JNI_TRUE, debugBuild == JNI_TRUE)
                ? JNI_TRUE
                : JNI_FALSE;
 }
@@ -378,15 +389,15 @@ static jlong nativeToolboxHoldMilliseconds(JNIEnv *, jclass)
 static jboolean nativeIsBlockedTelemetry(JNIEnv *env, jclass, jstring url)
 {
     auto loader = currentLoader();
-    return loader && url && loader::isTelemetryURL(toStdString(env, url)) &&
-                   loader::preferences::telemetryBlocked(loader->settings())
+    return loader && url && loader::isTelemetryURL(toStdString(env, url))
+                   && loader::preferences::telemetryBlocked(loader->settings())
                ? JNI_TRUE
                : JNI_FALSE;
 }
 
 struct ToolboxGestures {
-    std::mutex                        mutex;
-    loader::toolbox::ShakeSensor      shake;
+    std::mutex mutex;
+    loader::toolbox::ShakeSensor shake;
     loader::toolbox::ThreeFingerPress press;
 };
 
@@ -407,20 +418,20 @@ static loader::toolbox::GestureEnabled gestureEnabled(loader::preferences::Toolb
 static jboolean nativeShakeSample(JNIEnv *, jclass, jfloat x, jfloat y, jfloat z,
                                   jlong milliseconds)
 {
-    ToolboxGestures            &gestures = toolboxGestures();
+    ToolboxGestures &gestures = toolboxGestures();
     std::lock_guard<std::mutex> lock(gestures.mutex);
     return gestures.shake.sample(x, y, z, milliseconds,
-                                 gestureEnabled(loader::preferences::ToolboxGesture::Shake)) ==
-                   loader::toolbox::GestureAction::Open
+                                 gestureEnabled(loader::preferences::ToolboxGesture::Shake))
+                   == loader::toolbox::GestureAction::Open
                ? JNI_TRUE
                : JNI_FALSE;
 }
 
 static jstring nativeThreeFingerEvent(JNIEnv *env, jclass, jstring event, jint pointers)
 {
-    const std::string              name     = toStdString(env, event);
-    ToolboxGestures               &gestures = toolboxGestures();
-    std::lock_guard<std::mutex>    lock(gestures.mutex);
+    const std::string name    = toStdString(env, event);
+    ToolboxGestures &gestures = toolboxGestures();
+    std::lock_guard<std::mutex> lock(gestures.mutex);
     loader::toolbox::GestureAction action = loader::toolbox::GestureAction::None;
     if (name == "pointer-down")
     {
@@ -435,6 +446,7 @@ static jstring nativeThreeFingerEvent(JNIEnv *env, jclass, jstring event, jint p
     {
         action = gestures.press.holdElapsed();
     }
+
     return toJavaString(env, loader::toolbox::gestureActionName(action));
 }
 
@@ -476,6 +488,7 @@ static bool readOverlayBounds(JNIEnv *env, jdoubleArray bounds, loader::devoverl
     {
         return false;
     }
+
     jdouble values[6];
     env->GetDoubleArrayRegion(bounds, 0, 6, values);
     size   = {values[0], values[1]};
@@ -491,6 +504,7 @@ static jdoubleArray toPointArray(JNIEnv *env, loader::devoverlay::Point point)
         const jdouble values[2] = {point.x, point.y};
         env->SetDoubleArrayRegion(result, 0, 2, values);
     }
+
     return result;
 }
 
@@ -501,34 +515,36 @@ static jdouble nativeDevOverlayButtonSide(JNIEnv *, jclass)
 
 static jdoubleArray nativeDevOverlayCenter(JNIEnv *env, jclass, jdoubleArray bounds)
 {
-    loader::devoverlay::Size   size;
+    loader::devoverlay::Size size;
     loader::devoverlay::Insets insets;
-    auto                       loader = currentLoader();
+    auto loader = currentLoader();
     if (!loader || !readOverlayBounds(env, bounds, size, insets))
     {
         return nullptr;
     }
+
     return toPointArray(env, loader::devoverlay::buttonCenter(loader->settings(), size, insets));
 }
 
 static jdoubleArray nativeClampDevOverlayCenter(JNIEnv *env, jclass, jdouble x, jdouble y,
                                                 jdoubleArray bounds)
 {
-    loader::devoverlay::Size   size;
+    loader::devoverlay::Size size;
     loader::devoverlay::Insets insets;
     if (!readOverlayBounds(env, bounds, size, insets))
     {
         return nullptr;
     }
+
     return toPointArray(env, loader::devoverlay::clampCenter({x, y}, size, insets));
 }
 
 static void nativeSaveDevOverlayCenter(JNIEnv *env, jclass, jdouble x, jdouble y,
                                        jdoubleArray bounds)
 {
-    loader::devoverlay::Size   size;
+    loader::devoverlay::Size size;
     loader::devoverlay::Insets insets;
-    auto                       loader = currentLoader();
+    auto loader = currentLoader();
     if (loader && readOverlayBounds(env, bounds, size, insets))
     {
         loader::devoverlay::saveButtonCenter(loader->settings(), {x, y}, size);
@@ -569,6 +585,7 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
                     std::string("Failed to find NativeBridge.") + name + " " + signature);         \
         found = false;                                                                             \
     }
+
     UNBOUND_BRIDGE_CALLBACKS(UNBOUND_CACHE_CALLBACK)
 #undef UNBOUND_CACHE_CALLBACK
     return found;
@@ -599,10 +616,9 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
 #undef UNBOUND_NATIVE_METHOD
     };
 
-    if (env->RegisterNatives(bridge.get(), methods, sizeof(methods) / sizeof(methods[0])) !=
-            JNI_OK ||
-        !cacheCallbacks(env, bridge.get()) || !registerHotReloadNatives(env) ||
-        !registerFileWatcherNatives(env) || !registerHermesSampler(env))
+    if (env->RegisterNatives(bridge.get(), methods, sizeof(methods) / sizeof(methods[0])) != JNI_OK
+        || !cacheCallbacks(env, bridge.get()) || !registerHotReloadNatives(env)
+        || !registerFileWatcherNatives(env) || !registerHermesSampler(env))
     {
         clearPendingException(env);
         return JNI_ERR;

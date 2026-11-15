@@ -56,17 +56,18 @@ static std::string fakeBytecode(uint32_t version, const std::string &body)
     {
         bytes.push_back(static_cast<char>((version >> shift) & 0xFF));
     }
+
     return bytes + body;
 }
 
 static void pluginBytecodeMatchesItsManifest()
 {
-    const auto        root     = makeTemporaryDirectory();
-    const auto        folder   = root / "Plugins" / "compiled";
+    const auto root            = makeTemporaryDirectory();
+    const auto folder          = root / "Plugins" / "compiled";
     const std::string bytecode = fakeBytecode(98, "body");
-    const std::string manifest = R"({"id":"a.compiled","main":"dist/index.js","bytecode":{"98":")" +
-                                 loader::sha512Hex(bytecode) + R"(","96":")" +
-                                 loader::sha512Hex("other") + R"("}})";
+    const std::string manifest = R"({"id":"a.compiled","main":"dist/index.js","bytecode":{"98":")"
+                                 + loader::sha512Hex(bytecode) + R"(","96":")"
+                                 + loader::sha512Hex("other") + R"("}})";
     write(folder / "manifest.json", manifest);
     write(folder / "dist" / "index.js", "module.exports = 1;");
     write(folder / "dist" / "index.98.hbc", bytecode);
@@ -95,12 +96,12 @@ static void pluginBytecodeMatchesItsManifest()
 
 static void compiledPluginsLeaveTheirSourceOnDisk()
 {
-    const auto        root     = makeTemporaryDirectory();
-    const auto        folder   = root / "Plugins" / "compiled";
+    const auto root            = makeTemporaryDirectory();
+    const auto folder          = root / "Plugins" / "compiled";
     const std::string source   = "module.exports = 1;";
     const std::string bytecode = fakeBytecode(98, "body");
-    write(folder / "manifest.json", R"({"id":"a.compiled","main":"index.js","bytecode":{"98":")" +
-                                        loader::sha512Hex(bytecode) + R"("}})");
+    write(folder / "manifest.json", R"({"id":"a.compiled","main":"index.js","bytecode":{"98":")"
+                                        + loader::sha512Hex(bytecode) + R"("}})");
     write(folder / "index.js", source);
     write(folder / "index.98.hbc", bytecode);
 
@@ -195,10 +196,12 @@ int main()
             {
                 return std::nullopt;
             }
+
             if (url == "https://missing.invalid")
             {
                 return loader::DownloadResult{404, ""};
             }
+
             std::ofstream(destination, std::ios::binary) << url;
             return loader::DownloadResult{200, ""};
         });
@@ -211,11 +214,12 @@ int main()
         {
             return true;
         }
+
         return false;
     };
     provider.downloadFile("https://fonts.invalid/a.ttf", "Fonts/Icons/a.ttf");
-    assert(loader::readTextFile((root / "Fonts" / "Icons" / "a.ttf").string()) ==
-           "https://fonts.invalid/a.ttf");
+    assert(loader::readTextFile((root / "Fonts" / "Icons" / "a.ttf").string())
+           == "https://fonts.invalid/a.ttf");
     assert(refuses("https://fonts.invalid/b.ttf", "../b.ttf"));
     assert(refuses("https://fonts.invalid/b.ttf", "Fonts/../../b.ttf"));
     assert(refuses("https://fonts.invalid/b.ttf", (root / "b.ttf").string()));

@@ -24,7 +24,7 @@ static void sniffsByMagicBytes()
 static void readsFaces()
 {
     std::string error;
-    const auto  regular = readFontFace(font_fixtures::font(), error);
+    const auto regular = readFontFace(font_fixtures::font(), error);
     assert(regular && regular->postScriptName == "TestSans-Regular");
     assert(regular->family == "Test Sans" && regular->fullName == "Test Sans Regular");
     assert(regular->weight == 400 && !regular->italic);
@@ -52,12 +52,12 @@ static void readsFaces()
 static void readsVariableFonts()
 {
     std::string error;
-    const auto  font = readFontFace(font_vectors::variable(), error);
+    const auto font = readFontFace(font_vectors::variable(), error);
     assert(font && font->postScriptName == "VectorSans-Regular" && font->family == "Vector Sans");
     assert(font->axes.size() == 2 && font->variations.empty());
     assert(font->axes[0].tag == "wght" && font->axes[0].name == "Weight");
-    assert(font->axes[0].minimum == 100 && font->axes[0].defaultValue == 400 &&
-           font->axes[0].maximum == 900 && !font->axes[0].hidden);
+    assert(font->axes[0].minimum == 100 && font->axes[0].defaultValue == 400
+           && font->axes[0].maximum == 900 && !font->axes[0].hidden);
     assert(font->axes[1].tag == "wdth" && font->axes[1].minimum == 75);
 
     assert(font->instances.size() == 3);
@@ -72,7 +72,7 @@ static void readsVariableFonts()
 static void refusesWhatIsNotAFont()
 {
     std::string error;
-    FaceSpec    variable;
+    FaceSpec variable;
     variable.variable = true;
     assert(!readFontFace(font_fixtures::font(variable), error));
     assert(error.find("axes are damaged") != std::string::npos);
@@ -101,25 +101,25 @@ static void checksArchivePaths()
 static void extractsFontsFromZips()
 {
     FaceSpec bold;
-    bold.postScript            = "TestSans-Bold";
-    bold.weight                = 700;
-    const std::string zipped   = font_fixtures::zip({
+    bold.postScript          = "TestSans-Bold";
+    bold.weight              = 700;
+    const std::string zipped = font_fixtures::zip({
         {"Test Sans/TestSans-Regular.ttf", font_fixtures::font()},
         {"Test Sans/TestSans-Bold.OTF", font_fixtures::font(bold)},
         {"Test Sans/readme.txt", "hello"},
         {"__MACOSX/Test Sans/._TestSans-Regular.ttf", "resource fork"},
         {"Test Sans/", ""},
     });
-    ArchiveContents   contents = extractFontArchive(zipped);
+    ArchiveContents contents = extractFontArchive(zipped);
     assert(contents.error.empty());
     assert(contents.fonts.size() == 2);
     assert(contents.fonts[0].data == font_fixtures::font());
     assert(contents.fonts[1].name == "Test Sans/TestSans-Bold.OTF");
 
-    assert(extractFontArchive(font_fixtures::zip({{"../evil.ttf", "x"}})).error.find("outside") !=
-           std::string::npos);
-    assert(extractFontArchive(font_fixtures::zip({{"notes.txt", "x"}})).error.find("no .ttf") !=
-           std::string::npos);
+    assert(extractFontArchive(font_fixtures::zip({{"../evil.ttf", "x"}})).error.find("outside")
+           != std::string::npos);
+    assert(extractFontArchive(font_fixtures::zip({{"notes.txt", "x"}})).error.find("no .ttf")
+           != std::string::npos);
     assert(!extractFontArchive("PK\x03\x04 not really").error.empty());
     assert(!extractFontArchive("<html>").error.empty());
 }
@@ -146,15 +146,16 @@ static void boundsWhatArchivesUnpackTo()
     ArchiveLimits few;
     few.maxEntries = 1;
     assert(extractFontArchive(font_fixtures::zip({{"A.ttf", "a"}, {"B.txt", "b"}}), few)
-               .error.find("too many") != std::string::npos);
+               .error.find("too many")
+           != std::string::npos);
 
     // A declared size smaller than the stored bytes fails that entry's inflate, not the bounds.
     const ArchiveContents lying =
         extractFontArchive(font_fixtures::zip({{"Short.ttf", font_fixtures::font(), 8}}));
     assert(lying.fonts.empty());
 
-    const std::string body     = font_fixtures::font();
-    const auto        inflated = extractFontArchive(
+    const std::string body = font_fixtures::font();
+    const auto inflated    = extractFontArchive(
         font_fixtures::zip({{"Deflated.ttf", body, static_cast<uint32_t>(body.size())}}));
     assert(inflated.fonts.size() == 1 && inflated.fonts[0].data == body);
 }

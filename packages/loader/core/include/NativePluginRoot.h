@@ -27,12 +27,12 @@ struct NativeCapabilityReport {
     std::vector<std::string> diagnostics;
 };
 
-std::span<const char *const>   expectedNativePluginCapabilities(NativePluginPlatform platform);
+std::span<const char *const> expectedNativePluginCapabilities(NativePluginPlatform platform);
 const NativeCapabilityBinding *findNativeCapabilityBinding(std::string_view capability);
 std::vector<std::string> missingNativeCapabilityMethods(const NativeCapabilityBinding &binding,
-                                                        const InstalledNativeMethods  &installed);
-NativeCapabilityReport   resolveNativePluginCapabilities(NativePluginPlatform          platform,
-                                                         const InstalledNativeMethods &installed);
+                                                        const InstalledNativeMethods &installed);
+NativeCapabilityReport resolveNativePluginCapabilities(NativePluginPlatform platform,
+                                                       const InstalledNativeMethods &installed);
 
 class NativePluginRootBuilder
 {
@@ -43,8 +43,8 @@ public:
     void install();
 
 private:
-    facebook::jsi::Runtime                                    &runtime_;
-    NativePluginPlatform                                       platform_;
+    facebook::jsi::Runtime &runtime_;
+    NativePluginPlatform platform_;
     std::vector<std::pair<std::string, facebook::jsi::Object>> namespaces_;
 };
 }

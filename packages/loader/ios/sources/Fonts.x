@@ -1,8 +1,8 @@
 #import "Fonts.h"
 
 @implementation Fonts
-static NSDictionary<NSString *, NSString *> *overrides   = nil;
-static NSString                             *everyFamily = nil;
+static NSDictionary<NSString *, NSString *> *overrides = nil;
+static NSString *everyFamily                           = nil;
 // PostScript name -> the CGFont registered under it, so a reinstalled face replaces the old one.
 static NSMutableDictionary<NSString *, id> *registered = nil;
 // Font file -> `{ name, family }` it registered under, which a variable font's instances draw from.
@@ -14,7 +14,7 @@ static NSMutableDictionary<NSString *, NSString *> *faceNames = nil;
 static NSMutableSet<NSString *> *unknownNames = nil;
 // Families of the files the overrides' variable instances draw from.
 static NSMutableSet<NSString *> *instanceFamilies = nil;
-static NSString *const           chosenFaceKey    = @"UnboundFontsChosenFace";
+static NSString *const chosenFaceKey              = @"UnboundFontsChosenFace";
 // Names of the faces `chose:` handed out, which `FontOverflow` centres in their line boxes.
 static NSMutableSet<NSString *> *replacementNames = nil;
 // Set while a hook builds its replacement, whose own UIFont calls must reach the originals.
@@ -30,6 +30,7 @@ static _Thread_local BOOL replacing = NO;
         [Fonts apply];
         [Logger info:LOG_CATEGORY_FONTS format:@"Successfully loaded."];
     }
+
     @catch (NSException *e)
     {
         [Logger error:LOG_CATEGORY_FONTS format:@"Failed to load. (%@)", e.reason];
@@ -50,8 +51,8 @@ static _Thread_local BOOL replacing = NO;
         [Fonts loadFont:path];
     }
 
-    NSDictionary<NSString *, NSString *> *table    = plan[@"table"];
-    NSDictionary                         *variable = plan[@"instances"];
+    NSDictionary<NSString *, NSString *> *table = plan[@"table"];
+    NSDictionary *variable                      = plan[@"instances"];
     if ([variable isKindOfClass:[NSDictionary class]])
     {
         for (NSString *name in variable)
@@ -89,6 +90,7 @@ static _Thread_local BOOL replacing = NO;
             [replacementNames addObject:font.fontName];
         }
     }
+
     return font;
 }
 
@@ -104,11 +106,12 @@ static _Thread_local BOOL replacing = NO;
 + (NSString *)takeChosenFaceOf:(NSString *)family
 {
     NSMutableDictionary *thread = NSThread.currentThread.threadDictionary;
-    NSArray             *chosen = thread[chosenFaceKey];
+    NSArray *chosen             = thread[chosenFaceKey];
     if (!chosen || ![chosen[0] isEqualToString:family])
     {
         return nil;
     }
+
     [thread removeObjectForKey:chosenFaceKey];
     return chosen[1];
 }
@@ -178,6 +181,7 @@ static _Thread_local BOOL replacing = NO;
             registeredFiles       = registeredFiles ?: [NSMutableDictionary dictionary];
             registeredFiles[path] = @{@"name" : postScriptName, @"family" : family ?: @""};
         }
+
         [Logger info:LOG_CATEGORY_FONTS format:@"Loaded font: %@.", [Fonts getFontNameByRef:ref]];
     }
 
@@ -206,7 +210,7 @@ static _Thread_local BOOL replacing = NO;
 + (NSDictionary *)axisNames:(NSDictionary *)variations of:(CGFontRef)graphics
 {
     CTFontRef font = CTFontCreateWithGraphicsFont(graphics, 0, NULL, NULL);
-    NSArray  *axes = CFBridgingRelease(CTFontCopyVariationAxes(font));
+    NSArray *axes  = CFBridgingRelease(CTFontCopyVariationAxes(font));
     CFRelease(font);
 
     NSMutableDictionary *named = [NSMutableDictionary dictionary];
@@ -214,7 +218,7 @@ static _Thread_local BOOL replacing = NO;
     {
         NSNumber *tag  = axis[(__bridge NSString *) kCTFontVariationAxisIdentifierKey];
         NSString *name = axis[(__bridge NSString *) kCTFontVariationAxisNameKey];
-        uint32_t  code = tag.unsignedIntValue;
+        uint32_t code  = tag.unsignedIntValue;
         char bytes[5]  = {(char) (code >> 24), (char) (code >> 16), (char) (code >> 8), (char) code,
                           0};
         NSNumber *value = variations[[[NSString stringWithUTF8String:bytes]
@@ -224,6 +228,7 @@ static _Thread_local BOOL replacing = NO;
             named[name] = value;
         }
     }
+
     return named;
 }
 
@@ -234,18 +239,19 @@ static _Thread_local BOOL replacing = NO;
                     variations:(NSDictionary *)variations
 {
     NSString *fileName = [Fonts registeredFile:path][@"name"];
-    id        graphics;
+    id graphics;
     @synchronized([Fonts class])
     {
         graphics = fileName ? registered[fileName] : nil;
     }
+
     if (!graphics || ![variations isKindOfClass:[NSDictionary class]])
     {
         return nil;
     }
 
     NSDictionary *named = [Fonts axisNames:variations of:(__bridge CGFontRef) graphics];
-    CGFontRef     copy  = CGFontCreateCopyWithVariations((__bridge CGFontRef) graphics,
+    CGFontRef copy      = CGFontCreateCopyWithVariations((__bridge CGFontRef) graphics,
                                                          (__bridge CFDictionaryRef) named);
     if (!copy)
     {
@@ -255,8 +261,8 @@ static _Thread_local BOOL replacing = NO;
 
     NSString *postScriptName = CFBridgingRelease(CGFontCopyPostScriptName(copy));
     // The file's default coordinates name the file's own font, already registered.
-    BOOL ready = [postScriptName isEqualToString:fileName] ||
-                 (postScriptName && [Fonts registerGraphicsFont:copy name:postScriptName]);
+    BOOL ready = [postScriptName isEqualToString:fileName]
+                 || (postScriptName && [Fonts registerGraphicsFont:copy name:postScriptName]);
     CGFontRelease(copy);
     if (!ready)
     {
@@ -274,6 +280,7 @@ static _Thread_local BOOL replacing = NO;
             [instanceFamilies addObject:family];
         }
     }
+
     return postScriptName;
 }
 
@@ -296,8 +303,8 @@ static _Thread_local BOOL replacing = NO;
     }
 
     NSDictionary *face = [CoreBridge installedFont:name];
-    NSString     *path = face[@"path"];
-    NSString     *registeredName;
+    NSString *path     = face[@"path"];
+    NSString *registeredName;
     if ([path isKindOfClass:[NSString class]])
     {
         if (![Fonts registeredFile:path])
@@ -324,6 +331,7 @@ static _Thread_local BOOL replacing = NO;
             [unknownNames addObject:name];
         }
     }
+
     return registeredName;
 }
 
@@ -332,8 +340,8 @@ static _Thread_local BOOL replacing = NO;
     // `fontWithDescriptor:size:0` means the descriptor's size; CoreText reads 0 as 12 pt.
     size = size > 0 ? size : original.pointSize;
 
-    NSDictionary *table       = [Fonts overrides];
-    NSString     *replacement = table[everyFamily] ?: table[name];
+    NSDictionary *table   = [Fonts overrides];
+    NSString *replacement = table[everyFamily] ?: table[name];
     if (!name || !replacement || [replacement isEqualToString:name])
     {
         return nil;
@@ -344,7 +352,7 @@ static _Thread_local BOOL replacing = NO;
     // Glyphs the replacement lacks fall back to the original font, not the system one.
     UIFontDescriptor *fallback =
         original ?: [UIFontDescriptor fontDescriptorWithName:name size:size];
-    NSDictionary     *cascade    = @{UIFontDescriptorCascadeListAttribute : @[ fallback ]};
+    NSDictionary *cascade        = @{UIFontDescriptorCascadeListAttribute : @[ fallback ]};
     UIFontDescriptor *descriptor = [[UIFontDescriptor fontDescriptorWithName:replacement size:size]
         fontDescriptorByAddingAttributes:cascade];
 
@@ -374,12 +382,14 @@ static _Thread_local BOOL replacing = NO;
 @end
 
 %hook UIFont
+
 + (UIFont *)fontWithName:(NSString *)name size:(CGFloat)size
 {
     if (replacing)
     {
         return %orig;
     }
+
     return [Fonts replacementFor:name size:size original:nil] ?: %orig
                                                               ?: [Fonts installedFace:name size:size];
 }
@@ -393,6 +403,7 @@ static _Thread_local BOOL replacing = NO;
     {
         return @[ chosen ];
     }
+
     return [Fonts isInstanceFamily:family] ? @[] : %orig;
 }
 
@@ -402,12 +413,15 @@ static _Thread_local BOOL replacing = NO;
     {
         return %orig;
     }
+
     // Only a named descriptor: resolving `postscriptName` on a traits-only one matches fonts.
     NSString *name = [descriptor objectForKey:UIFontDescriptorNameAttribute];
     if (![name isKindOfClass:[NSString class]])
     {
         return %orig;
     }
+
     return [Fonts replacementFor:name size:size original:descriptor] ?: %orig;
 }
+
 %end

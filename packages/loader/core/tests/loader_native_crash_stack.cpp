@@ -28,7 +28,7 @@ std::filesystem::path temporaryDirectory()
 void writesTheCrashingStackForTheNextLaunch()
 {
     std::filesystem::path directory = temporaryDirectory();
-    std::string           marker    = (directory / "running").string();
+    std::string marker              = (directory / "running").string();
 
     pid_t child = fork();
     assert(child >= 0);
@@ -40,9 +40,11 @@ void writesTheCrashingStackForTheNextLaunch()
         {
             _exit(2);
         }
+
         crash();
         _exit(3);
     }
+
     int status = 0;
     waitpid(child, &status, 0);
     assert(WIFSIGNALED(status) && WTERMSIG(status) == SIGSEGV);
@@ -66,11 +68,12 @@ void keepsTheInnermostFramesInAReport()
     {
         stack += "#" + std::to_string(frame) + " 0x1000 libsomething.so + 0x1000 symbol\n";
     }
+
     loader::toolbox::IssueReport environment{"Android", {{"Unbound", "loader 1.1.1"}}, {}};
     std::string url = loader::crashReportURL(environment, "Discord crashed.", "", stack);
     assert(url.size() <= loader::kCrashReportURLLength);
-    assert(url.find("Native%20stack") != std::string::npos ||
-           url.find("Native+stack") != std::string::npos);
+    assert(url.find("Native%20stack") != std::string::npos
+           || url.find("Native+stack") != std::string::npos);
     assert(url.find("%230%20") != std::string::npos || url.find("%230+") != std::string::npos);
 }
 }

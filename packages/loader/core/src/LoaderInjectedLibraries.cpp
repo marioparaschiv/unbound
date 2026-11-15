@@ -66,8 +66,8 @@ namespace {
 
     bool isLooseInAppBundle(const std::string &path)
     {
-        return path.find(".app/") != std::string::npos &&
-               path.find(".framework/") == std::string::npos;
+        return path.find(".app/") != std::string::npos
+               && path.find(".framework/") == std::string::npos;
     }
 
     std::string packageOf(const std::string &path)
@@ -77,6 +77,7 @@ namespace {
         {
             return "";
         }
+
         std::string rest = path.substr(kApps.size());
         if (rest.starts_with("~~"))
         {
@@ -85,24 +86,27 @@ namespace {
             {
                 return "";
             }
+
             rest = rest.substr(slash + 1);
         }
-        const size_t end       = rest.find('/');
-        std::string  directory = end == std::string::npos ? rest : rest.substr(0, end);
-        const size_t dash      = directory.find('-');
+
+        const size_t end      = rest.find('/');
+        std::string directory = end == std::string::npos ? rest : rest.substr(0, end);
+        const size_t dash     = directory.find('-');
         return dash == std::string::npos ? directory : directory.substr(0, dash);
     }
 
     std::string magiskModuleOf(const std::string &path)
     {
         constexpr std::string_view kModules = "/data/adb/modules/";
-        const size_t               start    = path.find(kModules);
+        const size_t start                  = path.find(kModules);
         if (start == std::string::npos)
         {
             return "";
         }
-        std::string  rest = path.substr(start + kModules.size());
-        const size_t end  = rest.find('/');
+
+        std::string rest = path.substr(start + kModules.size());
+        const size_t end = rest.find('/');
         return end == std::string::npos ? "" : rest.substr(0, end);
     }
 
@@ -124,13 +128,16 @@ std::vector<std::string> injectedIOSLibraries(const std::vector<std::string> &im
         {
             continue;
         }
+
         const std::string name = withoutSuffix(baseName(path), ".dylib");
         if (name.empty() || isInjectionFramework(name) || lowercase(name).starts_with("libswift"))
         {
             continue;
         }
+
         found.insert(name);
     }
+
     return {found.begin(), found.end()};
 }
 
@@ -138,8 +145,8 @@ std::vector<std::string> injectedAndroidModules(const std::string &memoryMaps,
                                                 const std::string &ownPackage)
 {
     std::set<std::string> found;
-    std::istringstream    lines(memoryMaps);
-    std::string           line;
+    std::istringstream lines(memoryMaps);
+    std::string line;
     while (std::getline(lines, line))
     {
         const size_t start = line.find('/');
@@ -147,23 +154,28 @@ std::vector<std::string> injectedAndroidModules(const std::string &memoryMaps,
         {
             continue;
         }
+
         const std::string path = line.substr(start);
         if (std::string module = magiskModuleOf(path); !module.empty())
         {
             found.insert(module);
             continue;
         }
+
         if (!path.ends_with(".apk") && !path.ends_with(".so"))
         {
             continue;
         }
+
         const std::string package = packageOf(path);
         if (package.empty() || package == ownPackage || isSystemPackage(package))
         {
             continue;
         }
+
         found.insert(package);
     }
+
     return {found.begin(), found.end()};
 }
 }

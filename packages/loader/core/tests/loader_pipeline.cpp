@@ -193,8 +193,8 @@ void runsTheNewBundleOnTheFirstLaunchAfterALoaderUpdate()
 
     std::optional<loader::LoaderPipeline::SavedBundle> bundle = launch.pipeline.takeSavedBundle();
     assert(bundle && bundle->bundle == "next");
-    assert(launch.server.settings.getString("unbound", "loader.update.checkedBy", "") ==
-           loader::loaderVersion());
+    assert(launch.server.settings.getString("unbound", "loader.update.checkedBy", "")
+           == loader::loaderVersion());
     assert(launch.host->reloads == 0);
 }
 
@@ -214,8 +214,8 @@ void doesNothingWhenDisabled()
 void mapsBytecodeAndReadsSource()
 {
     bundle_test::Server server;
-    std::string         bytecode(64, '\0');
-    uint64_t            magic = loader::kHermesMagic;
+    std::string bytecode(64, '\0');
+    uint64_t magic = loader::kHermesMagic;
     std::memcpy(bytecode.data(), &magic, sizeof(magic));
     bytecode[8] = 98;
     assert(loader::writeTextFileAtomically(server.path("unbound.bundle"), bytecode));
@@ -224,7 +224,8 @@ void mapsBytecodeAndReadsSource()
     auto mapped = loader::LoaderPipeline::readSavedBundle(server.path("unbound.bundle"));
     assert(mapped && mapped->bundle.empty() && mapped->bytecode && !mapped->empty());
     assert(std::string(reinterpret_cast<const char *>(mapped->bytecode->data()),
-                       mapped->bytecode->size()) == bytecode);
+                       mapped->bytecode->size())
+           == bytecode);
 
     auto source = loader::LoaderPipeline::readSavedBundle(server.path("unbound.js"));
     assert(source && source->bundle == "source" && !source->bytecode);
@@ -237,16 +238,16 @@ void explainsWhyAFirstLaunchHasNoBundle()
     Launch offline;
     offline.pipeline.prepare();
     assert(offline.host->alerts.size() == 1);
-    assert(offline.host->alerts[0] ==
-           loader::bundleFailureNotice(loader::BundleUpdateFailure::Network));
+    assert(offline.host->alerts[0]
+           == loader::bundleFailureNotice(loader::BundleUpdateFailure::Network));
 
     Launch outdated;
     outdated.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "next"}}, {}, "beta",
                             "abc1234", "999.0.0");
     outdated.pipeline.prepare();
     assert(outdated.host->alerts.size() == 1);
-    assert(outdated.host->alerts[0] ==
-           loader::bundleFailureNotice(loader::BundleUpdateFailure::LoaderTooOld));
+    assert(outdated.host->alerts[0]
+           == loader::bundleFailureNotice(loader::BundleUpdateFailure::LoaderTooOld));
 }
 
 void guardsTheLaunchOncePerProcess()
@@ -266,6 +267,7 @@ void guardsTheLaunchOncePerProcess()
     {
         work();
     }
+
     assert(!loader::fileExists(marker));
 }
 

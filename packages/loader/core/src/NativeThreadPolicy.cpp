@@ -13,6 +13,7 @@ std::string threadPolicy(const nlohmann::json &options)
             return thread->get<std::string>();
         }
     }
+
     return kCurrentThreadPolicy;
 }
 
@@ -26,6 +27,7 @@ std::string threadPolicy(jsi::Runtime &runtime, const jsi::Value *options)
             return thread.asString(runtime).utf8(runtime);
         }
     }
+
     return kCurrentThreadPolicy;
 }
 

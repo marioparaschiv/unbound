@@ -41,6 +41,7 @@ const TraversalLimits &traversalLimits(TraversalProfile profile)
         case TraversalProfile::Query:
             break;
     }
+
     return kQueryLimits;
 }
 
@@ -50,11 +51,13 @@ static const nlohmann::json *presentField(const nlohmann::json &options, const c
     {
         return nullptr;
     }
+
     auto found = options.find(key);
     if (found == options.end() || found->is_null())
     {
         return nullptr;
     }
+
     return &*found;
 }
 
@@ -65,6 +68,7 @@ static uint32_t boundedCount(const nlohmann::json &options, const TraversalLimit
     {
         return limit.fallback;
     }
+
     if (!value->is_number())
     {
         throw std::invalid_argument(std::string(limit.key) + " must be a number");
@@ -75,14 +79,17 @@ static uint32_t boundedCount(const nlohmann::json &options, const TraversalLimit
     {
         throw std::invalid_argument(std::string(limit.key) + " must be a finite integer");
     }
+
     if (number < limit.minimum)
     {
         return limit.minimum;
     }
+
     if (number > limit.maximum)
     {
         return limit.maximum;
     }
+
     return static_cast<uint32_t>(number);
 }
 
@@ -93,10 +100,12 @@ static bool flag(const nlohmann::json &options, const char *key)
     {
         return false;
     }
+
     if (!value->is_boolean())
     {
         throw std::invalid_argument(std::string(key) + " must be a boolean");
     }
+
     return value->get<bool>();
 }
 
@@ -107,6 +116,7 @@ static TraversalDirection direction(const nlohmann::json &options)
     {
         return TraversalDirection::Descendants;
     }
+
     if (value->is_string())
     {
         const std::string &name = value->get_ref<const std::string &>();
@@ -114,11 +124,13 @@ static TraversalDirection direction(const nlohmann::json &options)
         {
             return TraversalDirection::Descendants;
         }
+
         if (name == "ancestors")
         {
             return TraversalDirection::Ancestors;
         }
     }
+
     throw std::invalid_argument("direction must be descendants or ancestors");
 }
 
@@ -130,7 +142,7 @@ TraversalOptions parseTraversalOptions(const nlohmann::json &options, TraversalP
     }
 
     const TraversalLimits &limits = traversalLimits(profile);
-    TraversalOptions       result;
+    TraversalOptions result;
     result.maxDepth   = boundedCount(options, limits.depth);
     result.maxNodes   = boundedCount(options, limits.nodes);
     result.maxResults = boundedCount(options, limits.results);
@@ -140,6 +152,7 @@ TraversalOptions parseTraversalOptions(const nlohmann::json &options, TraversalP
         result.stopAtMatch  = flag(options, "stopAtMatch");
         result.direction    = direction(options);
     }
+
     return result;
 }
 
@@ -149,18 +162,22 @@ static nlohmann::json scalarField(jsi::Runtime &runtime, const jsi::Value &value
     {
         return nullptr;
     }
+
     if (value.isNumber())
     {
         return value.getNumber();
     }
+
     if (value.isBool())
     {
         return value.getBool();
     }
+
     if (value.isString())
     {
         return value.getString(runtime).utf8(runtime);
     }
+
     return nlohmann::json::object();
 }
 
@@ -171,6 +188,7 @@ static void copyField(jsi::Runtime &runtime, const jsi::Object &source, const ch
     {
         return;
     }
+
     jsi::Value value = source.getProperty(runtime, key);
     if (!value.isUndefined())
     {
@@ -185,14 +203,15 @@ TraversalOptions parseTraversalOptions(jsi::Runtime &runtime, const jsi::Value &
     {
         return parseTraversalOptions(nlohmann::json(nullptr), profile);
     }
+
     if (!options.isObject())
     {
         throw std::invalid_argument("traversal options must be an object");
     }
 
     const TraversalLimits &limits = traversalLimits(profile);
-    jsi::Object            source = options.asObject(runtime);
-    nlohmann::json         fields = nlohmann::json::object();
+    jsi::Object source            = options.asObject(runtime);
+    nlohmann::json fields         = nlohmann::json::object();
     copyField(runtime, source, limits.depth.key, fields);
     copyField(runtime, source, limits.nodes.key, fields);
     copyField(runtime, source, limits.results.key, fields);
@@ -203,6 +222,7 @@ TraversalOptions parseTraversalOptions(jsi::Runtime &runtime, const jsi::Value &
             copyField(runtime, source, key, fields);
         }
     }
+
     return parseTraversalOptions(fields, profile);
 }
 }

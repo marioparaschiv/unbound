@@ -49,11 +49,12 @@ static Value makeFunction(const char *name, unsigned int argCount, Runtime &runt
         {
             return handler(rt, thisValue, args, count);
         }
+
         @catch (NSException *exception)
         {
-            throw loader::native::NativeCodedError("NATIVE_BRIDGE_ERROR",
-                                                   std::string("Objective-C exception: ") +
-                                                       (exception.reason.UTF8String ?: "unknown"));
+            throw loader::native::NativeCodedError(
+                "NATIVE_BRIDGE_ERROR", std::string("Objective-C exception: ")
+                                           + (exception.reason.UTF8String ?: "unknown"));
         }
     };
     return loader::native::makeFunction(runtime, name, argCount, std::move(translated));
@@ -72,7 +73,7 @@ static Value makeFunction(const char *name, unsigned int argCount, Runtime &runt
 static void installObjC(Runtime &runtime, Object &objc);
 
 // iOS scopes name `objc.` paths and keep them without the prefix.
-static Object makeScopedObjC(Runtime                                        &runtime,
+static Object makeScopedObjC(Runtime &runtime,
                              const std::shared_ptr<loader::native::UIScope> &scope)
 {
     Object full(runtime);
@@ -90,11 +91,12 @@ static Object makeScopedObjC(Runtime                                        &run
                         return scope->hook(
                             rt, [&]() -> std::pair<Value, loader::native::UIScope::Release> {
                                 Value token = makeHook(rt, args, count);
-                                if (!token.isObject() ||
-                                    !token.asObject(rt).isHostObject<HookTokenHost>(rt))
+                                if (!token.isObject()
+                                    || !token.asObject(rt).isHostObject<HookTokenHost>(rt))
                                 {
                                     return {std::move(token), nullptr};
                                 }
+
                                 std::shared_ptr<HookState> state =
                                     token.asObject(rt).getHostObject<HookTokenHost>(rt)->state();
                                 return {std::move(token), [state] {
@@ -104,12 +106,14 @@ static Object makeScopedObjC(Runtime                                        &run
                     }));
             continue;
         }
+
         Value value = full.getProperty(runtime, allowed.c_str());
         if (!value.isUndefined())
         {
             scoped.setProperty(runtime, allowed.c_str(), std::move(value));
         }
     }
+
     return scoped;
 }
 
@@ -136,6 +140,7 @@ static void installObjC(Runtime &runtime, Object &objc)
                          {
                              return Value::null();
                          }
+
                          Class cls = NSClassFromString(jsiString(rt, args[0]));
                          return cls ? Object::createFromHostObject(
                                           rt, std::make_shared<ObjCHandleHost>((id) cls))
@@ -151,6 +156,7 @@ static void installObjC(Runtime &runtime, Object &objc)
                          {
                              throw JSError(rt, "objc.alloc expects a class handle or class name");
                          }
+
                          return objcHandleResult(rt, [[cls alloc] init]);
                      }));
 
@@ -163,6 +169,7 @@ static void installObjC(Runtime &runtime, Object &objc)
                          {
                              return Value::null();
                          }
+
                          Class cls = object_isClass(object) ? object : object_getClass(object);
                          return objcJSIValue(rt, NSStringFromClass(cls));
                      }));
@@ -175,8 +182,9 @@ static void installObjC(Runtime &runtime, Object &objc)
                          {
                              return Value(false);
                          }
-                         id        object = objcValue(rt, args[0]);
-                         NSString *name   = jsiString(rt, args[1]);
+
+                         id object      = objcValue(rt, args[0]);
+                         NSString *name = jsiString(rt, args[1]);
                          return Value(object &&
                                       [object respondsToSelector:NSSelectorFromString(name)]);
                      }));
@@ -189,6 +197,7 @@ static void installObjC(Runtime &runtime, Object &objc)
                          {
                              throw JSError(rt, "objc.call expects an object handle and selector");
                          }
+
                          return objcFunction(rt, args[0], args[1], args, count, 2);
                      }));
 
@@ -201,8 +210,9 @@ static void installObjC(Runtime &runtime, Object &objc)
                 {
                     throw JSError(rt, "objc.callSuper expects an object, class, and selector");
                 }
-                id        object       = objcValue(rt, args[0]);
-                Class     cls          = classFromValue(rt, args[1]);
+
+                id object              = objcValue(rt, args[0]);
+                Class cls              = classFromValue(rt, args[1]);
                 NSString *selectorName = jsiString(rt, args[2]);
                 return invokeSuperObject(rt, object, cls, NSSelectorFromString(selectorName),
                                          argumentArray(rt, args, count, 3));
@@ -218,14 +228,16 @@ static void installObjC(Runtime &runtime, Object &objc)
                     throw JSError(rt,
                                   "objc.invoke expects an object, selector, and argument array");
                 }
-                Array           array     = args[2].asObject(rt).asArray(rt);
+
+                Array array               = args[2].asObject(rt).asArray(rt);
                 NSMutableArray *arguments = [NSMutableArray arrayWithCapacity:array.size(rt)];
                 for (size_t index = 0; index < array.size(rt); index++)
                 {
                     [arguments addObject:valueToObjC(rt, array.getValueAtIndex(rt, index))
                                              ?: [NSNull null]];
                 }
-                id        object       = objcValue(rt, args[0]);
+
+                id object              = objcValue(rt, args[0]);
                 NSString *selectorName = jsiString(rt, args[1]);
                 return invokeWithThreadPolicy(rt, object, NSSelectorFromString(selectorName),
                                               arguments, count > 3 ? &args[3] : nullptr);
@@ -239,9 +251,10 @@ static void installObjC(Runtime &runtime, Object &objc)
                          {
                              throw JSError(rt, "objc.prepare expects an object and selector");
                          }
-                         id        target       = objcValue(rt, args[0]);
+
+                         id target              = objcValue(rt, args[0]);
                          NSString *selectorName = jsiString(rt, args[1]);
-                         auto      plan =
+                         auto plan =
                              prepareObjCCallPlan(rt, target, NSSelectorFromString(selectorName));
                          return Object::createFromHostObject(rt, std::move(plan));
                      }));
@@ -256,12 +269,13 @@ static void installObjC(Runtime &runtime, Object &objc)
                     throw JSError(rt,
                                   "objc.invokePrepared expects a plan, target, and argument array");
                 }
-                auto plan   = objcCallPlanHost(rt, args[0]);
-                id   target = objcValue(rt, args[1]);
+
+                auto plan = objcCallPlanHost(rt, args[0]);
+                id target = objcValue(rt, args[1]);
                 plan->validate(rt, target);
-                Array           array      = args[2].asObject(rt).asArray(rt);
-                NSMutableArray *arguments  = argumentArray(rt, array);
-                NSInvocation   *invocation = prepareInvocationWithSignature(
+                Array array               = args[2].asObject(rt).asArray(rt);
+                NSMutableArray *arguments = argumentArray(rt, array);
+                NSInvocation *invocation  = prepareInvocationWithSignature(
                     target, plan->selector(), arguments, plan->signature(), &plan->argumentTypes());
                 return invokeInvocationWithThreadPolicy(
                     rt, invocation, count > 3 ? &args[3] : nullptr, &plan->resultType());
@@ -277,12 +291,13 @@ static void installObjC(Runtime &runtime, Object &objc)
                     throw JSError(
                         rt, "objc.invokePreparedAsync expects a plan, target, and argument array");
                 }
-                auto plan   = objcCallPlanHost(rt, args[0]);
-                id   target = objcValue(rt, args[1]);
+
+                auto plan = objcCallPlanHost(rt, args[0]);
+                id target = objcValue(rt, args[1]);
                 plan->validate(rt, target);
-                Array           array      = args[2].asObject(rt).asArray(rt);
-                NSMutableArray *arguments  = argumentArray(rt, array);
-                NSInvocation   *invocation = prepareInvocationWithSignature(
+                Array array               = args[2].asObject(rt).asArray(rt);
+                NSMutableArray *arguments = argumentArray(rt, array);
+                NSInvocation *invocation  = prepareInvocationWithSignature(
                     target, plan->selector(), arguments, plan->signature(), &plan->argumentTypes());
                 return invokeInvocationAsync(rt, invocation, plan);
             }));
@@ -295,6 +310,7 @@ static void installObjC(Runtime &runtime, Object &objc)
                          {
                              throw JSError(rt, "objc.disposePlan expects a call plan");
                          }
+
                          objcCallPlanHost(rt, args[0])->dispose();
                          return Value::undefined();
                      }));
@@ -309,14 +325,16 @@ static void installObjC(Runtime &runtime, Object &objc)
                     throw JSError(
                         rt, "objc.invokeAsync expects an object, selector, and argument array");
                 }
-                Array           array     = args[2].asObject(rt).asArray(rt);
+
+                Array array               = args[2].asObject(rt).asArray(rt);
                 NSMutableArray *arguments = [NSMutableArray arrayWithCapacity:array.size(rt)];
                 for (size_t index = 0; index < array.size(rt); index++)
                 {
                     [arguments addObject:valueToObjC(rt, array.getValueAtIndex(rt, index))
                                              ?: [NSNull null]];
                 }
-                id        object       = objcValue(rt, args[0]);
+
+                id object              = objcValue(rt, args[0]);
                 NSString *selectorName = jsiString(rt, args[1]);
                 return invokeAsync(rt, object, NSSelectorFromString(selectorName), arguments);
             }));
@@ -336,16 +354,18 @@ static void installObjC(Runtime &runtime, Object &objc)
                         rt,
                         "objc.invokeSuper expects an object, class, selector, and argument array");
                 }
-                id              object       = objcValue(rt, args[0]);
-                Class           cls          = classFromValue(rt, args[1]);
-                NSString       *selectorName = jsiString(rt, args[2]);
-                Array           array        = args[3].asObject(rt).asArray(rt);
-                NSMutableArray *arguments    = [NSMutableArray arrayWithCapacity:array.size(rt)];
+
+                id object                 = objcValue(rt, args[0]);
+                Class cls                 = classFromValue(rt, args[1]);
+                NSString *selectorName    = jsiString(rt, args[2]);
+                Array array               = args[3].asObject(rt).asArray(rt);
+                NSMutableArray *arguments = [NSMutableArray arrayWithCapacity:array.size(rt)];
                 for (size_t index = 0; index < array.size(rt); index++)
                 {
                     [arguments addObject:valueToObjC(rt, array.getValueAtIndex(rt, index))
                                              ?: [NSNull null]];
                 }
+
                 return invokeSuperWithThreadPolicy(rt, object, cls,
                                                    NSSelectorFromString(selectorName), arguments,
                                                    count > 4 ? &args[4] : nullptr);
@@ -362,16 +382,18 @@ static void installObjC(Runtime &runtime, Object &objc)
                         rt,
                         "objc.invokeSuperAsync expects an object, class, selector, and argument array");
                 }
-                id              object       = objcValue(rt, args[0]);
-                Class           cls          = classFromValue(rt, args[1]);
-                NSString       *selectorName = jsiString(rt, args[2]);
-                Array           array        = args[3].asObject(rt).asArray(rt);
-                NSMutableArray *arguments    = [NSMutableArray arrayWithCapacity:array.size(rt)];
+
+                id object                 = objcValue(rt, args[0]);
+                Class cls                 = classFromValue(rt, args[1]);
+                NSString *selectorName    = jsiString(rt, args[2]);
+                Array array               = args[3].asObject(rt).asArray(rt);
+                NSMutableArray *arguments = [NSMutableArray arrayWithCapacity:array.size(rt)];
                 for (size_t index = 0; index < array.size(rt); index++)
                 {
                     [arguments addObject:valueToObjC(rt, array.getValueAtIndex(rt, index))
                                              ?: [NSNull null]];
                 }
+
                 return invokeSuperAsync(rt, object, cls, NSSelectorFromString(selectorName),
                                         arguments);
             }));
@@ -394,12 +416,14 @@ static void installObjC(Runtime &runtime, Object &objc)
                          {
                              return Value::null();
                          }
+
                          id object = objcValue(rt, args[0]);
-                         if (!args[1].isObject() ||
-                             !args[1].asObject(rt).isHostObject<AssociationKeyHost>(rt))
+                         if (!args[1].isObject()
+                             || !args[1].asObject(rt).isHostObject<AssociationKeyHost>(rt))
                          {
                              return Value::null();
                          }
+
                          const void *key =
                              args[1].asObject(rt).getHostObject<AssociationKeyHost>(rt)->key();
                          return objcResult(rt, objc_getAssociatedObject(object, key));
@@ -410,15 +434,16 @@ static void installObjC(Runtime &runtime, Object &objc)
         makeFunction(
             "setAssociatedObject", 4, runtime,
             [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-                if (count < 3 || !args[1].isObject() ||
-                    !args[1].asObject(rt).isHostObject<AssociationKeyHost>(rt))
+                if (count < 3 || !args[1].isObject()
+                    || !args[1].asObject(rt).isHostObject<AssociationKeyHost>(rt))
                 {
                     throw JSError(rt,
                                   "objc.setAssociatedObject expects an object and association key");
                 }
-                id          object = objcValue(rt, args[0]);
+
+                id object       = objcValue(rt, args[0]);
                 const void *key = args[1].asObject(rt).getHostObject<AssociationKeyHost>(rt)->key();
-                id          value = valueToObjC(rt, args[2]);
+                id value        = valueToObjC(rt, args[2]);
                 objc_setAssociatedObject(object, key, value == [NSNull null] ? nil : value,
                                          associationPolicy(rt, count > 3 ? &args[3] : nullptr));
                 return Value::undefined();
@@ -432,6 +457,7 @@ static void installObjC(Runtime &runtime, Object &objc)
                          {
                              throw JSError(rt, "objc.struct expects a name and fields");
                          }
+
                          return structValue(rt, jsiString(rt, args[0]), args[1]);
                      }));
 
@@ -444,6 +470,7 @@ static void installObjC(Runtime &runtime, Object &objc)
                          {
                              return Array(rt, 0);
                          }
+
                          return objcResult(rt, object);
                      }));
 
@@ -456,6 +483,7 @@ static void installObjC(Runtime &runtime, Object &objc)
                          {
                              throw JSError(rt, "objc.data expects an ArrayBuffer or TypedArray");
                          }
+
                          return objcHandleResult(rt, data);
                      }));
 

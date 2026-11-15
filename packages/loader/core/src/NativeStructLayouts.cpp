@@ -58,6 +58,7 @@ const StructLayout *structLayout(std::string_view name)
             return &layout;
         }
     }
+
     return nullptr;
 }
 
@@ -78,13 +79,14 @@ const StructLayout *structLayoutForTypeName(std::string_view typeName)
             return structLayout(name);
         }
     }
+
     return structLayout(typeName);
 }
 
 static std::vector<std::string_view> pathParts(std::string_view path)
 {
     std::vector<std::string_view> parts;
-    size_t                        start = 0;
+    size_t start = 0;
     while (true)
     {
         size_t dot = path.find('.', start);
@@ -93,6 +95,7 @@ static std::vector<std::string_view> pathParts(std::string_view path)
         {
             return parts;
         }
+
         start = dot + 1;
     }
 }
@@ -100,11 +103,12 @@ static std::vector<std::string_view> pathParts(std::string_view path)
 static jsi::Object childObject(jsi::Runtime &runtime, jsi::Object &parent, std::string_view name)
 {
     std::string key(name);
-    jsi::Value  existing = parent.getProperty(runtime, key.c_str());
+    jsi::Value existing = parent.getProperty(runtime, key.c_str());
     if (existing.isObject())
     {
         return existing.asObject(runtime);
     }
+
     jsi::Object child(runtime);
     parent.setProperty(runtime, key.c_str(), child);
     return child;
@@ -118,6 +122,7 @@ static double readScalar(const uint8_t *bytes, const StructField &field)
         std::memcpy(&value, bytes + field.offset, sizeof(value));
         return static_cast<double>(value);
     }
+
     double value = 0;
     std::memcpy(&value, bytes + field.offset, sizeof(value));
     return value;
@@ -131,6 +136,7 @@ static void writeScalar(uint8_t *bytes, const StructField &field, double number)
         std::memcpy(bytes + field.offset, &value, sizeof(value));
         return;
     }
+
     std::memcpy(bytes + field.offset, &number, sizeof(number));
 }
 
@@ -143,6 +149,7 @@ static void setPath(jsi::Runtime &runtime, jsi::Object &object,
         object.setProperty(runtime, key.c_str(), value);
         return;
     }
+
     jsi::Object child = childObject(runtime, object, parts[index]);
     setPath(runtime, child, parts, index + 1, value);
 }
@@ -154,6 +161,7 @@ jsi::Value structToJS(jsi::Runtime &runtime, const StructLayout &layout, const u
     {
         setPath(runtime, result, pathParts(field.path), 0, readScalar(bytes, field));
     }
+
     return result;
 }
 
@@ -165,6 +173,7 @@ static double readPath(jsi::Runtime &runtime, const jsi::Object &object,
     {
         return object.getProperty(runtime, key.c_str()).asNumber();
     }
+
     return readPath(runtime, object.getPropertyAsObject(runtime, key.c_str()), parts, index + 1);
 }
 
@@ -175,12 +184,14 @@ std::vector<uint8_t> structFromJS(jsi::Runtime &runtime, const StructLayout &lay
     {
         throw std::invalid_argument("Native struct fields must be an object");
     }
-    jsi::Object          object = fields.asObject(runtime);
+
+    jsi::Object object = fields.asObject(runtime);
     std::vector<uint8_t> bytes(layout.size);
     for (const StructField &field : layout.fields)
     {
         writeScalar(bytes.data(), field, readPath(runtime, object, pathParts(field.path), 0));
     }
+
     return bytes;
 }
 }

@@ -18,17 +18,17 @@ enum class FollowUp
 struct MenuItem {
     std::string id;
     std::string title;
-    FollowUp    followUp = FollowUp::None;
+    FollowUp followUp = FollowUp::None;
 };
 
 struct Menu {
-    std::string           title;
-    std::string           cancel;
+    std::string title;
+    std::string cancel;
     std::vector<MenuItem> items;
 };
 
 struct SettingsEditResult {
-    bool        saved = false;
+    bool saved = false;
     std::string error;
 };
 
@@ -62,20 +62,20 @@ constexpr const char *kSettingsEditorTitle        = "Edit Settings JSON";
 constexpr const char *kSaveText                   = "Save";
 constexpr const char *kInvalidSettingsMessage     = "The settings must be a valid JSON object.";
 constexpr const char *kSettingsWriteFailedMessage = "The settings could not be saved.";
-constexpr double      kButtonSide                 = 44;
-constexpr double      kButtonMargin               = 8;
-constexpr Point       kDefaultPosition{1, 0.8};
+constexpr double kButtonSide                      = 44;
+constexpr double kButtonMargin                    = 8;
+constexpr Point kDefaultPosition{1, 0.8};
 
-const char        *followUpName(FollowUp followUp);
-Menu               menu(const SettingsStore &settings);
-nlohmann::json     menuJSON(const SettingsStore &settings);
+const char *followUpName(FollowUp followUp);
+Menu menu(const SettingsStore &settings);
+nlohmann::json menuJSON(const SettingsStore &settings);
 SettingsEditResult saveSettings(SettingsStore &settings, const std::string &json);
-nlohmann::json     editResultJSON(const SettingsEditResult &result);
+nlohmann::json editResultJSON(const SettingsEditResult &result);
 
 Point position(const SettingsStore &settings);
 Point clampCenter(Point center, Size bounds, Insets insets);
 Point buttonCenter(const SettingsStore &settings, Size bounds, Insets insets);
-bool  saveButtonCenter(SettingsStore &settings, Point center, Size bounds);
+bool saveButtonCenter(SettingsStore &settings, Point center, Size bounds);
 Frame buttonFrame(Point center);
 Frame collapsedWindowFrame(Point center, Frame screen);
 }

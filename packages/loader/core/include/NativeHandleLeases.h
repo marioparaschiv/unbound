@@ -24,13 +24,13 @@ public:
     facebook::jsi::Value adopt(facebook::jsi::Runtime &runtime, const nlohmann::json &value) const;
     facebook::jsi::Value adoptTaggedHandle(facebook::jsi::Runtime &runtime, const std::string &type,
                                            const std::string &id) const;
-    size_t               liveHandles() const;
+    size_t liveHandles() const;
 
 private:
     facebook::jsi::Value convert(facebook::jsi::Runtime &runtime, const nlohmann::json &value,
                                  size_t depth) const;
 
-    HandleMatcher                      matcher_;
+    HandleMatcher matcher_;
     std::shared_ptr<HandleLeaseLedger> ledger_;
 };
 }

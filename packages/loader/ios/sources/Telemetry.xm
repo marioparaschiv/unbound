@@ -18,8 +18,8 @@ using unbound::ios::toStdString;
 + (BOOL)canInitWithRequest:(NSURLRequest *)request
 {
     NSString *url = request.URL.absoluteString;
-    return url && loader::isTelemetryURL(toStdString(url)) &&
-           loader::preferences::telemetryBlocked(UnboundSettingsStore());
+    return url && loader::isTelemetryURL(toStdString(url))
+           && loader::preferences::telemetryBlocked(UnboundSettingsStore());
 }
 
 + (NSURLRequest *)canonicalRequestForRequest:(NSURLRequest *)request
@@ -54,6 +54,7 @@ static NSURLSessionConfiguration *withTelemetryProtocol(NSURLSessionConfiguratio
         configuration.protocolClasses =
             [@[ UBTelemetryProtocol.class ] arrayByAddingObjectsFromArray:classes];
     }
+
     return configuration;
 }
 

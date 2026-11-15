@@ -8,7 +8,7 @@
 // How the loader reaches the network: each platform supplies a text fetch and a file download.
 namespace loader {
 struct DownloadResult {
-    int         status = 0;
+    int status = 0;
     std::string etag;
     // The response's Retry-After header, if any.
     std::string retryAfter;

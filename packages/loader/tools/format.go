@@ -153,6 +153,10 @@ func runLint(args []string) error {
 		return fmt.Errorf("zizmor: %w", err)
 	}
 
+	if err := lintNativeSlop(rootPath); err != nil {
+		return fmt.Errorf("aislop: %w", err)
+	}
+
 	return runFormat([]string{"--root", rootPath, "--check"})
 }
 
@@ -325,7 +329,7 @@ func formatNativeSource(root, path string, original []byte) ([]byte, error) {
 		return nil, fmt.Errorf("clang-format %s: %v: %s", path, err, errorOutput.String())
 	}
 
-	formatted := output.Bytes()
+	formatted := padBlocks(output.Bytes())
 	if isLogos {
 		restored, err := restoreLogos(formatted, original)
 		if err != nil {
@@ -699,6 +703,21 @@ func auditWorkflows(root string) error {
 	github := filepath.Join(root, "..", "..", ".github")
 
 	return runQuiet(root, binary, "--offline", "--quiet", "--min-severity", "medium", "--config", filepath.Join(github, "zizmor.yml"), filepath.Join(github, "workflows"))
+}
+
+// lintNativeSlop fails on aislop findings in the C, C++ and Objective-C sources that .aislop/ci-baseline.json does not accept.
+func lintNativeSlop(root string) error {
+	binary, err := exec.LookPath("aislop")
+	if err != nil {
+		// `bun install` puts the pinned devDependency in the repo's node_modules, which is rarely on PATH.
+		binary, err = exec.LookPath(filepath.Join(root, "..", "..", "node_modules", ".bin", "aislop"))
+	}
+
+	if err != nil {
+		return errors.New("aislop is required to lint the native sources; run `bun install`")
+	}
+
+	return runQuiet(root, binary, "ci", "--human", ".")
 }
 
 func runQuiet(directory, name string, args ...string) error {

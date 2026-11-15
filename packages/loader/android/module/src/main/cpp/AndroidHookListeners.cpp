@@ -50,33 +50,35 @@ static constexpr const char *kCatchingCallName = "__unboundCatchingCall";
 static jsi::Function catchingCall(jsi::Runtime &runtime)
 {
     jsi::Object global = runtime.global();
-    jsi::Value  cached = global.getProperty(runtime, kCatchingCallName);
+    jsi::Value cached  = global.getProperty(runtime, kCatchingCallName);
     if (cached.isObject() && cached.asObject(runtime).isFunction(runtime))
     {
         return cached.asObject(runtime).asFunction(runtime);
     }
+
     std::optional<jsi::Function> created =
         loader::bootstrap::function(runtime, loader::bootstrap::kCatchingCall);
     if (!created)
     {
         throw jsi::JSError(runtime, "The catching-call bootstrap script is unavailable.");
     }
+
     global.setProperty(runtime, kCatchingCallName, *created);
     return std::move(*created);
 }
 
 struct HookListener {
-    std::weak_ptr<jsi::Function>                                   callback;
-    std::weak_ptr<loader::native::RuntimeResourceRegistry>         resources;
+    std::weak_ptr<jsi::Function> callback;
+    std::weak_ptr<loader::native::RuntimeResourceRegistry> resources;
     std::shared_ptr<loader::native::RuntimeResourceOperationScope> operations;
-    JavaCallbacks                                                  callbacks;
-    loader::AddonSlot                                              addon    = loader::kNoAddon;
-    bool                                                           coalesce = false;
-    bool                                                           rewritesArguments = false;
-    bool                                                           returnsValue      = false;
-    jsi::Runtime                                                  *inlineRuntime     = nullptr;
-    uint64_t                                                       runtimeIdentity   = 0;
-    uint64_t                                                       runtimeGeneration = 0;
+    JavaCallbacks callbacks;
+    loader::AddonSlot addon     = loader::kNoAddon;
+    bool coalesce               = false;
+    bool rewritesArguments      = false;
+    bool returnsValue           = false;
+    jsi::Runtime *inlineRuntime = nullptr;
+    uint64_t runtimeIdentity    = 0;
+    uint64_t runtimeGeneration  = 0;
 };
 
 bool onMainThread()
@@ -84,7 +86,7 @@ bool onMainThread()
     return gettid() == getpid();
 }
 
-static std::mutex                                    gHookMutex;
+static std::mutex gHookMutex;
 static std::unordered_map<std::string, HookListener> gHookListeners;
 
 static std::string hookListenerKey(const std::string &token)
@@ -98,48 +100,54 @@ static std::optional<std::string> returnedValue(jsi::Runtime &runtime, const jsi
     {
         return std::nullopt;
     }
+
     jsi::Value result = returned.asObject(runtime).getProperty(runtime, "result");
     if (result.isUndefined())
     {
         return std::nullopt;
     }
+
     return serializeJavaValue(runtime, result);
 }
 
-static std::optional<std::string> rewrittenArguments(jsi::Runtime     &runtime,
+static std::optional<std::string> rewrittenArguments(jsi::Runtime &runtime,
                                                      const jsi::Value &returned)
 {
     if (!returned.isObject())
     {
         return std::nullopt;
     }
+
     jsi::Value result = returned.asObject(runtime).getProperty(runtime, "result");
     if (!result.isObject())
     {
         return std::nullopt;
     }
+
     jsi::Value arguments = result.asObject(runtime).getProperty(runtime, "arguments");
     if (!arguments.isObject() || !arguments.asObject(runtime).isArray(runtime))
     {
         return std::nullopt;
     }
+
     return serializeJavaArguments(runtime, &arguments, 1, 0);
 }
 
 std::optional<std::string> dispatchHookEvent(const std::string &token, const std::string &payload)
 {
-    uint64_t     dispatchGeneration = loader::native::runtimeGeneration();
+    uint64_t dispatchGeneration = loader::native::runtimeGeneration();
     HookListener listener;
-    bool         listening = false;
+    bool listening = false;
     {
         std::lock_guard<std::mutex> lock(gHookMutex);
-        auto                        found = gHookListeners.find(token);
+        auto found = gHookListeners.find(token);
         if (found != gHookListeners.end())
         {
             listener  = found->second;
             listening = true;
         }
     }
+
     if (!listening)
     {
         std::optional<JavaCallbacks> callbacks = javaReleaseCallbacks();
@@ -147,8 +155,10 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
         {
             releaseJavaHandleIssues(javaHandleReleaser(*callbacks), payload);
         }
+
         return std::nullopt;
     }
+
     auto pendingEvent = pendingJavaPayload(listener.callbacks, payload);
     if (!listener.operations || !listener.operations->active())
     {
@@ -163,34 +173,38 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
         {
             operation->cancel();
         }
+
         return std::nullopt;
     }
 
     loader::AddonScope scope(listener.addon);
-    auto               deliver =
+    auto deliver =
         [callback = listener.callback, operations = listener.operations, operation,
          identity = listener.runtimeIdentity, generation = listener.runtimeGeneration,
          addon = listener.addon, pendingEvent, rewrites = listener.rewritesArguments,
          returns = listener.returnsValue](
-            jsi::Runtime                            &runtime,
+            jsi::Runtime &runtime,
             loader::native::RuntimeResourceRegistry &resources) -> std::optional<std::string> {
-        if (!operations->active() || !operation->active() ||
-            generation != loader::native::runtimeGeneration())
+        if (!operations->active() || !operation->active()
+            || generation != loader::native::runtimeGeneration())
         {
             return std::nullopt;
         }
+
         auto runtimeResources = loader::native::runtimeResourceRegistry(runtime);
         if (!runtimeResources->active() || runtimeResources->identity() != identity)
         {
             return std::nullopt;
         }
+
         resources.drainDeferredReleases();
         auto activeCallback = callback.lock();
         if (!activeCallback)
         {
             return std::nullopt;
         }
-        loader::AddonScope        runtimeScope(addon);
+
+        loader::AddonScope runtimeScope(addon);
         std::optional<jsi::Value> event = adoptTaggedJavaEvent(runtime, pendingEvent->payload());
         if (!event)
         {
@@ -199,8 +213,10 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
             {
                 return std::nullopt;
             }
+
             event = adoptJavaValue(runtime, parsed);
         }
+
         pendingEvent->transfer();
 
         jsi::Value failure = catchingCall(runtime).call(
@@ -211,14 +227,17 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
             {
                 return returnedValue(runtime, failure);
             }
+
             return rewrites ? rewrittenArguments(runtime, failure) : std::nullopt;
         }
+
         std::optional<std::string> message =
             loader::threading::throttledHookFailure(addon, failure.asString(runtime).utf8(runtime));
         if (message)
         {
             loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS, *message);
         }
+
         return std::nullopt;
     };
 
@@ -255,6 +274,7 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
         });
         return std::nullopt;
     }
+
     if (onMainThread())
     {
         std::optional<std::string> rewritten;
@@ -263,15 +283,17 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
             loader::native::withRuntimeResource(
                 listener.resources, listener.runtimeIdentity, operation,
                 [&](loader::native::RuntimeResourceRegistry &owner) {
-                    if (loader::native::runtimeResourceRegistry(*listener.inlineRuntime)
-                            ->identity() == listener.runtimeIdentity)
+                    if (loader::native::runtimeResourceRegistry(*listener.inlineRuntime)->identity()
+                        == listener.runtimeIdentity)
                     {
                         rewritten = deliver(*listener.inlineRuntime, owner);
                     }
                 });
         }
+
         return rewritten;
     }
+
     if (auto target = loader::native::executor())
     {
         auto inlineRuntime = listener.inlineRuntime;
@@ -286,8 +308,8 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
                 loader::native::withRuntimeResource(
                     resources, identity, pending,
                     [&](loader::native::RuntimeResourceRegistry &owner) {
-                        if (loader::native::runtimeResourceRegistry(*inlineRuntime)->identity() ==
-                            identity)
+                        if (loader::native::runtimeResourceRegistry(*inlineRuntime)->identity()
+                            == identity)
                         {
                             deliver(*inlineRuntime, owner);
                         }
@@ -295,6 +317,7 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
             }
         });
     }
+
     return std::nullopt;
 }
 
@@ -311,17 +334,17 @@ void rememberHookListener(jsi::Runtime &runtime, const std::string &token,
     auto resources  = loader::native::runtimeResourceRegistry(runtime);
     auto operations = std::make_shared<loader::native::RuntimeResourceOperationScope>();
     loader::native::retainRuntimeResource(runtime, hookListenerKey(token), callback);
-    HookListener                stored{callback,
-                                       resources,
-                                       operations,
-                                       callbacks,
-                                       loader::currentAddon(),
-                                       coalesce,
-                                       rewritesArguments,
-                                       returnsValue,
-                                       loader::native::currentUIScopeRuntime(),
-                                       resources->identity(),
-                                       loader::native::runtimeGeneration()};
+    HookListener stored{callback,
+                        resources,
+                        operations,
+                        callbacks,
+                        loader::currentAddon(),
+                        coalesce,
+                        rewritesArguments,
+                        returnsValue,
+                        loader::native::currentUIScopeRuntime(),
+                        resources->identity(),
+                        loader::native::runtimeGeneration()};
     std::lock_guard<std::mutex> lock(gHookMutex);
     gHookListeners[token] = std::move(stored);
 }
@@ -334,7 +357,7 @@ static void postToMain(std::function<void()> work)
     }
 }
 
-static loader::native::HookCallbackOwner hookListenerOwner(const std::string  &token,
+static loader::native::HookCallbackOwner hookListenerOwner(const std::string &token,
                                                            const HookListener &listener)
 {
     return {listener.resources, listener.runtimeIdentity, hookListenerKey(token),
@@ -344,10 +367,10 @@ static loader::native::HookCallbackOwner hookListenerOwner(const std::string  &t
 void forgetHookListener(const std::string &token)
 {
     HookListener listener;
-    bool         foundListener = false;
+    bool foundListener = false;
     {
         std::lock_guard<std::mutex> lock(gHookMutex);
-        auto                        found = gHookListeners.find(token);
+        auto found = gHookListeners.find(token);
         if (found != gHookListeners.end())
         {
             listener = found->second;
@@ -355,10 +378,12 @@ void forgetHookListener(const std::string &token)
             foundListener = true;
         }
     }
+
     if (!foundListener)
     {
         return;
     }
+
     listener.operations->cancelPending();
     loader::native::releaseHookCallbacks(hookListenerOwner(token, listener), postToMain);
 }
@@ -370,6 +395,7 @@ static void retireHookListeners()
         std::lock_guard<std::mutex> lock(gHookMutex);
         retired.swap(gHookListeners);
     }
+
     for (const auto &[token, listener] : retired)
     {
         listener.operations->cancelPending();
@@ -407,13 +433,14 @@ std::string installedHookToken(jsi::Runtime &runtime, const jsi::Value &value)
     {
         throw std::invalid_argument("The Android hook has been removed");
     }
+
     return token;
 }
 
 nlohmann::json boundedJSON(jsi::Runtime &runtime, const jsi::Value &value)
 {
     NativeConversionBudget budget(kNativeArgumentsConversion);
-    nlohmann::json         result = loader::native::serializeBounded(runtime, value, budget);
+    nlohmann::json result = loader::native::serializeBounded(runtime, value, budget);
     loader::native::dumpBounded(result, kNativeArgumentsConversion);
     return result;
 }

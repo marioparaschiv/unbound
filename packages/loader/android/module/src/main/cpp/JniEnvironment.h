@@ -6,14 +6,14 @@
 #include <vector>
 
 namespace unbound::android {
-void    setJavaVM(JavaVM *vm);
+void setJavaVM(JavaVM *vm);
 JNIEnv *currentEnvironment();
 
-std::string                toStdString(JNIEnv *env, jstring value);
+std::string toStdString(JNIEnv *env, jstring value);
 std::optional<std::string> toOptionalString(JNIEnv *env, jstring value);
-jstring                    toJavaString(JNIEnv *env, const std::string &value);
-jobjectArray               toJavaStringArray(JNIEnv *env, const std::vector<std::string> &values);
-bool                       clearPendingException(JNIEnv *env);
+jstring toJavaString(JNIEnv *env, const std::string &value);
+jobjectArray toJavaStringArray(JNIEnv *env, const std::vector<std::string> &values);
+bool clearPendingException(JNIEnv *env);
 // Clears the pending Java exception and returns its `toString()`, or `fallback` without one.
 std::string takeJavaFailure(JNIEnv *env, const char *fallback);
 
@@ -27,6 +27,6 @@ public:
 
 private:
     JNIEnv *env_;
-    jclass  class_;
+    jclass class_;
 };
 }

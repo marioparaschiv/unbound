@@ -87,6 +87,7 @@
 		"@semantic-release/git": "^11.0.1",
 		"@stylistic/eslint-plugin": "^5.10.0",
 		"@types/bun": "catalog:",
+		"aislop": "0.22.1",
 		"dts-bundle-generator": "^9.5.1",
 		"eslint-plugin-jsdoc": "^65.4.5",
 		"eslint-plugin-perfectionist": "^5.13.0",

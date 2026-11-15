@@ -28,6 +28,7 @@ inline std::string utf16(const std::string &text)
     {
         appendU16(encoded, static_cast<uint16_t>(static_cast<unsigned char>(character)));
     }
+
     return encoded;
 }
 
@@ -35,19 +36,20 @@ struct FaceSpec {
     std::string family     = "Test Sans";
     std::string postScript = "TestSans-Regular";
     std::string full       = "Test Sans Regular";
-    uint16_t    weight     = 400;
-    bool        italic     = false;
-    bool        variable   = false;
-    bool        openType   = false;
-    bool        withOS2    = true;
+    uint16_t weight        = 400;
+    bool italic            = false;
+    bool variable          = false;
+    bool openType          = false;
+    bool withOS2           = true;
 };
 
 inline std::string nameTable(const FaceSpec &spec)
 {
     struct Record {
-        uint16_t    id;
+        uint16_t id;
         std::string text;
     };
+
     const std::vector<Record> records = {
         {1, utf16(spec.family)}, {4, utf16(spec.full)}, {6, utf16(spec.postScript)}};
     std::string strings;
@@ -65,6 +67,7 @@ inline std::string nameTable(const FaceSpec &spec)
         appendU16(table, static_cast<uint16_t>(strings.size()));
         strings += record.text;
     }
+
     return table + strings;
 }
 
@@ -87,6 +90,7 @@ inline std::string font(const FaceSpec &spec = {})
     {
         tables.push_back({"OS/2", os2});
     }
+
     if (spec.variable)
     {
         tables.push_back({"fvar", std::string(16, '\0')});
@@ -107,10 +111,12 @@ inline std::string font(const FaceSpec &spec = {})
         appendU32(data, static_cast<uint32_t>(body.size()));
         offset += body.size();
     }
+
     for (const auto &[tag, body] : tables)
     {
         data += body;
     }
+
     return data;
 }
 
@@ -122,16 +128,17 @@ inline std::string collection(const std::string &first)
     appendU32(data, 16);
     // Table offsets in a collection count from the file start, so shift the inner directory.
     std::string inner = first;
-    const auto  count = static_cast<uint16_t>((static_cast<uint8_t>(inner[4]) << 8) |
-                                              static_cast<uint8_t>(inner[5]));
+    const auto count  = static_cast<uint16_t>((static_cast<uint8_t>(inner[4]) << 8)
+                                              | static_cast<uint8_t>(inner[5]));
     for (uint16_t index = 0; index < count; index++)
     {
         const size_t record = 12 + index * 16 + 8;
-        uint32_t     value  = 0;
+        uint32_t value      = 0;
         for (int byte = 0; byte < 4; byte++)
         {
             value = (value << 8) | static_cast<uint8_t>(inner[record + byte]);
         }
+
         value += 16;
         for (int byte = 3; byte >= 0; byte--)
         {
@@ -139,6 +146,7 @@ inline std::string collection(const std::string &first)
             value >>= 8;
         }
     }
+
     return data + inner;
 }
 
@@ -153,7 +161,7 @@ struct ZipEntry {
 // declared size miniz cannot check against the stored bytes up front.
 inline std::string deflateStored(const std::string &data)
 {
-    const auto  length = static_cast<uint16_t>(data.size());
+    const auto length = static_cast<uint16_t>(data.size());
     std::string stream(1, '\x01');
     stream += static_cast<char>(length & 0xFF);
     stream += static_cast<char>(length >> 8);
@@ -182,12 +190,12 @@ inline std::string zip(const std::vector<ZipEntry> &entries)
             mz_crc32(MZ_CRC32_INIT, reinterpret_cast<const unsigned char *>(entry.data.data()),
                      entry.data.size()));
         // A faked size needs deflate: miniz refuses a stored entry whose two sizes differ.
-        const bool        deflate  = entry.declaredSize != 0xFFFFFFFF;
-        const std::string stored   = deflate ? deflateStored(entry.data) : entry.data;
-        const uint32_t    size     = static_cast<uint32_t>(stored.size());
-        const uint32_t    declared = deflate ? entry.declaredSize : size;
-        const uint16_t    method   = deflate ? 8 : 0;
-        const uint32_t    offset   = static_cast<uint32_t>(localLE.size());
+        const bool deflate       = entry.declaredSize != 0xFFFFFFFF;
+        const std::string stored = deflate ? deflateStored(entry.data) : entry.data;
+        const uint32_t size      = static_cast<uint32_t>(stored.size());
+        const uint32_t declared  = deflate ? entry.declaredSize : size;
+        const uint16_t method    = deflate ? 8 : 0;
+        const uint32_t offset    = static_cast<uint32_t>(localLE.size());
         le32(localLE, 0x04034B50);
         le16(localLE, 20);
         le16(localLE, 0);
@@ -221,6 +229,7 @@ inline std::string zip(const std::vector<ZipEntry> &entries)
         le32(centralLE, offset);
         centralLE += entry.name;
     }
+
     std::string end;
     le32(end, 0x06054B50);
     le16(end, 0);

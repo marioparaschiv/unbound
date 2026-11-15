@@ -10,7 +10,7 @@ const std::string kBundle = "unbound.98.bundle";
 
 void trustsAnUnchangedInstalledBundle()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
     server.publish(kBase, "2026-11-13T00:00:00.000Z", {{kBundle, "good"}});
     assert(server.install(updater, std::nullopt));
@@ -21,7 +21,7 @@ void trustsAnUnchangedInstalledBundle()
 
 void healsABundleWhoseBytesChanged()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
     server.publish(kBase, "2026-11-13T00:00:00.000Z", {{kBundle, "good"}});
     assert(server.install(updater, std::nullopt));
@@ -41,7 +41,7 @@ void healsABundleWhoseBytesChanged()
 
 void reportsAnEmptyBundle()
 {
-    bundle_test::Server   server;
+    bundle_test::Server server;
     loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
     server.publish(kBase, "2026-11-13T00:00:00.000Z", {{kBundle, "good"}});
     assert(server.install(updater, std::nullopt));

@@ -35,17 +35,17 @@ int main()
     auto failed = history.records().back();
     assert(!failed.ok && failed.error == std::optional<std::string>("ReferenceError"));
     assert(failed.logs.size() == 2);
-    assert(failed.logs[0].level == loader::native::EvaluationLogLevel::Warn &&
-           failed.logs[1].message == "failed");
+    assert(failed.logs[0].level == loader::native::EvaluationLogLevel::Warn
+           && failed.logs[1].message == "failed");
 
     nlohmann::json serialized = history.json();
-    assert(serialized.size() == 2 && serialized[1]["logs"][1]["level"] == 3 &&
-           serialized[0]["error"].is_null());
+    assert(serialized.size() == 2 && serialized[1]["logs"][1]["level"] == 3
+           && serialized[0]["error"].is_null());
 
     std::string long_code(loader::native::kEvaluationFieldLimit + 10, 'a');
     assert(history.record({{"id", "e3"}, {"code", long_code}, {"ok", true}}));
-    assert(history.records().back().code ==
-           std::string(loader::native::kEvaluationFieldLimit, 'a') + "... (10 more bytes)");
+    assert(history.records().back().code
+           == std::string(loader::native::kEvaluationFieldLimit, 'a') + "... (10 more bytes)");
 
     std::string accented = "a\xC3\xA9";
     assert(loader::native::truncatedText(accented, 2) == "a... (2 more bytes)");
@@ -54,6 +54,7 @@ int main()
     {
         history.record({{"id", "n" + std::to_string(index)}, {"code", "x"}, {"ok", true}});
     }
+
     assert(history.records().size() == loader::native::kEvaluationHistoryLimit);
     assert(history.records().front().identifier == "n10");
 

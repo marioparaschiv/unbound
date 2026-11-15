@@ -33,6 +33,7 @@ namespace {
         {
             throw outOfRange(type);
         }
+
         return *number;
     }
 
@@ -42,14 +43,17 @@ namespace {
         {
             return *number;
         }
+
         if (const auto *number = std::get_if<std::uint64_t>(&value.data))
         {
             if (*number > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()))
             {
                 throw outOfRange(type);
             }
+
             return static_cast<std::int64_t>(*number);
         }
+
         return static_cast<std::int64_t>(numericArgument(value, type));
     }
 
@@ -59,14 +63,17 @@ namespace {
         {
             return *number;
         }
+
         if (const auto *number = std::get_if<std::int64_t>(&value.data))
         {
             if (*number < 0)
             {
                 throw outOfRange(type);
             }
+
             return static_cast<std::uint64_t>(*number);
         }
+
         return static_cast<std::uint64_t>(numericArgument(value, type));
     }
 
@@ -76,14 +83,16 @@ namespace {
         const auto *fields = std::get_if<NativeFields>(&value.data);
         if (!fields)
         {
-            throw std::invalid_argument("Native FFI " + type.layout->name +
-                                        " argument must be an object");
+            throw std::invalid_argument("Native FFI " + type.layout->name
+                                        + " argument must be an object");
         }
+
         if (fields->size() != type.layout->fields.size())
         {
-            throw std::invalid_argument("Native FFI " + type.layout->name +
-                                        " argument has the wrong layout");
+            throw std::invalid_argument("Native FFI " + type.layout->name
+                                        + " argument has the wrong layout");
         }
+
         std::memset(target, 0, type.layout->size);
         for (std::size_t index = 0; index < fields->size(); index++)
         {
@@ -122,6 +131,7 @@ void encodeValue(const Type &type, const NativeValue &value, std::uint8_t *targe
             {
                 throw std::invalid_argument("Native FFI boolean argument expected");
             }
+
             store<std::uint8_t>(target, *flag ? 1 : 0);
             return;
         }
@@ -161,11 +171,13 @@ void encodeValue(const Type &type, const NativeValue &value, std::uint8_t *targe
                 store<const char *>(target, nullptr);
                 return;
             }
+
             if (const auto *string = std::get_if<std::string>(&value.data))
             {
                 store<const char *>(target, storage.keep(*string));
                 return;
             }
+
             throw std::invalid_argument("Native FFI cstring argument expected");
         case Kind::Pointer:
             if (std::holds_alternative<std::monostate>(value.data))
@@ -173,18 +185,20 @@ void encodeValue(const Type &type, const NativeValue &value, std::uint8_t *targe
                 store<void *>(target, nullptr);
                 return;
             }
+
             if (const auto *address = std::get_if<NativeAddress>(&value.data))
             {
                 store<void *>(target, address->value);
                 return;
             }
+
             throw std::invalid_argument("Native FFI pointer argument expected");
         case Kind::Struct:
             encodeStruct(type, value, target, storage);
             return;
         case Kind::Extension:
-            throw std::invalid_argument("Native FFI " + type.name +
-                                        " values are encoded by their platform codec");
+            throw std::invalid_argument("Native FFI " + type.name
+                                        + " values are encoded by their platform codec");
     }
 }
 
@@ -231,12 +245,14 @@ NativeValue decodeValue(const Type &type, const std::uint8_t *source)
             {
                 fields.push_back(decodeValue(field.type, source + field.offset));
             }
+
             return {std::move(fields)};
         }
         case Kind::Extension:
-            throw std::invalid_argument("Native FFI " + type.name +
-                                        " values are decoded by their platform codec");
+            throw std::invalid_argument("Native FFI " + type.name
+                                        + " values are decoded by their platform codec");
     }
+
     return {};
 }
 }

@@ -30,12 +30,12 @@ static std::string lowercase(std::string value)
 static std::string percentEncode(const std::string &value)
 {
     static const char *const kHex = "0123456789ABCDEF";
-    std::string              encoded;
+    std::string encoded;
 
     for (unsigned char character : value)
     {
-        if (std::isalnum(character) || character == '-' || character == '_' || character == '.' ||
-            character == '~')
+        if (std::isalnum(character) || character == '-' || character == '_' || character == '.'
+            || character == '~')
         {
             encoded.push_back(static_cast<char>(character));
             continue;
@@ -62,6 +62,7 @@ const char *addonDirectoryName(AddonKind kind)
         case AddonKind::Fonts:
             return "Fonts";
     }
+
     return "";
 }
 
@@ -79,14 +80,15 @@ std::optional<AddonKind> addonKindNamed(const std::string &name)
             return kind;
         }
     }
+
     return std::nullopt;
 }
 
 bool wipeAddons(const std::string &documents, AddonKind kind)
 {
     const std::string wanted = lowercase(addonDirectoryName(kind));
-    std::error_code   error;
-    bool              removed = false;
+    std::error_code error;
+    bool removed = false;
 
     for (const std::string &name : listDirectory(documents))
     {
@@ -105,7 +107,7 @@ bool wipeAddons(const std::string &documents, AddonKind kind)
 bool factoryReset(const std::string &documents)
 {
     std::error_code error;
-    bool            succeeded = true;
+    bool succeeded = true;
 
     for (const std::string &name : listDirectory(documents))
     {
@@ -137,6 +139,7 @@ static std::string trimmed(const std::string &value)
     {
         return "";
     }
+
     const auto last = value.find_last_not_of(" \t\r\n");
     return value.substr(first, last - first + 1);
 }
@@ -146,8 +149,8 @@ bool useCustomBundle(SettingsStore &settings, const std::string &input)
     const std::string url    = trimmed(input);
     const std::string scheme = lowercase(url.substr(0, url.find("://")));
 
-    if ((scheme != "https" && scheme != "http") || url.find("://") == std::string::npos ||
-        url.size() <= scheme.size() + 3)
+    if ((scheme != "https" && scheme != "http") || url.find("://") == std::string::npos
+        || url.size() <= scheme.size() + 3)
     {
         return false;
     }
@@ -165,7 +168,7 @@ bool toggleRecovery(SettingsStore &settings)
 
 RecoveryToggle toggleRecoveryFromShortcut(SettingsStore &settings, bool bundleReady)
 {
-    const bool     enabled = toggleRecovery(settings);
+    const bool enabled = toggleRecovery(settings);
     RecoveryToggle result{enabled, preferences::recoveryStatusText(enabled), bundleReady};
 
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Recovery shortcut: " + result.status + ".");
@@ -182,6 +185,7 @@ std::vector<size_t> shortcutsAfterRecovery(const std::vector<std::string> &types
             kept.push_back(index);
         }
     }
+
     return kept;
 }
 
@@ -192,6 +196,7 @@ std::optional<RecoveryToggle> activateShortcut(SettingsStore &settings, bool bun
     {
         return std::nullopt;
     }
+
     return toggleRecoveryFromShortcut(settings, bundleReady);
 }
 
@@ -220,13 +225,14 @@ std::string discordLine(const std::string &label, const std::string &appSource)
 {
     static const std::regex pattern(R"(^\s*(.*?)(?:\s*-\s*(alpha|beta))?\s*\((\d+)\)\s*$)",
                                     std::regex::icase);
-    const std::string       source = appSource.empty() ? std::string() : " (" + appSource + ")";
-    std::smatch             match;
+    const std::string source = appSource.empty() ? std::string() : " (" + appSource + ")";
+    std::smatch match;
 
     if (label.empty())
     {
         return "unknown" + source;
     }
+
     if (!std::regex_match(label, match, pattern))
     {
         return label + source;
@@ -244,6 +250,7 @@ std::string discordLine(const std::string &label, const std::string &appSource)
                            return std::tolower(character);
                        });
     }
+
     return match[1].str() + " " + channel + ", build " + match[3].str() + source;
 }
 
@@ -257,13 +264,14 @@ std::vector<std::pair<std::string, std::string>> issueEnvironment(const IssueFac
     const auto known = [](const std::string &value) {
         return value.empty() ? std::string("unknown") : value;
     };
-    const bool  android = facts.platform == "Android";
+    const bool android = facts.platform == "Android";
     std::string loader =
         "loader " + known(facts.unboundVersion) + " (`" + loaderFile(facts.platform) + "`";
     if (!facts.framework.empty())
     {
         loader += ", `" + facts.framework + "`";
     }
+
     loader += ")";
 
     std::string state =
@@ -272,6 +280,7 @@ std::vector<std::pair<std::string, std::string>> issueEnvironment(const IssueFac
     {
         state += android ? " · emulator" : " · simulator";
     }
+
     if (facts.registration == "System")
     {
         state += " · system app";
@@ -286,11 +295,13 @@ std::vector<std::pair<std::string, std::string>> issueEnvironment(const IssueFac
     {
         lines.emplace_back("Install", facts.install);
     }
+
     lines.emplace_back("State", state);
     if (!facts.launch.empty())
     {
         lines.emplace_back("Launch", facts.launch);
     }
+
     return lines;
 }
 
@@ -357,6 +368,7 @@ static MenuSection bundleSection(const MenuOptions &options)
         previous.failure = kPreviousBundleFailedMessage;
         section.items.push_back(std::move(previous));
     }
+
     section.items.push_back(
         restartingAction("delete-bundle", "Delete Bundle", "delete-bundle", true));
     section.items.push_back(std::move(custom));
@@ -372,6 +384,7 @@ static MenuSection addonsSection()
             std::string("wipe-") + lowercase(addonDirectoryName(kind)),
             std::string("Wipe ") + addonTitle(kind), "wipe", true, addonDirectoryName(kind)));
     }
+
     return section;
 }
 
@@ -387,6 +400,7 @@ static MenuSection utilitiesSection(const SettingsStore &settings, const MenuOpt
     {
         section.items.push_back(platformItem("open-app-folder", "Open App Folder"));
     }
+
     if (options.copyAppFolderPath)
     {
         section.items.push_back(platformItem("copy-app-folder-path", "Copy App Folder Path"));
@@ -421,10 +435,12 @@ static bool menuOption(const nlohmann::json &input, const char *key)
     {
         return false;
     }
+
     if (value->is_boolean())
     {
         return value->get<bool>();
     }
+
     return value->is_number() && value->get<double>() != 0;
 }
 
@@ -435,6 +451,7 @@ MenuOptions menuOptions(const std::string &json)
     {
         return {};
     }
+
     return {menuOption(input, "openAppFolder"), menuOption(input, "copyAppFolderPath")};
 }
 
@@ -449,6 +466,7 @@ static const char *kindName(MenuItemKind kind)
         case MenuItemKind::Platform:
             return "platform";
     }
+
     return "";
 }
 
@@ -472,6 +490,7 @@ static nlohmann::json itemJSON(const MenuItem &item)
             json[key] = *value;
         }
     }
+
     if (item.prompt)
     {
         json["prompt"] = {{"title", item.prompt->title},
@@ -480,11 +499,13 @@ static nlohmann::json itemJSON(const MenuItem &item)
                           {"confirm", item.prompt->confirm},
                           {"cancel", item.prompt->cancel}};
     }
+
     if (item.gesture)
     {
         json["gesture"] = preferences::gestureName(*item.gesture);
         json["on"]      = item.on;
     }
+
     return json;
 }
 
@@ -498,6 +519,7 @@ nlohmann::json menuJSON(const SettingsStore &settings, const MenuOptions &option
         {
             items.push_back(itemJSON(item));
         }
+
         sections.push_back({{"title", section.title}, {"items", std::move(items)}});
     }
 
@@ -532,6 +554,7 @@ IssueFacts issueFacts(const NativePlatformProvider &provider, const std::string 
     {
         facts.registration = provider.isSystemApp() ? "System" : "User";
     }
+
     facts.install = provided(provider.installDetails);
     facts.launch  = launchReportLine(launchReport(), previousNativeCrash());
     return facts;
@@ -547,6 +570,7 @@ IssueReport issueReport(const NativePlatformProvider &provider, const std::strin
     {
         report.attachments.emplace_back("Entitlements", entitlements);
     }
+
     return report;
 }
 
@@ -557,31 +581,38 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
         const auto kind = addonKindNamed(argument);
         return flag(kind && wipeAddons(context.documents, *kind));
     }
+
     if (action == "factory-reset")
     {
         return flag(factoryReset(context.documents));
     }
+
     if (action == "delete-bundle")
     {
         deleteBundle(context.settings, context.updater, context.documents);
         return flag(true);
     }
+
     if (action == "previous-bundle")
     {
         return flag(context.updater.rollBackToPrevious());
     }
+
     if (action == "custom-bundle")
     {
         return flag(useCustomBundle(context.settings, argument));
     }
+
     if (action == "toggle-recovery")
     {
         return flag(toggleRecovery(context.settings));
     }
+
     if (action == "recovery-shortcut-action")
     {
         return kRecoveryShortcutAction;
     }
+
     if (action == "recovery-shortcut-activate")
     {
         const std::optional<RecoveryToggle> toggle = activateShortcut(
@@ -590,15 +621,17 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
         {
             return nlohmann::json{{"handled", false}}.dump();
         }
+
         return nlohmann::json{{"handled", true},
                               {"enabled", toggle->enabled},
                               {"status", toggle->status},
                               {"restartRequired", toggle->restartRequired}}
             .dump();
     }
+
     if (action == "recovery-shortcut-order")
     {
-        const nlohmann::json     types = nlohmann::json::parse(argument, nullptr, false);
+        const nlohmann::json types = nlohmann::json::parse(argument, nullptr, false);
         std::vector<std::string> names;
         if (types.is_array())
         {
@@ -607,60 +640,72 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
                 names.push_back(type.is_string() ? type.get<std::string>() : std::string());
             }
         }
+
         return nlohmann::json(shortcutsAfterRecovery(names)).dump();
     }
+
     if (action == "refetch-bundle")
     {
         return flag(refetchBundle(context.updater,
                                   context.updateURL ? context.updateURL() : std::nullopt,
                                   context.bytecodeVersion ? context.bytecodeVersion() : 0));
     }
+
     if (action == "settings")
     {
         return context.settings.serialize();
     }
+
     if (action == "save-settings")
     {
         return devoverlay::editResultJSON(devoverlay::saveSettings(context.settings, argument))
             .dump();
     }
+
     if (action == "developer-menu")
     {
         return devoverlay::menuJSON(context.settings).dump();
     }
+
     if (action == "issue-url")
     {
         const auto &provider = context.provider;
         return issueURL(issueReport(provider ? *provider : NativePlatformProvider{},
                                     context.platform, argument));
     }
+
     if (action == "crash-report-url")
     {
-        const auto                &provider = context.provider;
-        std::optional<std::string> summary  = crashSummary();
+        const auto &provider               = context.provider;
+        std::optional<std::string> summary = crashSummary();
         if (!summary)
         {
             return "";
         }
+
         return crashReportURL(issueReport(provider ? *provider : NativePlatformProvider{},
                                           context.platform, argument),
                               *summary, previousLaunchLogTail(kCrashReportLogLines),
                               describeNativeCrash(previousNativeCrash()));
     }
+
     if (action == "menu")
     {
         MenuOptions options    = menuOptions(argument);
         options.previousBundle = context.updater.previousBundleRevision();
         return menuJSON(context.settings, options).dump();
     }
+
     if (action == "menu-step")
     {
         return menuStepFor(argument);
     }
+
     if (action == "menu-outcome")
     {
         return menuOutcomeFor(argument);
     }
+
     return "";
 }
 
@@ -683,9 +728,9 @@ std::string issueBody(const IssueReport &report)
 
 std::string issueURL(const IssueReport &report)
 {
-    return std::string("https://github.com/") + kIssueRepository +
-           "/issues/new?template=crash-report.yml&title=" + percentEncode("crash: ") +
-           "&platform=" + percentEncode(report.platform) +
-           "&environment=" + percentEncode(issueBody(report));
+    return std::string("https://github.com/") + kIssueRepository
+           + "/issues/new?template=crash-report.yml&title=" + percentEncode("crash: ")
+           + "&platform=" + percentEncode(report.platform)
+           + "&environment=" + percentEncode(issueBody(report));
 }
 }

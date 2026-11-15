@@ -32,8 +32,8 @@ static void acceptsASignedManifestAndBundle()
     assert(server.lastDownload == kBase + kBundle);
     assert(trustRecord(server.candidate())["kind"] == "manifest");
     // The record names the exact file it hashed, so launch skips hashing it again.
-    assert(trustRecord(server.candidate())["identity"] ==
-           *loader::fileIdentity(server.candidate()));
+    assert(trustRecord(server.candidate())["identity"]
+           == *loader::fileIdentity(server.candidate()));
     assert(updater.resolveBundlePath() == server.candidate());
     assert(updater.markBundleAttempted(server.candidate()));
     assert(updater.acceptBundle(server.candidate()));
@@ -177,7 +177,7 @@ static void bindsPullRequestBuildsToTheirNumber()
 {
     for (uint32_t build : {0u, 5u, 6u})
     {
-        Server                server;
+        Server server;
         loader::BundleUpdater updater = server.updater(build ? bundle_test::pullRequestTrust(build)
                                                              : bundle_test::productionTrust());
 
@@ -283,8 +283,8 @@ static void replacesAPreSigningActiveBundle()
 
     // The verified active bundle came from this manifest, so nothing is requested.
     int downloads = server.downloads;
-    assert(updater.downloadBundle(updater.resolveBundlePath(), std::nullopt, 98) ==
-           server.active());
+    assert(updater.downloadBundle(updater.resolveBundlePath(), std::nullopt, 98)
+           == server.active());
     assert(server.downloads == downloads);
 
     server.files.clear();

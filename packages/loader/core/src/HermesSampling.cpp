@@ -18,9 +18,9 @@ namespace jsi = facebook::jsi;
 
 namespace {
     constexpr const char *kMakeRootAPI = "_ZN8facebook6hermes17makeHermesRootAPIEv";
-    constexpr jsi::UUID   kRootAPIUUID{0xb654d898, 0xdfad, 0x11ef, 0x859a, 0x325096b39f47};
-    constexpr double      kSamplingHz        = 400;
-    constexpr size_t      kNativeFrameHops   = 16;
+    constexpr jsi::UUID kRootAPIUUID{0xb654d898, 0xdfad, 0x11ef, 0x859a, 0x325096b39f47};
+    constexpr double kSamplingHz             = 400;
+    constexpr size_t kNativeFrameHops        = 16;
     constexpr const char *kHermesLibraries[] = {"libhermesvm.so", "libhermes.so"};
 
 #if __has_include(<link.h>)
@@ -29,15 +29,17 @@ namespace {
         std::pair<const char *, std::string> search{library, {}};
         dl_iterate_phdr(
             [](dl_phdr_info *info, size_t, void *data) {
-                auto       *found = static_cast<std::pair<const char *, std::string> *>(data);
-                std::string path  = info->dlpi_name ? info->dlpi_name : "";
-                if (path.size() >= std::strlen(found->first) &&
-                    path.compare(path.size() - std::strlen(found->first), std::string::npos,
-                                 found->first) == 0)
+                auto *found      = static_cast<std::pair<const char *, std::string> *>(data);
+                std::string path = info->dlpi_name ? info->dlpi_name : "";
+                if (path.size() >= std::strlen(found->first)
+                    && path.compare(path.size() - std::strlen(found->first), std::string::npos,
+                                    found->first)
+                           == 0)
                 {
                     found->second = path;
                     return 1;
                 }
+
                 return 0;
             },
             &search);
@@ -51,6 +53,7 @@ namespace {
         {
             return symbol;
         }
+
         for (const char *library : kHermesLibraries)
         {
             void *handle = dlopen(library, RTLD_NOW | RTLD_NOLOAD);
@@ -66,6 +69,7 @@ namespace {
                 return symbol;
             }
         }
+
         return nullptr;
     }
 
@@ -90,7 +94,7 @@ namespace {
     {
         using MakeRootAPI         = jsi::ICast *(*)();
         static HermesRootAPI *api = [] {
-            auto        make = reinterpret_cast<MakeRootAPI>(findSymbol(kMakeRootAPI));
+            auto make        = reinterpret_cast<MakeRootAPI>(findSymbol(kMakeRootAPI));
             jsi::ICast *root = make ? make() : nullptr;
             return root ? static_cast<HermesRootAPI *>(root->castInterface(kRootAPIUUID)) : nullptr;
         }();
@@ -121,16 +125,17 @@ namespace {
         {
             return false;
         }
+
         std::string location = name.substr(open + 1, name.size() - open - 2);
-        return location.rfind("unbound:", 0) != 0 && location.rfind("address at unbound", 0) != 0 &&
-               location != "unbound";
+        return location.rfind("unbound:", 0) != 0 && location.rfind("address at unbound", 0) != 0
+               && location != "unbound";
     }
 
     bool isJavaScript(const nlohmann::json &frame)
     {
         auto category = frame.find("category");
-        return category != frame.end() && category->is_string() &&
-               category->get<std::string>() == "JavaScript";
+        return category != frame.end() && category->is_string()
+               && category->get<std::string>() == "JavaScript";
     }
 }
 
@@ -142,7 +147,7 @@ std::vector<std::string> hottestStack(const std::string &chromeTrace, size_t dep
         return {};
     }
 
-    const nlohmann::json         &frames = trace["stackFrames"];
+    const nlohmann::json &frames = trace["stackFrames"];
     std::map<std::string, size_t> counts;
     for (const nlohmann::json &sample : trace["samples"])
     {
@@ -151,6 +156,7 @@ std::vector<std::string> hottestStack(const std::string &chromeTrace, size_t dep
         {
             continue;
         }
+
         std::string frame = idOf(*leaf);
         for (size_t hops = 0;
              frames.contains(frame) && !isJavaScript(frames[frame]) && hops < kNativeFrameHops;
@@ -158,6 +164,7 @@ std::vector<std::string> hottestStack(const std::string &chromeTrace, size_t dep
         {
             frame = parentOf(frames[frame]);
         }
+
         if (frames.contains(frame) && isJavaScript(frames[frame]))
         {
             counts[frame]++;
@@ -165,7 +172,7 @@ std::vector<std::string> hottestStack(const std::string &chromeTrace, size_t dep
     }
 
     std::string hottest;
-    size_t      best = 0;
+    size_t best = 0;
     for (const auto &[frame, count] : counts)
     {
         if (count > best)
@@ -182,13 +189,16 @@ std::vector<std::string> hottestStack(const std::string &chromeTrace, size_t dep
         {
             break;
         }
+
         const nlohmann::json &frame = frames[current];
         if (isJavaScript(frame) && isPluginFrame(frameName(frame)))
         {
             stack.push_back(frameName(frame));
         }
+
         current = parentOf(frame);
     }
+
     return stack;
 }
 
@@ -198,12 +208,14 @@ std::string describeSampledStack(const std::vector<std::string> &frames, bool in
     {
         return {};
     }
+
     std::string text =
         (insideNativeCall ? "The call came from " : "Its JavaScript was in ") + frames.front();
     for (size_t index = 1; index < frames.size(); index++)
     {
         text += ", called from " + frames[index];
     }
+
     return text + ".";
 }
 
@@ -214,6 +226,7 @@ std::string formatSampledStack(const std::vector<std::string> &frames)
     {
         text += (text.empty() ? "    at " : "\n    at ") + frame;
     }
+
     return text;
 }
 
@@ -231,10 +244,11 @@ static JavaScriptProfiler hermesProfiler()
             {
                 api->enableSamplingProfiler(kSamplingHz);
             }
+
             return api != nullptr;
         },
         [] {
-            HermesRootAPI     *api = rootAPI();
+            HermesRootAPI *api = rootAPI();
             std::ostringstream trace;
             api->dumpSampledTraceToStream(trace);
             api->disableSamplingProfiler();
@@ -244,9 +258,9 @@ static JavaScriptProfiler hermesProfiler()
 #endif
 }
 
-static std::mutex         gProfilerMutex;
-static JavaScriptProfiler gProfiler  = hermesProfiler();
-static bool               gProfiling = false;
+static std::mutex gProfilerMutex;
+static JavaScriptProfiler gProfiler = hermesProfiler();
+static bool gProfiling              = false;
 
 void setJavaScriptProfiler(JavaScriptProfiler profiler)
 {
@@ -261,6 +275,7 @@ bool startJavaScriptProfiler()
     {
         return false;
     }
+
     gProfiling = gProfiler.start();
     return gProfiling;
 }
@@ -272,11 +287,12 @@ std::optional<std::string> stopJavaScriptProfiler()
     {
         return std::nullopt;
     }
+
     gProfiling = false;
     return gProfiler.stop();
 }
 
-static constexpr std::chrono::seconds              kRuntimeSettling{15};
+static constexpr std::chrono::seconds kRuntimeSettling{15};
 static std::atomic<std::chrono::steady_clock::rep> gRuntimeCreatedAt{0};
 
 void noteRuntimeCreated()
@@ -297,6 +313,7 @@ std::vector<std::string> sampleJavaScriptStack(std::chrono::milliseconds duratio
     {
         return {};
     }
+
     std::this_thread::sleep_for(duration);
     std::optional<std::string> trace = stopJavaScriptProfiler();
     return trace ? hottestStack(*trace) : std::vector<std::string>{};

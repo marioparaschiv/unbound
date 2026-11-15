@@ -39,22 +39,25 @@ bool BundleTrust::trustsPullRequestKey() const
 std::vector<std::string> BundleTrust::productionKeys() const
 {
     std::vector<std::string> keys;
-    size_t                   start = 0;
+    size_t start = 0;
     while (start <= productionKey.size())
     {
-        size_t      end = productionKey.find(',', start);
+        size_t end = productionKey.find(',', start);
         std::string key =
             productionKey.substr(start, end == std::string::npos ? std::string::npos : end - start);
         if (!key.empty())
         {
             keys.push_back(key);
         }
+
         if (end == std::string::npos)
         {
             break;
         }
+
         start = end + 1;
     }
+
     return keys;
 }
 
@@ -64,22 +67,27 @@ static int base64Value(char character)
     {
         return character - 'A';
     }
+
     if (character >= 'a' && character <= 'z')
     {
         return character - 'a' + 26;
     }
+
     if (character >= '0' && character <= '9')
     {
         return character - '0' + 52;
     }
+
     if (character == '+')
     {
         return 62;
     }
+
     if (character == '/')
     {
         return 63;
     }
+
     return -1;
 }
 
@@ -93,6 +101,7 @@ static std::string_view withoutSurroundingSpace(std::string_view value)
     {
         value.remove_suffix(1);
     }
+
     return value;
 }
 
@@ -113,7 +122,7 @@ std::optional<std::string> decodeBase64(std::string_view encoded)
     std::string decoded;
     decoded.reserve(encoded.size() / 4 * 3);
     uint32_t accumulator = 0;
-    int      bits        = 0;
+    int bits             = 0;
     for (size_t index = 0; index < encoded.size() - padding; index++)
     {
         int value = base64Value(encoded[index]);
@@ -121,6 +130,7 @@ std::optional<std::string> decodeBase64(std::string_view encoded)
         {
             return std::nullopt;
         }
+
         accumulator = (accumulator << 6) | static_cast<uint32_t>(value);
         bits += 6;
         if (bits >= 8)
@@ -134,6 +144,7 @@ std::optional<std::string> decodeBase64(std::string_view encoded)
     {
         return std::nullopt;
     }
+
     return decoded;
 }
 
@@ -151,6 +162,7 @@ BundleTrust compiledBundleTrust()
     {
         trust.pullRequestKey = UNBOUND_PR_BUNDLE_SIGNING_KEY;
     }
+
     return trust;
 }
 
@@ -184,12 +196,14 @@ TrustedSigner verifyTrustedSignature(const std::string &message, const std::stri
             return TrustedSigner::Production;
         }
     }
-    if (trust.trustsPullRequestKey() &&
-        verifyBundleSignature(pullRequestSigningContext(trust.pullRequestNumber) + message,
-                              signatureBase64, trust.pullRequestKey))
+
+    if (trust.trustsPullRequestKey()
+        && verifyBundleSignature(pullRequestSigningContext(trust.pullRequestNumber) + message,
+                                 signatureBase64, trust.pullRequestKey))
     {
         return TrustedSigner::PullRequest;
     }
+
     return TrustedSigner::None;
 }
 
@@ -204,6 +218,7 @@ std::string describeSigner(TrustedSigner signer, const BundleTrust &trust)
         case TrustedSigner::None:
             break;
     }
+
     return "no trusted key";
 }
 
@@ -213,13 +228,14 @@ static std::string lowercase(std::string value)
     {
         character = static_cast<char>(std::tolower(static_cast<unsigned char>(character)));
     }
+
     return value;
 }
 
 static std::optional<std::array<int, 4>> ipv4Octets(const std::string &host)
 {
     std::array<int, 4> octets{};
-    size_t             start = 0;
+    size_t start = 0;
     for (size_t index = 0; index < octets.size(); index++)
     {
         size_t end = index + 1 < octets.size() ? host.find('.', start) : host.size();
@@ -227,6 +243,7 @@ static std::optional<std::array<int, 4>> ipv4Octets(const std::string &host)
         {
             return std::nullopt;
         }
+
         int value = 0;
         for (size_t position = start; position < end; position++)
         {
@@ -234,15 +251,19 @@ static std::optional<std::array<int, 4>> ipv4Octets(const std::string &host)
             {
                 return std::nullopt;
             }
+
             value = value * 10 + (host[position] - '0');
         }
+
         if (value > 255)
         {
             return std::nullopt;
         }
+
         octets[index] = value;
         start         = end + 1;
     }
+
     return octets;
 }
 
@@ -253,16 +274,17 @@ static bool isPrivateIPv4(const std::string &host)
     {
         return false;
     }
+
     int first  = (*octets)[0];
     int second = (*octets)[1];
-    return first == 127 || first == 10 || (first == 172 && second >= 16 && second <= 31) ||
-           (first == 192 && second == 168) || (first == 169 && second == 254);
+    return first == 127 || first == 10 || (first == 172 && second >= 16 && second <= 31)
+           || (first == 192 && second == 168) || (first == 169 && second == 254);
 }
 
 static bool hasSuffix(const std::string &value, const std::string &suffix)
 {
-    return value.size() > suffix.size() &&
-           value.compare(value.size() - suffix.size(), suffix.size(), suffix) == 0;
+    return value.size() > suffix.size()
+           && value.compare(value.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
 
 static std::optional<std::string> httpHost(const std::string &url)
@@ -273,7 +295,7 @@ static std::optional<std::string> httpHost(const std::string &url)
         return std::nullopt;
     }
 
-    size_t      authorityEnd = url.find_first_of("/?#", scheme.size());
+    size_t authorityEnd = url.find_first_of("/?#", scheme.size());
     std::string authority =
         url.substr(scheme.size(), authorityEnd == std::string::npos ? std::string::npos
                                                                     : authorityEnd - scheme.size());
@@ -290,6 +312,7 @@ static std::optional<std::string> httpHost(const std::string &url)
                    ? std::nullopt
                    : std::optional<std::string>(lowercase(authority.substr(1, closing - 1)));
     }
+
     return lowercase(authority.substr(0, authority.find(':')));
 }
 
@@ -300,7 +323,8 @@ bool isDevelopmentBundleURL(const std::string &url)
     {
         return false;
     }
-    return *host == "localhost" || hasSuffix(*host, ".localhost") || hasSuffix(*host, ".local") ||
-           *host == "::1" || isPrivateIPv4(*host);
+
+    return *host == "localhost" || hasSuffix(*host, ".localhost") || hasSuffix(*host, ".local")
+           || *host == "::1" || isPrivateIPv4(*host);
 }
 }

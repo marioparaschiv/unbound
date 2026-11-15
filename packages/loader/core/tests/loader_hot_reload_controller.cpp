@@ -10,7 +10,7 @@
 #include "LoaderSettings.h"
 
 struct ScheduledWork {
-    double                seconds;
+    double seconds;
     std::function<void()> work;
 };
 
@@ -67,7 +67,7 @@ struct FakeScheduler {
 
 struct FakeTransport : loader::HotReloadTransport {
     std::vector<loader::HotReloadRequest> opened;
-    int                                   cancelled = 0;
+    int cancelled = 0;
 
     void open(const loader::HotReloadRequest &request) override
     {
@@ -106,11 +106,11 @@ int main()
     settings.load();
     settings.set("unbound", "loader.update.etag", "\"1\"");
 
-    FakeScheduler              scheduler;
-    auto                       transport  = std::make_shared<FakeTransport>();
-    std::optional<std::string> base       = std::string("http://10.0.2.2:3000/unbound.js");
-    int                        reloads    = 0;
-    auto                       controller = std::make_shared<loader::HotReloadController>(
+    FakeScheduler scheduler;
+    auto transport                  = std::make_shared<FakeTransport>();
+    std::optional<std::string> base = std::string("http://10.0.2.2:3000/unbound.js");
+    int reloads                     = 0;
+    auto controller                 = std::make_shared<loader::HotReloadController>(
         settings,
         [&base] {
             return base;
@@ -151,8 +151,8 @@ int main()
     assert(request.headers.at("Cache-Control") == "no-cache");
     assert(request.connectTimeoutSeconds == loader::kHotReloadConnectTimeoutSeconds);
     assert(request.readTimeoutSeconds == loader::kHotReloadReadTimeoutSeconds);
-    assert(scheduler.pending.size() == 1 &&
-           scheduler.nextDelay() == loader::kHotReloadConnectTimeoutSeconds);
+    assert(scheduler.pending.size() == 1
+           && scheduler.nextDelay() == loader::kHotReloadConnectTimeoutSeconds);
 
     controller->sync();
     scheduler.runImmediate();
@@ -244,6 +244,7 @@ int main()
     {
         scheduler.runNext();
     }
+
     assert(transport->opened.size() == openedBeforeStop + 1);
     return 0;
 }

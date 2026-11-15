@@ -10,5 +10,5 @@ uint64_t nextUIScopeCacheId();
 
 facebook::jsi::Value cachedUIScopeNamespace(facebook::jsi::Runtime &runtime, const std::string &key,
                                             const std::function<facebook::jsi::Object()> &create,
-                                            std::function<bool()>                         active);
+                                            std::function<bool()> active);
 }

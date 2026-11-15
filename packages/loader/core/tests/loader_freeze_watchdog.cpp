@@ -40,6 +40,7 @@ public:
             std::lock_guard<std::mutex> lock(mutex_);
             queue_.push_back(std::move(work));
         }
+
         wake_.notify_one();
     }
 
@@ -57,17 +58,19 @@ private:
                 work = std::move(queue_.front());
                 queue_.pop_front();
             }
+
             if (!work)
             {
                 return;
             }
+
             work();
         }
     }
 
-    std::thread                       thread_;
-    std::mutex                        mutex_;
-    std::condition_variable           wake_;
+    std::thread thread_;
+    std::mutex mutex_;
+    std::condition_variable wake_;
     std::deque<std::function<void()>> queue_;
 };
 
@@ -82,11 +85,11 @@ static std::filesystem::path makeTemporaryDirectory()
 
 int main()
 {
-    std::filesystem::path root   = makeTemporaryDirectory();
-    std::string           marker = (root / loader::AddonCrashGuard::kFrozenFile).string();
-    loader::AddonSlot     slot   = loader::registerAddonSlot("unbound.frozen", "Frozen Plugin");
-    FakeRuntimeThread     runtime;
-    std::mutex            reportsMutex;
+    std::filesystem::path root = makeTemporaryDirectory();
+    std::string marker         = (root / loader::AddonCrashGuard::kFrozenFile).string();
+    loader::AddonSlot slot     = loader::registerAddonSlot("unbound.frozen", "Frozen Plugin");
+    FakeRuntimeThread runtime;
+    std::mutex reportsMutex;
     std::vector<loader::FreezeReport> reports;
 
     {
@@ -112,6 +115,7 @@ int main()
             {
                 std::this_thread::sleep_for(10ms);
             }
+
             markerSeen = loader::fileExists(marker);
         });
 
@@ -124,6 +128,7 @@ int main()
                     break;
                 }
             }
+
             std::this_thread::sleep_for(10ms);
         }
 
@@ -156,6 +161,7 @@ int main()
         });
         std::this_thread::sleep_for(500ms);
     }
+
     assert(unattributed.empty());
     assert(!loader::fileExists(marker));
 
@@ -168,8 +174,8 @@ int main()
         loader::AddonCrashGuard(root.string()).recoverFromPreviousLaunch();
     assert(disabled.size() == 1 && disabled[0].id == "unbound.frozen");
     assert(disabled[0].phase == loader::CrashPhase::Frozen);
-    assert(loader::crashDisabledNotice(disabled[0]) ==
-           "Disabled Frozen Plugin because Discord froze in it and had to be closed.");
+    assert(loader::crashDisabledNotice(disabled[0])
+           == "Disabled Frozen Plugin because Discord froze in it and had to be closed.");
 
     std::filesystem::remove_all(root);
     return 0;

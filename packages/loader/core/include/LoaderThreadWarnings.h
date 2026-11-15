@@ -15,9 +15,9 @@ public:
     using Clock = std::function<std::chrono::steady_clock::time_point()>;
 
     explicit OffMainViewWarnings(std::function<bool()> developerMode,
-                                 Clock                 clock = std::chrono::steady_clock::now);
+                                 Clock clock = std::chrono::steady_clock::now);
 
-    bool                       enabled();
+    bool enabled();
     std::optional<std::string> warning(AddonSlot addon, const std::string &call);
 
 private:
@@ -40,8 +40,8 @@ private:
 };
 
 std::optional<std::string> throttledHookFailure(AddonSlot addon, const std::string &reason);
-std::string                addonName(AddonSlot addon);
-std::string                hookFailureMessage(AddonSlot addon, const std::string &reason);
-std::string                hookSkippedMessage(AddonSlot addon, const std::string &selector);
-std::string                callbackFailureMessage(AddonSlot addon, const std::string &reason);
+std::string addonName(AddonSlot addon);
+std::string hookFailureMessage(AddonSlot addon, const std::string &reason);
+std::string hookSkippedMessage(AddonSlot addon, const std::string &selector);
+std::string callbackFailureMessage(AddonSlot addon, const std::string &reason);
 }

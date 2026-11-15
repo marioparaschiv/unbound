@@ -13,7 +13,7 @@ int main()
     assert(loader::themeIdFrom("midnight") == "midnight");
 
     std::set<std::string> installed{"midnight", "sunrise"};
-    ThemeSelection        selection([&installed](const std::string &id) {
+    ThemeSelection selection([&installed](const std::string &id) {
         return installed.count(id) > 0;
     });
 

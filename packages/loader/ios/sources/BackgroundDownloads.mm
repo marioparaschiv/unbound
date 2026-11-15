@@ -15,7 +15,7 @@ typedef void (*BackgroundEventsIMP)(id, SEL, UIApplication *, NSString *, void (
 
 static BackgroundEventsIMP originalBackgroundEvents = nullptr;
 
-@interface                                  BackgroundDownloads () <NSURLSessionDownloadDelegate>
+@interface BackgroundDownloads () <NSURLSessionDownloadDelegate>
 @property (nonatomic, strong) NSURLSession *session;
 @property (nonatomic, copy) void (^eventsFinished)(void);
 @end
@@ -33,17 +33,18 @@ static NSString *homeAbsolute(NSString *relative)
 static NSData *resumeDataFor(NSURL *url, NSString *destination)
 {
     NSString *resumePath = [destination stringByAppendingString:@".resume"];
-    NSData   *data       = [NSData dataWithContentsOfFile:resumePath];
+    NSData *data         = [NSData dataWithContentsOfFile:resumePath];
     [[NSFileManager defaultManager] removeItemAtPath:resumePath error:nil];
     if (!data)
     {
         return nil;
     }
+
     NSDictionary *saved = [NSPropertyListSerialization propertyListWithData:data
                                                                     options:0
                                                                      format:nil
                                                                       error:nil];
-    id            savedURL =
+    id savedURL =
         [saved isKindOfClass:NSDictionary.class] ? saved[@"NSURLSessionDownloadURL"] : nil;
     return [savedURL isKindOfClass:NSString.class] && [savedURL isEqualToString:url.absoluteString]
                ? data
@@ -58,11 +59,13 @@ static void handleBackgroundEvents(id delegate, SEL selector, UIApplication *app
         BackgroundDownloads.shared.eventsFinished = completion;
         return;
     }
+
     if (originalBackgroundEvents)
     {
         originalBackgroundEvents(delegate, selector, application, identifier, completion);
         return;
     }
+
     if (completion)
     {
         completion();
@@ -74,7 +77,7 @@ static void handleBackgroundEvents(id delegate, SEL selector, UIApplication *app
 + (instancetype)shared
 {
     static BackgroundDownloads *shared;
-    static dispatch_once_t      once;
+    static dispatch_once_t once;
     dispatch_once(&once, ^{ shared = [BackgroundDownloads new]; });
     return shared;
 }
@@ -88,6 +91,7 @@ static void handleBackgroundEvents(id delegate, SEL selector, UIApplication *app
                  format:@"Failed to find AppDelegate for background downloads"];
         return;
     }
+
     SEL selector = @selector(application:handleEventsForBackgroundURLSession:completionHandler:);
     const char *types = "v@:@@@?";
     if (!class_addMethod(delegateClass, selector, (IMP) handleBackgroundEvents, types))
@@ -96,6 +100,7 @@ static void handleBackgroundEvents(id delegate, SEL selector, UIApplication *app
         originalBackgroundEvents =
             (BackgroundEventsIMP) method_setImplementation(method, (IMP) handleBackgroundEvents);
     }
+
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0),
                    ^{ [BackgroundDownloads shared]; });
 }
@@ -115,6 +120,7 @@ static void handleBackgroundEvents(id delegate, SEL selector, UIApplication *app
                                                  delegate:self
                                             delegateQueue:queue];
     }
+
     return self;
 }
 
@@ -123,7 +129,7 @@ static void handleBackgroundEvents(id delegate, SEL selector, UIApplication *app
                  headers:(NSDictionary<NSString *, NSString *> *)headers
 {
     NSString *description = homeRelative(destination);
-    NSData   *resumeData  = resumeDataFor(url, destination);
+    NSData *resumeData    = resumeDataFor(url, destination);
     [self.session getAllTasksWithCompletionHandler:^(NSArray<NSURLSessionTask *> *tasks) {
         for (NSURLSessionTask *task in tasks)
         {
@@ -131,19 +137,23 @@ static void handleBackgroundEvents(id delegate, SEL selector, UIApplication *app
             {
                 continue;
             }
-            if ([task.originalRequest.URL isEqual:url] &&
-                task.state == NSURLSessionTaskStateRunning)
+
+            if ([task.originalRequest.URL isEqual:url]
+                && task.state == NSURLSessionTaskStateRunning)
             {
                 return;
             }
+
             [task cancel];
         }
+
         NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
         request.cachePolicy          = NSURLRequestReloadIgnoringCacheData;
         for (NSString *header in headers)
         {
             [request setValue:headers[header] forHTTPHeaderField:header];
         }
+
         NSURLSessionDownloadTask *task = resumeData
                                              ? [self.session downloadTaskWithResumeData:resumeData]
                                              : [self.session downloadTaskWithRequest:request];
@@ -168,6 +178,7 @@ static void handleBackgroundEvents(id delegate, SEL selector, UIApplication *app
               format:@"Background download of %@ ended with HTTP %ld", url, (long) status];
         return;
     }
+
     loader::finishBackgroundDownload(toStdString(url),
                                      toStdString(homeAbsolute(task.taskDescription)),
                                      toStdString(location.path));
@@ -181,6 +192,7 @@ static void handleBackgroundEvents(id delegate, SEL selector, UIApplication *app
     {
         return;
     }
+
     [Logger warning:LOG_CATEGORY_UPDATER
              format:@"Failed to download %@ in the background: %@ %ld", task.originalRequest.URL,
                     error.domain, (long) error.code];

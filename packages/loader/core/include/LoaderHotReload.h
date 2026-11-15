@@ -12,7 +12,7 @@
 #include "LoaderSettings.h"
 
 namespace loader {
-constexpr int    kDevServerPort                  = 3000;
+constexpr int kDevServerPort                     = 3000;
 constexpr double kDevServerProbeTimeoutSeconds   = 1.5;
 constexpr double kHotReloadMinimumDelaySeconds   = 1.0;
 constexpr double kHotReloadMaximumDelaySeconds   = 30.0;
@@ -21,11 +21,11 @@ constexpr double kHotReloadReadTimeoutSeconds    = 86400.0;
 
 using ReachabilityProbe = std::function<bool(const std::string &url, double timeoutSeconds)>;
 
-std::optional<std::string> resolveUpdateURL(const SettingsStore              &settings,
+std::optional<std::string> resolveUpdateURL(const SettingsStore &settings,
                                             const std::optional<std::string> &devServerHost,
-                                            const ReachabilityProbe          &isServing);
+                                            const ReachabilityProbe &isServing);
 std::optional<std::string> hotReloadURL(const std::string &base);
-std::string                normalizedEtag(std::string_view etag);
+std::string normalizedEtag(std::string_view etag);
 std::optional<std::string> hotReloadEtag(std::string_view event);
 bool hotReloadEventRequiresReload(const SettingsStore &settings, std::string_view event);
 
@@ -33,7 +33,7 @@ class HotReloadBackoff
 {
 public:
     double next();
-    void   reset();
+    void reset();
 
 private:
     double delay_ = kHotReloadMinimumDelaySeconds;
@@ -49,15 +49,15 @@ public:
 
 private:
     const SettingsStore &settings_;
-    std::string          buffer_;
+    std::string buffer_;
 };
 
 struct HotReloadRequest {
-    uint64_t                           connection = 0;
-    std::string                        url;
+    uint64_t connection = 0;
+    std::string url;
     std::map<std::string, std::string> headers;
-    double                             connectTimeoutSeconds = kHotReloadConnectTimeoutSeconds;
-    double                             readTimeoutSeconds    = kHotReloadReadTimeoutSeconds;
+    double connectTimeoutSeconds = kHotReloadConnectTimeoutSeconds;
+    double readTimeoutSeconds    = kHotReloadReadTimeoutSeconds;
 };
 
 class HotReloadTransport
@@ -97,20 +97,20 @@ private:
     void scheduleReconnect(uint64_t session);
     void later(double seconds, std::function<void(HotReloadController &)> work);
 
-    SettingsStore                      &settings_;
-    HotReloadURLResolver                resolveBaseURL_;
+    SettingsStore &settings_;
+    HotReloadURLResolver resolveBaseURL_;
     std::shared_ptr<HotReloadTransport> transport_;
-    HotReloadScheduler                  schedule_;
-    HotReloadAction                     reload_;
-    std::mutex                          controlMutex_;
-    mutable std::mutex                  stateMutex_;
-    HotReloadStream                     stream_;
-    HotReloadBackoff                    backoff_;
-    std::string                         url_;
-    bool                                running_        = false;
-    bool                                responded_      = false;
-    uint64_t                            session_        = 0;
-    uint64_t                            connection_     = 0;
-    uint64_t                            nextConnection_ = 0;
+    HotReloadScheduler schedule_;
+    HotReloadAction reload_;
+    std::mutex controlMutex_;
+    mutable std::mutex stateMutex_;
+    HotReloadStream stream_;
+    HotReloadBackoff backoff_;
+    std::string url_;
+    bool running_            = false;
+    bool responded_          = false;
+    uint64_t session_        = 0;
+    uint64_t connection_     = 0;
+    uint64_t nextConnection_ = 0;
 };
 }

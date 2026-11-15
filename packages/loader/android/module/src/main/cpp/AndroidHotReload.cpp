@@ -12,10 +12,10 @@ namespace unbound::android {
 static const char *const kHotReloadClass = "app/unbound/android/HotReload";
 
 struct HotReloadCallbacks {
-    jclass    hotReloadClass = nullptr;
-    jmethodID open           = nullptr;
-    jmethodID cancel         = nullptr;
-    jmethodID reload         = nullptr;
+    jclass hotReloadClass = nullptr;
+    jmethodID open        = nullptr;
+    jmethodID cancel      = nullptr;
+    jmethodID reload      = nullptr;
 };
 
 static HotReloadCallbacks gHotReload;
@@ -49,7 +49,7 @@ public:
             values.push_back(value);
         }
 
-        jstring      url          = toJavaString(env, request.url);
+        jstring url               = toJavaString(env, request.url);
         jobjectArray headerKeys   = toJavaStringArray(env, keys);
         jobjectArray headerValues = toJavaStringArray(env, values);
         env->CallStaticVoidMethod(gHotReload.hotReloadClass, gHotReload.open,
@@ -98,7 +98,7 @@ static jboolean nativeChunk(JNIEnv *env, jclass, jlong connection, jbyteArray ch
         return JNI_FALSE;
     }
 
-    jsize       count = std::clamp<jsize>(length, 0, env->GetArrayLength(chunk));
+    jsize count = std::clamp<jsize>(length, 0, env->GetArrayLength(chunk));
     std::string bytes(static_cast<size_t>(count), '\0');
     env->GetByteArrayRegion(chunk, 0, count, reinterpret_cast<jbyte *>(bytes.data()));
     return controller->onChunk(static_cast<uint64_t>(connection), bytes) ? JNI_TRUE : JNI_FALSE;
@@ -128,8 +128,8 @@ bool registerHotReloadNatives(JNIEnv *env)
         {"nativeClosed", "(JLjava/lang/String;)V", reinterpret_cast<void *>(nativeClosed)},
     };
 
-    if (env->RegisterNatives(hotReload.get(), methods, sizeof(methods) / sizeof(methods[0])) !=
-        JNI_OK)
+    if (env->RegisterNatives(hotReload.get(), methods, sizeof(methods) / sizeof(methods[0]))
+        != JNI_OK)
     {
         clearPendingException(env);
         return false;

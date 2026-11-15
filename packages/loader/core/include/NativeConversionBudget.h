@@ -39,7 +39,7 @@ public:
 
 private:
     NativeConversionProfile profile_;
-    size_t                  depth   = 0;
-    size_t                  entries = 0;
-    size_t                  bytes   = 0;
+    size_t depth   = 0;
+    size_t entries = 0;
+    size_t bytes   = 0;
 };

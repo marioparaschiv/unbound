@@ -38,15 +38,15 @@ void emptyCacheRoundTrips()
 
 void storesRoundTripByteForByte()
 {
-    const std::string                      packed = std::string("\x81\xa1k\xc3\0\xff", 6);
+    const std::string packed                      = std::string("\x81\xa1k\xc3\0\xff", 6);
     const std::vector<loader::CachedStore> stores = {
         {"unbound", 1, 10, packed},
         {"", 12, 0, ""},
         {std::string("na\0me", 5), 13, 4, "\x90"},
     };
     std::string cache = loader::encodeSettingsCache(42, 20, stores);
-    assert(cache.size() ==
-           kHeaderBytes + (4 + 7 + 24) + (4 + 0 + 24) + (4 + 5 + 24) + packed.size() + 0 + 1);
+    assert(cache.size()
+           == kHeaderBytes + (4 + 7 + 24) + (4 + 0 + 24) + (4 + 5 + 24) + packed.size() + 0 + 1);
 
     auto decoded = loader::decodeSettingsCache(cache, 42, 20);
     assert(decoded && decoded->size() == stores.size());
@@ -99,7 +99,7 @@ void oversizedCountsAreRejected()
     writeInteger(name, kHeaderBytes, UINT32_MAX, 4);
     assert(!loader::decodeSettingsCache(name, 1, 4));
 
-    std::string  packed             = loader::encodeSettingsCache(1, 4, {{"abc", 0, 1, "p"}});
+    std::string packed              = loader::encodeSettingsCache(1, 4, {{"abc", 0, 1, "p"}});
     const size_t packedLengthOffset = kHeaderBytes + 4 + 3 + 16;
     writeInteger(packed, packedLengthOffset, UINT64_MAX, 8);
     assert(!loader::decodeSettingsCache(packed, 1, 4));

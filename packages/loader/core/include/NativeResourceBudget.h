@@ -17,15 +17,15 @@ class NativeResourceBudget
 public:
     explicit NativeResourceBudget(size_t limit);
 
-    bool   acquire(size_t count = 1);
-    void   release(size_t count = 1);
+    bool acquire(size_t count = 1);
+    void release(size_t count = 1);
     size_t used() const;
     size_t limit() const;
 
 private:
     mutable std::mutex mutex_;
-    size_t             limit_;
-    size_t             used_ = 0;
+    size_t limit_;
+    size_t used_ = 0;
 };
 
 class NativeResourceReservation
@@ -41,7 +41,7 @@ public:
 
 private:
     NativeResourceBudget &budget_;
-    bool                  committed_ = false;
+    bool committed_ = false;
 };
 
 class NativeResourceRegistry
@@ -49,15 +49,15 @@ class NativeResourceRegistry
 public:
     explicit NativeResourceRegistry(NativeResourceBudget &budget);
 
-    void   adopt(const std::string &id, NativeResourceReservation &reservation);
-    bool   release(const std::string &id);
-    bool   contains(const std::string &id) const;
+    void adopt(const std::string &id, NativeResourceReservation &reservation);
+    bool release(const std::string &id);
+    bool contains(const std::string &id) const;
     size_t releaseAll();
     size_t size() const;
 
 private:
     NativeResourceBudget &budget_;
-    mutable std::mutex    mutex_;
+    mutable std::mutex mutex_;
     std::set<std::string> ids_;
 };
 
@@ -71,6 +71,6 @@ inline constexpr const char *kObjCPlanCounter   = "objcPlans";
 inline constexpr const char *kObjCRetainCounter = "objcRetains";
 inline constexpr const char *kJavaHandleCounter = "javaHandles";
 
-void           setPlatformResourceCounter(const std::string &name, std::function<size_t()> counter);
+void setPlatformResourceCounter(const std::string &name, std::function<size_t()> counter);
 nlohmann::json nativeResourceCounts();
 }

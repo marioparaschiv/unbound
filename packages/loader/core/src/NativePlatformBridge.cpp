@@ -80,6 +80,7 @@ static jsi::Value activityCell(jsi::Runtime &runtime)
     {
         return jsi::Value::undefined();
     }
+
     return jsi::ArrayBuffer(runtime, std::make_shared<ActivityCellBuffer>(cell));
 }
 
@@ -92,7 +93,7 @@ static jsi::Object crashGuardObject(jsi::Runtime &runtime, const std::string &do
     guard.setProperty(
         runtime, "begin",
         native::makeFunction(runtime, "begin", 2,
-                             [documents](jsi::Runtime     &rt, const jsi::Value &,
+                             [documents](jsi::Runtime &rt, const jsi::Value &,
                                          const jsi::Value *args, size_t count) -> jsi::Value {
                                  armAddonCrashAttribution(documents);
                                  return jsi::Value(AddonCrashGuard(documents).beginStart(
@@ -102,7 +103,7 @@ static jsi::Object crashGuardObject(jsi::Runtime &runtime, const std::string &do
     guard.setProperty(
         runtime, "end",
         native::makeFunction(runtime, "end", 1,
-                             [documents](jsi::Runtime     &rt, const jsi::Value &,
+                             [documents](jsi::Runtime &rt, const jsi::Value &,
                                          const jsi::Value *args, size_t count) -> jsi::Value {
                                  return jsi::Value(AddonCrashGuard(documents).finishStart(
                                      stringArgument(rt, args, count, 0)));
@@ -110,7 +111,7 @@ static jsi::Object crashGuardObject(jsi::Runtime &runtime, const std::string &do
     guard.setProperty(
         runtime, "register",
         native::makeFunction(runtime, "register", 2,
-                             [documents](jsi::Runtime     &rt, const jsi::Value &,
+                             [documents](jsi::Runtime &rt, const jsi::Value &,
                                          const jsi::Value *args, size_t count) -> jsi::Value {
                                  armAddonCrashAttribution(documents);
                                  return jsi::Value(static_cast<double>(
@@ -134,7 +135,7 @@ static jsi::Object crashGuardObject(jsi::Runtime &runtime, const std::string &do
     return guard;
 }
 
-static std::mutex                              gInstalledProviderMutex;
+static std::mutex gInstalledProviderMutex;
 static std::shared_ptr<NativePlatformProvider> gInstalledProvider;
 
 void setNativePlatformProvider(std::shared_ptr<NativePlatformProvider> provider)
@@ -166,11 +167,11 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
                 }
 
                 jsi::ArrayBuffer buffer = args[0].asObject(rt).getArrayBuffer(rt);
-                std::string      bytecode(reinterpret_cast<const char *>(buffer.data(rt)),
-                                          buffer.size(rt));
-                std::string      tag = count > 1 && args[1].isString()
-                                           ? args[1].getString(rt).utf8(rt)
-                                           : "NativePlatform.evaluateBytecode";
+                std::string bytecode(reinterpret_cast<const char *>(buffer.data(rt)),
+                                     buffer.size(rt));
+                std::string tag = count > 1 && args[1].isString()
+                                      ? args[1].getString(rt).utf8(rt)
+                                      : "NativePlatform.evaluateBytecode";
                 return evaluateBytecode(rt, std::move(bytecode), tag);
             }));
 
@@ -191,6 +192,7 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
                                                   {
                                                       return jsi::Value::undefined();
                                                   }
+
                                                   return jsi::String::createFromUtf8(rt, *trace);
                                               }));
     platform.setProperty(runtime, "profiler", std::move(profiler));
@@ -198,7 +200,7 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
     if (provider->fonts)
     {
         jsi::Object fonts(runtime);
-        auto        list = provider->fonts;
+        auto list = provider->fonts;
         fonts.setProperty(runtime, "list",
                           native::makeFunction(runtime, "list", 0,
                                                [list](jsi::Runtime &rt, const jsi::Value &,
@@ -282,6 +284,7 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
                                              {
                                                  environment["https"] = std::move(https);
                                              }
+
                                              return toJSIValue(rt, environment);
                                          }));
     app.setProperty(runtime, "getFramework",
@@ -318,6 +321,7 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
                                            rt, "verify needs the manifest JSON and the bundle"));
                     return result;
                 }
+
                 nlohmann::json manifest =
                     nlohmann::json::parse(args[0].getString(rt).utf8(rt), nullptr, false);
                 AddonSignatureResult signature =
@@ -336,36 +340,41 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
                         jsi::String::createFromUtf8(
                             rt, describeSigner(signature.signer, compiledBundleTrust())));
                 }
+
                 if (!signature.problem.empty())
                 {
                     result.setProperty(rt, "problem",
                                        jsi::String::createFromUtf8(rt, signature.problem));
                 }
+
                 return result;
             }));
     addons.setProperty(
         runtime, "evaluateBytecode",
         native::makeFunction(runtime, "evaluateBytecode", 2,
-                             [provider](jsi::Runtime     &rt, const jsi::Value &,
+                             [provider](jsi::Runtime &rt, const jsi::Value &,
                                         const jsi::Value *args, size_t count) -> jsi::Value {
-                                 if (!provider || provider->documents.empty() || count < 2 ||
-                                     !args[0].isString() || !args[1].isNumber())
+                                 if (!provider || provider->documents.empty() || count < 2
+                                     || !args[0].isString() || !args[1].isNumber())
                                  {
                                      return jsi::Value::undefined();
                                  }
+
                                  double requested = args[1].getNumber();
-                                 if (!(requested > 0 && requested <= UINT32_MAX) ||
-                                     requested != static_cast<uint32_t>(requested))
+                                 if (!(requested > 0 && requested <= UINT32_MAX)
+                                     || requested != static_cast<uint32_t>(requested))
                                  {
                                      return jsi::Value::undefined();
                                  }
-                                 std::string                folder = args[0].getString(rt).utf8(rt);
+
+                                 std::string folder = args[0].getString(rt).utf8(rt);
                                  std::optional<std::string> bytecode = readPluginBytecode(
                                      provider->documents, folder, static_cast<uint32_t>(requested));
                                  if (!bytecode)
                                  {
                                      return jsi::Value::undefined();
                                  }
+
                                  return evaluateBytecode(rt, std::move(*bytecode),
                                                          "unbound-plugin:" + folder);
                              }));
@@ -379,12 +388,14 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
                 {
                     return jsi::Value::undefined();
                 }
+
                 std::optional<std::string> source =
                     readPluginSource(provider->documents, args[0].getString(rt).utf8(rt));
                 if (!source)
                 {
                     return jsi::Value::undefined();
                 }
+
                 return jsi::String::createFromUtf8(rt, *source);
             }));
     platform.setProperty(runtime, "addons", std::move(addons));
@@ -396,7 +407,7 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
 
 static uintmax_t directoryBytes(const std::filesystem::path &directory)
 {
-    uintmax_t       bytes = 0;
+    uintmax_t bytes = 0;
     std::error_code walkError;
     for (std::filesystem::recursive_directory_iterator entry(
              directory, std::filesystem::directory_options::skip_permission_denied, walkError),
@@ -409,13 +420,14 @@ static uintmax_t directoryBytes(const std::filesystem::path &directory)
             bytes += entry->file_size(sizeError);
         }
     }
+
     return bytes;
 }
 
 static uintmax_t cacheBytes(const std::filesystem::path &appData)
 {
     constexpr const char *kCacheDirectories[] = {"Library/Caches", "tmp", "cache", "code_cache"};
-    uintmax_t             bytes               = 0;
+    uintmax_t bytes                           = 0;
     for (const char *name : kCacheDirectories)
     {
         std::error_code error;
@@ -424,23 +436,26 @@ static uintmax_t cacheBytes(const std::filesystem::path &appData)
             bytes += directoryBytes(appData / name);
         }
     }
+
     return bytes;
 }
 
 nlohmann::json storageState(const std::string &documents)
 {
     constexpr uintmax_t kMegabyte = 1024 * 1024;
-    nlohmann::json      state     = nlohmann::json::object();
+    nlohmann::json state          = nlohmann::json::object();
     if (documents.empty())
     {
         return state;
     }
-    std::error_code             error;
+
+    std::error_code error;
     std::filesystem::space_info space = std::filesystem::space(documents, error);
     if (!error)
     {
         state["freeMB"] = space.available / kMegabyte;
     }
+
     std::filesystem::path unbound(documents);
     std::filesystem::path appData = unbound.parent_path().parent_path();
     state["unboundMB"]            = directoryBytes(unbound) / kMegabyte;

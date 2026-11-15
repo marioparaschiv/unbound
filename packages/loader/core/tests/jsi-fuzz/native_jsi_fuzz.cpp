@@ -11,10 +11,10 @@
 int main()
 {
     const char *iterationsVariable = std::getenv("UNBOUND_FUZZ_ITERATIONS");
-    const long  iterations =
+    const long iterations =
         iterationsVariable ? std::strtol(iterationsVariable, nullptr, 10) : 3000;
     std::mt19937 random(0x15eed);
-    auto         runtime = facebook::hermes::makeHermesRuntime();
+    auto runtime = facebook::hermes::makeHermesRuntime();
     native_jsi_fuzz::replayRegressions(*runtime);
     for (long iteration = 0; iteration < iterations; iteration++)
     {
@@ -23,12 +23,14 @@ int main()
         {
             byte = static_cast<std::uint8_t>(random());
         }
+
         native_jsi_fuzz::fuzzOne(*runtime, input.data(), input.size());
         if (iteration % 500 == 499)
         {
             runtime = facebook::hermes::makeHermesRuntime();
         }
     }
+
     const native_jsi_fuzz::FuzzStats &stats = native_jsi_fuzz::stats();
     std::printf(
         "native JSI fuzz: %ld generated values, %ld evaluated, %ld conversions accepted, %ld rejected\n",
@@ -38,5 +40,6 @@ int main()
         std::fprintf(stderr, "native JSI fuzz: the generator stopped producing useful values\n");
         return 1;
     }
+
     return 0;
 }

@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 extern NSString *const UBAnimatedIconId;
-NSDictionary          *UBAnimatedIconInfo(void);
+NSDictionary *UBAnimatedIconInfo(void);
 #ifdef __cplusplus
 }
 #endif

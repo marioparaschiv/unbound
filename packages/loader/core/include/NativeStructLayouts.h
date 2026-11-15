@@ -16,14 +16,14 @@ enum class StructScalar
 
 struct StructField {
     std::string_view path;
-    size_t           offset;
-    StructScalar     scalar;
+    size_t offset;
+    StructScalar scalar;
 };
 
 struct StructLayout {
-    std::string_view         name;
-    std::string_view         encoding;
-    size_t                   size;
+    std::string_view name;
+    std::string_view encoding;
+    size_t size;
     std::vector<StructField> fields;
 };
 

@@ -13,7 +13,7 @@ const std::string kDeadURL = "http://127.0.0.1:9/unbound.js";
 
 struct LoggedLine {
     loader::LogLevel level;
-    std::string      message;
+    std::string message;
 };
 
 class ImmediateHost : public loader::PipelineHost
@@ -52,6 +52,7 @@ public:
     }
 
     void installNativeModules(facebook::jsi::Runtime &) override {}
+
     void onAddonsPrepared() override {}
 };
 
@@ -65,7 +66,7 @@ std::filesystem::path makeTemporaryDirectory()
 }
 
 loader::BundleUpdater unreachableUpdater(const std::filesystem::path &root,
-                                         loader::SettingsStore       &settings)
+                                         loader::SettingsStore &settings)
 {
     return loader::BundleUpdater(
         root.string(), settings,
@@ -102,6 +103,7 @@ const LoggedLine *find(const std::vector<LoggedLine> &lines, const std::string &
             return &line;
         }
     }
+
     return nullptr;
 }
 }
@@ -119,8 +121,9 @@ int main()
     const LoggedLine *manifest = find(uncached, "No usable manifest at ");
     assert(manifest);
     assert(manifest->level == loader::LogLevel::Warning);
-    assert(manifest->message ==
-           "No usable manifest at http://127.0.0.1:9/manifest.json; falling back to " + kDeadURL);
+    assert(manifest->message
+           == "No usable manifest at http://127.0.0.1:9/manifest.json; falling back to "
+                  + kDeadURL);
 
     const LoggedLine *failed = find(uncached, "Bundle download failed. ");
     assert(failed);
@@ -134,8 +137,9 @@ int main()
     const LoggedLine *covered = find(cached, "Bundle download failed. ");
     assert(covered);
     assert(covered->level == loader::LogLevel::Warning);
-    assert(covered->message == "Bundle download failed. (Could not download " + kDeadURL +
-                                   "); using the cached bundle");
+    assert(covered->message
+           == "Bundle download failed. (Could not download " + kDeadURL
+                  + "); using the cached bundle");
 
     std::filesystem::remove_all(root);
     return 0;

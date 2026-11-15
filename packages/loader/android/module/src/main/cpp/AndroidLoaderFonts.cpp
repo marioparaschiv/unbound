@@ -26,6 +26,7 @@ static std::vector<std::string> callStringArray(JNIEnv *env, jclass type, jmetho
     {
         return values;
     }
+
     jsize count = env->GetArrayLength(array);
     for (jsize index = 0; index < count; index++)
     {
@@ -33,6 +34,7 @@ static std::vector<std::string> callStringArray(JNIEnv *env, jclass type, jmetho
         values.push_back(toStdString(env, value));
         env->DeleteLocalRef(value);
     }
+
     env->DeleteLocalRef(array);
     return values;
 }
@@ -40,7 +42,7 @@ static std::vector<std::string> callStringArray(JNIEnv *env, jclass type, jmetho
 nlohmann::json AndroidLoader::appFonts()
 {
     nlohmann::json fonts = nlohmann::json::array();
-    JNIEnv        *env   = currentEnvironment();
+    JNIEnv *env          = currentEnvironment();
     if (!env)
     {
         return fonts;
@@ -50,7 +52,7 @@ nlohmann::json AndroidLoader::appFonts()
          callStringArray(env, callbacks_.bridgeClass, callbacks_.appFonts))
     {
         jstring javaPath = toJavaString(env, asset);
-        auto    bytes    = static_cast<jbyteArray>(
+        auto bytes       = static_cast<jbyteArray>(
             env->CallStaticObjectMethod(callbacks_.bridgeClass, callbacks_.appFontBytes, javaPath));
         env->DeleteLocalRef(javaPath);
         if (clearPendingException(env) || !bytes)
@@ -63,13 +65,14 @@ nlohmann::json AndroidLoader::appFonts()
                                 reinterpret_cast<jbyte *>(data.data()));
         env->DeleteLocalRef(bytes);
 
-        const size_t      slash = asset.find_last_of('/');
-        const size_t      dot   = asset.find_last_of('.');
+        const size_t slash = asset.find_last_of('/');
+        const size_t dot   = asset.find_last_of('.');
         const std::string stem =
             asset.substr(slash + 1, dot == std::string::npos ? std::string::npos : dot - slash - 1);
         fonts.push_back(
             loader::fontEntryFromData(data, std::string(kAssetFontPrefix) + asset, "app", stem));
     }
+
     return fonts;
 }
 
@@ -84,6 +87,7 @@ nlohmann::json AndroidLoader::systemFonts()
             fonts.push_back(std::move(font));
         }
     }
+
     return fonts;
 }
 }

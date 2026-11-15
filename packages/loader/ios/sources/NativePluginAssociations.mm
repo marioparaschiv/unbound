@@ -23,6 +23,7 @@ static objc_AssociationPolicy objcAssociationPolicy(loader::native::AssociationP
         case loader::native::AssociationPolicy::RetainNonatomic:
             return OBJC_ASSOCIATION_RETAIN_NONATOMIC;
     }
+
     return OBJC_ASSOCIATION_RETAIN_NONATOMIC;
 }
 
@@ -39,6 +40,7 @@ objc_AssociationPolicy associationPolicy(Runtime &runtime, const Value *value)
     {
         throw JSError(runtime, "Unsupported native association policy");
     }
+
     return objcAssociationPolicy(*policy);
 }
 }

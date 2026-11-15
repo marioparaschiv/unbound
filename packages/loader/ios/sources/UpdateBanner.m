@@ -1,11 +1,11 @@
 #import "UpdateBanner.h"
 
 static const NSTimeInterval kRetrySeconds = 0.25;
-static const CGFloat        kPillHeight   = 36.0;
-static const CGFloat        kPillPadding  = 16.0;
+static const CGFloat kPillHeight          = 36.0;
+static const CGFloat kPillPadding         = 16.0;
 
 static UIWindow *bannerWindow = nil;
-static BOOL      wanted       = NO;
+static BOOL wanted            = NO;
 
 // Launch may still be on its storyboard; any connected window scene can host the pill.
 static UIWindowScene *hostScene(void)
@@ -17,12 +17,15 @@ static UIWindowScene *hostScene(void)
         {
             continue;
         }
+
         if (scene.activationState == UISceneActivationStateForegroundActive)
         {
             return (UIWindowScene *) scene;
         }
+
         fallback = fallback ?: (UIWindowScene *) scene;
     }
+
     return fallback;
 }
 

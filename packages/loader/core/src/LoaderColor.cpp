@@ -21,10 +21,12 @@ static std::optional<RGBAColor> parseHex(const std::string &value)
     {
         digits = {digits[0], digits[0], digits[1], digits[1], digits[2], digits[2]};
     }
+
     if (digits.size() == 6)
     {
         digits += "FF";
     }
+
     if (digits.size() != 8 || !std::all_of(digits.begin(), digits.end(), [](unsigned char c) {
             return std::isxdigit(c);
         }))
@@ -47,8 +49,8 @@ static std::optional<RGBAColor> parseFunction(const std::string &value)
     }
 
     std::vector<double> components;
-    std::stringstream   stream(value.substr(open + 1, close - open - 1));
-    std::string         part;
+    std::stringstream stream(value.substr(open + 1, close - open - 1));
+    std::string part;
     while (std::getline(stream, part, ','))
     {
         try
@@ -58,6 +60,7 @@ static std::optional<RGBAColor> parseFunction(const std::string &value)
             {
                 return std::nullopt;
             }
+
             components.push_back(component);
         }
         catch (...)
@@ -83,14 +86,17 @@ std::optional<RGBAColor> parseColor(const std::string &input)
     {
         return std::nullopt;
     }
+
     if (value.front() == '#')
     {
         return parseHex(value);
     }
+
     if (value.rfind("rgb", 0) == 0)
     {
         return parseFunction(value);
     }
+
     return std::nullopt;
 }
 
@@ -99,8 +105,8 @@ uint32_t toARGB(const RGBAColor &color)
     auto channel = [](double component) {
         return static_cast<uint32_t>(std::lround(std::clamp(component, 0.0, 1.0) * 255.0));
     };
-    return (channel(color.alpha) << 24) | (channel(color.red) << 16) | (channel(color.green) << 8) |
-           channel(color.blue);
+    return (channel(color.alpha) << 24) | (channel(color.red) << 16) | (channel(color.green) << 8)
+           | channel(color.blue);
 }
 
 bool isDarkColor(const RGBAColor &color)

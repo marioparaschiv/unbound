@@ -19,9 +19,10 @@ static std::string stringArgument(jsi::Runtime &runtime, const jsi::Value *args,
 {
     if (index >= count || !args[index].isString())
     {
-        throw jsi::JSError(runtime, "fonts." + method + " expects a string argument " +
-                                        std::to_string(index + 1));
+        throw jsi::JSError(runtime, "fonts." + method + " expects a string argument "
+                                        + std::to_string(index + 1));
     }
+
     return args[index].getString(runtime).utf8(runtime);
 }
 
@@ -80,7 +81,7 @@ jsi::Object makeFontsBridge(jsi::Runtime &runtime, std::shared_ptr<FontService> 
     bridge.setProperty(
         runtime, "install",
         asyncMethod(runtime, "install", 2, [service](jsi::Runtime &rt, auto args, size_t count) {
-            const std::string    input    = stringArgument(rt, args, count, 0, "install");
+            const std::string input       = stringArgument(rt, args, count, 0, "install");
             const nlohmann::json variants = jsonArgument(rt, args, count, 1);
             return Work([service, input, variants] {
                 return service->install(input, variants);
@@ -117,6 +118,7 @@ jsi::Object makeFontsBridge(jsi::Runtime &runtime, std::shared_ptr<FontService> 
                                            fontId =
                                                stringArgument(rt, args, count, 1, "setOverride");
                                        }
+
                                        return Work([service, family, fontId] {
                                            service->setOverride(family, fontId);
                                            return nlohmann::json();

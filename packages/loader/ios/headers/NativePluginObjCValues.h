@@ -31,7 +31,7 @@ public:
     }
 
 private:
-    __strong id          value_;
+    __strong id value_;
     std::atomic<size_t> &live_;
 };
 
@@ -40,7 +40,7 @@ class StructHost final : public facebook::jsi::HostObject
 public:
     StructHost(NSString *name, NSValue *value) : name_([name copy]), value_(value) {}
 
-    facebook::jsi::Value get(facebook::jsi::Runtime          &runtime,
+    facebook::jsi::Value get(facebook::jsi::Runtime &runtime,
                              const facebook::jsi::PropNameID &name) override;
 
     NSString *name(void) const
@@ -55,7 +55,7 @@ public:
 
 private:
     NSString *name_;
-    NSValue  *value_;
+    NSValue *value_;
 };
 
 template <typename T> void storeNativeValue(uint8_t *target, T value)
@@ -71,10 +71,10 @@ template <typename T> T loadNativeValue(const uint8_t *source)
 }
 
 facebook::jsi::Value objcJSIValue(facebook::jsi::Runtime &runtime, id value);
-NSString            *jsiString(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value);
-std::shared_ptr<ObjCHandleHost> objcHost(facebook::jsi::Runtime     &runtime,
+NSString *jsiString(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value);
+std::shared_ptr<ObjCHandleHost> objcHost(facebook::jsi::Runtime &runtime,
                                          const facebook::jsi::Value &value);
-id                   objcValue(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value);
+id objcValue(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value);
 facebook::jsi::Value objcHandleResult(facebook::jsi::Runtime &runtime, id value);
 facebook::jsi::Value pointerResult(facebook::jsi::Runtime &runtime, void *pointer);
 facebook::jsi::Value objcResult(facebook::jsi::Runtime &runtime, id value);
@@ -85,7 +85,7 @@ facebook::jsi::Value structValue(facebook::jsi::Runtime &runtime, NSString *name
                                  const facebook::jsi::Value &fields);
 facebook::jsi::Value structFields(facebook::jsi::Runtime &runtime, NSString *name, NSValue *value);
 NSMutableArray *argumentArray(facebook::jsi::Runtime &runtime, const facebook::jsi::Array &values);
-NSArray        *argumentArray(facebook::jsi::Runtime &runtime, const facebook::jsi::Value *args,
-                              size_t count, size_t start);
-Class           classFromValue(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value);
+NSArray *argumentArray(facebook::jsi::Runtime &runtime, const facebook::jsi::Value *args,
+                       size_t count, size_t start);
+Class classFromValue(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value);
 }

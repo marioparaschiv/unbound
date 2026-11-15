@@ -40,6 +40,7 @@ namespace {
                 text += (text.empty() ? "" : separator) + part;
             }
         }
+
         return text;
     }
 }
@@ -51,14 +52,16 @@ bool isBetaBuild(const std::string &build)
     {
         letter++;
     }
-    if (letter == 0 || letter + 1 >= build.size() ||
-        !std::isupper(static_cast<unsigned char>(build[letter])))
+
+    if (letter == 0 || letter + 1 >= build.size()
+        || !std::isupper(static_cast<unsigned char>(build[letter])))
     {
         return false;
     }
+
     std::string rest = build.substr(letter + 1);
-    return rest.size() >= 5 && rest[0] == '5' &&
-           std::islower(static_cast<unsigned char>(rest.back()));
+    return rest.size() >= 5 && rest[0] == '5'
+           && std::islower(static_cast<unsigned char>(rest.back()));
 }
 
 std::vector<std::string> appleMarkers(const AppleDeviceFacts &facts)
@@ -68,18 +71,22 @@ std::vector<std::string> appleMarkers(const AppleDeviceFacts &facts)
     {
         markers.emplace_back(*facts.developerMode ? "Developer Mode on" : "Developer Mode off");
     }
+
     if (facts.lockdownMode)
     {
         markers.emplace_back("Lockdown Mode");
     }
+
     if (facts.iPhoneAppOnIPad)
     {
         markers.emplace_back("iPhone app on iPad");
     }
+
     if (facts.iOSAppOnMac)
     {
         markers.emplace_back("iPhone app on Mac");
     }
+
     return markers;
 }
 
@@ -90,10 +97,12 @@ std::vector<std::string> androidMarkers(const AndroidDeviceFacts &facts)
     {
         markers.emplace_back(*facts.selinuxEnforcing ? "SELinux enforcing" : "SELinux permissive");
     }
+
     if (!facts.verifiedBootState.empty())
     {
         markers.push_back("boot " + facts.verifiedBootState);
     }
+
     if (!facts.customROM.empty())
     {
         markers.push_back(facts.customROM);
@@ -102,14 +111,17 @@ std::vector<std::string> androidMarkers(const AndroidDeviceFacts &facts)
     {
         markers.push_back(facts.buildTags);
     }
+
     if (facts.pageSize > 0 && facts.pageSize != 4096)
     {
         markers.push_back(std::to_string(facts.pageSize / 1024) + " KB pages");
     }
+
     if (!facts.webView.empty())
     {
         markers.push_back("WebView " + facts.webView);
     }
+
     return markers;
 }
 
@@ -121,6 +133,7 @@ nlohmann::json httpsVerdict(const HttpsCheck &check)
                    ? nlohmann::json()
                    : nlohmann::json{{"intercepted", false}, {"failure", check.failure}};
     }
+
     for (const std::string &issuer : check.issuers)
     {
         if (!isPublicIssuer(issuer))
@@ -128,11 +141,13 @@ nlohmann::json httpsVerdict(const HttpsCheck &check)
             return {{"intercepted", true}, {"issuer", issuer.substr(0, 96)}};
         }
     }
+
     nlohmann::json verdict{{"intercepted", false}};
     if (!check.issuers.empty())
     {
         verdict["issuer"] = check.issuers.back().substr(0, 96);
     }
+
     return verdict;
 }
 
@@ -142,8 +157,9 @@ std::string androidInstallLine(const nlohmann::json &facts)
     {
         return "";
     }
+
     std::vector<std::string> parts;
-    std::string              signer = facts.value("signer", std::string());
+    std::string signer = facts.value("signer", std::string());
     if (!signer.empty())
     {
         parts.push_back("APK cert " + signer.substr(0, 16));
@@ -153,10 +169,11 @@ std::string androidInstallLine(const nlohmann::json &facts)
             parts.emplace_back("re-signed");
         }
     }
+
     parts.push_back(facts.value("patch", std::string()));
     parts.push_back(facts.value("framework", std::string()));
-    nlohmann::json missing    = facts.value("missingSplits", nlohmann::json::array());
-    bool           incomplete = false;
+    nlohmann::json missing = facts.value("missingSplits", nlohmann::json::array());
+    bool incomplete        = false;
     for (const nlohmann::json &name : missing)
     {
         if (name.is_string())
@@ -165,10 +182,12 @@ std::string androidInstallLine(const nlohmann::json &facts)
             incomplete = true;
         }
     }
+
     if (!incomplete && facts.value("splits", 0) > 0)
     {
         parts.push_back(std::to_string(facts.value("splits", 0)) + " splits");
     }
+
     parts.push_back(facts.value("profile", std::string()));
     return joinedWith(parts, " · ");
 }

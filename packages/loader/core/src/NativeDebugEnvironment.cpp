@@ -11,7 +11,7 @@
 namespace loader::native {
 namespace jsi = facebook::jsi;
 
-static std::mutex            gUIGarbageCollectorMutex;
+static std::mutex gUIGarbageCollectorMutex;
 static std::function<bool()> gUIGarbageCollector;
 
 void setUIRuntimeGarbageCollector(std::function<bool()> collector)
@@ -27,10 +27,12 @@ static bool collectUIRuntimeGarbage()
         std::lock_guard<std::mutex> lock(gUIGarbageCollectorMutex);
         collector = gUIGarbageCollector;
     }
+
     if (!collector)
     {
         return false;
     }
+
     try
     {
         return collector();
@@ -44,6 +46,7 @@ static bool collectUIRuntimeGarbage()
     {
         log(LogLevel::Error, LOG_CATEGORY_PLUGINS, "Collecting UI runtime garbage failed");
     }
+
     return false;
 }
 
@@ -61,22 +64,25 @@ nlohmann::json collectGarbage(jsi::Runtime &runtime)
 }
 
 nlohmann::json debugEnvironmentSnapshot(const DebugEnvironmentOptions &options,
-                                        const std::function<void()>   &collectRuntime)
+                                        const std::function<void()> &collectRuntime)
 {
     std::optional<nlohmann::json> collected;
     if (options.collectGarbage)
     {
         collected = collectGarbage(collectRuntime);
     }
+
     nlohmann::json environment = currentDebugEnvironment();
     if (collected)
     {
         environment["garbageCollection"] = std::move(*collected);
     }
+
     if (options.resetCounters)
     {
         resetMainWorkCounts();
     }
+
     return environment;
 }
 
@@ -95,6 +101,7 @@ jsi::Value readDebugEnvironment(jsi::Runtime &runtime, const jsi::Value *args, s
         options.collectGarbage = optionEnabled(runtime, requested, "collectGarbage");
         options.resetCounters  = optionEnabled(runtime, requested, "resetCounters");
     }
+
     return toJSIValue(runtime, debugEnvironmentSnapshot(options, [&runtime] {
                           runtime.instrumentation().collectGarbage("unbound debug");
                       }));

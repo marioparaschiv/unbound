@@ -7,22 +7,27 @@ std::optional<AssociationPolicy> associationPolicyNamed(std::string_view name)
     {
         return AssociationPolicy::Assign;
     }
+
     if (name == "retain")
     {
         return AssociationPolicy::Retain;
     }
+
     if (name == "copy")
     {
         return AssociationPolicy::Copy;
     }
+
     if (name == "copyNonatomic")
     {
         return AssociationPolicy::CopyNonatomic;
     }
+
     if (name == "retainNonatomic")
     {
         return AssociationPolicy::RetainNonatomic;
     }
+
     return std::nullopt;
 }
 }

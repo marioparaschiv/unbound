@@ -16,7 +16,7 @@ void BundleUpdater::verifyPlan(DownloadPlan &plan) const
         return;
     }
 
-    std::string                manifestURL = plan.source + kBundleManifestName;
+    std::string manifestURL = plan.source + kBundleManifestName;
     std::optional<std::string> signature =
         plan.signature.valid() ? plan.signature.get() : std::nullopt;
     std::optional<BundleManifest> manifest = parseBundleManifest(plan.manifestText);
@@ -43,8 +43,8 @@ void BundleUpdater::verifyPlan(DownloadPlan &plan) const
     if (std::optional<std::string> rollback = rollbackProblem(*manifest, plan.source, baseline()))
     {
         log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-            "Refused the update: the signed manifest would roll back the active bundle, as " +
-                *rollback + ".");
+            "Refused the update: the signed manifest would roll back the active bundle, as "
+                + *rollback + ".");
         throw BundleUpdateError(BundleUpdateFailure::Verification,
                                 "Bundle manifest would roll back the active bundle");
     }
@@ -56,6 +56,7 @@ void BundleUpdater::verifyPlan(DownloadPlan &plan) const
         recordRequiredLoader(documents_, manifest->minLoaderVersion);
         throw BundleUpdateError(BundleUpdateFailure::LoaderTooOld, "Bundle needs a newer loader");
     }
+
     recordRequiredLoader(documents_, "");
 
     if (std::optional<std::string> bridge =
@@ -77,9 +78,9 @@ void BundleUpdater::verifyPlan(DownloadPlan &plan) const
     }
 
     log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-        "Bundle manifest verified with " + describeSigner(signer, trust_) + " (revision " +
-            manifest->revision + ", channel " + manifest->channel + ", built " +
-            manifest->buildTime + ").");
+        "Bundle manifest verified with " + describeSigner(signer, trust_) + " (revision "
+            + manifest->revision + ", channel " + manifest->channel + ", built "
+            + manifest->buildTime + ").");
     plan.manifestSignature = *signature;
     plan.expectedSha512    = hash->second;
     auto patches           = manifest->patches.find(hash->first);
@@ -88,7 +89,7 @@ void BundleUpdater::verifyPlan(DownloadPlan &plan) const
 }
 
 std::optional<std::string> BundleUpdater::verifiedRecord(const DownloadPlan &plan,
-                                                         const std::string  &candidatePath) const
+                                                         const std::string &candidatePath) const
 {
     nlohmann::json record{{"url", plan.url},
                           {"source", plan.source},
@@ -114,12 +115,14 @@ std::optional<std::string> BundleUpdater::verifiedRecord(const DownloadPlan &pla
             "Rejected the downloaded bundle: its SHA-512 does not match the signed manifest.");
         return std::nullopt;
     }
+
     log(LogLevel::Info, LOG_CATEGORY_UPDATER,
         "Bundle signature verified: " + plan.file + " matches the signed manifest.");
     if (std::optional<nlohmann::json> identity = fileIdentity(candidatePath))
     {
         record["identity"] = *identity;
     }
+
     record["kind"]      = "manifest";
     record["manifest"]  = plan.manifestText;
     record["signature"] = plan.manifestSignature;

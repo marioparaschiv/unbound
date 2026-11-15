@@ -13,8 +13,8 @@ namespace jsi = facebook::jsi;
 
 namespace loader::ffi {
 namespace {
-    std::mutex          platformMutex;
-    PointerResolver     platformPointerResolver;
+    std::mutex platformMutex;
+    PointerResolver platformPointerResolver;
     StructResultFactory platformStructResultFactory;
 
     PointerResolver currentPointerResolver()
@@ -35,20 +35,23 @@ namespace {
         {
             return value.getString(runtime).utf8(runtime);
         }
+
         if (value.isObject())
         {
-            jsi::Object object     = value.asObject(runtime);
-            jsi::Value  structName = object.getProperty(runtime, "struct");
+            jsi::Object object    = value.asObject(runtime);
+            jsi::Value structName = object.getProperty(runtime, "struct");
             if (structName.isString())
             {
                 return "struct:" + structName.getString(runtime).utf8(runtime);
             }
+
             jsi::Value name = object.getProperty(runtime, "type");
             if (name.isString())
             {
                 return name.getString(runtime).utf8(runtime);
             }
         }
+
         throw std::invalid_argument("Native FFI type must be a string or type object");
     }
 
@@ -58,29 +61,33 @@ namespace {
         {
             throw std::invalid_argument("ffi.call expects a signature object");
         }
+
         jsi::Object signature = value.asObject(runtime);
-        jsi::Value  result    = signature.getProperty(runtime, "returnType");
+        jsi::Value result     = signature.getProperty(runtime, "returnType");
         if (result.isUndefined())
         {
             result = signature.getProperty(runtime, "returns");
         }
+
         if (result.isUndefined())
         {
             throw std::invalid_argument("Native FFI signature is missing returnType");
         }
+
         jsi::Value arguments = signature.getProperty(runtime, "args");
         if (!arguments.isObject() || !arguments.asObject(runtime).isArray(runtime))
         {
             throw std::invalid_argument("Native FFI signature is missing args");
         }
 
-        jsi::Array        list = arguments.asObject(runtime).asArray(runtime);
+        jsi::Array list = arguments.asObject(runtime).asArray(runtime);
         std::vector<Type> types;
         types.reserve(list.size(runtime));
         for (std::size_t index = 0; index < list.size(runtime); index++)
         {
             types.push_back(resolveType(typeName(runtime, list.getValueAtIndex(runtime, index))));
         }
+
         return makeSignature(resolveType(typeName(runtime, result)), std::move(types));
     }
 
@@ -90,10 +97,12 @@ namespace {
         {
             return nullptr;
         }
+
         if (auto host = pointerHost(runtime, value))
         {
             return host->value();
         }
+
         if (value.isObject())
         {
             if (PointerResolver resolver = currentPointerResolver())
@@ -101,6 +110,7 @@ namespace {
                 return resolver(runtime, value.asObject(runtime));
             }
         }
+
         return std::nullopt;
     }
 
@@ -110,11 +120,12 @@ namespace {
     {
         if (!value.isObject())
         {
-            throw std::invalid_argument("Native FFI " + type.layout->name +
-                                        " argument must be an object");
+            throw std::invalid_argument("Native FFI " + type.layout->name
+                                        + " argument must be an object");
         }
+
         jsi::Object object = value.asObject(runtime);
-        jsi::Value  inner  = object.getProperty(runtime, "value");
+        jsi::Value inner   = object.getProperty(runtime, "value");
         if (inner.isObject() && object.getProperty(runtime, "name").isString())
         {
             object = inner.asObject(runtime);
@@ -127,11 +138,13 @@ namespace {
             jsi::Value fieldValue = object.getProperty(runtime, field.name.c_str());
             if (fieldValue.isUndefined())
             {
-                throw std::invalid_argument("Native FFI " + type.layout->name + " is missing " +
-                                            field.name);
+                throw std::invalid_argument("Native FFI " + type.layout->name + " is missing "
+                                            + field.name);
             }
+
             fields.push_back(nativeValue(runtime, fieldValue, field.type));
         }
+
         return {std::move(fields)};
     }
 
@@ -142,10 +155,12 @@ namespace {
         {
             return {number.getInt64(runtime)};
         }
+
         if (number.isUint64(runtime))
         {
             return {number.getUint64(runtime)};
         }
+
         throw std::invalid_argument("Native FFI " + type.name + " argument is out of range");
     }
 
@@ -160,22 +175,26 @@ namespace {
                 {
                     return *pointer ? NativeValue{NativeAddress{*pointer}} : NativeValue{};
                 }
+
                 throw std::invalid_argument("Native FFI pointer argument expected");
             case Kind::CString:
                 if (value.isNull() || value.isUndefined())
                 {
                     return {};
                 }
+
                 if (!value.isString())
                 {
                     throw std::invalid_argument("Native FFI cstring argument expected");
                 }
+
                 return {value.getString(runtime).utf8(runtime)};
             case Kind::Bool:
                 if (!value.isBool())
                 {
                     throw std::invalid_argument("Native FFI boolean argument expected");
                 }
+
                 return {value.getBool()};
             default:
                 break;
@@ -185,10 +204,12 @@ namespace {
         {
             return {value.getNumber()};
         }
+
         if (value.isBigInt() && (type.kind == Kind::Int64 || type.kind == Kind::UInt64))
         {
             return nativeBigInt(runtime, value, type);
         }
+
         throw std::invalid_argument("Native FFI " + type.name + " argument is out of range");
     }
 
@@ -204,6 +225,7 @@ namespace {
             result.setProperty(runtime, field.name.c_str(),
                                javaScriptValue(runtime, field.type, fields[index]));
         }
+
         return result;
     }
 
@@ -213,30 +235,37 @@ namespace {
         {
             return type.kind == Kind::Void ? jsi::Value::undefined() : jsi::Value::null();
         }
+
         if (const auto *flag = std::get_if<bool>(&value.data))
         {
             return jsi::Value(*flag);
         }
+
         if (const auto *number = std::get_if<double>(&value.data))
         {
             return jsi::Value(*number);
         }
+
         if (const auto *number = std::get_if<std::int64_t>(&value.data))
         {
             return jsi::BigInt::fromInt64(runtime, *number);
         }
+
         if (const auto *number = std::get_if<std::uint64_t>(&value.data))
         {
             return jsi::BigInt::fromUint64(runtime, *number);
         }
+
         if (const auto *string = std::get_if<std::string>(&value.data))
         {
             return jsi::String::createFromUtf8(runtime, *string);
         }
+
         if (const auto *address = std::get_if<NativeAddress>(&value.data))
         {
             return pointerValue(runtime, address->value, false);
         }
+
         return structFields(runtime, *type.layout, std::get<NativeFields>(value.data));
     }
 
@@ -278,6 +307,7 @@ Type resolveType(const std::string &name)
     {
         throw std::invalid_argument("Unsupported native FFI type " + name + " on this platform");
     }
+
     return *type;
 }
 
@@ -287,6 +317,7 @@ jsi::Value pointerValue(jsi::Runtime &runtime, void *pointer, bool callable)
     {
         return jsi::Value::null();
     }
+
     return jsi::Object::createFromHostObject(runtime,
                                              std::make_shared<PointerHost>(pointer, callable));
 }
@@ -297,11 +328,13 @@ std::shared_ptr<PointerHost> pointerHost(jsi::Runtime &runtime, const jsi::Value
     {
         return nullptr;
     }
+
     jsi::Object object = value.asObject(runtime);
     if (!object.isHostObject<PointerHost>(runtime))
     {
         return nullptr;
     }
+
     return object.getHostObject<PointerHost>(runtime);
 }
 
@@ -313,10 +346,12 @@ void writeValue(jsi::Runtime &runtime, const jsi::Value &value, const Type &type
         type.codec->write(runtime, value, target, storage);
         return;
     }
+
     if (type.kind == Kind::Void)
     {
         return;
     }
+
     encodeValue(type, nativeValue(runtime, value, type), target, storage);
 }
 
@@ -341,9 +376,10 @@ jsi::Value lookupSymbol(jsi::Runtime &runtime, const jsi::Value *args, std::size
     {
         throw std::invalid_argument("ffi.symbol expects a symbol name");
     }
-    std::string name   = args[0].getString(runtime).utf8(runtime);
-    void       *handle = RTLD_DEFAULT;
-    bool        opened = false;
+
+    std::string name = args[0].getString(runtime).utf8(runtime);
+    void *handle     = RTLD_DEFAULT;
+    bool opened      = false;
     if (count > 1 && args[1].isString())
     {
         std::string image = args[1].getString(runtime).utf8(runtime);
@@ -352,6 +388,7 @@ jsi::Value lookupSymbol(jsi::Runtime &runtime, const jsi::Value *args, std::size
         {
             throw std::invalid_argument("ffi.symbol image is not loaded");
         }
+
         opened = true;
     }
 
@@ -360,6 +397,7 @@ jsi::Value lookupSymbol(jsi::Runtime &runtime, const jsi::Value *args, std::size
     {
         dlclose(handle);
     }
+
     return pointerValue(runtime, symbol, true);
 }
 
@@ -374,11 +412,13 @@ jsi::Value callFunction(jsi::Runtime &runtime, const jsi::Value *args, std::size
     {
         throw std::invalid_argument("ffi.call expects a pointer, signature, and arguments");
     }
+
     std::shared_ptr<PointerHost> host = pointerHost(runtime, args[0]);
     if (!host)
     {
         throw std::invalid_argument("ffi.call expects a pointer handle");
     }
+
     if (!host->callable() || !isCallableSymbolAddress(host->value()))
     {
         throw std::invalid_argument("ffi.call requires an executable symbol pointer");
@@ -396,6 +436,7 @@ jsi::Value callFunction(jsi::Runtime &runtime, const jsi::Value *args, std::size
         writeValue(runtime, args[index + 2], signature.arguments[index], frame.argument(index),
                    frame.storage());
     }
+
     frame.invoke(host->value());
     return readValue(runtime, signature.result, frame.result());
 }

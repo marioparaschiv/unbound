@@ -44,18 +44,19 @@ int main()
         assert(nativeFFITypeName(malformed.c_str()).empty());
     }
 
-    std::mt19937                       generator(0x4e415449);
+    std::mt19937 generator(0x4e415449);
     std::uniform_int_distribution<int> length(0, 128);
     std::uniform_int_distribution<int> byte(1, 255);
     for (int index = 0; index < 50000; index++)
     {
         std::string encoding;
-        int         count = length(generator);
+        int count = length(generator);
         encoding.reserve(count);
         for (int position = 0; position < count; position++)
         {
             encoding.push_back(static_cast<char>(byte(generator)));
         }
+
         normalizedType(encoding.c_str());
         nativeFFITypeName(encoding.c_str());
     }

@@ -17,8 +17,8 @@
 
 namespace loader::ios {
 struct HookSignature {
-    loader::ffi::Type                           result;
-    std::vector<loader::ffi::Type>              arguments;
+    loader::ffi::Type result;
+    std::vector<loader::ffi::Type> arguments;
     std::shared_ptr<loader::ffi::CallInterface> interface;
 };
 
@@ -32,40 +32,40 @@ struct HookCallbacks {
 };
 
 struct HookDispatcher {
-    Class                                   cls;
-    SEL                                     selector;
-    IMP                                     original;
-    std::shared_ptr<HookSignature>          signature;
-    ffi_closure                            *closure = nullptr;
-    void                                   *code    = nullptr;
+    Class cls;
+    SEL selector;
+    IMP original;
+    std::shared_ptr<HookSignature> signature;
+    ffi_closure *closure = nullptr;
+    void *code           = nullptr;
     std::vector<std::shared_ptr<HookState>> hooks;
-    std::atomic_uint                        activeCalls{0};
-    std::atomic_bool                        retired{false};
+    std::atomic_uint activeCalls{0};
+    std::atomic_bool retired{false};
 };
 
 struct HookState {
-    uint64_t                                               identifier;
-    uint64_t                                               runtimeGeneration;
-    std::string                                            callbackResourceKey;
+    uint64_t identifier;
+    uint64_t runtimeGeneration;
+    std::string callbackResourceKey;
     std::weak_ptr<loader::native::RuntimeResourceRegistry> callbackResources;
-    uint64_t                                               callbackRuntimeIdentity = 0;
-    std::weak_ptr<HookCallbacks>                           callbacks;
-    bool                                                   hasBefore     = false;
-    bool                                                   hasAfter      = false;
-    bool                                                   hasReplace    = false;
-    bool                                                   coalesceAfter = false;
-    std::weak_ptr<HookDispatcher>                          dispatcher;
-    __strong id                                            instanceTarget = nil;
-    std::mutex                                             returnCacheMutex;
+    uint64_t callbackRuntimeIdentity = 0;
+    std::weak_ptr<HookCallbacks> callbacks;
+    bool hasBefore     = false;
+    bool hasAfter      = false;
+    bool hasReplace    = false;
+    bool coalesceAfter = false;
+    std::weak_ptr<HookDispatcher> dispatcher;
+    __strong id instanceTarget = nil;
+    std::mutex returnCacheMutex;
     __strong NSMutableDictionary<NSArray *, NSData *> *returnCache =
         [NSMutableDictionary dictionary];
-    bool                                                           cacheOnly = false;
-    bool                                                           once      = false;
-    loader::native::HookPayload                                    payload;
-    facebook::jsi::Runtime                                        *inlineRuntime = nullptr;
-    loader::AddonSlot                                              addon         = loader::kNoAddon;
-    std::atomic_bool                                               active{true};
-    std::atomic_bool                                               afterOncePending{false};
+    bool cacheOnly = false;
+    bool once      = false;
+    loader::native::HookPayload payload;
+    facebook::jsi::Runtime *inlineRuntime = nullptr;
+    loader::AddonSlot addon               = loader::kNoAddon;
+    std::atomic_bool active{true};
+    std::atomic_bool afterOncePending{false};
     std::shared_ptr<loader::native::RuntimeResourceOperationScope> operations =
         std::make_shared<loader::native::RuntimeResourceOperationScope>();
 };
@@ -80,7 +80,7 @@ public:
         return state_;
     }
 
-    facebook::jsi::Value get(facebook::jsi::Runtime          &runtime,
+    facebook::jsi::Value get(facebook::jsi::Runtime &runtime,
                              const facebook::jsi::PropNameID &name) override;
 
 private:

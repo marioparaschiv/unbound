@@ -40,8 +40,8 @@ using namespace facebook;
 
 #pragma mark - Pre/post bundle injection
 
-static jsi::Runtime *gRuntime  = nullptr;
-static __weak id     gInstance = nil;
+static jsi::Runtime *gRuntime = nullptr;
+static __weak id gInstance    = nil;
 
 static loader::browserlogin::PendingLogin &pendingBrowserLogin(void)
 {
@@ -56,7 +56,7 @@ BOOL UnboundBundleIsReady(void)
 
 static void applyPendingBrowserLogin(void)
 {
-    id                         instance = gInstance;
+    id instance = gInstance;
     std::optional<std::string> pending =
         pendingBrowserLogin().begin(instance && UnboundBundleIsReady());
     if (!pending)
@@ -81,6 +81,7 @@ static void applyPendingBrowserLogin(void)
                        format:@"Browser login failed. (%s)", error.what()];
             }
         }
+
         dispatch_async(dispatch_get_main_queue(), ^{
             switch (pendingBrowserLogin().finish(tokenValue, applied))
             {
@@ -93,8 +94,8 @@ static void applyPendingBrowserLogin(void)
                            format:@"Browser login JavaScript application failed (attempt %u).",
                                   pendingBrowserLogin().failures()];
                     dispatch_after(dispatch_time(DISPATCH_TIME_NOW,
-                                                 (int64_t) (loader::browserlogin::kRetrySeconds *
-                                                            NSEC_PER_SEC)),
+                                                 (int64_t) (loader::browserlogin::kRetrySeconds
+                                                            * NSEC_PER_SEC)),
                                    dispatch_get_main_queue(), ^{ applyPendingBrowserLogin(); });
                     return;
                 case loader::browserlogin::ApplyResult::GaveUp:
@@ -129,7 +130,7 @@ static std::atomic_bool discordActive{false};
 
 static void keepAwakeForUpdateCheck()
 {
-    UIApplication                     *application = UIApplication.sharedApplication;
+    UIApplication *application = UIApplication.sharedApplication;
     __block UIBackgroundTaskIdentifier task =
         [application beginBackgroundTaskWithName:@"Unbound update check"
                                expirationHandler:^{
@@ -140,6 +141,7 @@ static void keepAwakeForUpdateCheck()
     {
         return;
     }
+
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
         if (UnboundLoader()->onBackground())
         {
@@ -148,6 +150,7 @@ static void keepAwakeForUpdateCheck()
                 [NSThread sleepForTimeInterval:1.0];
             }
         }
+
         dispatch_async(dispatch_get_main_queue(), ^{
             if (task != UIBackgroundTaskInvalid)
             {
@@ -161,7 +164,7 @@ static void keepAwakeForUpdateCheck()
 static void watchNetworkCost()
 {
     static nw_path_monitor_t monitor = nullptr;
-    static dispatch_once_t   onceToken;
+    static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         monitor = nw_path_monitor_create();
         nw_path_monitor_set_queue(monitor, dispatch_get_global_queue(QOS_CLASS_UTILITY, 0));
@@ -195,6 +198,7 @@ public:
         {
             return std::nullopt;
         }
+
         return std::string(static_cast<const char *>(data.bytes), data.length);
     }
 
@@ -227,7 +231,7 @@ public:
     std::optional<loader::DownloadResult>
     download(const std::string &url, const std::string &destination,
              const std::map<std::string, std::string> &headers,
-             const loader::DownloadPolicy             &policy) override
+             const loader::DownloadPolicy &policy) override
     {
         return UnboundDownload(url, destination, headers, policy);
     }
@@ -240,6 +244,7 @@ public:
         {
             requestHeaders[toNSString(key)] = toNSString(value);
         }
+
         [BackgroundDownloads.shared continueDownload:[NSURL URLWithString:toNSString(url)]
                                                   to:toNSString(destination)
                                              headers:requestHeaders];
@@ -293,6 +298,7 @@ public:
                 }
             }
         }
+
         return "";
     }
 
@@ -307,6 +313,7 @@ public:
         {
             return toStdString([NSURL fileURLWithPath:path].absoluteString);
         }
+
         return animated ? iconImageURL(@[ animated[@"Rest"] ]) : "";
     }
 
@@ -324,33 +331,37 @@ public:
         {
             return @"Unbound";
         }
+
         NSString *name = names[iconId];
         return [name isKindOfClass:NSString.class] && name.length ? name : iconId;
     }
 
     static nlohmann::json declaredUnboundIcons()
     {
-        nlohmann::json icons     = nlohmann::json::array();
-        NSDictionary  *info      = installedInfo();
-        NSDictionary  *alternate = info[@"CFBundleIcons"][@"CFBundleAlternateIcons"];
-        NSDictionary  *names     = info[@"UnboundIconNames"];
-        NSDictionary  *animated  = UBAnimatedIconInfo();
-        NSArray       *frames    = animated[@"Frames"] ?: @[];
+        nlohmann::json icons    = nlohmann::json::array();
+        NSDictionary *info      = installedInfo();
+        NSDictionary *alternate = info[@"CFBundleIcons"][@"CFBundleAlternateIcons"];
+        NSDictionary *names     = info[@"UnboundIconNames"];
+        NSDictionary *animated  = UBAnimatedIconInfo();
+        NSArray *frames         = animated[@"Frames"] ?: @[];
         for (NSString *iconId in [alternate.allKeys sortedArrayUsingSelector:@selector(compare:)])
         {
             if (![iconId hasPrefix:@"Unbound"] || [frames containsObject:iconId])
             {
                 continue;
             }
+
             std::string image = iconImageURL(alternate[iconId][@"CFBundleIconFiles"]);
             if (image.empty())
             {
                 continue;
             }
+
             icons.push_back({{"id", toStdString(iconId)},
                              {"name", toStdString(iconName(iconId, names))},
                              {"image", image}});
         }
+
         std::string preview = animatedIconImageURL(animated);
         if (!preview.empty())
         {
@@ -358,6 +369,7 @@ public:
                              {"name", toStdString(animated[@"Name"] ?: @"Unbound (Animated)")},
                              {"image", preview}});
         }
+
         return icons;
     }
 
@@ -409,6 +421,7 @@ public:
             {
                 return;
             }
+
             UIAlertAction *open = [UIAlertAction
                 actionWithTitle:@"Open Toolbox"
                           style:UIAlertActionStyleDefault
@@ -438,7 +451,7 @@ public:
                         handler:^(UIAlertAction *action) {
                             NSString *link = [CoreBridge toolbox:@"crash-report-url"
                                                         argument:discordVersion];
-                            NSURL    *url  = link.length ? [NSURL URLWithString:link] : nil;
+                            NSURL *url     = link.length ? [NSURL URLWithString:link] : nil;
                             if (url)
                             {
                                 [[UIApplication sharedApplication] openURL:url
@@ -479,7 +492,7 @@ public:
 std::shared_ptr<loader::Loader> UnboundLoader()
 {
     static std::shared_ptr<loader::Loader> shared;
-    static dispatch_once_t                 onceToken;
+    static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         [FileSystem init];
         shared = std::make_shared<loader::Loader>(
@@ -541,6 +554,7 @@ static void prepareLoading(id instance)
         [Utilities setBundleUpdater:instance];
         [Logger info:LOG_CATEGORY_DEFAULT format:@"DCDBundleUpdaterManager captured."];
     }
+
     return instance;
 }
 

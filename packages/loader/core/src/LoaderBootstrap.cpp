@@ -11,10 +11,10 @@ namespace loader::bootstrap {
 namespace jsi = facebook::jsi;
 
 struct Scripts {
-    std::mutex                         mutex;
-    ScriptSource                       source;
+    std::mutex mutex;
+    ScriptSource source;
     std::map<std::string, std::string> loaded;
-    std::set<std::string>              reported;
+    std::set<std::string> reported;
 };
 
 // Built on first use: iOS sets the source from a thread its %ctor starts while this file's static
@@ -27,7 +27,7 @@ static Scripts &scripts()
 
 void setScriptSource(ScriptSource source)
 {
-    Scripts                    &state = scripts();
+    Scripts &state = scripts();
     std::lock_guard<std::mutex> lock(state.mutex);
     state.source = std::move(source);
     state.loaded.clear();
@@ -36,7 +36,7 @@ void setScriptSource(ScriptSource source)
 
 std::optional<std::string> script(const std::string &name)
 {
-    Scripts                    &state = scripts();
+    Scripts &state = scripts();
     std::lock_guard<std::mutex> lock(state.mutex);
     if (auto cached = state.loaded.find(name); cached != state.loaded.end())
     {
@@ -53,8 +53,10 @@ std::optional<std::string> script(const std::string &name)
             log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
                 "Bootstrap script " + name + " is unavailable.");
         }
+
         return std::nullopt;
     }
+
     state.loaded[name] = *loaded;
     return loaded;
 }
@@ -72,6 +74,7 @@ std::optional<jsi::Function> function(jsi::Runtime &runtime, const std::string &
     {
         return std::nullopt;
     }
+
     return value.asObject(runtime).asFunction(runtime);
 }
 }

@@ -14,7 +14,7 @@ namespace unbound::android {
 static const char *const kSettingsWatcherClass = "app/unbound/android/SettingsWatcher";
 
 struct SettingsWatcherCallbacks {
-    jclass    watcherClass  = nullptr;
+    jclass watcherClass     = nullptr;
     jmethodID observe       = nullptr;
     jmethodID stopObserving = nullptr;
     jmethodID changed       = nullptr;
@@ -29,6 +29,7 @@ static void callWithPath(jmethodID method, const std::string &path)
     {
         return;
     }
+
     jstring value = toJavaString(env, path);
     env->CallStaticVoidMethod(gCallbacks.watcherClass, method, value);
     clearPendingException(env);
@@ -42,6 +43,7 @@ static void notifyChanged()
     {
         return;
     }
+
     env->CallStaticVoidMethod(gCallbacks.watcherClass, gCallbacks.changed);
     clearPendingException(env);
 }
@@ -109,8 +111,8 @@ bool registerFileWatcherNatives(JNIEnv *env)
          reinterpret_cast<void *>(nativeDirectoryEvent)},
     };
 
-    if (env->RegisterNatives(watcher.get(), methods, sizeof(methods) / sizeof(methods[0])) !=
-        JNI_OK)
+    if (env->RegisterNatives(watcher.get(), methods, sizeof(methods) / sizeof(methods[0]))
+        != JNI_OK)
     {
         clearPendingException(env);
         return false;
@@ -122,7 +124,7 @@ bool registerFileWatcherNatives(JNIEnv *env)
         env->GetStaticMethodID(watcher.get(), "stopObserving", "(Ljava/lang/String;)V");
     gCallbacks.changed = env->GetStaticMethodID(watcher.get(), "changed", "()V");
 
-    return !clearPendingException(env) && gCallbacks.observe && gCallbacks.stopObserving &&
-           gCallbacks.changed;
+    return !clearPendingException(env) && gCallbacks.observe && gCallbacks.stopObserving
+           && gCallbacks.changed;
 }
 }

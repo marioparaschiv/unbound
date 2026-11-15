@@ -44,6 +44,7 @@ static std::string syntheticFont(const std::string &fullName)
     {
         appendU16(name, static_cast<uint16_t>(static_cast<unsigned char>(character)));
     }
+
     std::string table;
     appendU16(table, 0);
     appendU16(table, 1);
@@ -52,6 +53,7 @@ static std::string syntheticFont(const std::string &fullName)
     {
         appendU16(table, value);
     }
+
     appendU16(table, static_cast<uint16_t>(name.size()));
     appendU16(table, 0);
     table += name;
@@ -61,6 +63,7 @@ static std::string syntheticFont(const std::string &fullName)
     {
         appendU16(font, value);
     }
+
     appendU32(font, 0x6E616D65);
     appendU32(font, 0);
     appendU32(font, 28);
@@ -85,6 +88,7 @@ public:
         {
             byte = static_cast<char>(random_());
         }
+
         return data;
     }
 
@@ -93,11 +97,12 @@ public:
         static const char *const names[] = {"plugin",       ".hidden",  "with space", "ünïcødé",
                                             "dots.in.name", "UPPER",    "-dash",      "x",
                                             "emoji-😀",     "trailing."};
-        std::string              name    = names[next(sizeof(names) / sizeof(names[0]))];
+        std::string name                 = names[next(sizeof(names) / sizeof(names[0]))];
         if (next(6) == 0)
         {
             name += std::string(180, 'l');
         }
+
         return name + "-" + std::to_string(next(100000));
     }
 
@@ -107,6 +112,7 @@ public:
         {
             return bytes(next(64));
         }
+
         int edits = 1 + static_cast<int>(next(6));
         for (int edit = 0; edit < edits && !data.empty(); edit++)
         {
@@ -127,6 +133,7 @@ public:
                     break;
             }
         }
+
         return data;
     }
 
@@ -160,12 +167,13 @@ static std::string manifestFor(Generator &generator, const std::string &id)
             manifest["main"] = mains[generator.next(sizeof(mains) / sizeof(mains[0]))];
             break;
     }
+
     return manifest.dump();
 }
 
 static void addPlugin(Generator &generator, const fs::path &plugins, const fs::path &outside)
 {
-    fs::path        folder = plugins / generator.folderName();
+    fs::path folder = plugins / generator.folderName();
     std::error_code error;
     switch (generator.next(10))
     {
@@ -181,6 +189,7 @@ static void addPlugin(Generator &generator, const fs::path &plugins, const fs::p
         default:
             break;
     }
+
     fs::create_directories(folder / "sub", error);
     if (generator.next(5) == 0)
     {
@@ -190,6 +199,7 @@ static void addPlugin(Generator &generator, const fs::path &plugins, const fs::p
     {
         write(folder / "manifest.json", manifestFor(generator, folder.filename().string()));
     }
+
     if (generator.next(6) == 0)
     {
         fs::create_symlink(outside / "secret.txt", folder / "index.js", error);
@@ -203,7 +213,7 @@ static void addPlugin(Generator &generator, const fs::path &plugins, const fs::p
 
 static void addTheme(Generator &generator, const fs::path &themes)
 {
-    fs::path        folder = themes / generator.folderName();
+    fs::path folder = themes / generator.folderName();
     std::error_code error;
     fs::create_directories(folder, error);
     write(folder / "manifest.json", generator.next(3) ? "{\"id\":\"theme\",\"name\":\"Theme\"}"
@@ -218,7 +228,7 @@ static void addTheme(Generator &generator, const fs::path &themes)
 
 static void addFont(Generator &generator, const fs::path &fonts)
 {
-    fs::path        file = fonts / (generator.folderName() + (generator.next(2) ? ".ttf" : ".otf"));
+    fs::path file = fonts / (generator.folderName() + (generator.next(2) ? ".ttf" : ".otf"));
     std::error_code error;
     switch (generator.next(6))
     {
@@ -241,11 +251,12 @@ static void addFont(Generator &generator, const fs::path &fonts)
 static bool inside(const fs::path &root, const fs::path &path)
 {
     std::error_code error;
-    fs::path        canonicalRoot = fs::weakly_canonical(root, error);
-    fs::path        canonicalPath = fs::weakly_canonical(path, error);
-    auto            rootEnd       = canonicalRoot.end();
+    fs::path canonicalRoot = fs::weakly_canonical(root, error);
+    fs::path canonicalPath = fs::weakly_canonical(path, error);
+    auto rootEnd           = canonicalRoot.end();
     return std::mismatch(canonicalRoot.begin(), rootEnd, canonicalPath.begin(), canonicalPath.end())
-               .first == rootEnd;
+               .first
+           == rootEnd;
 }
 
 static void scanRound(Generator &generator, const fs::path &base)
@@ -266,16 +277,18 @@ static void scanRound(Generator &generator, const fs::path &base)
     {
         addPlugin(generator, plugins, outside);
     }
+
     for (uint32_t count = generator.next(5); count > 0; count--)
     {
         addTheme(generator, themes);
     }
+
     for (uint32_t count = generator.next(6); count > 0; count--)
     {
         addFont(generator, fonts);
     }
 
-    auto               started = std::chrono::steady_clock::now();
+    auto started = std::chrono::steady_clock::now();
     loader::AddonState state;
     state.scan(documents.string());
     require(std::chrono::steady_clock::now() - started < std::chrono::seconds(5),
@@ -284,14 +297,15 @@ static void scanRound(Generator &generator, const fs::path &base)
     for (const nlohmann::json &plugin : state.plugins())
     {
         const nlohmann::json &manifest = plugin["manifest"];
-        fs::path              folder   = manifest["path"].get<std::string>();
-        fs::path              entry    = manifest["entry"].get<std::string>();
+        fs::path folder                = manifest["path"].get<std::string>();
+        fs::path entry                 = manifest["entry"].get<std::string>();
         require(inside(plugins, folder), "a loaded plugin lives in the Plugins folder",
                 folder.string());
         require(inside(folder, entry), "a plugin's entry stays inside its own folder",
                 entry.string());
         require(plugin["bundle"].is_string(), "a loaded plugin carries its bundle", entry.string());
     }
+
     for (const nlohmann::json &theme : state.themes())
     {
         require(inside(themes, theme["manifest"]["path"].get<std::string>()),
@@ -303,14 +317,15 @@ static void scanRound(Generator &generator, const fs::path &base)
 int main()
 {
     const char *roundsVariable = std::getenv("UNBOUND_FUZZ_ITERATIONS");
-    const long  rounds         = roundsVariable ? std::strtol(roundsVariable, nullptr, 10) : 150;
-    Generator   generator(0xadd0);
-    fs::path    base = fs::temp_directory_path() / "unbound-addon-discovery-fuzz";
+    const long rounds          = roundsVariable ? std::strtol(roundsVariable, nullptr, 10) : 150;
+    Generator generator(0xadd0);
+    fs::path base = fs::temp_directory_path() / "unbound-addon-discovery-fuzz";
 
     for (long round = 0; round < rounds; round++)
     {
         scanRound(generator, base);
     }
+
     fs::remove_all(base);
 
     std::string font = syntheticFont("Seed Sans");

@@ -31,8 +31,8 @@ public:
     bool deactivate()
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        bool                        wasActive = active_;
-        active_                               = false;
+        bool wasActive = active_;
+        active_        = false;
         lastSetFrame_.reset();
         return wasActive;
     }
@@ -80,12 +80,12 @@ public:
 
 private:
     std::shared_ptr<FabricAdapter> adapter_;
-    mutable std::mutex             mutex_;
-    std::string                    id_;
-    std::string                    reuseKey_;
-    uint64_t                       generation_ = 0;
-    bool                           active_     = false;
-    std::optional<NativeFrame>     lastSetFrame_;
+    mutable std::mutex mutex_;
+    std::string id_;
+    std::string reuseKey_;
+    uint64_t generation_ = 0;
+    bool active_         = false;
+    std::optional<NativeFrame> lastSetFrame_;
 };
 
 using SurfacePointer = std::shared_ptr<FabricSurface>;

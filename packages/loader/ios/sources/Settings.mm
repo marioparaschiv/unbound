@@ -30,7 +30,7 @@ loader::SettingsStore &UnboundSettingsStore()
 + (void)init
 {
     loader::SettingsStore &store = UnboundSettingsStore();
-    NSString              *path  = @(store.path().c_str());
+    NSString *path               = @(store.path().c_str());
 
     [FileSystem monitor:path
                onChange:^{

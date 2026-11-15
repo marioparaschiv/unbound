@@ -10,7 +10,7 @@ namespace loader::native {
 namespace jsi = facebook::jsi;
 
 static constexpr const char *kScopeCacheGlobal = "__nativeUIScopeCache";
-static std::atomic_uint64_t  gNextScopeCacheId{1};
+static std::atomic_uint64_t gNextScopeCacheId{1};
 
 uint64_t nextUIScopeCacheId()
 {
@@ -24,18 +24,20 @@ static jsi::Object scopeCache(jsi::Runtime &runtime)
     {
         return existing.asObject(runtime);
     }
+
     jsi::Value created = bootstrap::evaluate(runtime, bootstrap::kNativeUIScopeCache);
     if (!created.isObject())
     {
         throwCoded(runtime, "NATIVE_PLUGIN_UNAVAILABLE", "The UI scope cache is unavailable");
     }
+
     runtime.global().setProperty(runtime, kScopeCacheGlobal, created);
     return created.asObject(runtime);
 }
 
 jsi::Value cachedUIScopeNamespace(jsi::Runtime &runtime, const std::string &key,
                                   const std::function<jsi::Object()> &create,
-                                  std::function<bool()>               active)
+                                  std::function<bool()> active)
 {
     jsi::Object cache      = scopeCache(runtime);
     jsi::String identifier = jsi::String::createFromUtf8(runtime, key);
@@ -44,11 +46,13 @@ jsi::Value cachedUIScopeNamespace(jsi::Runtime &runtime, const std::string &key,
         cache.getPropertyAsFunction(runtime, "erase").call(runtime, identifier);
         throwCoded(runtime, "NATIVE_PLUGIN_SCOPE_DISPOSED", "The UI scope has been disposed");
     }
+
     jsi::Value existing = cache.getPropertyAsFunction(runtime, "read").call(runtime, identifier);
     if (!existing.isUndefined())
     {
         return existing;
     }
+
     jsi::Object source = create();
     auto isActive = makeFunction(runtime, "isActive", 0,
                                  [active = std::move(active)](jsi::Runtime &, const jsi::Value &,

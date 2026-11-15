@@ -50,6 +50,7 @@ inline void fuzzTypeEncoding(const std::string &input)
     {
         return;
     }
+
     bool platformType = name == "object" || name == "class" || name == "selector";
     require(platformType || loader::ffi::parseType(name).has_value(),
             "every mapped encoding names a known type");
@@ -57,6 +58,7 @@ inline void fuzzTypeEncoding(const std::string &input)
     {
         return;
     }
+
     const char *canonical = nativeStructEncoding(name.substr(7));
     require(canonical != nullptr, "every mapped struct has a canonical encoding");
     require(nativeFFITypeName(canonical) == name, "the canonical encoding maps back to its type");
@@ -68,10 +70,12 @@ inline bool decodesWithoutDereferencing(const loader::ffi::Type &type)
     {
         return false;
     }
+
     if (type.kind != loader::ffi::Kind::Struct)
     {
         return true;
     }
+
     for (const loader::ffi::StructField &field : type.layout->fields)
     {
         if (!decodesWithoutDereferencing(field.type))
@@ -79,6 +83,7 @@ inline bool decodesWithoutDereferencing(const loader::ffi::Type &type)
             return false;
         }
     }
+
     return true;
 }
 
@@ -88,6 +93,7 @@ inline bool holdsNonFinite(const loader::ffi::NativeValue &value)
     {
         return !std::isfinite(*number);
     }
+
     if (const loader::ffi::NativeFields *fields =
             std::get_if<loader::ffi::NativeFields>(&value.data))
     {
@@ -99,6 +105,7 @@ inline bool holdsNonFinite(const loader::ffi::NativeValue &value)
             }
         }
     }
+
     return false;
 }
 
@@ -109,6 +116,7 @@ inline void fuzzTypeName(const std::string &input)
     {
         return;
     }
+
     require(type->name == input, "a parsed type keeps its name");
     std::size_t size      = loader::ffi::typeSize(*type);
     std::size_t alignment = loader::ffi::typeAlignment(*type);
@@ -145,21 +153,24 @@ inline void fuzzValueRoundTrip(const std::uint8_t *data, std::size_t size)
     {
         return;
     }
+
     loader::ffi::Type type =
         *loader::ffi::parseType(names[data[0] % (sizeof(names) / sizeof(names[0]))]);
     if (!decodesWithoutDereferencing(type))
     {
         return;
     }
-    std::size_t               storage = loader::ffi::valueStorageSize(type);
+
+    std::size_t storage = loader::ffi::valueStorageSize(type);
     std::vector<std::uint8_t> source(storage, 0);
     std::memcpy(source.data(), data + 1, std::min(storage, size - 1));
     if (type.kind == loader::ffi::Kind::Bool)
     {
         source[0] &= 1;
     }
-    loader::ffi::NativeValue     value = loader::ffi::decodeValue(type, source.data());
-    std::vector<std::uint8_t>    encoded(storage, 0);
+
+    loader::ffi::NativeValue value = loader::ffi::decodeValue(type, source.data());
+    std::vector<std::uint8_t> encoded(storage, 0);
     loader::ffi::ArgumentStorage arguments;
     try
     {
@@ -170,9 +181,10 @@ inline void fuzzValueRoundTrip(const std::uint8_t *data, std::size_t size)
         require(holdsNonFinite(value), "a decoded value re-encodes unless it is not finite");
         return;
     }
+
     if (!holdsNonFinite(value))
     {
-        loader::ffi::NativeValue  again = loader::ffi::decodeValue(type, encoded.data());
+        loader::ffi::NativeValue again = loader::ffi::decodeValue(type, encoded.data());
         std::vector<std::uint8_t> reencoded(storage, 0);
         loader::ffi::encodeValue(type, again, reencoded.data(), arguments);
         require(encoded == reencoded, "encoding a decoded value is stable");
@@ -188,12 +200,13 @@ inline void fuzzNumericValue(const std::uint8_t *data, std::size_t size)
     {
         return;
     }
+
     double value;
     std::memcpy(&value, data + 1, sizeof(double));
-    const char *type  = types[data[0] % (sizeof(types) / sizeof(types[0]))];
-    bool        valid = validNativeNumericValue(value, type);
-    require(!(valid && std::isnan(value) && std::strcmp(type, "double") != 0 &&
-              std::strcmp(type, "float") != 0),
+    const char *type = types[data[0] % (sizeof(types) / sizeof(types[0]))];
+    bool valid       = validNativeNumericValue(value, type);
+    require(!(valid && std::isnan(value) && std::strcmp(type, "double") != 0
+              && std::strcmp(type, "float") != 0),
             "NaN is never a valid integer");
     require(!valid || isNativeScalarType(type), "only scalar types accept numbers");
 }
@@ -208,11 +221,13 @@ inline void fuzzNames(const std::string &input)
     catch (const std::invalid_argument &)
     {
     }
+
     nlohmann::json handle = nlohmann::json::parse(input, nullptr, false);
     if (handle.is_discarded())
     {
         return;
     }
+
     try
     {
         std::string id = loader::native::parseHandleId(handle, "handle");
@@ -232,15 +247,18 @@ inline void fuzzBundleManifest(const std::string &input)
     {
         return;
     }
+
     for (std::uint32_t version : manifest->bytecodeVersions)
     {
         manifest->bundleFile(version, false);
         manifest->bundleFile(version, true);
     }
+
     if (!manifest->isSignable())
     {
         return;
     }
+
     loader::BundleBaseline baseline = loader::baselineFromManifest(*manifest, "fuzz");
     std::optional<loader::BundleBaseline> parsed =
         loader::parseBaseline(loader::serializeBaseline(baseline));
@@ -256,10 +274,11 @@ inline void fuzzOne(const std::uint8_t *data, std::size_t size)
     {
         return;
     }
+
     Target target = static_cast<Target>(data[0] % static_cast<std::uint8_t>(Target::Count));
-    const std::uint8_t *rest   = data + 1;
-    std::size_t         length = size - 1;
-    std::string         text(reinterpret_cast<const char *>(rest), length);
+    const std::uint8_t *rest = data + 1;
+    std::size_t length       = size - 1;
+    std::string text(reinterpret_cast<const char *>(rest), length);
     switch (target)
     {
         case Target::TypeEncoding:

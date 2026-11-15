@@ -16,18 +16,18 @@ enum class TaggedValueKind
 };
 
 struct TaggedValue {
-    std::string     type;
-    TaggedValueKind kind    = TaggedValueKind::Null;
-    bool            boolean = false;
-    double          number  = 0;
-    std::string     text;
+    std::string type;
+    TaggedValueKind kind = TaggedValueKind::Null;
+    bool boolean         = false;
+    double number        = 0;
+    std::string text;
 };
 
 struct TaggedEvent {
     std::optional<TaggedValue> self;
-    std::vector<TaggedValue>   arguments;
-    std::vector<size_t>        argumentIndexes;
-    std::string                phase;
+    std::vector<TaggedValue> arguments;
+    std::vector<size_t> argumentIndexes;
+    std::string phase;
 };
 
 std::optional<TaggedValue> parseTaggedValue(std::string_view json);

@@ -47,7 +47,8 @@ jsi::Value UIScope::hook(jsi::Runtime &runtime, const Install &install)
     {
         throw jsi::JSError(runtime, "The UI scope has been disposed");
     }
-    AddonScope    addonScope(addon_);
+
+    AddonScope addonScope(addon_);
     jsi::Runtime *previous = gUIScopeRuntime;
     gUIScopeRuntime        = &runtime;
     std::pair<jsi::Value, Release> installed;
@@ -60,12 +61,14 @@ jsi::Value UIScope::hook(jsi::Runtime &runtime, const Install &install)
         gUIScopeRuntime = previous;
         throw;
     }
+
     gUIScopeRuntime = previous;
     if (installed.second)
     {
         std::lock_guard<std::mutex> lock(mutex_);
         releases_.push_back(std::move(installed.second));
     }
+
     return std::move(installed.first);
 }
 
@@ -78,9 +81,11 @@ void UIScope::dispose()
         {
             return;
         }
+
         disposed_ = true;
         releases.swap(releases_);
     }
+
     for (const Release &release : releases)
     {
         release();
@@ -88,7 +93,7 @@ void UIScope::dispose()
 }
 
 std::vector<std::string> uiScopePaths(const std::vector<std::string> &paths,
-                                      std::string_view                namespacePrefix)
+                                      std::string_view namespacePrefix)
 {
     std::vector<std::string> allowed;
     for (const std::string &path : paths)
@@ -98,6 +103,7 @@ std::vector<std::string> uiScopePaths(const std::vector<std::string> &paths,
             allowed.push_back(path.substr(namespacePrefix.size()));
         }
     }
+
     return allowed;
 }
 
@@ -109,8 +115,9 @@ std::vector<std::string> parseUIScopePaths(jsi::Runtime &runtime, const jsi::Val
     {
         throw jsi::JSError(runtime, usage);
     }
+
     std::vector<std::string> paths;
-    jsi::Array               names = args[0].asObject(runtime).asArray(runtime);
+    jsi::Array names = args[0].asObject(runtime).asArray(runtime);
     for (size_t index = 0; index < names.size(runtime); index++)
     {
         jsi::Value path = names.getValueAtIndex(runtime, index);
@@ -119,6 +126,7 @@ std::vector<std::string> parseUIScopePaths(jsi::Runtime &runtime, const jsi::Val
             paths.push_back(path.getString(runtime).utf8(runtime));
         }
     }
+
     return uiScopePaths(paths, namespacePrefix);
 }
 
@@ -147,6 +155,7 @@ namespace {
                 {
                     onRead_(runtime);
                 }
+
                 return read(runtime, property.utf8(runtime));
             });
         }
@@ -164,10 +173,12 @@ namespace {
                         return jsi::Value::undefined();
                     });
             }
+
             if (std::find(namespaces_.begin(), namespaces_.end(), name) == namespaces_.end())
             {
                 return jsi::Value::undefined();
             }
+
             return cachedUIScopeNamespace(
                 runtime, std::to_string(cacheId_) + ":" + name,
                 [&] {
@@ -179,11 +190,11 @@ namespace {
                 });
         }
 
-        std::shared_ptr<UIScope>            scope_;
-        const std::vector<std::string>      namespaces_;
-        UIScopeNamespaceFactory             create_;
+        std::shared_ptr<UIScope> scope_;
+        const std::vector<std::string> namespaces_;
+        UIScopeNamespaceFactory create_;
         std::function<void(jsi::Runtime &)> onRead_;
-        const uint64_t                      cacheId_;
+        const uint64_t cacheId_;
     };
 }
 

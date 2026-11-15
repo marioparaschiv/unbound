@@ -24,8 +24,8 @@ static void checkInstallSources()
     assert(trollStoreVariant(false, true) == "TrollStore Lite");
     assert(trollStoreVariant(false, false) == "Unknown");
 
-    int  jitQueries = 0;
-    auto jit        = [&jitQueries](bool available) {
+    int jitQueries = 0;
+    auto jit       = [&jitQueries](bool available) {
         return [&jitQueries, available] {
             jitQueries++;
             return available;
@@ -36,10 +36,10 @@ static void checkInstallSources()
     assert(appSource({false, Receipt::None, false, true, true, jit(true)}) == "TrollStore Lite");
     assert(appSource({false, Receipt::AppStore, true, false, false, {}}) == "App Store");
     assert(jitQueries == 0);
-    assert(appSource({false, Receipt::AppStore, false, false, true, jit(true)}) ==
-           "LiveContainer (JIT)");
-    assert(appSource({false, Receipt::None, false, false, true, jit(false)}) ==
-           "LiveContainer (Signed)");
+    assert(appSource({false, Receipt::AppStore, false, false, true, jit(true)})
+           == "LiveContainer (JIT)");
+    assert(appSource({false, Receipt::None, false, false, true, jit(false)})
+           == "LiveContainer (Signed)");
     assert(jitQueries == 2);
     assert(appSource({false, Receipt::None, false, false, true, {}}) == "LiveContainer (Signed)");
     assert(appSource({false, Receipt::TestFlight, false, false, false, {}}) == "TestFlight");
@@ -64,8 +64,8 @@ static void checkInstallSources()
     signing.profileExpiry     = "2026-11-18";
     signing.altStore          = true;
     signing.entitlementSource = "kernel";
-    assert(signingDetails(signing) ==
-           "Development (`ABCDE12345`) · exp 2026-11-18 · AltStore/SideStore");
+    assert(signingDetails(signing)
+           == "Development (`ABCDE12345`) · exp 2026-11-18 · AltStore/SideStore");
     signing.getTaskAllow = false;
     signing.altStore     = false;
     assert(signingDetails(signing).rfind("Ad Hoc (`ABCDE12345`)", 0) == 0);
@@ -76,12 +76,11 @@ static void checkInstallSources()
     assert(signingDetails(signing).rfind("Distribution (`ABCDE12345`)", 0) == 0);
     signing.teamIdentifier    = kDiscordTeamIdentifier;
     signing.entitlementSource = "executable";
-    assert(signingDetails(signing) ==
-           std::string("Distribution (`") + kDiscordTeamIdentifier + "`)");
+    assert(signingDetails(signing)
+           == std::string("Distribution (`") + kDiscordTeamIdentifier + "`)");
 
-    assert(
-        provisioningProfilePlist("\x30\x82junk<?xml version=\"1.0\"?><plist><dict/></plist>sig") ==
-        "<?xml version=\"1.0\"?><plist><dict/></plist>");
+    assert(provisioningProfilePlist("\x30\x82junk<?xml version=\"1.0\"?><plist><dict/></plist>sig")
+           == "<?xml version=\"1.0\"?><plist><dict/></plist>");
     assert(!provisioningProfilePlist("<?xml no end"));
     assert(!provisioningProfilePlist("no plist"));
 
@@ -104,6 +103,7 @@ static void appendSocketAddress(std::vector<uint8_t> &message, uint8_t length, u
         address[0] = length;
         address[1] = family;
     }
+
     for (size_t index = 0; index < octets.size() && 4 + index < address.size(); index++)
     {
         address[4 + index] = octets[index];
@@ -112,10 +112,11 @@ static void appendSocketAddress(std::vector<uint8_t> &message, uint8_t length, u
     {
         address.push_back(0);
     }
+
     message.insert(message.end(), address.begin(), address.end());
 }
 
-static std::vector<uint8_t> routeMessage(int                                      addresses,
+static std::vector<uint8_t> routeMessage(int addresses,
                                          const std::vector<std::vector<uint8_t>> &sockets)
 {
     std::vector<uint8_t> message(92, 0);
@@ -124,6 +125,7 @@ static std::vector<uint8_t> routeMessage(int                                    
     {
         message.insert(message.end(), socket.begin(), socket.end());
     }
+
     const uint16_t length = static_cast<uint16_t>(message.size());
     std::memcpy(message.data(), &length, sizeof(length));
     return message;
@@ -162,20 +164,20 @@ static void checkRoutingTable()
     assert(!gateway(routeMessage(0x3, {ipv4({0, 0, 0, 0}), ipv4({172, 16, 0, 1}, 8)})));
 
     std::vector<uint8_t> skipped(4, 0);
-    assert(gateway(routeMessage(0x7, {ipv4({0, 0, 0, 0}), ipv4({10, 1, 2, 3}), skipped})) ==
-           "10.1.2.3");
+    assert(gateway(routeMessage(0x7, {ipv4({0, 0, 0, 0}), ipv4({10, 1, 2, 3}), skipped}))
+           == "10.1.2.3");
 
     std::vector<uint8_t> truncated = defaultRoute;
     truncated.resize(truncated.size() - 8);
     assert(!gateway(truncated));
 
     std::vector<uint8_t> shortHeader = defaultRoute;
-    const uint16_t       tooShort    = 40;
+    const uint16_t tooShort          = 40;
     std::memcpy(shortHeader.data(), &tooShort, sizeof(tooShort));
     assert(!gateway(shortHeader));
 
     std::vector<uint8_t> overrun = routeMessage(0x3, {ipv4({0, 0, 0, 0})});
-    const uint16_t       claimed = static_cast<uint16_t>(overrun.size());
+    const uint16_t claimed       = static_cast<uint16_t>(overrun.size());
     overrun.resize(overrun.size() - 4);
     std::memcpy(overrun.data(), &claimed, sizeof(claimed));
     assert(!gateway(overrun));
@@ -189,14 +191,16 @@ static void checkHookFrameworks()
     assert(hookFrameworkForImage("/var/jb/usr/lib/libellekit.dylib", true)->name == "ElleKit");
     assert(
         hookFrameworkForImage("/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate", false)
-            ->name == "Substrate");
-    assert(hookFrameworkForImage("/usr/lib/libsubstitute.dylib", false)->package ==
-           "com.ex.substitute");
+            ->name
+        == "Substrate");
+    assert(hookFrameworkForImage("/usr/lib/libsubstitute.dylib", false)->package
+           == "com.ex.substitute");
     assert(hookFrameworkForImage("/var/jb/usr/lib/libhooker.dylib", true)->name == "libhooker");
     assert(!hookFrameworkForImage("/usr/lib/libobjc.A.dylib", false));
     assert(hookFrameworkForImage(
                "/x/Discord.app/Frameworks/CydiaSubstrate.framework/CydiaSubstrate", true)
-               ->name == "ElleKit");
+               ->name
+           == "ElleKit");
 
     std::string status = "Package: mobilesubstrate\nVersion: 0.9.7\n\nPackage: ellekit\r\n"
                          "Status: install ok installed\r\nVersion: 1.1.3\r\n";
@@ -215,16 +219,16 @@ int main()
     assert(jailbreakName("/var/jb", {}, {}).empty());
     assert(jailbreakName("/var/jb", {".installed_dopamine"}, {}) == "Dopamine");
     assert(jailbreakName("/var/jb", {".installed_dopamine", ".installed_nekojb"}, {}) == "nekoJB");
-    assert(jailbreakName("/var/jb", {".installed_dopamine", ".installed_nathanlr"}, {}) ==
-           "nathanlr");
-    assert(jailbreakName("/var/jb", {".installed_dopamine", ".palecursus_strapped"}, {}) ==
-           "palera1n");
-    assert(jailbreakName("/var/jb", {".installed_relaxin", ".installed_palera1n"}, {}) ==
-           "Relaxin");
-    assert(jailbreakName("/private/var/containers/Bundle/Application/.jbroot-123", {}, {}) ==
-           "roothide");
-    assert(jailbreakName("/private/preboot/root/procursus", {".installed_dopamine"}, {}, true) ==
-           "Dopamine (roothide)");
+    assert(jailbreakName("/var/jb", {".installed_dopamine", ".installed_nathanlr"}, {})
+           == "nathanlr");
+    assert(jailbreakName("/var/jb", {".installed_dopamine", ".palecursus_strapped"}, {})
+           == "palera1n");
+    assert(jailbreakName("/var/jb", {".installed_relaxin", ".installed_palera1n"}, {})
+           == "Relaxin");
+    assert(jailbreakName("/private/var/containers/Bundle/Application/.jbroot-123", {}, {})
+           == "roothide");
+    assert(jailbreakName("/private/preboot/root/procursus", {".installed_dopamine"}, {}, true)
+           == "Dopamine (roothide)");
     assert(jailbreakName("/private/preboot/root/procursus",
                          {".installed_dopamine", ".xia0o0o0o_jb_installed"}, {})
                .empty());

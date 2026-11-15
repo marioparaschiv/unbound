@@ -31,27 +31,27 @@ struct StructLayout;
 class TypeCodec;
 
 struct Type {
-    Kind                kind;
-    std::string         name;
+    Kind kind;
+    std::string name;
     const StructLayout *layout = nullptr;
-    const TypeCodec    *codec  = nullptr;
+    const TypeCodec *codec     = nullptr;
 };
 
 struct StructField {
     std::string name;
-    Type        type;
+    Type type;
     std::size_t offset;
 };
 
 struct StructLayout {
-    std::string              name;
+    std::string name;
     std::vector<StructField> fields;
-    std::size_t              size;
-    std::size_t              alignment;
+    std::size_t size;
+    std::size_t alignment;
 };
 
 struct Signature {
-    Type              result;
+    Type result;
     std::vector<Type> arguments;
 };
 
@@ -59,8 +59,8 @@ constexpr std::size_t kMaximumArguments = 16;
 
 std::optional<Type> parseType(const std::string &name);
 const StructLayout *structLayout(const std::string &name);
-std::size_t         typeSize(const Type &type);
-std::size_t         typeAlignment(const Type &type);
-void      registerExtensionType(const std::string &name, std::shared_ptr<const TypeCodec> codec);
+std::size_t typeSize(const Type &type);
+std::size_t typeAlignment(const Type &type);
+void registerExtensionType(const std::string &name, std::shared_ptr<const TypeCodec> codec);
 Signature makeSignature(Type result, std::vector<Type> arguments);
 }

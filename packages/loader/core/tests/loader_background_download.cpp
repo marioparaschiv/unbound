@@ -50,10 +50,10 @@ void downloadsOfAnotherURLAreDiscarded()
 
 void failedDownloadsContinueInTheBackground()
 {
-    std::string            destination = scratch("handoff.candidate");
-    int                    foreground  = 0;
-    int                    collected   = 0;
-    std::string            handedOff;
+    std::string destination = scratch("handoff.candidate");
+    int foreground          = 0;
+    int collected           = 0;
+    std::string handedOff;
     loader::FileDownloader download = loader::withBackgroundHandoff(
         [&](const std::string &, const std::string &, const std::map<std::string, std::string> &,
             const loader::DownloadPolicy &) -> std::optional<loader::DownloadResult> {

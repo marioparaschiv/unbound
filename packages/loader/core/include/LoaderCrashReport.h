@@ -12,7 +12,7 @@ constexpr std::size_t kCrashReportLogBytes  = 4000;
 constexpr std::size_t kCrashReportURLLength = 8000;
 
 // Notes what the loader just recovered from, for a report the person chooses to open.
-void                       recordCrashSummary(const std::string &summary);
+void recordCrashSummary(const std::string &summary);
 std::optional<std::string> crashSummary();
 
 // A prefilled GitHub crash report: the toolbox's environment, what happened, and the end of the

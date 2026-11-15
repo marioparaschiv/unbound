@@ -6,8 +6,8 @@ using namespace loader::devoverlay;
 
 static bool same(const Frame &left, const Frame &right)
 {
-    return left.x == right.x && left.y == right.y && left.width == right.width &&
-           left.height == right.height;
+    return left.x == right.x && left.y == right.y && left.width == right.width
+           && left.height == right.height;
 }
 
 int main()

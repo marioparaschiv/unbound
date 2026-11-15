@@ -48,7 +48,7 @@ enum class NetworkType : int
     Other,
 };
 
-static std::atomic<int>  networkType{static_cast<int>(NetworkType::Unknown)};
+static std::atomic<int> networkType{static_cast<int>(NetworkType::Unknown)};
 static std::atomic<bool> networkConstrained{false};
 static std::atomic<bool> networkExpensive{false};
 
@@ -58,25 +58,29 @@ static NetworkType pathType(nw_path_t path)
     {
         return NetworkType::Offline;
     }
+
     if (nw_path_uses_interface_type(path, nw_interface_type_wifi))
     {
         return NetworkType::Wifi;
     }
+
     if (nw_path_uses_interface_type(path, nw_interface_type_cellular))
     {
         return NetworkType::Cellular;
     }
+
     if (nw_path_uses_interface_type(path, nw_interface_type_wired))
     {
         return NetworkType::Ethernet;
     }
+
     return NetworkType::Other;
 }
 
 static void watchNetwork()
 {
     static nw_path_monitor_t monitor;
-    static dispatch_once_t   once;
+    static dispatch_once_t once;
     dispatch_once(&once, ^{
         monitor = nw_path_monitor_create();
         nw_path_monitor_set_queue(monitor, dispatch_get_global_queue(QOS_CLASS_UTILITY, 0));
@@ -113,6 +117,7 @@ static nlohmann::json networkJSON()
     {
         return nullptr;
     }
+
     NSDictionary *proxy = CFBridgingRelease(CFNetworkCopySystemProxySettings());
     NSDictionary *scoped =
         [proxy[@"__SCOPED__"] isKindOfClass:NSDictionary.class] ? proxy[@"__SCOPED__"] : @{};
@@ -124,6 +129,7 @@ static nlohmann::json networkJSON()
             vpn = vpn || [interface hasPrefix:prefix];
         }
     }
+
     BOOL proxied = [proxy[@"HTTPEnable"] boolValue] || [proxy[@"HTTPSEnable"] boolValue] ||
                    [proxy[@"ProxyAutoConfigEnable"] boolValue];
     return {{"type", networkTypeName(type)},
@@ -159,16 +165,18 @@ static void readMainThreadState()
 static void readFocus()
 {
     constexpr NSInteger kFocusAuthorized = 3;
-    Class               center           = NSClassFromString(@"INFocusStatusCenter");
-    id                  shared           = [center respondsToSelector:@selector(defaultCenter)]
+    Class center                         = NSClassFromString(@"INFocusStatusCenter");
+    id shared                            = [center respondsToSelector:@selector(defaultCenter)]
                                                ? [center performSelector:@selector(defaultCenter)]
                                                : nil;
-    if (!shared || ![shared respondsToSelector:@selector(authorizationStatus)] ||
-        reinterpret_cast<NSInteger (*)(id, SEL)>(objc_msgSend)(
-            shared, @selector(authorizationStatus)) != kFocusAuthorized)
+    if (!shared || ![shared respondsToSelector:@selector(authorizationStatus)]
+        || reinterpret_cast<NSInteger (*)(id, SEL)>(objc_msgSend)(shared,
+                                                                  @selector(authorizationStatus))
+               != kFocusAuthorized)
     {
         return;
     }
+
     id status    = [shared performSelector:@selector(focusStatus)];
     id isFocused = [status respondsToSelector:@selector(isFocused)]
                        ? [status performSelector:@selector(isFocused)]
@@ -214,10 +222,12 @@ static nlohmann::json powerJSON()
     {
         power["battery"] = percent;
     }
+
     if (int charging = batteryCharging.load(); charging >= 0)
     {
         power["charging"] = charging == 1;
     }
+
     return power;
 }
 
@@ -243,38 +253,44 @@ static nlohmann::json pushJSON()
     {
         return nullptr;
     }
+
     nlohmann::json push = {{"permission", notificationPermissionName(status)}};
     if (int registered = pushRegistered.load(); registered >= 0)
     {
         push["registered"] = registered == 1;
     }
+
     if (int summary = scheduledSummary.load(); summary >= 0)
     {
         push["summary"] = summary == 1;
     }
+
     if (int focus = focused.load(); focus >= 0)
     {
         push["focus"] = focus == 1;
     }
+
     return push;
 }
 
 #pragma pack(push, 4)
+
 struct UnboundDNSResolver {
-    char             *domain;
-    int32_t           nameserverCount;
+    char *domain;
+    int32_t nameserverCount;
     struct sockaddr **nameservers;
 };
 
 struct UnboundDNSConfig {
-    int32_t                     resolverCount;
+    int32_t resolverCount;
     struct UnboundDNSResolver **resolvers;
 };
+
 #pragma pack(pop)
 
 extern "C" {
 struct UnboundDNSConfig *dns_configuration_copy(void);
-void                     dns_configuration_free(struct UnboundDNSConfig *config);
+void dns_configuration_free(struct UnboundDNSConfig *config);
 }
 
 static std::string addressText(const struct sockaddr *address)
@@ -290,6 +306,7 @@ static std::string addressText(const struct sockaddr *address)
         inet_ntop(AF_INET6, &reinterpret_cast<const sockaddr_in6 *>(address)->sin6_addr, text,
                   sizeof(text));
     }
+
     return text;
 }
 
@@ -300,6 +317,7 @@ static nlohmann::json dnsJSON()
     {
         return nullptr;
     }
+
     nlohmann::json servers = nlohmann::json::array();
     for (int32_t index = 0; index < config->resolverCount; index++)
     {
@@ -308,6 +326,7 @@ static nlohmann::json dnsJSON()
         {
             continue;
         }
+
         for (int32_t server = 0; server < resolver->nameserverCount; server++)
         {
             if (std::string text = addressText(resolver->nameservers[server]); !text.empty())
@@ -315,8 +334,10 @@ static nlohmann::json dnsJSON()
                 servers.push_back(text);
             }
         }
+
         break;
     }
+
     dns_configuration_free(config);
     return {{"servers", servers}};
 }
@@ -329,11 +350,11 @@ static NSSet<NSString *> *appGroupsOf(NSDictionary *entitlements)
 
 static nlohmann::json extensionsJSON()
 {
-    static nlohmann::json  extensions = nlohmann::json::array();
+    static nlohmann::json extensions = nlohmann::json::array();
     static dispatch_once_t once;
     dispatch_once(&once, ^{
-        NSSet    *appGroups = appGroupsOf([Utilities getApplicationEntitlements]);
-        NSString *plugIns   = NSBundle.mainBundle.builtInPlugInsPath;
+        NSSet *appGroups  = appGroupsOf([Utilities getApplicationEntitlements]);
+        NSString *plugIns = NSBundle.mainBundle.builtInPlugInsPath;
         for (NSString *name in [NSFileManager.defaultManager contentsOfDirectoryAtPath:plugIns
                                                                                  error:nil])
         {
@@ -341,6 +362,7 @@ static nlohmann::json extensionsJSON()
             {
                 continue;
             }
+
             NSBundle *extension =
                 [NSBundle bundleWithPath:[plugIns stringByAppendingPathComponent:name]];
             NSString *executable = extension.executablePath;
@@ -348,6 +370,7 @@ static nlohmann::json extensionsJSON()
             {
                 continue;
             }
+
             NSSet *groups = appGroupsOf([Utilities entitlementsOfExecutable:executable]);
             extensions.push_back(
                 {{"name", toStdString(name.stringByDeletingPathExtension)},
@@ -382,6 +405,7 @@ static std::vector<std::string> loadedImagePaths()
             paths.emplace_back(name);
         }
     }
+
     return paths;
 }
 
@@ -396,19 +420,23 @@ static nlohmann::json deviceStateJSON()
     {
         state["network"] = network;
     }
+
     state["power"] = powerJSON();
     if (nlohmann::json extensions = extensionsJSON(); !extensions.empty())
     {
         state["extensions"] = extensions;
     }
+
     if (nlohmann::json push = pushJSON(); !push.is_null())
     {
         state["push"] = push;
     }
+
     if (nlohmann::json dns = dnsJSON(); !dns.is_null())
     {
         state["dns"] = dns;
     }
+
     refreshDeviceState();
     return state;
 }

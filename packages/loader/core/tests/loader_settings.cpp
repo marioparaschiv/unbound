@@ -71,6 +71,7 @@ int main()
     {
         assert(loader::writeTextFileAtomically(path + ".corrupt-" + std::to_string(index), "x"));
     }
+
     assert(loader::writeTextFileAtomically(path, "{not json"));
     loader::SettingsStore pruned(path);
     pruned.load();
@@ -79,12 +80,14 @@ int main()
     {
         backups += entry.path().filename().string().rfind("settings.json.corrupt-", 0) == 0;
     }
+
     assert(backups == 3);
     bool foundBackup = false;
     for (const auto &entry : std::filesystem::directory_iterator(root))
     {
         foundBackup |= entry.path().filename().string().rfind("settings.json.corrupt-", 0) == 0;
     }
+
     assert(foundBackup);
 
     assert(!corrupt.replace("[]"));
@@ -101,8 +104,8 @@ int main()
         assert(loader::writeTextFileAtomically(
             fresh,
             R"({"unbound":{"recovery":false,"toasts":{"enabled":false}},"plugins":{"a":1}})"));
-        std::filesystem::last_write_time(fresh, std::filesystem::file_time_type::clock::now() +
-                                                    std::chrono::seconds(2));
+        std::filesystem::last_write_time(fresh, std::filesystem::file_time_type::clock::now()
+                                                    + std::chrono::seconds(2));
         assert(!native.getBoolean("unbound", "toasts.enabled", true));
 
         native.set("unbound", "recovery", true);
@@ -154,8 +157,8 @@ int main()
         const auto lazy = std::filesystem::temp_directory_path() / "loader-settings-lazy.json";
         const std::string cache = R"({ "assets" : {"a.png": 1, "b\u0041": [1, {"c": "}"}]} })";
         assert(loader::writeTextFileAtomically(
-            lazy, std::string(R"({"unbound":{"recovery":true},"cache":)") + cache +
-                      R"(,"bad":{"x":tru},"esc\"aped":{"k":1}})"));
+            lazy, std::string(R"({"unbound":{"recovery":true},"cache":)") + cache
+                      + R"(,"bad":{"x":tru},"esc\"aped":{"k":1}})"));
         loader::SettingsStore store(lazy.string());
         store.load();
         assert(store.getBoolean("unbound", "recovery", false));
@@ -197,6 +200,7 @@ int main()
             broken.load();
             assert(loader::readTextFile(lazy).value() == "{}");
         }
+
         for (const auto &entry : std::filesystem::directory_iterator(lazy.parent_path()))
         {
             if (entry.path().filename().string().rfind("loader-settings-lazy.json", 0) == 0)
@@ -224,7 +228,7 @@ int main()
         // A hit decodes from the cache, not the JSON: a cache naming the right hash wins.
         {
             const std::string json = loader::readTextFile(cached).value();
-            auto              stores =
+            auto stores =
                 loader::decodeSettingsCache(packed, loader::settingsHash(json), json.size());
             assert(stores);
             for (loader::CachedStore &store : *stores)
@@ -232,6 +236,7 @@ int main()
                 store.packed.clear();
                 nlohmann::json::to_msgpack(nlohmann::json({{"from", "cache"}}), store.packed);
             }
+
             assert(loader::writeTextFileAtomically(
                 bin,
                 loader::encodeSettingsCache(loader::settingsHash(json), json.size(), *stores)));
@@ -240,6 +245,7 @@ int main()
             assert(forged.getString("big", "from", "") == "cache");
             assert(loader::writeTextFileAtomically(bin, packed));
         }
+
         loader::SettingsStore hit(cached.string());
         hit.load();
         assert(hit.get("unbound", "n") == nlohmann::json(1.5));
@@ -247,8 +253,8 @@ int main()
         assert(hit.getString("unbound", "s", "") == "x");
         hit.set("unbound", "s", "y");
         assert(hit.save());
-        assert(loader::readTextFile(cached).value().find(R"("big":{"k":true})") !=
-               std::string::npos);
+        assert(loader::readTextFile(cached).value().find(R"("big":{"k":true})")
+               != std::string::npos);
         assert(loader::readTextFile(bin).value() != packed);
 
         const std::string json = loader::readTextFile(cached).value();
@@ -257,8 +263,8 @@ int main()
         assert(stores && stores->size() == 2);
         for (const loader::CachedStore &store : *stores)
         {
-            assert(nlohmann::json::from_msgpack(store.packed) ==
-                   nlohmann::json::parse(json.substr(store.jsonOffset, store.jsonLength)));
+            assert(nlohmann::json::from_msgpack(store.packed)
+                   == nlohmann::json::parse(json.substr(store.jsonOffset, store.jsonLength)));
         }
 
         // The cache only answers for the exact bytes it was built from.
@@ -270,6 +276,7 @@ int main()
             assert(!loader::decodeSettingsCache(current.substr(0, length),
                                                 loader::settingsHash(json), json.size()));
         }
+
         assert(
             !loader::decodeSettingsCache(current + "x", loader::settingsHash(json), json.size()));
 
@@ -315,7 +322,7 @@ int main()
         }
     }
 
-    const auto            stagedPath = (root / "staged.json").string();
+    const auto stagedPath = (root / "staged.json").string();
     loader::SettingsStore staged(stagedPath);
     staged.load();
     assert(staged.stage(

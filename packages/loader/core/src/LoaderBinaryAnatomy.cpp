@@ -10,11 +10,11 @@
 
 namespace loader::binary {
 namespace {
-    constexpr size_t   kMachHeaderSize    = 32;
-    constexpr size_t   kMaxHeaderBytes    = 4 * 1024 * 1024;
-    constexpr size_t   kMaxSignatureBytes = 16 * 1024 * 1024;
-    constexpr size_t   kFingerprintLength = 16;
-    constexpr uint32_t kCPUTypeARM64      = 0x0100000c;
+    constexpr size_t kMachHeaderSize    = 32;
+    constexpr size_t kMaxHeaderBytes    = 4 * 1024 * 1024;
+    constexpr size_t kMaxSignatureBytes = 16 * 1024 * 1024;
+    constexpr size_t kFingerprintLength = 16;
+    constexpr uint32_t kCPUTypeARM64    = 0x0100000c;
 
     const std::string kCommonNameOID   = std::string("\x55\x04\x03", 3);
     const std::string kOrgUnitOID      = std::string("\x55\x04\x0b", 3);
@@ -30,19 +30,20 @@ namespace {
     uint32_t big32(const std::string &bytes, size_t offset)
     {
         const auto *data = reinterpret_cast<const uint8_t *>(bytes.data() + offset);
-        return (uint32_t(data[0]) << 24) | (uint32_t(data[1]) << 16) | (uint32_t(data[2]) << 8) |
-               uint32_t(data[3]);
+        return (uint32_t(data[0]) << 24) | (uint32_t(data[1]) << 16) | (uint32_t(data[2]) << 8)
+               | uint32_t(data[3]);
     }
 
     std::optional<std::string> readRange(std::ifstream &stream, uint64_t offset, size_t size)
     {
         std::string bytes(size, '\0');
         stream.clear();
-        if (!stream.seekg(static_cast<std::streamoff>(offset)) ||
-            !stream.read(bytes.data(), static_cast<std::streamoff>(size)))
+        if (!stream.seekg(static_cast<std::streamoff>(offset))
+            || !stream.read(bytes.data(), static_cast<std::streamoff>(size)))
         {
             return std::nullopt;
         }
+
         return bytes;
     }
 
@@ -53,14 +54,16 @@ namespace {
         {
             return std::nullopt;
         }
+
         uint32_t value = big32(*magic, 0);
         if (value != codesign::kFatMagic && value != codesign::kFatMagic64)
         {
             return 0;
         }
-        bool     wide      = value == codesign::kFatMagic64;
-        uint32_t slices    = std::min<uint32_t>(big32(*magic, 4), 16);
-        size_t   entrySize = wide ? 32 : 20;
+
+        bool wide        = value == codesign::kFatMagic64;
+        uint32_t slices  = std::min<uint32_t>(big32(*magic, 4), 16);
+        size_t entrySize = wide ? 32 : 20;
         for (uint32_t index = 0; index < slices; index++)
         {
             std::optional<std::string> entry = readRange(stream, 8 + entrySize * index, entrySize);
@@ -68,12 +71,14 @@ namespace {
             {
                 return std::nullopt;
             }
+
             if (big32(*entry, 0) == kCPUTypeARM64)
             {
                 return wide ? (uint64_t(big32(*entry, 8)) << 32) | big32(*entry, 12)
                             : big32(*entry, 8);
             }
         }
+
         return std::nullopt;
     }
 
@@ -91,11 +96,12 @@ namespace {
                 text += '-';
             }
         }
+
         return text;
     }
 
     struct Element {
-        uint8_t     tag = 0;
+        uint8_t tag = 0;
         std::string content;
         std::string whole;
     };
@@ -106,9 +112,10 @@ namespace {
         {
             return std::nullopt;
         }
-        size_t  start  = offset;
-        uint8_t tag    = static_cast<uint8_t>(der[offset++]);
-        size_t  length = static_cast<uint8_t>(der[offset++]);
+
+        size_t start  = offset;
+        uint8_t tag   = static_cast<uint8_t>(der[offset++]);
+        size_t length = static_cast<uint8_t>(der[offset++]);
         if (length & 0x80)
         {
             size_t bytes = length & 0x7f;
@@ -116,16 +123,19 @@ namespace {
             {
                 return std::nullopt;
             }
+
             length = 0;
             for (size_t index = 0; index < bytes; index++)
             {
                 length = (length << 8) | static_cast<uint8_t>(der[offset++]);
             }
         }
+
         if (length > der.size() - offset)
         {
             return std::nullopt;
         }
+
         Element element{tag, der.substr(offset, length),
                         der.substr(start, offset + length - start)};
         offset += length;
@@ -135,11 +145,12 @@ namespace {
     std::vector<Element> children(const std::string &content)
     {
         std::vector<Element> list;
-        size_t               offset = 0;
+        size_t offset = 0;
         while (std::optional<Element> element = readElement(content, offset))
         {
             list.push_back(std::move(*element));
         }
+
         return list;
     }
 
@@ -156,27 +167,31 @@ namespace {
                 }
             }
         }
+
         return "";
     }
 
     std::vector<Element> tbsFields(const std::string &der)
     {
-        size_t                 offset      = 0;
+        size_t offset                      = 0;
         std::optional<Element> certificate = readElement(der, offset);
         if (!certificate || certificate->tag != 0x30)
         {
             return {};
         }
+
         std::vector<Element> parts = children(certificate->content);
         if (parts.empty() || parts[0].tag != 0x30)
         {
             return {};
         }
+
         std::vector<Element> fields = children(parts[0].content);
         if (!fields.empty() && fields[0].tag == 0xa0)
         {
             fields.erase(fields.begin());
         }
+
         return fields;
     }
 
@@ -195,10 +210,10 @@ namespace {
 
 std::string versionString(uint32_t packed)
 {
-    uint32_t    major = packed >> 16;
-    uint32_t    minor = (packed >> 8) & 0xff;
-    uint32_t    patch = packed & 0xff;
-    std::string text  = std::to_string(major) + "." + std::to_string(minor);
+    uint32_t major   = packed >> 16;
+    uint32_t minor   = (packed >> 8) & 0xff;
+    uint32_t patch   = packed & 0xff;
+    std::string text = std::to_string(major) + "." + std::to_string(minor);
     return patch ? text + "." + std::to_string(patch) : text;
 }
 
@@ -208,7 +223,8 @@ std::optional<Anatomy> parseAnatomy(const std::string &image)
     {
         return std::nullopt;
     }
-    Anatomy  anatomy;
+
+    Anatomy anatomy;
     uint32_t count       = little32(image, 16);
     anatomy.loadCommands = count;
     size_t offset        = kMachHeaderSize;
@@ -220,6 +236,7 @@ std::optional<Anatomy> parseAnatomy(const std::string &image)
         {
             break;
         }
+
         if (command == kUUIDCommand && size >= 24)
         {
             anatomy.uuid = uuidString(image, offset + 8);
@@ -238,17 +255,18 @@ std::optional<Anatomy> parseAnatomy(const std::string &image)
             anatomy.minimumOS = versionString(little32(image, offset + 8));
             anatomy.sdk       = versionString(little32(image, offset + 12));
         }
-        else if ((command == kLoadDylib || command == kLoadWeakDylib ||
-                  command == kReexportDylib) &&
-                 size >= 24)
+        else if ((command == kLoadDylib || command == kLoadWeakDylib || command == kReexportDylib)
+                 && size >= 24)
         {
-            uint32_t    nameOffset = little32(image, offset + 8);
+            uint32_t nameOffset = little32(image, offset + 8);
             std::string name =
                 nameOffset < size ? image.substr(offset + nameOffset, size - nameOffset) : "";
             anatomy.dylibs.push_back(name.substr(0, name.find('\0')));
         }
+
         offset += size;
     }
+
     return anatomy;
 }
 
@@ -259,20 +277,23 @@ std::optional<Anatomy> readAnatomy(const std::string &executablePath)
     {
         return std::nullopt;
     }
-    std::optional<uint64_t>    base = arm64SliceOffset(stream);
+
+    std::optional<uint64_t> base = arm64SliceOffset(stream);
     std::optional<std::string> header =
         base ? readRange(stream, *base, kMachHeaderSize) : std::nullopt;
     if (!header || little32(*header, 0) != codesign::kMachOMagic64)
     {
         return std::nullopt;
     }
-    size_t commandBytes                = std::min<size_t>(little32(*header, 20), kMaxHeaderBytes);
-    std::optional<std::string> image   = readRange(stream, *base, kMachHeaderSize + commandBytes);
-    std::optional<Anatomy>     anatomy = image ? parseAnatomy(*image) : std::nullopt;
+
+    size_t commandBytes              = std::min<size_t>(little32(*header, 20), kMaxHeaderBytes);
+    std::optional<std::string> image = readRange(stream, *base, kMachHeaderSize + commandBytes);
+    std::optional<Anatomy> anatomy   = image ? parseAnatomy(*image) : std::nullopt;
     if (!anatomy)
     {
         return std::nullopt;
     }
+
     size_t offset = kMachHeaderSize;
     for (uint32_t index = 0; index < anatomy->loadCommands && offset + 16 <= image->size(); index++)
     {
@@ -282,14 +303,15 @@ std::optional<Anatomy> readAnatomy(const std::string &executablePath)
         {
             break;
         }
+
         if (command == kCodeSignature)
         {
             uint32_t dataOffset = little32(*image, offset + 8);
             uint32_t dataSize =
                 std::min<uint32_t>(little32(*image, offset + 12), kMaxSignatureBytes);
             std::optional<std::string> superBlob = readRange(stream, *base + dataOffset, dataSize);
-            if (superBlob && superBlob->size() >= 12 &&
-                big32(*superBlob, 0) == codesign::kEmbeddedSignatureMagic)
+            if (superBlob && superBlob->size() >= 12
+                && big32(*superBlob, 0) == codesign::kEmbeddedSignatureMagic)
             {
                 uint32_t blobs = big32(*superBlob, 8);
                 for (uint32_t slot = 0; slot < blobs && 12 + slot * 8 + 8 <= superBlob->size();
@@ -299,45 +321,54 @@ std::optional<Anatomy> readAnatomy(const std::string &executablePath)
                     {
                         continue;
                     }
+
                     uint32_t blobOffset = big32(*superBlob, 12 + slot * 8 + 4);
-                    if (blobOffset + 8 > superBlob->size() ||
-                        big32(*superBlob, blobOffset) != kBlobWrapperMagic)
+                    if (blobOffset + 8 > superBlob->size()
+                        || big32(*superBlob, blobOffset) != kBlobWrapperMagic)
                     {
                         break;
                     }
+
                     uint32_t length = big32(*superBlob, blobOffset + 4);
                     if (length >= 8 && blobOffset + length <= superBlob->size())
                     {
                         anatomy->signature = superBlob->substr(blobOffset + 8, length - 8);
                     }
+
                     break;
                 }
             }
+
             break;
         }
+
         offset += size;
     }
+
     return anatomy;
 }
 
 std::vector<std::string> cmsCertificates(const std::string &cms)
 {
-    size_t                 offset      = 0;
+    size_t offset                      = 0;
     std::optional<Element> contentInfo = readElement(cms, offset);
     if (!contentInfo || contentInfo->tag != 0x30)
     {
         return {};
     }
+
     std::vector<Element> info = children(contentInfo->content);
     if (info.size() < 2 || info[1].tag != 0xa0)
     {
         return {};
     }
+
     std::vector<Element> wrapped = children(info[1].content);
     if (wrapped.empty() || wrapped[0].tag != 0x30)
     {
         return {};
     }
+
     std::vector<std::string> certificates;
     for (const Element &field : children(wrapped[0].content))
     {
@@ -345,6 +376,7 @@ std::vector<std::string> cmsCertificates(const std::string &cms)
         {
             continue;
         }
+
         for (const Element &certificate : children(field.content))
         {
             if (certificate.tag == 0x30)
@@ -352,8 +384,10 @@ std::vector<std::string> cmsCertificates(const std::string &cms)
                 certificates.push_back(certificate.whole);
             }
         }
+
         break;
     }
+
     return certificates;
 }
 
@@ -364,6 +398,7 @@ std::optional<Certificate> describeCertificate(const std::string &der)
     {
         return std::nullopt;
     }
+
     Certificate certificate;
     certificate.commonName         = nameAttribute(fields[4].content, kCommonNameOID);
     certificate.organizationalUnit = nameAttribute(fields[4].content, kOrgUnitOID);
@@ -379,7 +414,7 @@ std::optional<Certificate> signer(const std::string &cms)
     for (const std::string &candidate : certificates)
     {
         std::string subject = subjectOf(candidate);
-        bool        issuesAnother =
+        bool issuesAnother =
             std::any_of(certificates.begin(), certificates.end(), [&](const std::string &other) {
                 return &other != &candidate && issuerOf(other) == subject;
             });
@@ -388,6 +423,7 @@ std::optional<Certificate> signer(const std::string &cms)
             return describeCertificate(candidate);
         }
     }
+
     return std::nullopt;
 }
 
@@ -402,6 +438,7 @@ std::string shortIssuer(std::string issuer)
             issuer.replace(found, from.size(), to);
         }
     }
+
     return issuer;
 }
 
@@ -420,29 +457,34 @@ std::string anatomyLine(const Anatomy &anatomy, const std::string &bundlePath)
     {
         parts.push_back(*anatomy.cryptid ? "encrypted" : "decrypted");
     }
+
     if (!anatomy.minimumOS.empty())
     {
         parts.push_back("min " + anatomy.minimumOS + " · SDK " + anatomy.sdk);
     }
+
     size_t injected =
         std::count_if(anatomy.dylibs.begin(), anatomy.dylibs.end(), [&](const std::string &path) {
-            return !path.starts_with("/System/") && !path.starts_with("/usr/lib/") &&
-                   !path.starts_with("@rpath/") && !path.starts_with(bundlePath);
+            return !path.starts_with("/System/") && !path.starts_with("/usr/lib/")
+                   && !path.starts_with("@rpath/") && !path.starts_with(bundlePath);
         });
     parts.push_back(std::to_string(anatomy.dylibs.size()) + " dylibs");
     if (injected)
     {
         parts.push_back(std::to_string(injected) + " injected");
     }
+
     if (!anatomy.uuid.empty())
     {
         parts.push_back("UUID " + anatomy.uuid.substr(0, 8));
     }
+
     std::string line;
     for (const std::string &part : parts)
     {
         line += (line.empty() ? "" : " · ") + part;
     }
+
     return line;
 }
 }

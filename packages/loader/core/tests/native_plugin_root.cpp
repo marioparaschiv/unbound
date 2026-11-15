@@ -20,6 +20,7 @@ static InstalledNativeMethods installedFor(NativePluginPlatform platform)
             methods.insert(std::string(method));
         }
     }
+
     return installed;
 }
 

@@ -50,12 +50,14 @@ static std::string surfaceContainer(jsi::Runtime &runtime, const jsi::Value &val
     {
         return "{}";
     }
+
     jsi::Object candidate = value.asObject(runtime);
-    if (candidate.getProperty(runtime, "id").isString() ||
-        candidate.getProperty(runtime, "value").isString())
+    if (candidate.getProperty(runtime, "id").isString()
+        || candidate.getProperty(runtime, "value").isString())
     {
         return serializeJavaHandle(runtime, value);
     }
+
     return "{}";
 }
 
@@ -72,7 +74,7 @@ class AndroidFabricAdapter final : public loader::native::FabricAdapter
 public:
     explicit AndroidFabricAdapter(const JavaCallbacks &callbacks) : callbacks_(callbacks) {}
 
-    std::shared_ptr<loader::native::FabricView> view(jsi::Runtime     &runtime,
+    std::shared_ptr<loader::native::FabricView> view(jsi::Runtime &runtime,
                                                      const jsi::Value &handle) override
     {
         return std::make_shared<AndroidFabricView>(surfaceContainer(runtime, handle));
@@ -90,6 +92,7 @@ public:
         {
             throw std::runtime_error("The Android surface adapter returned an invalid handle");
         }
+
         return parsed["id"].get<std::string>();
     }
 
@@ -132,9 +135,9 @@ public:
 
     bool detach(const std::string &surface) override
     {
-        return callbacks_.fabricDetach && callbacks_.fabricAttach &&
-               invokeStaticBoolean(callbacks_.bridgeClass, callbacks_.fabricDetach,
-                                   loader::native::handleJSON(surface));
+        return callbacks_.fabricDetach && callbacks_.fabricAttach
+               && invokeStaticBoolean(callbacks_.bridgeClass, callbacks_.fabricDetach,
+                                      loader::native::handleJSON(surface));
     }
 
     bool attach(const std::string &surface, const loader::native::FabricView &container) override

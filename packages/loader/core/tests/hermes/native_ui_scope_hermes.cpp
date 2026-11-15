@@ -32,6 +32,7 @@ static std::string thrownMessage(jsi::Runtime &runtime, const std::string &sourc
     {
         return error.getMessage();
     }
+
     return "";
 }
 
@@ -42,6 +43,7 @@ static std::optional<std::string> bootstrapScript(const std::string &name)
     {
         return std::nullopt;
     }
+
     std::stringstream contents;
     contents << file.rdbuf();
     return contents.str();
@@ -50,17 +52,17 @@ static std::optional<std::string> bootstrapScript(const std::string &name)
 int main()
 {
     loader::bootstrap::setScriptSource(bootstrapScript);
-    auto          hermes  = facebook::hermes::makeHermesRuntime();
+    auto hermes           = facebook::hermes::makeHermesRuntime();
     jsi::Runtime &runtime = *hermes;
 
     auto scope = std::make_shared<loader::native::UIScope>(loader::kNoAddon,
                                                            std::vector<std::string>{"tap"});
     require(scope->allows("tap") && !scope->allows("tapAsync"), "allows only listed paths");
 
-    int           built    = 0;
-    int           released = 0;
-    jsi::Runtime *seen     = nullptr;
-    jsi::Object   object   = loader::native::makeUIScopeObject(
+    int built          = 0;
+    int released       = 0;
+    jsi::Runtime *seen = nullptr;
+    jsi::Object object = loader::native::makeUIScopeObject(
         runtime, scope, {"ui"}, [&](jsi::Runtime &rt, const std::string &name) {
             built++;
             jsi::Object ui(rt);

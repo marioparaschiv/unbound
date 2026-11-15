@@ -33,12 +33,13 @@ ObjCCallPlanHost::~ObjCCallPlanHost()
 
 void ObjCCallPlanHost::validate(Runtime &runtime, id target) const
 {
-    if (!active_.load(std::memory_order_acquire) ||
-        runtimeGeneration_ != loader::native::runtimeGeneration() ||
-        runtimeIdentity_ != loader::native::runtimeResourceRegistry(runtime)->identity())
+    if (!active_.load(std::memory_order_acquire)
+        || runtimeGeneration_ != loader::native::runtimeGeneration()
+        || runtimeIdentity_ != loader::native::runtimeResourceRegistry(runtime)->identity())
     {
         throw JSError(runtime, "The Objective-C call plan is stale or disposed");
     }
+
     bool matchesTarget = false;
     if (classMethod_ && object_isClass(target))
     {
@@ -55,6 +56,7 @@ void ObjCCallPlanHost::validate(Runtime &runtime, id target) const
     {
         matchesTarget = [target isKindOfClass:ownerClass_];
     }
+
     if (!matchesTarget)
     {
         throw JSError(runtime, "The Objective-C call target does not match its prepared class");
@@ -82,6 +84,7 @@ std::shared_ptr<ObjCCallPlanHost> objcCallPlanHost(Runtime &runtime, const Value
     {
         throw JSError(runtime, "An Objective-C call plan is required");
     }
+
     return value.asObject(runtime).getHostObject<ObjCCallPlanHost>(runtime);
 }
 
@@ -91,27 +94,31 @@ std::shared_ptr<ObjCCallPlanHost> prepareObjCCallPlan(Runtime &runtime, id targe
     {
         throw JSError(runtime, "Invalid native Objective-C call-plan target or selector");
     }
-    bool   classMethod = object_isClass(target);
-    Class  ownerClass  = classMethod ? (Class) target : [target class];
-    Method method      = classMethod ? class_getClassMethod(ownerClass, selector)
-                                     : class_getInstanceMethod(ownerClass, selector);
+
+    bool classMethod = object_isClass(target);
+    Class ownerClass = classMethod ? (Class) target : [target class];
+    Method method    = classMethod ? class_getClassMethod(ownerClass, selector)
+                                   : class_getInstanceMethod(ownerClass, selector);
     if (!method)
     {
         throw JSError(runtime, "Objective-C call-plan selector is unavailable");
     }
+
     NSMethodSignature *signature =
         [NSMethodSignature signatureWithObjCTypes:method_getTypeEncoding(method)];
-    if (!signature || signature.numberOfArguments < 2 ||
-        signature.numberOfArguments - 2 > kMaximumNativeArguments)
+    if (!signature || signature.numberOfArguments < 2
+        || signature.numberOfArguments - 2 > kMaximumNativeArguments)
     {
         throw JSError(runtime, "Objective-C call-plan signature is invalid");
     }
+
     std::string resultName = nativeFFITypeName(signature.methodReturnType);
     if (resultName.empty())
     {
         throw JSError(runtime, "Unsupported Objective-C call-plan return type");
     }
-    loader::ffi::Type              resultType;
+
+    loader::ffi::Type resultType;
     std::vector<loader::ffi::Type> argumentTypes;
     argumentTypes.reserve(signature.numberOfArguments - 2);
     try
@@ -120,19 +127,21 @@ std::shared_ptr<ObjCCallPlanHost> prepareObjCCallPlan(Runtime &runtime, id targe
         for (NSUInteger index = 2; index < signature.numberOfArguments; index++)
         {
             const char *encoding = [signature getArgumentTypeAtIndex:index];
-            char        code     = normalizedType(encoding);
-            if (code != '@' && code != '#' && code != 'c' && code != 'C' && code != 's' &&
-                code != 'S' && code != 'i' && code != 'I' && code != 'l' && code != 'L' &&
-                code != 'q' && code != 'Q' && code != 'B' && code != 'f' && code != 'd' &&
-                code != '{')
+            char code            = normalizedType(encoding);
+            if (code != '@' && code != '#' && code != 'c' && code != 'C' && code != 's'
+                && code != 'S' && code != 'i' && code != 'I' && code != 'l' && code != 'L'
+                && code != 'q' && code != 'Q' && code != 'B' && code != 'f' && code != 'd'
+                && code != '{')
             {
                 throw std::invalid_argument("Unsupported Objective-C call-plan argument type");
             }
+
             std::string name = nativeFFITypeName(encoding);
             if (name.empty())
             {
                 throw std::invalid_argument("Unsupported Objective-C call-plan argument type");
             }
+
             argumentTypes.push_back(loader::ffi::resolveType(name));
         }
     }
@@ -140,10 +149,12 @@ std::shared_ptr<ObjCCallPlanHost> prepareObjCCallPlan(Runtime &runtime, id targe
     {
         throw JSError(runtime, error.what());
     }
+
     if (!loader::native::nativePreparedCallBudget().acquire())
     {
         throw JSError(runtime, "Too many prepared Objective-C calls are active");
     }
+
     try
     {
         auto resources = loader::native::runtimeResourceRegistry(runtime);

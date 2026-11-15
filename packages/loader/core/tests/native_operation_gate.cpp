@@ -20,12 +20,12 @@ int main()
     for (int index = 0; index < 1000; index++)
     {
         loader::NativeOperationGate competing;
-        bool                        started  = false;
-        bool                        timedOut = false;
-        std::thread                 operation([&]() {
+        bool started  = false;
+        bool timedOut = false;
+        std::thread operation([&]() {
             started = competing.start();
         });
-        std::thread                 timeout([&]() {
+        std::thread timeout([&]() {
             timedOut = competing.expire();
         });
         operation.join();

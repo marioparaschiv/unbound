@@ -12,9 +12,9 @@ int main()
     assert(queue.enqueue(1));
     assert(!queue.enqueue(2));
     assert(!queue.enqueue(3));
-    auto             now = std::chrono::steady_clock::time_point{};
+    auto now = std::chrono::steady_clock::time_point{};
     std::vector<int> observed;
-    bool             remaining = queue.drain(
+    bool remaining = queue.drain(
         [&](int value) {
             observed.push_back(value);
             now += std::chrono::milliseconds(2);
@@ -42,7 +42,8 @@ int main()
                },
                [&] {
                    return now;
-               }) == false);
+               })
+           == false);
     assert((observed == std::vector<int>{1, 4, 2, 3}));
     assert(queue.size() == 0);
     assert(queue.enqueue(5));
@@ -63,12 +64,14 @@ int main()
                    {
                        assert(!queue.enqueue(7, loader::native::NativeWorkPriority::Critical));
                    }
+
                    now += std::chrono::milliseconds(2);
                },
                [&] {
                    return now;
                },
-               std::chrono::milliseconds(0)) == false);
+               std::chrono::milliseconds(0))
+           == false);
     assert((observed == std::vector<int>{1, 4, 2, 3, 5, 6, 7}));
 
     assert(queue.enqueue(8));
@@ -84,8 +87,8 @@ int main()
     assert((observed == std::vector<int>{1, 4, 2, 3, 5, 6, 7, 8, 9}));
 
     loader::native::NativeWorkQueue<int> concurrent;
-    std::atomic_int                      wakeups{0};
-    std::vector<std::thread>             producers;
+    std::atomic_int wakeups{0};
+    std::vector<std::thread> producers;
     for (int producer = 0; producer < 4; producer++)
     {
         producers.emplace_back([&, producer] {
@@ -98,10 +101,12 @@ int main()
             }
         });
     }
+
     for (auto &producer : producers)
     {
         producer.join();
     }
+
     assert(wakeups.load() == 1);
     assert(concurrent.size() == 400);
     std::vector<int> counts(400);
@@ -116,10 +121,11 @@ int main()
     {
         assert(count == 1);
     }
+
     assert(concurrent.enqueue(400));
 
     loader::native::NativeWorkQueue<int> coalesced;
-    std::vector<int>                     latest;
+    std::vector<int> latest;
     assert(coalesced.enqueueCoalesced("hook-1:receiver-1", 1));
     assert(!coalesced.enqueueCoalesced("hook-1:receiver-1", 2));
     assert(!coalesced.enqueueCoalesced("hook-1:receiver-2", 3));
@@ -140,11 +146,12 @@ int main()
                },
                [&] {
                    return now;
-               }) == false);
+               })
+           == false);
     assert(latest.back() == 4);
 
     loader::native::NativeWorkQueue<int> ordered;
-    std::vector<int>                     delivered;
+    std::vector<int> delivered;
     assert(ordered.enqueueCoalesced("hook-1:receiver-1", 1));
     assert(!ordered.enqueue(2));
     assert(!ordered.enqueueCoalesced("hook-1:receiver-1", 3));

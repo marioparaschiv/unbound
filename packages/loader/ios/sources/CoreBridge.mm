@@ -53,6 +53,7 @@ static LogLevel iosLogLevel(loader::LogLevel level)
         case loader::LogLevel::Error:
             return LogLevelError;
     }
+
     return LogLevelInfo;
 }
 
@@ -74,6 +75,7 @@ static LogLevel iosLogLevel(loader::LogLevel level)
         [Logger error:LOG_CATEGORY_UTILITIES
                format:@"%@ is not a readable Hermes bytecode bundle", path];
     }
+
     return version;
 }
 
@@ -91,6 +93,7 @@ uiColors(const std::map<std::string, loader::RGBAColor> &colors)
     {
         result[@(loader::themeColorAccessor(name).c_str())] = uiColor(color);
     }
+
     return result;
 }
 
@@ -135,26 +138,30 @@ static nlohmann::json platformFontEntry(NSString *postScriptName, NSString *appP
     {
         entry["family"] = family;
     }
+
     if (!style.empty())
     {
         entry["style"] = style;
     }
+
     if ([url isKindOfClass:[NSURL class]] && [url.path hasPrefix:appPath])
     {
         entry["source"] = "app";
     }
+
     return entry;
 }
 
 nlohmann::json UnboundPlatformFontEntries()
 {
-    NSArray       *names   = CFBridgingRelease(CTFontManagerCopyAvailablePostScriptNames());
-    NSString      *appPath = NSBundle.mainBundle.bundlePath;
+    NSArray *names         = CFBridgingRelease(CTFontManagerCopyAvailablePostScriptNames());
+    NSString *appPath      = NSBundle.mainBundle.bundlePath;
     nlohmann::json entries = nlohmann::json::array();
     for (NSString *name in [names sortedArrayUsingSelector:@selector(compare:)])
     {
         entries.push_back(platformFontEntry(name, appPath));
     }
+
     return entries;
 }
 
@@ -231,7 +238,7 @@ static loader::FontOverrideRegistry &UnboundFontOverrides()
 + (NSDictionary *)fontOverridePlan
 {
     nlohmann::json targets = UnboundFonts()->store().overrideTargets();
-    id             converted =
+    id converted =
         objectFromJSON(loader::fontOverridePlanJSON(UnboundFontOverrides().plan(targets)));
     return [converted isKindOfClass:[NSDictionary class]] ? converted : @{};
 }

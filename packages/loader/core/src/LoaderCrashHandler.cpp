@@ -33,14 +33,14 @@ static constexpr std::array<int, 6> kCrashSignals = {SIGSEGV, SIGBUS, SIGABRT,
                                                      SIGILL,  SIGFPE, SIGTRAP};
 
 static std::array<struct sigaction, kCrashSignals.size()> gPreviousActions;
-static std::atomic<int>                                   gMarkerDescriptor{-1};
-static std::atomic_bool                                   gRecorded{false};
-static char                                               gImageLine[256];
-static size_t                                             gImageLineLength = 0;
-static std::atomic_bool                                   gInstalled{false};
-static std::atomic<int>                                   gStackDescriptor{-1};
-static std::string                                        gPreviousNativeCrash;
-static constexpr size_t                                   kMaxNativeFrames = 32;
+static std::atomic<int> gMarkerDescriptor{-1};
+static std::atomic_bool gRecorded{false};
+static char gImageLine[256];
+static size_t gImageLineLength = 0;
+static std::atomic_bool gInstalled{false};
+static std::atomic<int> gStackDescriptor{-1};
+static std::string gPreviousNativeCrash;
+static constexpr size_t kMaxNativeFrames = 32;
 
 static void writeText(int descriptor, const char *text)
 {
@@ -56,6 +56,7 @@ static void writeText(int descriptor, const char *text)
         {
             return;
         }
+
         text += written;
         length -= static_cast<size_t>(written);
     }
@@ -63,7 +64,7 @@ static void writeText(int descriptor, const char *text)
 
 static void writeHex(int descriptor, uintptr_t value)
 {
-    char  digits[2 + sizeof(uintptr_t) * 2 + 1];
+    char digits[2 + sizeof(uintptr_t) * 2 + 1];
     char *end    = digits + sizeof(digits) - 1;
     *end         = '\0';
     char *cursor = end;
@@ -79,7 +80,7 @@ static void writeHex(int descriptor, uintptr_t value)
 
 static void writeDecimal(int descriptor, unsigned value)
 {
-    char  digits[12];
+    char digits[12];
     char *cursor = digits + sizeof(digits) - 1;
     *cursor      = '\0';
     do
@@ -98,6 +99,7 @@ static bool crashRegisters(void *context, uintptr_t &pc, uintptr_t &lr, uintptr_
     {
         return false;
     }
+
     auto *ucontext = static_cast<ucontext_t *>(context);
 #if defined(__APPLE__) && defined(__arm64__)
     pc = static_cast<uintptr_t>(__darwin_arm_thread_state64_get_pc(ucontext->uc_mcontext->__ss));
@@ -139,6 +141,7 @@ static void writeFrame(int descriptor, size_t index, uintptr_t address)
                 image = cursor + 1;
             }
         }
+
         writeText(descriptor, " ");
         writeText(descriptor, image);
         writeText(descriptor, " + ");
@@ -149,6 +152,7 @@ static void writeFrame(int descriptor, size_t index, uintptr_t address)
             writeText(descriptor, info.dli_sname);
         }
     }
+
     writeText(descriptor, "\n");
 }
 
@@ -160,6 +164,7 @@ static void writeNativeStack(int signal, void *context)
     {
         return;
     }
+
     writeText(descriptor, "Signal ");
     writeDecimal(descriptor, static_cast<unsigned>(signal));
     writeText(descriptor, "\n");
@@ -168,6 +173,7 @@ static void writeNativeStack(int signal, void *context)
         ssize_t written = write(descriptor, gImageLine, gImageLineLength);
         (void) written;
     }
+
     writeCrashingAddonLine(descriptor);
 
     uintptr_t pc = 0, lr = 0, fp = 0;
@@ -179,24 +185,28 @@ static void writeNativeStack(int signal, void *context)
         {
             writeFrame(descriptor, index++, lr);
         }
+
         for (; index < kMaxNativeFrames && fp && (fp % sizeof(uintptr_t)) == 0; index++)
         {
-            const auto *frame    = reinterpret_cast<const uintptr_t *>(fp);
-            uintptr_t   next     = frame[0];
-            uintptr_t   returnTo = frame[1];
+            const auto *frame  = reinterpret_cast<const uintptr_t *>(fp);
+            uintptr_t next     = frame[0];
+            uintptr_t returnTo = frame[1];
             if (!returnTo)
             {
                 break;
             }
+
             writeFrame(descriptor, index, returnTo);
             // Frames grow towards higher addresses as the walk unwinds; anything else is corrupt.
             if (next <= fp || next - fp > 1024 * 1024)
             {
                 break;
             }
+
             fp = next;
         }
     }
+
     fsync(descriptor);
     close(descriptor);
 }
@@ -210,6 +220,7 @@ static int crashSignalIndex(int signal)
             return static_cast<int>(index);
         }
     }
+
     return -1;
 }
 
@@ -245,6 +256,7 @@ static void forwardToPreviousHandler(int signal, siginfo_t *info, void *context)
         previous.sa_handler(signal);
         return;
     }
+
     raiseWithDefaultAction(signal);
 }
 
@@ -256,6 +268,7 @@ static void recordCrashingAddon(int signal, siginfo_t *info, void *context)
     {
         writeCrashingAddonRecord(descriptor);
     }
+
     writeNativeStack(signal, context);
 #if defined(__ANDROID__)
     static char abortMessage[kAddonRecordByteLimit + 32];
@@ -276,6 +289,7 @@ static std::string describeHandler(const struct sigaction &action)
     {
         return "the default action";
     }
+
     if (address == reinterpret_cast<void *>(SIG_IGN))
     {
         return "an ignored action";
@@ -285,16 +299,17 @@ static std::string describeHandler(const struct sigaction &action)
     if (dladdr(address, &info) && info.dli_fname)
     {
         std::string image = info.dli_fname;
-        size_t      slash = image.find_last_of('/');
+        size_t slash      = image.find_last_of('/');
         image             = slash == std::string::npos ? image : image.substr(slash + 1);
         return info.dli_sname ? std::string(info.dli_sname) + " in " + image : image;
     }
+
     return "an unnamed handler";
 }
 
 bool installAddonCrashHandler(const std::string &markerPath)
 {
-    static std::mutex           mutex;
+    static std::mutex mutex;
     std::lock_guard<std::mutex> lock(mutex);
     if (gInstalled.load())
     {
@@ -316,21 +331,23 @@ bool installAddonCrashHandler(const std::string &markerPath)
             "not attributed.");
         return false;
     }
+
     gMarkerDescriptor.store(descriptor, std::memory_order_release);
 
-    size_t      slash = markerPath.find_last_of('/');
+    size_t slash = markerPath.find_last_of('/');
     std::string stackPath =
         joinPath(slash == std::string::npos ? "." : markerPath.substr(0, slash), kNativeCrashFile);
     std::string writtenStack = readTextFile(stackPath).value_or("");
     if (!writtenStack.empty())
     {
         struct stat info = {};
-        int64_t     at =
+        int64_t at =
             stat(stackPath.c_str(), &info) == 0 ? static_cast<int64_t>(info.st_mtime) * 1000 : 0;
         recordCrash(slash == std::string::npos ? "." : markerPath.substr(0, slash), writtenStack,
                     at);
         gPreviousNativeCrash = std::move(writtenStack);
     }
+
     int stack = open(stackPath.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
     gStackDescriptor.store(stack, std::memory_order_release);
 
@@ -343,14 +360,15 @@ bool installAddonCrashHandler(const std::string &markerPath)
     {
         sigaction(kCrashSignals[index], &action, &gPreviousActions[index]);
     }
+
     gInstalled.store(true);
 
     log(LogLevel::Info, LOG_CATEGORY_PLUGINS,
-        "Addon crash attribution is installed; SIGSEGV continues to " +
-            describeHandler(gPreviousActions[static_cast<size_t>(crashSignalIndex(SIGSEGV))]) +
-            " and SIGABRT to " +
-            describeHandler(gPreviousActions[static_cast<size_t>(crashSignalIndex(SIGABRT))]) +
-            ".");
+        "Addon crash attribution is installed; SIGSEGV continues to "
+            + describeHandler(gPreviousActions[static_cast<size_t>(crashSignalIndex(SIGSEGV))])
+            + " and SIGABRT to "
+            + describeHandler(gPreviousActions[static_cast<size_t>(crashSignalIndex(SIGABRT))])
+            + ".");
     return true;
 }
 
@@ -370,6 +388,7 @@ bool adoptPreviousNativeCrash(const std::string &stack)
     {
         return false;
     }
+
     gPreviousNativeCrash = stack;
     return true;
 }

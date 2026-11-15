@@ -20,7 +20,7 @@ static bool isServingBundle(NSURL *url, NSTimeInterval timeout)
     request.HTTPMethod = @"HEAD";
 
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL         serving   = NO;
+    __block BOOL serving           = NO;
 
     NSURLSessionDataTask *task = [[NSURLSession sharedSession]
         dataTaskWithRequest:request
@@ -31,7 +31,8 @@ static bool isServingBundle(NSURL *url, NSTimeInterval timeout)
     [task resume];
 
     if (dispatch_semaphore_wait(
-            semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t) (timeout * NSEC_PER_SEC))) != 0)
+            semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t) (timeout * NSEC_PER_SEC)))
+        != 0)
     {
         [task cancel];
         return NO;
@@ -48,6 +49,7 @@ static std::optional<std::string> fetchText(const std::string &url, double timeo
     {
         return std::nullopt;
     }
+
     return std::string(static_cast<const char *>(data.bytes), data.length);
 }
 
@@ -63,17 +65,18 @@ download(const std::string &url, const std::string &destination,
 
     @try
     {
-        NSHTTPURLResponse     *response = [FileSystem download:[NSURL URLWithString:toNSString(url)]
-                                                          path:toNSString(destination)
-                                                   withHeaders:requestHeaders
-                                                requestTimeout:policy.readTimeoutSeconds
-                                                  totalTimeout:policy.totalTimeoutSeconds];
+        NSHTTPURLResponse *response = [FileSystem download:[NSURL URLWithString:toNSString(url)]
+                                                      path:toNSString(destination)
+                                               withHeaders:requestHeaders
+                                            requestTimeout:policy.readTimeoutSeconds
+                                              totalTimeout:policy.totalTimeoutSeconds];
         loader::DownloadResult result;
         result.status     = static_cast<int>(response.statusCode);
         result.etag       = toStdString([response valueForHTTPHeaderField:@"etag"] ?: @"");
         result.retryAfter = toStdString([response valueForHTTPHeaderField:@"Retry-After"] ?: @"");
         return result;
     }
+
     @catch (NSException *exception)
     {
         [Logger info:LOG_CATEGORY_UPDATER
@@ -90,7 +93,7 @@ std::optional<std::string> UnboundFetchText(const std::string &url, double timeo
 std::optional<loader::DownloadResult>
 UnboundDownload(const std::string &url, const std::string &destination,
                 const std::map<std::string, std::string> &headers,
-                const loader::DownloadPolicy             &policy)
+                const loader::DownloadPolicy &policy)
 {
     return download(url, destination, headers, policy);
 }

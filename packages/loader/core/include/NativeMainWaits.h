@@ -16,10 +16,10 @@ enum class MainWorkKind : uint32_t
 
 struct MainWaitRecord {
     std::atomic_uint64_t key{0};
-    std::atomic_bool     ready{false};
-    AddonSlot            addon                      = kNoAddon;
-    uint32_t             kind                       = 0;
-    char                 label[kMainWaitLabelLimit] = {};
+    std::atomic_bool ready{false};
+    AddonSlot addon                 = kNoAddon;
+    uint32_t kind                   = 0;
+    char label[kMainWaitLabelLimit] = {};
     std::atomic_uint64_t posted{0};
     std::atomic_uint64_t started{0};
     std::atomic_uint64_t finished{0};
@@ -30,8 +30,8 @@ struct MainWaitRecord {
     std::atomic_uint64_t maxRunNanos{0};
 };
 
-uint64_t        monotonicNanos();
-void            raiseTo(std::atomic_uint64_t &maximum, uint64_t value);
+uint64_t monotonicNanos();
+void raiseTo(std::atomic_uint64_t &maximum, uint64_t value);
 MainWaitRecord &mainWaitRecord(AddonSlot addon, MainWorkKind kind, std::string_view label);
 MainWaitRecord &currentCallRecord(AddonSlot addon, MainWorkKind kind);
 
@@ -69,6 +69,6 @@ public:
 
 private:
     MainWaitRecord *record_;
-    uint64_t        postedAt_;
+    uint64_t postedAt_;
 };
 }

@@ -34,6 +34,7 @@ public:
         {
             gLeasedHandles++;
         }
+
         Entry &entry = found->second;
         entry.live++;
         entry.issues++;
@@ -50,15 +51,18 @@ public:
             {
                 return;
             }
+
             auto found = entries_.find(id);
             if (found == entries_.end() || --found->second.live > 0)
             {
                 return;
             }
+
             issues = found->second.issues;
             entries_.erase(found);
             gLeasedHandles--;
         }
+
         scheduleRelease(id, issues);
     }
 
@@ -93,15 +97,16 @@ private:
             release_(id, issues);
             return;
         }
+
         target->runOnMain([ledger = shared_from_this(), id, issues]() {
             ledger->release_(id, issues);
         });
     }
 
-    HandleRelease                          release_;
-    mutable std::mutex                     mutex_;
+    HandleRelease release_;
+    mutable std::mutex mutex_;
     std::unordered_map<std::string, Entry> entries_;
-    uint64_t                               generation_ = runtimeGeneration();
+    uint64_t generation_ = runtimeGeneration();
 };
 
 class HandleLease final : public jsi::NativeState
@@ -119,8 +124,8 @@ public:
 
 private:
     std::shared_ptr<HandleLeaseLedger> ledger_;
-    std::string                        id_;
-    uint64_t                           generation_;
+    std::string id_;
+    uint64_t generation_;
 };
 
 HandleLeases::HandleLeases(HandleMatcher matcher, HandleRelease release)
@@ -155,6 +160,7 @@ jsi::Value HandleLeases::convert(jsi::Runtime &runtime, const nlohmann::json &va
     {
         throw std::invalid_argument("A native result is nested too deeply");
     }
+
     if (value.is_array())
     {
         jsi::Array array(runtime, value.size());
@@ -162,24 +168,29 @@ jsi::Value HandleLeases::convert(jsi::Runtime &runtime, const nlohmann::json &va
         {
             array.setValueAtIndex(runtime, index, convert(runtime, value[index], depth + 1));
         }
+
         return array;
     }
+
     if (!value.is_object())
     {
         return toJSIValue(runtime, value);
     }
+
     if (std::optional<std::string> id = matcher_(value))
     {
         jsi::Object handle = toJSIValue(runtime, value).asObject(runtime);
         handle.setNativeState(runtime, std::make_shared<HandleLease>(ledger_, *id));
         return handle;
     }
+
     jsi::Object object(runtime);
     for (auto entry = value.begin(); entry != value.end(); ++entry)
     {
         object.setProperty(runtime, entry.key().c_str(),
                            convert(runtime, entry.value(), depth + 1));
     }
+
     return object;
 }
 }

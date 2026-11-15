@@ -15,8 +15,8 @@ namespace loader {
 // One store as the cache records it.
 struct CachedStore {
     std::string name;
-    uint64_t    jsonOffset = 0;
-    uint64_t    jsonLength = 0;
+    uint64_t jsonOffset = 0;
+    uint64_t jsonLength = 0;
     std::string packed;
 };
 

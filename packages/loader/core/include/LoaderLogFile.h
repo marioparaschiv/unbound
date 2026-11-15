@@ -30,8 +30,8 @@ public:
     RotatingLogFile(std::string name, std::size_t maximumSize, std::size_t filesKept,
                     std::size_t linesBuffered);
 
-    void        open(const std::string &directory);
-    void        append(const std::string &line);
+    void open(const std::string &directory);
+    void append(const std::string &line);
     std::string path(std::size_t generation) const;
     // The end of the file as the previous launch left it, read before this launch writes, so a
     // crash report can show what led up to the crash.
@@ -40,23 +40,23 @@ public:
 private:
     void rotate();
 
-    std::string             name_;
-    std::size_t             maximumSize_;
-    std::size_t             filesKept_;
-    std::size_t             linesBuffered_;
-    std::string             directory_;
-    std::ofstream           stream_;
-    std::size_t             size_ = 0;
+    std::string name_;
+    std::size_t maximumSize_;
+    std::size_t filesKept_;
+    std::size_t linesBuffered_;
+    std::string directory_;
+    std::ofstream stream_;
+    std::size_t size_ = 0;
     std::deque<std::string> pending_;
-    std::string             previousTail_;
-    std::mutex              mutex_;
+    std::string previousTail_;
+    std::mutex mutex_;
 };
 
 std::string logFileDirectory(const std::string &documents);
 // The last `lines` lines the previous launch wrote to `unbound.log`, read when this launch opened
 // the log, as plain text.
 std::string previousLaunchLogTail(std::size_t lines);
-void        openLogFile(const std::string &documents);
+void openLogFile(const std::string &documents);
 // Writes the entry to its source's file and hands it to `UnboundNative.logs` subscribers.
 void appendLogEntry(LogEntry entry);
 // A loader line: source `unbound`, scope `Loader/<category>`.

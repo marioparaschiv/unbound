@@ -115,9 +115,9 @@ namespace {
         {
         }
 
-        NativeConversionBudget    budget;
+        NativeConversionBudget budget;
         std::vector<const void *> nativePath;
-        std::vector<Object>       javascriptPath;
+        std::vector<Object> javascriptPath;
 
         void enter(Runtime &runtime)
         {
@@ -178,11 +178,12 @@ namespace {
         NativeConversionVisit(Runtime &runtime, ConversionState &state, id value) : state(state)
         {
             const void *identity = (__bridge const void *) value;
-            if (std::find(state.nativePath.begin(), state.nativePath.end(), identity) !=
-                state.nativePath.end())
+            if (std::find(state.nativePath.begin(), state.nativePath.end(), identity)
+                != state.nativePath.end())
             {
                 throw JSError(runtime, "Native value contains a collection cycle");
             }
+
             state.nativePath.push_back(identity);
         }
 
@@ -206,6 +207,7 @@ namespace {
                     throw JSError(runtime, "JavaScript value contains a collection cycle");
                 }
             }
+
             state.javascriptPath.push_back(std::move(object));
         }
 
@@ -235,8 +237,8 @@ static Value objcResultValue(Runtime &runtime, id value, ConversionState &state)
 
     if ([value isKindOfClass:[NSNumber class]])
     {
-        NSNumber   *number = (NSNumber *) value;
-        const char *type   = number.objCType;
+        NSNumber *number = (NSNumber *) value;
+        const char *type = number.objCType;
         if (strcmp(type, @encode(long long)) == 0 || strcmp(type, @encode(long)) == 0)
         {
             int64_t integer = number.longLongValue;
@@ -245,8 +247,9 @@ static Value objcResultValue(Runtime &runtime, id value, ConversionState &state)
                 return Value(runtime, BigInt::fromInt64(runtime, integer));
             }
         }
-        if (strcmp(type, @encode(unsigned long long)) == 0 ||
-            strcmp(type, @encode(unsigned long)) == 0)
+
+        if (strcmp(type, @encode(unsigned long long)) == 0
+            || strcmp(type, @encode(unsigned long)) == 0)
         {
             uint64_t integer = number.unsignedLongLongValue;
             if (integer > 9007199254740991ULL)
@@ -254,13 +257,14 @@ static Value objcResultValue(Runtime &runtime, id value, ConversionState &state)
                 return Value(runtime, BigInt::fromUint64(runtime, integer));
             }
         }
+
         return objcJSIValue(runtime, value);
     }
 
     if ([value isKindOfClass:[NSData class]])
     {
         state.addBytes(runtime, [(NSData *) value length]);
-        auto        data = std::make_shared<NativeDataBuffer>((NSData *) value);
+        auto data = std::make_shared<NativeDataBuffer>((NSData *) value);
         ArrayBuffer buffer(runtime, data);
         return Uint8Array(runtime, buffer, 0, buffer.size(runtime));
     }
@@ -268,20 +272,21 @@ static Value objcResultValue(Runtime &runtime, id value, ConversionState &state)
     if ([value isKindOfClass:[NSArray class]])
     {
         NativeConversionVisit visit(runtime, state, value);
-        NSArray              *array = (NSArray *) value;
+        NSArray *array = (NSArray *) value;
         state.ensureEntries(runtime, array.count);
         Array result(runtime, array.count);
         for (NSUInteger index = 0; index < array.count; index++)
         {
             result.setValueAtIndex(runtime, index, objcResultValue(runtime, array[index], state));
         }
+
         return result;
     }
 
     if ([value isKindOfClass:[NSDictionary class]])
     {
         NativeConversionVisit visit(runtime, state, value);
-        NSDictionary         *dictionary = (NSDictionary *) value;
+        NSDictionary *dictionary = (NSDictionary *) value;
         state.ensureEntries(runtime, dictionary.count);
         Object result(runtime);
         for (id key in dictionary)
@@ -292,11 +297,13 @@ static Value objcResultValue(Runtime &runtime, id value, ConversionState &state)
             {
                 continue;
             }
+
             state.addBytes(runtime,
                            [(NSString *) key lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
             result.setProperty(runtime, PropNameID::forUtf8(runtime, std::string(name)),
                                objcResultValue(runtime, dictionary[key], state));
         }
+
         return result;
     }
 
@@ -341,10 +348,12 @@ static id valueToObjCValue(Runtime &runtime, const Value &value, ConversionState
         {
             return @((long long) runtime.truncate(bigint));
         }
+
         if (runtime.bigintIsUint64(bigint))
         {
             return @((unsigned long long) runtime.truncate(bigint));
         }
+
         throw JSError(runtime, "Native integer exceeds 64-bit range");
     }
 
@@ -372,8 +381,8 @@ static id valueToObjCValue(Runtime &runtime, const Value &value, ConversionState
     if (object.isArray(runtime))
     {
         JavaScriptConversionVisit visit(runtime, state, value);
-        Array                     array = object.asArray(runtime);
-        size_t                    count = array.size(runtime);
+        Array array  = object.asArray(runtime);
+        size_t count = array.size(runtime);
         state.ensureEntries(runtime, count);
         NSMutableArray *result = [NSMutableArray arrayWithCapacity:count];
         for (size_t index = 0; index < count; index++)
@@ -382,13 +391,14 @@ static id valueToObjCValue(Runtime &runtime, const Value &value, ConversionState
                 addObject:valueToObjCValue(runtime, array.getValueAtIndex(runtime, index), state)
                               ?: [NSNull null]];
         }
+
         return result;
     }
 
     JavaScriptConversionVisit visit(runtime, state, value);
-    NSMutableDictionary      *result = [NSMutableDictionary dictionary];
-    Array                     names  = object.getPropertyNames(runtime);
-    size_t                    count  = names.size(runtime);
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    Array names                 = object.getPropertyNames(runtime);
+    size_t count                = names.size(runtime);
     state.ensureEntries(runtime, count);
     for (size_t index = 0; index < count; index++)
     {
@@ -408,6 +418,7 @@ static id valueToObjCValue(Runtime &runtime, const Value &value, ConversionState
         id item     = valueToObjCValue(runtime, object.getProperty(runtime, key.UTF8String), state);
         result[key] = item ?: [NSNull null];
     }
+
     return result;
 }
 
@@ -433,7 +444,7 @@ id valueToData(Runtime &runtime, const Value &value)
 
     if (object.isTypedArray(runtime))
     {
-        TypedArray  array  = object.getTypedArray(runtime);
+        TypedArray array   = object.getTypedArray(runtime);
         ArrayBuffer buffer = array.buffer(runtime);
         return [NSData dataWithBytes:buffer.data(runtime) + array.byteOffset(runtime)
                               length:array.byteLength(runtime)];
@@ -455,6 +466,7 @@ Value structValue(Runtime &runtime, NSString *name, const Value &fields)
     {
         throw JSError(runtime, "Unsupported native struct");
     }
+
     std::vector<uint8_t> bytes;
     try
     {
@@ -464,6 +476,7 @@ Value structValue(Runtime &runtime, NSString *name, const Value &fields)
     {
         throw JSError(runtime, error.what());
     }
+
     std::string encoding(layout->encoding);
     return structResult(runtime, name,
                         [NSValue valueWithBytes:bytes.data() objCType:encoding.c_str()]);
@@ -477,6 +490,7 @@ NSMutableArray *argumentArray(Runtime &runtime, const Array &values)
         [arguments addObject:valueToObjC(runtime, values.getValueAtIndex(runtime, index))
                                  ?: [NSNull null]];
     }
+
     return arguments;
 }
 
@@ -495,6 +509,7 @@ NSArray *argumentArray(Runtime &runtime, const Value *args, size_t count, size_t
             [arguments addObject:valueToObjC(runtime, value) ?: [NSNull null]];
         }
     }
+
     return arguments;
 }
 
@@ -522,10 +537,12 @@ Value StructHost::get(Runtime &runtime, const PropNameID &name)
     {
         return String::createFromUtf8(runtime, name_.UTF8String ?: "");
     }
+
     if (property == "value")
     {
         return structFields(runtime, name_, value_);
     }
+
     return Value::undefined();
 }
 
@@ -538,6 +555,7 @@ Value structFields(Runtime &runtime, NSString *name, NSValue *value)
     {
         return Value::undefined();
     }
+
     std::vector<uint8_t> bytes(layout->size);
     [value getValue:bytes.data() size:bytes.size()];
     return loader::native::structToJS(runtime, *layout, bytes.data());

@@ -21,10 +21,10 @@ struct HookFlags {
 };
 
 struct HookPayload {
-    bool                receiver     = true;
-    bool                allArguments = true;
+    bool receiver     = true;
+    bool allArguments = true;
     std::vector<size_t> argumentIndexes;
-    HookPayloadPhase    phase = HookPayloadPhase::both;
+    HookPayloadPhase phase = HookPayloadPhase::both;
 };
 
 struct HookHandlers {
@@ -33,8 +33,8 @@ struct HookHandlers {
     bool replace = false;
 };
 
-HookFlags   parseHookFlags(const nlohmann::json &options);
-HookFlags   parseHookFlags(facebook::jsi::Runtime &runtime, const facebook::jsi::Object &options);
+HookFlags parseHookFlags(const nlohmann::json &options);
+HookFlags parseHookFlags(facebook::jsi::Runtime &runtime, const facebook::jsi::Object &options);
 HookPayload parseHookPayload(const nlohmann::json &options, size_t explicitArguments);
 HookPayload parseHookPayload(facebook::jsi::Runtime &runtime, const facebook::jsi::Object &options,
                              size_t explicitArguments);
@@ -47,6 +47,6 @@ void validateHookHandlers(facebook::jsi::Runtime &runtime, const HookHandlers &h
                           std::string_view result);
 
 std::vector<size_t> payloadArgumentIndexes(const HookPayload &payload, size_t explicitArguments);
-size_t              selectedPayloadArgument(double requested, size_t available);
+size_t selectedPayloadArgument(double requested, size_t available);
 size_t selectedPayloadArgument(facebook::jsi::Runtime &runtime, double requested, size_t available);
 }

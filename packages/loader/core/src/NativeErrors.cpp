@@ -47,7 +47,9 @@ NativeFailure describeFailure(std::exception_ptr failure)
     }
     catch (...)
     {
+        // Non-standard throws carry no message; the generic failure below describes them.
     }
+
     return {kNativeBridgeErrorCode, "Native operation failed"};
 }
 
@@ -64,7 +66,7 @@ void setNativeErrorDelivery(NativeErrorDelivery delivery)
 jsi::Object makeError(jsi::Runtime &runtime, const char *code, const std::string &message)
 {
     jsi::Function constructor = runtime.global().getPropertyAsFunction(runtime, "Error");
-    jsi::Object   error =
+    jsi::Object error =
         constructor.callAsConstructor(runtime, jsi::String::createFromUtf8(runtime, message))
             .asObject(runtime);
     error.setProperty(runtime, "code", jsi::String::createFromUtf8(runtime, code));
@@ -114,7 +116,9 @@ static NativeFailure describeJSError(jsi::Runtime &runtime, const jsi::JSError &
     }
     catch (...)
     {
+        // Reading the code is optional; the message alone still describes the failure.
     }
+
     return failure;
 }
 
@@ -168,6 +172,7 @@ jsi::Value guard(jsi::Runtime &runtime, const std::function<jsi::Value()> &body)
     {
         return envelopingGuard(runtime, body);
     }
+
     return throwingGuard(runtime, body);
 }
 
@@ -178,11 +183,13 @@ static std::optional<jsi::Function> failureGuard(jsi::Runtime &runtime)
     {
         return existing.asObject(runtime).asFunction(runtime);
     }
+
     jsi::Value created = bootstrap::evaluate(runtime, bootstrap::kNativeFailureGuard);
     if (!created.isObject() || !created.asObject(runtime).isFunction(runtime))
     {
         return std::nullopt;
     }
+
     return created.asObject(runtime).asFunction(runtime);
 }
 
@@ -199,6 +206,7 @@ static std::string firstStringArgument(jsi::Runtime &runtime, const jsi::Value *
             return text.size() > kArgumentLabelLimit ? text.substr(0, kArgumentLabelLimit) : text;
         }
     }
+
     return {};
 }
 
@@ -220,11 +228,13 @@ jsi::Function makeFunction(jsi::Runtime &runtime, const char *name, unsigned int
     {
         return native;
     }
+
     auto wrap = failureGuard(runtime);
     if (!wrap)
     {
         return native;
     }
+
     return wrap->call(runtime, std::move(native)).asObject(runtime).asFunction(runtime);
 }
 }

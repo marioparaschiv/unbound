@@ -8,10 +8,10 @@ using namespace loader::threading;
 
 int main()
 {
-    bool                                  developerMode = false;
-    int                                   reads         = 0;
+    bool developerMode = false;
+    int reads          = 0;
     std::chrono::steady_clock::time_point now{};
-    OffMainViewWarnings                   warnings(
+    OffMainViewWarnings warnings(
         [&] {
             reads++;
             return developerMode;
@@ -27,8 +27,9 @@ int main()
 
     now += std::chrono::seconds(1);
     AddonSlot plugin = registerAddonSlot("unbound.example", "Example");
-    assert(*warnings.warning(plugin, "-[UIView bounds]") ==
-           "Example called -[UIView bounds] off the main thread. Views are only safe on the main "
+    assert(
+        *warnings.warning(plugin, "-[UIView bounds]")
+        == "Example called -[UIView bounds] off the main thread. Views are only safe on the main "
            "thread; use invokeAsync instead.");
     assert(!warnings.warning(plugin, "-[UIView bounds]"));
     assert(warnings.warning(plugin, "android.view.View.getWidth()"));
@@ -37,7 +38,7 @@ int main()
     assert(hookFailureMessage(plugin, "boom") == "Native plugin hook failed in Example: boom");
 
     std::chrono::steady_clock::time_point failedAt{};
-    HookFailureThrottle                   throttle([&] {
+    HookFailureThrottle throttle([&] {
         return failedAt;
     });
     assert(*throttle.admit(plugin, "boom") == "Native plugin hook failed in Example: boom");
@@ -45,14 +46,14 @@ int main()
     assert(!throttle.admit(plugin, "boom"));
     assert(*throttle.admit(plugin, "other") == "Native plugin hook failed in Example: other");
     failedAt += std::chrono::seconds(10);
-    assert(*throttle.admit(plugin, "boom") ==
-           "Native plugin hook failed in Example: boom [repeated 3 times]");
+    assert(*throttle.admit(plugin, "boom")
+           == "Native plugin hook failed in Example: boom [repeated 3 times]");
     assert(!throttle.admit(plugin, "boom"));
-    assert(callbackFailureMessage(plugin, "boom") ==
-           "Native plugin callback failed in Example: boom");
-    assert(hookSkippedMessage(plugin, "layoutSubviews") ==
-           "Native plugin hook skipped in Example: the JavaScript thread did not answer the "
-           "layoutSubviews hook within 100 ms, so it did not run");
+    assert(callbackFailureMessage(plugin, "boom")
+           == "Native plugin callback failed in Example: boom");
+    assert(hookSkippedMessage(plugin, "layoutSubviews")
+           == "Native plugin hook skipped in Example: the JavaScript thread did not answer the "
+              "layoutSubviews hook within 100 ms, so it did not run");
 
     developerMode = false;
     now += std::chrono::seconds(1);

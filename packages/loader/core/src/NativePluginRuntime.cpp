@@ -21,24 +21,25 @@ namespace jsi = facebook::jsi;
 
 static constexpr const char *kPendingInvocations = "__NativePluginPendingInvocations";
 
-static std::mutex                            gStateMutex;
+static std::mutex gStateMutex;
 static std::shared_ptr<NativePluginExecutor> gExecutor;
-static jsi::Runtime                         *gRuntime = nullptr;
-static std::thread::id                       gRuntimeThread;
-static RuntimeGenerationTracker              gGenerations;
-static std::atomic_uint64_t                  gNextInvocation{1};
-static std::atomic_uint                      gMainThreadRuntimeWaits{0};
-static RuntimeStallGate                      gMainThreadRuntimeStall;
-static std::mutex                            gCrossingMutex;
-static std::condition_variable               gCrossingChanged;
+static jsi::Runtime *gRuntime = nullptr;
+static std::thread::id gRuntimeThread;
+static RuntimeGenerationTracker gGenerations;
+static std::atomic_uint64_t gNextInvocation{1};
+static std::atomic_uint gMainThreadRuntimeWaits{0};
+static RuntimeStallGate gMainThreadRuntimeStall;
+static std::mutex gCrossingMutex;
+static std::condition_variable gCrossingChanged;
 
 std::optional<uint64_t> RuntimeGenerationTracker::advance(const void *runtime,
-                                                          bool        alreadyRegistered)
+                                                          bool alreadyRegistered)
 {
     if (runtime_ == runtime && alreadyRegistered)
     {
         return std::nullopt;
     }
+
     runtime_ = runtime;
     return generation_.fetch_add(1) + 1;
 }
@@ -61,6 +62,7 @@ void RuntimeGenerationTracker::notify(uint64_t generation) const
         std::lock_guard<std::mutex> lock(listenersMutex_);
         listeners = listeners_;
     }
+
     for (const RuntimeGenerationListener &listener : listeners)
     {
         try
@@ -109,6 +111,7 @@ uint64_t registerRuntime(jsi::Runtime &runtime)
         gRuntime       = &runtime;
         gRuntimeThread = std::this_thread::get_id();
     }
+
     uint64_t generation = gGenerations.generation();
     runtime.global().setProperty(runtime, kRuntimeGenerationMarker,
                                  jsi::Value(static_cast<double>(generation)));
@@ -116,6 +119,7 @@ uint64_t registerRuntime(jsi::Runtime &runtime)
     {
         gGenerations.notify(*advanced);
     }
+
     return generation;
 }
 
@@ -147,8 +151,8 @@ static jsi::Runtime *currentRuntime()
 }
 
 struct MainCrossing {
-    bool                finished = false;
-    std::exception_ptr  failure;
+    bool finished = false;
+    std::exception_ptr failure;
     NativeOperationGate gate;
 };
 
@@ -158,6 +162,7 @@ MainThreadRuntimeWait::MainThreadRuntimeWait()
         std::lock_guard<std::mutex> lock(gCrossingMutex);
         gMainThreadRuntimeWaits.fetch_add(1);
     }
+
     gCrossingChanged.notify_all();
 }
 
@@ -192,15 +197,16 @@ static void crossToMain(std::function<void()> operation, std::chrono::millisecon
         refuseCrossingWhileMainWaits();
     }
 
-    auto           crossing = std::make_shared<MainCrossing>();
-    AddonSlot      addon    = currentAddon();
-    auto           deadline = std::chrono::steady_clock::now() + timeout;
+    auto crossing   = std::make_shared<MainCrossing>();
+    AddonSlot addon = currentAddon();
+    auto deadline   = std::chrono::steady_clock::now() + timeout;
     MainWaitTiming timing(currentCallRecord(addon, MainWorkKind::Synchronous));
     target->runOnMain([crossing, operation = std::move(operation), addon, timing]() {
         if (!crossing->gate.start())
         {
             return;
         }
+
         uint64_t startedAt = timing.started();
         try
         {
@@ -211,17 +217,19 @@ static void crossToMain(std::function<void()> operation, std::chrono::millisecon
         {
             crossing->failure = std::current_exception();
         }
+
         timing.finished(startedAt);
         crossing->gate.finish();
         {
             std::lock_guard<std::mutex> lock(gCrossingMutex);
             crossing->finished = true;
         }
+
         gCrossingChanged.notify_all();
     });
 
     std::unique_lock<std::mutex> lock(gCrossingMutex);
-    bool                         pastDeadline = false;
+    bool pastDeadline = false;
     while (!crossing->finished)
     {
         if (refuseWhileMainWaits && mainThreadIsWaitingForRuntime() && crossing->gate.expire())
@@ -229,11 +237,13 @@ static void crossToMain(std::function<void()> operation, std::chrono::millisecon
             timing.expired();
             refuseCrossingWhileMainWaits();
         }
+
         if (pastDeadline)
         {
             gCrossingChanged.wait(lock);
             continue;
         }
+
         if (gCrossingChanged.wait_until(lock, deadline) == std::cv_status::timeout)
         {
             pastDeadline = true;
@@ -258,7 +268,7 @@ void executeMainSynchronously(std::function<void()> operation, std::chrono::mill
     crossToMain(std::move(operation), timeout, false);
 }
 
-void executeMainSynchronouslyUnlessMainWaits(std::function<void()>     operation,
+void executeMainSynchronouslyUnlessMainWaits(std::function<void()> operation,
                                              std::chrono::milliseconds timeout)
 {
     crossToMain(std::move(operation), timeout, true);
@@ -267,8 +277,8 @@ void executeMainSynchronouslyUnlessMainWaits(std::function<void()>     operation
 std::string postedMainFailureMessage(AddonSlot addon, const std::string &description,
                                      const std::string &reason)
 {
-    return "Posted native call " + description + " failed in " + threading::addonName(addon) +
-           ": " + reason;
+    return "Posted native call " + description + " failed in " + threading::addonName(addon) + ": "
+           + reason;
 }
 
 void postMainOperation(std::function<void()> operation, std::string description)
@@ -285,13 +295,13 @@ void postMainOperation(std::function<void()> operation, std::string description)
         return;
     }
 
-    AddonSlot      addon = currentAddon();
+    AddonSlot addon = currentAddon();
     MainWaitTiming timing(description.empty()
                               ? currentCallRecord(addon, MainWorkKind::Posted)
                               : mainWaitRecord(addon, MainWorkKind::Posted, description));
     target->runOnMain(
         [operation = std::move(operation), description = std::move(description), addon, timing]() {
-            uint64_t   startedAt = timing.started();
+            uint64_t startedAt = timing.started();
             AddonScope scope(addon);
             try
             {
@@ -303,6 +313,7 @@ void postMainOperation(std::function<void()> operation, std::string description)
                 log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
                     postedMainFailureMessage(addon, description, failure.message));
             }
+
             timing.finished(startedAt);
         });
 }
@@ -315,8 +326,8 @@ static std::optional<jsi::Object> takePending(jsi::Runtime &runtime, const std::
         return std::nullopt;
     }
 
-    jsi::Object pending   = pendingValue.asObject(runtime);
-    jsi::Value  pairValue = pending.getProperty(runtime, identifier.c_str());
+    jsi::Object pending  = pendingValue.asObject(runtime);
+    jsi::Value pairValue = pending.getProperty(runtime, identifier.c_str());
     if (!pairValue.isObject())
     {
         return std::nullopt;
@@ -327,7 +338,7 @@ static std::optional<jsi::Object> takePending(jsi::Runtime &runtime, const std::
 }
 
 static void settlePending(jsi::Runtime &runtime, const jsi::Object &pair,
-                          const std::optional<NativeFailure>              &failure,
+                          const std::optional<NativeFailure> &failure,
                           const std::function<jsi::Value(jsi::Runtime &)> &result)
 {
     jsi::Function reject = pair.getPropertyAsFunction(runtime, "reject");
@@ -336,6 +347,7 @@ static void settlePending(jsi::Runtime &runtime, const jsi::Object &pair,
         reject.call(runtime, makeError(runtime, failure->code.c_str(), failure->message));
         return;
     }
+
     try
     {
         jsi::Value value = result(runtime);
@@ -391,7 +403,7 @@ bool runningAsynchronousMainOperation()
 
 jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()> operation,
                                      std::function<jsi::Value(jsi::Runtime &)> result,
-                                     bool                                      nextFrame)
+                                     bool nextFrame)
 {
     auto target = executor();
     if (!target)
@@ -399,15 +411,15 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
         throwCoded(runtime, "NATIVE_PLUGIN_UNAVAILABLE", "Native executor is unavailable");
     }
 
-    uint64_t        generation = gGenerations.generation();
-    std::string     identifier = std::to_string(gNextInvocation.fetch_add(1));
-    auto            cancelled  = std::make_shared<std::atomic_bool>(false);
-    auto            gate       = std::make_shared<NativeOperationGate>();
-    AddonSlot       addon      = currentAddon();
-    MainWaitRecord *waits      = &currentCallRecord(addon, MainWorkKind::Asynchronous);
+    uint64_t generation    = gGenerations.generation();
+    std::string identifier = std::to_string(gNextInvocation.fetch_add(1));
+    auto cancelled         = std::make_shared<std::atomic_bool>(false);
+    auto gate              = std::make_shared<NativeOperationGate>();
+    AddonSlot addon        = currentAddon();
+    MainWaitRecord *waits  = &currentCallRecord(addon, MainWorkKind::Asynchronous);
 
-    jsi::Object global       = runtime.global();
-    jsi::Value  pendingValue = global.getProperty(runtime, kPendingInvocations);
+    jsi::Object global      = runtime.global();
+    jsi::Value pendingValue = global.getProperty(runtime, kPendingInvocations);
     if (!pendingValue.isObject())
     {
         global.setProperty(runtime, kPendingInvocations, jsi::Object(runtime));
@@ -441,8 +453,8 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
                     return;
                 }
 
-                uint64_t                     startedAt = timing.started();
-                AddonScope                   scope(addon);
+                uint64_t startedAt = timing.started();
+                AddonScope scope(addon);
                 std::optional<NativeFailure> failure;
                 try
                 {
@@ -453,6 +465,7 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
                 {
                     failure = describeFailure(std::current_exception());
                 }
+
                 timing.finished(startedAt);
                 gate->finish();
 
@@ -468,6 +481,7 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
                         {
                             return;
                         }
+
                         settlePending(completion, *pair, failure, result);
                     });
             };
@@ -492,6 +506,7 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
                 {
                     return;
                 }
+
                 timing.expired();
                 cancelled->store(true);
                 executeRuntimeAsynchronously([identifier, generation](jsi::Runtime &completion) {
@@ -499,6 +514,7 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
                     {
                         return;
                     }
+
                     rejectPending(completion, identifier, "NATIVE_MAIN_THREAD_TIMEOUT",
                                   "Native operation timed out before reaching the main thread");
                 });
@@ -508,7 +524,7 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
         });
 
     jsi::Function constructor = global.getPropertyAsFunction(runtime, "Promise");
-    jsi::Object   promise =
+    jsi::Object promise =
         constructor.callAsConstructor(runtime, std::move(executorFunction)).asObject(runtime);
 
     promise.setProperty(
@@ -521,6 +537,7 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
                          {
                              return jsi::Value::undefined();
                          }
+
                          rejectPending(rt, identifier, "NATIVE_PLUGIN_SCOPE_DISPOSED",
                                        "Native async invocation was cancelled");
                          return jsi::Value::undefined();
@@ -537,7 +554,7 @@ jsi::Value executeBackgroundAsynchronously(jsi::Runtime &runtime, std::function<
         throwCoded(runtime, "NATIVE_PLUGIN_UNAVAILABLE", "Native executor is unavailable");
     }
 
-    uint64_t    generation = gGenerations.generation();
+    uint64_t generation    = gGenerations.generation();
     std::string identifier = std::to_string(gNextInvocation.fetch_add(1));
     jsi::Object global     = runtime.global();
     if (!global.getProperty(runtime, kPendingInvocations).isObject())
@@ -574,12 +591,14 @@ jsi::Value executeBackgroundAsynchronously(jsi::Runtime &runtime, std::function<
                 {
                     failure = describeFailure(std::current_exception());
                 }
+
                 executeRuntimeAsynchronously(
                     [identifier, generation, result, failure](jsi::Runtime &completion) {
                         if (generation != gGenerations.generation())
                         {
                             return;
                         }
+
                         std::optional<jsi::Object> pair = takePending(completion, identifier);
                         if (pair)
                         {
@@ -603,15 +622,16 @@ void executeRuntimeAsynchronously(std::function<void(jsi::Runtime &)> callback)
         return;
     }
 
-    jsi::Runtime *expected   = currentRuntime();
-    uint64_t      generation = gGenerations.generation();
-    AddonSlot     addon      = currentAddon();
+    jsi::Runtime *expected = currentRuntime();
+    uint64_t generation    = gGenerations.generation();
+    AddonSlot addon        = currentAddon();
     target->runOnRuntime(
         [callback = std::move(callback), expected, generation, addon](jsi::Runtime &runtime) {
             if (expected != &runtime || generation != gGenerations.generation())
             {
                 return;
             }
+
             AddonScope scope(addon);
             try
             {
@@ -638,17 +658,18 @@ void executeRuntimeCoalesced(std::string key, std::function<void(jsi::Runtime &)
         return;
     }
 
-    jsi::Runtime *expected   = currentRuntime();
-    uint64_t      generation = gGenerations.generation();
-    AddonSlot     addon      = currentAddon();
-    key = std::to_string(reinterpret_cast<uintptr_t>(expected)) + ":" + std::to_string(generation) +
-          ":" + std::to_string(addon) + ":" + key;
+    jsi::Runtime *expected = currentRuntime();
+    uint64_t generation    = gGenerations.generation();
+    AddonSlot addon        = currentAddon();
+    key = std::to_string(reinterpret_cast<uintptr_t>(expected)) + ":" + std::to_string(generation)
+          + ":" + std::to_string(addon) + ":" + key;
     target->runOnRuntimeCoalesced(std::move(key), [callback = std::move(callback), expected,
                                                    generation, addon](jsi::Runtime &runtime) {
         if (expected != &runtime || generation != gGenerations.generation())
         {
             return;
         }
+
         AddonScope scope(addon);
         try
         {
@@ -668,7 +689,7 @@ void executeRuntimeCoalesced(std::string key, std::function<void(jsi::Runtime &)
 }
 
 bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
-                                 std::chrono::milliseconds           timeout)
+                                 std::chrono::milliseconds timeout)
 {
     jsi::Runtime *expected = currentRuntime();
     if (expected && isRuntimeThread())
@@ -690,24 +711,24 @@ bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
     }
 
     struct State {
-        std::mutex              mutex;
+        std::mutex mutex;
         std::condition_variable done;
-        bool                    signaled  = false;
-        bool                    completed = false;
-        std::atomic_bool        cancelled{false};
-        std::exception_ptr      failure;
+        bool signaled  = false;
+        bool completed = false;
+        std::atomic_bool cancelled{false};
+        std::exception_ptr failure;
     };
 
-    auto      state      = std::make_shared<State>();
-    uint64_t  generation = gGenerations.generation();
-    AddonSlot addon      = currentAddon();
+    auto state          = std::make_shared<State>();
+    uint64_t generation = gGenerations.generation();
+    AddonSlot addon     = currentAddon();
     target->runOnRuntimeCritical([state, callback = std::move(callback), expected, generation,
                                   addon](jsi::Runtime &runtime) {
         gMainThreadRuntimeStall.answered();
-        bool               completed = false;
+        bool completed = false;
         std::exception_ptr failure;
-        if (!state->cancelled.load() && expected == &runtime &&
-            generation == gGenerations.generation())
+        if (!state->cancelled.load() && expected == &runtime
+            && generation == gGenerations.generation())
         {
             try
             {
@@ -720,6 +741,7 @@ bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
                 failure = std::current_exception();
             }
         }
+
         std::lock_guard<std::mutex> lock(state->mutex);
         state->completed = completed;
         state->failure   = failure;
@@ -734,11 +756,13 @@ bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
         {
             waiting.emplace();
         }
+
         std::unique_lock<std::mutex> lock(state->mutex);
         signaled = state->done.wait_for(lock, timeout, [&] {
             return state->signaled;
         });
     }
+
     if (!signaled)
     {
         state->cancelled.store(true);
@@ -746,6 +770,7 @@ bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
         {
             gMainThreadRuntimeStall.timedOut();
         }
+
         return false;
     }
 
@@ -753,6 +778,7 @@ bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
     {
         std::rethrow_exception(state->failure);
     }
+
     return state->completed;
 }
 }

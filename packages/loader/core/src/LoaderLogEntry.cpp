@@ -37,6 +37,7 @@ std::optional<LogSource> logSourceFromName(const std::string &name)
             return source;
         }
     }
+
     return std::nullopt;
 }
 
@@ -64,6 +65,7 @@ std::optional<LogLevel> logLevelFromName(const std::string &name)
             return level;
         }
     }
+
     return std::nullopt;
 }
 
@@ -78,11 +80,12 @@ nlohmann::json logEntryJSON(const LogEntry &entry)
 
 std::optional<LogEntry> logEntryFromJSON(const nlohmann::json &value)
 {
-    if (!value.is_object() || !value.contains("t") || !value["t"].is_number() ||
-        !value.contains("msg") || !value["msg"].is_string())
+    if (!value.is_object() || !value.contains("t") || !value["t"].is_number()
+        || !value.contains("msg") || !value["msg"].is_string())
     {
         return std::nullopt;
     }
+
     LogEntry entry;
     entry.time    = value["t"].get<long long>();
     entry.message = value["msg"].get<std::string>();
@@ -90,10 +93,12 @@ std::optional<LogEntry> logEntryFromJSON(const nlohmann::json &value)
     {
         entry.source = logSourceFromName(value["src"].get<std::string>()).value_or(entry.source);
     }
+
     if (value.contains("lvl") && value["lvl"].is_string())
     {
         entry.level = logLevelFromName(value["lvl"].get<std::string>()).value_or(entry.level);
     }
+
     if (value.contains("scope") && value["scope"].is_array())
     {
         for (const nlohmann::json &part : value["scope"])
@@ -104,6 +109,7 @@ std::optional<LogEntry> logEntryFromJSON(const nlohmann::json &value)
             }
         }
     }
+
     return entry;
 }
 
@@ -136,7 +142,7 @@ static char levelLetter(LogLevel level)
 std::string formatLogEntry(const LogEntry &entry)
 {
     std::time_t seconds = static_cast<std::time_t>(entry.time / 1000);
-    std::tm     time{};
+    std::tm time{};
     gmtime_r(&seconds, &time);
     char stamp[32];
     std::snprintf(stamp, sizeof(stamp), "%04d-%02d-%02dT%02d:%02d:%02d.%03lldZ",
@@ -147,7 +153,8 @@ std::string formatLogEntry(const LogEntry &entry)
     {
         scope += (scope.empty() ? "" : "/") + part;
     }
-    return std::string(stamp) + " " + levelLetter(entry.level) + " " + logSourceName(entry.source) +
-           (scope.empty() ? "" : " [" + scope + "]") + " " + entry.message;
+
+    return std::string(stamp) + " " + levelLetter(entry.level) + " " + logSourceName(entry.source)
+           + (scope.empty() ? "" : " [" + scope + "]") + " " + entry.message;
 }
 }

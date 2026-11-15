@@ -10,7 +10,7 @@
 
 int main()
 {
-    char        pattern[] = "/tmp/unbound-digest-XXXXXX";
+    char pattern[]        = "/tmp/unbound-digest-XXXXXX";
     std::string directory = mkdtemp(pattern);
     std::string bundle    = loader::joinPath(directory, "index.js");
 
@@ -23,8 +23,8 @@ int main()
     assert(loader::writeTextFileAtomically(bundle, "second"));
     assert(loader::cachedSha512(directory, bundle, "second") == loader::sha512Hex("second"));
 
-    assert(loader::cachedSha512(directory, bundle, "other contents of another size") ==
-           loader::sha512Hex("other contents of another size"));
+    assert(loader::cachedSha512(directory, bundle, "other contents of another size")
+           == loader::sha512Hex("other contents of another size"));
 
     std::string sha256 = loader::crypto::hex(loader::crypto::sha256("second"));
     assert(loader::cachedSha256(directory, bundle, "second") == sha256);

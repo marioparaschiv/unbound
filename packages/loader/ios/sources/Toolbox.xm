@@ -16,7 +16,7 @@ static loader::toolbox::MenuStep menuStep(NSDictionary *item, BOOL confirmed)
     return loader::toolbox::menuStep(jsonFromObject(item), confirmed);
 }
 
-@interface                         ToolboxViewController ()
+@interface ToolboxViewController ()
 @property (nonatomic, assign) BOOL dismissalInProgress;
 @end
 
@@ -30,7 +30,7 @@ static loader::toolbox::MenuStep menuStep(NSDictionary *item, BOOL confirmed)
 @end
 
 static loader::toolbox::ShakeMotion shakeMotion;
-static NSHashTable                 *windowsWithGestures = nil;
+static NSHashTable *windowsWithGestures = nil;
 
 static void addSettingsGestureToWindow(UIWindow *window)
 {
@@ -61,6 +61,7 @@ static void triggerHapticFeedback(void)
         feedbackGenerator =
             [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
     }
+
     [feedbackGenerator prepare];
     [feedbackGenerator impactOccurred];
 }
@@ -75,6 +76,7 @@ static UIWindowScene *activeWindowScene(void)
             return (UIWindowScene *) scene;
         }
     }
+
     return nil;
 }
 
@@ -87,6 +89,7 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
 }
 
 %hook UIWindow
+
 - (void)becomeKeyWindow
 {
     %orig;
@@ -100,19 +103,21 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
     {
         shakeMotion.began([[NSDate date] timeIntervalSince1970]);
     }
+
     %orig;
 }
 
 - (void)motionEnded:(UIEventSubtype)motion withEvent:(UIEvent *)event
 {
-    if (motion == UIEventSubtypeMotionShake &&
-        shakeMotion.ended([[NSDate date] timeIntervalSince1970], [] {
-            return toolboxGestureEnabled(kShakeGesture);
-        }) == loader::toolbox::GestureAction::Open)
+    if (motion == UIEventSubtypeMotionShake
+        && shakeMotion.ended([[NSDate date] timeIntervalSince1970], [] {
+               return toolboxGestureEnabled(kShakeGesture);
+           }) == loader::toolbox::GestureAction::Open)
     {
         triggerHapticFeedback();
         dispatch_async(dispatch_get_main_queue(), ^{ showToolboxSheet(); });
     }
+
     %orig;
 }
 
@@ -120,6 +125,7 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
 
 %hook UIApplication
 %new
+
 - (void)handleThreeFingerLongPress:(UILongPressGestureRecognizer *)gesture
 {
     if (gesture.state == UIGestureRecognizerStateBegan)
@@ -131,6 +137,7 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
         }
     }
 }
+
 %end
 
 @implementation ToolboxViewController
@@ -230,7 +237,7 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
 static NSString *iconForMenuItem(NSString *identifier)
 {
     static NSDictionary<NSString *, NSString *> *icons = nil;
-    static dispatch_once_t                       onceToken;
+    static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         icons = @{
             @"refetch-bundle" : @"arrow.triangle.2.circlepath",
@@ -286,8 +293,8 @@ static NSString *iconForMenuItem(NSString *identifier)
 
     NSDictionary *item = self.menuSections[indexPath.section][@"items"][indexPath.row];
 
-    BOOL     isDestructive = [item[@"destructive"] boolValue];
-    UIColor *tint          = isDestructive ? UIColor.systemRedColor : UIColor.labelColor;
+    BOOL isDestructive = [item[@"destructive"] boolValue];
+    UIColor *tint      = isDestructive ? UIColor.systemRedColor : UIColor.labelColor;
 
     UIImageSymbolConfiguration *symbolConfig =
         [UIImageSymbolConfiguration configurationWithPointSize:18 weight:UIImageSymbolWeightMedium];
@@ -403,7 +410,7 @@ static NSString *iconForMenuItem(NSString *identifier)
 
 - (void)promptForMenuItem:(NSDictionary *)item
 {
-    NSDictionary      *prompt = item[@"prompt"];
+    NSDictionary *prompt = item[@"prompt"];
     UIAlertController *alert =
         [UIAlertController alertControllerWithTitle:prompt[@"title"]
                                             message:prompt[@"message"]
@@ -448,6 +455,7 @@ static NSString *iconForMenuItem(NSString *identifier)
                 [progress dismissViewControllerAnimated:YES completion:finish];
                 return;
             }
+
             finish();
         });
     });
@@ -471,7 +479,7 @@ static NSString *iconForMenuItem(NSString *identifier)
 
 - (void)openAppFolder
 {
-    UIApplication           *application = [UIApplication sharedApplication];
+    UIApplication *application = [UIApplication sharedApplication];
     std::vector<std::string> urls =
         loader::toolbox::appFolderURLs(toStdString(FileSystem.documents), [Utilities isJailbroken]);
 
@@ -498,7 +506,7 @@ static NSString *iconForMenuItem(NSString *identifier)
     NSString *discordVersion = toNSString(loader::toolbox::discordVersionLabel(
         appVersion ? std::optional<std::string>(toStdString(appVersion)) : std::nullopt,
         toStdString(buildNumber)));
-    NSURL    *url = [NSURL URLWithString:[CoreBridge toolbox:@"issue-url" argument:discordVersion]];
+    NSURL *url = [NSURL URLWithString:[CoreBridge toolbox:@"issue-url" argument:discordVersion]];
 
     if (!url)
     {
@@ -523,6 +531,7 @@ static NSString *iconForMenuItem(NSString *identifier)
             return (UISwitch *) cell.accessoryView;
         }
     }
+
     return nil;
 }
 
@@ -538,13 +547,14 @@ static NSString *iconForMenuItem(NSString *identifier)
             }
         }
     }
+
     return nil;
 }
 
 - (void)toggleSetting:(UISwitch *)sender
 {
-    NSString     *identifier = sender.accessibilityIdentifier;
-    NSDictionary *item       = [self menuItemWithIdentifier:identifier];
+    NSString *identifier = sender.accessibilityIdentifier;
+    NSDictionary *item   = [self menuItemWithIdentifier:identifier];
 
     if (item[@"gesture"])
     {
@@ -613,7 +623,9 @@ void showToolboxSheet(void)
 
     UIWindowScene *activeScene = activeWindowScene();
     if (!activeScene)
+    {
         return;
+    }
 
     UIWindow *originalKeyWindow = nil;
     for (UIWindow *w in activeScene.windows)

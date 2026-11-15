@@ -32,13 +32,13 @@ enum class CutoutKind
 
 struct Cutout {
     CutoutKind kind;
-    Frame      frame;
+    Frame frame;
 };
 
 struct ViewState {
-    bool   exists = false;
-    bool   hidden = true;
-    double alpha  = 0;
+    bool exists  = false;
+    bool hidden  = true;
+    double alpha = 0;
 };
 
 struct Plan {
@@ -61,16 +61,16 @@ enum class Lifecycle
 };
 
 std::optional<Cutout> cutoutFromSystem(std::optional<Frame> rect);
-double                cornerRadius(const Cutout &cutout);
-Frame                 logoFrame(const Cutout &cutout);
+double cornerRadius(const Cutout &cutout);
+Frame logoFrame(const Cutout &cutout);
 
 class Presentation
 {
 public:
     Start start(bool hasCutout);
-    Plan  show(const ViewState &view) const;
-    Plan  hide(const ViewState &view) const;
-    Plan  on(Lifecycle event, const ViewState &view) const;
+    Plan show(const ViewState &view) const;
+    Plan hide(const ViewState &view) const;
+    Plan on(Lifecycle event, const ViewState &view) const;
 
 private:
     bool started_ = false;

@@ -6,14 +6,15 @@
 namespace loader {
 static size_t validSequenceLength(const std::string &text, size_t index)
 {
-    auto          lead = static_cast<unsigned char>(text[index]);
-    size_t        length;
+    auto lead = static_cast<unsigned char>(text[index]);
+    size_t length;
     unsigned char lowest  = 0x80;
     unsigned char highest = 0xBF;
     if (lead < 0x80)
     {
         return 1;
     }
+
     if (lead >= 0xC2 && lead <= 0xDF)
     {
         length = 2;
@@ -34,28 +35,31 @@ static size_t validSequenceLength(const std::string &text, size_t index)
     {
         return 0;
     }
+
     if (index + length > text.size())
     {
         return 0;
     }
+
     for (size_t offset = 1; offset < length; offset++)
     {
-        auto          continuation = static_cast<unsigned char>(text[index + offset]);
-        unsigned char minimum      = offset == 1 ? lowest : 0x80;
-        unsigned char maximum      = offset == 1 ? highest : 0xBF;
+        auto continuation     = static_cast<unsigned char>(text[index + offset]);
+        unsigned char minimum = offset == 1 ? lowest : 0x80;
+        unsigned char maximum = offset == 1 ? highest : 0xBF;
         if (continuation < minimum || continuation > maximum)
         {
             return 0;
         }
     }
+
     return length;
 }
 
 std::string withValidUTF8(const std::string &text)
 {
     std::string result;
-    size_t      copied = 0;
-    size_t      index  = 0;
+    size_t copied = 0;
+    size_t index  = 0;
     while (index < text.size())
     {
         size_t length = validSequenceLength(text, index);
@@ -64,24 +68,27 @@ std::string withValidUTF8(const std::string &text)
             index += length;
             continue;
         }
+
         result.append(text, copied, index - copied);
         result.append("\xEF\xBF\xBD");
         index++;
         copied = index;
     }
+
     if (copied == 0)
     {
         return text;
     }
+
     result.append(text, copied, std::string::npos);
     return result;
 }
 
 static bool textNestsTooDeeply(const std::string &text, size_t maximumDepth)
 {
-    size_t depth    = 0;
-    bool   inString = false;
-    bool   escaped  = false;
+    size_t depth  = 0;
+    bool inString = false;
+    bool escaped  = false;
     for (char character : text)
     {
         if (inString)
@@ -98,8 +105,10 @@ static bool textNestsTooDeeply(const std::string &text, size_t maximumDepth)
             {
                 inString = false;
             }
+
             continue;
         }
+
         if (character == '"')
         {
             inString = true;
@@ -116,6 +125,7 @@ static bool textNestsTooDeeply(const std::string &text, size_t maximumDepth)
             depth--;
         }
     }
+
     return false;
 }
 
@@ -130,15 +140,18 @@ bool jsonNestsTooDeeply(const nlohmann::json &value, size_t maximumDepth)
         {
             continue;
         }
+
         if (depth > maximumDepth)
         {
             return true;
         }
+
         for (const nlohmann::json &child : *current)
         {
             pending.emplace_back(&child, depth + 1);
         }
     }
+
     return false;
 }
 
@@ -148,6 +161,7 @@ nlohmann::json parseBoundedJSON(const std::string &text, size_t maximumDepth)
     {
         return nlohmann::json(nlohmann::json::value_t::discarded);
     }
+
     return nlohmann::json::parse(text, nullptr, false);
 }
 

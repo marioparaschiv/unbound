@@ -9,9 +9,10 @@ std::string parseName(const std::string &value, size_t maximum, const char *subj
 {
     if (value.empty() || value.size() > maximum)
     {
-        throw std::invalid_argument(std::string(subject) + " must be 1 to " +
-                                    std::to_string(maximum) + " bytes");
+        throw std::invalid_argument(std::string(subject) + " must be 1 to "
+                                    + std::to_string(maximum) + " bytes");
     }
+
     return value;
 }
 
@@ -22,6 +23,7 @@ std::string parseName(jsi::Runtime &runtime, const jsi::Value &value, size_t max
     {
         throw std::invalid_argument(std::string(subject) + " must be a string");
     }
+
     return parseName(value.getString(runtime).utf8(runtime), maximum, subject);
 }
 
@@ -32,12 +34,14 @@ static const nlohmann::json *handleField(const nlohmann::json &handle)
     {
         return &*id;
     }
+
     auto type  = handle.find("type");
     auto value = handle.find("value");
     if (type != handle.end() && *type == "handle" && value != handle.end() && value->is_string())
     {
         return &*value;
     }
+
     return nullptr;
 }
 
@@ -47,11 +51,13 @@ std::string parseHandleId(const nlohmann::json &handle, const char *subject)
     {
         throw std::invalid_argument(std::string(subject) + " must be a handle object");
     }
+
     const nlohmann::json *id = handleField(handle);
     if (!id)
     {
         throw std::invalid_argument(std::string(subject) + " must contain a string id");
     }
+
     return parseName(id->get<std::string>(), kMaximumHandleIdBytes, subject);
 }
 
@@ -61,7 +67,8 @@ std::string parseHandleId(jsi::Runtime &runtime, const jsi::Value &handle, const
     {
         throw std::invalid_argument(std::string(subject) + " must be a handle object");
     }
-    jsi::Object    object = handle.asObject(runtime);
+
+    jsi::Object object    = handle.asObject(runtime);
     nlohmann::json fields = nlohmann::json::object();
     for (const char *key : {"id", "type", "value"})
     {
@@ -71,6 +78,7 @@ std::string parseHandleId(jsi::Runtime &runtime, const jsi::Value &handle, const
             fields[key] = field.getString(runtime).utf8(runtime);
         }
     }
+
     return parseHandleId(fields, subject);
 }
 

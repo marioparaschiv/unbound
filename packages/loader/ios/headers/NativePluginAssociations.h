@@ -19,6 +19,6 @@ private:
     __strong id value_;
 };
 
-objc_AssociationPolicy associationPolicy(facebook::jsi::Runtime     &runtime,
+objc_AssociationPolicy associationPolicy(facebook::jsi::Runtime &runtime,
                                          const facebook::jsi::Value *value);
 }

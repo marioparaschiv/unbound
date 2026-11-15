@@ -19,22 +19,26 @@ static std::string kernelEntitlementsBlob()
     {
         return header;
     }
+
     if (errno != ERANGE)
     {
         return "";
     }
-    const auto  *bytes  = reinterpret_cast<const uint8_t *>(header.data());
-    const size_t length = (size_t(bytes[4]) << 24) | (size_t(bytes[5]) << 16) |
-                          (size_t(bytes[6]) << 8) | size_t(bytes[7]);
+
+    const auto *bytes   = reinterpret_cast<const uint8_t *>(header.data());
+    const size_t length = (size_t(bytes[4]) << 24) | (size_t(bytes[5]) << 16)
+                          | (size_t(bytes[6]) << 8) | size_t(bytes[7]);
     if (length <= header.size() || length > 1024 * 1024)
     {
         return "";
     }
+
     std::string blob(length, '\0');
     if (csops(getpid(), kCodeSigningOpsEntitlementsBlob, blob.data(), blob.size()) != 0)
     {
         return "";
     }
+
     return blob;
 }
 
@@ -44,8 +48,9 @@ static NSDictionary *entitlementsPlist(const std::optional<std::string> &plist)
     {
         return nil;
     }
-    NSData       *data         = [NSData dataWithBytes:plist->data() length:plist->size()];
-    NSError      *error        = nil;
+
+    NSData *data               = [NSData dataWithBytes:plist->data() length:plist->size()];
+    NSError *error             = nil;
     NSDictionary *entitlements = [NSPropertyListSerialization propertyListWithData:data
                                                                            options:0
                                                                             format:nil
@@ -54,6 +59,7 @@ static NSDictionary *entitlementsPlist(const std::optional<std::string> &plist)
     {
         return nil;
     }
+
     return entitlements;
 }
 
@@ -80,6 +86,7 @@ static NSDictionary *kernelEntitlements()
             return entitlements;
         }
     }
+
     return @{};
 }
 
@@ -91,12 +98,13 @@ static NSDictionary *kernelEntitlements()
     }
 
     std::vector<std::string> candidates;
-    char                     path[PATH_MAX];
-    uint32_t                 size = sizeof(path);
+    char path[PATH_MAX];
+    uint32_t size = sizeof(path);
     if (_NSGetExecutablePath(path, &size) == 0)
     {
         candidates.emplace_back(path);
     }
+
     NSBundle *bundle         = [NSBundle mainBundle];
     NSString *executableName = bundle.infoDictionary[@"CFBundleExecutable"];
     if (NSString *bundleExecutable =
@@ -126,14 +134,15 @@ static NSDictionary *kernelEntitlements()
 {
     NSDictionary *signature    = [self getApplicationSignatureInfo];
     NSDictionary *entitlements = signature[@"entitlements"];
-    NSString     *source       = signature[@"source"];
+    NSString *source           = signature[@"source"];
 
     loader::environment::SigningFacts facts;
-    id                                team = entitlements[@"com.apple.developer.team-identifier"];
+    id team = entitlements[@"com.apple.developer.team-identifier"];
     if ([team isKindOfClass:[NSString class]])
     {
         facts.teamIdentifier = toStdString((NSString *) team);
     }
+
     facts.getTaskAllow = [entitlements[@"get-task-allow"] isKindOfClass:[NSNumber class]] &&
                          [entitlements[@"get-task-allow"] boolValue];
     if (source.length > 0)
@@ -143,13 +152,13 @@ static NSDictionary *kernelEntitlements()
 
     NSBundle *bundle      = NSBundle.mainBundle;
     NSString *profilePath = [bundle pathForResource:@"embedded" ofType:@"mobileprovision"];
-    NSData   *profileData = profilePath ? [NSData dataWithContentsOfFile:profilePath] : nil;
+    NSData *profileData   = profilePath ? [NSData dataWithContentsOfFile:profilePath] : nil;
     if (profileData)
     {
         std::string raw(static_cast<const char *>(profileData.bytes), profileData.length);
         if (auto plist = loader::environment::provisioningProfilePlist(raw))
         {
-            NSData       *xml     = [NSData dataWithBytes:plist->data() length:plist->size()];
+            NSData *xml           = [NSData dataWithBytes:plist->data() length:plist->size()];
             NSDictionary *profile = [NSPropertyListSerialization propertyListWithData:xml
                                                                               options:0
                                                                                format:nil
@@ -170,6 +179,7 @@ static NSDictionary *kernelEntitlements()
             }
         }
     }
+
     facts.altStore = [bundle objectForInfoDictionaryKey:@"ALTDeviceID"] != nil;
 
     return [NSString stringWithUTF8String:loader::environment::signingDetails(facts).c_str()];
@@ -183,7 +193,7 @@ static NSDictionary *kernelEntitlements()
     }
 
     NSError *error = nil;
-    NSData  *plistData =
+    NSData *plistData =
         [NSPropertyListSerialization dataWithPropertyList:entitlements
                                                    format:NSPropertyListXMLFormat_v1_0
                                                   options:0

@@ -18,10 +18,10 @@
 namespace loader::fonts {
 namespace fs = std::filesystem;
 
-static constexpr const char *kStateFile    = "state.json";
-static constexpr const char *kFilesFolder  = "files";
-static constexpr const char *kStageFolder  = ".staging";
-static constexpr size_t      kMaximumFonts = 512;
+static constexpr const char *kStateFile   = "state.json";
+static constexpr const char *kFilesFolder = "files";
+static constexpr const char *kStageFolder = ".staging";
+static constexpr size_t kMaximumFonts     = 512;
 
 FontStore::FontStore(std::string documents) : directory_(joinPath(documents, "Fonts")) {}
 
@@ -37,6 +37,7 @@ static std::string uniqueId(const std::vector<InstalledFont> &fonts, const std::
     {
         id = base.substr(0, 120) + "-" + std::to_string(suffix);
     }
+
     return id;
 }
 
@@ -47,43 +48,47 @@ static std::vector<InstalledFont> adoptLooseFonts(const std::string &directory)
     for (const std::string &name : listDirectory(directory))
     {
         const std::string path = joinPath(directory, name);
-        if (name.starts_with(".") || name == kStateFile || isDirectory(path) ||
-            fileSize(path) > kMaxFontDownloadBytes || fonts.size() == kMaximumFonts)
+        if (name.starts_with(".") || name == kStateFile || isDirectory(path)
+            || fileSize(path) > kMaxFontDownloadBytes || fonts.size() == kMaximumFonts)
         {
             continue;
         }
-        const auto  data = readTextFile(path);
+
+        const auto data = readTextFile(path);
         std::string error;
-        const auto  face = data ? readFontFace(*data, error) : std::nullopt;
+        const auto face = data ? readFontFace(*data, error) : std::nullopt;
         if (!face)
         {
             log(LogLevel::Warning, LOG_CATEGORY_FONTS,
                 "Failed to adopt font " + name + ": " + (error.empty() ? "unreadable" : error));
             continue;
         }
+
         fonts.push_back(
             {uniqueId(fonts, fontIdFor(face->postScriptName)), face->family, face->postScriptName,
              face->fullName, face->weight, face->italic, name,
              FontSource{kLocalProvider, face->postScriptName, std::nullopt, std::nullopt},
              face->axes, instanceCoordinates(face->axes, {}, error).value_or(FontVariations{})});
     }
+
     return fonts;
 }
 
 static std::map<std::string, std::string> migrateOverrides(const std::vector<InstalledFont> &fonts,
-                                                           const nlohmann::json             &legacy)
+                                                           const nlohmann::json &legacy)
 {
     std::map<std::string, std::string> overrides;
     if (!legacy.is_object())
     {
         return overrides;
     }
+
     for (const auto &[family, value] : legacy.items())
     {
         const std::string name = value.is_string() ? value.get<std::string>() : "";
         const auto found = std::find_if(fonts.begin(), fonts.end(), [&](const InstalledFont &font) {
-            return !name.empty() &&
-                   (font.postScriptName == name || font.fullName == name || font.id == name);
+            return !name.empty()
+                   && (font.postScriptName == name || font.fullName == name || font.id == name);
         });
         if (found != fonts.end())
         {
@@ -95,6 +100,7 @@ static std::map<std::string, std::string> migrateOverrides(const std::vector<Ins
                 "Dropped the override of " + family + ": " + name + " is not an installed font");
         }
     }
+
     return overrides;
 }
 
@@ -105,6 +111,7 @@ void FontStore::open(const nlohmann::json &legacyOverrides)
     {
         return;
     }
+
     opened_ = true;
     createDirectories(directory_);
     removeTree(directory_, kStageFolder);
@@ -119,8 +126,8 @@ void FontStore::open(const nlohmann::json &legacyOverrides)
         state_.fonts     = adoptLooseFonts(directory_);
         state_.overrides = migrateOverrides(state_.fonts, legacyOverrides);
         log(LogLevel::Info, LOG_CATEGORY_FONTS,
-            "Migrated " + std::to_string(state_.fonts.size()) + " fonts and " +
-                std::to_string(state_.overrides.size()) + " overrides into state.json.");
+            "Migrated " + std::to_string(state_.fonts.size()) + " fonts and "
+                + std::to_string(state_.overrides.size()) + " overrides into state.json.");
     }
 
     // A font whose file is gone (wiped by hand) leaves the state, with its overrides.
@@ -174,10 +181,10 @@ std::string FontStore::pathOf(const InstalledFont &font) const
 std::string FontStore::stagingDirectory() const
 {
     static std::atomic<uint64_t> counter{0};
-    const auto        stamp = std::chrono::steady_clock::now().time_since_epoch().count();
-    const std::string name  = std::to_string(stamp) + "-" + std::to_string(counter++) + "-" +
-                              std::to_string(std::random_device{}() & 0xFFFF);
-    const std::string path  = joinPath(joinPath(directory_, kStageFolder), name);
+    const auto stamp       = std::chrono::steady_clock::now().time_since_epoch().count();
+    const std::string name = std::to_string(stamp) + "-" + std::to_string(counter++) + "-"
+                             + std::to_string(std::random_device{}() & 0xFFFF);
+    const std::string path = joinPath(joinPath(directory_, kStageFolder), name);
     createDirectories(path);
     return path;
 }
@@ -191,17 +198,20 @@ bool FontStore::update(const std::function<bool(FontState &)> &change)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        FontState                   next = state_;
+        FontState next = state_;
         if (!change(next))
         {
             return false;
         }
+
         if (!writeTextFileAtomically(statePath(directory_), toJSON(fontStateJSON(next))))
         {
             throw std::runtime_error("Failed to save the font state");
         }
+
         state_ = std::move(next);
     }
+
     notify();
     return true;
 }
@@ -213,6 +223,7 @@ void FontStore::notify()
         std::lock_guard<std::mutex> lock(mutex_);
         onChange = onChange_;
     }
+
     if (onChange)
     {
         onChange();
@@ -232,9 +243,10 @@ static void removeFontFile(const std::string &directory, const FontState &state,
     {
         return;
     }
+
     removeFile(joinPath(directory, file));
     // Drops the install's folder once its last face is gone.
-    const fs::path  parent = fs::path(file).parent_path();
+    const fs::path parent = fs::path(file).parent_path();
     std::error_code error;
     if (!parent.empty() && fs::is_empty(fs::path(directory) / parent, error))
     {
@@ -242,7 +254,7 @@ static void removeFontFile(const std::string &directory, const FontState &state,
     }
 }
 
-std::vector<InstalledFont> FontStore::commitInstall(const std::string         &staged,
+std::vector<InstalledFont> FontStore::commitInstall(const std::string &staged,
                                                     std::vector<InstalledFont> faces)
 {
     const std::string name   = fs::path(staged).filename().string();
@@ -252,9 +264,10 @@ std::vector<InstalledFont> FontStore::commitInstall(const std::string         &s
     fs::rename(staged, target, error);
     if (error)
     {
-        throw std::runtime_error("Failed to move the downloaded fonts into place: " +
-                                 error.message());
+        throw std::runtime_error("Failed to move the downloaded fonts into place: "
+                                 + error.message());
     }
+
     for (InstalledFont &face : faces)
     {
         face.file = std::string(kFilesFolder) + "/" + name + "/" + face.file;
@@ -280,6 +293,7 @@ std::vector<InstalledFont> FontStore::commitInstall(const std::string         &s
                     state.fonts.push_back(face);
                 }
             }
+
             return true;
         });
     }
@@ -288,23 +302,26 @@ std::vector<InstalledFont> FontStore::commitInstall(const std::string         &s
         removeTree(directory_, std::string(kFilesFolder) + "/" + name);
         throw;
     }
+
     const FontState current = state();
     for (const std::string &file : replaced)
     {
         removeFontFile(directory_, current, file);
     }
+
     return faces;
 }
 
 bool FontStore::remove(const std::string &id)
 {
     std::string file;
-    const bool  removed = update([&](FontState &state) {
+    const bool removed = update([&](FontState &state) {
         const InstalledFont *font = findFont(state.fonts, id);
         if (!font)
         {
             return false;
         }
+
         file = font->file;
         std::erase_if(state.fonts, [&](const InstalledFont &entry) {
             return entry.id == id;
@@ -318,6 +335,7 @@ bool FontStore::remove(const std::string &id)
     {
         removeFontFile(directory_, state(), file);
     }
+
     return removed;
 }
 
@@ -330,16 +348,19 @@ InstalledFont FontStore::addInstance(const std::string &id, const FontVariations
         {
             throw std::runtime_error("No installed font has the id " + id);
         }
+
         if (base->axes.empty())
         {
             throw std::runtime_error(base->fullName + " is not a variable font");
         }
+
         std::string error;
-        const auto  coordinates = instanceCoordinates(base->axes, variations, error);
+        const auto coordinates = instanceCoordinates(base->axes, variations, error);
         if (!coordinates)
         {
             throw std::runtime_error(error);
         }
+
         // The same coordinates of the same file are the face already installed.
         const auto existing =
             std::find_if(state.fonts.begin(), state.fonts.end(), [&](const InstalledFont &font) {
@@ -350,10 +371,12 @@ InstalledFont FontStore::addInstance(const std::string &id, const FontVariations
             added = *existing;
             return false;
         }
+
         if (state.fonts.size() >= kMaximumFonts)
         {
             throw std::runtime_error("There are too many fonts");
         }
+
         // `base` may be any instance, so the defaults get a name of their own.
         FontFace font;
         font.family          = base->family;
@@ -381,7 +404,7 @@ InstalledFont FontStore::addInstance(const std::string &id, const FontVariations
 bool FontStore::setOverride(const std::string &key, const std::optional<std::string> &fontId)
 {
     const DiscordFamilies known = families();
-    bool                  valid = true;
+    bool valid                  = true;
     update([&](FontState &state) {
         auto overrides = withOverride(state, known, key, fontId);
         valid          = overrides.has_value();
@@ -389,6 +412,7 @@ bool FontStore::setOverride(const std::string &key, const std::optional<std::str
         {
             return false;
         }
+
         state.overrides = std::move(*overrides);
         return true;
     });
@@ -424,6 +448,7 @@ static std::string presetIdFor(const std::vector<FontPreset> &presets, const std
     {
         base.pop_back();
     }
+
     base           = base.empty() ? "preset" : base;
     std::string id = base;
     for (int suffix = 2; std::any_of(presets.begin(), presets.end(),
@@ -434,6 +459,7 @@ static std::string presetIdFor(const std::vector<FontPreset> &presets, const std
     {
         id = base + "-" + std::to_string(suffix);
     }
+
     return id;
 }
 
@@ -449,10 +475,12 @@ FontPreset FontStore::savePreset(FontPreset preset)
             *existing = preset;
             return true;
         }
+
         if (state.presets.size() >= kMaximumFonts)
         {
             throw std::runtime_error("There are too many presets");
         }
+
         preset.id = presetIdFor(state.presets, preset.name);
         state.presets.push_back(preset);
         return true;
@@ -463,9 +491,11 @@ FontPreset FontStore::savePreset(FontPreset preset)
 bool FontStore::removePreset(const std::string &id)
 {
     return update([&](FontState &state) {
-        return std::erase_if(state.presets, [&](const FontPreset &preset) {
-                   return preset.id == id;
-               }) > 0;
+        return std::erase_if(state.presets,
+                             [&](const FontPreset &preset) {
+                                 return preset.id == id;
+                             })
+               > 0;
     });
 }
 
@@ -477,13 +507,14 @@ static nlohmann::json targetOf(const std::string &directory, const InstalledFont
     {
         target["variations"] = font.variations;
     }
+
     return target;
 }
 
 nlohmann::json FontStore::overrideTargets() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    nlohmann::json              targets = nlohmann::json::object();
+    nlohmann::json targets = nlohmann::json::object();
     for (const auto &[family, id] : state_.overrides)
     {
         if (const InstalledFont *font = findFont(state_.fonts, id))
@@ -491,6 +522,7 @@ nlohmann::json FontStore::overrideTargets() const
             targets[family] = targetOf(directory_, *font);
         }
     }
+
     return targets;
 }
 
@@ -506,6 +538,7 @@ std::optional<nlohmann::json> FontStore::overrideTarget(const std::string &famil
     {
         return targetOf(directory_, *own);
     }
+
     for (const std::string &key : {std::string("*"), family})
     {
         const auto found = state_.overrides.find(key);
@@ -516,6 +549,7 @@ std::optional<nlohmann::json> FontStore::overrideTarget(const std::string &famil
             return targetOf(directory_, *font);
         }
     }
+
     return std::nullopt;
 }
 }

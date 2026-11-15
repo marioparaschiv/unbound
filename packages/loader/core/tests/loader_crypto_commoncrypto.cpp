@@ -31,13 +31,14 @@ static std::optional<std::string> commonCrypt(CCOperation operation, const std::
                                               const std::string &iv, const std::string &input)
 {
     std::string output(input.size() + kCCBlockSizeAES128, '\0');
-    size_t      written = 0;
+    size_t written = 0;
     if (CCCrypt(operation, kCCAlgorithmAES, kCCOptionPKCS7Padding, key.data(), key.size(),
-                iv.data(), input.data(), input.size(), output.data(), output.size(),
-                &written) != kCCSuccess)
+                iv.data(), input.data(), input.size(), output.data(), output.size(), &written)
+        != kCCSuccess)
     {
         return std::nullopt;
     }
+
     output.resize(written);
     return output;
 }
@@ -53,11 +54,13 @@ static void matchesCommonCryptoOnVectors()
         assert(commonCrypt(kCCEncrypt, key, iv, plaintext) == ciphertext);
         assert(commonCrypt(kCCDecrypt, key, iv, ciphertext) == plaintext);
     }
+
     for (const Vector &vector : load("hmacsha256"))
     {
-        assert(crypto::hex(commonMAC(fromHex(vector.fields[0]), fromHex(vector.fields[1]))) ==
-               vector.fields[2]);
+        assert(crypto::hex(commonMAC(fromHex(vector.fields[0]), fromHex(vector.fields[1])))
+               == vector.fields[2]);
     }
+
     for (const Vector &vector : load("sha256"))
     {
         assert(crypto::hex(commonDigest(fromHex(vector.fields[0]))) == vector.fields[1]);
@@ -66,15 +69,16 @@ static void matchesCommonCryptoOnVectors()
 
 static void matchesCommonCryptoOnRandomInputs()
 {
-    std::mt19937_64                       generator(20261027);
-    std::uniform_int_distribution<int>    byte(0, 255);
+    std::mt19937_64 generator(20261027);
+    std::uniform_int_distribution<int> byte(0, 255);
     std::uniform_int_distribution<size_t> length(0, 600);
-    auto                                  draw = [&](size_t count) {
+    auto draw = [&](size_t count) {
         std::string value(count, '\0');
         for (char &character : value)
         {
             character = static_cast<char>(byte(generator));
         }
+
         return value;
     };
 
@@ -88,8 +92,8 @@ static void matchesCommonCryptoOnRandomInputs()
         assert(commonCrypt(kCCDecrypt, key, iv, ciphertext) == plaintext);
         assert(crypto::aes256CBCDecrypt(key, iv, ciphertext) == plaintext);
 
-        const std::string                garbage = draw((length(generator) / 16 + 1) * 16);
-        const std::optional<std::string> strict  = crypto::aes256CBCDecrypt(key, iv, garbage);
+        const std::string garbage               = draw((length(generator) / 16 + 1) * 16);
+        const std::optional<std::string> strict = crypto::aes256CBCDecrypt(key, iv, garbage);
         assert(!strict || commonCrypt(kCCDecrypt, key, iv, garbage) == strict);
 
         const std::string macKey = draw(length(generator) % 200);
@@ -102,9 +106,10 @@ static std::string rawEncrypt(const std::string &key, const std::string &iv,
                               const std::string &blocks)
 {
     std::string output(blocks.size(), '\0');
-    size_t      written = 0;
+    size_t written = 0;
     assert(CCCrypt(kCCEncrypt, kCCAlgorithmAES, 0, key.data(), key.size(), iv.data(), blocks.data(),
-                   blocks.size(), output.data(), output.size(), &written) == kCCSuccess);
+                   blocks.size(), output.data(), output.size(), &written)
+           == kCCSuccess);
     return output;
 }
 
@@ -118,6 +123,7 @@ static void rejectsPaddingCommonCryptoLetsThrough()
         assert(commonCrypt(kCCDecrypt, key, iv, ciphertext) == std::string(15, 'p') + last);
         assert(!crypto::aes256CBCDecrypt(key, iv, ciphertext));
     }
+
     const std::string mixed = rawEncrypt(key, iv, std::string(14, 'p') + "\x01\x02");
     assert(commonCrypt(kCCDecrypt, key, iv, mixed) == std::string(14, 'p'));
     assert(!crypto::aes256CBCDecrypt(key, iv, mixed));

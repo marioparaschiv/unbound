@@ -17,12 +17,12 @@ static std::filesystem::path makeTemporaryDirectory()
 
 int main()
 {
-    const auto                         root      = makeTemporaryDirectory();
-    const auto                         documents = root.string();
-    std::string                        manifest  = R"({"bytecodeVersions":[96,98]})";
-    std::string                        requestedURL;
+    const auto root      = makeTemporaryDirectory();
+    const auto documents = root.string();
+    std::string manifest = R"({"bytecodeVersions":[96,98]})";
+    std::string requestedURL;
     std::map<std::string, std::string> requestedHeaders;
-    int                                nextStatus = 200;
+    int nextStatus = 200;
 
     loader::SettingsStore settings((root / "settings.json").string());
     settings.load();
@@ -34,6 +34,7 @@ int main()
             {
                 return std::nullopt;
             }
+
             return manifest;
         },
         [&](const std::string &url, const std::string &destination,
@@ -45,17 +46,18 @@ int main()
             {
                 assert(loader::writeTextFileAtomically(destination, "bundle-" + url));
             }
+
             return loader::DownloadResult{nextStatus, "\"etag-1\""};
         },
         loader::BundleTrust{});
 
     assert(updater.downloadURL(std::nullopt, 98) == "https://builds.unbound.rip/unbound.98.bundle");
     assert(updater.downloadURL(std::nullopt, 90) == "https://builds.unbound.rip/unbound.js");
-    assert(updater.downloadURL(std::string("http://10.0.2.2:3000/unbound.bundle"), 98) ==
-           "http://10.0.2.2:3000/unbound.98.bundle");
+    assert(updater.downloadURL(std::string("http://10.0.2.2:3000/unbound.bundle"), 98)
+           == "http://10.0.2.2:3000/unbound.98.bundle");
     manifest.clear();
-    assert(updater.downloadURL(std::string("http://10.0.2.2:3000/unbound.bundle"), 98) ==
-           "http://10.0.2.2:3000/unbound.bundle");
+    assert(updater.downloadURL(std::string("http://10.0.2.2:3000/unbound.bundle"), 98)
+           == "http://10.0.2.2:3000/unbound.bundle");
     manifest = R"({"bytecodeVersions":[98]})";
 
     std::string initial = updater.resolveBundlePath();
@@ -93,12 +95,13 @@ int main()
     {
         rejected = true;
     }
+
     assert(rejected);
     assert(!loader::fileExists((root / "unbound.bundle.candidate").string()));
 
     settings.set("unbound", "developer-mode", true);
-    manifest                = R"({"bytecodeVersions":[98],"sha512":{"unbound-dev.98.bundle":")" +
-                              loader::sha512Hex("dev") + R"("}})";
+    manifest                = R"({"bytecodeVersions":[98],"sha512":{"unbound-dev.98.bundle":")"
+                              + loader::sha512Hex("dev") + R"("}})";
     nextStatus              = 200;
     std::string development = updater.downloadBundle(updater.resolveBundlePath(), std::nullopt, 98);
     assert(requestedURL == "https://builds.unbound.rip/unbound-dev.98.bundle");

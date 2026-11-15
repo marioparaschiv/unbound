@@ -28,6 +28,7 @@ public:
             state_->stopping = true;
             state_->deadlines.clear();
         }
+
         state_->wake.notify_all();
     }
 
@@ -39,6 +40,7 @@ public:
             {
                 return;
             }
+
             state_->deadlines.push_back(
                 {Clock::now() + delay, state_->sequence++, std::move(work)});
             std::push_heap(state_->deadlines.begin(), state_->deadlines.end(), Later{});
@@ -50,13 +52,14 @@ public:
                 }).detach();
             }
         }
+
         state_->wake.notify_one();
     }
 
 private:
     struct Deadline {
-        Clock::time_point     due;
-        uint64_t              sequence;
+        Clock::time_point due;
+        uint64_t sequence;
         std::function<void()> work;
     };
 
@@ -68,12 +71,12 @@ private:
     };
 
     struct State {
-        mutable std::mutex      mutex;
+        mutable std::mutex mutex;
         std::condition_variable wake;
-        std::vector<Deadline>   deadlines;
-        uint64_t                sequence = 0;
-        bool                    running  = false;
-        bool                    stopping = false;
+        std::vector<Deadline> deadlines;
+        uint64_t sequence = 0;
+        bool running      = false;
+        bool stopping     = false;
     };
 
     static void run(State &state)
@@ -86,12 +89,14 @@ private:
                 state.wake.wait(lock);
                 continue;
             }
+
             const Clock::time_point due = state.deadlines.front().due;
             if (Clock::now() < due)
             {
                 state.wake.wait_until(lock, due);
                 continue;
             }
+
             std::pop_heap(state.deadlines.begin(), state.deadlines.end(), Later{});
             std::function<void()> work = std::move(state.deadlines.back().work);
             state.deadlines.pop_back();

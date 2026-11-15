@@ -29,11 +29,13 @@ namespace {
                 storeNativeValue<void *>(target, nullptr);
                 return;
             }
+
             if (std::shared_ptr<PointerHost> host = loader::ffi::pointerHost(runtime, value))
             {
                 storeNativeValue<void *>(target, host->value());
                 return;
             }
+
             id object = valueToObjC(runtime, value);
             storage.retain(std::make_shared<ObjCHandleHost>(object, liveObjCRetains()));
             storeNativeValue<void *>(target, (__bridge void *) object);
@@ -56,16 +58,19 @@ namespace {
                 storeNativeValue<void *>(target, nullptr);
                 return;
             }
+
             if (std::shared_ptr<ObjCHandleHost> host = objcHost(runtime, value))
             {
                 storeNativeValue<void *>(target, (__bridge void *) host->value());
                 return;
             }
+
             if (std::shared_ptr<PointerHost> host = loader::ffi::pointerHost(runtime, value))
             {
                 storeNativeValue<void *>(target, host->value());
                 return;
             }
+
             throw std::invalid_argument("Native FFI class argument expected");
         }
 
@@ -86,16 +91,19 @@ namespace {
                 storeNativeValue<SEL>(target, NULL);
                 return;
             }
+
             if (value.isString())
             {
                 storeNativeValue<SEL>(target, NSSelectorFromString(jsiString(runtime, value)));
                 return;
             }
+
             if (std::shared_ptr<PointerHost> host = loader::ffi::pointerHost(runtime, value))
             {
                 storeNativeValue<void *>(target, host->value());
                 return;
             }
+
             throw std::invalid_argument("Native FFI selector argument expected");
         }
 
@@ -114,18 +122,20 @@ static std::optional<void *> objcFFIPointer(Runtime &runtime, const Object &obje
     {
         return std::nullopt;
     }
+
     return (__bridge void *) object.getHostObject<ObjCHandleHost>(runtime)->value();
 }
 
-static std::optional<Value> objcFFIStructResult(Runtime                         &runtime,
+static std::optional<Value> objcFFIStructResult(Runtime &runtime,
                                                 const loader::ffi::StructLayout &layout,
-                                                const uint8_t                   *source)
+                                                const uint8_t *source)
 {
     const char *encoding = nativeStructEncoding(layout.name);
     if (!encoding)
     {
         return std::nullopt;
     }
+
     return structResult(runtime, [NSString stringWithUTF8String:layout.name.c_str()] ?: @"",
                         [NSValue value:source withObjCType:encoding]);
 }

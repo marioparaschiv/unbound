@@ -25,8 +25,8 @@ void iosListsTweaksAndInjectedDylibs()
         "/Library/MobileSubstrate/DynamicLibraries/Shadow.dylib",
         "/Library/MobileSubstrate/DynamicLibraries/FLEXing.dylib",
     };
-    assert((loader::injectedIOSLibraries(images) ==
-            std::vector<std::string>{"Cephei", "Enmity", "FLEXing", "Shadow"}));
+    assert((loader::injectedIOSLibraries(images)
+            == std::vector<std::string>{"Cephei", "Enmity", "FLEXing", "Shadow"}));
 }
 
 void androidListsOtherModulesOnce()
@@ -45,8 +45,9 @@ void androidListsOtherModulesOnce()
         "7700-7800 r--p 00000000 fd:05 8 /data/adb/modules/zygisk_shamiko/zygisk/arm64-v8a.so\n"
         "7800-7900 r--p 00000000 fd:05 9 /data/app/com.legacy.module-1/base.apk\n"
         "7900-7a00 rw-p 00000000 00:00 0 [anon:dalvik-main space]\n";
-    assert((loader::injectedAndroidModules(maps, "com.discord") ==
-            std::vector<std::string>{"com.example.hide", "com.legacy.module", "zygisk_shamiko"}));
+    assert(
+        (loader::injectedAndroidModules(maps, "com.discord")
+         == std::vector<std::string>{"com.example.hide", "com.legacy.module", "zygisk_shamiko"}));
 }
 
 int main()

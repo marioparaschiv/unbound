@@ -35,9 +35,9 @@ constexpr size_t kMaxDecodedFontBytes = 3 * kMaxFontDownloadBytes;
 struct FontAxis {
     std::string tag;
     std::string name;
-    double      minimum      = 0;
-    double      defaultValue = 0;
-    double      maximum      = 0;
+    double minimum      = 0;
+    double defaultValue = 0;
+    double maximum      = 0;
     // The font asks apps not to offer it, such as an optical size that follows the text size.
     bool hidden = false;
 };
@@ -47,22 +47,22 @@ using FontVariations = std::map<std::string, double>;
 
 // A variable font's named instance, such as `Bold` at `{ wght: 700 }`.
 struct FontInstance {
-    std::string    postScriptName;
-    std::string    style;
+    std::string postScriptName;
+    std::string style;
     FontVariations coordinates;
 };
 
 // One face read from a font file: its names, the weight and style it declares itself, and for a
 // variable font its axes, named instances and the coordinates this face draws at.
 struct FontFace {
-    std::string               postScriptName;
-    std::string               fullName;
-    std::string               family;
-    int                       weight = 400;
-    bool                      italic = false;
-    std::vector<FontAxis>     axes;
+    std::string postScriptName;
+    std::string fullName;
+    std::string family;
+    int weight  = 400;
+    bool italic = false;
+    std::vector<FontAxis> axes;
     std::vector<FontInstance> instances;
-    FontVariations            variations;
+    FontVariations variations;
 };
 
 // Checks `data` is a usable TrueType or OpenType font, static or variable (index 0 of a
@@ -91,7 +91,7 @@ struct ArchiveFont {
 // inflates.
 struct ArchiveContents {
     std::vector<ArchiveFont> fonts;
-    std::string              error;
+    std::string error;
 };
 
 ArchiveContents extractFontArchive(const std::string &zip, const ArchiveLimits &limits = {});

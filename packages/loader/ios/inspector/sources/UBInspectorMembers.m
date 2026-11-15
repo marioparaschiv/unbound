@@ -23,37 +23,64 @@ static void UBSetImage(NSMutableDictionary *member, const void *address)
 {
     Dl_info info;
     if (address && dladdr(address, &info) && info.dli_fname)
+    {
         member[@"image"] = @(info.dli_fname);
+    }
 }
 
 static NSDictionary *UBPropertyMember(Class cls, objc_property_t property, BOOL classProperty)
 {
-    NSString               *name       = @(property_getName(property));
+    NSString *name                     = @(property_getName(property));
     FLEXPropertyAttributes *attributes = [FLEXPropertyAttributes attributesForProperty:property];
-    NSString               *type       = UBType(attributes.typeEncoding.UTF8String);
+    NSString *type                     = UBType(attributes.typeEncoding.UTF8String);
 
     NSMutableArray<NSString *> *flags = [NSMutableArray new];
     if (attributes.isNonatomic)
+    {
         [flags addObject:@"nonatomic"];
-    if (attributes.isRetained)
-        [flags addObject:@"strong"];
-    if (attributes.isCopy)
-        [flags addObject:@"copy"];
-    if (attributes.isWeak)
-        [flags addObject:@"weak"];
-    if (attributes.isReadOnly)
-        [flags addObject:@"readonly"];
-    if (attributes.isDynamic)
-        [flags addObject:@"dynamic"];
-    if (classProperty)
-        [flags addObject:@"class"];
+    }
 
-    NSString                   *getter   = attributes.customGetterString ?: name;
+    if (attributes.isRetained)
+    {
+        [flags addObject:@"strong"];
+    }
+
+    if (attributes.isCopy)
+    {
+        [flags addObject:@"copy"];
+    }
+
+    if (attributes.isWeak)
+    {
+        [flags addObject:@"weak"];
+    }
+
+    if (attributes.isReadOnly)
+    {
+        [flags addObject:@"readonly"];
+    }
+
+    if (attributes.isDynamic)
+    {
+        [flags addObject:@"dynamic"];
+    }
+
+    if (classProperty)
+    {
+        [flags addObject:@"class"];
+    }
+
+    NSString *getter                     = attributes.customGetterString ?: name;
     NSMutableArray<NSString *> *declared = flags.mutableCopy;
     if (attributes.customGetterString)
+    {
         [declared addObject:[@"getter=" stringByAppendingString:getter]];
+    }
+
     if (attributes.customSetterString)
+    {
         [declared addObject:[@"setter=" stringByAppendingString:attributes.customSetterString]];
+    }
 
     NSMutableDictionary *member = [@{
         @"name" : name,
@@ -67,9 +94,15 @@ static NSDictionary *UBPropertyMember(Class cls, objc_property_t property, BOOL 
         @"read" : UBPropertyRead(cls, property, classProperty),
     } mutableCopy];
     if (attributes.typeEncoding)
+    {
         member[@"encoding"] = attributes.typeEncoding;
+    }
+
     if (attributes.backingIvar.length)
+    {
         member[@"ivar"] = attributes.backingIvar;
+    }
+
     if (!attributes.isReadOnly && name.length)
     {
         member[@"setter"] =
@@ -78,13 +111,14 @@ static NSDictionary *UBPropertyMember(Class cls, objc_property_t property, BOOL 
                        stringWithFormat:@"set%@%@:", [name substringToIndex:1].uppercaseString,
                                         [name substringFromIndex:1]];
     }
+
     return member;
 }
 
 static NSDictionary *UBIvarMember(Class cls, Ivar ivar)
 {
-    const char          *encoding = ivar_getTypeEncoding(ivar) ?: "";
-    NSMutableDictionary *member   = [@{
+    const char *encoding        = ivar_getTypeEncoding(ivar) ?: "";
+    NSMutableDictionary *member = [@{
         @"name" : @(ivar_getName(ivar) ?: "?"),
         @"kind" : @"ivars",
         @"type" : UBType(encoding),
@@ -96,27 +130,33 @@ static NSDictionary *UBIvarMember(Class cls, Ivar ivar)
     ssize_t size =
         encoding[0] ? [FLEXTypeEncodingParser sizeForTypeEncoding:@(encoding) alignment:NULL] : -1;
     if (size >= 0)
+    {
         member[@"size"] = @(size);
+    }
+
     if (encoding[0] == '@' && UBIvarIsWeak(cls, ivar))
+    {
         member[@"attributes"] = @[ @"weak" ];
+    }
+
     return member;
 }
 
 static NSDictionary *UBMethodMember(Method method, BOOL classMethod)
 {
-    NSString *name           = NSStringFromSelector(method_getName(method));
-    char     *returnEncoding = method_copyReturnType(method);
-    NSString *returnType     = UBType(returnEncoding);
+    NSString *name       = NSStringFromSelector(method_getName(method));
+    char *returnEncoding = method_copyReturnType(method);
+    NSString *returnType = UBType(returnEncoding);
     free(returnEncoding);
 
-    unsigned int                count       = method_getNumberOfArguments(method);
-    NSArray<NSString *>        *parts       = [name componentsSeparatedByString:@":"];
+    unsigned int count                      = method_getNumberOfArguments(method);
+    NSArray<NSString *> *parts              = [name componentsSeparatedByString:@":"];
     NSMutableArray<NSString *> *parameters  = [NSMutableArray new];
     NSMutableArray<NSString *> *declaration = [NSMutableArray new];
     for (unsigned int index = 2; index < count; index++)
     {
-        char     *argument = method_copyArgumentType(method, index);
-        NSString *type     = UBType(argument);
+        char *argument = method_copyArgumentType(method, index);
+        NSString *type = UBType(argument);
         free(argument);
 
         [parameters addObject:type];
@@ -152,7 +192,7 @@ static NSDictionary *UBProtocolMember(Protocol *protocol)
 
 /** One member of a cached list: its name to sort and filter by, and its result, built the first
  * time a page shows it. */
-@interface                            UBInspectorMemberEntry : NSObject
+@interface UBInspectorMemberEntry : NSObject
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, copy) NSString *kind;
 @property (nonatomic, copy) NSDictionary * (^build)(void);
@@ -169,12 +209,15 @@ static NSDictionary *UBEntryMember(UBInspectorMemberEntry *entry)
     @synchronized(entry)
     {
         if (entry.member)
+        {
             return entry.member;
+        }
 
         @try
         {
             entry.member = entry.build();
         }
+
         @catch (NSException *exception)
         {
             entry.member = @{
@@ -184,6 +227,7 @@ static NSDictionary *UBEntryMember(UBInspectorMemberEntry *entry)
                 @"read" : UBReadNever
             };
         }
+
         entry.build = nil;
         return entry.member;
     }
@@ -202,13 +246,13 @@ static void UBAddEntry(NSMutableArray<UBInspectorMemberEntry *> *entries, const 
 static NSArray<UBInspectorMemberEntry *> *UBBuildEntries(Class cls, NSString *kind)
 {
     NSMutableArray<UBInspectorMemberEntry *> *members = [NSMutableArray new];
-    unsigned int                              count   = 0;
+    unsigned int count                                = 0;
 
     if ([kind isEqualToString:@"properties"])
     {
         for (int pass = 0; pass < 2; pass++)
         {
-            BOOL             classProperty = pass == 1;
+            BOOL classProperty = pass == 1;
             objc_property_t *properties =
                 class_copyPropertyList(classProperty ? object_getClass(cls) : cls, &count);
             for (unsigned int index = 0; index < count; index++)
@@ -217,6 +261,7 @@ static NSArray<UBInspectorMemberEntry *> *UBBuildEntries(Class cls, NSString *ki
                 UBAddEntry(members, property_getName(property), kind,
                            ^{ return UBPropertyMember(cls, property, classProperty); });
             }
+
             free(properties);
         }
     }
@@ -228,18 +273,20 @@ static NSArray<UBInspectorMemberEntry *> *UBBuildEntries(Class cls, NSString *ki
             Ivar ivar = ivars[index];
             UBAddEntry(members, ivar_getName(ivar), kind, ^{ return UBIvarMember(cls, ivar); });
         }
+
         free(ivars);
     }
     else if ([kind isEqualToString:@"methods"] || [kind isEqualToString:@"classMethods"])
     {
-        BOOL    classMethod = [kind isEqualToString:@"classMethods"];
-        Method *methods = class_copyMethodList(classMethod ? object_getClass(cls) : cls, &count);
+        BOOL classMethod = [kind isEqualToString:@"classMethods"];
+        Method *methods  = class_copyMethodList(classMethod ? object_getClass(cls) : cls, &count);
         for (unsigned int index = 0; index < count; index++)
         {
             Method method = methods[index];
             UBAddEntry(members, sel_getName(method_getName(method)), kind,
                        ^{ return UBMethodMember(method, classMethod); });
         }
+
         free(methods);
     }
     else if ([kind isEqualToString:@"protocols"])
@@ -251,6 +298,7 @@ static NSArray<UBInspectorMemberEntry *> *UBBuildEntries(Class cls, NSString *ki
             UBAddEntry(members, protocol_getName(protocol), kind,
                        ^{ return UBProtocolMember(protocol); });
         }
+
         free(protocols);
     }
 
@@ -266,7 +314,7 @@ static NSArray<UBInspectorMemberEntry *> *UBBuildEntries(Class cls, NSString *ki
 static NSArray<UBInspectorMemberEntry *> *UBEntries(Class cls, NSString *kind)
 {
     static NSCache<NSString *, NSArray<UBInspectorMemberEntry *> *> *cache;
-    static dispatch_once_t                                           once;
+    static dispatch_once_t once;
     dispatch_once(&once, ^{
         cache            = [NSCache new];
         cache.countLimit = 128;
@@ -281,6 +329,7 @@ static NSArray<UBInspectorMemberEntry *> *UBEntries(Class cls, NSString *kind)
         entries = UBBuildEntries(cls, kind);
         [cache setObject:entries forKey:key];
     }
+
     return entries;
 }
 
@@ -292,7 +341,10 @@ NSDictionary *UBListMemberPage(Class cls, NSString *kind, NSUInteger offset, NSU
 
     NSMutableArray<NSDictionary *> *members = [NSMutableArray new];
     for (UBInspectorMemberEntry *entry in page[@"members"])
+    {
         [members addObject:UBEntryMember(entry)];
+    }
+
     return @{@"total" : page[@"total"], @"members" : members};
 }
 
@@ -320,5 +372,6 @@ NSUInteger UBMemberCount(Class cls, NSString *kind)
     {
         free(class_copyProtocolList(cls, &count));
     }
+
     return count + classCount;
 }

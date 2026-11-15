@@ -15,7 +15,7 @@
 
 namespace loader {
 constexpr DownloadPolicy kBundleDownloadPolicy{};
-constexpr double         kManifestFetchTimeoutSeconds = 5.0;
+constexpr double kManifestFetchTimeoutSeconds = 5.0;
 
 bool isAcceptedDownloadStatus(int status);
 // Seconds a Retry-After header asks to wait; HTTP dates and nonsense give nothing.
@@ -39,7 +39,7 @@ public:
     {
     }
 
-    BundleUpdateFailure   failure;
+    BundleUpdateFailure failure;
     std::optional<double> retryAfter;
 };
 
@@ -66,42 +66,42 @@ public:
     std::string currentBundlePath() const;
     // `ignorePause` is for an explicit manual refetch, which checks even while client updates
     // are paused; launch-time updates leave it false.
-    std::string downloadBundle(const std::string                &preferredPath,
+    std::string downloadBundle(const std::string &preferredPath,
                                const std::optional<std::string> &updateURL,
                                uint32_t bytecodeVersion, bool ignorePause = false);
     std::string downloadURL(const std::optional<std::string> &updateURL, uint32_t bytecodeVersion);
     // Whether a newer bundle than the one at `preferredPath` is published, verifying its manifest
     // without downloading the bundle. False while client updates are paused and the cached bundle
     // can stay, or while a downloaded candidate waits.
-    bool isUpdateAvailable(const std::string                &preferredPath,
+    bool isUpdateAvailable(const std::string &preferredPath,
                            const std::optional<std::string> &updateURL, uint32_t bytecodeVersion);
 
     // The DevTools backend the bundle at `bundlePath` was built with, verified against that
     // bundle's manifest and cached beside it; downloads it on first use.
     std::optional<std::string> devtoolsScript(const std::string &bundlePath,
-                                              uint32_t           bytecodeVersion);
+                                              uint32_t bytecodeVersion);
 
     std::optional<std::string> integrityProblem(const std::string &path);
-    void                       healDamagedBundle(const std::string &path);
+    void healDamagedBundle(const std::string &path);
 
     bool markBundleAttempted(const std::string &path);
     bool acceptBundle(const std::string &path);
     void rejectBundle(const std::string &path);
     void discardFailedBundle(const std::string &path);
     // Puts back the bundle the last promotion replaced; false when there is none to put back.
-    bool                       rollBackToPrevious();
+    bool rollBackToPrevious();
     std::optional<std::string> previousBundleRevision() const;
 
     const std::string &documents() const;
 
-    bool                developerMode() const;
+    bool developerMode() const;
     std::optional<bool> recordedDeveloperMode(const std::string &path) const;
 
     std::optional<BundleBaseline> baseline() const;
 
 private:
     struct BundleSource {
-        std::string                baseURL;
+        std::string baseURL;
         std::optional<std::string> directURL;
     };
 
@@ -112,23 +112,23 @@ private:
     struct DownloadPlan {
         std::string url;
         // The bundle's file name in the manifest, such as `unbound.98.bundle`.
-        std::string              file;
-        std::string              source;
-        std::string              exemption;
-        std::string              manifestText;
-        std::string              manifestSignature;
-        std::string              expectedSha512;
+        std::string file;
+        std::string source;
+        std::string exemption;
+        std::string manifestText;
+        std::string manifestSignature;
+        std::string expectedSha512;
         std::vector<std::string> patchBases;
-        bool                     unchanged = false;
+        bool unchanged = false;
         // The manifest's signature, fetched while the bundle downloads; verifyPlan waits for it.
         std::shared_future<std::optional<std::string>> signature;
     };
 
     std::optional<std::string> patchedCandidate(const DownloadPlan &plan,
-                                                const std::string  &targetPath,
-                                                const std::string  &candidatePath) const;
-    std::string                bundlePath(const std::string &extension) const;
-    BundleSource               bundleSource(const std::optional<std::string> &updateURL) const;
+                                                const std::string &targetPath,
+                                                const std::string &candidatePath) const;
+    std::string bundlePath(const std::string &extension) const;
+    BundleSource bundleSource(const std::optional<std::string> &updateURL) const;
     std::optional<std::string> fetch(const std::string &url) const;
     std::string selectURL(const BundleSource &source, const std::optional<BundleManifest> &manifest,
                           uint32_t bytecodeVersion) const;
@@ -137,27 +137,27 @@ private:
     // Fetches the manifest and starts fetching its signature; nothing in the plan is trusted until
     // verifyPlan returns.
     DownloadPlan planDownload(const std::optional<std::string> &updateURL,
-                              uint32_t                          bytecodeVersion);
+                              uint32_t bytecodeVersion);
     // Checks the manifest's signature, rollback, loader and bridge versions, and fills in the
     // bundle's expected hash; throws a BundleUpdateError for a manifest it refuses.
-    void                       verifyPlan(DownloadPlan &plan) const;
+    void verifyPlan(DownloadPlan &plan) const;
     std::optional<std::string> verifiedRecord(const DownloadPlan &plan,
-                                              const std::string  &candidatePath) const;
+                                              const std::string &candidatePath) const;
     std::optional<std::string> candidateProblem(const std::string &candidatePath) const;
     bool isActiveManifest(const std::string &url, const std::string &manifestText) const;
-    std::optional<std::string> pauseProblem(const std::string                &path,
+    std::optional<std::string> pauseProblem(const std::string &path,
                                             const std::optional<std::string> &updateURL,
                                             uint32_t bytecodeVersion) const;
     // The cached bundle paused client updates keep, or nothing when updates run or it can't stay.
-    std::optional<std::string> pausedBundle(const std::string                &preferredPath,
+    std::optional<std::string> pausedBundle(const std::string &preferredPath,
                                             const std::optional<std::string> &updateURL,
-                                            uint32_t                          bytecodeVersion);
-    void                       recordBaseline(const std::string &record);
+                                            uint32_t bytecodeVersion);
+    void recordBaseline(const std::string &record);
 
-    std::string    documents_;
+    std::string documents_;
     SettingsStore &settings_;
-    TextFetcher    fetchText_;
+    TextFetcher fetchText_;
     FileDownloader download_;
-    BundleTrust    trust_;
+    BundleTrust trust_;
 };
 }

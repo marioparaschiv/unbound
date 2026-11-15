@@ -12,6 +12,7 @@ inline nlohmann::json parseBundleRecord(const std::optional<std::string> &text)
     {
         return nlohmann::json();
     }
+
     nlohmann::json record = nlohmann::json::parse(*text, nullptr, false);
     return record.is_object() ? record : nlohmann::json();
 }

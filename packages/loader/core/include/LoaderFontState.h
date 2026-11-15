@@ -17,9 +17,9 @@ inline constexpr const char *kLocalProvider = "local";
 // Where a face came from: `{ "<provider>": id, "weight"?: n, "style"?: "normal"|"italic" }`, or
 // `{ "local": name }` for a font with no source. Presets hold these instead of files.
 struct FontSource {
-    std::string                provider;
-    std::string                id;
-    std::optional<int>         weight;
+    std::string provider;
+    std::string id;
+    std::optional<int> weight;
     std::optional<std::string> style;
 
     bool local() const
@@ -33,19 +33,19 @@ struct InstalledFont {
     std::string family;
     std::string postScriptName;
     std::string fullName;
-    int         weight = 400;
-    bool        italic = false;
+    int weight  = 400;
+    bool italic = false;
     // Relative to the Fonts folder. A variable font's faces share one file.
     std::string file;
-    FontSource  source;
+    FontSource source;
     // A variable font's axes and the coordinates this face draws at; both empty for a static face.
     std::vector<FontAxis> axes;
-    FontVariations        variations;
+    FontVariations variations;
 };
 
 struct FontPreset {
-    std::string                       id;
-    std::string                       name;
+    std::string id;
+    std::string name;
     std::map<std::string, FontSource> overrides;
 };
 
@@ -53,33 +53,33 @@ struct FontPreset {
 // `DISPLAY`.
 struct DiscordFamily {
     std::vector<std::string> groups;
-    int                      weight = 400;
-    bool                     italic = false;
+    int weight  = 400;
+    bool italic = false;
 };
 
 using DiscordFamilies = std::map<std::string, DiscordFamily>;
 
 struct FontState {
-    std::vector<InstalledFont>         fonts;
+    std::vector<InstalledFont> fonts;
     std::map<std::string, std::string> overrides;
-    std::vector<FontPreset>            presets;
+    std::vector<FontPreset> presets;
 };
 
 // A weight from 1 to 1000. JS numbers cross the bridge as doubles, so `400.0` counts.
-std::optional<int>        fontWeightOf(const nlohmann::json &value);
+std::optional<int> fontWeightOf(const nlohmann::json &value);
 std::optional<FontSource> parseFontSource(const nlohmann::json &value);
-nlohmann::json            fontSourceJSON(const FontSource &source);
-bool                      sameOrigin(const FontSource &left, const FontSource &right);
+nlohmann::json fontSourceJSON(const FontSource &source);
+bool sameOrigin(const FontSource &left, const FontSource &right);
 // The resolver input that names `source` again: a Google family name or the provider's own link.
 std::string fontSourceInput(const FontSource &source);
 
-nlohmann::json               installedFontJSON(const InstalledFont &font);
+nlohmann::json installedFontJSON(const InstalledFont &font);
 std::optional<InstalledFont> parseInstalledFont(const nlohmann::json &value);
-nlohmann::json               fontPresetJSON(const FontPreset &preset);
+nlohmann::json fontPresetJSON(const FontPreset &preset);
 // Validates a preset from JS or a pasted clipboard; `error` names the first problem.
 std::optional<FontPreset> parseFontPreset(const nlohmann::json &value, std::string &error);
 
-FontState      parseFontState(const nlohmann::json &value);
+FontState parseFontState(const nlohmann::json &value);
 nlohmann::json fontStateJSON(const FontState &state);
 
 // Reads `Constants.Fonts` (`{ PRIMARY_SEMIBOLD: "ggsans-Semibold", ... }`) into its families.

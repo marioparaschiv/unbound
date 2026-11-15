@@ -36,6 +36,7 @@ static std::optional<std::string> styleOf(const nlohmann::json &value)
     {
         return value.get<std::string>();
     }
+
     return std::nullopt;
 }
 
@@ -45,11 +46,13 @@ std::optional<int> fontWeightOf(const nlohmann::json &value)
     {
         return std::nullopt;
     }
+
     const double weight = value.get<double>();
     if (!(weight >= 1 && weight <= 1000) || weight != static_cast<int>(weight))
     {
         return std::nullopt;
     }
+
     return static_cast<int>(weight);
 }
 
@@ -59,6 +62,7 @@ std::optional<FontSource> parseFontSource(const nlohmann::json &value)
     {
         return std::nullopt;
     }
+
     std::optional<FontSource> source;
     for (const char *provider : kProviders)
     {
@@ -67,18 +71,22 @@ std::optional<FontSource> parseFontSource(const nlohmann::json &value)
         {
             continue;
         }
+
         if (source || !found->is_string())
         {
             return std::nullopt;
         }
+
         source = FontSource{provider, found->get<std::string>(), std::nullopt, std::nullopt};
     }
-    if (!source || source->id.empty() || source->id.size() > kMaximumSourceId ||
-        hasControlCharacter(source->id) ||
-        (isLinkProvider(source->provider) && !source->id.starts_with("https://")))
+
+    if (!source || source->id.empty() || source->id.size() > kMaximumSourceId
+        || hasControlCharacter(source->id)
+        || (isLinkProvider(source->provider) && !source->id.starts_with("https://")))
     {
         return std::nullopt;
     }
+
     if (const auto weight = value.find("weight"); weight != value.end() && !weight->is_null())
     {
         source->weight = fontWeightOf(*weight);
@@ -87,6 +95,7 @@ std::optional<FontSource> parseFontSource(const nlohmann::json &value)
             return std::nullopt;
         }
     }
+
     if (const auto style = value.find("style"); style != value.end() && !style->is_null())
     {
         source->style = styleOf(*style);
@@ -95,6 +104,7 @@ std::optional<FontSource> parseFontSource(const nlohmann::json &value)
             return std::nullopt;
         }
     }
+
     return source;
 }
 
@@ -105,10 +115,12 @@ nlohmann::json fontSourceJSON(const FontSource &source)
     {
         json["weight"] = *source.weight;
     }
+
     if (source.style)
     {
         json["style"] = *source.style;
     }
+
     return json;
 }
 
@@ -123,18 +135,22 @@ std::string fontSourceInput(const FontSource &source)
     {
         return "https://fontsource.org/fonts/" + source.id;
     }
+
     if (source.provider == "fontshare")
     {
         return "https://www.fontshare.com/fonts/" + source.id;
     }
+
     if (source.provider == "fontsquirrel")
     {
         return "https://www.fontsquirrel.com/fonts/" + source.id;
     }
+
     if (source.provider == "dafont")
     {
         return "https://www.dafont.com/" + source.id + ".font";
     }
+
     return source.id;
 }
 
@@ -160,9 +176,11 @@ nlohmann::json installedFontJSON(const InstalledFont &font)
                             {"max", axis.maximum},
                             {"hidden", axis.hidden}});
         }
+
         json["axes"]       = std::move(axes);
         json["variations"] = font.variations;
     }
+
     return json;
 }
 
@@ -189,14 +207,16 @@ static std::optional<std::vector<FontAxis>> parseAxes(const nlohmann::json &valu
         const auto initial = axis.is_object() ? numberField(axis, "default") : std::nullopt;
         const auto maximum = axis.is_object() ? numberField(axis, "max") : std::nullopt;
         const auto tag     = axis.is_object() ? stringField(axis, "tag") : "";
-        if (tag.empty() || tag.size() > 4 || !minimum || !initial || !maximum ||
-            !(*minimum <= *initial && *initial <= *maximum))
+        if (tag.empty() || tag.size() > 4 || !minimum || !initial || !maximum
+            || !(*minimum <= *initial && *initial <= *maximum))
         {
             return std::nullopt;
         }
+
         axes.push_back({tag, stringField(axis, "name"), *minimum, *initial, *maximum,
                         axis.value("hidden", false) == true});
     }
+
     return axes;
 }
 
@@ -206,6 +226,7 @@ std::optional<InstalledFont> parseInstalledFont(const nlohmann::json &value)
     {
         return std::nullopt;
     }
+
     InstalledFont font;
     font.id             = stringField(value, "id");
     font.family         = stringField(value, "family");
@@ -222,9 +243,10 @@ std::optional<InstalledFont> parseInstalledFont(const nlohmann::json &value)
     {
         return std::nullopt;
     }
+
     font.source = *parsed;
     font.axes   = *axes;
-    std::string          error;
+    std::string error;
     const nlohmann::json variations = value.value("variations", nlohmann::json::object());
     for (const auto &[tag, coordinate] : variations.items())
     {
@@ -233,6 +255,7 @@ std::optional<InstalledFont> parseInstalledFont(const nlohmann::json &value)
             font.variations[tag] = coordinate.get<double>();
         }
     }
+
     // Coordinates past an axis clamp to it; a face naming an axis the font lacks draws at the
     // defaults.
     auto coordinates = instanceCoordinates(font.axes, font.variations, error);
@@ -248,6 +271,7 @@ nlohmann::json fontPresetJSON(const FontPreset &preset)
     {
         overrides[family] = fontSourceJSON(source);
     }
+
     return {{"id", preset.id}, {"name", preset.name}, {"overrides", std::move(overrides)}};
 }
 
@@ -265,34 +289,39 @@ std::optional<FontPreset> parseFontPreset(const nlohmann::json &value, std::stri
         error = "A preset must be an object";
         return std::nullopt;
     }
+
     FontPreset preset;
     preset.id   = stringField(value, "id");
     preset.name = trimmed(stringField(value, "name"));
-    if (preset.name.empty() || preset.name.size() > kMaximumPresetName ||
-        hasControlCharacter(preset.name))
+    if (preset.name.empty() || preset.name.size() > kMaximumPresetName
+        || hasControlCharacter(preset.name))
     {
         error = "A preset needs a name of at most 64 characters";
         return std::nullopt;
     }
+
     const auto overrides = value.find("overrides");
-    if (overrides == value.end() || !overrides->is_object() ||
-        overrides->size() > kMaximumOverrides)
+    if (overrides == value.end() || !overrides->is_object()
+        || overrides->size() > kMaximumOverrides)
     {
         error = "A preset needs an overrides object";
         return std::nullopt;
     }
+
     for (const auto &[family, source] : overrides->items())
     {
         const auto parsed = parseFontSource(source);
-        if (family.empty() || family.size() > kMaximumFamilyName || hasControlCharacter(family) ||
-            !parsed)
+        if (family.empty() || family.size() > kMaximumFamilyName || hasControlCharacter(family)
+            || !parsed)
         {
-            error = "The preset's font for \"" + family.substr(0, kMaximumFamilyName) +
-                    "\" is not valid";
+            error = "The preset's font for \"" + family.substr(0, kMaximumFamilyName)
+                    + "\" is not valid";
             return std::nullopt;
         }
+
         preset.overrides[family] = *parsed;
     }
+
     return preset;
 }
 
@@ -303,6 +332,7 @@ FontState parseFontState(const nlohmann::json &value)
     {
         return state;
     }
+
     for (const nlohmann::json &font : value.value("fonts", nlohmann::json::array()))
     {
         if (auto parsed = parseInstalledFont(font); parsed && !findFont(state.fonts, parsed->id))
@@ -310,6 +340,7 @@ FontState parseFontState(const nlohmann::json &value)
             state.fonts.push_back(std::move(*parsed));
         }
     }
+
     const nlohmann::json overrides = value.value("overrides", nlohmann::json::object());
     for (const auto &[family, id] : overrides.items())
     {
@@ -318,6 +349,7 @@ FontState parseFontState(const nlohmann::json &value)
             state.overrides[family] = id.get<std::string>();
         }
     }
+
     for (const nlohmann::json &preset : value.value("presets", nlohmann::json::array()))
     {
         std::string error;
@@ -326,6 +358,7 @@ FontState parseFontState(const nlohmann::json &value)
             state.presets.push_back(std::move(*parsed));
         }
     }
+
     return state;
 }
 
@@ -337,10 +370,12 @@ nlohmann::json fontStateJSON(const FontState &state)
     {
         fonts.push_back(installedFontJSON(font));
     }
+
     for (const FontPreset &preset : state.presets)
     {
         presets.push_back(fontPresetJSON(preset));
     }
+
     return {{"version", 1},
             {"fonts", std::move(fonts)},
             {"overrides", state.overrides},
@@ -374,7 +409,7 @@ static std::optional<int> weightNamed(const std::string &text)
                                                                            {"thin", 100},
                                                                            {"normal", 400},
                                                                            {"regular", 400}}};
-    const std::string                                         lower    = lowercase(text);
+    const std::string lower                                            = lowercase(text);
     for (const auto &[name, weight] : kWeights)
     {
         if (lower.find(name) != std::string::npos)
@@ -382,6 +417,7 @@ static std::optional<int> weightNamed(const std::string &text)
             return weight;
         }
     }
+
     return std::nullopt;
 }
 
@@ -398,24 +434,27 @@ DiscordFamilies discordFamilies(const nlohmann::json &constants)
     {
         return families;
     }
+
     for (const auto &[key, value] : constants.items())
     {
         if (!value.is_string() || key.empty())
         {
             continue;
         }
+
         const std::string group = key.substr(0, key.find('_'));
         const std::string list  = value.get<std::string>();
-        size_t            start = 0;
+        size_t start            = 0;
         while (start <= list.size())
         {
-            const size_t      end    = std::min(list.find(',', start), list.size());
+            const size_t end         = std::min(list.find(',', start), list.size());
             const std::string family = trimmed(list.substr(start, end - start));
             start                    = end + 1;
             if (family.empty() || family.size() > kMaximumFamilyName)
             {
                 continue;
             }
+
             // Discord lists one family under several groups, such as ggsans-Bold in PRIMARY and
             // DISPLAY.
             if (const auto known = families.find(family); known != families.end())
@@ -425,14 +464,17 @@ DiscordFamilies discordFamilies(const nlohmann::json &constants)
                 {
                     groups.push_back(group);
                 }
+
                 continue;
             }
+
             const auto weight = weightNamed(key);
             families[family]  = {{group},
                                  weight.value_or(weightNamed(family).value_or(400)),
                                  italicNamed(key) || italicNamed(family)};
         }
     }
+
     return families;
 }
 
@@ -443,6 +485,7 @@ DiscordFamily discordFamily(const DiscordFamilies &families, const std::string &
     {
         return found->second;
     }
+
     return {{}, weightNamed(family).value_or(400), italicNamed(family)};
 }
 
@@ -455,14 +498,17 @@ std::string fontIdFor(const std::string &postScriptName)
         {
             break;
         }
+
         const bool safe =
             std::isalnum(character) || character == '.' || character == '_' || character == '-';
         id += safe ? static_cast<char>(character) : '-';
     }
+
     if (id.empty() || id.front() == '.')
     {
         id.insert(id.begin(), 'f');
     }
+
     return id.substr(0, kMaximumFontIdBytes);
 }
 
@@ -477,14 +523,15 @@ const InstalledFont *findFont(const std::vector<InstalledFont> &fonts, const std
 const InstalledFont *nearestFace(const std::vector<InstalledFont> &fonts, int weight, bool italic,
                                  const std::function<bool(const InstalledFont &)> &accept)
 {
-    const InstalledFont *best      = nullptr;
-    int                  bestScore = 0;
+    const InstalledFont *best = nullptr;
+    int bestScore             = 0;
     for (const InstalledFont &font : fonts)
     {
         if (!accept(font))
         {
             continue;
         }
+
         // A style mismatch costs more than any weight gap.
         const int score = std::abs(font.weight - weight) + (font.italic == italic ? 0 : 2000);
         if (!best || score < bestScore)
@@ -493,13 +540,14 @@ const InstalledFont *nearestFace(const std::vector<InstalledFont> &fonts, int we
             bestScore = score;
         }
     }
+
     return best;
 }
 
 const InstalledFont *matchSource(const std::vector<InstalledFont> &fonts, const FontSource &source,
                                  const DiscordFamily &family)
 {
-    const int  weight = source.weight.value_or(family.weight);
+    const int weight  = source.weight.value_or(family.weight);
     const bool italic = source.style ? *source.style == "italic" : family.italic;
     const auto face   = nearestFace(fonts, weight, italic, [&](const InstalledFont &font) {
         return sameOrigin(font.source, source);
@@ -539,6 +587,7 @@ withOverride(const FontState &state, const DiscordFamilies &families, const std:
         {
             overrides.erase(key);
         }
+
         return overrides;
     }
 
@@ -549,13 +598,15 @@ withOverride(const FontState &state, const DiscordFamilies &families, const std:
             overrides.erase(family);
             continue;
         }
-        const DiscordFamily  wanted = discordFamily(families, family);
+
+        const DiscordFamily wanted = discordFamily(families, family);
         const InstalledFont *face =
             nearestFace(state.fonts, wanted.weight, wanted.italic, [&](const InstalledFont &font) {
                 return font.family == chosen->family;
             });
         overrides[family] = face ? face->id : chosen->id;
     }
+
     return overrides;
 }
 }

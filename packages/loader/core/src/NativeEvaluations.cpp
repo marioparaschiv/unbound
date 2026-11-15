@@ -17,6 +17,7 @@ static size_t codePointBoundary(const std::string &text, size_t limit)
     {
         end--;
     }
+
     return end;
 }
 
@@ -38,21 +39,24 @@ static std::optional<std::string> optionalText(const nlohmann::json &input, cons
     {
         return std::nullopt;
     }
+
     if (!found->is_string())
     {
         throw std::invalid_argument("value and error must be strings when present");
     }
+
     return truncatedText(found->get<std::string>(), kEvaluationFieldLimit);
 }
 
 static std::vector<EvaluationLogLine> parseLogs(const nlohmann::json &input)
 {
     std::vector<EvaluationLogLine> lines;
-    auto                           found = input.find("logs");
+    auto found = input.find("logs");
     if (found == input.end() || found->is_null())
     {
         return lines;
     }
+
     if (!found->is_array())
     {
         throw std::invalid_argument("logs must be an array when present");
@@ -60,8 +64,8 @@ static std::vector<EvaluationLogLine> parseLogs(const nlohmann::json &input)
 
     for (size_t index = 0; index < found->size(); index++)
     {
-        const nlohmann::json &line     = (*found)[index];
-        const std::string     position = "logs[" + std::to_string(index) + "]";
+        const nlohmann::json &line = (*found)[index];
+        const std::string position = "logs[" + std::to_string(index) + "]";
         if (!line.is_object())
         {
             throw std::invalid_argument(position + " must be an object");
@@ -69,18 +73,18 @@ static std::vector<EvaluationLogLine> parseLogs(const nlohmann::json &input)
 
         auto level   = line.find("level");
         auto message = line.find("message");
-        if (level == line.end() || !level->is_number() || message == line.end() ||
-            !message->is_string())
+        if (level == line.end() || !level->is_number() || message == line.end()
+            || !message->is_string())
         {
-            throw std::invalid_argument(position +
-                                        " must have a level of 1, 2 or 3 and a string message");
+            throw std::invalid_argument(position
+                                        + " must have a level of 1, 2 or 3 and a string message");
         }
 
         double number = level->get<double>();
         if (number != 1 && number != 2 && number != 3)
         {
-            throw std::invalid_argument(position +
-                                        " must have a level of 1, 2 or 3 and a string message");
+            throw std::invalid_argument(position
+                                        + " must have a level of 1, 2 or 3 and a string message");
         }
 
         if (lines.size() < kEvaluationLogLineLimit)
@@ -89,6 +93,7 @@ static std::vector<EvaluationLogLine> parseLogs(const nlohmann::json &input)
                              truncatedText(message->get<std::string>(), kEvaluationFieldLimit)});
         }
     }
+
     return lines;
 }
 
@@ -102,9 +107,9 @@ EvaluationRecord parseEvaluationRecord(const nlohmann::json &input)
     auto identifier = input.find("id");
     auto code       = input.find("code");
     auto ok         = input.find("ok");
-    if (identifier == input.end() || !identifier->is_string() ||
-        identifier->get<std::string>().empty() || code == input.end() || !code->is_string() ||
-        ok == input.end() || !ok->is_boolean())
+    if (identifier == input.end() || !identifier->is_string()
+        || identifier->get<std::string>().empty() || code == input.end() || !code->is_string()
+        || ok == input.end() || !ok->is_boolean())
     {
         throw std::invalid_argument("id and code must be strings and ok must be a boolean");
     }
@@ -153,6 +158,7 @@ static LogLevel logLevel(EvaluationLogLevel level)
         case EvaluationLogLevel::Log:
             return LogLevel::Info;
     }
+
     return LogLevel::Info;
 }
 
@@ -167,6 +173,7 @@ static const char *levelName(EvaluationLogLevel level)
         case EvaluationLogLevel::Log:
             return "log";
     }
+
     return "log";
 }
 
@@ -176,15 +183,15 @@ static void logRecord(const EvaluationRecord &record)
         record.ok ? truncatedText(record.value.value_or("undefined"), kEvaluationLogFieldLimit)
                   : truncatedText(record.error.value_or("unknown error"), kEvaluationLogFieldLimit);
     log(record.ok ? LogLevel::Info : LogLevel::Error, LOG_CATEGORY_DEBUGGER,
-        "Eval " + record.identifier + (record.ok ? " succeeded" : " failed") + " (" +
-            std::to_string(record.logs.size()) + " console lines)\n> " +
-            truncatedText(record.code, kEvaluationLogFieldLimit) + "\n< " + outcome);
+        "Eval " + record.identifier + (record.ok ? " succeeded" : " failed") + " ("
+            + std::to_string(record.logs.size()) + " console lines)\n> "
+            + truncatedText(record.code, kEvaluationLogFieldLimit) + "\n< " + outcome);
 
     for (const auto &line : record.logs)
     {
         log(logLevel(line.level), "debugger",
-            "Eval " + record.identifier + " [" + levelName(line.level) + "] " +
-                truncatedText(line.message, kEvaluationLogFieldLimit));
+            "Eval " + record.identifier + " [" + levelName(line.level) + "] "
+                + truncatedText(line.message, kEvaluationLogFieldLimit));
     }
 }
 
@@ -216,6 +223,7 @@ bool EvaluationHistory::record(const nlohmann::json &input)
     {
         records_.pop_front();
     }
+
     return true;
 }
 
@@ -232,6 +240,7 @@ nlohmann::json EvaluationHistory::json() const
     {
         result.push_back(evaluationRecordJSON(record));
     }
+
     return result;
 }
 
@@ -247,14 +256,17 @@ static nlohmann::json inputJSON(jsi::Runtime &runtime, const jsi::Value &value, 
     {
         return value.getBool();
     }
+
     if (value.isNumber())
     {
         return value.getNumber();
     }
+
     if (value.isString())
     {
         return value.getString(runtime).utf8(runtime);
     }
+
     if (!value.isObject() || depth >= kEvaluationInputDepth)
     {
         return nullptr;
@@ -263,12 +275,13 @@ static nlohmann::json inputJSON(jsi::Runtime &runtime, const jsi::Value &value, 
     jsi::Object object = value.asObject(runtime);
     if (object.isArray(runtime))
     {
-        jsi::Array     array  = object.asArray(runtime);
+        jsi::Array array      = object.asArray(runtime);
         nlohmann::json result = nlohmann::json::array();
         for (size_t index = 0; index < array.size(runtime); index++)
         {
             result.push_back(inputJSON(runtime, array.getValueAtIndex(runtime, index), depth + 1));
         }
+
         return result;
     }
 
@@ -281,6 +294,7 @@ static nlohmann::json inputJSON(jsi::Runtime &runtime, const jsi::Value &value, 
             result[name] = inputJSON(runtime, property, depth + 1);
         }
     }
+
     return result;
 }
 

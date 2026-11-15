@@ -41,6 +41,7 @@ static NSString *browserLoginQueryValue(NSURLComponents *components, NSString *n
             return item.value;
         }
     }
+
     return nil;
 }
 
@@ -101,6 +102,7 @@ static void openSafariExtensionSettings(NSString *identifier) API_AVAILABLE(ios(
                                {
                                    return;
                                }
+
                                [Logger
                                     error:LOG_CATEGORY_DEFAULT
                                    format:@"Failed to open Safari extension settings: %@.", error];
@@ -194,19 +196,19 @@ static BOOL browserLoginHandleURL(NSURL *url)
     }
 
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    NSString       *state    = [defaults stringForKey:BrowserLoginStateKey];
-    NSData         *secret   = [defaults dataForKey:BrowserLoginSecretKey];
-    NSDate         *date     = [defaults objectForKey:BrowserLoginDateKey];
+    NSString *state          = [defaults stringForKey:BrowserLoginStateKey];
+    NSData *secret           = [defaults dataForKey:BrowserLoginSecretKey];
+    NSDate *date             = [defaults objectForKey:BrowserLoginDateKey];
 
-    NSURLComponents *parts = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
-    NSString        *returnedState = browserLoginQueryValue(parts, @"state");
-    NSData          *iv = browserLoginDecodeBase64URL(browserLoginQueryValue(parts, @"iv"));
+    NSURLComponents *parts  = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
+    NSString *returnedState = browserLoginQueryValue(parts, @"state");
+    NSData *iv              = browserLoginDecodeBase64URL(browserLoginQueryValue(parts, @"iv"));
     NSData *ciphertext  = browserLoginDecodeBase64URL(browserLoginQueryValue(parts, @"ciphertext"));
     NSData *returnedMAC = browserLoginDecodeBase64URL(browserLoginQueryValue(parts, @"mac"));
 
-    browserlogin::Session  session{toStdString(state), secret.length,
-                                   date ? std::optional<double>(-date.timeIntervalSinceNow)
-                                        : std::nullopt};
+    browserlogin::Session session{toStdString(state), secret.length,
+                                  date ? std::optional<double>(-date.timeIntervalSinceNow)
+                                       : std::nullopt};
     browserlogin::Callback callback{toStdString(returnedState), iv.length, ciphertext.length,
                                     returnedMAC.length};
 
@@ -226,8 +228,8 @@ static BOOL browserLoginHandleURL(NSURL *url)
                  error:LOG_CATEGORY_DEFAULT
                 format:
                     @"Browser login validation failed: session=%d fresh=%d secret=%lu iv=%lu ciphertext=%lu mac=%lu age=%.1f.",
-                    secret.length == browserlogin::kSecretBytes &&
-                        browserlogin::isFresh(session.ageSeconds),
+                    secret.length == browserlogin::kSecretBytes
+                        && browserlogin::isFresh(session.ageSeconds),
                     browserlogin::isFresh(session.ageSeconds), (unsigned long) secret.length,
                     (unsigned long) iv.length, (unsigned long) ciphertext.length,
                     (unsigned long) returnedMAC.length, session.ageSeconds.value_or(-1)];
@@ -282,6 +284,7 @@ static BOOL browserLoginShouldHandleController(ASAuthorizationController *contro
             return YES;
         }
     }
+
     return NO;
 }
 
@@ -301,7 +304,7 @@ static void completeIconChange(void (^completion)(NSError *error), NSError *erro
 }
 
 static void setAlternateIconNameWithUIKit(NSString *iconName, void (^completion)(NSError *error),
-                                          NSError  *fallbackError)
+                                          NSError *fallbackError)
 {
     UIApplication *application = UIApplication.sharedApplication;
     SEL setterSelector         = NSSelectorFromString(@"_setAlternateIconName:completionHandler:");
@@ -324,7 +327,7 @@ static void setAlternateIconNameWithUIKit(NSString *iconName, void (^completion)
 void SetAlternateIconName(NSString *iconName, void (^completion)(NSError *error))
 {
     Class bundleProxyClass = NSClassFromString(@"LSBundleProxy");
-    SEL   proxySelector    = NSSelectorFromString(@"bundleProxyForCurrentProcess");
+    SEL proxySelector      = NSSelectorFromString(@"bundleProxyForCurrentProcess");
     if (!bundleProxyClass || ![bundleProxyClass respondsToSelector:proxySelector])
     {
         NSError *error = iconError(1, @"LSBundleProxy is unavailable");
@@ -334,7 +337,7 @@ void SetAlternateIconName(NSString *iconName, void (^completion)(NSError *error)
     }
 
     id (*getBundleProxy)(id, SEL) = (id (*)(id, SEL)) objc_msgSend;
-    id  bundleProxy               = getBundleProxy(bundleProxyClass, proxySelector);
+    id bundleProxy                = getBundleProxy(bundleProxyClass, proxySelector);
     SEL setterSelector            = NSSelectorFromString(@"setAlternateIconName:withResult:");
     if (!bundleProxy || ![bundleProxy respondsToSelector:setterSelector])
     {
@@ -364,7 +367,7 @@ void SetAlternateIconName(NSString *iconName, void (^completion)(NSError *error)
 
 static NSString *signedAppGroup(void)
 {
-    static NSString       *group;
+    static NSString *group;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         id groups =
@@ -392,13 +395,16 @@ static NSString *remappedAppGroup(NSString *identifier)
 }
 
 %hook NSUserDefaults
+
 - (instancetype)initWithSuiteName:(NSString *)suiteName
 {
     return %orig(remappedAppGroup(suiteName));
 }
+
 %end
 
 %hook NSFileManager
+
 - (NSURL *)containerURLForSecurityApplicationGroupIdentifier:(NSString *)identifier
 {
     if (identifier == nil)
@@ -416,11 +422,11 @@ static NSString *remappedAppGroup(NSString *identifier)
     }
 
     NSError *error;
-    NSURL   *url = [[NSFileManager defaultManager] URLForDirectory:NSDocumentDirectory
-                                                          inDomain:NSUserDomainMask
-                                                 appropriateForURL:nil
-                                                            create:YES
-                                                             error:&error];
+    NSURL *url = [[NSFileManager defaultManager] URLForDirectory:NSDocumentDirectory
+                                                        inDomain:NSUserDomainMask
+                                               appropriateForURL:nil
+                                                          create:YES
+                                                           error:&error];
     if (error)
     {
         [Logger error:LOG_CATEGORY_DEFAULT format:@"Failed getting documents directory: %@", error];
@@ -429,6 +435,7 @@ static NSString *remappedAppGroup(NSString *identifier)
 
     return url;
 }
+
 %end
 
 %hook UIDocumentPickerViewController
@@ -448,6 +455,7 @@ static NSString *remappedAppGroup(NSString *identifier)
     {
         [ans setAllowsMultipleSelection:YES];
     }
+
     return ans;
 }
 
@@ -462,6 +470,7 @@ static NSString *remappedAppGroup(NSString *identifier)
     {
         return;
     }
+
     %orig(YES);
 }
 
@@ -488,6 +497,7 @@ static NSString *remappedAppGroup(NSString *identifier)
 %end
 
 %hook UIApplication
+
 - (void)setAlternateIconName:(NSString *)iconName completionHandler:(void (^)(NSError *))completion
 {
     void (^wrappedCompletion)(NSError *) = ^(NSError *error) {
@@ -499,6 +509,7 @@ static NSString *remappedAppGroup(NSString *identifier)
 
     SetAlternateIconName(iconName, wrappedCompletion);
 }
+
 %end
 
 %hook ASAuthorizationController
@@ -510,6 +521,7 @@ static NSString *remappedAppGroup(NSString *identifier)
         browserLoginStart();
         return;
     }
+
     %orig;
 }
 
@@ -520,6 +532,7 @@ static NSString *remappedAppGroup(NSString *identifier)
         browserLoginStart();
         return;
     }
+
     %orig(options);
 }
 
@@ -535,6 +548,7 @@ static NSString *remappedAppGroup(NSString *identifier)
     {
         return YES;
     }
+
     return %orig(application, url, options);
 }
 

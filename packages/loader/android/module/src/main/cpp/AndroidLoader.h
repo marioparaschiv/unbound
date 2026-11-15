@@ -29,11 +29,11 @@ struct JavaCallbacks {
 };
 
 struct LoaderConfiguration {
-    std::string    documents;
+    std::string documents;
     nlohmann::json bootstrapScripts = nlohmann::json::object();
-    std::string    origin;
-    uint32_t       bytecodeVersion = 0;
-    nlohmann::json platformInfo    = nlohmann::json::object();
+    std::string origin;
+    uint32_t bytecodeVersion    = 0;
+    nlohmann::json platformInfo = nlohmann::json::object();
 };
 
 // Android's half of the loader: the JNI transport, scheduling and UI the core `loader::Loader`
@@ -55,7 +55,7 @@ public:
     bool installSchedulerDrain(facebook::jsi::Runtime &runtime);
 
     void runOnRuntime(std::function<void(facebook::jsi::Runtime &)> work) override;
-    void runOnRuntimeCoalesced(std::string                                   key,
+    void runOnRuntimeCoalesced(std::string key,
                                std::function<void(facebook::jsi::Runtime &)> work) override;
     void runOnRuntimeCritical(std::function<void(facebook::jsi::Runtime &)> work) override;
     bool isMainThread() override;
@@ -65,61 +65,63 @@ public:
     void runInBackground(std::function<void()> work) override;
 
     std::optional<std::string> resource(const std::string &name) override;
-    uint32_t                   runtimeBytecodeVersion() override;
+    uint32_t runtimeBytecodeVersion() override;
     std::optional<std::string> fetchText(const std::string &url, double timeoutSeconds) override;
     std::optional<loader::DownloadResult>
-         download(const std::string &url, const std::string &destination,
-                  const std::map<std::string, std::string> &headers,
-                  const loader::DownloadPolicy             &policy) override;
+    download(const std::string &url, const std::string &destination,
+             const std::map<std::string, std::string> &headers,
+             const loader::DownloadPolicy &policy) override;
     void recordSystemExits();
     void collectBackgroundDownload(const std::string &destination) override;
     void continueDownloadInBackground(const std::string &url, const std::string &destination,
                                       const std::map<std::string, std::string> &headers) override;
     bool isServing(const std::string &url, double timeoutSeconds) override;
-    std::optional<std::string>                  devServerHost() override;
+    std::optional<std::string> devServerHost() override;
     std::shared_ptr<loader::HotReloadTransport> hotReloadTransport() override;
-    nlohmann::json                              systemFonts() override;
-    void                                        onFontsChanged() override;
-    void                 installNativeModules(facebook::jsi::Runtime &runtime) override;
-    void                 extendNativeProvider(loader::UnboundNativeProvider &provider) override;
-    void                 onBundleExecuted() override;
-    void                 alert(const std::string &message) override;
-    void                 crashAlert(const std::string &message) override;
-    void                 stuckLaunch(const std::string &message) override;
+    nlohmann::json systemFonts() override;
+    void onFontsChanged() override;
+    void installNativeModules(facebook::jsi::Runtime &runtime) override;
+    void extendNativeProvider(loader::UnboundNativeProvider &provider) override;
+    void onBundleExecuted() override;
+    void alert(const std::string &message) override;
+    void crashAlert(const std::string &message) override;
+    void stuckLaunch(const std::string &message) override;
     loader::PreviousExit previousExit() override;
-    bool                 tracksVisibility() override
+
+    bool tracksVisibility() override
     {
         return true;
     }
+
     bool visibleNow() override;
     bool onMeteredNetwork() override;
     void showUpdateProgress(bool showing) override;
     void reload() override;
 
 private:
-    void           enqueueRuntime(std::function<void(facebook::jsi::Runtime &)> work,
-                                  loader::native::NativeWorkPriority            priority);
-    void           scheduleRuntimeDrain();
-    void           requestRuntimeDrain(bool throughScheduler);
-    void           drainScheduledRuntimeWork(facebook::jsi::Runtime &runtime);
-    bool           drainQueuedRuntimeWork(facebook::jsi::Runtime &runtime);
+    void enqueueRuntime(std::function<void(facebook::jsi::Runtime &)> work,
+                        loader::native::NativeWorkPriority priority);
+    void scheduleRuntimeDrain();
+    void requestRuntimeDrain(bool throughScheduler);
+    void drainScheduledRuntimeWork(facebook::jsi::Runtime &runtime);
+    bool drainQueuedRuntimeWork(facebook::jsi::Runtime &runtime);
     nlohmann::json appFonts();
-    bool           installHomeScreenIcon(const std::string &name, const std::string &imagePath);
+    bool installHomeScreenIcon(const std::string &name, const std::string &imagePath);
 
-    LoaderConfiguration                                                            configuration_;
-    JavaCallbacks                                                                  callbacks_;
+    LoaderConfiguration configuration_;
+    JavaCallbacks callbacks_;
     loader::native::NativeWorkQueue<std::function<void(facebook::jsi::Runtime &)>> runtimeQueue_;
-    std::mutex                                                                     mainQueueMutex_;
-    std::deque<std::function<void()>>                                              mainQueue_;
-    bool                                 mainDrainScheduled_ = false;
+    std::mutex mainQueueMutex_;
+    std::deque<std::function<void()>> mainQueue_;
+    bool mainDrainScheduled_ = false;
     loader::native::NativeFrameWorkQueue frameQueue_;
-    std::atomic<bool>                    schedulerDrainLive_ = false;
-    DeadlineTimer                        timer_;
+    std::atomic<bool> schedulerDrainLive_ = false;
+    DeadlineTimer timer_;
 };
 
 // The running loader and its Android host; both empty before `nativeInitialize`.
 std::shared_ptr<loader::Loader> currentLoader();
-std::shared_ptr<AndroidLoader>  currentHost();
-void                            setDiscordVisible(bool visible);
+std::shared_ptr<AndroidLoader> currentHost();
+void setDiscordVisible(bool visible);
 void setCurrentLoader(std::shared_ptr<loader::Loader> loader, std::shared_ptr<AndroidLoader> host);
 }

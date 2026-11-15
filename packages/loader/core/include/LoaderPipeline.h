@@ -24,6 +24,7 @@ public:
     virtual ~PipelineHost() = default;
 
     virtual void runInBackground(std::function<void()> work) = 0;
+
     // Runs `work` off the main thread once `seconds` have passed.
     virtual void runAfter(double seconds, std::function<void()> work)
     {
@@ -35,39 +36,50 @@ public:
 
     virtual std::optional<std::string> resource(const std::string &name) = 0;
     virtual std::optional<std::string> resolveUpdateURL()                = 0;
-    virtual uint32_t                   runtimeBytecodeVersion()          = 0;
-    virtual UnboundNativeProvider      unboundNativeProvider()           = 0;
+    virtual uint32_t runtimeBytecodeVersion()                            = 0;
+    virtual UnboundNativeProvider unboundNativeProvider()                = 0;
 
     virtual void installNativeModules(facebook::jsi::Runtime &runtime) = 0;
+
     virtual void onAddonsPrepared() {}
+
     virtual void onBundleExecuted() {}
+
     virtual void alert(const std::string &message) {}
+
     // An alert about a crash the loader recovered from, offering to open a prefilled report.
     virtual void crashAlert(const std::string &message)
     {
         alert(message);
     }
+
     virtual void stuckLaunch(const std::string &message) {}
+
     // How the previous process ended, where the platform keeps a record of it.
     virtual PreviousExit previousExit()
     {
         return PreviousExit::Unknown;
     }
+
     virtual bool tracksVisibility()
     {
         return false;
     }
+
     virtual bool visibleNow()
     {
         return false;
     }
+
     // Whether the active network is metered (mobile data, a hotspot or Low Data Mode).
     virtual bool onMeteredNetwork()
     {
         return false;
     }
+
     // Shown while Discord's launch waits for Unbound's bundle to download.
     virtual void showUpdateProgress(bool showing) {}
+
     virtual void reload() {}
 };
 
@@ -83,8 +95,8 @@ public:
 
     struct SavedBundle {
         // Source text; empty when `bytecode` maps the file instead.
-        std::string                                  bundle;
-        std::string                                  path;
+        std::string bundle;
+        std::string path;
         std::shared_ptr<const facebook::jsi::Buffer> bytecode;
 
         bool empty() const
@@ -105,7 +117,7 @@ public:
     // finishes, honours paused client updates and throws what failed. Whether a newer bundle than
     // the saved or staged one is published; downloads nothing. Within kFreshCheckSeconds of a
     // check that found the bundle current, answers from it without asking the server again.
-    bool                    isBundleUpdateAvailable();
+    bool isBundleUpdateAvailable();
     static constexpr double kFreshCheckSeconds = 60.0;
     // Downloads the newer bundle, skipping the Wi-Fi wait; returns whether one waits for the next
     // restart.
@@ -118,8 +130,8 @@ public:
     void markHealthy();
 
     // Seconds after Discord's first screen renders before the launch counts as healthy.
-    static constexpr double      kRenderedHealthySeconds = 3.0;
-    static constexpr double      kStuckLaunchSeconds     = 25.0;
+    static constexpr double kRenderedHealthySeconds = 3.0;
+    static constexpr double kStuckLaunchSeconds     = 25.0;
     static constexpr const char *kStuckLaunchNotice =
         "Discord has not finished starting after 25 seconds. Unbound's Toolbox can turn on "
         "Recovery Mode or remove the downloaded bundle.";
@@ -148,10 +160,10 @@ public:
 
 private:
     struct FirstDownload {
-        uint64_t                   token     = 0;
-        bool                       pending   = false;
-        bool                       settled   = false;
-        bool                       abandoned = false;
+        uint64_t token = 0;
+        bool pending   = false;
+        bool settled   = false;
+        bool abandoned = false;
         std::optional<SavedBundle> fallback;
         std::optional<std::string> path;
     };
@@ -164,36 +176,36 @@ private:
     bool savedFlavourIsCurrent(const std::string &path) const;
     bool settleFirstDownload(uint64_t token, std::optional<std::string> path);
     std::optional<SavedBundle> awaitFirstDownload(uint64_t token);
-    bool        evaluate(facebook::jsi::Runtime &runtime, SavedBundle saved, uint64_t token);
-    void        injectPreBundle(facebook::jsi::Runtime &runtime, const std::string &bundlePath);
-    void        announceCrashDisabledAddons();
-    void        guardLaunch();
-    void        promotePendingBundle();
-    void        recordRunningBundle(const std::string &path);
+    bool evaluate(facebook::jsi::Runtime &runtime, SavedBundle saved, uint64_t token);
+    void injectPreBundle(facebook::jsi::Runtime &runtime, const std::string &bundlePath);
+    void announceCrashDisabledAddons();
+    void guardLaunch();
+    void promotePendingBundle();
+    void recordRunningBundle(const std::string &path);
     std::string recoveryKey() const;
-    void        leaveAutomaticRecoveryIfChanged();
+    void leaveAutomaticRecoveryIfChanged();
 
     std::shared_ptr<PipelineHost> host_;
-    SettingsStore                &settings_;
-    BundleUpdater                &updater_;
-    std::optional<SavedBundle>    saved_;
-    std::mutex                    savedMutex_;
-    std::atomic_uint64_t          token_{0};
-    std::atomic_bool              bundleReady_{false};
-    std::atomic_bool              bundleStaged_{false};
-    std::atomic_bool              evaluationFailed_{false};
-    FirstDownload                 firstDownload_;
-    std::condition_variable       firstDownloadSettled_;
-    std::atomic_bool              launchGuarded_{false};
-    std::atomic_bool              launchHealthy_{false};
-    std::mutex                    promotionMutex_;
-    std::optional<std::string>    pendingPromotion_;
-    std::atomic_bool              checking_{false};
-    std::atomic_bool              waitingForWifi_{false};
-    std::atomic_bool              rendered_{false};
-    std::atomic_bool              frozen_{false};
-    std::atomic_bool              stuckOffered_{false};
-    std::atomic_int64_t           lastCheckMs_{0};
+    SettingsStore &settings_;
+    BundleUpdater &updater_;
+    std::optional<SavedBundle> saved_;
+    std::mutex savedMutex_;
+    std::atomic_uint64_t token_{0};
+    std::atomic_bool bundleReady_{false};
+    std::atomic_bool bundleStaged_{false};
+    std::atomic_bool evaluationFailed_{false};
+    FirstDownload firstDownload_;
+    std::condition_variable firstDownloadSettled_;
+    std::atomic_bool launchGuarded_{false};
+    std::atomic_bool launchHealthy_{false};
+    std::mutex promotionMutex_;
+    std::optional<std::string> pendingPromotion_;
+    std::atomic_bool checking_{false};
+    std::atomic_bool waitingForWifi_{false};
+    std::atomic_bool rendered_{false};
+    std::atomic_bool frozen_{false};
+    std::atomic_bool stuckOffered_{false};
+    std::atomic_int64_t lastCheckMs_{0};
     // When the last finished check found the running or staged bundle current; 0 after any other.
     std::atomic_int64_t currentAtMs_{0};
     std::atomic_int64_t runtimeCreatedMs_{0};

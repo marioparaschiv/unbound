@@ -19,7 +19,7 @@ namespace loader::fonts {
 // A resolver answer is small; a font or archive gets the time a slow connection needs for 10 MB.
 static constexpr DownloadPolicy kResolvePolicy{10.0, 15.0, 20.0};
 static constexpr DownloadPolicy kFontPolicy{15.0, 30.0, 120.0};
-static constexpr size_t         kMaximumResolvedFiles = 64;
+static constexpr size_t kMaximumResolvedFiles = 64;
 
 std::string defaultApiOrigin()
 {
@@ -29,19 +29,21 @@ std::string defaultApiOrigin()
 std::string percentEncode(const std::string &text)
 {
     static constexpr const char *kHex = "0123456789ABCDEF";
-    std::string                  encoded;
+    std::string encoded;
     for (unsigned char character : text)
     {
-        if (std::isalnum(character) || character == '-' || character == '_' || character == '.' ||
-            character == '~')
+        if (std::isalnum(character) || character == '-' || character == '_' || character == '.'
+            || character == '~')
         {
             encoded += static_cast<char>(character);
             continue;
         }
+
         encoded += '%';
         encoded += kHex[character >> 4];
         encoded += kHex[character & 0xF];
     }
+
     return encoded;
 }
 
@@ -61,31 +63,35 @@ void FontService::setApiOrigin(std::string origin)
     {
         origin.pop_back();
     }
+
     if (!origin.starts_with("https://") && !origin.starts_with("http://"))
     {
         return;
     }
+
     std::lock_guard<std::mutex> lock(apiMutex_);
     apiOrigin_ = std::move(origin);
 }
 
 nlohmann::json FontService::list() const
 {
-    const FontState state    = store_.state();
-    nlohmann::json  fonts    = nlohmann::json::array();
-    nlohmann::json  families = nlohmann::json::object();
+    const FontState state   = store_.state();
+    nlohmann::json fonts    = nlohmann::json::array();
+    nlohmann::json families = nlohmann::json::object();
     for (const InstalledFont &font : state.fonts)
     {
         nlohmann::json entry = installedFontJSON(font);
         entry["path"]        = store_.pathOf(font);
         fonts.push_back(std::move(entry));
     }
+
     for (const auto &[family, discord] : store_.families())
     {
         families[family] = {{"groups", discord.groups},
                             {"weight", discord.weight},
                             {"style", discord.italic ? "italic" : "normal"}};
     }
+
     return {{"fonts", std::move(fonts)},
             {"overrides", state.overrides},
             {"families", std::move(families)}};
@@ -102,6 +108,7 @@ nlohmann::json FontService::catalogEntries() const
                            {"path", store_.pathOf(font)},
                            {"source", "custom"}});
     }
+
     return entries;
 }
 
@@ -124,37 +131,39 @@ static std::string resolveFailure(int status)
 
 static bool isProvider(const nlohmann::json &provider)
 {
-    return provider.is_string() && provider != kLocalProvider &&
-           parseFontSource({{provider.get<std::string>(), "https://x"}}).has_value();
+    return provider.is_string() && provider != kLocalProvider
+           && parseFontSource({{provider.get<std::string>(), "https://x"}}).has_value();
 }
 
 // Checks the resolver's answer has the shape `@unbound-app/contracts/fonts` promises.
 static nlohmann::json checkedResolution(const nlohmann::json &value)
 {
     const auto text = [&](const char *key) {
-        return value.contains(key) && value[key].is_string() &&
-               !value[key].get<std::string>().empty();
+        return value.contains(key) && value[key].is_string()
+               && !value[key].get<std::string>().empty();
     };
-    if (!value.is_object() || !isProvider(value.value("provider", nlohmann::json())) ||
-        !text("id") || !text("family") || !value.contains("files") || !value["files"].is_array() ||
-        value["files"].empty() || value["files"].size() > kMaximumResolvedFiles)
+    if (!value.is_object() || !isProvider(value.value("provider", nlohmann::json())) || !text("id")
+        || !text("family") || !value.contains("files") || !value["files"].is_array()
+        || value["files"].empty() || value["files"].size() > kMaximumResolvedFiles)
     {
         throw std::runtime_error("Unbound's font lookup answered with something unreadable");
     }
+
     for (const nlohmann::json &file : value["files"])
     {
         const auto url    = file.value("url", nlohmann::json());
         const auto kind   = file.value("kind", nlohmann::json());
         const auto weight = file.value("weight", nlohmann::json());
         const auto style  = file.value("style", nlohmann::json());
-        if (!url.is_string() || !url.get<std::string>().starts_with("https://") ||
-            (kind != "font" && kind != "archive") ||
-            !(weight.is_null() || (weight.is_number_integer() && weight >= 1 && weight <= 1000)) ||
-            !(style.is_null() || style == "normal" || style == "italic"))
+        if (!url.is_string() || !url.get<std::string>().starts_with("https://")
+            || (kind != "font" && kind != "archive")
+            || !(weight.is_null() || (weight.is_number_integer() && weight >= 1 && weight <= 1000))
+            || !(style.is_null() || style == "normal" || style == "italic"))
         {
             throw std::runtime_error("Unbound's font lookup listed an unreadable file");
         }
     }
+
     return value;
 }
 
@@ -165,6 +174,7 @@ nlohmann::json FontService::resolveLocked(const std::string &input)
         std::lock_guard<std::mutex> lock(apiMutex_);
         origin = apiOrigin_;
     }
+
     const std::string staged = store_.stagingDirectory();
     const std::string target = joinPath(staged, "resolved.json");
     const auto result = download_(origin + "/api/v1/fonts/resolve?input=" + percentEncode(input),
@@ -175,10 +185,12 @@ nlohmann::json FontService::resolveLocked(const std::string &input)
     {
         throw std::runtime_error("Unbound's font lookup could not be reached");
     }
+
     if (result->status != 200 || !text)
     {
         throw std::runtime_error(resolveFailure(result->status));
     }
+
     return checkedResolution(parseBoundedJSON(*text));
 }
 
@@ -195,6 +207,7 @@ static std::optional<std::set<Variant>> variantsOf(const nlohmann::json &value)
     {
         return std::nullopt;
     }
+
     std::set<Variant> variants;
     for (const nlohmann::json &variant : value)
     {
@@ -204,8 +217,10 @@ static std::optional<std::set<Variant>> variantsOf(const nlohmann::json &value)
         {
             throw std::runtime_error("A variant needs a weight from 1 to 1000");
         }
+
         variants.insert({*weight, variant.value("style", "normal") == "italic"});
     }
+
     return variants;
 }
 
@@ -216,29 +231,31 @@ static bool namesItsFamily(const std::string &provider)
 }
 
 struct Staging {
-    const FontStore           &store;
-    const nlohmann::json      &resolved;
-    std::string                directory;
+    const FontStore &store;
+    const nlohmann::json &resolved;
+    std::string directory;
     std::vector<InstalledFont> faces;
-    nlohmann::json             errors = nlohmann::json::array();
+    nlohmann::json errors = nlohmann::json::array();
 
     void add(const std::string &name, const std::string &download, const nlohmann::json &file,
              const std::optional<std::set<Variant>> &variants)
     {
         std::string error;
-        const bool  web  = sniffFontFile(download) == FontFileType::WebFont;
-        const auto  data = web ? decodeWebFont(download, error) : std::optional(download);
-        const auto  face = data ? readFontFace(*data, error) : std::nullopt;
+        const bool web  = sniffFontFile(download) == FontFileType::WebFont;
+        const auto data = web ? decodeWebFont(download, error) : std::optional(download);
+        const auto face = data ? readFontFace(*data, error) : std::nullopt;
         if (!face)
         {
             errors.push_back(name + ": " + error);
             return;
         }
+
         if (!face->axes.empty())
         {
             addVariable(name, *data, *face, variants);
             return;
         }
+
         const int weight =
             file["weight"].is_number_integer() ? file["weight"].get<int>() : face->weight;
         const bool italic = file["style"].is_string() ? file["style"] == "italic" : face->italic;
@@ -246,6 +263,7 @@ struct Staging {
         {
             return;
         }
+
         FontFace styled = *face;
         styled.weight   = weight;
         styled.italic   = italic;
@@ -253,6 +271,7 @@ struct Staging {
         {
             return;
         }
+
         const std::string fileName = save(name, *data, fontIdFor(face->postScriptName));
         if (!fileName.empty())
         {
@@ -281,16 +300,18 @@ private:
     std::string save(const std::string &name, const std::string &data, const std::string &id)
     {
         const std::string extension = "." + fontFileExtension(sniffFontFile(data));
-        std::string       fileName  = id + extension;
+        std::string fileName        = id + extension;
         for (int suffix = 2; fileExists(joinPath(directory, fileName)); suffix++)
         {
             fileName = id + "-" + std::to_string(suffix) + extension;
         }
+
         if (!writeTextFileAtomically(joinPath(directory, fileName), data))
         {
             errors.push_back(name + ": failed to save it");
             return "";
         }
+
         return fileName;
     }
 
@@ -301,6 +322,7 @@ private:
         {
             return;
         }
+
         const std::string provider = resolved["provider"].get<std::string>();
         faces.push_back(
             {id, namesItsFamily(provider) ? resolved["family"].get<std::string>() : face.family,
@@ -316,13 +338,14 @@ static void stageFile(Staging &staging, const FileDownloader &download, const nl
 {
     const std::string url    = file["url"].get<std::string>();
     const std::string target = joinPath(staging.directory, "download-" + std::to_string(index));
-    const auto        result = download(url, target, {}, kFontPolicy);
+    const auto result        = download(url, target, {}, kFontPolicy);
     if (!result || result->status != 200)
     {
-        staging.errors.push_back("Failed to download " + url +
-                                 (result ? ": HTTP " + std::to_string(result->status) : ""));
+        staging.errors.push_back("Failed to download " + url
+                                 + (result ? ": HTTP " + std::to_string(result->status) : ""));
         return;
     }
+
     const bool tooLarge = fileSize(target) > kMaxFontDownloadBytes;
     const auto data     = tooLarge ? std::nullopt : readTextFile(target);
     removeFile(target);
@@ -340,32 +363,36 @@ static void stageFile(Staging &staging, const FileDownloader &download, const nl
         {
             staging.errors.push_back(url + ": " + archive.error);
         }
+
         for (const ArchiveFont &font : archive.fonts)
         {
             staging.add(font.name, font.data, file, variants);
         }
+
         return;
     }
+
     if (type == FontFileType::Unknown)
     {
         staging.errors.push_back(url + ": not a font or a zip (a wrong link answers with a page)");
         return;
     }
+
     staging.add(url, *data, file, variants);
 }
 
 nlohmann::json FontService::installLocked(const std::string &input, const nlohmann::json &variants)
 {
     const nlohmann::json resolved = resolveLocked(input);
-    const auto           wanted   = variantsOf(variants);
-    Staging              staging{store_, resolved, store_.stagingDirectory()};
+    const auto wanted             = variantsOf(variants);
+    Staging staging{store_, resolved, store_.stagingDirectory()};
 
     size_t index = 0;
     for (const nlohmann::json &file : resolved["files"])
     {
         const bool known = file["weight"].is_number_integer();
-        const bool skip  = wanted && known &&
-                           !wanted->count({file["weight"].get<int>(), file["style"] == "italic"});
+        const bool skip = wanted && known
+                          && !wanted->count({file["weight"].get<int>(), file["style"] == "italic"});
         if (!skip)
         {
             stageFile(staging, download_, file, index++, wanted);
@@ -377,8 +404,8 @@ nlohmann::json FontService::installLocked(const std::string &input, const nlohma
         store_.discardStaging(staging.directory);
         const std::string reason =
             staging.errors.empty() ? "no matching font" : staging.errors[0].get<std::string>();
-        throw std::runtime_error("Failed to install " + resolved["family"].get<std::string>() +
-                                 ": " + reason);
+        throw std::runtime_error("Failed to install " + resolved["family"].get<std::string>() + ": "
+                                 + reason);
     }
 
     nlohmann::json installed = nlohmann::json::array();
@@ -386,9 +413,10 @@ nlohmann::json FontService::installLocked(const std::string &input, const nlohma
     {
         installed.push_back(installedFontJSON(font));
     }
+
     log(LogLevel::Info, LOG_CATEGORY_FONTS,
-        "Installed " + std::to_string(installed.size()) + " faces of " +
-            resolved["family"].get<std::string>() + ".");
+        "Installed " + std::to_string(installed.size()) + " faces of "
+            + resolved["family"].get<std::string>() + ".");
     return {{"installed", std::move(installed)}, {"errors", std::move(staging.errors)}};
 }
 
@@ -412,6 +440,7 @@ nlohmann::json FontService::addInstance(const std::string &id, const nlohmann::j
     {
         throw std::runtime_error("Variations must be an object of axis tags to numbers");
     }
+
     FontVariations wanted;
     for (const auto &[tag, value] : variations.items())
     {
@@ -419,8 +448,10 @@ nlohmann::json FontService::addInstance(const std::string &id, const nlohmann::j
         {
             throw std::runtime_error("The " + tag + " axis needs a number");
         }
+
         wanted[tag] = value.get<double>();
     }
+
     return installedFontJSON(store_.addInstance(id, wanted));
 }
 
@@ -448,6 +479,7 @@ nlohmann::json FontService::listPresets() const
     {
         presets.push_back(fontPresetJSON(preset));
     }
+
     return presets;
 }
 
@@ -456,8 +488,8 @@ nlohmann::json FontService::savePreset(const nlohmann::json &value)
     nlohmann::json preset = value;
     if (preset.is_object() && !preset.contains("overrides"))
     {
-        const FontState state     = store_.state();
-        nlohmann::json  overrides = nlohmann::json::object();
+        const FontState state    = store_.state();
+        nlohmann::json overrides = nlohmann::json::object();
         for (const auto &[family, id] : state.overrides)
         {
             if (const InstalledFont *font = findFont(state.fonts, id))
@@ -465,14 +497,17 @@ nlohmann::json FontService::savePreset(const nlohmann::json &value)
                 overrides[family] = fontSourceJSON(font->source);
             }
         }
+
         preset["overrides"] = std::move(overrides);
     }
+
     std::string error;
-    auto        parsed = parseFontPreset(preset, error);
+    auto parsed = parseFontPreset(preset, error);
     if (!parsed)
     {
         throw std::runtime_error(error);
     }
+
     return fontPresetJSON(store_.savePreset(std::move(*parsed)));
 }
 

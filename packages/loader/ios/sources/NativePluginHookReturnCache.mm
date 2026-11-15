@@ -21,77 +21,93 @@ static id hookCacheComponent(const loader::ffi::Type &spec, const uint8_t *bytes
         id object = (__bridge id) loadNativeValue<void *>(bytes);
         return object ?: [NSNull null];
     }
+
     if (spec.name == "selector")
     {
         SEL selector = loadNativeValue<SEL>(bytes);
         return selector ? NSStringFromSelector(selector) : [NSNull null];
     }
+
     if (spec.name == "pointer")
     {
         return [NSValue valueWithPointer:loadNativeValue<void *>(bytes)];
     }
+
     if (spec.name == "cstring")
     {
         const char *string = loadNativeValue<const char *>(bytes);
         return string ? ([NSString stringWithUTF8String:string] ?: [NSNull null]) : [NSNull null];
     }
+
     if (spec.name == "bool")
     {
         return @(loadNativeValue<bool>(bytes));
     }
+
     if (spec.name == "i8")
     {
         return @(loadNativeValue<int8_t>(bytes));
     }
+
     if (spec.name == "u8")
     {
         return @(loadNativeValue<uint8_t>(bytes));
     }
+
     if (spec.name == "i16")
     {
         return @(loadNativeValue<int16_t>(bytes));
     }
+
     if (spec.name == "u16")
     {
         return @(loadNativeValue<uint16_t>(bytes));
     }
+
     if (spec.name == "i32")
     {
         return @(loadNativeValue<int32_t>(bytes));
     }
+
     if (spec.name == "u32")
     {
         return @(loadNativeValue<uint32_t>(bytes));
     }
+
     if (spec.name == "i64")
     {
         return @(loadNativeValue<int64_t>(bytes));
     }
+
     if (spec.name == "u64")
     {
         return @(loadNativeValue<uint64_t>(bytes));
     }
+
     if (spec.name == "float")
     {
         return @(loadNativeValue<float>(bytes));
     }
+
     if (spec.name == "double")
     {
         return @(loadNativeValue<double>(bytes));
     }
+
     if (spec.kind == loader::ffi::Kind::Struct)
     {
         const char *encoding = nativeStructEncoding(spec.layout->name);
         return encoding ? [NSValue value:bytes withObjCType:encoding] : nil;
     }
+
     return nil;
 }
 
 static NSArray *hookReturnCacheKey(Runtime &runtime, const std::shared_ptr<HookState> &state,
                                    const Value *args, size_t count)
 {
-    if (!state || !state->cacheOnly || count < 2 || !args[1].isObject() ||
-        !args[1].asObject(runtime).isArray(runtime))
+    if (!state || !state->cacheOnly || count < 2 || !args[1].isObject()
+        || !args[1].asObject(runtime).isArray(runtime))
     {
         throw JSError(runtime, "Native hook return caching is unavailable");
     }
@@ -102,8 +118,8 @@ static NSArray *hookReturnCacheKey(Runtime &runtime, const std::shared_ptr<HookS
         throw JSError(runtime, "Native hook has been removed");
     }
 
-    id     target   = objcValue(runtime, args[0]);
-    Array  values   = args[1].asObject(runtime).asArray(runtime);
+    id target       = objcValue(runtime, args[0]);
+    Array values    = args[1].asObject(runtime).asArray(runtime);
     size_t expected = dispatcher->signature->arguments.size() - 2;
     if (!target || values.size(runtime) != expected)
     {
@@ -115,8 +131,8 @@ static NSArray *hookReturnCacheKey(Runtime &runtime, const std::shared_ptr<HookS
     [components addObject:NSStringFromSelector(dispatcher->selector)];
     for (size_t index = 0; index < expected; index++)
     {
-        const loader::ffi::Type     &spec = dispatcher->signature->arguments[index + 2];
-        std::vector<uint8_t>         bytes(loader::ffi::valueStorageSize(spec));
+        const loader::ffi::Type &spec = dispatcher->signature->arguments[index + 2];
+        std::vector<uint8_t> bytes(loader::ffi::valueStorageSize(spec));
         loader::ffi::ArgumentStorage storage;
         loader::ffi::writeValue(runtime, values.getValueAtIndex(runtime, index), spec, bytes.data(),
                                 storage);
@@ -125,13 +141,15 @@ static NSArray *hookReturnCacheKey(Runtime &runtime, const std::shared_ptr<HookS
         {
             throw JSError(runtime, "Native hook return cache argument type is unsupported");
         }
+
         [components addObject:component];
     }
+
     return [components copy];
 }
 
 static NSArray *hookReturnCacheKey(const std::shared_ptr<HookDispatcher> &dispatcher,
-                                   void                                 **arguments)
+                                   void **arguments)
 {
     if (!dispatcher || !arguments)
     {
@@ -148,28 +166,32 @@ static NSArray *hookReturnCacheKey(const std::shared_ptr<HookDispatcher> &dispat
         {
             return nil;
         }
+
         [components addObject:component];
     }
+
     return [components copy];
 }
 
-bool applyCachedHookReturn(const std::shared_ptr<HookState>      &state,
+bool applyCachedHookReturn(const std::shared_ptr<HookState> &state,
                            const std::shared_ptr<HookDispatcher> &dispatcher, void **arguments,
                            void *returnValue)
 {
-    NSArray *key    = hookReturnCacheKey(dispatcher, arguments);
-    NSData  *cached = nil;
+    NSArray *key   = hookReturnCacheKey(dispatcher, arguments);
+    NSData *cached = nil;
     if (key)
     {
         std::lock_guard<std::mutex> lock(state->returnCacheMutex);
         cached = state->returnCache[key];
     }
-    if (cached && returnValue &&
-        cached.length == loader::ffi::typeSize(dispatcher->signature->result))
+
+    if (cached && returnValue
+        && cached.length == loader::ffi::typeSize(dispatcher->signature->result))
     {
         memcpy(returnValue, cached.bytes, cached.length);
         return true;
     }
+
     return false;
 }
 
@@ -181,6 +203,7 @@ static void reserveHookCacheEntry(Runtime &runtime, const std::shared_ptr<HookSt
         loader::native::throwCoded(runtime, loader::native::kNativeBridgeErrorCode,
                                    "Native hook has been removed");
     }
+
     if (cache[key] == nil && !loader::native::nativeCachedReturnBudget().acquire())
     {
         loader::native::throwCoded(runtime, loader::native::kNativeBridgeErrorCode,
@@ -212,14 +235,14 @@ void setHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState> &stat
     }
 
     const loader::ffi::Type &result = dispatcher->signature->result;
-    std::vector<uint8_t>     bytes(loader::ffi::valueStorageSize(result));
+    std::vector<uint8_t> bytes(loader::ffi::valueStorageSize(result));
     if (!setHookReturn(runtime, result, args[2], bytes.data()))
     {
         throw JSError(runtime, "Native hook return value has an unsupported type");
     }
 
-    NSArray *key   = hookReturnCacheKey(runtime, state, args, count);
-    NSData  *value = [NSData dataWithBytes:bytes.data() length:loader::ffi::typeSize(result)];
+    NSArray *key  = hookReturnCacheKey(runtime, state, args, count);
+    NSData *value = [NSData dataWithBytes:bytes.data() length:loader::ffi::typeSize(result)];
     std::lock_guard<std::mutex> lock(state->returnCacheMutex);
     reserveHookCacheEntry(runtime, state, state->returnCache, key);
     state->returnCache[key] = value;
@@ -228,7 +251,7 @@ void setHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState> &stat
 void removeHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState> &state,
                            const Value *args, size_t count)
 {
-    NSArray                    *key = hookReturnCacheKey(runtime, state, args, count);
+    NSArray *key = hookReturnCacheKey(runtime, state, args, count);
     std::lock_guard<std::mutex> lock(state->returnCacheMutex);
     releaseHookCacheEntry(state->returnCache, key);
 }
@@ -239,6 +262,7 @@ void clearHookReturnCache(const std::shared_ptr<HookState> &state)
     {
         return;
     }
+
     std::lock_guard<std::mutex> lock(state->returnCacheMutex);
     loader::native::nativeCachedReturnBudget().release(state->returnCache.count);
     [state->returnCache removeAllObjects];

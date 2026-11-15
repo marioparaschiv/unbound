@@ -12,7 +12,7 @@ static loader::LogEntry entry(const std::string &message)
 
 static void holdsNothingWhileStopped()
 {
-    loader::LogStream                  stream;
+    loader::LogStream stream;
     std::vector<std::function<void()>> scheduled;
     stream.publish(entry("before"));
     assert(!stream.active());
@@ -41,9 +41,9 @@ static void holdsNothingWhileStopped()
 
 static void dropsTheOldestPastTheLimit()
 {
-    loader::LogStream                  stream(2);
+    loader::LogStream stream(2);
     std::vector<std::function<void()>> scheduled;
-    std::vector<std::string>           delivered;
+    std::vector<std::string> delivered;
     stream.start(
         [&](std::vector<loader::LogEntry> batch) {
             for (const loader::LogEntry &item : batch)
@@ -63,10 +63,10 @@ static void dropsTheOldestPastTheLimit()
 
 static void aRestartIgnoresTheEarlierSessionsFlush()
 {
-    loader::LogStream                  stream;
+    loader::LogStream stream;
     std::vector<std::function<void()>> scheduled;
-    int                                batches = 0;
-    auto                               sink    = [&](std::vector<loader::LogEntry>) {
+    int batches = 0;
+    auto sink   = [&](std::vector<loader::LogEntry>) {
         batches++;
     };
     auto schedule = [&](std::function<void()> work) {

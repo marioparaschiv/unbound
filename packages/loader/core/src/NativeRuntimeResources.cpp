@@ -7,7 +7,7 @@
 namespace loader::native {
 namespace jsi = facebook::jsi;
 
-static constexpr jsi::UUID  kRuntimeResourcesId(0x64e8b209, 0x6e91, 0x4c70, 0x913a, 0x72d489a45c21);
+static constexpr jsi::UUID kRuntimeResourcesId(0x64e8b209, 0x6e91, 0x4c70, 0x913a, 0x72d489a45c21);
 static std::atomic_uint64_t gNextRuntimeResourceIdentity{1};
 
 static std::mutex &runtimeResourceQuarantineMutex()
@@ -62,6 +62,7 @@ bool RuntimeResourceOperation::start(uint64_t identity)
     {
         return false;
     }
+
     auto registry = registry_.lock();
     return registry && registry->active() && registry->identity() == identity_ && gate_.start();
 }
@@ -75,8 +76,10 @@ bool RuntimeResourceOperation::cancel()
         {
             registry->finishOperation(identifier_);
         }
+
         forgetFromScope();
     }
+
     return expired;
 }
 
@@ -91,10 +94,12 @@ void RuntimeResourceOperation::finish()
     {
         gate_.finish();
     }
+
     if (auto registry = registry_.lock())
     {
         registry->finishOperation(identifier_);
     }
+
     forgetFromScope();
 }
 
@@ -105,6 +110,7 @@ bool RuntimeResourceOperation::active() const
     {
         return false;
     }
+
     auto registry = registry_.lock();
     return registry && registry->active() && registry->identity() == identity_;
 }
@@ -122,6 +128,7 @@ void RuntimeResourceOperation::forgetFromScope()
         std::lock_guard<std::mutex> lock(scopeMutex_);
         scope = scope_.lock();
     }
+
     if (scope)
     {
         scope->forget(this);
@@ -146,15 +153,18 @@ bool RuntimeResourceOperationScope::track(
     {
         return false;
     }
+
     std::lock_guard<std::mutex> lock(mutex_);
     if (!active())
     {
         return false;
     }
+
     {
         std::lock_guard<std::mutex> operationLock(operation->scopeMutex_);
         operation->scope_ = scope;
     }
+
     operations_.erase(std::remove_if(operations_.begin(), operations_.end(),
                                      [](const auto &entry) {
                                          auto current = entry.lock();
@@ -195,8 +205,10 @@ void RuntimeResourceOperationScope::cancelPending()
                 pending.push_back(std::move(operation));
             }
         }
+
         operations_.clear();
     }
+
     for (const auto &operation : pending)
     {
         operation->cancel();
@@ -225,7 +237,7 @@ std::unique_lock<std::recursive_mutex> RuntimeResourceRegistry::lockRuntime() co
 
 void RuntimeResourceRegistry::invalidate()
 {
-    auto                                                   runtimeLock = lockRuntime();
+    auto runtimeLock = lockRuntime();
     std::vector<std::shared_ptr<RuntimeResourceOperation>> pending;
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -238,6 +250,7 @@ void RuntimeResourceRegistry::invalidate()
                 pending.push_back(std::move(pendingOperation));
             }
         }
+
         pendingOperations_.clear();
     }
 }
@@ -249,13 +262,15 @@ std::shared_ptr<RuntimeResourceOperation> RuntimeResourceRegistry::beginOperatio
     {
         return nullptr;
     }
+
     auto registry = weak_from_this();
     if (registry.expired())
     {
         return nullptr;
     }
+
     uint64_t identifier = nextOperationId_++;
-    auto     operation  = std::shared_ptr<RuntimeResourceOperation>(
+    auto operation      = std::shared_ptr<RuntimeResourceOperation>(
         new RuntimeResourceOperation(registry, identity_, identifier));
     pendingOperations_.emplace(identifier, operation);
     return operation;
@@ -279,12 +294,14 @@ bool RuntimeResourceRegistry::retain(const std::string &key, std::shared_ptr<voi
     {
         return false;
     }
-    auto                        runtimeLock = lockRuntime();
+
+    auto runtimeLock = lockRuntime();
     std::lock_guard<std::mutex> lock(mutex_);
     if (!active())
     {
         return false;
     }
+
     return resources_.emplace(key, std::move(resource)).second;
 }
 
@@ -294,8 +311,9 @@ bool RuntimeResourceRegistry::release(const std::string &key)
     {
         return false;
     }
-    auto                               runtimeLock = lockRuntime();
-    std::shared_ptr<void>              released;
+
+    auto runtimeLock = lockRuntime();
+    std::shared_ptr<void> released;
     std::vector<std::shared_ptr<void>> deferred;
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -303,15 +321,18 @@ bool RuntimeResourceRegistry::release(const std::string &key)
         {
             return false;
         }
+
         deferred.swap(deferredReleases_);
         auto found = resources_.find(key);
         if (found == resources_.end())
         {
             return false;
         }
+
         released = std::move(found->second);
         resources_.erase(found);
     }
+
     return true;
 }
 
@@ -327,11 +348,13 @@ bool RuntimeResourceRegistry::deferRelease(const std::string &key)
     {
         return false;
     }
+
     auto found = resources_.find(key);
     if (found == resources_.end())
     {
         return false;
     }
+
     deferredReleases_.push_back(std::move(found->second));
     resources_.erase(found);
     return true;
@@ -349,20 +372,22 @@ size_t RuntimeResourceRegistry::drainDeferredReleases()
     {
         return 0;
     }
-    auto                               runtimeLock = lockRuntime();
+
+    auto runtimeLock = lockRuntime();
     std::vector<std::shared_ptr<void>> released;
     {
         std::lock_guard<std::mutex> lock(mutex_);
         released.swap(deferredReleases_);
     }
+
     return released.size();
 }
 
 void RuntimeResourceRegistry::clear()
 {
-    auto                                                   runtimeLock = lockRuntime();
+    auto runtimeLock = lockRuntime();
     std::unordered_map<std::string, std::shared_ptr<void>> released;
-    std::vector<std::shared_ptr<void>>                     deferred;
+    std::vector<std::shared_ptr<void>> deferred;
     if (!onOwnerThread())
     {
         {
@@ -370,16 +395,19 @@ void RuntimeResourceRegistry::clear()
             released.swap(resources_);
             deferred.swap(deferredReleases_);
         }
+
         std::lock_guard<std::mutex> lock(runtimeResourceQuarantineMutex());
-        auto                       &quarantine = runtimeResourceQuarantine();
+        auto &quarantine = runtimeResourceQuarantine();
         for (auto &[key, resource] : released)
         {
             quarantine.push_back(std::move(resource));
         }
+
         quarantine.insert(quarantine.end(), std::make_move_iterator(deferred.begin()),
                           std::make_move_iterator(deferred.end()));
         return;
     }
+
     {
         std::lock_guard<std::mutex> lock(mutex_);
         released.swap(resources_);
@@ -394,6 +422,7 @@ std::shared_ptr<RuntimeResourceRegistry> runtimeResourceRegistry(jsi::Runtime &r
     {
         return std::static_pointer_cast<RuntimeResourceRuntimeData>(existing)->resources;
     }
+
     auto created = std::make_shared<RuntimeResourceRuntimeData>();
     runtime.setRuntimeData(kRuntimeResourcesId, created);
     return created->resources;
@@ -413,26 +442,27 @@ void retainRuntimeResource(jsi::Runtime &runtime, const std::string &key,
 bool releaseRuntimeResource(jsi::Runtime &runtime, const std::string &key)
 {
     auto existing = runtime.getRuntimeData(kRuntimeResourcesId);
-    return existing &&
-           std::static_pointer_cast<RuntimeResourceRuntimeData>(existing)->resources->release(key);
+    return existing
+           && std::static_pointer_cast<RuntimeResourceRuntimeData>(existing)->resources->release(
+               key);
 }
 
 bool deferRuntimeResourceRelease(const std::weak_ptr<RuntimeResourceRegistry> &registry,
-                                 const std::string                            &key)
+                                 const std::string &key)
 {
     auto resources = registry.lock();
     return resources && resources->deferRelease(key);
 }
 
 bool releaseRuntimeResource(const std::weak_ptr<RuntimeResourceRegistry> &registry,
-                            const std::string                            &key)
+                            const std::string &key)
 {
     auto resources = registry.lock();
     return resources && resources->release(key);
 }
 
 bool releaseRuntimeResourceOnOwnerThread(const std::weak_ptr<RuntimeResourceRegistry> &registry,
-                                         const std::string                            &key)
+                                         const std::string &key)
 {
     auto resources = registry.lock();
     return resources && resources->releaseOnOwnerThread(key);
@@ -445,13 +475,14 @@ bool invalidateRuntimeResources(const std::weak_ptr<RuntimeResourceRegistry> &re
     {
         return false;
     }
+
     resources->invalidate();
     return true;
 }
 
 std::shared_ptr<RuntimeResourceOperation>
 beginRuntimeResourceOperation(const std::weak_ptr<RuntimeResourceRegistry> &registry,
-                              uint64_t                                      identity)
+                              uint64_t identity)
 {
     auto resources = registry.lock();
     return resources ? resources->beginOperation(identity) : nullptr;

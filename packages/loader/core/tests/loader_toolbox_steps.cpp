@@ -29,6 +29,7 @@ static nlohmann::json menuItem(const nlohmann::json &menu, const std::string &id
             }
         }
     }
+
     assert(false);
     return nullptr;
 }
@@ -61,7 +62,7 @@ static void checkMenuOutcomes(const nlohmann::json &menu)
 
 int main()
 {
-    const auto            root = makeTemporaryDirectory();
+    const auto root = makeTemporaryDirectory();
     loader::SettingsStore settings((root / "settings.json").string());
     settings.load();
 
@@ -93,32 +94,36 @@ int main()
     loader::toolbox::ToolboxContext context{settings, updater, root.string(), "Android"};
 
     const nlohmann::json destructive = menuItem(menu, "delete-bundle");
+    assert(
+        loader::toolbox::perform(context, "menu-step", nlohmann::json{{"item", destructive}}.dump())
+        == "confirm");
+    assert(
+        loader::toolbox::perform(context, "menu-step",
+                                 nlohmann::json{{"item", destructive}, {"confirmed", true}}.dump())
+        == "run");
+    assert(
+        loader::toolbox::perform(context, "menu-step",
+                                 nlohmann::json{{"item", menuItem(menu, "custom-bundle")}}.dump())
+        == "prompt");
     assert(loader::toolbox::perform(context, "menu-step",
-                                    nlohmann::json{{"item", destructive}}.dump()) == "confirm");
-    assert(loader::toolbox::perform(
-               context, "menu-step",
-               nlohmann::json{{"item", destructive}, {"confirmed", true}}.dump()) == "run");
-    assert(loader::toolbox::perform(
-               context, "menu-step",
-               nlohmann::json{{"item", menuItem(menu, "custom-bundle")}}.dump()) == "prompt");
-    assert(loader::toolbox::perform(
-               context, "menu-step",
-               nlohmann::json{{"item", menuItem(menu, "open-issue")}}.dump()) == "platform");
+                                    nlohmann::json{{"item", menuItem(menu, "open-issue")}}.dump())
+           == "platform");
     assert(loader::toolbox::perform(context, "menu-step", "not json") == "none");
 
     const nlohmann::json refetch = menuItem(menu, "refetch-bundle");
+    assert(loader::toolbox::perform(context, "menu-outcome",
+                                    nlohmann::json{{"item", refetch}, {"result", "false"}}.dump())
+           == "failed");
+    assert(
+        loader::toolbox::perform(context, "menu-outcome", nlohmann::json{{"item", refetch}}.dump())
+        == "failed");
+    assert(loader::toolbox::perform(context, "menu-outcome",
+                                    nlohmann::json{{"item", refetch}, {"result", "true"}}.dump())
+           == "restart");
     assert(loader::toolbox::perform(
                context, "menu-outcome",
-               nlohmann::json{{"item", refetch}, {"result", "false"}}.dump()) == "failed");
-    assert(loader::toolbox::perform(context, "menu-outcome",
-                                    nlohmann::json{{"item", refetch}}.dump()) == "failed");
-    assert(loader::toolbox::perform(context, "menu-outcome",
-                                    nlohmann::json{{"item", refetch}, {"result", "true"}}.dump()) ==
-           "restart");
-    assert(loader::toolbox::perform(
-               context, "menu-outcome",
-               nlohmann::json{{"item", menuItem(menu, "open-issue")}, {"result", "true"}}.dump()) ==
-           "done");
+               nlohmann::json{{"item", menuItem(menu, "open-issue")}, {"result", "true"}}.dump())
+           == "done");
     assert(loader::toolbox::perform(context, "menu-outcome", "[]") == "done");
 
     assert(!loader::toolbox::isShakeGesture(0.49));
@@ -132,11 +137,11 @@ int main()
     assert(loader::toolbox::discordVersionLabel("352.0", "") == "352.0 ()");
     assert(loader::toolbox::discordVersionLabel(std::nullopt, "86457").empty());
 
-    assert((loader::toolbox::appFolderURLs("/var/mobile/Documents/Unbound", true) ==
-            std::vector<std::string>{"filza://view/var/mobile/Documents/Unbound",
-                                     "shareddocuments:///var/mobile/Documents/Unbound"}));
-    assert((loader::toolbox::appFolderURLs("/private/Documents/Unbound", false) ==
-            std::vector<std::string>{"shareddocuments:///private/Documents/Unbound"}));
+    assert((loader::toolbox::appFolderURLs("/var/mobile/Documents/Unbound", true)
+            == std::vector<std::string>{"filza://view/var/mobile/Documents/Unbound",
+                                        "shareddocuments:///var/mobile/Documents/Unbound"}));
+    assert((loader::toolbox::appFolderURLs("/private/Documents/Unbound", false)
+            == std::vector<std::string>{"shareddocuments:///private/Documents/Unbound"}));
 
     std::filesystem::remove_all(root);
     return 0;

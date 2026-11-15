@@ -20,20 +20,24 @@ inline void collectJavaHandleIssues(const nlohmann::json &value, std::vector<std
         {
             collectJavaHandleIssues(child, issues);
         }
+
         return;
     }
+
     if (!value.is_object())
     {
         return;
     }
+
     auto type = value.find("type");
     auto id   = value.find("value");
-    if (type != value.end() && type->is_string() && *type == "handle" && id != value.end() &&
-        id->is_string() && id->get<std::string>().rfind("java-", 0) == 0)
+    if (type != value.end() && type->is_string() && *type == "handle" && id != value.end()
+        && id->is_string() && id->get<std::string>().rfind("java-", 0) == 0)
     {
         issues.push_back(id->get<std::string>());
         return;
     }
+
     for (auto iterator = value.begin(); iterator != value.end(); ++iterator)
     {
         collectJavaHandleIssues(iterator.value(), issues);
@@ -47,6 +51,7 @@ inline void releaseJavaHandleIssues(const JavaHandleReleaser &release, const std
     {
         return;
     }
+
     std::vector<std::string> issues;
     collectJavaHandleIssues(parsed, issues);
     for (const std::string &id : issues)
@@ -67,8 +72,8 @@ public:
 
     ~PendingJavaPayload()
     {
-        if (!transferred_.load(std::memory_order_acquire) && !payload_.empty() &&
-            generation_ == generationSource_())
+        if (!transferred_.load(std::memory_order_acquire) && !payload_.empty()
+            && generation_ == generationSource_())
         {
             releaseJavaHandleIssues(release_, payload_);
         }
@@ -88,6 +93,7 @@ public:
         {
             generation_ = kStaleGeneration;
         }
+
         payload_ = std::move(payload);
     }
 
@@ -106,9 +112,9 @@ private:
     static constexpr uint64_t kStaleGeneration = UINT64_MAX;
 
     JavaHandleReleaser release_;
-    GenerationSource   generationSource_;
-    std::string        payload_;
-    uint64_t           generation_;
-    std::atomic_bool   transferred_{false};
+    GenerationSource generationSource_;
+    std::string payload_;
+    uint64_t generation_;
+    std::atomic_bool transferred_{false};
 };
 }

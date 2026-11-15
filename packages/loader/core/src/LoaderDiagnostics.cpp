@@ -20,19 +20,21 @@ std::string bannerSubject(const std::string &subject)
     {
         return subject;
     }
+
     size_t length = kBannerSubjectLength;
     while (length > 0 && isContinuationByte(subject[length]))
     {
         length--;
     }
+
     return subject.substr(0, length) + "...";
 }
 
 std::string developmentBuildBanner(const BuildInfo &info)
 {
-    return std::string(kDevelopmentBuildTitle) + "\n#" + known(info.commit) + " - " +
-           bannerSubject(info.subject) + " - " + known(info.branch) +
-           "\nBuilt: " + known(info.timestamp);
+    return std::string(kDevelopmentBuildTitle) + "\n#" + known(info.commit) + " - "
+           + bannerSubject(info.subject) + " - " + known(info.branch)
+           + "\nBuilt: " + known(info.timestamp);
 }
 
 static const std::map<std::string, std::set<long long>> &ignoredErrorCodes()
@@ -68,24 +70,25 @@ static bool isInvalidArgumentPOSIXError(const ErrorReport &report)
 {
     if (report.underlyingError)
     {
-        return report.underlyingError->domain == "NSPOSIXErrorDomain" &&
-               report.underlyingError->code == 22;
+        return report.underlyingError->domain == "NSPOSIXErrorDomain"
+               && report.underlyingError->code == 22;
     }
-    return contains(report.underlyingText, "NSPOSIXErrorDomain") &&
-           contains(report.underlyingText, "Code=22");
+
+    return contains(report.underlyingText, "NSPOSIXErrorDomain")
+           && contains(report.underlyingText, "Code=22");
 }
 
 static bool isIgnoredCocoaError(const ErrorReport &report)
 {
-    return report.code == 256 &&
-           (isInvalidArgumentPOSIXError(report) || contains(report.filePath, "appsflyer-v1") ||
-            contains(report.url, "appsflyer-v1"));
+    return report.code == 256
+           && (isInvalidArgumentPOSIXError(report) || contains(report.filePath, "appsflyer-v1")
+               || contains(report.url, "appsflyer-v1"));
 }
 
 static bool isIgnoredGestureError(const ErrorReport &report)
 {
-    return (report.code == 7 && report.localizedDescription == "Custom") ||
-           (report.code == 0 && report.localizedDescription == "Excluded");
+    return (report.code == 7 && report.localizedDescription == "Custom")
+           || (report.code == 0 && report.localizedDescription == "Excluded");
 }
 
 static bool isIgnoredViewServiceError(const ErrorReport &report)
@@ -96,34 +99,39 @@ static bool isIgnoredViewServiceError(const ErrorReport &report)
 bool isIgnoredError(const ErrorReport &report)
 {
     const auto &codes = ignoredErrorCodes();
-    const auto  entry = codes.find(report.domain);
+    const auto entry  = codes.find(report.domain);
     if (entry != codes.end() && entry->second.count(report.code))
     {
         return true;
     }
+
     if (report.domain == "NSPOSIXErrorDomain")
     {
         return report.code == 22 && report.userInfoCount == 0;
     }
+
     if (report.domain == "NSCocoaErrorDomain")
     {
         return isIgnoredCocoaError(report);
     }
+
     if (report.domain == "com.apple.Gestures")
     {
         return isIgnoredGestureError(report);
     }
+
     if (report.domain == "_UIViewServiceErrorDomain")
     {
         return isIgnoredViewServiceError(report);
     }
+
     return false;
 }
 
 bool isIgnoredException(const std::string &name)
 {
-    return name == "CHHapticErrorCodeServerInitFailedException" || name == "DownloadFailed" ||
-           name == "DownloadTimedOut" || name == "DownloadWriteFailed";
+    return name == "CHHapticErrorCodeServerInitFailedException" || name == "DownloadFailed"
+           || name == "DownloadTimedOut" || name == "DownloadWriteFailed";
 }
 
 bool needsExtensionCheck(bool appStore, bool testFlight, bool trollStore)
@@ -142,6 +150,7 @@ std::vector<StartupWarning> missingExtensionWarnings(bool hasSafariExtension,
                             "able to open Discord links directly in the app.",
                             "OpenInDiscord extension missing, showing alert"});
     }
+
     if (!hasShareExtension)
     {
         warnings.push_back({"Missing Share Extension",
@@ -150,6 +159,7 @@ std::vector<StartupWarning> missingExtensionWarnings(bool hasSafariExtension,
                             "sheet.",
                             "Share extension missing, showing alert"});
     }
+
     return warnings;
 }
 }

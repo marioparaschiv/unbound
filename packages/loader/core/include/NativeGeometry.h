@@ -19,9 +19,9 @@ struct NativeFrame {
     double height = 0;
 };
 
-NativeSize  parseSize(const nlohmann::json &value);
+NativeSize parseSize(const nlohmann::json &value);
 NativeFrame parseFrame(const nlohmann::json &value);
-NativeSize  parseSize(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value);
+NativeSize parseSize(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value);
 NativeFrame parseFrame(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value);
 
 nlohmann::json toJSON(const NativeSize &size);
