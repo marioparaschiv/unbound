@@ -1,5 +1,7 @@
 import type { NativeObjCBridge } from '@unbound-app/api/native';
 
+import { sharedImageCache } from '@unbound-plugins/shared/media/shared-image-cache';
+
 import { roleSymbol, roundedAvatar, tintRoleSymbol } from '~/native/ios/images';
 import type { Bridge, Handle } from '~/native/ios/bridge';
 import type { Mention, MentionType } from '~/lib/mentions';
@@ -44,11 +46,7 @@ async function loadImageBytes(url: string, objc: FileReader): Promise<ImageBytes
 		return bytes instanceof Uint8Array ? bytes : null;
 	}
 
-	if (!url.startsWith('https://')) return null;
-
-	const response = await fetch(url);
-
-	return response.ok ? response.arrayBuffer() : null;
+	return sharedImageCache().bytes(url);
 }
 
 /**
