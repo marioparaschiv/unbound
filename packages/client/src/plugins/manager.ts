@@ -10,6 +10,7 @@ import type { AddonGlobals, AddonScope } from '~/addons/scope';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { createPluginContext } from '~/native/plugin-context';
 import type { AddonAttribution } from '~/addons/crash-guard';
+import { scheduleChatRedraw } from '~/plugins/chat-redraw';
 import { readPluginEntry } from '~/plugins/legacy-entry';
 import { pluginSourceName } from '~/plugins/source-name';
 import { rememberSourceDigest } from '~/addons/digests';
@@ -69,6 +70,9 @@ export class Plugins extends Addons<Plugin> {
 			noun: 'UNBOUND_PLUGINS_NOUN',
 			icon: 'PuzzlePieceIcon',
 		});
+
+		this.on('started', scheduleChatRedraw);
+		this.on('stopped', scheduleChatRedraw);
 	}
 
 	/**
