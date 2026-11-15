@@ -72,7 +72,7 @@ export function renderCasePost(entry: ModCase, prefix: string, icons: CaseIcons)
 
 /**
  * @description Renders the DM that tells a user what was done to them.
- * @param notice The action, reason and, for a temporary one, its start and end.
+ * @param notice The action, reason, moderator and, for a temporary one, its start and end.
  * @param guildName The server's name.
  * @param icons The action icon emojis.
  * @returns The message body.
@@ -92,6 +92,10 @@ export function renderCaseNotice(
 
 	if (durationMs !== undefined && notice.expiresAt) {
 		lines.push(`-# For ${formatDuration(durationMs)}, until ${stamp(notice.expiresAt, 'f')}`);
+	}
+
+	if (meta.namesModerator) {
+		lines.push(`-# Moderator: ${escapeMarkdown(notice.moderatorName)} (${notice.moderatorId})`);
 	}
 
 	return post(meta.colour, lines.join('\n'));

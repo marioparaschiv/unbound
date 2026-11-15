@@ -83,6 +83,8 @@ describe.skipIf(!DATABASE_URL)('moderation', () => {
 		const notice = {
 			action: 'warn',
 			reason: 'Spam',
+			moderatorId: '200',
+			moderatorName: 'mod',
 			createdAt: new Date(),
 			expiresAt: null,
 		} as const;

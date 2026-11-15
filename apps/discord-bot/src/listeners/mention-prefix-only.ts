@@ -11,7 +11,10 @@ export class MentionPrefixOnlyListener extends Listener<typeof Events.MentionPre
 
 		return message.channel.send(
 			defaultPrefix
-				? `My prefix in this guild is: \`${String(defaultPrefix)}\``
+				? `My prefixes in this guild are: ${[defaultPrefix]
+						.flat()
+						.map((prefix) => `\`${prefix}\``)
+						.join(', ')}`
 				: 'Cannot find any Prefix for Message Commands.',
 		);
 	}

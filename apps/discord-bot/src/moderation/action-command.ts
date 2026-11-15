@@ -215,6 +215,8 @@ export abstract class ModerationActionCommand extends Command {
 		const notice = {
 			action: this.action,
 			reason,
+			moderatorId: moderator.id,
+			moderatorName: moderator.user.username,
 			createdAt,
 			expiresAt: durationMs === undefined ? null : new Date(createdAt.getTime() + durationMs),
 		};
@@ -235,9 +237,12 @@ export abstract class ModerationActionCommand extends Command {
 			...notice,
 			userId: user.id,
 			userName: user.username,
-			moderatorId: moderator.id,
-			moderatorName: moderator.user.username,
 		});
+
+		if (this.action === 'warn') {
+			await this.container.automod?.afterWarn(guild, user.id);
+		}
+
 		const lasting = durationMs === undefined ? '' : ` for ${formatDuration(durationMs)}`;
 		const undelivered = meta.notifies && !notified ? ' I could not DM them.' : '';
 
