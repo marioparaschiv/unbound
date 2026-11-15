@@ -167,6 +167,7 @@ export const debugCardRequestSchema = Type.Object({
 	iconPack: Type.Optional(text()),
 	launch: Type.Optional(launchSchema),
 	bundleChannel: Type.Optional(text(16)),
+	bundleBuiltAt: Type.Optional(text(32)),
 	memory: Type.Optional(memorySchema),
 	network: Type.Optional(networkSchema),
 	power: Type.Optional(powerSchema),

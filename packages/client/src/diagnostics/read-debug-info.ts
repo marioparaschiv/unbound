@@ -378,6 +378,7 @@ export function readDebugInfo(): DebugInfo {
 		iconPack: attempt(() => selectedAddon(icons), ''),
 		launch: launchOf(loader?.launch),
 		bundleChannel: loader?.launch?.channel,
+		bundleBuiltAt: import.meta.env.BUILD_TIME || undefined,
 		memory: attempt(() => memoryOf(state), undefined),
 		network: attempt(() => state?.network, undefined),
 		power: attempt(() => powerOf(state), undefined),

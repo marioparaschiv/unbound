@@ -6,6 +6,7 @@ type ImportMetaEnv = {
 	readonly DEV_TOOLS: boolean;
 	/** Whether this is a benchmark build, which carries `scripts/bench-android`'s agent and its startup marks. */
 	readonly BENCH: boolean;
+	readonly BUILD_TIME: string;
 };
 
 type ImportMeta = {

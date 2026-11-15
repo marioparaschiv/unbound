@@ -107,6 +107,9 @@ function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 				'import.meta.env.DEV': JSON.stringify(IS_DEV_BUILD),
 				'import.meta.env.DEV_TOOLS': JSON.stringify(devTools),
 				'import.meta.env.BENCH': JSON.stringify(Boolean(benchmark)),
+				'import.meta.env.BUILD_TIME': JSON.stringify(
+					IS_DEV_BUILD ? new Date().toISOString() : '',
+				),
 			},
 		},
 		// The store page imports the ADDON.md contract but never parses YAML; yaml declares no `sideEffects`.
