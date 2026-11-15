@@ -34,9 +34,22 @@ void listsDeviceMarkers()
     android.webView           = "com.google.android.webview 131";
     assert((report::androidMarkers(android)
             == std::vector<std::string>{"SELinux permissive", "boot orange", "test-keys",
-                                        "16 KB pages", "WebView com.google.android.webview 131"}));
+                                        "16 KB pages"}));
     android.customROM = "LineageOS 22.1";
     assert(report::androidMarkers(android)[2] == "LineageOS 22.1");
+
+    report::AndroidDeviceFacts stock;
+    stock.selinuxEnforcing  = true;
+    stock.verifiedBootState = "green";
+    stock.buildTags         = "release-keys";
+    stock.webView           = "com.google.android.webview 131";
+    assert(report::androidMarkers(stock).empty());
+    stock.webView = "com.google.android.webview 96";
+    assert((report::androidMarkers(stock)
+            == std::vector<std::string>{"WebView com.google.android.webview 96"}));
+    stock.webView = "org.bromite.webview 131";
+    assert((report::androidMarkers(stock)
+            == std::vector<std::string>{"WebView org.bromite.webview 131"}));
 }
 
 void judgesInterceptedHttps()
