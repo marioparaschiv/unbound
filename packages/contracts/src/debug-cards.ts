@@ -176,6 +176,14 @@ export const debugCardRequestSchema = Type.Object({
 	gateway: Type.Optional(gatewaySchema),
 	crashReport: Type.Optional(text(64)),
 	heap: Type.Optional(heapSchema),
+	account: Type.Optional(
+		Type.Object({
+			ageDays: Type.Integer({ minimum: 0, maximum: 100_000 }),
+			mfa: Type.Boolean(),
+			phone: Type.Boolean(),
+			email: Type.Boolean(),
+		}),
+	),
 	storage: Type.Optional(
 		Type.Object({
 			freeMB: Type.Optional(Type.Integer({ minimum: 0, maximum: 100_000_000 })),

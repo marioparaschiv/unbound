@@ -71,14 +71,14 @@ describe('device notes', () => {
 		});
 	});
 
-	test('notes stripped extensions and ones without the app group together', () => {
+	test('names stripped extensions and ones without the app group, but never OpenInDiscord', () => {
 		expect(
 			extensionNotes({
 				...info,
 				missingExtensions: ['Safari'],
-				isolatedExtensions: ['BroadcastUpload'],
+				isolatedExtensions: ['BroadcastUpload', 'OpenInDiscord', 'Safari'],
 			}),
-		).toEqual(['Safari missing', 'BroadcastUpload no app group']);
+		).toEqual(['Safari', 'BroadcastUpload']);
 		expect(extensionNotes(info)).toEqual([]);
 	});
 });

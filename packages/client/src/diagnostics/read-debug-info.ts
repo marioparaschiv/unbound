@@ -1,3 +1,4 @@
+import { findStore } from '~/metro/lookups';
 import type { NativeDeviceState, UnboundLaunchReport } from '@unbound-app/types';
 
 import { NativeBridgeCapabilityError, NativeBridgeVersionError } from '~/native/errors';
@@ -186,6 +187,29 @@ export async function readAccessibility(): Promise<
 	return { reduceMotion, boldText };
 }
 
+const UserStore = findStore('User');
+const DISCORD_EPOCH = 1_420_070_400_000;
+const DAY_MS = 86_400_000;
+
+type CurrentUser = { id?: string; mfaEnabled?: boolean; phone?: string | null; verified?: boolean };
+
+function accountOf(): DebugInfo['account'] {
+	const user = (
+		UserStore as { getCurrentUser?(): CurrentUser | undefined } | undefined
+	)?.getCurrentUser?.();
+
+	if (!user?.id) return undefined;
+
+	const created = Number(BigInt(user.id) >> 22n) + DISCORD_EPOCH;
+
+	return {
+		ageDays: Math.max(0, Math.floor((Date.now() - created) / DAY_MS)),
+		mfa: Boolean(user.mfaEnabled),
+		phone: Boolean(user.phone),
+		email: Boolean(user.verified),
+	};
+}
+
 function storageOf(state?: NativeDeviceState): DebugInfo['storage'] {
 	if (
 		state?.freeMB === undefined &&
@@ -276,11 +300,15 @@ function pushOf(state: NativeDeviceState | undefined, android: boolean): DebugIn
 }
 
 const MAX_ISOLATED_EXTENSIONS = 8;
+const WORKS_WITHOUT_APP_GROUP = new Set(['OpenInDiscord']);
 
 function isolatedExtensionsOf(state?: NativeDeviceState): string[] | undefined {
 	const isolated = (state?.extensions ?? [])
 		.filter(
-			(extension) => typeof extension?.name === 'string' && extension.sharesGroup === false,
+			(extension) =>
+				typeof extension?.name === 'string' &&
+				extension.sharesGroup === false &&
+				!WORKS_WITHOUT_APP_GROUP.has(extension.name),
 		)
 		.map((extension) => extension.name.slice(0, 64))
 		.slice(0, MAX_ISOLATED_EXTENSIONS);
@@ -393,6 +421,7 @@ export function readDebugInfo(): DebugInfo {
 		isolatedExtensions: android
 			? undefined
 			: attempt(() => isolatedExtensionsOf(state), undefined),
+		account: attempt(accountOf, undefined),
 		storage: attempt(() => storageOf(state), undefined),
 		errors: recentErrors(),
 		patches: attempt(patchCounts, undefined),
