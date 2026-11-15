@@ -1977,6 +1977,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/show-roles-in-chat": {
+      "name": "show-roles-in-chat",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/show-timeout-duration": {
       "name": "show-timeout-duration",
       "dependencies": {
@@ -5180,6 +5194,8 @@
     "show-hidden-things": ["show-hidden-things@workspace:packages/plugins/show-hidden-things"],
 
     "show-me-your-name": ["show-me-your-name@workspace:packages/plugins/show-me-your-name"],
+
+    "show-roles-in-chat": ["show-roles-in-chat@workspace:packages/plugins/show-roles-in-chat"],
 
     "show-timeout-duration": ["show-timeout-duration@workspace:packages/plugins/show-timeout-duration"],
 

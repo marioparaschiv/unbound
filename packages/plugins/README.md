@@ -1,6 +1,6 @@
 # Plugins
 
-139 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+140 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -116,6 +116,7 @@
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Shiki Codeblocks](https://unbound.rip/addons/unbound.shiki-codeblocks): Highlights code blocks with VS Code-style syntax colors.
 - <img src="../../assets/plugins/readme-icons/eye-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Show Hidden Things](https://unbound.rip/addons/unbound.show-hidden-things): Displays hidden and moderator-only features regardless of permissions.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Show Me Your Name](https://unbound.rip/addons/unbound.show-me-your-name): Display usernames next to display names, or show usernames only.
+- <img src="../../assets/plugins/readme-icons/shield-user-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Show Roles In Chat](https://unbound.rip/addons/unbound.show-roles-in-chat): Shows each author's highest role as a coloured tag next to their name in chat.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Show Timeout Duration](https://unbound.rip/addons/unbound.show-timeout-duration): Shows how much longer a user's timeout will last.
 - <img src="../../assets/plugins/readme-icons/bell-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Silent Message Toggle](https://unbound.rip/addons/unbound.silent-message-toggle): Adds a button to the chat input that sends your next messages as silent messages.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Silent Typing](https://unbound.rip/addons/unbound.silent-typing): Hides that you are typing, with a toggle in the chat input to turn it on and off.
