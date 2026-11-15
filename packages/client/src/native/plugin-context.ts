@@ -5,6 +5,7 @@ import { validateNativeBridgeRequirements } from '~/native/capabilities';
 import { resolveManifestCapabilities } from '~/addons/manifest';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { createScopedNativeBridge } from '~/native/scope';
+import { clearPluginTemp, pluginTempPath } from '~/native/plugin-temp';
 import { currentPlatform } from '~/native/platform';
 
 const stoppers = new WeakMap<object, () => void>();
@@ -23,7 +24,7 @@ export function beginNativeStop(context: PluginContext | undefined): void {
  * @description Builds a plugin's context, with a native bridge scoped to its declared capabilities.
  * @param manifest The plugin's manifest.
  * @param attribute Marks the plugin as active in the loader's crash attribution while its native calls run.
- * @returns The plugin context; call its `dispose` to release the plugin's native resources.
+ * @returns The plugin context; call its `dispose` to release the plugin's native resources and empty its temporary folder.
  */
 export function createPluginContext(
 	manifest: AddonManifest,
@@ -36,6 +37,7 @@ export function createPluginContext(
 	const scoped = createScopedNativeBridge(capabilities, platform, attribute, manifest.id);
 
 	stoppers.set(scoped.bridge, scoped.beginStop);
+	clearPluginTemp(manifest.id);
 
 	return {
 		manifest,
@@ -43,6 +45,13 @@ export function createPluginContext(
 		platform,
 		capabilities,
 		native: scoped.bridge,
-		dispose: scoped.dispose,
+		tempPath: pluginTempPath(manifest.id),
+		dispose() {
+			try {
+				scoped.dispose();
+			} finally {
+				clearPluginTemp(manifest.id);
+			}
+		},
 	};
 }

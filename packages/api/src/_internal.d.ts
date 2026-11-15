@@ -4898,7 +4898,7 @@ export type NativeObjCBridge = {
 	array(handle: NativeObjectHandle): NativeObjCResult[];
 	/** Copies bytes into a new `NSData` object. */
 	data(value: ArrayBuffer | Uint8Array): NativeObjectHandle;
-	/** Hooks a method by class and selector; handlers run in registration order, and the scope removes the hook on dispose. */
+	/** Hooks a method by class and selector, or a class method with a `+` before the selector; handlers run in registration order, and the scope removes the hook on dispose. */
 	hook<Receiver extends boolean = true>(
 		className: string,
 		selector: string,
@@ -5649,6 +5649,8 @@ export type PluginContext = {
 	readonly capabilities: readonly NativeBridgeCapability[];
 	/** The native bridge, scoped to the plugin's capabilities. */
 	readonly native: NativeBridge;
+	/** The plugin's temporary folder, relative to the documents directory, for `fs`; emptied before `start` and after `stop`. */
+	readonly tempPath: string;
 	/** Releases the plugin's hooks, surfaces, handles and subscriptions; the addon manager calls it on stop, unload, reload or a failed start. */
 	dispose(): void;
 };

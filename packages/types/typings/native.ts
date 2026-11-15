@@ -250,6 +250,8 @@ export type PluginContext = {
 	readonly capabilities: readonly NativeBridgeCapability[];
 	/** The native bridge, scoped to the plugin's capabilities. */
 	readonly native: NativeBridge;
+	/** The plugin's temporary folder, relative to the documents directory, for `fs`; emptied before `start` and after `stop`. */
+	readonly tempPath: string;
 	/** Releases the plugin's hooks, surfaces, handles and subscriptions; the addon manager calls it on stop, unload, reload or a failed start. */
 	dispose(): void;
 };
