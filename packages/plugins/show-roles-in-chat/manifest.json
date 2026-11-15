@@ -1,0 +1,17 @@
+{
+	"id": "unbound.show-roles-in-chat",
+	"name": "Show Roles In Chat",
+	"description": "Shows each author's highest role as a coloured tag next to their name in chat.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ShieldUserIcon",
+	"main": "index.ts"
+}
