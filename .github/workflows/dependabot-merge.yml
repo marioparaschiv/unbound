@@ -6,6 +6,7 @@ on:
             - Client CI
             - DevTools
             - Loader Pull Request Build
+            - Minimum loader
             - Plugins
             - Pull request title
             - Secret scan

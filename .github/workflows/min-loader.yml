@@ -1,0 +1,40 @@
+name: Minimum loader
+
+on:
+    pull_request:
+        paths:
+            - 'packages/client/**'
+            - 'packages/types/typings/**'
+            - 'scripts/check-min-loader.ts'
+            - '.github/workflows/min-loader.yml'
+    push:
+        branches: [main]
+        paths:
+            - 'packages/client/**'
+            - 'packages/types/typings/**'
+            - 'scripts/check-min-loader.ts'
+
+permissions:
+    contents: read
+
+concurrency:
+    group: min-loader-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    check:
+        name: Client runs on minLoaderVersion
+        runs-on: ubuntu-26.04
+        timeout-minutes: 10
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+                  fetch-depth: 1
+
+            - name: Setup Bun dependencies
+              uses: ./.github/actions/setup-bun-deps
+
+            - name: Type-check the client against that loader's native typings
+              run: bun scripts/check-min-loader.ts
