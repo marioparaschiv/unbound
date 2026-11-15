@@ -18,7 +18,10 @@ The first variant is the baseline. Each variant is `name[:KEY=VALUE,...]`, built
 2. Backs up `settings.json`, then points the loader at the harness's server (`http://10.0.2.2:3390/<variant>/`), turns the debugger and hot reload off, and disables plugins (`--plugins keep` leaves them).
 3. Runs the variants in blocks, alternating the order each round (A B, B A, ...). A block starts with a warm-up launch that downloads the variant's bundle; the measured launches then run it from the cache.
 4. Each launch: the agent records marks, Hermes heap counters, module loads and timer lag, waits `--idle-ms`, walks the settings screens for `--step-ms` each, then POSTs its report. The harness reads Discord's process start time and `dumpsys meminfo`.
-5. Restores `settings.json`, deletes the bench bundle, and relaunches Discord on its dev server.
+5. Reads the loader's `Unbound` logcat lines for the launch and turns them into `loader …` phases: the update check, manifest fetch, bundle download, first-download wait and evaluation. The server logs each bundle-folder request as an `http <status> <path>` span.
+6. Restores `settings.json`, deletes the bench bundle, and relaunches Discord on its dev server.
+
+`--cold` deletes the saved bundle before each measured launch, so each one waits for the download, as a first launch or a loader update does. `--latency-ms <n>` holds each bundle-folder request for `n` ms as a stand-in for the CDN's round trip.
 
 A launch is invalid when Discord restarts, another bundle ran, Unbound failed to initialize, or a screen did not open.
 

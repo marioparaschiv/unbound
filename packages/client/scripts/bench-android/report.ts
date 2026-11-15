@@ -1,10 +1,13 @@
 import { BENCH_MARKS } from '~/core/bench-hooks';
 
 import type { AgentReport as AgentFinal } from './schema';
+import type { NativeLine } from './native';
+import type { TimedSpan } from './spans';
 import type { MemInfo } from './device';
 
 import { mannWhitney, summarize } from '../../../cli/src/bench/stats';
 import { spanSection, totalsSection } from './spans';
+import { nativeSpans } from './native';
 
 /** One measured launch. */
 export type LaunchRecord = {
@@ -14,6 +17,10 @@ export type LaunchRecord = {
 	agent: AgentFinal | null;
 	memory: { idle: MemInfo | null; final: MemInfo | null };
 	problems: string[];
+	/** The loader's logcat lines; runs recorded before the harness read them have none. */
+	native?: NativeLine[];
+	/** The device's requests to the harness's CDN stand-in, in host epoch ms. */
+	requests?: TimedSpan[];
 };
 
 type BuildInfo = {
@@ -102,6 +109,10 @@ export function metricsOf(record: LaunchRecord): Record<string, number> {
 		if (value !== undefined) {
 			out[key] = value;
 		}
+	}
+
+	for (const phase of nativeSpans(record.native ?? [])) {
+		out[`ms ${phase.name}`] = phase.end - phase.start;
 	}
 
 	for (const name of ['startup', 'idle', 'idle:gc']) {

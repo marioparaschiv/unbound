@@ -49,6 +49,10 @@ Spans nest by time: each one sits under the shortest span that contains it.
 | `module <path>`                                       | A client module body, start to end; the bench build plugin wraps every `src` file                                 |
 | `discord <path>` or `discord <id> [export keys]`      | A Discord Metro factory run (`metro/search.ts`); library modules have no path, so their exports name them         |
 | `metro find <cache key>`, `library <props>`           | A metro search, and a shimmed library such as `react-native-reanimated` resolving on first use                    |
+| `loader <phase>`                                      | The loader's logcat lines paired into phases (`native.ts`); every line is also a `loader:` event on `launch`      |
+| `http <status> <path>`                                | A request the device made to the harness's server, as the server saw it                                           |
+
+`loader` and `http` spans run off the JS thread, so they nest apart from the client's spans and hang off `launch`. To time the bundle download, add `--cold` (no saved bundle before each launch) and `--latency-ms 80` (a CDN-like round trip per request).
 
 Self time is a span's time minus its children. A client module with a large total but zero self time only triggered Discord modules. Before you count that time as Unbound's cost, check whether Discord loads those modules later anyway with a `lazy:UNBOUND_LAZY_MODULES=proxy` variant.
 

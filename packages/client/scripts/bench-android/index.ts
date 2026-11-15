@@ -5,9 +5,12 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { basename, join } from 'node:path';
 import { parseArgs } from 'node:util';
 
+import type { TimedSpan } from './spans';
+
 import { createDevice, sha256, type MemInfo } from './device';
 import { renderReport, type LaunchRecord } from './report';
 import { startServer, type AgentReport } from './server';
+import { parseNativeLines } from './native';
 import { exportLaunch } from './otel';
 
 const ROOT = join(import.meta.dir, '..', '..');
@@ -28,6 +31,8 @@ const { values } = parseArgs({
 		out: { type: 'string' },
 		'report-only': { type: 'string' },
 		'skip-build': { type: 'boolean', default: false },
+		cold: { type: 'boolean', default: false },
+		'latency-ms': { type: 'string', default: '0' },
 		otel: {
 			type: 'string',
 			default: process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? 'http://localhost:4318',
@@ -213,6 +218,7 @@ async function main() {
 	const records: LaunchRecord[] = [];
 	let expecting: { variant: string; resolve: (report: AgentReport) => void } | undefined;
 	let idleMem: MemInfo | undefined;
+	let requests: TimedSpan[] = [];
 
 	const stopServer = startServer(
 		port,
@@ -228,7 +234,10 @@ async function main() {
 				expecting.resolve(report);
 			}
 		},
+		{ latencyMs: Number(values['latency-ms']), onRequest: (span) => requests.push(span) },
 	);
+
+	await device.growLog();
 
 	const original = await device.readSettings();
 	let restored = false;
@@ -284,6 +293,12 @@ async function main() {
 		await sleep(2_000);
 
 		idleMem = undefined;
+		requests = [];
+
+		// With no saved bundle the launch waits for the download, as a first launch or a loader update does.
+		if (values.cold) {
+			await device.clearBundle();
+		}
 
 		const final = new Promise<AgentReport | undefined>((resolve) => {
 			expecting = { variant: b.name, resolve };
@@ -327,6 +342,7 @@ async function main() {
 		}
 
 		const agent = report ?? null;
+		const native = pid ? parseNativeLines(await device.loaderLog(pid)) : [];
 
 		problems.push(...agentProblems(agent));
 
@@ -337,6 +353,8 @@ async function main() {
 			agent,
 			memory: { idle: idleMem ?? null, final: finalMem ?? null },
 			problems,
+			native,
+			requests,
 		};
 	}
 

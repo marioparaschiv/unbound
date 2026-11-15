@@ -83,9 +83,9 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
             downloaded = updater_.downloadBundle(savedPath, host_->resolveUpdateURL(),
                                                  host_->runtimeBytecodeVersion());
             preferences::setCheckedByLoader(settings_, loaderVersion());
-            recordUpdateCheck(epochMs(), downloaded != savedPath && fileExists(downloaded)
-                                             ? "downloaded"
-                                             : "current");
+            bool current = downloaded == savedPath || !fileExists(downloaded);
+            currentAtMs_.store(current ? nowMs() : 0);
+            recordUpdateCheck(epochMs(), current ? "current" : "downloaded");
         }
         catch (const std::exception &error)
         {
@@ -93,6 +93,7 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
             BundleUpdateFailure failure = update ? update->failure : BundleUpdateFailure::Network;
             // Even a failed check counts, so an offline launch does not wait again next time.
             preferences::setCheckedByLoader(settings_, loaderVersion());
+            currentAtMs_.store(0);
             recordUpdateCheck(epochMs(), "failed", error.what());
             log(hasSaved ? LogLevel::Warning : LogLevel::Error, LOG_CATEGORY_DEFAULT,
                 std::string("Bundle download failed. (") + error.what() + ")" +
@@ -125,6 +126,8 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
             settleFirstDownload(token,
                                 updated ? std::optional<std::string>(downloaded) : std::nullopt))
         {
+            // This launch runs what it just downloaded, so nothing newer waits.
+            currentAtMs_.store(nowMs());
             return;
         }
         if (updated && !reloadOnUpdate && token == token_.load())
@@ -156,7 +159,16 @@ bool LoaderPipeline::isBundleUpdateAvailable()
     ExclusiveCheck check(checking_);
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "The client asked whether a newer bundle exists.");
 
-    return updater_.isUpdateAvailable(updater_.resolveBundlePath(), host_->resolveUpdateURL(),
+    // The client asks once its addons load, moments after the launch's own check.
+    int64_t current = currentAtMs_.load();
+    if (current != 0 && nowMs() - current < static_cast<int64_t>(kFreshCheckSeconds * 1000))
+    {
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+            "No update found; answered from the check that just ran.");
+        return false;
+    }
+
+    return updater_.isUpdateAvailable(updater_.currentBundlePath(), host_->resolveUpdateURL(),
                                       host_->runtimeBytecodeVersion());
 }
 
@@ -168,7 +180,7 @@ bool LoaderPipeline::updateBundleNow()
     lastCheckMs_.store(nowMs());
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "The client asked to download a newer bundle.");
 
-    std::string savedPath = updater_.resolveBundlePath();
+    std::string savedPath = updater_.currentBundlePath();
     std::string downloaded;
     try
     {
@@ -177,11 +189,13 @@ bool LoaderPipeline::updateBundleNow()
     }
     catch (const std::exception &error)
     {
+        currentAtMs_.store(0);
         recordUpdateCheck(epochMs(), "failed", error.what());
         throw;
     }
 
     bool updated = downloaded != savedPath && fileExists(downloaded);
+    currentAtMs_.store(updated ? 0 : nowMs());
     recordUpdateCheck(epochMs(), updated ? "downloaded" : "current");
     if (updated && token == token_.load())
     {
@@ -216,7 +230,7 @@ void LoaderPipeline::checkForUpdate(uint64_t token, size_t attempt)
     std::string savedPath;
     try
     {
-        savedPath = updater_.resolveBundlePath();
+        savedPath = updater_.currentBundlePath();
     }
     catch (const std::exception &error)
     {

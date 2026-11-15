@@ -1,4 +1,4 @@
-import { chmod, mkdir, mkdtemp, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { chmod, cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { join, resolve } from 'node:path';
 import { existsSync } from 'node:fs';
@@ -294,7 +294,8 @@ async function downloadVersion(npmVersion: string, root: string): Promise<void> 
 			const destination = join(root, platform);
 
 			await rm(destination, { recursive: true, force: true });
-			await rename(join(extracted, platform), destination);
+			// A copy, not a rename: the temp directory is often on another filesystem (EXDEV).
+			await cp(join(extracted, platform), destination, { recursive: true });
 		}
 	} finally {
 		await rm(work, { recursive: true, force: true });
