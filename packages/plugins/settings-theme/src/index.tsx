@@ -2,7 +2,15 @@ import { findRenderTarget } from '@unbound-plugins/shared/react/render-target';
 import { settings } from '@unbound-app/settings';
 import { flux, metro, patcher } from '@unbound-app/api';
 import { StyleSheet, View } from 'react-native';
-import { Children, cloneElement, isValidElement, type ComponentType, type ReactNode } from 'react';
+import {
+	cloneElement,
+	createContext,
+	isValidElement,
+	useContext,
+	type ComponentType,
+	type Context,
+	type ReactNode,
+} from 'react';
 
 import { withTransparentNavigator } from '~/lib/navigator';
 
@@ -19,40 +27,56 @@ function isThemeActive(): boolean {
 	return Boolean(custom?.getCustomTheme?.() || gradient?.getLinearGradient?.());
 }
 
-type RootProps = { style?: unknown; children?: ReactNode };
+type HeaderElements = { HeaderHeightContext?: Context<number | undefined> };
+
+const Headers: HeaderElements | undefined = metro.findByProps(
+	'HeaderHeightContext',
+	'useHeaderHeight',
+	{
+		lazy: true,
+	},
+);
+const NoHeaderHeight = createContext<number | undefined>(undefined);
+
+function ThemeBackdrop() {
+	const Gradient = metro.findByFilePath('modules/client_themes/native/ThemedGradient.tsx', {
+		interop: false,
+	})?.default as ComponentType<{ style?: object }> | undefined;
+
+	return (
+		<>
+			<View pointerEvents='none' style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]}>
+				{Gradient ? <Gradient style={{ flex: 1 }} /> : null}
+			</View>
+			<View
+				pointerEvents='none'
+				style={[
+					StyleSheet.absoluteFill,
+					{ backgroundColor: `rgba(0,0,0,${settings.dim / 100})` },
+				]}
+			/>
+		</>
+	);
+}
+
+function ThemedScreen({ children }: { children: ReactNode }) {
+	const headerHeight = useContext(Headers?.HeaderHeightContext ?? NoHeaderHeight) ?? 0;
+
+	return (
+		<View style={{ flex: 1 }}>
+			<ThemeBackdrop />
+			<View style={{ flex: 1, paddingTop: headerHeight }}>{children}</View>
+		</View>
+	);
+}
 
 function ThemedSettings({ children }: { children: ReactNode }) {
 	const useThemeActive = metro.findByFilePath('modules/client_themes/native/useActiveTheme.tsx', {
 		interop: false,
 	})?.useIsClientThemeOrCustomThemeActive as (() => boolean) | undefined;
-	const Gradient = metro.findByFilePath('modules/client_themes/native/ThemedGradient.tsx', {
-		interop: false,
-	})?.default as ComponentType<{ style?: object }> | undefined;
 	const active = useThemeActive?.() ?? false;
-	const root = withTransparentNavigator(children, NAVIGATOR_ID);
 
-	if (!active || !Gradient || !isValidElement<RootProps>(root)) return root;
-
-	return cloneElement(
-		root,
-		{ style: [root.props.style, TRANSPARENT] },
-		<View
-			key='unbound-theme'
-			pointerEvents='none'
-			style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]}
-		>
-			<Gradient style={{ flex: 1 }} />
-		</View>,
-		<View
-			key='unbound-dim'
-			pointerEvents='none'
-			style={[
-				StyleSheet.absoluteFill,
-				{ backgroundColor: `rgba(0,0,0,${settings.dim / 100})` },
-			]}
-		/>,
-		...Children.toArray(root.props.children),
-	);
+	return active ? withTransparentNavigator(children, NAVIGATOR_ID, ThemedScreen) : children;
 }
 
 type StyledProps = { style?: unknown; contentContainerStyle?: unknown };
