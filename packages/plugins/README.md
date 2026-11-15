@@ -1,6 +1,6 @@
 # Plugins
 
-145 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+146 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -62,6 +62,7 @@
 - <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Hide Unusable Expressions](https://unbound.rip/addons/unbound.hide-unusable-expressions): Leaves emojis and stickers you can't send out of the pickers, instead of showing them locked.
 - <img src="../../assets/plugins/readme-icons/ic-swipe-reply-24px.svg" width="20" height="20" align="absmiddle" alt=""> [Highlight Replies](https://unbound.rip/addons/unbound.highlight-replies): Highlights replies to your messages like mentions, even when the reply didn't ping you.
 - <img src="../../assets/plugins/readme-icons/eye-icon.svg" width="20" height="20" align="absmiddle" alt=""> [I Love Spam](https://unbound.rip/addons/unbound.i-love-spam): Shows messages from users Discord marks as likely spammers instead of hiding them.
+- <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Image Alt Text](https://unbound.rip/addons/unbound.image-alt-text): Shows the descriptions people give their images right in the message, instead of behind the ALT badge.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Image Link](https://unbound.rip/addons/unbound.image-link): Keeps the link in a message that is only an image or video link, instead of showing the embed alone.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [IRC Colors](https://unbound.rip/addons/unbound.irc-colors): Gives everyone in chat their own username color, picked from their user id like in IRC clients.
 - <img src="../../assets/plugins/readme-icons/chevron-large-right-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Jump To Top](https://unbound.rip/addons/unbound.jump-to-top): Adds a button above Discord's jump-to-present arrow that jumps to the first message in the channel.
