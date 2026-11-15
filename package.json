@@ -31,7 +31,7 @@
 			"typescript": "^7.0.2",
 			"possess": "^1.1.0",
 			"@types/bun": "latest",
-			"better-auth": "1.7.21"
+			"better-auth": "1.7.22"
 		},
 		"catalogs": {
 			"react": {
@@ -95,7 +95,7 @@
 		"lefthook": "^2.2.2",
 		"oxfmt": "^0.78.0",
 		"oxlint": "^1.93.0",
-		"oxlint-tsgolint": "^7.0.2006",
+		"oxlint-tsgolint": "^7.0.2007",
 		"semantic-release": "^25.0.9",
 		"ts-morph": "^28.0.0",
 		"typescript": "catalog:"
