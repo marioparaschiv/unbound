@@ -5,6 +5,7 @@ export type Badge = { label: BadgeLabel; color: string };
 export type BadgeLabel =
 	| 'BADGE_NSFW'
 	| 'BADGE_LOCKED'
+	| 'BADGE_PRIVATE'
 	| 'BADGE_RULES'
 	| 'BADGE_TEXT'
 	| 'BADGE_VOICE'
@@ -22,6 +23,7 @@ export type BadgeChannel = {
 	type?: number;
 	nsfw?: boolean;
 	locked: boolean;
+	private: boolean;
 	isRules: boolean;
 };
 
@@ -29,6 +31,7 @@ export type BadgeChannel = {
 export type BadgeOptions = {
 	nsfw: boolean;
 	locked: boolean;
+	private: boolean;
 	rules: boolean;
 	type: boolean;
 	oneBadge: boolean;
@@ -36,6 +39,7 @@ export type BadgeOptions = {
 
 const NSFW: Badge = { label: 'BADGE_NSFW', color: '#e91e63' };
 const LOCKED: Badge = { label: 'BADGE_LOCKED', color: '#80848e' };
+const PRIVATE: Badge = { label: 'BADGE_PRIVATE', color: '#4e5058' };
 const RULES: Badge = { label: 'BADGE_RULES', color: '#5865f2' };
 
 const TYPE_BADGES: Partial<Record<number, Badge>> = {
@@ -52,7 +56,7 @@ const TYPE_BADGES: Partial<Record<number, Badge>> = {
 };
 
 /**
- * @description Lists the badges a channel row shows, in order: locked, NSFW, rules, then its type.
+ * @description Lists the badges a channel row shows, in order: locked, private, NSFW, rules, then its type.
  * @param channel What the badges read from the channel.
  * @param options Which badges show.
  * @returns The badges, empty when none apply.
@@ -61,6 +65,7 @@ export function badgesFor(channel: BadgeChannel, options: BadgeOptions): Badge[]
 	const typeBadge = channel.type === undefined ? undefined : TYPE_BADGES[channel.type];
 	const badges = [
 		options.locked && channel.locked && LOCKED,
+		options.private && channel.private && PRIVATE,
 		options.nsfw && channel.nsfw && NSFW,
 		options.rules && channel.isRules && RULES,
 		options.type && typeBadge,

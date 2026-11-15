@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.0] - 2026-11-15
+
+### Changed
+
+- Locked now marks channels you cannot post or talk in, instead of every private channel.
+
+### Added
+
+- A Private badge for channels hidden from @everyone.
+
 ## [1.0.0] - 2026-11-14
 
 ### Added

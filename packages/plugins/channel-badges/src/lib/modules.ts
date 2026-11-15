@@ -1,4 +1,9 @@
-import { metro } from '@unbound-app/api';
+import type { FluxStore } from '@unbound-app/api/flux';
+import { flux, metro } from '@unbound-app/api';
+
+type PermissionStore = FluxStore & {
+	can(permission: bigint, context: object): boolean;
+};
 
 /** Discord's permission checks, which say whether @everyone may see a channel. */
 export const PermissionUtils = metro.findByProps('computePermissions', 'canEveryoneRole', {
@@ -7,3 +12,6 @@ export const PermissionUtils = metro.findByProps('computePermissions', 'canEvery
 
 /** Discord's constants, which hold the permission bits. */
 export const DiscordConstants = metro.findByProps('Permissions', 'ThemeTypes', { lazy: true });
+
+/** The current user's permissions in each channel. */
+export const PermissionStore = flux.getStore('Permission') as PermissionStore;
