@@ -37,6 +37,7 @@ const (
 	unboundBonjourService = "_unbound-bridge._tcp"
 	// Shown in iOS's Local Network prompt, unless Discord declares its own text.
 	unboundLocalNetworkUsage = "Unbound's debugger finds and connects to the debugger bridge on your computer over the local network."
+	unboundSpeechUsage       = "Unbound plugins turn voice messages into text, on this device."
 )
 
 // cyanInputs writes the Info.plist keys cyan merges into the IPA: the loader version for every channel, and
@@ -111,6 +112,10 @@ func mergePlist(data []byte, loader string, branding bool) ([]byte, error) {
 	merge := newPlistDict()
 	if err := setSideloadVersion(info, merge, loader); err != nil {
 		return nil, err
+	}
+
+	if info.get("NSSpeechRecognitionUsageDescription") == nil {
+		merge.set("NSSpeechRecognitionUsageDescription", plistText(unboundSpeechUsage))
 	}
 
 	if !branding {
