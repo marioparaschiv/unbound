@@ -1,0 +1,6 @@
+{
+	"OPTIONS": "Message menu",
+	"HINT": "Hold an option and drag it to move it. Options you switch off are hidden from the menu. New options from Discord or plugins appear here after you next open the menu.",
+	"EMPTY": "Long-press a message once so the editor can list the menu's options.",
+	"RESET": "Reset to Discord's order"
+}

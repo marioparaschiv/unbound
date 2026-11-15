@@ -1,6 +1,6 @@
 # Plugins
 
-148 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+149 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -86,6 +86,7 @@
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Latency](https://unbound.rip/addons/unbound.message-latency): Marks messages that took at least the selected threshold to send.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Link Embeds](https://unbound.rip/addons/unbound.message-link-embeds): Adds previews to messages that link to other Discord messages.
 - <img src="../../assets/plugins/readme-icons/eye-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Logger](https://unbound.rip/addons/unbound.message-logger): Keeps deleted and edited messages in the chat.
+- <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Menu Editor](https://unbound.rip/addons/unbound.message-menu-editor): Reorders and hides the options in the menu you get from long-pressing a message.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Text Size](https://unbound.rip/addons/unbound.message-text-size): Makes the text of chat messages bigger or smaller, leaving the rest of Discord as it is.
 - <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [More User Tags](https://unbound.rip/addons/unbound.more-user-tags): Adds tags for webhooks and moderative roles.
 - <img src="../../assets/plugins/readme-icons/microphone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Moyai](https://unbound.rip/addons/unbound.moyai): Plays a thud when Moyai appears in the current channel or as a reaction.

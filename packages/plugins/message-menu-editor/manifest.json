@@ -1,0 +1,17 @@
+{
+	"id": "unbound.message-menu-editor",
+	"name": "Message Menu Editor",
+	"description": "Reorders and hides the options in the menu you get from long-pressing a message.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ChatDotsIcon",
+	"main": "index.tsx"
+}
