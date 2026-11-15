@@ -676,6 +676,8 @@ func lintWorkflows(root string) error {
 	return runQuiet(root, binary, workflows...)
 }
 
+const antiSlopInstall = "go install github.com/JacobJNilsson/anti-slop-go/cmd/antislop@v1.4.1"
+
 func lintAntiSlop(root string) error {
 	binary, err := exec.LookPath("antislop")
 	if err != nil {
@@ -684,7 +686,13 @@ func lintAntiSlop(root string) error {
 	}
 
 	if err != nil {
-		return errors.New("antislop is required to lint the Go sources")
+		if os.Getenv("CI") != "" {
+			return errors.New("antislop is required to lint the Go sources: " + antiSlopInstall)
+		}
+
+		fmt.Fprintln(os.Stderr, "Skipping antislop, which is not installed; CI still runs it. Install: "+antiSlopInstall)
+
+		return nil
 	}
 
 	if err := runQuiet(root, binary, append(antiSlopRules, "./tools")...); err != nil {

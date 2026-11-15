@@ -100,7 +100,7 @@ func doctorChecks(environment doctorEnvironment) []doctorCheck {
 
 	checks = append(checks,
 		commandCheck("actionlint", false, "brew install actionlint; go run ./tools lint needs it"),
-		commandCheck("antislop", false, "go install github.com/JacobJNilsson/anti-slop-go/cmd/antislop@v1.4.1; go run ./tools lint needs it"),
+		commandCheck("antislop", false, antiSlopInstall+"; go run ./tools lint needs it"),
 		commandCheck("java", false, "install JDK 17 for the Android module"),
 		commandCheck("adb", false, "add the Android SDK platform-tools to PATH for the Android smoke test"),
 		doctorCheck{name: "Android SDK", hint: "install the Android SDK or set ANDROID_HOME", passes: func(environment doctorEnvironment) bool {
