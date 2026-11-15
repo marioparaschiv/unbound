@@ -172,30 +172,74 @@ export function renderBanner(svg: string): Uint8Array {
 	return markGenerated(resvg.render().asPng());
 }
 
+const FALLBACK_ICON = 'SettingsIcon';
+
+/** Which banners a run writes: the named plugins, every generated banner, or only missing ones. */
+export type BannerSelection = { names: Set<string>; all: boolean };
+
+/**
+ * @description Reads the run's arguments: plugin folder names, and `--all` to redraw every generated banner.
+ * @param args The command-line arguments.
+ * @returns The selection.
+ */
+export function parseBannerArgs(args: readonly string[]): BannerSelection {
+	return {
+		names: new Set(args.filter((arg) => !arg.startsWith('--'))),
+		all: args.includes('--all'),
+	};
+}
+
+/**
+ * @description Decides whether a run draws a plugin's banner: hand-made banners are kept, missing ones are drawn, and
+ * generated ones are redrawn only when named or with `--all`.
+ * @param folder The plugin's folder name.
+ * @param banner The plugin's current banner, or `undefined` when it has none.
+ * @param selection The run's selection.
+ * @returns Whether to draw it.
+ */
+export function shouldDrawBanner(
+	folder: string,
+	banner: Uint8Array | undefined,
+	selection: BannerSelection,
+): boolean {
+	if (!banner) return selection.names.size === 0 || selection.names.has(folder);
+	if (!isGeneratedBanner(banner)) return false;
+
+	return selection.all || selection.names.has(folder);
+}
+
+function readIcon(icon: string): string {
+	const path = join(PLUGIN_ICONS_DIR, `${icon}.png`);
+
+	if (existsSync(path)) return readFileSync(path).toString('base64');
+
+	console.warn(
+		`No ${icon}.png in assets/plugins/icons; using ${FALLBACK_ICON}. Run plugins:sync-icons to add it.`,
+	);
+
+	return readFileSync(join(PLUGIN_ICONS_DIR, `${FALLBACK_ICON}.png`)).toString('base64');
+}
+
 function main(): void {
+	const selection = parseBannerArgs(process.argv.slice(2));
 	let written = 0;
-	let kept = 0;
 
 	for (const { folder, manifest } of readPluginManifests(PLUGINS_DIR)) {
 		const directory = join(PLUGINS_DIR, folder);
 		const bannerPath = join(directory, BANNER_PATH);
+		const banner = existsSync(bannerPath) ? readFileSync(bannerPath) : undefined;
 
-		if (existsSync(bannerPath) && !isGeneratedBanner(readFileSync(bannerPath))) {
-			kept++;
-		} else {
-			const iconBase64 = readFileSync(
-				join(PLUGIN_ICONS_DIR, `${pluginIcon(manifest)}.png`),
-			).toString('base64');
-			const svg = bannerSvg({
-				name: manifest.name,
-				description: manifest.description,
-				iconBase64,
-			});
+		if (!shouldDrawBanner(folder, banner, selection)) continue;
 
-			mkdirSync(join(directory, 'media'), { recursive: true });
-			writeFileSync(bannerPath, renderBanner(svg));
-			written++;
-		}
+		const svg = bannerSvg({
+			name: manifest.name,
+			description: manifest.description,
+			iconBase64: readIcon(pluginIcon(manifest)),
+		});
+
+		mkdirSync(join(directory, 'media'), { recursive: true });
+		writeFileSync(bannerPath, renderBanner(svg));
+		written++;
 
 		const pagePath = join(directory, 'ADDON.md');
 		if (!existsSync(pagePath)) continue;
@@ -205,7 +249,7 @@ function main(): void {
 		if (updated !== page) writeFileSync(pagePath, updated);
 	}
 
-	console.log(`Banners: ${written} generated, ${kept} hand-made kept.`);
+	console.log(`Banners: ${written} drawn.`);
 }
 
 if (import.meta.main) main();

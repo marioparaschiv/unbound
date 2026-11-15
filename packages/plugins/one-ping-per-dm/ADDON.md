@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :bell: When someone sends you several messages in a DM, only the first unread one plays Discord's in-app message sound.

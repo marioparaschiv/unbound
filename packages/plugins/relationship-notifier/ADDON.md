@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :user-minus: Tells you when a friend removes you, or when someone withdraws the friend request they sent you.
