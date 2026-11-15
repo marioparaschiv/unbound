@@ -134,7 +134,9 @@ import { metro, patcher } from '@unbound-app/api';
 
 const Constants = metro.findByFilePath('modules/custom_status/Constants.tsx', { interop: false });
 
-patcher.assign(Constants, 'ClearAfterOptions', [...Constants.ClearAfterOptions, 900_000]);
+if (Constants) {
+	patcher.assign(Constants, 'ClearAfterOptions', [...Constants.ClearAfterOptions, 900_000]);
+}
 ```
 
 ## Unloaded Modules

@@ -1,0 +1,4 @@
+{
+	"SCALE": "Message text size",
+	"SCALE_SUBTITLE": "In percent of Discord's size. Messages already on screen change as they are drawn again."
+}
