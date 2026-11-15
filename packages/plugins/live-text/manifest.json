@@ -1,0 +1,17 @@
+{
+	"id": "unbound.live-text",
+	"name": "Live Text",
+	"description": "Reads the text in pictures from the image viewer's menu, so you can select and copy it. iOS only.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TextIcon",
+	"main": "index.tsx"
+}

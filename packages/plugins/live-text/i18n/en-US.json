@@ -1,0 +1,8 @@
+{
+	"COPY_TEXT": "Copy Text",
+	"TEXT_IN_IMAGE": "Text in Image",
+	"COPY_ALL": "Copy All",
+	"COPIED": "Copied the text.",
+	"NO_TEXT": "No text found in this image.",
+	"READ_FAILED": "Could not read this image."
+}
