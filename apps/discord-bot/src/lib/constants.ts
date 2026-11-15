@@ -8,7 +8,7 @@ export const COLOURS = {
 	deploy: 0x1a_bc_9c,
 } as const;
 
-export type AppEmoji = { name: string; id: string };
+export type AppEmoji = { name: string; id: string; animated?: boolean };
 
 /** The bot application's own emojis: Nucleo Micro Bold icons in the brand colour, or white where named. */
 export const EMOJIS = {

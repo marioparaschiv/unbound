@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "a12cb649-334b-4db5-a32d-5121ff20240c",
+  "prevIds": [
+    "f0bbb014-694f-44b7-826e-e73b2f3cd8d9"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "bot",
+        "star_post",
+        "emojis"
+      ],
+      "writes": [
+        "s|col|bot.star_post.emojis",
+        "n|col|bot.star_post.emojis",
+        "e|col|bot.star_post.emojis"
+      ],
+      "reads": [
+        "n|tbl|bot.star_post",
+        "n|sch|bot"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "star_post",
+        "name": "emojis",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 1,
+        "default": "'{}'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

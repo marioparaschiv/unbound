@@ -6,6 +6,7 @@ import { createBotReads } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
 
 import { createStarboard, type Starboard } from '~/starboard/starboard';
+import { createStarboardEmojis } from '~/starboard/starboard-emojis';
 import { createDatabase, POOLED_OPTIONS } from '~/db/database';
 import { createMessageGateway } from '~/lib/discord-messages';
 import { createAuditTelemetry } from '~/lib/audit-telemetry';
@@ -89,6 +90,7 @@ function startRuntime(ready: Client<true>) {
 		container.starboard = createStarboard({
 			db,
 			messages: createMessageGateway(ready.rest, ready.user.id),
+			emojis: createStarboardEmojis(ready.rest, ready.application.id),
 			guildId: config.guildId,
 			channelId: starboardChannelId,
 		});
