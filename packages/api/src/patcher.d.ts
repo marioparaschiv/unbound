@@ -10,9 +10,23 @@ declare enum PatchType {
 	Instead = 1,
 	After = 2,
 }
+/**
+ * @description Sets a property for as long as the returned function is not called, then puts the original back,
+ * unless something else replaced the value in the meantime.
+ * @template T The object's type.
+ * @template K The property's key.
+ * @param parent The object, such as a module's exports.
+ * @param key The property to set.
+ * @param value The value to set.
+ * @returns Restores the original value or descriptor.
+ */
+declare function assignValue<T extends object, K extends keyof T>(
+	parent: T,
+	key: K,
+	value: T[K],
+): () => void;
 /** The symbol a patched method carries, pointing at its patch state. */
 export declare const PATCH_SYMBOL: symbol;
-/** Every module the patcher has patched, with its live patches. */
 export declare const patches: PatchedModule[];
 /**
  * `before`, `instead` and `after` for React components. Each takes a `memo`, `forwardRef` or class component and
@@ -308,6 +322,6 @@ export type ResultOf<F> =
 /** The `this` a patch receives: the method's declared `this`, else the object `M` holding it. */
 export type SelfOf<M, F> = unknown extends ThisParameterType<F> ? M : ThisParameterType<F>;
 
-export { PatchType$1 as PatchType };
+export { PatchType$1 as PatchType, assignValue as assign };
 
 export {};
