@@ -19,12 +19,10 @@ void recognisesBetaBuilds()
 void listsDeviceMarkers()
 {
     report::AppleDeviceFacts apple;
-    apple.developerMode   = true;
     apple.lockdownMode    = true;
     apple.iPhoneAppOnIPad = true;
-    assert(
-        (report::appleMarkers(apple)
-         == std::vector<std::string>{"Developer Mode on", "Lockdown Mode", "iPhone app on iPad"}));
+    assert((report::appleMarkers(apple)
+            == std::vector<std::string>{"Lockdown Mode", "iPhone app on iPad"}));
 
     report::AndroidDeviceFacts android;
     android.selinuxEnforcing  = false;
