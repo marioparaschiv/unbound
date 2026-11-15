@@ -1,0 +1,17 @@
+{
+	"id": "unbound.greentext",
+	"name": "Greentext",
+	"description": "Shows lines that start with > in green, like on imageboards.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TextIcon",
+	"main": "index.ts"
+}

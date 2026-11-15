@@ -1153,6 +1153,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/greentext": {
+      "name": "greentext",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/greet-sticker-picker": {
       "name": "greet-sticker-picker",
       "dependencies": {
@@ -4372,6 +4386,8 @@
     "gopd": ["gopd@1.2.0", "", {}, "sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg=="],
 
     "graceful-fs": ["graceful-fs@4.2.12", "", {}, "sha512-iuyGF2E4oafQfPsRrG2wtY2ILupMhvtdrhzrxB+0VcjsPpSPttpfYdjnGFGsTi5MaJFjI1jOKHPQ6UTbTj9TAw=="],
+
+    "greentext": ["greentext@workspace:packages/plugins/greentext"],
 
     "greet-sticker-picker": ["greet-sticker-picker@workspace:packages/plugins/greet-sticker-picker"],
 
