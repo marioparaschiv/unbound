@@ -217,7 +217,11 @@ std::string SettingsStore::dumpLocked(std::vector<CachedStore> &layout) const
 void SettingsStore::load()
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    loadLocked();
+}
 
+void SettingsStore::loadLocked() const
+{
     std::optional<std::string> contents = readTextFile(path_);
     unreadable_                         = !contents && fileExists(path_);
     if (unreadable_)
@@ -331,6 +335,25 @@ void SettingsStore::reload()
     }
 
     load();
+}
+
+void SettingsStore::refresh()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    // Changes staged but not yet flushed stay: they are replayed over the file's new contents.
+    if (dirty_ && !unreadable_)
+    {
+        mergeExternalEditsLocked();
+        return;
+    }
+
+    // The store's own save also wakes the file watcher; there is nothing new to read then.
+    if (stamp_.exists && stampOnDisk() == stamp_)
+    {
+        return;
+    }
+
+    loadLocked();
 }
 
 bool SettingsStore::readable() const
