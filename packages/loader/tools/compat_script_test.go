@@ -10,17 +10,20 @@ func referenceKeys(set *compatSourceSet) map[string]bool {
 	for _, reference := range set.sorted() {
 		keys[reference.Kind+" "+reference.Class+" "+reference.Name+strings.Join(reference.Terms, ",")] = true
 	}
+
 	return keys
 }
 
 func expectKeys(t *testing.T, set *compatSourceSet, present []string, absent []string) {
 	t.Helper()
+
 	keys := referenceKeys(set)
 	for _, key := range present {
 		if !keys[key] {
 			t.Errorf("missing reference %q in %v", key, keys)
 		}
 	}
+
 	for _, key := range absent {
 		if keys[key] {
 			t.Errorf("unexpected reference %q", key)
@@ -30,6 +33,7 @@ func expectKeys(t *testing.T, set *compatSourceSet, present []string, absent []s
 
 func expectNoDynamic(t *testing.T, set *compatSourceSet) {
 	t.Helper()
+
 	if len(set.dynamicSites) > 0 {
 		t.Fatalf("expected no skipped lookups, got %+v", set.dynamicSites)
 	}
@@ -224,16 +228,19 @@ export function later(objc: NativeObjCBridge) {
 `,
 	})
 	expectKeys(t, set, []string{"objc-method DCDLabel setText:"}, nil)
+
 	var calls []string
 	for _, site := range set.dynamicSites {
 		calls = append(calls, site.Call)
 	}
+
 	joined := strings.Join(calls, ";")
 	for _, expected := range []string{"objc.getClass", "objc.invoke", "lookup (not called with names the scan can read)"} {
 		if !strings.Contains(joined, expected) {
 			t.Fatalf("expected a skipped %q site, got %v", expected, calls)
 		}
 	}
+
 	if strings.Contains(joined, "objc.hook") {
 		t.Fatalf("a forwarder definition must not count as skipped: %v", calls)
 	}
@@ -268,6 +275,7 @@ export function readMessage(bridge: NativeMessageCellBridge, text: TextBridge, c
 `,
 	})
 	expectKeys(t, set, []string{"objc-ivar  viewModel", "objc-method  attributedText", "objc-class  DCDLabel"}, []string{"objc-method  hiddenSelector"})
+
 	if len(set.dynamicSites) != 1 || set.dynamicSites[0].Call != "mystery.invoke (unknown bridge)" {
 		t.Fatalf("a lookup through an unknown receiver must be reported, got %+v", set.dynamicSites)
 	}

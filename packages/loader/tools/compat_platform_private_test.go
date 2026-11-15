@@ -20,6 +20,7 @@ export function chain(objc: NativeObjCBridge, view: unknown) {
 func TestMergeJavaFrameworkKeepsPublicAndAddsHidden(t *testing.T) {
 	public := newJavaFrameworkIndex()
 	public.add(&javaFrameworkClass{Name: "android.view.View", Methods: map[string][]string{"setAlpha": {"(F)V"}}, Fields: map[string]bool{}})
+
 	hidden := newJavaFrameworkIndex()
 	hidden.add(&javaFrameworkClass{Name: "android.view.View", Methods: map[string][]string{"getListenerInfo": {"()Landroid/view/View$ListenerInfo;"}}, Fields: map[string]bool{"mListenerInfo": true}})
 	hidden.add(&javaFrameworkClass{Name: "android.util.PathParser", Methods: map[string][]string{"createPathFromPathData": {"(Ljava/lang/String;)Landroid/graphics/Path;"}}, Fields: map[string]bool{}})
@@ -30,6 +31,7 @@ func TestMergeJavaFrameworkKeepsPublicAndAddsHidden(t *testing.T) {
 	if view.Methods["setAlpha"] == nil || view.Methods["getListenerInfo"] == nil || !view.Fields["mListenerInfo"] {
 		t.Fatalf("merged View lost or missed members: %+v", view)
 	}
+
 	if public.Classes["android.util.PathParser"] == nil || !public.MethodNames["createPathFromPathData"] || !public.FieldNames["mListenerInfo"] {
 		t.Fatal("hidden classes and member names were not added")
 	}
@@ -44,6 +46,7 @@ func TestSystemChainDeclaresWalksPrivateSuperclasses(t *testing.T) {
 	if !target.systemChainDeclares("_UIPrivateView", "_privateLayout") {
 		t.Fatal("a private superclass method was not found")
 	}
+
 	if target.systemChainDeclares("_UIPrivateView", "missingSelector") {
 		t.Fatal("a missing selector was reported as declared")
 	}

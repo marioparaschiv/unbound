@@ -72,9 +72,11 @@ func TestDecodePointerResolvesCacheOffsets(t *testing.T) {
 	if got := cache.decodePointer(0x180001000); got != 0x180001000 {
 		t.Fatalf("absolute pointer decoded to %#x", got)
 	}
+
 	if got := cache.decodePointer(1<<63 | 0x2000); got != 0x180002000 {
 		t.Fatalf("authenticated pointer decoded to %#x", got)
 	}
+
 	if got := cache.decodePointer(0); got != 0 {
 		t.Fatalf("null pointer decoded to %#x", got)
 	}

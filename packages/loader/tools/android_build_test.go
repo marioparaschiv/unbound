@@ -22,18 +22,23 @@ const testBuildCommit = "0123456789abcdef0123456789abcdef01234567"
 
 func zipEntries(t *testing.T, entries map[string][]byte) []byte {
 	t.Helper()
+
 	var archive bytes.Buffer
+
 	writer := zip.NewWriter(&archive)
 	for name, data := range entries {
 		entry, err := writer.CreateHeader(&zip.FileHeader{Name: name, Method: zip.Store})
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		entry.Write(data)
 	}
+
 	if err := writer.Close(); err != nil {
 		t.Fatal(err)
 	}
+
 	return archive.Bytes()
 }
 
@@ -46,10 +51,12 @@ func writeTestPatchedBuild(t *testing.T, directory string) string {
 		lspatchOriginEntry:    stock,
 	})
 	split := testAPKBytes(t, discordTestManifest(patchedAPKVersionCode, "", "config.arm64_v8a"))
+
 	path := filepath.Join(directory, "Unbound.apks")
 	if err := os.WriteFile(path, zipEntries(t, map[string][]byte{"base.apk": base, "config.arm64_v8a.apk": split}), 0o644); err != nil {
 		t.Fatal(err)
 	}
+
 	return path
 }
 
@@ -63,32 +70,40 @@ func TestStageAndroidBuildDescribesEverySplit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if record.DiscordVersion != "352.17" || record.DiscordVersionCode != 352017 {
 		t.Fatalf("record = %+v", record)
 	}
+
 	var names []string
 	for _, split := range record.Splits {
 		names = append(names, split.Name)
+
 		compressed, err := os.ReadFile(split.path)
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		reader, err := gzip.NewReader(bytes.NewReader(compressed))
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		apk, err := io.ReadAll(reader)
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		digest := sha256.Sum256(apk)
 		if hex.EncodeToString(digest[:]) != split.SHA256 || int64(len(apk)) != split.Size || int64(len(compressed)) != split.CompressedSize {
 			t.Fatalf("split %s does not describe its file", split.Name)
 		}
+
 		if split.Key != "android/stable/352017/"+testBuildCommit+"/"+split.Name+"-"+split.SHA256[:16]+".apk.gz" {
 			t.Fatalf("split %s key = %s", split.Name, split.Key)
 		}
 	}
+
 	if strings.Join(names, ",") != "base,config.arm64_v8a,config.x86_64" {
 		t.Fatalf("splits = %v", names)
 	}
@@ -114,10 +129,12 @@ type fakeBucket struct {
 func (bucket *fakeBucket) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	bucket.mutex.Lock()
 	defer bucket.mutex.Unlock()
+
 	if !strings.HasPrefix(request.Header.Get("Authorization"), "AWS4-HMAC-SHA256 Credential=key/") {
 		writer.WriteHeader(http.StatusForbidden)
 		return
 	}
+
 	key := strings.TrimPrefix(request.URL.Path, "/public/")
 	switch request.Method {
 	case http.MethodHead:
@@ -126,11 +143,13 @@ func (bucket *fakeBucket) ServeHTTP(writer http.ResponseWriter, request *http.Re
 		}
 	case http.MethodPut:
 		body, _ := io.ReadAll(request.Body)
+
 		digest := sha256.Sum256(body)
 		if request.Header.Get("X-Amz-Content-Sha256") != hex.EncodeToString(digest[:]) {
 			writer.WriteHeader(http.StatusBadRequest)
 			return
 		}
+
 		bucket.objects[key] = body
 		bucket.puts = append(bucket.puts, key)
 	}
@@ -138,13 +157,17 @@ func (bucket *fakeBucket) ServeHTTP(writer http.ResponseWriter, request *http.Re
 
 func TestUploadAndroidBuildWritesTheRecordLastAndSkipsUploadedSplits(t *testing.T) {
 	directory := t.TempDir()
+
 	record, err := stageAndroidBuild(writeTestPatchedBuild(t, directory), nil, directory, "beta", testBuildCommit)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	fake := &fakeBucket{objects: map[string][]byte{}}
+
 	server := httptest.NewServer(fake)
 	defer server.Close()
+
 	bucket := s3Bucket{endpoint: server.URL, region: "auto", bucket: "public", accessKey: "key", secretKey: "secret", client: server.Client(), now: time.Now}
 
 	for range 2 {
@@ -152,7 +175,9 @@ func TestUploadAndroidBuildWritesTheRecordLastAndSkipsUploadedSplits(t *testing.
 			t.Fatal(err)
 		}
 	}
+
 	recordKey := "android/beta/352017/" + testBuildCommit + "/build.json"
+
 	want := []string{record.Splits[0].Key, record.Splits[1].Key, recordKey, recordKey}
 	if strings.Join(fake.puts, ",") != strings.Join(want, ",") {
 		t.Fatalf("puts = %v", fake.puts)
@@ -162,6 +187,7 @@ func TestUploadAndroidBuildWritesTheRecordLastAndSkipsUploadedSplits(t *testing.
 func TestAndroidSplitKeysDifferWhenTheirContentDoes(t *testing.T) {
 	record := androidBuildRecord{Channel: "stable", DiscordVersionCode: 353011, Commit: testBuildCommit}
 	first := androidSplitKey(record, androidBuildSplit{Name: "base", SHA256: strings.Repeat("a", 64)})
+
 	second := androidSplitKey(record, androidBuildSplit{Name: "base", SHA256: strings.Repeat("b", 64)})
 	if first == second {
 		t.Fatalf("both builds share %s", first)

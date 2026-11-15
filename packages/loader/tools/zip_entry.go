@@ -11,5 +11,6 @@ func readZipEntry(file *zip.File) ([]byte, error) {
 		return nil, err
 	}
 	defer reader.Close()
+
 	return io.ReadAll(reader)
 }

@@ -25,6 +25,7 @@ func TestStableReleasesPairTheLatestOfEachPlatform(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		if pairing.AndroidVersion != test.version || pairing.AndroidCode != test.code || pairing.Mismatch != test.mismatch {
 			t.Fatalf("pairing iOS %s with %d gave %+v", test.ios, test.code, pairing)
 		}
@@ -36,10 +37,12 @@ func TestReleasePairingAcceptsDifferentDiscordReleases(t *testing.T) {
 	if err := runReleasePairing([]string{"--ios-version", "352.0", "--android-code", "351011", "--output", output}); err != nil {
 		t.Fatal(err)
 	}
+
 	data, err := os.ReadFile(output)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if string(data) != "android_code=351011\nandroid_version=351.11\n" {
 		t.Fatalf("unexpected outputs %q", data)
 	}
@@ -47,17 +50,21 @@ func TestReleasePairingAcceptsDifferentDiscordReleases(t *testing.T) {
 
 func TestReleasePairingFailsOnTheWrongRequestedVersionUnlessItIsADryRun(t *testing.T) {
 	output := filepath.Join(t.TempDir(), "output")
+
 	args := []string{"--ios-version", "352.0", "--requested-version", "351.0", "--android-code", "351011", "--output", output}
 	if err := runReleasePairing(args); err == nil {
 		t.Fatal("a real release used an IPA other than the requested one")
 	}
+
 	if err := runReleasePairing(append(args, "--dry-run")); err != nil {
 		t.Fatal(err)
 	}
+
 	data, err := os.ReadFile(output)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if !strings.Contains(string(data), "android_code=351011\nandroid_version=351.11\n") {
 		t.Fatalf("unexpected outputs %q", data)
 	}

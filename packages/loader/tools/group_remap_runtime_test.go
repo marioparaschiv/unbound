@@ -29,20 +29,25 @@ int main(int argc, char **argv) {
 
 func buildGroupRemapHarness(t *testing.T, group string) string {
 	t.Helper()
+
 	if runtime.GOOS != "darwin" {
 		t.Skip("needs clang and codesign")
 	}
+
 	dir := t.TempDir()
 	source := filepath.Join(dir, "harness.m")
 	entitlements := filepath.Join(dir, "harness.entitlements")
 	library := filepath.Join(dir, "UnboundGroups.dylib")
 	harness := filepath.Join(dir, "harness")
+
 	if err := os.WriteFile(source, []byte(groupRemapHarness), 0o644); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := os.WriteFile(entitlements, []byte(entitlementsPlist([]string{group})), 0o644); err != nil {
 		t.Fatal(err)
 	}
+
 	steps := [][]string{
 		{"xcrun", "clang", "-dynamiclib", "-fobjc-arc", "-framework", "Foundation", "-o", library, filepath.Join("..", "ios", "groups", "UnboundGroups.m")},
 		{"xcrun", "clang", "-fobjc-arc", "-framework", "Foundation", "-Wl,-rpath,@executable_path", "-o", harness, source, library},
@@ -53,16 +58,19 @@ func buildGroupRemapHarness(t *testing.T, group string) string {
 			t.Skipf("%s unavailable: %v %s", step[0], err, output)
 		}
 	}
+
 	return harness
 }
 
 func TestGroupRemapSharesDiscordDefaultsWithTheSignedGroup(t *testing.T) {
 	group := fmt.Sprintf("group.dev.unbound.remaptest%d", time.Now().UnixNano())
 	harness := buildGroupRemapHarness(t, group)
+
 	home, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	t.Cleanup(func() {
 		_ = os.RemoveAll(filepath.Join(home, "Library", "Group Containers", group))
 		_ = os.Remove(filepath.Join(home, "Library", "Preferences", group+".plist"))

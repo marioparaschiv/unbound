@@ -17,15 +17,19 @@ func TestParsesTheCrashIssue(t *testing.T) {
 	if !ok || crash.platform != "ios" || crash.version != "1.3.0" {
 		t.Fatalf("parsed %+v, %v", crash, ok)
 	}
+
 	if crash.image.name != "Unbound.dylib" || crash.image.id != "01234567-89AB-CDEF-0123-456789ABCDEF" {
 		t.Fatalf("image %+v", crash.image)
 	}
+
 	if !strings.HasPrefix(crash.stack, "Signal 11") || strings.Contains(crash.stack, "Previous launch log") {
 		t.Fatalf("stack section %q", crash.stack)
 	}
+
 	if _, ok := parseIssueCrash(iosIssueBody + "\n" + symbolicatedMarker); ok {
 		t.Fatal("a symbolicated issue was parsed again")
 	}
+
 	if _, ok := parseIssueCrash("- **Unbound:** loader 1.3.0\nno stack"); ok {
 		t.Fatal("an issue without a native stack was parsed")
 	}
@@ -40,16 +44,20 @@ func TestPicksTheReleaseCarryingTheLoaderVersion(t *testing.T) {
 	if tag, ok := pickSymbolRelease(releases, issueCrash{platform: "ios", version: "1.3.0"}); !ok || tag != "match" {
 		t.Fatalf("picked %q", tag)
 	}
+
 	if _, ok := pickSymbolRelease(releases, issueCrash{platform: "ios", version: "9.9.9"}); ok {
 		t.Fatal("picked a release for an unknown version")
 	}
+
 	if tag, _ := pickSymbolRelease(releases, issueCrash{platform: "android", version: "1.3.0"}); tag != "android" {
 		t.Fatalf("picked %q for Android", tag)
 	}
+
 	identified := issueCrash{platform: "ios", version: "1.3.0", image: imageIdentity{id: "X"}}
 	if got := symbolReleaseCandidates(releases, identified); !slices.Equal(got, []string{"match", "newest"}) {
 		t.Fatalf("candidates %v", got)
 	}
+
 	if got := symbolReleaseCandidates(releases, issueCrash{platform: "ios", version: "1.3.0"}); !slices.Equal(got, []string{"match"}) {
 		t.Fatalf("candidates without an image %v", got)
 	}
@@ -57,31 +65,40 @@ func TestPicksTheReleaseCarryingTheLoaderVersion(t *testing.T) {
 
 func TestNamesOnlyUnboundFrames(t *testing.T) {
 	crash, _ := parseIssueCrash(iosIssueBody)
+
 	var asked []uint64
+
 	symbolize := func(object string, addresses []uint64) ([][]sourceLocation, error) {
 		asked = addresses
+
 		return [][]sourceLocation{
 			{{function: "loader::hook", file: "/ci/packages/loader/core/src/Hook.cpp", line: 42}},
 			{{function: "loader::run"}},
 		}, nil
 	}
+
 	output, count, err := symbolicateLoaderStack(crash.stack, "Unbound.dylib", symbolize)
 	if err != nil || count != 2 {
 		t.Fatalf("count %d, err %v", count, err)
 	}
+
 	if asked[0] != 0x1a2b || asked[1] != 0x2000 {
 		t.Fatalf("asked for %x", asked)
 	}
+
 	if !strings.Contains(output, "#0 0x100a0 Unbound.dylib + 0x1a2b\n    loader::hook at packages/loader/core/src/Hook.cpp:42\n") {
 		t.Fatalf("output %q", output)
 	}
+
 	if strings.Contains(output, "UIKitCore + 0x40\n    ") {
 		t.Fatal("a system frame was annotated")
 	}
+
 	comment := issueSymbolsComment("discord-355.0-ios", "1.3.0", output, crashHeadline(crash), "41")
 	if !strings.Contains(comment, "Crash: SIGSEGV in Chat Bubbles\nLooks like the same crash as #41.") {
 		t.Fatalf("comment summary %q", comment)
 	}
+
 	if !strings.HasPrefix(comment, symbolicatedMarker) || !strings.Contains(comment, "`discord-355.0-ios`") {
 		t.Fatalf("comment %q", comment)
 	}
@@ -90,12 +107,15 @@ func TestNamesOnlyUnboundFrames(t *testing.T) {
 func TestNamesSignalsPerPlatform(t *testing.T) {
 	ios := issueCrash{platform: "ios", stack: "Signal 10\nAddon {\"id\":\"chat-bubbles\",\"name\":\"Chat Bubbles\"}\n"}
 	android := issueCrash{platform: "android", stack: "Signal 7\n#0 0x1\n"}
+
 	if got := crashHeadline(ios); got != "SIGBUS in Chat Bubbles" {
 		t.Fatalf("iOS headline %q", got)
 	}
+
 	if got := crashHeadline(android); got != "SIGBUS" {
 		t.Fatalf("Android headline %q", got)
 	}
+
 	if crashHeadline(issueCrash{platform: "ios", stack: "#0 0x1"}) != "" {
 		t.Fatal("a stack without a signal got a headline")
 	}

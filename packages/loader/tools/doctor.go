@@ -34,6 +34,7 @@ type doctorResult struct {
 
 func systemDoctorEnvironment() doctorEnvironment {
 	home, _ := os.UserHomeDir()
+
 	return doctorEnvironment{
 		goos: runtime.GOOS,
 		lookPath: func(name string) error {
@@ -57,9 +58,11 @@ func pinnedNDKVersion(buildFile string) string {
 	if err != nil {
 		return ""
 	}
+
 	if match := ndkVersionPattern.FindSubmatch(data); match != nil {
 		return string(match[1])
 	}
+
 	return ""
 }
 
@@ -94,8 +97,10 @@ func doctorChecks(environment doctorEnvironment) []doctorCheck {
 	} else {
 		checks = append(checks, commandCheck("make", true, "install make"))
 	}
+
 	checks = append(checks,
 		commandCheck("actionlint", false, "brew install actionlint; go run ./tools lint needs it"),
+		commandCheck("antislop", false, "go install github.com/JacobJNilsson/anti-slop-go/cmd/antislop@v1.4.1; go run ./tools lint needs it"),
 		commandCheck("java", false, "install JDK 17 for the Android module"),
 		commandCheck("adb", false, "add the Android SDK platform-tools to PATH for the Android smoke test"),
 		doctorCheck{name: "Android SDK", hint: "install the Android SDK or set ANDROID_HOME", passes: func(environment doctorEnvironment) bool {
@@ -109,6 +114,7 @@ func doctorChecks(environment doctorEnvironment) []doctorCheck {
 			return environment.getenv("DKRYPT_API_KEY") != ""
 		}},
 	)
+
 	return checks
 }
 
@@ -117,16 +123,19 @@ func runDoctorChecks(checks []doctorCheck, environment doctorEnvironment) []doct
 	for _, check := range checks {
 		results = append(results, doctorResult{check: check, ok: check.passes(environment)})
 	}
+
 	return results
 }
 
 func doctorFailures(results []doctorResult, strict bool) int {
 	failures := 0
+
 	for _, result := range results {
 		if !result.ok && (result.check.required || strict) {
 			failures++
 		}
 	}
+
 	return failures
 }
 
@@ -143,22 +152,30 @@ func printDoctorResult(result doctorResult) {
 
 func runDoctor(args []string) error {
 	set := flag.NewFlagSet("doctor", flag.ContinueOnError)
+
 	strict := set.Bool("strict", false, "fail when optional platform tools are unavailable")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
+
 	environment := systemDoctorEnvironment()
+
 	results := runDoctorChecks(doctorChecks(environment), environment)
 	for _, result := range results {
 		printDoctorResult(result)
 	}
+
 	failures := doctorFailures(results, *strict)
+
 	if _, err := packageName("."); err != nil {
 		fmt.Println("missing control package metadata: run doctor from packages/loader")
+
 		failures++
 	}
+
 	if failures > 0 {
 		return errors.New("doctor found missing requirements")
 	}
+
 	return nil
 }

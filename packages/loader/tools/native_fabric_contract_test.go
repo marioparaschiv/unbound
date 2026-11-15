@@ -14,12 +14,15 @@ func TestNativeFabricConformanceIsSharedAcrossPlatforms(t *testing.T) {
 	if !ok {
 		t.Fatal("could not locate test source")
 	}
+
 	root := filepath.Dir(filepath.Dir(filename))
 	fixturePath := filepath.Join(root, "core", "tests", "vectors", "native-fabric-conformance.json")
+
 	fixtureBytes, err := os.ReadFile(fixturePath)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	var fixture struct {
 		Module    string `json:"module"`
 		Mutations []any  `json:"mutations"`
@@ -32,6 +35,7 @@ func TestNativeFabricConformanceIsSharedAcrossPlatforms(t *testing.T) {
 	if err := json.Unmarshal(fixtureBytes, &fixture); err != nil {
 		t.Fatal(err)
 	}
+
 	if fixture.Module == "" || len(fixture.Mutations) == 0 || fixture.Expected.UpdateCalls != 1 ||
 		fixture.Expected.SizeCalls != 1 || fixture.Expected.FrameCalls != 1 {
 		t.Fatal("the shared native Fabric vector must cover a coalesced update, size, and frame")
@@ -58,15 +62,20 @@ func TestNativeFabricConformanceIsSharedAcrossPlatforms(t *testing.T) {
 		"../types/typings/native-fabric.ts",
 		"../types/typings/native-methods.ts",
 	}
+
 	var source strings.Builder
+
 	for _, name := range files {
 		path := filepath.Join(root, name)
+
 		contents, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		source.Write(contents)
 	}
+
 	contract := source.String()
 	for _, required := range []string{
 		"runOnMainNextFrame",
@@ -94,19 +103,24 @@ func TestNativeFabricFrameBatchesAreAsyncAndNextFrameOnly(t *testing.T) {
 	if !ok {
 		t.Fatal("could not locate test source")
 	}
+
 	root := filepath.Dir(filepath.Dir(filename))
 	path := filepath.Join(root, "core", "src", "NativeFabric.cpp")
+
 	source, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	code := string(source)
 	if codeIndex(code, `fabric.defineAsync("batchAsync"`) == -1 {
 		t.Fatal("Fabric frame batches must be exposed through the asynchronous-only entrypoint")
 	}
+
 	if codeIndex(code, `fabric.define("batchAsync"`) != -1 {
 		t.Fatal("Fabric frame batches must not acquire a synchronous entrypoint")
 	}
+
 	if codeIndex(code, `nullptr, nullptr, true`) == -1 {
 		t.Fatal("Fabric frame batches must be scheduled for the next display frame")
 	}

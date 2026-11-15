@@ -10,6 +10,7 @@ func TestParseSmokeResourcesReadsTheLoaderCounts(t *testing.T) {
 	if resources == nil || *resources != (smokeResources{Hooks: 12, Surfaces: 2, Handles: 54}) {
 		t.Fatalf("unexpected resources %+v", resources)
 	}
+
 	if parseSmokeResources("null") != nil || parseSmokeResources("not json") != nil {
 		t.Fatal("a loader without counts must report none")
 	}
@@ -20,6 +21,7 @@ func TestRenderSmokeResourcesListsEachCount(t *testing.T) {
 	if !strings.Contains(report, "| Native handles referenced from JavaScript | 54 |") || !strings.Contains(report, "| Installed hooks | 12 |") {
 		t.Fatalf("resource table missing:\n%s", report)
 	}
+
 	if renderSmokeResources(nil) != "" {
 		t.Fatal("no counts must render nothing")
 	}
@@ -30,14 +32,17 @@ func TestResourceReportWarnsOnlyWhenHandlesGrowPastMain(t *testing.T) {
 	for _, handles := range []float64{50, 60, 55} {
 		baseline = append(baseline, smokeStartupRecord{Resources: &smokeResources{Handles: handles}})
 	}
+
 	steady := renderResourceReport(smokeStartupRecord{Resources: &smokeResources{Handles: 140}}, baseline)
 	if len(steady.warnings) != 0 || !strings.Contains(steady.markdown, "| Native handles referenced after GC | 140 | 55 |") {
 		t.Fatalf("a small rise must only be reported: %+v", steady)
 	}
+
 	leaking := renderResourceReport(smokeStartupRecord{Resources: &smokeResources{Handles: 900}}, baseline)
 	if len(leaking.warnings) != 1 {
 		t.Fatalf("a leak must warn: %+v", leaking)
 	}
+
 	if early := renderResourceReport(smokeStartupRecord{Resources: &smokeResources{Handles: 900}}, baseline[:2]); early.markdown != "" {
 		t.Fatal("too few measured main runs must compare nothing")
 	}

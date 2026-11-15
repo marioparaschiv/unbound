@@ -28,13 +28,16 @@ func TestLogosDirectivesSurviveProtection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	text := string(protected)
 	if strings.Contains(text, "\n%hook") || strings.Contains(text, " %orig(") || strings.Contains(text, "%c(") {
 		t.Fatalf("Logos syntax was left for clang-format:\n%s", text)
 	}
+
 	if !strings.Contains(text, `@"%orig stays in strings %@"`) {
 		t.Fatal("string literals must not be rewritten")
 	}
+
 	if !strings.Contains(text, logosPragma+"0\n") || !strings.Contains(text, logosPragma+"2\n") {
 		t.Fatal("directive lines must become numbered pragmas")
 	}
@@ -43,6 +46,7 @@ func TestLogosDirectivesSurviveProtection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if string(restored) != source {
 		t.Fatalf("restoring changed the source:\n%s", restored)
 	}
@@ -50,10 +54,12 @@ func TestLogosDirectivesSurviveProtection(t *testing.T) {
 
 func TestTokenComparisonAllowsWhitespaceAndIncludeOrder(t *testing.T) {
 	original := "#import \"B.h\"\n#import \"A.h\"\nint value=1;\n"
+
 	formatted := "#import \"A.h\"\n#import \"B.h\"\n\nint value = 1;\n"
 	if !sameTokens([]byte(original), []byte(formatted)) {
 		t.Fatal("whitespace and include order changes must be allowed")
 	}
+
 	if sameTokens([]byte("int value = 1;"), []byte("int value = 2;")) {
 		t.Fatal("token changes must be rejected")
 	}
@@ -69,9 +75,11 @@ func TestClangFormatKeepsLogosIntact(t *testing.T) {
 	if err := requireClangFormat(); err != nil {
 		t.Skip(err)
 	}
+
 	if _, err := exec.LookPath("clang-format"); err != nil {
 		t.Skip(err)
 	}
+
 	source := strings.Join([]string{
 		"#import \"Toolbox.h\"",
 		"",
@@ -100,18 +108,22 @@ func TestClangFormatKeepsLogosIntact(t *testing.T) {
 
 	root := loaderRoot(t)
 	path := filepath.Join(t.TempDir(), "Sample.x")
+
 	first, err := formatNativeSource(root, path, []byte(source))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	for _, mangled := range []string{"% hook", "% end", "% new", "% orig", "% ctor", "% init", "% c("} {
 		if strings.Contains(string(first), mangled) {
 			t.Fatalf("clang-format mangled %q:\n%s", mangled, first)
 		}
 	}
+
 	if strings.Join(logosDirectives(first), "|") != "%hook UIWindow|%end|%hook UIApplication|%new|%end|%ctor" {
 		t.Fatalf("directives changed:\n%s", first)
 	}
+
 	if !strings.Contains(string(first), "[self setNeedsLayout];") {
 		t.Fatalf("the code itself was not formatted:\n%s", first)
 	}
@@ -120,6 +132,7 @@ func TestClangFormatKeepsLogosIntact(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if string(second) != string(first) {
 		t.Fatalf("formatting is not idempotent:\n%s\n---\n%s", first, second)
 	}
@@ -127,14 +140,17 @@ func TestClangFormatKeepsLogosIntact(t *testing.T) {
 
 func TestKotlinFormatterSkipsLocallyWithoutJava(t *testing.T) {
 	noJava := func(string) bool { return false }
+
 	local := func(string) string { return "" }
 	if kotlinFormatterRuns(local, noJava) {
 		t.Fatal("the Kotlin formatter ran without a Java runtime")
 	}
+
 	ci := func(name string) string {
 		if name == "CI" {
 			return "true"
 		}
+
 		return ""
 	}
 	if !kotlinFormatterRuns(ci, noJava) {
@@ -144,16 +160,19 @@ func TestKotlinFormatterSkipsLocallyWithoutJava(t *testing.T) {
 
 func TestKotlinFormatterUsesJavaHome(t *testing.T) {
 	var tried string
+
 	env := func(name string) string {
 		if name == "JAVA_HOME" {
 			return "/opt/jdk"
 		}
+
 		return ""
 	}
 	kotlinFormatterRuns(env, func(java string) bool {
 		tried = java
 		return true
 	})
+
 	if tried != filepath.Join("/opt/jdk", "bin", "java") {
 		t.Fatalf("tried %q", tried)
 	}

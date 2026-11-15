@@ -37,10 +37,12 @@ func normaliseConsoleMessage(message string) string {
 	for _, volatile := range smokeConsoleVolatile {
 		message = volatile.pattern.ReplaceAllString(message, volatile.replacement)
 	}
+
 	message = strings.TrimSpace(message)
 	if len(message) > smokeConsoleMessageLimit {
 		message = message[:smokeConsoleMessageLimit]
 	}
+
 	return message
 }
 
@@ -49,16 +51,19 @@ func androidConsoleEntry(line string) (smokeConsoleEntry, bool) {
 	if match == nil {
 		return smokeConsoleEntry{}, false
 	}
+
 	tag := strings.TrimSpace(match[2])
 	if tag != "ReactNativeJS" && tag != "Unbound" {
 		return smokeConsoleEntry{}, false
 	}
+
 	switch match[1] {
 	case "E", "F":
 		return smokeConsoleEntry{Level: "error", Message: normaliseConsoleMessage(match[3])}, true
 	case "W":
 		return smokeConsoleEntry{Level: "warning", Message: normaliseConsoleMessage(match[3])}, true
 	}
+
 	return smokeConsoleEntry{}, false
 }
 
@@ -67,12 +72,14 @@ func deviceConsoleEntry(line string) (smokeConsoleEntry, bool) {
 	if match == nil {
 		return smokeConsoleEntry{}, false
 	}
+
 	switch match[1] {
 	case "E":
 		return smokeConsoleEntry{Level: "error", Message: normaliseConsoleMessage(match[2])}, true
 	case "W":
 		return smokeConsoleEntry{Level: "warning", Message: normaliseConsoleMessage(match[2])}, true
 	}
+
 	return smokeConsoleEntry{}, false
 }
 
@@ -81,10 +88,12 @@ func iosConsoleEntry(line string) (smokeConsoleEntry, bool) {
 	if match == nil {
 		return smokeConsoleEntry{}, false
 	}
+
 	switch match[1] {
 	case "E", "F", "Error", "Fault":
 		return smokeConsoleEntry{Level: "error", Message: normaliseConsoleMessage(match[3])}, true
 	}
+
 	return smokeConsoleEntry{}, false
 }
 
@@ -101,27 +110,34 @@ func (set smokeConsoleSet) sorted() []smokeConsoleEntry {
 	for entry := range set {
 		entries = append(entries, entry)
 	}
+
 	sort.Slice(entries, func(left, right int) bool {
 		if entries[left].Level != entries[right].Level {
 			return entries[left].Level < entries[right].Level
 		}
+
 		return entries[left].Message < entries[right].Message
 	})
+
 	return entries
 }
 
 func newConsoleEntries(current []smokeConsoleEntry, baseline []smokeStartupRecord) []smokeConsoleEntry {
 	seen := smokeConsoleSet{}
+
 	for _, record := range baseline {
 		for _, entry := range record.Console {
 			seen[entry] = true
 		}
 	}
+
 	fresh := []smokeConsoleEntry{}
+
 	for _, entry := range current {
 		if !seen[entry] {
 			fresh = append(fresh, entry)
 		}
 	}
+
 	return fresh
 }

@@ -17,9 +17,11 @@ func unzipEntry(path, entry, destination string, runner commandRunner, root stri
 		return err
 	}
 	defer file.Close()
+
 	command := exec.Command("unzip", "-p", path, entry)
 	command.Stdout = file
 	command.Stderr = os.Stderr
+
 	return command.Run()
 }
 
@@ -28,6 +30,7 @@ func zipList(path string, runner commandRunner, root string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return strings.Split(strings.TrimSpace(output), "\n"), nil
 }
 
@@ -40,18 +43,22 @@ func copyTree(source, destination string) error {
 		if err != nil {
 			return err
 		}
+
 		relative, err := filepath.Rel(source, path)
 		if err != nil {
 			return err
 		}
+
 		target := filepath.Join(destination, relative)
 		if info.IsDir() {
 			return os.MkdirAll(target, info.Mode().Perm())
 		}
+
 		data, err := os.ReadFile(path)
 		if err != nil {
 			return err
 		}
+
 		return os.WriteFile(target, data, info.Mode().Perm())
 	})
 }

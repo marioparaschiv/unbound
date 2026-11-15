@@ -45,15 +45,19 @@ func runAndroidSmoke(args []string) error {
 	set := flag.NewFlagSet("smoke android", flag.ContinueOnError)
 	options := registerSmokeFlags(set)
 	serial := set.String("serial", firstNonEmpty(os.Getenv("ANDROID_SERIAL"), "emulator-5554"), "adb serial of the emulator")
+
 	apks := set.String("apks", "", "directory of the patched Discord split APKs")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
+
 	if *apks == "" {
 		return errors.New("usage: smoke android --apks <dir> [--serial <serial>] [--plugins <dir>] [--client <dir>] [--artifacts <dir>]")
 	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
 	return runSmokeTest(ctx, "android", options, &androidSmokeTarget{serial: *serial, apks: *apks})
 }
 
@@ -63,6 +67,7 @@ func firstNonEmpty(values ...string) string {
 			return value
 		}
 	}
+
 	return ""
 }
 
@@ -86,57 +91,72 @@ func (target *androidSmokeTarget) prepare(ctx context.Context, plugins []smokePl
 	if err := target.waitForBoot(ctx); err != nil {
 		return err
 	}
+
 	if _, err := target.adb(ctx, time.Minute, "root"); err != nil {
 		return err
 	}
+
 	if err := target.waitForBoot(ctx); err != nil {
 		return err
 	}
+
 	identity, err := target.shell(ctx, time.Minute, "id -u")
 	if err != nil {
 		return err
 	}
+
 	if strings.TrimSpace(identity) != "0" {
 		return errors.New("adb has no root on this emulator; use a google_apis system image")
 	}
+
 	abi, err := target.shell(ctx, time.Minute, "getprop ro.product.cpu.abi")
 	if err != nil {
 		return err
 	}
+
 	target.abi = strings.TrimSpace(abi)
+
 	splits, err := selectAndroidSplits(target.apks, target.abi)
 	if err != nil {
 		return err
 	}
+
 	if _, err := target.adb(ctx, 10*time.Minute, append([]string{"install-multiple", "-r", "-d"}, splits...)...); err != nil {
 		return err
 	}
+
 	if _, err := target.shell(ctx, time.Minute, "rm -rf "+smokeAndroidStaging+" && mkdir -p "+smokeAndroidStaging+"/Plugins"); err != nil {
 		return err
 	}
+
 	staging, err := os.MkdirTemp("", "unbound-smoke-settings-")
 	if err != nil {
 		return err
 	}
 	defer os.RemoveAll(staging)
+
 	settingsPath := filepath.Join(staging, "settings.json")
 	if err := os.WriteFile(settingsPath, settings, 0o644); err != nil {
 		return err
 	}
+
 	if _, err := target.adb(ctx, time.Minute, "push", settingsPath, smokeAndroidStaging+"/settings.json"); err != nil {
 		return err
 	}
+
 	for _, plugin := range plugins {
 		destination := smokeAndroidStaging + "/Plugins/" + plugin.id
 		if _, err := target.shell(ctx, time.Minute, "mkdir -p "+destination); err != nil {
 			return err
 		}
+
 		for _, file := range plugin.files {
 			if _, err := target.adb(ctx, 2*time.Minute, "push", filepath.Join(plugin.directory, file), path.Join(destination, file)); err != nil {
 				return err
 			}
 		}
 	}
+
 	documents := smokeAndroidData + "/files/Unbound"
 	install := strings.Join([]string{
 		"mkdir -p " + documents,
@@ -146,6 +166,7 @@ func (target *androidSmokeTarget) prepare(ctx context.Context, plugins []smokePl
 		"rm -rf " + smokeAndroidStaging,
 	}, " && ")
 	_, err = target.shell(ctx, time.Minute, install)
+
 	return err
 }
 
@@ -153,14 +174,17 @@ func (target *androidSmokeTarget) waitForBoot(ctx context.Context) error {
 	if _, err := target.adb(ctx, 5*time.Minute, "wait-for-device"); err != nil {
 		return err
 	}
+
 	deadline := time.Now().Add(5 * time.Minute)
 	for time.Now().Before(deadline) && ctx.Err() == nil {
 		booted, err := target.shell(ctx, 30*time.Second, "getprop sys.boot_completed")
 		if err == nil && strings.TrimSpace(booted) == "1" {
 			return nil
 		}
+
 		time.Sleep(smokePollInterval)
 	}
+
 	return errors.New("the emulator did not finish booting")
 }
 
@@ -169,9 +193,13 @@ func selectAndroidSplits(directory, abi string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	var base string
-	var abiSplit string
-	var others []string
+
+	var (
+		base     string
+		abiSplit string
+		others   []string
+	)
+
 	for _, apk := range apks {
 		name := filepath.Base(apk)
 		switch {
@@ -185,13 +213,17 @@ func selectAndroidSplits(directory, abi string) ([]string, error) {
 			others = append(others, apk)
 		}
 	}
+
 	if base == "" {
 		return nil, fmt.Errorf("%s has no base APK", directory)
 	}
+
 	if abiSplit == "" {
 		return nil, fmt.Errorf("%s has no split for the emulator's %s ABI", directory, abi)
 	}
+
 	sort.Strings(others)
+
 	return append([]string{base, abiSplit}, others...), nil
 }
 
@@ -201,6 +233,7 @@ func androidSplitABI(name string) string {
 			return abi
 		}
 	}
+
 	return ""
 }
 
@@ -208,19 +241,24 @@ func (target *androidSmokeTarget) streamLogs(ctx context.Context) (io.ReadCloser
 	if _, err := target.adb(ctx, time.Minute, "logcat", "-c"); err != nil {
 		return nil, nil, err
 	}
+
 	command := exec.CommandContext(ctx, "adb", "-s", target.serial, "logcat", "-v", "threadtime")
+
 	output, err := command.StdoutPipe()
 	if err != nil {
 		return nil, nil, err
 	}
+
 	command.Stderr = command.Stdout
 	if err := command.Start(); err != nil {
 		return nil, nil, err
 	}
+
 	stop := func() error {
 		stopSmokeProcess(command)
 		return nil
 	}
+
 	return output, stop, nil
 }
 
@@ -228,6 +266,7 @@ func (target *androidSmokeTarget) launch(ctx context.Context) error {
 	if _, err := target.shell(ctx, time.Minute, "monkey -p "+smokeAndroidPackage+" -c android.intent.category.LAUNCHER 1"); err != nil {
 		return err
 	}
+
 	return target.attach(ctx)
 }
 
@@ -239,8 +278,10 @@ func (target *androidSmokeTarget) attach(ctx context.Context) error {
 			target.pid = pids[0]
 			return nil
 		}
+
 		time.Sleep(smokePollInterval)
 	}
+
 	return errSmokeNotStarted
 }
 
@@ -249,6 +290,7 @@ func (target *androidSmokeTarget) discordPIDs(ctx context.Context) ([]string, er
 	if err != nil {
 		return nil, err
 	}
+
 	return strings.Fields(output), nil
 }
 
@@ -256,7 +298,9 @@ func (target *androidSmokeTarget) running(ctx context.Context) bool {
 	if target.pid == "" {
 		return true
 	}
+
 	pids, err := target.discordPIDs(ctx)
+
 	return err != nil || slices.Contains(pids, target.pid)
 }
 

@@ -9,6 +9,7 @@ const failedReport = "## Android smoke test\n\nFailed:\n\n- Discord crashed: Pro
 
 func TestSmokeFailureSummaryListsFailuresAndTheFirstCrash(t *testing.T) {
 	log := "10-30 I boot\n" + strings.Repeat("10-30 I filler\n", 12) + "10-30 W System.err: at NativeProxy.initHybrid\n10-30 F libc: Fatal signal 7 (SIGBUS)\n10-30 F DEBUG: backtrace:\n10-30 I later\n"
+
 	summary := renderSmokeFailureSummary(failedReport, log)
 	for _, want := range []string{
 		"- Discord crashed: Process com.discord has died",
@@ -21,6 +22,7 @@ func TestSmokeFailureSummaryListsFailuresAndTheFirstCrash(t *testing.T) {
 			t.Fatalf("summary is missing %q:\n%s", want, summary)
 		}
 	}
+
 	if strings.Contains(summary, "I boot") || strings.Contains(summary, "Startup milestone") {
 		t.Fatalf("summary includes lines long before the crash or the startup table:\n%s", summary)
 	}

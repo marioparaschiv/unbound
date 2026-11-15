@@ -35,6 +35,7 @@ func findStickyComment(comments []prComment, title string) int64 {
 			return comment.ID
 		}
 	}
+
 	return 0
 }
 
@@ -43,12 +44,16 @@ func ghAPI(input []byte, args ...string) ([]byte, error) {
 	if input != nil {
 		command.Stdin = bytes.NewReader(input)
 	}
+
 	var stderr bytes.Buffer
+
 	command.Stderr = &stderr
+
 	output, err := command.Output()
 	if err != nil {
 		return nil, fmt.Errorf("gh api %s: %w: %s", strings.Join(args, " "), err, strings.TrimSpace(stderr.String()))
 	}
+
 	return output, nil
 }
 
@@ -57,23 +62,29 @@ func upsertStickyComment(repository string, pullRequest int, title, markdown str
 	if err != nil {
 		return err
 	}
+
 	var pages [][]prComment
 	if err := json.Unmarshal(output, &pages); err != nil {
 		return err
 	}
+
 	var comments []prComment
 	for _, page := range pages {
 		comments = append(comments, page...)
 	}
+
 	payload, err := json.Marshal(map[string]string{"body": stickyCommentBody(title, markdown)})
 	if err != nil {
 		return err
 	}
+
 	if id := findStickyComment(comments, title); id != 0 {
 		_, err = ghAPI(payload, "--method", "PATCH", fmt.Sprintf("repos/%s/issues/comments/%d", repository, id), "--input", "-")
 		return err
 	}
+
 	_, err = ghAPI(payload, "--method", "POST", fmt.Sprintf("repos/%s/issues/%d/comments", repository, pullRequest), "--input", "-")
+
 	return err
 }
 
@@ -82,16 +93,20 @@ func runPRComment(args []string) error {
 	repository := set.String("repo", os.Getenv("GITHUB_REPOSITORY"), "owner/name of the pull request")
 	pullRequest := set.Int("pr", 0, "pull request number")
 	title := set.String("title", "", "heading that identifies the comment to keep updating")
+
 	bodyFile := set.String("body-file", "", "markdown to put under the heading")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
+
 	if *repository == "" || *pullRequest == 0 || *title == "" || *bodyFile == "" {
 		return errors.New("usage: pr-comment --pr <number> --title <heading> --body-file <markdown> [--repo <owner/name>]")
 	}
+
 	markdown, err := os.ReadFile(*bodyFile)
 	if err != nil {
 		return err
 	}
+
 	return upsertStickyComment(*repository, *pullRequest, *title, string(markdown))
 }

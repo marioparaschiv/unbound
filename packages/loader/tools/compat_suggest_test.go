@@ -38,19 +38,24 @@ func TestNearestNames(t *testing.T) {
 		"messagestore",
 		"unrelatedThing",
 	})
+
 	got := nearestNames("useMessageStore", names)
 	if len(got) < 2 || !slices.Contains(got[:2], "useMessagesStore") || !slices.Contains(got[:2], "useMessageStores") {
 		t.Fatalf("one-letter renames should be suggested: %v", got)
 	}
+
 	if got := nearestNames("com.discord.chat.MessageView", names); len(got) == 0 || got[0] != "com.discord.chat2.MessageView" {
 		t.Fatalf("a class that moved package should come first: %v", got)
 	}
+
 	if got := nearestNames("MessageStore", sliceNames([]string{"messagestore", "MessageStore"})); !slices.Equal(got, []string{"messagestore"}) {
 		t.Fatalf("the name itself must not be suggested, other cases should: %v", got)
 	}
+
 	if got := nearestNames("selectGuild", names); len(got) != 0 {
 		t.Fatalf("unrelated names must not be suggested: %v", got)
 	}
+
 	many := sliceNames([]string{"getIdA", "getIdB", "getIdC", "getIdD"})
 	if got := nearestNames("getId", many); len(got) != compatSuggestionLimit {
 		t.Fatalf("suggestions must be capped at %d: %v", compatSuggestionLimit, got)
@@ -68,10 +73,12 @@ func TestCompatSuggestionsInReasons(t *testing.T) {
 		{Kind: referenceJavaMethod, Class: "com.discord.View", Name: "setMesage", Component: "plugin:demo", Locations: location},
 	}
 	results := evaluateCompat(references, targets, nil)
+
 	props := statusOf(results, "ios", referenceProps, "transitionToGuildz")
 	if props.Status != compatBroken || !strings.Contains(props.Reason, "`transitionToGuildz` → `transitionToGuild`, `transitionToGuilds`") {
 		t.Fatalf("missing props should suggest near identifiers: %+v", props)
 	}
+
 	method := statusOf(results, "android", referenceJavaMethod, "setMesage")
 	if !strings.Contains(method.Reason, "(similar: `setMessage`)") {
 		t.Fatalf("missing methods should suggest the class's near methods: %+v", method)

@@ -29,8 +29,10 @@ func parseDiscordVersion(version string) ([2]int, error) {
 	if match == nil {
 		return [2]int{}, fmt.Errorf("invalid Discord version %q", version)
 	}
+
 	major, _ := strconv.Atoi(match[1])
 	minor, _ := strconv.Atoi(match[2])
+
 	return [2]int{major, minor}, nil
 }
 
@@ -39,18 +41,22 @@ func compareDiscordVersions(left, right string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	b, err := parseDiscordVersion(right)
 	if err != nil {
 		return 0, err
 	}
+
 	for index := range a {
 		if a[index] != b[index] {
 			if a[index] < b[index] {
 				return -1, nil
 			}
+
 			return 1, nil
 		}
 	}
+
 	return 0, nil
 }
 
@@ -59,38 +65,48 @@ func loadCompatPolicy(root string) (*compatPolicy, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var policy compatPolicy
 	if err := json.Unmarshal(data, &policy); err != nil {
 		return nil, fmt.Errorf("%s: %w", compatPolicyPath, err)
 	}
+
 	for _, platform := range []string{"android", "ios"} {
 		if _, err := parseDiscordVersion(policy.Minimum[platform]); err != nil {
 			return nil, fmt.Errorf("%s: %s minimum: %w", compatPolicyPath, platform, err)
 		}
 	}
+
 	if policy.ReminderDays <= 0 {
 		return nil, fmt.Errorf("%s: raiseReminderDays must be positive", compatPolicyPath)
 	}
+
 	return &policy, nil
 }
 
 func evaluateCompatSupport(targets []*compatTarget, policy *compatPolicy, baseline *compatResults, now time.Time) map[string]*compatSupport {
 	support := map[string]*compatSupport{}
+
 	for _, target := range targets {
 		minimum := policy.Minimum[target.Platform]
 		state := &compatSupport{Minimum: minimum}
+
 		support[target.Platform] = state
 		if order, err := compareDiscordVersions(target.Version, minimum); err != nil || order <= 0 {
 			continue
 		}
+
 		state.NewerSince = now.Format(time.RFC3339)
+
 		if baseline == nil || baseline.Support[target.Platform] == nil {
 			continue
 		}
+
 		if previous := baseline.Support[target.Platform]; previous.Minimum == minimum && previous.NewerSince != "" {
 			state.NewerSince = previous.NewerSince
 		}
 	}
+
 	return support
 }
 
@@ -99,6 +115,8 @@ func compatOlderThanSupported(target *compatTarget, support map[string]*compatSu
 	if state == nil {
 		return false
 	}
+
 	order, err := compareDiscordVersions(target.Version, state.Minimum)
+
 	return err == nil && order < 0
 }

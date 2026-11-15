@@ -41,11 +41,13 @@ var reloadSmokePlugins = []smokePlugin{{id: "unbound.view-raw"}}
 // replaySmokeLog observes each line at the time it was logged.
 func replaySmokeLog(t *testing.T, watcher *smokeLogWatcher, layout string, lines []string) {
 	t.Helper()
+
 	for _, line := range lines {
 		at, err := time.Parse(layout, line[:len(layout)])
 		if err != nil {
 			t.Fatalf("unreadable log time in %q: %v", line, err)
 		}
+
 		watcher.now = func() time.Time { return at }
 		watcher.observe(line)
 	}
@@ -53,10 +55,12 @@ func replaySmokeLog(t *testing.T, watcher *smokeLogWatcher, layout string, lines
 
 func launchedAt(t *testing.T, watcher *smokeLogWatcher, layout, value string) {
 	t.Helper()
+
 	at, err := time.Parse(layout, value)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	watcher.now = func() time.Time { return at }
 	watcher.markLaunch()
 }
@@ -71,27 +75,35 @@ func TestSmokeWaitsForTheRuntimeAfterTheLoadersFirstLaunchRestart(t *testing.T) 
 	launchedAt(t, watcher, androidLogTime, "11-01 08:28:43.370")
 
 	replaySmokeLog(t, watcher, androidLogTime, androidFirstLaunchLog[:6])
+
 	if watcher.loadedAll(reloadSmokePlugins) {
 		t.Fatal("plugins loaded by the runtime the loader is about to restart counted as the run's loads")
 	}
+
 	replaySmokeLog(t, watcher, androidLogTime, androidFirstLaunchLog[6:7])
+
 	if watcher.crashed() {
 		t.Fatal("the loader's planned restart was reported as a crash")
 	}
+
 	replaySmokeLog(t, watcher, androidLogTime, androidFirstLaunchLog[7:])
+
 	if !watcher.loadedAll(reloadSmokePlugins) {
 		t.Fatal("the relaunched Discord's plugin loads were not counted")
 	}
 
 	result := &smokeResult{loaded: map[string]bool{}, failures: map[string][]string{}}
 	watcher.snapshot(result)
+
 	want := smokeStartupTimes{runtime: 6093 * time.Millisecond, plugins: 300 * time.Millisecond, bundle: 7213 * time.Millisecond}
 	if result.startup != want {
 		t.Fatalf("got startup %+v, want %+v", result.startup, want)
 	}
+
 	if len(result.crashes) != 0 {
 		t.Fatalf("a first launch that restarted once reported crashes: %v", result.crashes)
 	}
+
 	if problems := startupBudgetProblems(result.startup, smokeStartupBudget{bundle: 30 * time.Second, plugins: 20 * time.Second}, nil); len(problems) != 0 {
 		t.Fatalf("a first launch that restarted once went over budget: %v", problems)
 	}
@@ -102,6 +114,7 @@ func TestSmokeCountsACrashAfterThePlannedRestart(t *testing.T) {
 	launchedAt(t, watcher, androidLogTime, "11-01 08:28:43.370")
 	replaySmokeLog(t, watcher, androidLogTime, androidFirstLaunchLog[:7])
 	watcher.observe("11-01 08:28:57.000   523  1729 I ActivityManager: Process com.discord (pid 5086) has died: fg  TOP ")
+
 	if !watcher.crashed() {
 		t.Fatal("the relaunched Discord dying was not reported as a crash")
 	}
@@ -118,19 +131,24 @@ func (target *restartingSmokeTarget) running(context.Context) bool { return targ
 func (target *restartingSmokeTarget) attach(context.Context) error {
 	target.attaches++
 	target.alive = true
+
 	return nil
 }
 
 func TestSmokeFollowsOnlyAnAnnouncedRestart(t *testing.T) {
 	target := &restartingSmokeTarget{androidSmokeTarget: &androidSmokeTarget{}}
+
 	watcher := newSmokeLogWatcher(target)
 	if discordRunning(context.Background(), target, watcher) {
 		t.Fatal("an exit with no announced reload was followed")
 	}
+
 	watcher.observe(androidFirstLaunchLog[5])
+
 	if !discordRunning(context.Background(), target, watcher) || target.attaches != 1 {
 		t.Fatalf("the announced restart was not followed, %d attaches", target.attaches)
 	}
+
 	target.alive = false
 	if discordRunning(context.Background(), target, watcher) {
 		t.Fatal("a second exit was followed as the same restart")
@@ -142,17 +160,21 @@ func TestSmokeTimesAFirstLaunchThatReloadsInPlace(t *testing.T) {
 	launchedAt(t, watcher, iosLogTime, "2026-11-01 08:33:58.827")
 
 	replaySmokeLog(t, watcher, iosLogTime, iosFirstLaunchLog[:5])
+
 	if watcher.loadedAll(reloadSmokePlugins) {
 		t.Fatal("plugins loaded by the runtime the loader is about to reload counted as the run's loads")
 	}
+
 	replaySmokeLog(t, watcher, iosLogTime, iosFirstLaunchLog[5:])
 
 	result := &smokeResult{loaded: map[string]bool{}, failures: map[string][]string{}}
 	watcher.snapshot(result)
+
 	want := smokeStartupTimes{runtime: 10*time.Minute + 10100*time.Millisecond, plugins: 128 * time.Millisecond, bundle: 6287 * time.Millisecond}
 	if result.startup != want {
 		t.Fatalf("got startup %+v, want %+v", result.startup, want)
 	}
+
 	if problems := startupBudgetProblems(result.startup, smokeStartupBudget{bundle: time.Minute, plugins: time.Minute}, nil); len(problems) != 0 {
 		t.Fatalf("Discord's own wait before its runtime counted against Unbound: %v", problems)
 	}

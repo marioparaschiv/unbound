@@ -11,24 +11,30 @@ import (
 
 func releasesServer(t *testing.T, pages ...string) *httptest.Server {
 	t.Helper()
+
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if request.URL.Path != "/repos/owner/repo/releases" || request.Header.Get("Authorization") != "Bearer github-token" {
 			t.Fatalf("unexpected request %s with authorization %q", request.URL, request.Header.Get("Authorization"))
 		}
+
 		var page int
 		fmt.Sscan(request.URL.Query().Get("page"), &page)
+
 		if page < 1 || page > len(pages) {
 			fmt.Fprint(writer, "[]")
 			return
 		}
+
 		fmt.Fprint(writer, pages[page-1])
 	}))
 	t.Cleanup(server.Close)
+
 	return server
 }
 
 func trackerServer(t *testing.T, available ...int) *httptest.Server {
 	t.Helper()
+
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		for _, code := range available {
 			if request.URL.Path == fmt.Sprintf("/download/%d/base", code) {
@@ -37,9 +43,11 @@ func trackerServer(t *testing.T, available ...int) *httptest.Server {
 				return
 			}
 		}
+
 		writer.WriteHeader(http.StatusNotFound)
 	}))
 	t.Cleanup(server.Close)
+
 	return server
 }
 
@@ -64,6 +72,7 @@ func TestLatestReleasedAndroidVersionTakesEachChannelsNewestPublishedDiscord(t *
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		if version != want {
 			t.Fatalf("%s released %+v, want %+v", channel, version, want)
 		}
@@ -73,10 +82,12 @@ func TestLatestReleasedAndroidVersionTakesEachChannelsNewestPublishedDiscord(t *
 func TestLatestReleasedAndroidVersionReadsEveryPage(t *testing.T) {
 	full := "[" + strings.TrimSuffix(strings.Repeat(`{"tag_name":"discord-351.1-android-beta"},`, 100), ",") + "]"
 	server := releasesServer(t, full, `[{"tag_name":"discord-352.3-android-beta"}]`)
+
 	version, err := latestReleasedAndroidVersion(context.Background(), server.Client(), server.URL, "owner/repo", "github-token", "beta")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if version != (releasedAndroidVersion{352, 3}) {
 		t.Fatalf("beta released %+v, want 352.3 from the second page", version)
 	}
@@ -103,10 +114,12 @@ func TestReleasedAndroidCodeTakesTheHighestTrackTheTrackerServes(t *testing.T) {
 		{"beta", releasedAndroidVersion{352, 17}, nil, 352017},
 	} {
 		tracker := trackerServer(t, test.available...)
+
 		code, err := releasedAndroidCode(context.Background(), tracker.Client(), tracker.URL, test.channel, test.version)
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		if code != test.want {
 			t.Fatalf("%s %+v resolved to %d, want %d", test.channel, test.version, code, test.want)
 		}
