@@ -4,7 +4,9 @@ import {
 	bannerSvg,
 	isGeneratedBanner,
 	markGenerated,
+	parseBannerArgs,
 	renderBanner,
+	shouldDrawBanner,
 	withBannerFrontmatter,
 	wrapLines,
 } from '~/generate-plugin-banners';
@@ -65,5 +67,28 @@ describe('withBannerFrontmatter', () => {
 
 		expect(once).toBe(`---\nbanner: media/banner.png\n---\n\n${body}`);
 		expect(withBannerFrontmatter(once)).toBe(once);
+	});
+});
+
+describe('shouldDrawBanner', () => {
+	const generated = markGenerated(
+		renderBanner(bannerSvg({ name: 'A', description: 'B', iconBase64: icon })),
+	);
+	const handMade = new Uint8Array([1, 2, 3]);
+
+	test('draws only missing banners by default', () => {
+		const selection = parseBannerArgs([]);
+
+		expect(shouldDrawBanner('a', undefined, selection)).toBe(true);
+		expect(shouldDrawBanner('a', generated, selection)).toBe(false);
+		expect(shouldDrawBanner('a', handMade, selection)).toBe(false);
+	});
+
+	test('redraws named plugins, or every generated banner with --all, and never hand-made ones', () => {
+		expect(shouldDrawBanner('a', generated, parseBannerArgs(['a']))).toBe(true);
+		expect(shouldDrawBanner('b', generated, parseBannerArgs(['a']))).toBe(false);
+		expect(shouldDrawBanner('b', undefined, parseBannerArgs(['a']))).toBe(false);
+		expect(shouldDrawBanner('b', generated, parseBannerArgs(['--all']))).toBe(true);
+		expect(shouldDrawBanner('b', handMade, parseBannerArgs(['--all']))).toBe(false);
 	});
 });

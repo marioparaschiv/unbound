@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :wand-sparkle: The reaction picker opens with **Super Reaction** already switched on, so the next emoji you pick is a Super Reaction. Tap the toggle to send a normal reaction instead.
