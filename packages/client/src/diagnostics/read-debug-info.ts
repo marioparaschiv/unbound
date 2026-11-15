@@ -1,4 +1,3 @@
-import { findStore } from '~/metro/lookups';
 import type { NativeDeviceState, UnboundLaunchReport } from '@unbound-app/types';
 
 import { NativeBridgeCapabilityError, NativeBridgeVersionError } from '~/native/errors';
@@ -15,6 +14,7 @@ import { getHeapUsage } from '~/native/runtime';
 import { getSetting } from '~/settings/unbound';
 import type { Addons } from '~/addons/addons';
 import { icons } from '~/icon-packs/manager';
+import { findStore } from '~/metro/lookups';
 import { plugins } from '~/plugins/manager';
 import UpdatesStore from '~/updates/state';
 import { getLocale } from '~/i18n/locale';
@@ -26,8 +26,8 @@ import type { AddonCount, DebugInfo, DiscordSupport } from './format-debug-info'
 import { privateDnsName, resolverName } from './dns-provider';
 import { readExperiments } from './experiments';
 import { readAppSession } from './app-session';
-import { recentErrors } from './recent-errors';
 import { hookFailures } from './hook-failures';
+import { recentErrors } from './recent-errors';
 import { pushStateOf } from './push-state';
 import { readGateway } from './gateway';
 import { redactReport } from './redact';
@@ -199,7 +199,9 @@ function accountOf(): DebugInfo['account'] {
 		UserStore as { getCurrentUser?(): CurrentUser | undefined } | undefined
 	)?.getCurrentUser?.();
 
-	if (!user?.id) return undefined;
+	if (!user?.id) {
+		return undefined;
+	}
 
 	const created = Number(BigInt(user.id) >> 22n) + DISCORD_EPOCH;
 
@@ -426,6 +428,8 @@ export function readDebugInfo(): DebugInfo {
 		storage: attempt(() => storageOf(state), undefined),
 		errors: recentErrors(),
 		hookFailures: hookFailures(),
+		ffiClosures: state?.ffiClosures,
+		ffiClosureProbe: state?.ffiClosureProbe,
 		patches: attempt(patchCounts, undefined),
 		native: attempt(nativeCounts, undefined),
 		enabledPlugins: attempt(enabledPlugins, undefined),

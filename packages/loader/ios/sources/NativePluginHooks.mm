@@ -8,6 +8,7 @@
 #include <unordered_map>
 
 #import "NativeAddressValidation.h"
+#import "NativeFFIClosureProbe.h"
 #import "NativeHookCallbacks.h"
 #import "NativeHookKeys.h"
 #import "NativePluginHookDispatch.h"
@@ -394,8 +395,12 @@ Value makeHook(Runtime &runtime, const Value *args, size_t count)
                     }
 
                     signatureName += ")";
-                    throw JSError(runtime, "Native hook closure is unavailable on this device for "
-                                               + signatureName);
+                    throw JSError(runtime,
+                                  "Native hook closure is unavailable on this device for "
+                                      + signatureName
+                                      + (loader::ffi::closuresExecutable()
+                                             ? ""
+                                             : " (libffi closures failed the launch probe)"));
                 }
             }
 

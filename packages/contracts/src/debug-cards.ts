@@ -202,6 +202,8 @@ export const debugCardRequestSchema = Type.Object({
 			{ maxItems: 3 },
 		),
 	),
+	ffiClosures: Type.Optional(Type.Boolean()),
+	ffiClosureProbe: Type.Optional(text(24)),
 	hookFailures: Type.Optional(
 		Type.Array(
 			Type.Object({
