@@ -1,9 +1,9 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 import type { ManifestContext, ManifestOptions } from './manifest';
 
@@ -39,7 +39,6 @@ export type HermesPlugin = {
 		bundle: Record<string, BundleEntry>,
 		isWrite: boolean,
 	): Promise<void>;
-	buildEnd(this: HermesContext): Promise<void>;
 };
 
 type Target = { version: number | null; dir: string | null };
@@ -48,10 +47,8 @@ type Compiled = { bytecode: Buffer; map: string | undefined };
 
 type Exit = { code: number | null; stderr: string };
 
-const temp = join(tmpdir(), 'hermesc');
-
-function tempFile(extension: string): string {
-	return join(temp, `${randomBytes(8).readUint32LE(0)}${extension}`);
+function tempFile(directory: string, extension: string): string {
+	return join(directory, `${randomBytes(8).readUint32LE(0)}${extension}`);
 }
 
 async function compile(
@@ -68,7 +65,7 @@ async function compile(
 		return undefined;
 	}
 
-	const bytecode = tempFile('.bundle');
+	const bytecode = tempFile(dirname(js), '.bundle');
 	const args = [
 		'--emit-binary',
 		'--out',
@@ -124,8 +121,54 @@ async function compile(
 	return { bytecode: asset, map };
 }
 
+type Job = { directory: string; file: string; name: string; outputFile: string; code: string };
+
+async function compileTargets(
+	ctx: HermesContext,
+	targets: Target[],
+	flags: string[],
+	{ directory, file, name, outputFile, code }: Job,
+): Promise<void> {
+	const js = tempFile(directory, '.js');
+
+	await writeFile(js, code, 'utf-8');
+
+	for (const target of targets) {
+		if (!target.dir) {
+			ctx.warn(
+				`hermesc for bytecode ${target.version} could not be downloaded, skipping it.`,
+			);
+			continue;
+		}
+
+		const fileName =
+			target.version === null ? `${name}.bundle` : `${name}.${target.version}.bundle`;
+
+		ctx.info(`${outputFile} -> ${outputFile.replace(file, fileName)}...`);
+
+		const compiled = await compile(ctx, target.dir, js, flags);
+
+		if (!compiled) continue;
+
+		ctx.emitFile({ type: 'asset', fileName, source: compiled.bytecode });
+
+		if (compiled.map) {
+			const map = { ...JSON.parse(compiled.map), sources: [file] };
+
+			ctx.emitFile({
+				type: 'asset',
+				fileName: `${fileName}.map`,
+				source: JSON.stringify(map),
+			});
+		}
+
+		ctx.info(`( ͡° ͜ʖ ͡°) Bytecode compiled to ${fileName}`);
+	}
+}
+
 /**
  * @description Compiles the bundle's output file to Hermes bytecode, once per held hermesc version, as `<name>.<version>.bundle` beside it.
+ * Each build uses its own temporary folder, so builds running side by side never delete each other's files.
  * @param options A fixed hermesc directory, or which of npm's bytecode versions to hold; plus extra hermesc flags.
  * @returns The rollup plugin, which rolldown also accepts.
  */
@@ -136,67 +179,34 @@ export default function hermes(options: HermesOptions = {}): HermesPlugin {
 		name: 'hermesc',
 
 		async generateBundle(output, bundle) {
-			const file = output.file?.split('/').pop();
+			const outputFile = output.file;
+			const file = outputFile?.split('/').pop();
 
-			if (!output.file || !file) return;
+			if (!outputFile || !file) return;
 
 			const chunk = bundle[file];
 
 			if (typeof chunk?.code !== 'string') return;
 
-			const name = file.split('.')[0];
+			const name = file.split('.')[0] ?? file;
 
 			targets ??= options.hermesc
 				? [{ version: null, dir: options.hermesc }]
 				: await resolveHermesTargets(this, options);
 
-			if (!existsSync(temp)) {
-				await mkdir(temp);
+			const directory = await mkdtemp(join(tmpdir(), 'hermesc-'));
+
+			try {
+				await compileTargets(this, targets, options.flags ?? [], {
+					directory,
+					file,
+					name,
+					outputFile,
+					code: chunk.code,
+				});
+			} finally {
+				await rm(directory, { recursive: true, force: true });
 			}
-
-			const js = tempFile('.js');
-
-			await writeFile(js, chunk.code, 'utf-8');
-
-			for (const target of targets) {
-				if (!target.dir) {
-					this.warn(
-						`hermesc for bytecode ${target.version} could not be downloaded, skipping it.`,
-					);
-					continue;
-				}
-
-				const fileName =
-					target.version === null ? `${name}.bundle` : `${name}.${target.version}.bundle`;
-
-				this.info(`${output.file} -> ${output.file.replace(file, fileName)}...`);
-
-				const compiled = await compile(this, target.dir, js, options.flags ?? []);
-
-				if (!compiled) {
-					continue;
-				}
-
-				this.emitFile({ type: 'asset', fileName, source: compiled.bytecode });
-
-				if (compiled.map) {
-					const map = { ...JSON.parse(compiled.map), sources: [file] };
-
-					this.emitFile({
-						type: 'asset',
-						fileName: `${fileName}.map`,
-						source: JSON.stringify(map),
-					});
-				}
-
-				this.info(`( ͡° ͜ʖ ͡°) Bytecode compiled to ${fileName}`);
-			}
-
-			await rm(js, { force: true });
-		},
-
-		async buildEnd() {
-			await rm(temp, { recursive: true, force: true });
 		},
 	};
 }

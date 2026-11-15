@@ -16,8 +16,5 @@ export default function hermesVersions(versions: number[], flags: string[]): Plu
 		async generateBundle(options, bundle, isWrite) {
 			await compiler.generateBundle.call(this, options, bundle, isWrite);
 		},
-		async buildEnd() {
-			await compiler.buildEnd.call(this);
-		},
 	};
 }
