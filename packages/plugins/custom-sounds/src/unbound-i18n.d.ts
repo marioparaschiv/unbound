@@ -3,10 +3,60 @@
 declare module '@unbound-app/i18n' {
 	/** Every en-US message, read in the user's locale. */
 	export type Messages = {
+		/** Replace Discord's sounds */
+		readonly REPLACE_SECTION: string;
+		/** Play another of Discord's sounds or a file from a link instead. A link plays an mp3, m4a, wav or ogg file up to 5 MB. */
+		readonly REPLACE_SECTION_SUBTITLE: string;
+		/** Discord's own */
+		readonly CHOICE_DEFAULT: string;
+		/** Link */
+		readonly LINK: string;
+		/** New message */
+		readonly EVENT_MESSAGE: string;
+		/** Incoming call */
+		readonly EVENT_CALL_RINGING: string;
+		/** Someone joins voice */
+		readonly EVENT_USER_JOIN: string;
+		/** Someone leaves voice */
+		readonly EVENT_USER_LEAVE: string;
+		/** You're moved to another channel */
+		readonly EVENT_USER_MOVED: string;
+		/** Mute */
+		readonly EVENT_MUTE: string;
+		/** Unmute */
+		readonly EVENT_UNMUTE: string;
+		/** Deafen */
+		readonly EVENT_DEAFEN: string;
+		/** Undeafen */
+		readonly EVENT_UNDEAFEN: string;
+		/** Disconnect */
+		readonly EVENT_DISCONNECT: string;
+		/** Push to talk on */
+		readonly EVENT_PTT_START: string;
+		/** Push to talk off */
+		readonly EVENT_PTT_STOP: string;
+		/** Stream starts */
+		readonly EVENT_STREAM_STARTED: string;
+		/** Stream ends */
+		readonly EVENT_STREAM_ENDED: string;
+		/** Someone watches your stream */
+		readonly EVENT_STREAM_USER_JOINED: string;
+		/** Someone stops watching */
+		readonly EVENT_STREAM_USER_LEFT: string;
+		/** Camera on */
+		readonly EVENT_CAMERA_ON: string;
+		/** Camera off */
+		readonly EVENT_CAMERA_OFF: string;
+		/** Activity starts */
+		readonly EVENT_ACTIVITY_LAUNCH: string;
+		/** Activity ends */
+		readonly EVENT_ACTIVITY_END: string;
+		/** Friend join sounds */
+		readonly JOIN_SECTION: string;
+		/** An extra sound only you hear when chosen friends join your voice channel. */
+		readonly JOIN_SECTION_SUBTITLE: string;
 		/** Sound */
 		readonly SOUND: string;
-		/** Played only for you, alongside Discord's own join sound. */
-		readonly SOUND_SUBTITLE: string;
 		/** Activity join */
 		readonly SOUND_ACTIVITY_JOIN: string;
 		/** Stream viewer join */
@@ -21,10 +71,10 @@ declare module '@unbound-app/i18n' {
 		readonly SOUND_CAMERA: string;
 		/** Push to talk */
 		readonly SOUND_PTT: string;
+		/** File from a link */
+		readonly SOUND_LINK: string;
 		/** Volume */
 		readonly VOLUME: string;
-		/** In percent. */
-		readonly VOLUME_SUBTITLE: string;
 		/** Friends */
 		readonly FRIENDS: string;
 		/** The sound plays when one of them joins the voice channel you are in. */

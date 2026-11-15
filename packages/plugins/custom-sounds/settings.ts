@@ -1,11 +1,12 @@
 import { defineSettings, setting } from '@unbound-app/settings/schema';
 
 export default defineSettings({
+	choices: setting.string({ default: '{}', hidden: true }),
+	links: setting.string({ default: '{}', hidden: true }),
 	users: setting.string({ default: '', hidden: true }),
 	sound: setting.choice({
 		default: 'activity_user_join',
-		title: 'SOUND',
-		subtitle: 'SOUND_SUBTITLE',
+		hidden: true,
 		options: {
 			activity_user_join: 'SOUND_ACTIVITY_JOIN',
 			stream_user_joined: 'SOUND_STREAM_JOIN',
@@ -14,14 +15,9 @@ export default defineSettings({
 			bit_message1: 'SOUND_BIT',
 			camera_on: 'SOUND_CAMERA',
 			ptt_start: 'SOUND_PTT',
+			link: 'SOUND_LINK',
 		},
 	}),
-	volume: setting.number({
-		default: 60,
-		min: 10,
-		max: 100,
-		step: 10,
-		title: 'VOLUME',
-		subtitle: 'VOLUME_SUBTITLE',
-	}),
+	joinLink: setting.string({ default: '', hidden: true }),
+	volume: setting.number({ default: 60, min: 10, max: 100, step: 10, hidden: true }),
 });
