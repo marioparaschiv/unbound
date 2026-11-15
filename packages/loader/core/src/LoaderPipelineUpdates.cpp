@@ -106,7 +106,7 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
 
             if (!hasSaved && attempt == 0 && token == token_.load())
             {
-                host_->alert(bundleFailureNotice(failure));
+                host_->alert(bundleFailureNotice(failure, host_->loaderInstall()));
             }
 
             if (failure == BundleUpdateFailure::Network && attempt < std::size(kRetryDelaysSeconds)

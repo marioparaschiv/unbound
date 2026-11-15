@@ -80,6 +80,11 @@ public:
         host_->alert(message);
     }
 
+    LoaderInstall loaderInstall() override
+    {
+        return host_->loaderInstall();
+    }
+
     void crashAlert(const std::string &message) override
     {
         host_->crashAlert(message);

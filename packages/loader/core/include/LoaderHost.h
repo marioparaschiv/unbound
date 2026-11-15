@@ -11,6 +11,7 @@
 #include <thread>
 
 #include "LoaderHotReload.h"
+#include "LoaderInstall.h"
 #include "LoaderLaunchGuard.h"
 #include "LoaderTransport.h"
 #include "UnboundNativeBridge.h"
@@ -84,6 +85,12 @@ public:
     virtual void onBundleExecuted() {}
 
     virtual void alert(const std::string &message) {}
+
+    // What the user installs to get a newer loader, which the "out of date" alert names.
+    virtual LoaderInstall loaderInstall()
+    {
+        return LoaderInstall::Unknown;
+    }
 
     // An alert about a crash the loader recovered from, offering to open a prefilled report.
     virtual void crashAlert(const std::string &message)

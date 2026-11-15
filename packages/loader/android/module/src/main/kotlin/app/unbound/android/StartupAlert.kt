@@ -18,10 +18,21 @@ object StartupAlert {
         pending = Pending(title, message, reportable = false)
     }
 
+    /** Shows [message] in a dialog, as the iOS loader's alert does; a toast would cut it to two lines. */
+    @JvmStatic
+    fun show(message: String) {
+        present(Pending(TITLE, message, reportable = false))
+    }
+
     /** Shows [message] with a Report button that opens a prefilled crash report on GitHub. */
     @JvmStatic
     fun reportCrash(message: String) {
-        pending = Pending(TITLE, message, reportable = true)
+        present(Pending(TITLE, message, reportable = true))
+    }
+
+    // Shows the alert now if an activity is up; otherwise the next resumed activity shows it.
+    private fun present(alert: Pending) {
+        pending = alert
         Handler(Looper.getMainLooper()).post {
             ActivityTracker.currentActivity()?.let { if (!it.isFinishing) onResumed(it) }
         }

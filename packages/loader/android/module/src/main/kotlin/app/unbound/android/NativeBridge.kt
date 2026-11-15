@@ -611,10 +611,7 @@ object NativeBridge {
 
     @JvmStatic
     fun alert(message: String) {
-        Handler(Looper.getMainLooper()).post {
-            val context = Platform.application() ?: return@post
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-        }
+        StartupAlert.show(message)
     }
 
     @JvmStatic

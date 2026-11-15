@@ -281,7 +281,29 @@ bool BundleUpdater::isActiveManifest(const std::string &url, const std::string &
            && bundleRecordField(record, "manifest") == manifestText;
 }
 
-std::string bundleFailureNotice(BundleUpdateFailure failure)
+static std::string loaderTooOldNotice(LoaderInstall install)
+{
+    const std::string outdated =
+        "This version of Unbound is out of date, so Discord opened without it. ";
+
+    switch (install)
+    {
+        case LoaderInstall::Apk:
+            return outdated + "Install the latest Unbound APK, then reopen Discord.";
+        case LoaderInstall::Ipa:
+            return outdated + "Install the latest Unbound IPA, then reopen Discord.";
+        case LoaderInstall::Tweak:
+            return outdated
+                   + "Update the Unbound tweak in your package manager, then reopen Discord.";
+        case LoaderInstall::Unknown:
+            break;
+    }
+
+    return "Unbound's latest bundle needs a newer loader, so Discord started without it. "
+           "Update Unbound's loader, then reopen Discord.";
+}
+
+std::string bundleFailureNotice(BundleUpdateFailure failure, LoaderInstall install)
 {
     switch (failure)
     {
@@ -289,8 +311,7 @@ std::string bundleFailureNotice(BundleUpdateFailure failure)
             return "Unbound could not download its bundle, so Discord started without it. Check "
                    "your connection and reopen Discord to try again.";
         case BundleUpdateFailure::LoaderTooOld:
-            return "Unbound's latest bundle needs a newer loader, so Discord started without it. "
-                   "Update Unbound's loader, then reopen Discord.";
+            return loaderTooOldNotice(install);
         case BundleUpdateFailure::Storage:
             return "Unbound could not save its bundle, so Discord started without it. Free up some "
                    "storage and reopen Discord.";
