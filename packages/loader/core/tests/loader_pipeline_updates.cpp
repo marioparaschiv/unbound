@@ -2,7 +2,9 @@
 #include <cassert>
 #include <string>
 
+#include "LoaderFiles.h"
 #include "LoaderPipeline.h"
+#include "LoaderPreferences.h"
 #include "PipelineFixtures.h"
 
 namespace {
@@ -94,12 +96,13 @@ void checksThenStagesABundleTheClientAsksForEvenOnAMeteredNetwork()
     Launch launch;
     launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
     assert(launch.server.install(launch.updater, std::nullopt));
+    // Metered, so the launch's own check waits and every check below asks the server.
+    launch.host->metered = true;
     launch.pipeline.prepare();
     assert(!launch.pipeline.isBundleUpdateAvailable());
 
     launch.server.publish(kBase, "2026-10-03T00:00:00.000Z", {{kBundle, "next"}});
-    launch.host->metered = true;
-    int downloads        = launch.server.downloads;
+    int downloads = launch.server.downloads;
 
     assert(launch.pipeline.isBundleUpdateAvailable());
     assert(launch.server.downloads == downloads);
@@ -111,6 +114,53 @@ void checksThenStagesABundleTheClientAsksForEvenOnAMeteredNetwork()
     assert(!launch.pipeline.isCheckingForUpdate());
     // The staged candidate is what the next restart runs, so nothing newer waits.
     assert(!launch.pipeline.isBundleUpdateAvailable());
+}
+
+void answersTheClientFromTheLaunchCheckThatJustRan()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    launch.pipeline.prepare();
+    int fetches = launch.server.fetches;
+
+    assert(!launch.pipeline.isBundleUpdateAvailable());
+    assert(launch.server.fetches == fetches);
+}
+
+void answersTheClientFromTheFirstDownloadThisLaunchRuns()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "first"}});
+    launch.pipeline.prepare();
+    assert(launch.pipeline.takeSavedBundle());
+    // Promoted at once, as a dev server's bundle is.
+    assert(launch.updater.acceptBundle(launch.server.candidate()));
+    int fetches = launch.server.fetches;
+
+    assert(!launch.pipeline.isBundleUpdateAvailable());
+    assert(launch.server.fetches == fetches);
+}
+
+void keepsTheCandidateThisLaunchRunsWhenTheClientChecks()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    launch.server.publish(kBase, "2026-10-03T00:00:00.000Z", {{kBundle, "next"}});
+    assert(launch.server.download(launch.updater, std::nullopt));
+    launch.host->metered = true;
+    launch.pipeline.prepare();
+    // What evaluating the candidate marks before Discord's bundle runs.
+    assert(launch.updater.markBundleAttempted(launch.server.candidate()));
+
+    assert(!launch.pipeline.isBundleUpdateAvailable());
+    launch.host->metered = false;
+    assert(launch.pipeline.onBackground() == false);
+    launch.pipeline.updateBundleNow();
+
+    assert(loader::readTextFile(launch.server.candidate()) == "next");
+    assert(loader::preferences::rejectedRevision(launch.server.settings).empty());
 }
 
 void leavesPausedClientUpdatesAlone()
@@ -160,6 +210,9 @@ int main()
     checksInTheForegroundOnlyOnceTheLastCheckIsOld();
     retriesAFailedCheckWhenTheServerSaysWhen();
     checksThenStagesABundleTheClientAsksForEvenOnAMeteredNetwork();
+    answersTheClientFromTheLaunchCheckThatJustRan();
+    answersTheClientFromTheFirstDownloadThisLaunchRuns();
+    keepsTheCandidateThisLaunchRunsWhenTheClientChecks();
     leavesPausedClientUpdatesAlone();
     reportsNoUpdateFromASourceWithoutAManifestToCompare();
     spacesRetriesWithJitter();

@@ -205,6 +205,7 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
 
     DownloadPlan plan;
     plan.url    = selectURL(source, manifest, bytecodeVersion);
+    plan.file   = urlFileName(plan.url);
     plan.source = source.baseURL;
 
     if (std::optional<std::string> exemption = exemptionFor(plan.url))
@@ -231,81 +232,24 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
         return plan;
     }
 
-    std::optional<std::string> signature =
-        manifest ? fetch(manifestURL + kBundleSignatureSuffix) : std::nullopt;
     if (!manifestText)
     {
         log(LogLevel::Error, LOG_CATEGORY_UPDATER, "Could not fetch " + manifestURL + ".");
         throw BundleUpdateError(BundleUpdateFailure::Network, "Could not fetch " + manifestURL);
     }
-    TrustedSigner signer =
-        signature ? verifyTrustedSignature(*manifestText, *signature, trust_) : TrustedSigner::None;
-    std::optional<BundleBaseline> active = baseline();
-
-    if (signer == TrustedSigner::None)
+    plan.manifestText = *manifestText;
+    if (manifest)
     {
-        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-            "Refused the update: " + manifestURL + " has no valid signature.");
-        throw BundleUpdateError(BundleUpdateFailure::Verification,
-                                "Bundle manifest failed signature verification");
-    }
-
-    if (!manifest->isSignable())
-    {
-        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-            "Refused the update: the signed manifest lacks its build time, revision, channel or "
-            "hashes.");
-        throw BundleUpdateError(BundleUpdateFailure::Verification,
-                                "Signed bundle manifest is incomplete");
-    }
-
-    if (std::optional<std::string> rollback = rollbackProblem(*manifest, plan.source, active))
-    {
-        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-            "Refused the update: the signed manifest would roll back the active bundle, as " +
-                *rollback + ".");
-        throw BundleUpdateError(BundleUpdateFailure::Verification,
-                                "Bundle manifest would roll back the active bundle");
-    }
-
-    if (std::optional<std::string> outdated = loaderVersionProblem(*manifest, loaderVersion()))
-    {
-        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-            "Refused the update: " + *outdated + ". Update the loader to use this bundle.");
-        recordRequiredLoader(documents_, manifest->minLoaderVersion);
-        throw BundleUpdateError(BundleUpdateFailure::LoaderTooOld, "Bundle needs a newer loader");
-    }
-    recordRequiredLoader(documents_, "");
-
-    if (std::optional<std::string> bridge =
-            nativeBridgeProblem(*manifest, kNativePluginApiVersion, kNativePluginAbiVersion))
-    {
-        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-            "Refused the update: " + *bridge + ". Update the loader to use this bundle.");
-        throw BundleUpdateError(BundleUpdateFailure::LoaderTooOld,
-                                "Bundle needs a different native bridge");
-    }
-
-    auto hash = manifest->sha512.find(urlFileName(plan.url));
-    if (hash == manifest->sha512.end())
-    {
-        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-            "Refused the update: the signed manifest has no hash for " + urlFileName(plan.url) +
-                ".");
-        throw BundleUpdateError(BundleUpdateFailure::Verification,
-                                "Signed bundle manifest does not list the bundle");
-    }
-
-    log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-        "Bundle manifest verified with " + describeSigner(signer, trust_) + " (revision " +
-            manifest->revision + ", channel " + manifest->channel + ", built " +
-            manifest->buildTime + ").");
-    plan.manifestText      = *manifestText;
-    plan.manifestSignature = *signature;
-    plan.expectedSha512    = hash->second;
-    if (auto patches = manifest->patches.find(hash->first); patches != manifest->patches.end())
-    {
-        plan.patchBases = patches->second;
+        // Saves a round trip before the bundle download, whose bytes count only once
+        // verifyPlan has checked this signature.
+        plan.signature =
+            std::async(std::launch::async, [this, url = manifestURL + kBundleSignatureSuffix]() {
+                return fetch(url);
+            }).share();
+        if (auto patches = manifest->patches.find(plan.file); patches != manifest->patches.end())
+        {
+            plan.patchBases = patches->second;
+        }
     }
     return plan;
 }
@@ -326,45 +270,6 @@ bool BundleUpdater::isActiveManifest(const std::string &url, const std::string &
     return bundleRecordField(record, "kind") == "manifest" &&
            bundleRecordField(record, "file") == urlFileName(url) &&
            bundleRecordField(record, "manifest") == manifestText;
-}
-
-std::optional<std::string> BundleUpdater::verifiedRecord(const DownloadPlan &plan,
-                                                         const std::string  &candidatePath) const
-{
-    nlohmann::json record{{"url", plan.url},
-                          {"source", plan.source},
-                          {"file", urlFileName(plan.url)},
-                          {"developerMode", developerMode() ? "1" : "0"}};
-
-    if (!plan.exemption.empty())
-    {
-        record["kind"]      = "exempt";
-        record["exemption"] = plan.exemption;
-        return record.dump();
-    }
-
-    std::optional<std::string> bundle = readTextFile(candidatePath);
-    if (!bundle)
-    {
-        return std::nullopt;
-    }
-
-    if (sha512Hex(*bundle) != plan.expectedSha512)
-    {
-        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-            "Rejected the downloaded bundle: its SHA-512 does not match the signed manifest.");
-        return std::nullopt;
-    }
-    log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-        "Bundle signature verified: " + urlFileName(plan.url) + " matches the signed manifest.");
-    if (std::optional<nlohmann::json> identity = fileIdentity(candidatePath))
-    {
-        record["identity"] = *identity;
-    }
-    record["kind"]      = "manifest";
-    record["manifest"]  = plan.manifestText;
-    record["signature"] = plan.manifestSignature;
-    return record.dump();
 }
 
 std::string bundleFailureNotice(BundleUpdateFailure failure)
@@ -480,8 +385,11 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
         throw BundleUpdateError(BundleUpdateFailure::Storage, *problem);
     }
 
-    if (isVerified && !forceUpdate && activeFile == urlFileName(url))
+    // A patch applies only against hashes from the verified manifest, so it waits for the
+    // signature; a whole download runs while the signature is fetched.
+    if (isVerified && !forceUpdate && activeFile == urlFileName(url) && !plan.patchBases.empty())
     {
+        verifyPlan(plan);
         if (std::optional<std::string> record = patchedCandidate(plan, targetPath, candidatePath))
         {
             if (writeTextFileAtomically(candidatePath + kBundleTrustSuffix, *record) &&
@@ -497,6 +405,15 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
 
     std::optional<DownloadResult> response =
         download_ ? download_(url, candidatePath, headers, kBundleDownloadPolicy) : std::nullopt;
+    try
+    {
+        verifyPlan(plan);
+    }
+    catch (const BundleUpdateError &)
+    {
+        removeFile(candidatePath);
+        throw;
+    }
     if (!response)
     {
         throw BundleUpdateError(BundleUpdateFailure::Network, "Could not download " + url);

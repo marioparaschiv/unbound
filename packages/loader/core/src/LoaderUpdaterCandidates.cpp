@@ -165,6 +165,28 @@ std::string BundleUpdater::resolveBundlePath()
     return bundlePath("bundle");
 }
 
+std::string BundleUpdater::currentBundlePath() const
+{
+    for (const char *extension : kBundleExtensions)
+    {
+        if (std::string candidate = bundlePath(extension) + kBundleCandidateSuffix;
+            fileExists(candidate))
+        {
+            return candidate;
+        }
+    }
+
+    for (const char *extension : kBundleExtensions)
+    {
+        if (std::string path = bundlePath(extension); fileExists(path))
+        {
+            return path;
+        }
+    }
+
+    return bundlePath("bundle");
+}
+
 void BundleUpdater::recordBaseline(const std::string &record)
 {
     nlohmann::json parsed = parseBundleRecord(record);

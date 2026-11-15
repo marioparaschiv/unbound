@@ -103,8 +103,10 @@ public:
     bool hasStagedBundle() const;
     // For the client's update page. Each runs on the calling thread once any running check
     // finishes, honours paused client updates and throws what failed. Whether a newer bundle than
-    // the saved or staged one is published; downloads nothing.
-    bool isBundleUpdateAvailable();
+    // the saved or staged one is published; downloads nothing. Within kFreshCheckSeconds of a
+    // check that found the bundle current, answers from it without asking the server again.
+    bool                    isBundleUpdateAvailable();
+    static constexpr double kFreshCheckSeconds = 60.0;
     // Downloads the newer bundle, skipping the Wi-Fi wait; returns whether one waits for the next
     // restart.
     bool updateBundleNow();
@@ -192,10 +194,12 @@ private:
     std::atomic_bool              frozen_{false};
     std::atomic_bool              stuckOffered_{false};
     std::atomic_int64_t           lastCheckMs_{0};
-    std::atomic_int64_t           runtimeCreatedMs_{0};
-    std::atomic_int64_t           bundleExecutedMs_{0};
-    std::atomic_int64_t           renderedMs_{0};
-    std::atomic_int64_t           healthyMs_{0};
-    std::atomic_int64_t           visibleMs_{0};
+    // When the last finished check found the running or staged bundle current; 0 after any other.
+    std::atomic_int64_t currentAtMs_{0};
+    std::atomic_int64_t runtimeCreatedMs_{0};
+    std::atomic_int64_t bundleExecutedMs_{0};
+    std::atomic_int64_t renderedMs_{0};
+    std::atomic_int64_t healthyMs_{0};
+    std::atomic_int64_t visibleMs_{0};
 };
 }
