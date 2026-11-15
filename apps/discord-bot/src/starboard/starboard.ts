@@ -6,11 +6,11 @@ import {
 	type Embed,
 	type Message,
 	type PartialMessage,
-	type RESTPostAPIChannelMessageJSONBody,
 } from 'discord.js';
 import { createLogger } from '@unbound-app/logger';
 import { eq } from 'drizzle-orm';
 
+import { starboardEmojiNames, type StarboardEmojis } from '~/starboard/starboard-emojis';
 import { createPostLedger, type LedgerRow, type MutableRows } from '~/lib/post-ledger';
 import { discordFailure, type MessageGateway } from '~/lib/discord-messages';
 import { renderStarPost, type StarredMessage } from '~/lib/star-post';
@@ -27,6 +27,7 @@ export const STAR_THRESHOLD = 2;
 export type StarboardOptions = {
 	db: Database;
 	messages: MessageGateway;
+	emojis: StarboardEmojis;
 	guildId: string;
 	channelId: string;
 };
@@ -174,10 +175,11 @@ function embedMedia(embed: Embed): string | undefined {
 	return embed.image?.url;
 }
 
-function snapshot(message: Message<true>): StarredMessage {
+async function snapshot(message: Message<true>, emojis: StarboardEmojis): Promise<StarredMessage> {
 	const media: StarredMessage['media'] = [];
 	const files: StarredMessage['files'] = [];
 	const shown = message.member ?? message.author;
+	const avatarHash = message.member?.avatar ?? message.author.avatar;
 
 	for (const attachment of message.attachments.values()) {
 		const type = attachment.contentType ?? '';
@@ -207,16 +209,21 @@ function snapshot(message: Message<true>): StarredMessage {
 		createdAt: message.createdAt,
 		author: {
 			name: shown.displayName,
-			avatarUrl: shown.displayAvatarURL({ extension: 'png', size: 128 }),
+			emoji: await emojis.avatar({
+				id: message.author.id,
+				avatarHash,
+				avatarUrl: shown.displayAvatarURL({ extension: 'png', size: 128 }),
+			}),
 		},
-		content: message.content,
+		// The guild's own emojis show as they are; any other is copied to the bot.
+		content: await emojis.mirror(message.content, new Set(message.guild.emojis.cache.keys())),
 		media,
 		files,
 	};
 }
 
-function hashOf(body: RESTPostAPIChannelMessageJSONBody) {
-	return new Bun.CryptoHasher('sha256').update(JSON.stringify(body)).digest('hex');
+function hashOf(serialized: string) {
+	return new Bun.CryptoHasher('sha256').update(serialized).digest('hex');
 }
 
 /**
@@ -224,7 +231,13 @@ function hashOf(body: RESTPostAPIChannelMessageJSONBody) {
  * @param options The database, the bot's Discord messages, the guild and the starboard channel.
  * @returns The starboard; it handles one message at a time, so racing reactions never double post.
  */
-export function createStarboard({ db, messages, guildId, channelId }: StarboardOptions): Starboard {
+export function createStarboard({
+	db,
+	messages,
+	emojis,
+	guildId,
+	channelId,
+}: StarboardOptions): Starboard {
 	const ledger = createPostLedger({
 		messages,
 		label: 'starred message',
@@ -255,6 +268,28 @@ export function createStarboard({ db, messages, guildId, channelId }: StarboardO
 		return users.size;
 	}
 
+	// Records the emojis a post shows, then deletes the starboard emojis no post shows any more.
+	async function keepEmojis(key: string, names: readonly string[]) {
+		await db
+			.update(starPost)
+			.set({ emojis: [...names] })
+			.where(eq(starPost.sourceMessageId, sourceOf(key).messageId));
+
+		const rows = await db.select({ emojis: starPost.emojis }).from(starPost);
+
+		await emojis.prune(new Set(rows.flatMap((row) => row.emojis)));
+	}
+
+	async function unpost(key: string) {
+		// Most messages never had a post; they cost one lookup.
+		if (!(await STAR_ROWS.get(db, key))) {
+			return;
+		}
+
+		await ledger.sync(db, key, undefined);
+		await keepEmojis(key, []);
+	}
+
 	async function sync(client: Client, key: string) {
 		const source = await fetchMessage(client, sourceOf(key));
 
@@ -265,7 +300,7 @@ export function createStarboard({ db, messages, guildId, channelId }: StarboardO
 			source.author.id === client.user?.id ||
 			!isPublic(source)
 		) {
-			await ledger.sync(db, key, undefined);
+			await unpost(key);
 
 			return;
 		}
@@ -273,18 +308,20 @@ export function createStarboard({ db, messages, guildId, channelId }: StarboardO
 		const count = await stars(source, key);
 
 		if (count < STAR_THRESHOLD) {
-			await ledger.sync(db, key, undefined);
+			await unpost(key);
 
 			return;
 		}
 
-		const post = renderStarPost(snapshot(source), count);
+		const post = renderStarPost(await snapshot(source, emojis), count);
+		const serialized = JSON.stringify(post.body);
 
 		await ledger.sync(db, key, {
 			channelId,
-			hash: hashOf(post.body),
+			hash: hashOf(serialized),
 			render: async () => post,
 		});
+		await keepEmojis(key, starboardEmojiNames(serialized));
 	}
 
 	return {
@@ -309,7 +346,7 @@ export function createStarboard({ db, messages, guildId, channelId }: StarboardO
 			const key = keyOf({ channelId: message.channelId, messageId: message.id });
 
 			try {
-				await queue.enqueue(() => ledger.sync(db, key, undefined));
+				await queue.enqueue(() => unpost(key));
 			} catch (error) {
 				logger.error(
 					`Failed to remove the starboard post of message ${message.id}:`,

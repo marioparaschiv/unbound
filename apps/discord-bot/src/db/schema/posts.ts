@@ -47,6 +47,8 @@ export const starPost = botSchema.table('star_post', {
 	messageId: text('message_id').notNull().unique(),
 	/** The hash of the post's body; a new star count or edit changes it. */
 	postedHash: text('posted_hash').notNull(),
+	/** The starboard app emojis the post shows, kept while any post names them. */
+	emojis: text('emojis').array().notNull().default([]),
 	postedAt: timestamp('posted_at', { withTimezone: true }).notNull().defaultNow(),
 	editedAt: timestamp('edited_at', { withTimezone: true }),
 });

@@ -2,12 +2,13 @@ import type {
 	APIActionRowComponent,
 	APIButtonComponentWithURL,
 	APIComponentInContainer,
+	APIContainerComponent,
 	APIMediaGalleryItem,
 } from 'discord.js';
-import { ButtonStyle, ComponentType } from 'discord.js';
+import { ButtonStyle, ComponentType, MessageFlags } from 'discord.js';
 
-import { containerMessage, textDisplay, type ContainerMessage } from '~/lib/container-message';
 import { EMOJIS, STAR_EMOJIS, type AppEmoji } from '~/lib/constants';
+import { textDisplay } from '~/lib/container-message';
 import { truncate } from '~/lib/message-text';
 
 /** What a starboard post shows of the starred message. */
@@ -16,7 +17,9 @@ export type StarredMessage = {
 	/** The message's jump link. */
 	url: string;
 	createdAt: Date;
-	author: { name: string; avatarUrl: string };
+	/** The author's display name, and their round avatar emoji when one could be made. */
+	author: { name: string; emoji?: AppEmoji };
+	/** The text, its custom emojis already swapped for ones the bot can show. */
 	content: string;
 	/** Images and videos, shown in a gallery. */
 	media: { url: string; spoiler: boolean; description?: string }[];
@@ -24,9 +27,13 @@ export type StarredMessage = {
 	files: { name: string; url: string }[];
 };
 
-/** A rendered starboard post, sendable as an `OutgoingMessage`. */
+/** A rendered starboard post, sendable as an `OutgoingMessage`: the card, then its jump button under it. */
 export type StarPost = {
-	body: ContainerMessage & { allowed_mentions: { parse: [] } };
+	body: {
+		flags: MessageFlags.IsComponentsV2;
+		components: [APIContainerComponent, APIActionRowComponent<APIButtonComponentWithURL>];
+		allowed_mentions: { parse: [] };
+	};
 };
 
 const STAR_MINIMUM = 2;
@@ -42,7 +49,7 @@ const ALT_LIMIT = 1024;
 const GALLERY_LIMIT = 10;
 
 function mention(emoji: AppEmoji) {
-	return `<:${emoji.name}:${emoji.id}>`;
+	return `<${emoji.animated ? 'a' : ''}:${emoji.name}:${emoji.id}>`;
 }
 
 /**
@@ -74,15 +81,18 @@ export function starAccent(stars: number): number {
 }
 
 function body(message: StarredMessage, stars: number) {
-	const time = Math.floor(message.createdAt.getTime() / 1000);
-	const header = `-# ${mention(starEmoji(stars))} **${stars}** · <#${message.channelId}> · <t:${time}:R>`;
+	const { name, emoji } = message.author;
+	const author = `${emoji ? `${mention(emoji)} ` : ''}**${truncate(name, NAME_LIMIT)}**`;
 	const content = message.content.trim();
 
 	return [
-		header,
-		`**${truncate(message.author.name, NAME_LIMIT)}**`,
+		`${author} · ${mention(starEmoji(stars))} **${stars}**`,
 		...(content ? [truncate(content, CONTENT_LIMIT)] : []),
 	].join('\n');
+}
+
+function footer(message: StarredMessage) {
+	return textDisplay(`-# <t:${Math.floor(message.createdAt.getTime() / 1000)}:R>`);
 }
 
 function gallery(media: StarredMessage['media']): APIComponentInContainer[] {
@@ -131,19 +141,20 @@ export function renderStarPost(message: StarredMessage, stars: number): StarPost
 
 	return {
 		body: {
-			...containerMessage(starAccent(stars), [
+			flags: MessageFlags.IsComponentsV2,
+			components: [
 				{
-					type: ComponentType.Section,
-					components: [textDisplay(body(message, stars))],
-					accessory: {
-						type: ComponentType.Thumbnail,
-						media: { url: message.author.avatarUrl },
-					},
+					type: ComponentType.Container,
+					accent_color: starAccent(stars),
+					components: [
+						textDisplay(body(message, stars)),
+						...gallery(message.media),
+						...files(message.files),
+						footer(message),
+					],
 				},
-				...gallery(message.media),
-				...files(message.files),
 				jump,
-			]),
+			],
 			allowed_mentions: { parse: [] },
 		},
 	};
