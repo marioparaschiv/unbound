@@ -256,11 +256,18 @@ function paintRow(current: BubbleState, row: NativeJavaReference, id: string, ki
 		const none = { x: 0, y: 0 };
 		const starts = kind !== 'next';
 
-		moveHeading(java, config, row, {
-			name: starts && fallback ? fallback.name : none,
-			avatar: starts && fallback ? fallback.avatar : none,
-			reply: starts && fallback ? fallback.reply : none,
-		});
+		moveHeading(
+			java,
+			config,
+			row,
+			{
+				name: starts && fallback ? fallback.name : none,
+				avatar: starts && fallback ? fallback.avatar : none,
+				reply: starts && fallback ? fallback.reply : none,
+			},
+			true,
+			true,
+		);
 
 		if (starts && fallback?.hideStart) {
 			placeAvatar(

@@ -350,11 +350,11 @@ function ReplyRow({ fitted }: { fitted: boolean }) {
 		<ui.SegmentedRow
 			label={messages.REPLY}
 			subLabel={replyNote(fitted, roomyRows, nameInside)}
-			value={usable ? reply : ReplyStyle.icon}
-			disabled={!usable}
+			value={!usable && reply === ReplyStyle.quote ? ReplyStyle.icon : reply}
 			options={[
-				{ value: ReplyStyle.quote, label: messages.REPLY_QUOTE },
+				...(usable ? [{ value: ReplyStyle.quote, label: messages.REPLY_QUOTE }] : []),
 				{ value: ReplyStyle.icon, label: messages.REPLY_ICON },
+				{ value: ReplyStyle.bubble, label: messages.REPLY_BUBBLE },
 			]}
 			onChange={(value) => {
 				settings.reply = choice(value, ReplyStyle);

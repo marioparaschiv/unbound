@@ -1,4 +1,8 @@
-import type { NativeJavaBridge, NativeJavaReference } from '@unbound-app/api/native';
+import type {
+	NativeJavaBridge,
+	NativeJavaReference,
+	NativeJavaValue,
+} from '@unbound-app/api/native';
 import {
 	javaBoolean,
 	javaFlag,
@@ -15,6 +19,9 @@ const CENTER_VERTICAL = 16;
 
 /** The reply icon's drawable, 0 when Discord has none, its view id, and its size and gap before the preview's avatar, in pixels. */
 export type ReplyIconConfig = { drawable: number; id: number; size: number; gap: number };
+
+/** A reply preview drawn as its own bubble: its ARGB color, radius and padding around the avatar and text, in pixels. */
+export type ReplyBubblePaint = { color: number; radius: number; padding: number };
 
 /** A reply preview's views: the preview, its spine, the views before its text, starting with its avatar, and its text. */
 export type ReplyViews = {
@@ -128,18 +135,78 @@ function placeInPreview(
 	java.invoke(icon, 'setTranslationY', [javaFloat(top + (height - size) / 2)]);
 }
 
+const NO_BACKGROUND = { type: 'null', class: 'android.graphics.drawable.Drawable' } as const;
+
+function setBackgroundKeepingPadding(
+	java: NativeJavaBridge,
+	view: NativeJavaReference,
+	background: NativeJavaReference | NativeJavaValue,
+) {
+	'worklet';
+	const padding = ['getPaddingLeft', 'getPaddingTop', 'getPaddingRight', 'getPaddingBottom'].map(
+		(getter) => javaInt(numberOf(java, view, getter) ?? 0),
+	);
+
+	java.invoke(view, 'setBackground', [background]);
+	java.invoke(view, 'setPadding', padding);
+}
+
+function bubbleDrawable(java: NativeJavaBridge, { color, radius, padding }: ReplyBubblePaint) {
+	'worklet';
+	const shape = java.construct('android.graphics.drawable.GradientDrawable', []);
+
+	java.invoke(shape, 'setColor', [javaInt(color)]);
+	java.invoke(shape, 'setCornerRadius', [javaFloat(radius)]);
+
+	return java.construct('android.graphics.drawable.InsetDrawable', [
+		shape,
+		javaInt(-Math.round(padding)),
+		javaInt(0),
+		javaInt(-Math.round(padding)),
+		javaInt(0),
+	]);
+}
+
+function paintReplyBubble(
+	java: NativeJavaBridge,
+	{ preview, leading, text }: ReplyViews,
+	bubble: ReplyBubblePaint | undefined,
+) {
+	'worklet';
+
+	if (!text) return;
+
+	if (leading) java.invoke(leading, 'setTranslationZ', [javaFloat(bubble ? 1 : 0)]);
+
+	if (!bubble) {
+		setBackgroundKeepingPadding(java, text, NO_BACKGROUND);
+
+		return;
+	}
+
+	setBackgroundKeepingPadding(java, text, bubbleDrawable(java, bubble));
+	java.invoke(preview, 'setClipChildren', [javaBoolean(false)]);
+}
+
 /**
- * @description Swaps a reply preview's branching spine for a reply icon before its avatar while bubbles paint the row, or hides both while the preview sits in a quote box.
+ * @description Swaps a reply preview's branching spine for a reply icon before its avatar while bubbles paint the row, hides both while the preview sits in a quote box,
+ * or keeps the spine and draws the preview as its own bubble.
  * @param java The plugin's Java bridge.
  * @param config The icon's drawable, view id and size.
  * @param views The reply preview's views.
- * @param state Whether bubbles paint the row, `false` giving Discord's spine back, and whether the preview is quoted.
+ * @param state Whether bubbles paint the row, `false` giving Discord's spine back, whether the preview is quoted, the reply bubble to draw,
+ * and whether a bubble already drawn stays, as while the row waits to be measured.
  */
 export function paintReplySpine(
 	java: NativeJavaBridge,
 	config: ReplyIconConfig,
 	views: ReplyViews,
-	{ active, quoted }: { active: boolean; quoted: boolean },
+	{
+		active,
+		quoted,
+		bubble,
+		keep = false,
+	}: { active: boolean; quoted: boolean; bubble?: ReplyBubblePaint; keep?: boolean },
 ) {
 	'worklet';
 	const { preview, spine, leading, text } = views;
@@ -147,9 +214,14 @@ export function paintReplySpine(
 	const isReply =
 		numberOf(java, preview, 'getVisibility') === VISIBLE &&
 		numberOf(java, leading, 'getVisibility') === VISIBLE;
-	const showIcon = active && !quoted && isReply;
+	const kept =
+		keep && !bubble && Boolean(text && javaReference(java.invoke(text, 'getBackground', [])));
+	const bubbled = active && !quoted && isReply && (Boolean(bubble) || kept);
+	const showIcon = active && !quoted && isReply && !bubbled;
 
-	if (spine) java.invoke(spine, 'setAlpha', [javaFloat(active ? 0 : 1)]);
+	if (spine) java.invoke(spine, 'setAlpha', [javaFloat(active && !bubbled ? 0 : 1)]);
+
+	if (!kept) paintReplyBubble(java, views, bubbled ? bubble : undefined);
 
 	const icon = replyIconIn(java, config, views, showIcon);
 

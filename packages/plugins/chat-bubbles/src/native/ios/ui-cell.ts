@@ -12,6 +12,7 @@ const PICTURE_TAG = 0x0b0b27;
 const DECORATION_TAG = 0x0b0b28;
 const QUOTE_TAG = 0x0b0b29;
 const REPLY_ICON_TAG = 0x0b0b2a;
+const REPLY_BUBBLE_TAG = 0x0b0b2b;
 const REPLY_SYMBOL = { name: 'arrowshape.turn.up.left.fill', top: 2 };
 const MAX_PICTURES = 128;
 const SPINE_CLASS = 'DCDSpine';
@@ -26,6 +27,9 @@ export type CellQuote = {
 	color: BubbleColor;
 	radius: number;
 };
+
+/** A reply preview drawn as its own bubble: its color, radius and padding around the avatar and text. */
+export type CellReplyBubble = { color: BubbleColor; radius: number; padding: number };
 
 /** Whose avatar a row shows, and whether it starts or ends the author's group. */
 export type CellAvatar = { author: string; start: boolean; end: boolean };
@@ -43,6 +47,7 @@ export type CellPaint = {
 	/** Whether the timestamp hides to leave the name's tags room. */
 	hideTime?: boolean;
 	quote?: CellQuote;
+	replyBubble?: CellReplyBubble;
 	picture?: CellAvatar;
 };
 
@@ -279,12 +284,108 @@ function replyIconIn(
 	return icon;
 }
 
-// Bubbles swap Discord's branching spine for a reply icon at its tip, or hide both while the preview sits in a quote box.
+function replyBubbleIn(objc: NativeObjCBridge, preview: NativeObjectHandle) {
+	'worklet';
+	const existing = objc.invoke(preview, 'viewWithTag:', [
+		REPLY_BUBBLE_TAG,
+	]) as NativeObjectHandle | null;
+
+	if (existing) return existing;
+
+	const view = objc.call(
+		objc.getClass('UIView') as NativeObjectHandle,
+		'new',
+	) as NativeObjectHandle | null;
+
+	if (!view) return null;
+
+	objc.invoke(view, 'setTag:', [REPLY_BUBBLE_TAG]);
+	objc.invoke(view, 'setUserInteractionEnabled:', [false]);
+	objc.invoke(preview, 'insertSubview:atIndex:', [view, 0]);
+
+	return view;
+}
+
+function contentFrame(objc: NativeObjCBridge, preview: NativeObjectHandle): Box | undefined {
+	'worklet';
+	let frame: Box | undefined;
+
+	for (const view of subviewsOf(objc, preview)) {
+		const tag = objc.invoke(view, 'tag', []);
+
+		if (
+			objc.className(view) === SPINE_CLASS ||
+			tag === REPLY_ICON_TAG ||
+			tag === REPLY_BUBBLE_TAG
+		) {
+			continue;
+		}
+
+		if (objc.invoke(view, 'isHidden', [])) continue;
+
+		const box = readBox(objc.invoke(view, 'frame', []));
+
+		if (box.width <= 0 || box.height <= 0) continue;
+
+		frame = frame
+			? {
+					x: Math.min(frame.x, box.x),
+					y: Math.min(frame.y, box.y),
+					width:
+						Math.max(frame.x + frame.width, box.x + box.width) -
+						Math.min(frame.x, box.x),
+					height:
+						Math.max(frame.y + frame.height, box.y + box.height) -
+						Math.min(frame.y, box.y),
+				}
+			: box;
+	}
+
+	return frame;
+}
+
+function paintReplyBubble(
+	objc: NativeObjCBridge,
+	preview: NativeObjectHandle,
+	bubble: CellReplyBubble | undefined,
+) {
+	'worklet';
+	const frame = bubble ? contentFrame(objc, preview) : undefined;
+	const view = bubble && frame ? replyBubbleIn(objc, preview) : null;
+
+	if (!bubble || !frame || !view) {
+		const existing = objc.invoke(preview, 'viewWithTag:', [REPLY_BUBBLE_TAG]);
+
+		if (existing) objc.invoke(existing as NativeObjectHandle, 'setHidden:', [true]);
+
+		return;
+	}
+
+	const { padding } = bubble;
+
+	objc.invoke(view, 'setFrame:', [
+		cgRect(objc, {
+			x: frame.x - padding,
+			y: frame.y - padding / 2,
+			width: frame.width + padding * 2,
+			height: frame.height + padding,
+		}),
+	]);
+	objc.invoke(view, 'setBackgroundColor:', [uiColor(objc, bubble.color)]);
+	objc.invoke(objc.invoke(view, 'layer', []) as NativeObjectHandle, 'setCornerRadius:', [
+		bubble.radius,
+	]);
+	objc.invoke(view, 'setHidden:', [false]);
+}
+
+// Bubbles swap Discord's branching spine for a reply icon at its tip, hide both while the preview sits in a quote box, or keep the spine beside a bubble.
 function paintSpine(
 	objc: NativeObjCBridge,
 	holder: NativeObjectHandle | null,
 	active: boolean,
 	quoted: boolean,
+	bubble: CellReplyBubble | undefined,
+	keep: boolean,
 ) {
 	'worklet';
 	const found = holder ? spineOf(objc, holder) : undefined;
@@ -292,9 +393,16 @@ function paintSpine(
 	if (!found) return;
 
 	const { preview, spine } = found;
-	const showIcon = active && !quoted;
+	const drawn = objc.invoke(preview, 'viewWithTag:', [
+		REPLY_BUBBLE_TAG,
+	]) as NativeObjectHandle | null;
+	const kept = keep && !bubble && Boolean(drawn && !objc.invoke(drawn, 'isHidden', []));
+	const bubbled = active && !quoted && (Boolean(bubble) || kept);
+	const showIcon = active && !quoted && !bubbled;
 
-	objc.invoke(spine, 'setAlpha:', [active ? 0 : 1]);
+	objc.invoke(spine, 'setAlpha:', [active && !bubbled ? 0 : 1]);
+
+	if (!kept) paintReplyBubble(objc, preview, bubbled ? bubble : undefined);
 
 	const icon = showIcon
 		? replyIconIn(objc, preview)
@@ -345,12 +453,14 @@ function paintQuote(
 	fill: NativeObjectHandle | null,
 	quote: CellQuote | undefined,
 	active: boolean,
+	bubble?: CellReplyBubble,
+	keep = false,
 ) {
 	'worklet';
 	const holder = objc.getIvar(cell, '_headerView') as NativeObjectHandle | null;
 	const layer = holder ? (objc.invoke(holder, 'layer', []) as NativeObjectHandle) : null;
 
-	paintSpine(objc, holder, active, Boolean(quote));
+	paintSpine(objc, holder, active, Boolean(quote), bubble, keep);
 
 	if (!quote) {
 		const existing = fill && objc.invoke(fill, 'viewWithTag:', [QUOTE_TAG]);
@@ -634,7 +744,7 @@ export function paintCell(
 
 	clipName(objc, cell, paint?.nameClip);
 
-	paintQuote(objc, cell, fill, paint?.quote, true);
+	paintQuote(objc, cell, fill, paint?.quote, true, paint?.replyBubble, !paint);
 	paintPicture(objc, state, cache, cell, painted, messageId);
 }
 

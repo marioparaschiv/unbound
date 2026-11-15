@@ -149,6 +149,8 @@ declare module '@unbound-app/i18n' {
 		readonly REPLY: string;
 		/** Automatic */
 		readonly REPLY_AUTO: string;
+		/** Bubble */
+		readonly REPLY_BUBBLE: string;
 		/** Above */
 		readonly REPLY_ICON: string;
 		/** Turn on Name inside the bubble to quote replies inside it */
@@ -157,7 +159,7 @@ declare module '@unbound-app/i18n' {
 		readonly REPLY_NEEDS_ROOM: string;
 		/** Inside */
 		readonly REPLY_QUOTE: string;
-		/** Show the message being replied to in a box inside the bubble, or above it with a reply icon */
+		/** Show the message being replied to in a box inside the bubble, above it with a reply icon, or in its own small bubble above it */
 		readonly REPLY_SUBTITLE: string;
 		/** Make room for padding */
 		readonly ROOMY_ROWS: string;

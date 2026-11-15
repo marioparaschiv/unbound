@@ -14,7 +14,14 @@ import {
 	restoreCells,
 	setCellFallback,
 } from '~/native/ios/worklets';
-import { CornerCurve, Grouping, IOSClass, SQUARED_CORNER_RATIO } from '~/lib/constants';
+import {
+	CornerCurve,
+	Grouping,
+	IOSClass,
+	ReplyBubble,
+	ReplyStyle,
+	SQUARED_CORNER_RATIO,
+} from '~/lib/constants';
 import { bubblePath, cornerRadii } from '~/lib/bubble-path';
 import { bubbleProblem } from '~/lib/geometry';
 import { bubbleTail, cornerShape, withoutTailCorner } from '~/lib/group';
@@ -328,15 +335,26 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 			...(measured.mention
 				? mentionPaint(color, measured.mention, style.mention)
 				: { color }),
-			paint: cellPaint(
-				measured,
-				frame,
-				headingPadding(style),
-				color,
-				style.avatarLast && sender.author !== undefined
-					? { author: sender.author, ...edges }
-					: undefined,
-			),
+			paint: {
+				...cellPaint(
+					measured,
+					frame,
+					headingPadding(style),
+					color,
+					style.avatarLast && sender.author !== undefined
+						? { author: sender.author, ...edges }
+						: undefined,
+				),
+				...(style.reply === ReplyStyle.bubble && !measured.quoted
+					? {
+							replyBubble: {
+								color,
+								radius: shape.radius * ReplyBubble.radiusRatio,
+								padding: ReplyBubble.padding,
+							},
+						}
+					: {}),
+			},
 		};
 
 		if (!drawnBubbles.changed(key, drawn)) return;

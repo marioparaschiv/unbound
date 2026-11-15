@@ -47,8 +47,10 @@ export const CornerCurve = { continuous: 'continuous', circular: 'circular' } as
 /** `grouped` squares the corners where a group's bubbles meet; `separate` rounds every bubble fully; `joined` makes a group's bubbles touch and read as one shape. */
 export const Grouping = { grouped: 'grouped', separate: 'separate', joined: 'joined' } as const;
 
-/** Where a reply's preview sits: `quote` in a box inside the bubble, `icon` above it behind a reply icon, `auto` as `icon` while the avatar sits by a group's last bubble, otherwise `quote`. */
-export const ReplyStyle = { auto: 'auto', quote: 'quote', icon: 'icon' } as const;
+/** Where a reply's preview sits: `quote` in a box inside the bubble, `icon` above it behind a reply icon, `bubble` above it in its own small bubble, `auto` as `icon` while the avatar sits by a group's last bubble, otherwise `quote`. */
+export const ReplyStyle = { auto: 'auto', quote: 'quote', icon: 'icon', bubble: 'bubble' } as const;
+
+export const ReplyBubble = { radiusRatio: 0.75, padding: 6 } as const;
 
 /** How strongly a translucent bubble blurs what lies behind it, such as a chat background. */
 export const BubbleBlur = {

@@ -56,7 +56,12 @@ export default defineSettings({
 	reply: setting.choice({
 		default: 'auto',
 		hidden: true,
-		options: { auto: 'REPLY_AUTO', quote: 'REPLY_QUOTE', icon: 'REPLY_ICON' },
+		options: {
+			auto: 'REPLY_AUTO',
+			quote: 'REPLY_QUOTE',
+			icon: 'REPLY_ICON',
+			bubble: 'REPLY_BUBBLE',
+		},
 	}),
 	tail: setting.boolean({ default: false, hidden: true }),
 	tailSize: setting.number({ default: 8, hidden: true }),

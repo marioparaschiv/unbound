@@ -235,15 +235,20 @@ function removeBubble(java: NativeJavaBridge, config: RowConfig, row: NativeJava
 }
 
 /**
- * @description Moves a row's name row, time, avatar and reply preview, clips the preview to its quote box and swaps its spine for a reply icon.
+ * @description Moves a row's name row, time, avatar and reply preview, clips the preview to its quote box, and swaps its spine for a reply icon or draws the preview as its own bubble.
  * @param active Whether bubbles paint the row; `false` gives Discord's spine back.
+ * @param waiting Whether the row waits to be measured, which keeps a reply bubble it already has.
  */
 export function moveHeading(
 	java: NativeJavaBridge,
 	config: RowConfig,
 	row: NativeJavaReference,
-	paint: Pick<RowPaint, 'name' | 'avatar' | 'reply' | 'time' | 'timeHidden' | 'clip'>,
+	paint: Pick<
+		RowPaint,
+		'name' | 'avatar' | 'reply' | 'time' | 'timeHidden' | 'clip' | 'replyBubble'
+	>,
 	active = true,
+	waiting = false,
 ) {
 	'worklet';
 	const { ids } = config;
@@ -271,7 +276,7 @@ export function moveHeading(
 			leading: viewIn(java, row, ids.reply_leading_views),
 			text: viewIn(java, row, ids.reply_text),
 		},
-		{ active, quoted: Boolean(paint.clip) },
+		{ active, quoted: Boolean(paint.clip), bubble: paint.replyBubble, keep: waiting },
 	);
 
 	if (!paint.clip) {

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.17] - 2026-11-15
+
+### Added
+
+- Replies: a Bubble style that shows the replied message in its own small bubble above the message, with Discord's connector line instead of the reply icon.
+
 ## [1.6.16] - 2026-11-15
 
 ### Fixed
