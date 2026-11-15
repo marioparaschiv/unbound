@@ -31,6 +31,19 @@ describe('placeTooltip', () => {
 		expect(placement?.frame).toEqual({ x: 164, y: 571, width: 148, height: 46 });
 	});
 
+	test('stays clear of the system bars on an edge-to-edge screen', () => {
+		const insetBounds = { x: 0, y: 24, width: 320, height: 568 };
+		const placement = placeTooltip(
+			text,
+			{ x: 100, y: 580, width: 12, height: 12 },
+			insetBounds,
+		);
+
+		expect(placement?.below).toBe(false);
+		expect(placement!.frame.y + placement!.frame.height).toBeLessThanOrEqual(580);
+		expect(placement!.frame.y).toBeGreaterThanOrEqual(insetBounds.y + 8);
+	});
+
 	test('rejects text without a size', () => {
 		expect(placeTooltip({ width: 0, height: 18 }, bounds, bounds)).toBeNull();
 		expect(placeTooltip({ width: 120, height: Number.NaN }, bounds, bounds)).toBeNull();
