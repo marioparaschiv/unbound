@@ -46,7 +46,8 @@ var antiSlopRules = []string{"-safetyassert", "-nountypedmap", "-noanyreturn", "
 
 const (
 	gofumptModule = "mvdan.cc/gofumpt@v0.12.0"
-	wslModule     = "github.com/bombsimon/wsl/v5/cmd/wsl@v5.9.0"
+	// v5.9.0 builds against an x/tools that cannot read Go 1.27.4's export data, and then misreports spacing.
+	wslModule = "github.com/bombsimon/wsl/v5/cmd/wsl@v5.9.1-0.20261016141542-cfd2b0357934"
 )
 
 var wslFinding = regexp.MustCompile(`(?m)^(.+\.go):\d+:\d+: `)
@@ -531,8 +532,15 @@ func formatGoSources(root string, check bool) ([]string, error) {
 	}
 
 	files := map[string]bool{}
-	for _, file := range append(spacing, strings.Fields(string(output))...) {
+	for _, file := range spacing {
 		files[file] = true
+	}
+
+	// `go run` adds its own lines, such as `go: downloading`, before gofumpt's file list.
+	for _, line := range strings.Split(string(output), "\n") {
+		if strings.HasSuffix(line, ".go") {
+			files[line] = true
+		}
 	}
 
 	return slices.Sorted(maps.Keys(files)), nil
