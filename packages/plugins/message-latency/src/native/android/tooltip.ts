@@ -19,6 +19,7 @@ import {
 	javaReference,
 	javaString,
 } from '@unbound-plugins/shared/native/android/java-values';
+import { insetFrame, systemBarInsets } from '@unbound-plugins/shared/native/android/window-insets';
 import { currentDecorView } from '@unbound-plugins/shared/native/android/views';
 import registerAppSurface from '@unbound-plugins/shared/native/app-surface';
 
@@ -197,14 +198,22 @@ export function createAndroidTooltips({ java, hooks, fabric }: Native): AndroidT
 		if (!surfaceName) return;
 
 		const metrics = await metricsOf(decor);
-		const bounds = {
-			x: 0,
-			y: 0,
-			width:
-				(javaNumber(await java.invokeAsync(decor, 'getWidth', [])) ?? 0) / metrics.density,
-			height:
-				(javaNumber(await java.invokeAsync(decor, 'getHeight', [])) ?? 0) / metrics.density,
-		};
+		const insets = await systemBarInsets(java, decor);
+		// The decor view runs under the system bars on edge-to-edge screens, so the tooltip keeps inside them.
+		const bounds = insetFrame(
+			{
+				x: 0,
+				y: 0,
+				width: javaNumber(await java.invokeAsync(decor, 'getWidth', [])) ?? 0,
+				height: javaNumber(await java.invokeAsync(decor, 'getHeight', [])) ?? 0,
+			},
+			insets,
+		);
+
+		bounds.x /= metrics.density;
+		bounds.y /= metrics.density;
+		bounds.width /= metrics.density;
+		bounds.height /= metrics.density;
 		const text = measure(anchor.tooltip, tooltipTextWidth(bounds.width), metrics);
 		const placement = text
 			? placeTooltip(text, await iconFrame(anchor.host, metrics.density), bounds)

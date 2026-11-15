@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.10] - 2026-11-15
+
+### Fixed
+
+- On Android the latency tooltip stays clear of the status bar, navigation bar and camera cutout on edge-to-edge screens.
+
 ## [1.2.9] - 2026-11-14
 
 ### Fixed

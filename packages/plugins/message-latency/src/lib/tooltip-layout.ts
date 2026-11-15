@@ -21,7 +21,7 @@ export function tooltipTextWidth(windowWidth: number): number {
  * @description Places the tooltip bubble centered on the indicator, below it when it fits and above it otherwise, inside the window.
  * @param text The measured size of the tooltip text.
  * @param icon The indicator's frame in window coordinates.
- * @param bounds The window's bounds.
+ * @param bounds The part of the window the bubble may use, such as inside the system bars.
  * @returns The bubble's frame and arrow, or `null` when the text has no usable size.
  */
 export function placeTooltip(text: Size, icon: Frame, bounds: Frame): TooltipPlacement | null {
@@ -31,10 +31,12 @@ export function placeTooltip(text: Size, icon: Frame, bounds: Frame): TooltipPla
 
 	const width = textWidth + 28;
 	const height = text.height + 20 + Tooltip.arrowHeight;
-	const x = Math.max(8, Math.min(icon.x + (icon.width - width) / 2, bounds.width - width - 8));
+	const left = bounds.x + 8;
+	const right = bounds.x + bounds.width - width - 8;
+	const x = Math.max(left, Math.min(icon.x + (icon.width - width) / 2, right));
 	const belowY = icon.y + icon.height + Tooltip.anchorGap;
-	const below = belowY + height <= bounds.height - 8;
-	const y = below ? belowY : Math.max(8, icon.y - height - Tooltip.anchorGap);
+	const below = belowY + height <= bounds.y + bounds.height - 8;
+	const y = below ? belowY : Math.max(bounds.y + 8, icon.y - height - Tooltip.anchorGap);
 
 	return {
 		frame: { x, y, width, height },
