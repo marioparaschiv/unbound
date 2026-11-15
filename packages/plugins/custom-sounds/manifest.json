@@ -1,0 +1,18 @@
+{
+	"id": "unbound.custom-sounds",
+	"name": "Custom Sounds",
+	"description": "Replaces Discord's sounds with others or files from links, and plays a sound only you hear when chosen friends join your voice channel.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "VoiceNormalIcon",
+	"main": "index.tsx",
+	"replaces": ["unbound.join-sounds"]
+}

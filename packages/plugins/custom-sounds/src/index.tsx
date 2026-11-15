@@ -1,9 +1,13 @@
 import { parseIdList } from '@unbound-plugins/shared/entities/id-list';
+import type { PluginContext } from '@unbound-app/api/native';
 import { settings } from '@unbound-app/settings';
-import { flux } from '@unbound-app/api';
+import { flux, patcher } from '@unbound-app/api';
 
+import { linkPlayer, type LinkPlayer } from '~/native/player';
 import { joinedUsers, type VoiceStateUpdate } from '~/lib/joins';
-import { playJoinSound } from '~/lib/play';
+import { playJoinSound } from '~/lib/join-sound';
+import { setActivePlayer } from '~/lib/active-player';
+import { patchSounds } from '~/patches/sounds';
 import SettingsPanel from '~/settings';
 
 export { SettingsPanel };
@@ -12,9 +16,14 @@ type VoiceStateStore = {
 	getVoiceStateForUser(userId: string): { channelId?: string | null } | undefined;
 };
 
+let player: LinkPlayer | undefined;
 let stopListening: (() => void) | undefined;
 
-export function start() {
+export function start(context: PluginContext) {
+	player = linkPlayer(context.native, context.tempPath);
+	setActivePlayer(player);
+	patchSounds(player);
+
 	const VoiceStates = flux.getStore('VoiceState') as unknown as VoiceStateStore;
 	const SelectedChannels = flux.getStore('SelectedChannel');
 	const Users = flux.getStore('User');
@@ -29,7 +38,7 @@ export function start() {
 				Users?.getCurrentUser?.()?.id,
 			);
 
-			if (joined.length) playJoinSound();
+			if (joined.length) playJoinSound(player);
 		} catch (error) {
 			logger.error('Failed to check a voice state update for joins:', error);
 		}
@@ -41,4 +50,8 @@ export function start() {
 export function stop() {
 	stopListening?.();
 	stopListening = undefined;
+	patcher.unpatchAll();
+	player?.dispose();
+	player = undefined;
+	setActivePlayer(undefined);
 }

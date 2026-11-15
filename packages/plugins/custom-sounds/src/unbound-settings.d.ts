@@ -131,35 +131,21 @@ declare module '@unbound-app/settings' {
 
 	/** The plugin's settings: reads apply defaults, and writes are validated and saved to its Bucket. */
 	export type Settings = {
+		choices: string;
+		links: string;
 		users: string;
-		/**
-		 * Sound
-		 *
-		 * Played only for you, alongside Discord's own join sound.
-		 */
-		sound: "activity_user_join" | "stream_user_joined" | "activity_launch" | "mention1" | "bit_message1" | "camera_on" | "ptt_start";
-		/**
-		 * Volume
-		 *
-		 * In percent.
-		 */
+		sound: "activity_user_join" | "stream_user_joined" | "activity_launch" | "mention1" | "bit_message1" | "camera_on" | "ptt_start" | "link";
+		joinLink: string;
 		volume: number;
 	};
 
 	/** Each setting and section by its dot-separated key. */
 	type SettingValues = {
+		"choices": string;
+		"links": string;
 		"users": string;
-		/**
-		 * Sound
-		 *
-		 * Played only for you, alongside Discord's own join sound.
-		 */
-		"sound": "activity_user_join" | "stream_user_joined" | "activity_launch" | "mention1" | "bit_message1" | "camera_on" | "ptt_start";
-		/**
-		 * Volume
-		 *
-		 * In percent.
-		 */
+		"sound": "activity_user_join" | "stream_user_joined" | "activity_launch" | "mention1" | "bit_message1" | "camera_on" | "ptt_start" | "link";
+		"joinLink": string;
 		"volume": number;
 	};
 
