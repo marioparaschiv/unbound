@@ -5,9 +5,9 @@ import type {
 	NativeHookToken,
 } from '@unbound-app/types';
 
+import { hookTarget, recordHookFailure } from '~/diagnostics/hook-failures';
 import type { ScopeGate, ScopeLifecycle } from '~/native/scope-gate';
 import { NativeBridgeDisposedError } from '~/native/errors';
-import { hookTarget, recordHookFailure } from '~/diagnostics/hook-failures';
 import { retryUntilInstalled } from '~/native/hook-retry';
 
 type ObjCSource = Pick<NativeObjCBridge, 'hook' | 'getClass'> &

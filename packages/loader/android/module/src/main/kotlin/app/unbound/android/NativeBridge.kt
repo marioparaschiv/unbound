@@ -71,6 +71,12 @@ object NativeBridge {
     @JvmStatic
     external fun nativeAdoptAnrTrace(trace: ByteArray, at: Long): Boolean
 
+    @JvmStatic
+    external fun nativeMarkMainThread()
+
+    @JvmStatic
+    external fun nativeAddonOnMainThread(): String?
+
     /**
      * How Discord's main process last ended: 1 for a crash, a freeze or a failed start; 2 when the person or the
      * system ended it; 0 when Android keeps no record (before Android 11).

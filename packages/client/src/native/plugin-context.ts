@@ -2,10 +2,10 @@ import type { AddonManifest } from '@unbound-app/types/addons';
 import type { PluginContext } from '@unbound-app/types';
 
 import { validateNativeBridgeRequirements } from '~/native/capabilities';
+import { clearPluginTemp, pluginTempPath } from '~/native/plugin-temp';
 import { resolveManifestCapabilities } from '~/addons/manifest';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { createScopedNativeBridge } from '~/native/scope';
-import { clearPluginTemp, pluginTempPath } from '~/native/plugin-temp';
 import { currentPlatform } from '~/native/platform';
 
 const stoppers = new WeakMap<object, () => void>();

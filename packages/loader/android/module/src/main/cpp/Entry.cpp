@@ -1,4 +1,5 @@
 #include <android/log.h>
+#include <atomic>
 #include <jni.h>
 #include <mutex>
 
@@ -11,6 +12,7 @@
 #include "HermesBytecodeHeader.h"
 #include "JniEnvironment.h"
 #include "JniSurface.h"
+#include "LoaderAddonActivity.h"
 #include "LoaderColor.h"
 #include "LoaderCrashHandler.h"
 #include "LoaderDevOverlay.h"
@@ -136,6 +138,21 @@ static void nativeOnBackground(JNIEnv *, jclass)
     {
         loader->onBackground();
     }
+}
+
+static std::atomic<uintptr_t> mainActivityThread{0};
+
+static void nativeMarkMainThread(JNIEnv *, jclass)
+{
+    mainActivityThread.store(loader::currentActivityThread());
+}
+
+static jstring nativeAddonOnMainThread(JNIEnv *env, jclass)
+{
+    uintptr_t thread = mainActivityThread.load();
+    std::string record =
+        thread ? loader::addonRecord(loader::addonOnThread(thread)) : std::string();
+    return record.empty() ? nullptr : env->NewStringUTF(record.c_str());
 }
 
 static jboolean nativeAdoptAnrTrace(JNIEnv *env, jclass, jbyteArray trace, jlong at)
