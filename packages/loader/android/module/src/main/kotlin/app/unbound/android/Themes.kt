@@ -7,6 +7,7 @@ import android.content.res.TypedArray
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.ExceptionMode
 import org.json.JSONObject
+import java.io.File
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
@@ -21,6 +22,7 @@ object Themes {
     private const val LAZY = "kotlin.Lazy"
     private const val SENTINEL_BASE = 0x5A000000
     private val THEME_SUFFIXES = listOf("dark", "light", "ash", "onyx", "darker", "midnight")
+    private const val RESOURCE_ID_CACHE = "unbound-resource-ids.tsv"
 
     internal data class Palette(
         val semantic: Map<String, Int> = emptyMap(),
@@ -40,6 +42,7 @@ object Themes {
 
     @Volatile private var semanticResources = false
     private var patcher: Patcher? = null
+    private var resourceIdCache: ResourceIdCache? = null
 
     internal enum class Source { THEME_MANAGER, COLOR_RESOURCES }
 
@@ -115,10 +118,18 @@ object Themes {
 
     private fun resourceId(name: String): Int {
         val current = context?.resources ?: resources ?: return 0
-        return current.getIdentifier(name, "color", context?.packageName ?: Unbound.DISCORD_PACKAGE)
+        val lookup = { current.getIdentifier(name, "color", context?.packageName ?: Unbound.DISCORD_PACKAGE) }
+        return resourceIds()?.id("color", name, lookup) ?: lookup()
     }
 
-    private fun resolveIds(): Map<Int, Int> = resolveRawIds(palette.raw) + if (semanticResources) semanticIds() else emptyMap()
+    private fun resourceIds(): ResourceIdCache? =
+        resourceIdCache ?: Platform.application()?.let { app ->
+            val build = runCatching { app.packageManager.getPackageInfo(app.packageName, 0).longVersionCode.toString() }.getOrNull()
+            build?.let { ResourceIdCache(File(app.cacheDir, RESOURCE_ID_CACHE), it) }
+        }?.also { resourceIdCache = it }
+
+    private fun resolveIds(): Map<Int, Int> =
+        (resolveRawIds(palette.raw) + if (semanticResources) semanticIds() else emptyMap()).also { resourceIdCache?.save() }
 
     private fun semanticIds(): Map<Int, Int> =
         semanticResourceIds(
