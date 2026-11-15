@@ -62,10 +62,10 @@ const client = new SapphireClient({
 	intents: [
 		GatewayIntentBits.DirectMessages,
 		GatewayIntentBits.GuildMessages,
-		// The notifications help waits for a reaction once the asker opens their DMs.
+		// The `/debug` help waits for a reaction once the asker opens their DMs.
 		GatewayIntentBits.GuildMessageReactions,
 		GatewayIntentBits.Guilds,
-		// Privileged: the notifications help reads questions and the `/debug` card's alt text.
+		// Privileged: the `/debug` help reads questions and the `/debug` card's alt text.
 		GatewayIntentBits.MessageContent,
 	],
 	// Reactions and deletes on messages sent before the bot started arrive as partials; the starboard needs them.
