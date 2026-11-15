@@ -399,7 +399,9 @@ describe('debug card', () => {
 					{ ...info, injected: ['\u3164\u200b Crane', '\u2800', 'CopyLogDaemon\t'] },
 					new Date(),
 				),
-			).map((run) => run.text),
+			)
+				.map((run) => run.text)
+				.join(''),
 		).toContain('Crane · CopyLogDaemon');
 	});
 
@@ -413,7 +415,7 @@ describe('debug card', () => {
 			.map((run) => run.text);
 
 		expect(labels).toContain('appex');
-		expect(texts(card).some((run) => run.text.includes('Share missing'))).toBe(true);
+		expect(texts(card).some((run) => run.text.includes('Share'))).toBe(true);
 		expect(texts(layoutDebugCard(info, new Date())).map((run) => run.text)).not.toContain(
 			'appex',
 		);

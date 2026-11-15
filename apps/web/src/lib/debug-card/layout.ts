@@ -11,6 +11,8 @@ import { launchNotes } from '@unbound-app/contracts/debug-card-launch';
 import type { DebugCardContext } from '~/lib/debug-card/context';
 
 import { accent, cleanNames, COLORS, dim, joined, value, warn, type Span } from './spans';
+import { tweakSpans } from './tweaks';
+import { accountNotes } from './account';
 import { dnsNote, gatewayNote, powerNote, pushNote } from './device-notes';
 import { storageMatters, storageSummary } from './storage';
 import { environmentRows } from './environment-rows';
@@ -397,7 +399,7 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 			'issues',
 			info.disabledAddons?.length ? [warn(fittedList(info.disabledAddons, VALUE_ROOM))] : [],
 		],
-		['tweaks', tweaks.length ? [warn(fittedList(tweaks, VALUE_ROOM))] : []],
+		['tweaks', tweaks.length ? tweakSpans(tweaks, VALUE_ROOM) : []],
 		[
 			'appex',
 			extensionNotes(info).length ? [warn(fittedList(extensionNotes(info), VALUE_ROOM))] : [],
@@ -407,6 +409,12 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 		['gateway', gateway ? [warn(fittedList([gateway], VALUE_ROOM))] : []],
 		['push', push ? [warn(fittedList([push], VALUE_ROOM))] : []],
 		['memory', memory.length ? [warn(fittedList(memory, VALUE_ROOM))] : []],
+		[
+			'account',
+			accountNotes(info.account).length
+				? [warn(fittedList(accountNotes(info.account), VALUE_ROOM))]
+				: [],
+		],
 		['storage', storage ? [warn(storage)] : []],
 		['power', power ? [warn(power)] : []],
 		['dns', dns ? [warn(dns)] : []],
@@ -415,16 +423,20 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 	return candidates.filter(([, spans]) => spans.length > 0);
 }
 
+const WORKS_WITHOUT_APP_GROUP = new Set(['OpenInDiscord']);
+
 /**
- * @description Lists what is wrong with the app's extensions: ones a sideloader stripped, and ones signed without the app group.
+ * @description Names the app's extensions that are broken: ones a sideloader stripped, and ones signed without the app
+ * group that need it. OpenInDiscord only opens links and needs no app group, so it is never named.
  * @param info The report.
- * @returns One note per extension and problem.
+ * @returns The extension names, each once.
  */
 export function extensionNotes(info: DebugInfo): string[] {
-	return [
-		...(info.missingExtensions ?? []).map((name) => `${name} missing`),
-		...(info.isolatedExtensions ?? []).map((name) => `${name} no app group`),
-	];
+	const isolated = (info.isolatedExtensions ?? []).filter(
+		(name) => !WORKS_WITHOUT_APP_GROUP.has(name),
+	);
+
+	return [...new Set([...(info.missingExtensions ?? []), ...isolated])];
 }
 
 function addonSummaries({ plugins, themes }: DebugInfo): string[] {

@@ -4,6 +4,7 @@ import { joined } from './spans';
 
 const LOW_STORAGE_MB = 500;
 const LARGE_DISCORD_MB = 2048;
+const LARGE_UNBOUND_MB = 500;
 
 /**
  * @description Describes the device's free space and how much Discord and Unbound take.
@@ -30,14 +31,15 @@ export function storageSummary(storage: DebugInfo['storage']): string | undefine
 }
 
 /**
- * @description Decides whether the card shows storage: when space runs low or Discord's data grew large.
+ * @description Decides whether the card shows storage: when space runs low, or Discord's or Unbound's data grew large.
  * @param storage The reported sizes.
  * @returns Whether storage is worth a row.
  */
 export function storageMatters(storage: DebugInfo['storage']): boolean {
 	return (
 		(storage?.freeMB !== undefined && storage.freeMB < LOW_STORAGE_MB) ||
-		(storage?.discordMB !== undefined && storage.discordMB >= LARGE_DISCORD_MB)
+		(storage?.discordMB !== undefined && storage.discordMB >= LARGE_DISCORD_MB) ||
+		(storage?.unboundMB !== undefined && storage.unboundMB >= LARGE_UNBOUND_MB)
 	);
 }
 
