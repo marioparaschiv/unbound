@@ -29,7 +29,8 @@ static std::unordered_map<HookDispatcher *, std::shared_ptr<HookDispatcher>> gCl
 
 static std::string hookKey(Class cls, SEL selector)
 {
-    return std::string(class_getName(cls)) + ":" + sel_getName(selector);
+    return std::string(class_isMetaClass(cls) ? "+" : "") + class_getName(cls) + ":"
+           + sel_getName(selector);
 }
 
 static void postToMain(std::function<void()> work)
@@ -256,9 +257,16 @@ Value makeHook(Runtime &runtime, const Value *args, size_t count)
 
     NSString *className    = jsiString(runtime, args[0]);
     NSString *selectorName = jsiString(runtime, args[1]);
+    BOOL classMethod       = [selectorName hasPrefix:@"+"];
     Class cls              = NSClassFromString(className);
-    SEL selector           = NSSelectorFromString(selectorName);
-    Method method          = class_getInstanceMethod(cls, selector);
+    if (classMethod)
+    {
+        selectorName = [selectorName substringFromIndex:1];
+        cls          = cls ? object_getClass(cls) : nil;
+    }
+
+    SEL selector  = NSSelectorFromString(selectorName);
+    Method method = class_getInstanceMethod(cls, selector);
     if (!cls || !method)
     {
         throw JSError(runtime, "Objective-C hook target is unavailable");
