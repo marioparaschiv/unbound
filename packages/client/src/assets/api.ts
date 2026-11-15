@@ -268,6 +268,25 @@ function registerAll() {
 	readRegistered();
 }
 
+function cacheLoadedAssetModules(moduleIds: readonly number[]) {
+	for (let i = 0, len = moduleIds.length; i < len; i++) {
+		const id = moduleIds[i];
+		const mdl = window.modules.get(id);
+		const assetId = mdl?.isInitialized ? mdl.publicModule.exports : void 0;
+		const asset = typeof assetId === 'number' ? assets.get(assetId) : void 0;
+
+		if (!asset?.__packager_asset) {
+			continue;
+		}
+
+		const key = keyOf(asset.name, asset.type);
+
+		if (getCachedAssetModule(key) === void 0) {
+			addAssetToCache(key, id);
+		}
+	}
+}
+
 // Initializes every asset module not yet initialized, and nothing else.
 function sweep() {
 	// Asset modules are told apart by the registry they require, so none can be found before it loads.
@@ -285,6 +304,8 @@ function sweep() {
 		}
 	}
 
+	readRegistered();
+	cacheLoadedAssetModules(moduleIds);
 	markAssetsComplete();
 }
 
