@@ -1558,6 +1558,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/message-menu-editor": {
+      "name": "message-menu-editor",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/message-text-size": {
       "name": "message-text-size",
       "dependencies": {
@@ -4766,6 +4780,8 @@
     "message-link-embeds": ["message-link-embeds@workspace:packages/plugins/message-link-embeds"],
 
     "message-logger": ["message-logger@workspace:packages/plugins/message-logger"],
+
+    "message-menu-editor": ["message-menu-editor@workspace:packages/plugins/message-menu-editor"],
 
     "message-text-size": ["message-text-size@workspace:packages/plugins/message-text-size"],
 
