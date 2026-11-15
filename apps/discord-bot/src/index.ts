@@ -1,11 +1,13 @@
 import './lib/setup';
 
+import { Events, GatewayIntentBits, Partials, type Client } from 'discord.js';
 import { container, LogLevel, SapphireClient } from '@sapphire/framework';
-import { Events, GatewayIntentBits, type Client } from 'discord.js';
 import { createBotReads } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
 
+import { createStarboard, type Starboard } from '~/starboard/starboard';
 import { createDatabase, POOLED_OPTIONS } from '~/db/database';
+import { createMessageGateway } from '~/lib/discord-messages';
 import { createAuditTelemetry } from '~/lib/audit-telemetry';
 import { loadConfig, type BotConfig } from '~/lib/config';
 import { startDispatchers } from '~/runtime/start';
@@ -18,6 +20,8 @@ declare module '@sapphire/pieces' {
 	interface Container {
 		/** The configuration `src/index.ts` loaded, for the Sapphire pieces, which Sapphire constructs itself. */
 		config: BotConfig;
+		/** Set once the client is ready; unset while `STARBOARD_CHANNEL_ID` is. */
+		starboard?: Starboard;
 	}
 }
 
@@ -64,6 +68,8 @@ const client = new SapphireClient({
 		// Privileged: the notifications help reads questions and the `/debug` card's alt text.
 		GatewayIntentBits.MessageContent,
 	],
+	// Reactions and deletes on messages sent before the bot started arrive as partials; the starboard needs them.
+	partials: [Partials.Message, Partials.Reaction, Partials.User],
 	loadMessageCommandListeners: true,
 	// Sent on every identify, so the status survives reconnects.
 	presence: { status: 'dnd' },
@@ -77,6 +83,17 @@ async function exit(code: number): Promise<never> {
 }
 
 function startRuntime(ready: Client<true>) {
+	const starboardChannelId = config.ids.STARBOARD_CHANNEL_ID;
+
+	if (starboardChannelId) {
+		container.starboard = createStarboard({
+			db,
+			messages: createMessageGateway(ready.rest, ready.user.id),
+			guildId: config.guildId,
+			channelId: starboardChannelId,
+		});
+	}
+
 	const dispatchers = createDispatchers({
 		config,
 		discord: {

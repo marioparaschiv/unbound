@@ -39,6 +39,18 @@ export const reviewNotice = botSchema.table('review_notice', {
 	handledAt: timestamp('handled_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** One row per message on the starboard, keyed by the starred message; removed once it drops below the threshold. */
+export const starPost = botSchema.table('star_post', {
+	sourceMessageId: text('source_message_id').primaryKey(),
+	sourceChannelId: text('source_channel_id').notNull(),
+	channelId: text('channel_id').notNull(),
+	messageId: text('message_id').notNull().unique(),
+	/** The hash of the post's body; a new star count or edit changes it. */
+	postedHash: text('posted_hash').notNull(),
+	postedAt: timestamp('posted_at', { withTimezone: true }).notNull().defaultNow(),
+	editedAt: timestamp('edited_at', { withTimezone: true }),
+});
+
 /** One row per announced loader release, never deleted, so a release is never announced twice. */
 export const releasePost = botSchema.table(
 	'release_post',
