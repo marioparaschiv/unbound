@@ -12,6 +12,7 @@ import { NATIVE_BRIDGE_METHOD_CAPABILITIES } from '@unbound-app/types/native';
 import { NativeBridgeDisposedError, NativeBridgeUnavailableError } from '~/native/errors';
 import { getNativeBridge } from '~/native/bridge';
 import { findByProps } from '~/metro/lookups';
+import { createLogger } from '@unbound-app/logger';
 
 type UIWorklet<A extends NativeUIArgument[], R> = (...args: A) => R;
 
@@ -46,6 +47,8 @@ type ScopedUIBridge = {
 	dispose: () => void;
 };
 
+const logger = createLogger('Native', 'UI');
+
 const Reanimated = findByProps('runOnJS', 'runOnUI');
 const LazyReanimatedModule = findByProps('ReanimatedModule');
 
@@ -69,6 +72,11 @@ const GUARDED_CALL = {
 const JS_CALLBACK = {
 	hash: 0x75_6e_62_05,
 	code: '(function unboundJSCallback(){const{runOnJS,listener}=this.__closure;runOnJS(listener).apply(undefined,arguments);})',
+};
+
+const DISPOSE_SCOPES = {
+	hash: 0x75_6e_62_07,
+	code: "(function unboundDisposeScopes(){for(let index=0;index<arguments.length;index++){try{arguments[index].dispose();}catch(error){console.error('[Unbound] Failed to dispose a UI scope: '+String(error));}}})",
 };
 
 const PREPARED_CALL_METHODS: ReadonlySet<NativeBridgeMethod> = new Set([
@@ -188,6 +196,31 @@ function guardWorklet<A extends NativeUIArgument[]>(
 	});
 }
 
+function disposeNow(scopes: readonly NativeUIScope[]) {
+	for (const scope of scopes) {
+		try {
+			scope.dispose();
+		} catch (error) {
+			logger.error('Failed to dispose a UI scope:', error);
+		}
+	}
+}
+
+function disposeAfterQueuedWork(scopes: readonly NativeUIScope[]) {
+	if (!scopes.length) return;
+
+	try {
+		const runtime = uiRuntime();
+
+		runtime.runOnUI(guardWorklet<NativeUIScope[]>(DISPOSE_SCOPES, {}, runtime.version))(
+			...scopes,
+		);
+	} catch (error) {
+		logger.error('Failed to queue UI scope disposal:', error);
+		disposeNow(scopes);
+	}
+}
+
 /**
  * @description Builds a plugin's UI-runtime bridge, which opens native scopes limited to its capabilities and removes their hooks when disposed.
  * @param capabilities The capabilities the plugin declares for this platform.
@@ -199,7 +232,6 @@ export function createScopedUIBridge(
 	platform?: NativeBridgePlatform,
 ): ScopedUIBridge {
 	const scopes = new Set<NativeUIScope>();
-	const pendingCalls = new Set<(error: Error) => void>();
 	let disposed = false;
 
 	function requireActive() {
@@ -231,7 +263,6 @@ export function createScopedUIBridge(
 
 						settled = true;
 						clearTimeout(timeout);
-						pendingCalls.delete(rejectCall);
 						action();
 					}
 					function rejectCall(error: Error) {
@@ -243,7 +274,6 @@ export function createScopedUIBridge(
 								code: 'NATIVE_PLUGIN_CALL_CANCELLED',
 							}),
 						);
-					pendingCalls.add(rejectCall);
 					const timeout = setTimeout(
 						() =>
 							rejectCall(
@@ -314,21 +344,7 @@ export function createScopedUIBridge(
 			if (disposed) return;
 
 			disposed = true;
-
-			for (const rejectCall of pendingCalls) {
-				rejectCall(new NativeBridgeDisposedError());
-			}
-
-			pendingCalls.clear();
-
-			for (const scope of scopes) {
-				try {
-					scope.dispose();
-				} catch {
-					continue;
-				}
-			}
-
+			disposeAfterQueuedWork([...scopes]);
 			scopes.clear();
 		},
 	};
