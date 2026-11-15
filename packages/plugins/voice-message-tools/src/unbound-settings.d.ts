@@ -144,6 +144,12 @@ declare module '@unbound-app/settings' {
 		 */
 		speed: "1" | "2" | "0.75" | "1.5";
 		/**
+		 * Remember speed per chat
+		 *
+		 * The speed button sets the speed for the chat you are in; other chats keep their own or the speed above.
+		 */
+		perChat: boolean;
+		/**
 		 * Show audio files as voice messages
 		 *
 		 * Audio files others send play in the voice message player.
@@ -166,6 +172,12 @@ declare module '@unbound-app/settings' {
 		 */
 		"speed": "1" | "2" | "0.75" | "1.5";
 		/**
+		 * Remember speed per chat
+		 *
+		 * The speed button sets the speed for the chat you are in; other chats keep their own or the speed above.
+		 */
+		"perChat": boolean;
+		/**
 		 * Show audio files as voice messages
 		 *
 		 * Audio files others send play in the voice message player.
@@ -182,7 +194,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "sendAudio" | "showAudio";
+	export type BooleanSettingKey = "sendAudio" | "perChat" | "showAudio";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

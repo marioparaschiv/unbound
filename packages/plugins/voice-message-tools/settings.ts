@@ -18,6 +18,11 @@ export default defineSettings({
 			'2': 'SPEED_2',
 		},
 	}),
+	perChat: setting.boolean({
+		default: true,
+		title: 'PER_CHAT',
+		subtitle: 'PER_CHAT_SUBTITLE',
+	}),
 	showAudio: setting.boolean({
 		default: false,
 		title: 'SHOW_AUDIO',

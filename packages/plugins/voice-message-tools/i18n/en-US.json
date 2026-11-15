@@ -10,5 +10,7 @@
 	"SPEED_075": "0.75×",
 	"SPEED_1": "1×",
 	"SPEED_15": "1.5×",
-	"SPEED_2": "2×"
+	"SPEED_2": "2×",
+	"PER_CHAT": "Remember speed per chat",
+	"PER_CHAT_SUBTITLE": "The speed button sets the speed for the chat you are in; other chats keep their own or the speed above."
 }
