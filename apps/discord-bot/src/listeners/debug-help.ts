@@ -20,14 +20,17 @@ import {
 	type Entitlements,
 } from '~/lib/notification-diagnosis';
 import {
-	ASK_FOR_DEBUG,
+	askForDebug,
 	ASK_TTL_MS,
 	dmSentMessage,
 	OPEN_DMS_EMOJI,
-	OPEN_DMS_EXPIRED,
+	openDmsExpired,
 	openDmsPrompt,
-} from '~/lib/notification-prompts';
+	type HelpTopic,
+} from '~/lib/debug-prompts';
+import { diagnoseScreenShare, isScreenShareQuestion } from '~/lib/screen-share-diagnosis';
 import { renderNotificationHelp } from '~/lib/notification-replies';
+import { renderScreenShareHelp } from '~/lib/screen-share-replies';
 
 // A real entitlements plist is a few kilobytes.
 const MAX_ENTITLEMENTS_BYTES = 64 * 1024;
@@ -42,10 +45,23 @@ type DmRetry = {
 	reaction: MessageReaction;
 	asker: User;
 	guildName: string;
+	topic: HelpTopic;
 	stop: () => void;
 };
 
-const logger = createLogger('Bot', 'NotificationHelp');
+/** An open ask: what it was about, and until when a `/debug` answers it. */
+type Ask = { topic: HelpTopic; until: number };
+
+const logger = createLogger('Bot', 'DebugHelp');
+
+// Screen share goes first: "screen share notifications" is a screen share question.
+function questionTopic(text: string): HelpTopic | undefined {
+	if (isScreenShareQuestion(text)) {
+		return 'screen-share';
+	}
+
+	return isNotificationQuestion(text) ? 'notifications' : undefined;
+}
 
 // The card's alt text carries the report; without a card, `/debug` sends it as Markdown.
 function findDebugPayload(message: Message): DebugPayload | undefined {
@@ -93,9 +109,9 @@ async function clearReactions(prompt: Message) {
 }
 
 @ApplyOptions<Listener.Options>({ event: Events.MessageCreate })
-export class NotificationHelpListener extends Listener<typeof Events.MessageCreate> {
-	// Who was asked, and until when; in memory, so a restart forgets open asks.
-	private readonly asked = new Map<string, number>();
+export class DebugHelpListener extends Listener<typeof Events.MessageCreate> {
+	// Who was asked, about what and until when; in memory, so a restart forgets open asks.
+	private readonly asked = new Map<string, Ask>();
 
 	public override async run(message: Message) {
 		const inGuild = message.guildId === this.container.config.guildId;
@@ -105,18 +121,19 @@ export class NotificationHelpListener extends Listener<typeof Events.MessageCrea
 		}
 
 		const payload = findDebugPayload(message);
+		const topic = inGuild ? questionTopic(message.content) : undefined;
 
 		if (payload) {
 			await this.answerDebug(message, payload);
-		} else if (inGuild && isNotificationQuestion(message.content)) {
-			await this.askForDebug(message);
+		} else if (topic) {
+			await this.askForDebug(message, topic);
 		}
 	}
 
-	private async askForDebug(message: Message) {
+	private async askForDebug(message: Message, topic: HelpTopic) {
 		const now = Date.now();
 
-		for (const [userId, until] of this.asked) {
+		for (const [userId, { until }] of this.asked) {
 			if (until <= now) {
 				this.asked.delete(userId);
 			}
@@ -127,15 +144,15 @@ export class NotificationHelpListener extends Listener<typeof Events.MessageCrea
 			return;
 		}
 
-		this.asked.set(message.author.id, now + ASK_TTL_MS);
+		this.asked.set(message.author.id, { topic, until: now + ASK_TTL_MS });
 
 		try {
-			const result = await this.sendAsk(message.author);
+			const result = await this.sendAsk(message.author, topic);
 
 			if (result.status === 'sent') {
-				await message.reply(dmSentMessage(result.channelId));
+				await message.reply(dmSentMessage(result.channelId, topic));
 			} else if (result.status === 'closed') {
-				await this.waitForOpenDms(message);
+				await this.waitForOpenDms(message, topic);
 			} else {
 				// Discord itself failed; the next question tries again.
 				this.asked.delete(message.author.id);
@@ -148,12 +165,12 @@ export class NotificationHelpListener extends Listener<typeof Events.MessageCrea
 		}
 	}
 
-	private async sendAsk(user: User): Promise<DmResult> {
+	private async sendAsk(user: User, topic: HelpTopic): Promise<DmResult> {
 		try {
-			const ask = await user.send(ASK_FOR_DEBUG);
+			const ask = await user.send(askForDebug(topic));
 
 			// The `/debug` window starts when the DM arrives, not when the question was asked.
-			this.asked.set(user.id, Date.now() + ASK_TTL_MS);
+			this.asked.set(user.id, { topic, until: Date.now() + ASK_TTL_MS });
 
 			return { status: 'sent', channelId: ask.channelId };
 		} catch (error) {
@@ -164,17 +181,17 @@ export class NotificationHelpListener extends Listener<typeof Events.MessageCrea
 				return { status: 'closed' };
 			}
 
-			logger.error(`Failed to DM ${user.id} about notifications:`, error);
+			logger.error(`Failed to DM ${user.id} about ${topic}:`, error);
 
 			return { status: 'failed' };
 		}
 	}
 
 	// Waits for the asker, and only the asker, to react once their DMs are open, then retries the DM.
-	private async waitForOpenDms(message: Message) {
+	private async waitForOpenDms(message: Message, topic: HelpTopic) {
 		const asker = message.author;
 		const guildName = message.guild?.name ?? 'the server';
-		const prompt = await message.reply(openDmsPrompt(guildName));
+		const prompt = await message.reply(openDmsPrompt(guildName, topic));
 
 		await prompt.react(OPEN_DMS_EMOJI);
 
@@ -190,30 +207,31 @@ export class NotificationHelpListener extends Listener<typeof Events.MessageCrea
 				reaction,
 				asker,
 				guildName,
+				topic,
 				stop: () => collector.stop('sent'),
 			});
 		});
 		collector.on('end', (_collected, reason) => {
 			if (reason !== 'sent') {
-				void this.expireDmPrompt(prompt, asker);
+				void this.expireDmPrompt(prompt, asker, topic);
 			}
 		});
 	}
 
-	private async retryDm({ prompt, reaction, asker, guildName, stop }: DmRetry) {
+	private async retryDm({ prompt, reaction, asker, guildName, topic, stop }: DmRetry) {
 		try {
-			const result = await this.sendAsk(asker);
+			const result = await this.sendAsk(asker, topic);
 
 			if (result.status === 'sent') {
 				stop();
-				await prompt.edit(dmSentMessage(result.channelId));
+				await prompt.edit(dmSentMessage(result.channelId, topic));
 				await clearReactions(prompt);
 
 				return;
 			}
 
 			// A failed send has no DM to point at, so it asks for another reaction like a closed one.
-			await prompt.edit(openDmsPrompt(guildName, true));
+			await prompt.edit(openDmsPrompt(guildName, topic, true));
 			// Lets them react again; needs Manage Messages, so a failure only costs the retry.
 			await reaction.users.remove(asker.id).catch((cause: unknown) => {
 				logger.warn(`Failed to clear the reaction of ${asker.id} on ${prompt.id}:`, cause);
@@ -223,11 +241,11 @@ export class NotificationHelpListener extends Listener<typeof Events.MessageCrea
 		}
 	}
 
-	private async expireDmPrompt(prompt: Message, asker: User) {
+	private async expireDmPrompt(prompt: Message, asker: User, topic: HelpTopic) {
 		this.asked.delete(asker.id);
 
 		try {
-			await prompt.edit(OPEN_DMS_EXPIRED);
+			await prompt.edit(openDmsExpired(topic));
 			await clearReactions(prompt);
 		} catch (error) {
 			logger.error(`Failed to expire the DM prompt ${prompt.id}:`, error);
@@ -235,20 +253,24 @@ export class NotificationHelpListener extends Listener<typeof Events.MessageCrea
 	}
 
 	private async answerDebug(message: Message, payload: DebugPayload) {
-		const until = this.asked.get(message.author.id);
+		const ask = this.asked.get(message.author.id);
 
-		if (!until || until <= Date.now()) {
+		if (!ask || ask.until <= Date.now()) {
 			return;
 		}
 
 		this.asked.delete(message.author.id);
 
 		// Only text reports and cards from older servers lack the entitlements in the payload.
-		const facts = diagnoseNotifications(
-			payload,
-			payload.entitlements ?? (await fetchEntitlements(message)),
-		);
-		const reply = renderNotificationHelp({ view: 'simple', askerId: message.author.id, facts });
+		const entitlements = payload.entitlements ?? (await fetchEntitlements(message));
+		const reply =
+			ask.topic === 'screen-share'
+				? renderScreenShareHelp(diagnoseScreenShare(payload, entitlements))
+				: renderNotificationHelp({
+						view: 'simple',
+						askerId: message.author.id,
+						facts: diagnoseNotifications(payload, entitlements),
+					});
 
 		try {
 			await message.reply(reply);

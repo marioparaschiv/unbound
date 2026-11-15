@@ -33,21 +33,23 @@ export type NotificationFacts = {
 	appId?: string;
 };
 
-// Only the keys the diagnosis reads; the plist's other keys pass through unchecked.
+// Only the keys the notifications and screen share diagnoses read; the plist's other keys pass through unchecked.
 const entitlementsSchema = Type.Object({
 	'application-identifier': Type.Optional(Type.String()),
 	'com.apple.developer.team-identifier': Type.Optional(Type.String()),
 	'aps-environment': Type.Optional(Type.String()),
 	'get-task-allow': Type.Optional(Type.Boolean()),
+	'com.apple.security.application-groups': Type.Optional(Type.Array(Type.String())),
 });
 
-// The alt text carries the whole report; these are the fields the diagnosis reads.
+// The alt text carries the whole report; these are the fields the notifications and screen share diagnoses read.
 const payloadSchema = Type.Object({
 	unbound: Type.String(),
 	platform: Type.String(),
 	install: Type.Optional(Type.String()),
 	source: Type.Optional(Type.String()),
 	entitlements: Type.Optional(entitlementsSchema),
+	isolatedExtensions: Type.Optional(Type.Array(Type.String())),
 });
 
 export type DebugPayload = StaticDecode<typeof payloadSchema>;
@@ -63,6 +65,10 @@ const DEVELOPMENT_INSTALL = /^Development\b/;
 
 function textField(content: string, label: string): string | undefined {
 	return new RegExp(String.raw`^- \*\*${label}:\*\* (.+)$`, 'm').exec(content)?.[1]?.trim();
+}
+
+function textList(content: string, label: string): string[] | undefined {
+	return textField(content, label)?.split(' · ');
 }
 
 /**
@@ -111,6 +117,7 @@ export function readTextReport(content: string): DebugPayload | undefined {
 		platform: / on Android\b/.test(device) ? 'Android' : 'iOS',
 		install: textField(content, 'Install'),
 		source: textField(content, 'Discord'),
+		isolatedExtensions: textList(content, 'Extensions without the app group'),
 	};
 }
 
@@ -123,6 +130,22 @@ export function readEntitlements(plist?: PlistValue): Entitlements | undefined {
 	const parsed = safeParse(entitlementsSchema, plist);
 
 	return parsed.success ? parsed.data : undefined;
+}
+
+/**
+ * @description Tells whether Discord runs inside LiveContainer, which lends it LiveContainer's signature.
+ * @param payload The `/debug` report.
+ * @param entitlements The entitlements, when the report did not carry them.
+ * @returns Whether the App ID or the install source names LiveContainer.
+ */
+export function isLiveContainer(
+	payload: DebugPayload,
+	entitlements = payload.entitlements,
+): boolean {
+	return (
+		LIVECONTAINER.test(entitlements?.['application-identifier'] ?? '') ||
+		LIVECONTAINER.test(payload.source ?? '')
+	);
 }
 
 function classify(payload: DebugPayload, entitlements?: Entitlements): NotificationFacts {
@@ -148,7 +171,7 @@ function classify(payload: DebugPayload, entitlements?: Entitlements): Notificat
 		return { diagnosis: pushes ? 'discord-signed' : 'discord-no-push', team, push };
 	}
 
-	if (LIVECONTAINER.test(appId ?? '') || LIVECONTAINER.test(payload.source ?? '')) {
+	if (isLiveContainer(payload, entitlements)) {
 		return { diagnosis: 'livecontainer', team, push };
 	}
 
@@ -200,5 +223,6 @@ export default {
 	readDebugPayload,
 	readTextReport,
 	readEntitlements,
+	isLiveContainer,
 	diagnoseNotifications,
 };
