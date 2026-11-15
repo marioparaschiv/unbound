@@ -140,6 +140,13 @@ func runCompatScan(args []string) error {
 			return fmt.Errorf("iOS: %w", err)
 		}
 
+		own, err := loadOwnObjCClasses(*root)
+		if err != nil {
+			return fmt.Errorf("loader sources: %w", err)
+		}
+
+		mergeOwnObjCClasses(target.objc, own)
+
 		if *iosSDK == "" {
 			*iosSDK = discoverIOSSDK()
 		}
