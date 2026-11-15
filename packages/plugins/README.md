@@ -1,6 +1,6 @@
 # Plugins
 
-141 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+142 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -31,6 +31,7 @@
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Clean Channel Names](https://unbound.rip/addons/unbound.clean-channel-names): Shows channel names without dashes, emoji and decorative letters, as plain words.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Clear URLs](https://unbound.rip/addons/unbound.clear-urls): Removes tracking garbage from URLs before you send them.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Client Side Block](https://unbound.rip/addons/unbound.client-side-block): Hides messages from blocked, ignored and hand-picked users, replies to them, and messages with keywords you pick, without blocking anyone on Discord.
+- <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Compact Mode](https://unbound.rip/addons/unbound.compact-mode): Drops message headers and avatars and puts each author's name inline with their message, like desktop's compact layout.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Copy Image](https://unbound.rip/addons/unbound.copy-image): Adds Copy Image to the media viewer's share menu, which copies the picture itself as a PNG that any app can paste.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom Commands](https://unbound.rip/addons/unbound.custom-commands): Create slash commands that send saved text, images, and videos.
 - <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom RPC](https://unbound.rip/addons/unbound.custom-rpc): Shows a Rich Presence of your own on your profile: any name, text, images, timer and buttons.
