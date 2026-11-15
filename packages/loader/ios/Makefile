@@ -55,6 +55,7 @@ WOFF2_FILES := $(wildcard ../vendor/brotli/c/common/*.c) $(wildcard ../vendor/br
 $(foreach file,$(WOFF2_FILES),$(eval $(file)_CFLAGS = -w))
 
 $(TWEAK_NAME)_FILES = $(shell find sources -name "*.x*" -o -name "*.m*") $(wildcard ../core/src/*.cpp) $(wildcard ../core/src/ffi/*.cpp) $(wildcard ../vendor/monocypher/*.c) ../vendor/miniz/miniz_unbound.c shared/UBAppIcons.m $(BEARSSL_FILES) $(WOFF2_FILES)
+$(TWEAK_NAME)_SUBPROJECTS = live-activities
 $(TWEAK_NAME)_CFLAGS = $(COMMON_FLAGS)
 sources/CoreBridge.mm_CFLAGS = -DCOMMIT_HASH='@"$(COMMIT_HASH)"' -DCOMMIT_SHORT_HASH='@"$(COMMIT_SHORT_HASH)"' -DCOMMIT_SUBJECT='@"$(COMMIT_SUBJECT)"' -DCOMMIT_BRANCH='@"$(COMMIT_BRANCH)"' -DBUILD_TIMESTAMP='@"$(BUILD_TIMESTAMP)"'
 # version.json is the release version; CI stamps it into ios/control, which local builds leave stale,
@@ -66,7 +67,7 @@ LOADER_VERSION := $(shell printf '%s\n%s\n' "$(THEOS_PACKAGE_BASE_VERSION)" "$(L
 # _CCFLAGS (not _CXXFLAGS) is what Theos applies to C++/Objective-C++ compiles.
 $(TWEAK_NAME)_CCFLAGS = $(COMMON_FLAGS) -I$(LIBFFI_HEADERS) -std=c++20 -fno-cxx-modules
 # Resolve JSI/TurboModule symbols from Discord's React dylib at load time.
-$(TWEAK_NAME)_LDFLAGS = -undefined dynamic_lookup $(LIBFFI_ARCHIVE)
+$(TWEAK_NAME)_LDFLAGS = -undefined dynamic_lookup $(LIBFFI_ARCHIVE) -weak_framework ActivityKit
 $(TWEAK_NAME)_FRAMEWORKS = UIKit Foundation AuthenticationServices UniformTypeIdentifiers Security SafariServices AVFoundation CoreHaptics CoreGraphics QuartzCore ImageIO Network CFNetwork MetricKit UserNotifications
 $(TWEAK_NAME)_LIBRARIES = z
 
