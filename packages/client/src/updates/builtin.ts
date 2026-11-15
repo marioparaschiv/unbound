@@ -8,7 +8,7 @@ import type { SectionEntry } from '~/settings/section';
 import { compareVersions } from '~/core/versions';
 import { getSetting } from '~/settings/unbound';
 import UpdatesStore from '~/updates/state';
-import { getBucket } from '~/storage/api';
+import { getBucket, persist } from '~/storage/api';
 
 // The loader downloads the next bundle in the background, usually within seconds of launch.
 const STAGED_CHECK_DELAY = 20_000;
@@ -59,6 +59,9 @@ function announceClient() {
 	}
 
 	storage.set('lastClientVersion', CLIENT_VERSION);
+	// Saved now, not on the debounce: an older iOS loader reloads settings.json when the updater writes it at
+	// launch, dropping changes not yet saved, and the next launch would announce this version again.
+	void persist();
 }
 
 /** Toasts a newly updated client, and offers a restart once the loader stages the next bundle. */
