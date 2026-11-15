@@ -37,7 +37,7 @@ const (
 	unboundBonjourService = "_unbound-bridge._tcp"
 	// Shown in iOS's Local Network prompt, unless Discord declares its own text.
 	unboundLocalNetworkUsage = "Unbound's debugger finds and connects to the debugger bridge on your computer over the local network."
-	unboundSpeechUsage       = "Unbound plugins turn voice messages into text, on this device."
+	unboundSpeechUsage       = "Unbound plugins turn voice messages into text."
 )
 
 // cyanInputs writes the Info.plist keys cyan merges into the IPA: the loader version for every channel, and
