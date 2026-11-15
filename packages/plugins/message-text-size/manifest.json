@@ -13,5 +13,20 @@
 		"min": "3.0.0"
 	},
 	"icon": "TextIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"platforms": {
+		"android": {
+			"capabilities": [
+				"native.java.hooks",
+				"native.java.invoke"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "15337596522db06e7f649b9ebc6a88414181cd128fc2161c672e835014a440152adcc46bd39a42d638c32691b7cb8a70be835a210026d6e1e518628cbe4c6fa7"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "9XtK15727f5oHjdJ2reqrOhRlmdREGMmM1FJqXrlM+/NVfViTSIvDoC9CYMKwOqEYrCGRL0ZF+bVSvDFGJPtCw=="
+	}
 }
