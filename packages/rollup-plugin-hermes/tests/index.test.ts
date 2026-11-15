@@ -1,7 +1,15 @@
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+	chmodSync,
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from 'node:fs';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 import type { HermesContext } from '~/index';
 import hermes from '~/index';
@@ -63,7 +71,6 @@ async function build(flags?: string[]) {
 		{ 'unbound.js': { type: 'chunk', code: 'throw 1;' } },
 		true,
 	);
-	await plugin.buildEnd.call(ctx);
 
 	const args = readFileSync(join(dir, process.platform, 'args'), 'utf-8')
 		.trim()
@@ -106,6 +113,14 @@ describe('rollup-plugin-hermes compile', () => {
 		} finally {
 			delete process.env.FAKE_SKIP_MAP;
 		}
+	});
+
+	test("runs builds side by side without one deleting the other's files, and leaves no temp folder behind", async () => {
+		const [first, second] = await Promise.all([build(), build()]);
+
+		expect(text(first.emitted['unbound.bundle'])).toBe('bytecode');
+		expect(text(second.emitted['unbound.bundle'])).toBe('bytecode');
+		expect(existsSync(dirname(first.args.at(-1) ?? ''))).toBe(false);
 	});
 
 	test('emits no source map without -output-source-map', async () => {
