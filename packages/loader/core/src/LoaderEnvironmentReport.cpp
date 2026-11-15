@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <mutex>
 
 namespace loader::environment_report {
@@ -90,15 +91,31 @@ std::vector<std::string> appleMarkers(const AppleDeviceFacts &facts)
     return markers;
 }
 
+static bool isUsualWebView(const std::string &webView)
+{
+    static const std::vector<std::string> standard = {
+        "com.google.android.webview ", "com.android.webview ", "com.android.chrome "};
+    constexpr int kOldMajor = 120;
+    for (const std::string &package : standard)
+    {
+        if (webView.starts_with(package))
+        {
+            return std::atoi(webView.c_str() + package.size()) >= kOldMajor;
+        }
+    }
+
+    return false;
+}
+
 std::vector<std::string> androidMarkers(const AndroidDeviceFacts &facts)
 {
     std::vector<std::string> markers;
-    if (facts.selinuxEnforcing)
+    if (facts.selinuxEnforcing && !*facts.selinuxEnforcing)
     {
-        markers.emplace_back(*facts.selinuxEnforcing ? "SELinux enforcing" : "SELinux permissive");
+        markers.emplace_back("SELinux permissive");
     }
 
-    if (!facts.verifiedBootState.empty())
+    if (!facts.verifiedBootState.empty() && facts.verifiedBootState != "green")
     {
         markers.push_back("boot " + facts.verifiedBootState);
     }
@@ -117,7 +134,7 @@ std::vector<std::string> androidMarkers(const AndroidDeviceFacts &facts)
         markers.push_back(std::to_string(facts.pageSize / 1024) + " KB pages");
     }
 
-    if (!facts.webView.empty())
+    if (!facts.webView.empty() && !isUsualWebView(facts.webView))
     {
         markers.push_back("WebView " + facts.webView);
     }
