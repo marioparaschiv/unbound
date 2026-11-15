@@ -50,7 +50,9 @@ export function tweakSpans(tweaks: string[], room: number): Span[] {
 			break;
 		}
 
-		if (index) spans.push(dim(' · '));
+		if (index) {
+			spans.push(dim(' · '));
+		}
 
 		spans.push({ text: name, color: isConflictingTweak(name) ? COLORS.bad : COLORS.warn });
 		used += separator + name.length;

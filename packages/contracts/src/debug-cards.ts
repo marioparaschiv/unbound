@@ -202,6 +202,16 @@ export const debugCardRequestSchema = Type.Object({
 			{ maxItems: 3 },
 		),
 	),
+	hookFailures: Type.Optional(
+		Type.Array(
+			Type.Object({
+				addon: text(),
+				target: text(240),
+				reason: text(120),
+			}),
+			{ maxItems: 5 },
+		),
+	),
 	patches: Type.Optional(
 		Type.Array(
 			Type.Object({ caller: text(), count: Type.Integer({ minimum: 0, maximum: 100_000 }) }),

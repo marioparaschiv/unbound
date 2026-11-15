@@ -11,12 +11,13 @@ import { launchNotes } from '@unbound-app/contracts/debug-card-launch';
 import type { DebugCardContext } from '~/lib/debug-card/context';
 
 import { accent, cleanNames, COLORS, dim, joined, value, warn, type Span } from './spans';
-import { tweakSpans } from './tweaks';
-import { accountNotes } from './account';
 import { dnsNote, gatewayNote, powerNote, pushNote } from './device-notes';
 import { storageMatters, storageSummary } from './storage';
+import { errorNotes, hookNotes } from './issue-notes';
 import { environmentRows } from './environment-rows';
 import { clipped, wrapped } from './wrap-lines';
+import { accountNotes } from './account';
+import { tweakSpans } from './tweaks';
 
 export { joined } from './spans';
 
@@ -133,7 +134,9 @@ function builtAgo(builtAt: string | undefined, now: Date): string | undefined {
 
 	const minutes = Math.max(0, Math.round((now.getTime() - at) / 60_000));
 
-	if (minutes < 60) return `built ${minutes} min ago`;
+	if (minutes < 60) {
+		return `built ${minutes} min ago`;
+	}
 
 	const hours = Math.round(minutes / 60);
 
@@ -369,22 +372,12 @@ export function memorySummary(memory: DebugCardMemory): string {
 	]);
 }
 
-/**
- * @description Lists recent errors newest first, each prefixed with its addon.
- * @param errors The recent errors.
- * @returns One note per error.
- */
-export function errorNotes(errors: DebugInfo['errors'] = []): string[] {
-	return errors
-		.toReversed()
-		.map((error) => (error.addon ? `${error.addon}: ${error.message}` : error.message));
-}
-
 function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): [string, Span[]][] {
 	const crashes = crashSummary(info.launch?.crashes ?? [], now);
 	const launch = launchNotes(info.launch);
 	const memory = memoryNotes(info.memory);
 	const errors = errorNotes(info.errors);
+	const hooks = hookNotes(info.hookFailures);
 	const storage = storageMatters(info.storage) ? storageSummary(info.storage) : undefined;
 	const updates = updateNotes(context, info.addonUpdates);
 	const tweaks = cleanNames(info.injected ?? []);
@@ -405,6 +398,7 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 			extensionNotes(info).length ? [warn(fittedList(extensionNotes(info), VALUE_ROOM))] : [],
 		],
 		['errors', errors.length ? [warn(fittedList(errors, VALUE_ROOM))] : []],
+		['hooks', hooks.length ? [warn(fittedList(hooks, VALUE_ROOM))] : []],
 		['launch', launch.length ? [warn(fittedList(launch, VALUE_ROOM))] : []],
 		['gateway', gateway ? [warn(fittedList([gateway], VALUE_ROOM))] : []],
 		['push', push ? [warn(fittedList([push], VALUE_ROOM))] : []],
