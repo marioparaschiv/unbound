@@ -64,9 +64,11 @@ export async function inspectNative(
 				for (let depth = 0; parent && depth < 32; depth++) {
 					superclasses.push(parent);
 
-					const parentClass = handle(java.invoke(java.getClass(parent), 'getSuperclass'));
-
-					parent = parentClass ? string(java.invoke(parentClass, 'getName')) : null;
+					try {
+						parent = java.describe(parent).superclass;
+					} catch {
+						parent = null;
+					}
 				}
 
 				return {
