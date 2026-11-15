@@ -37,7 +37,7 @@ describe('loadConfig', () => {
 		expect(result.ok ? '' : result.message).toContain('env RECONCILE_INTERVAL_SECONDS');
 	});
 
-	test('passes a complete env with the real constants, though some ids are still unset', () => {
+	test('passes a complete env with the real constants', () => {
 		const result = loadConfig(ENV);
 
 		expect(result).toEqual({
@@ -46,7 +46,7 @@ describe('loadConfig', () => {
 				guildId: '950850315601711176',
 				ids: expect.objectContaining({
 					PLUGINS_CHANNEL_ID: '1564067818415333407',
-					RELEASES_ROLE_ID: undefined,
+					LOADER_RELEASES_CHANNEL_ID: '1571505878891503718',
 				}),
 				siteUrl: 'https://unbound.rip',
 				cdnUrl: 'https://cdn.unbound.rip',

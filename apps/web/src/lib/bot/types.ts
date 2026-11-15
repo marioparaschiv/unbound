@@ -1,7 +1,7 @@
 import type { ReviewDecision, SubmissionKind } from '@unbound-app/contracts/publish';
 import type { AddonType } from '@unbound-app/contracts/addons';
 
-import type { loaderRelease, moderationEvent } from '~/db/schema';
+import type { bundleRelease, loaderRelease, moderationEvent } from '~/db/schema';
 
 /** A manifest author as an addon post shows it; `discordId` is the manifest's author id. */
 export type PublicAddonAuthor = {
@@ -83,6 +83,17 @@ export type Release = Pick<
 
 export type ReleaseKey = Pick<Release, 'platform' | 'version'>;
 
+/** A client bundle CI published; `version` is the commit it was built from. */
+export type Bundle = Pick<
+	typeof bundleRelease.$inferSelect,
+	'channel' | 'version' | 'publishedAt'
+> & {
+	/** The version published before it on its channel; `null` for the channel's first. */
+	previousVersion: string | null;
+};
+
+export type BundleKey = Pick<Bundle, 'channel' | 'version'>;
+
 /** A user with a linked Discord account; users without one are never returned. */
 export type Member = {
 	userId: string;
@@ -126,6 +137,10 @@ export type BotReads = {
 	release: (key: ReleaseKey) => Promise<Release | undefined>;
 	/** Releases published at or after a moment, in publish order. */
 	releasesSince: (since: Date) => Promise<Release[]>;
+	/** A published client bundle. */
+	bundle: (key: BundleKey) => Promise<Bundle | undefined>;
+	/** Client bundles published at or after a moment, in publish order. */
+	bundlesSince: (since: Date) => Promise<Bundle[]>;
 	/** The Discord-linked users a query names. */
 	members: (query: MemberQuery) => Promise<Member[]>;
 };

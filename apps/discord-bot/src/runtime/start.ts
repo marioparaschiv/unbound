@@ -11,6 +11,16 @@ export type RunningDispatchers = {
 
 const logger = createLogger('Bot', 'Dispatchers');
 
+// A dispatcher with no channel has no subscribe to reconcile after, so it reconciles once at start;
+// the timer retries a failure.
+function reconcileOnce(dispatcher: Dispatcher, reconcile: () => Promise<void>): Unlisten {
+	reconcile().catch((error) =>
+		logger.error(`Failed the first reconcile of ${dispatcher.name}:`, error),
+	);
+
+	return async () => void 0;
+}
+
 /**
  * @description Starts each dispatcher: listens on its channel and reconciles it every `reconcileIntervalMs`, one call at a time.
  * @param dispatchers The dispatchers `createDispatchers` built.
@@ -29,12 +39,14 @@ export function startDispatchers(
 	const running = dispatchers.map((dispatcher) => {
 		const queue = createSerialQueue();
 		const reconcile = () => queue.enqueue(() => dispatcher.reconcile(context));
-		const unlisten = listen({
-			url,
-			channel: dispatcher.channel,
-			handler: (payload) => queue.enqueue(() => dispatcher.handle(payload, context)),
-			reconcile,
-		});
+		const unlisten = dispatcher.channel
+			? listen({
+					url,
+					channel: dispatcher.channel,
+					handler: (payload) => queue.enqueue(() => dispatcher.handle(payload, context)),
+					reconcile,
+				})
+			: reconcileOnce(dispatcher, reconcile);
 
 		let pending = false;
 
