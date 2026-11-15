@@ -38,7 +38,7 @@ updates:
             update-types:
                 - 'version-update:semver-minor'
                 - 'version-update:semver-major'
-          - dependency-name: '@babel/core'
+          - dependency-name: '@babel/*'
             update-types:
                 - 'version-update:semver-major'
           - dependency-name: 'typescript'
