@@ -1,7 +1,5 @@
-/** What the plugin reads from a role. */
 export type Role = { id: string; name: string; color: number; position: number };
 
-/** A role tag's text and its ARGB colours as signed 32-bit integers, which Android's row parser requires. */
 export type RoleTag = { text: string; textColor: number; backgroundColor: number };
 
 const OPAQUE = 0xff000000;

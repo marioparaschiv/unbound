@@ -106,7 +106,6 @@ function renderOf(type: unknown): ((props: unknown) => Node) | undefined {
 function wrapperFor(type: unknown, rule: Rule, level: number): unknown {
 	if (/REA|Animated|Reanimated|Workaround/i.test(componentName(type))) return undefined;
 
-	// A wrapper already rounds what it renders; wrapping it again would round the same tree once per enclosing target.
 	if (typeof type === 'function' && ownWrappers.has(type)) return undefined;
 
 	const render = renderOf(type);
@@ -153,7 +152,6 @@ function roundedStyle(
 
 	if (typeof next !== 'number' || (next === box.radius && !box.corners.length)) return style;
 
-	// A corner radius wins over `borderRadius`, so each one the view sets is replaced too.
 	const rounded = Object.fromEntries([
 		['borderRadius', next],
 		...box.corners.map((key) => [key, next]),
@@ -196,7 +194,6 @@ export function roundTree(
 	const { props } = node;
 	const style = roundedStyle(props.style, rule, owner, props);
 	const children = roundTree(props.children, rule, { depth: depth + 1, level, owner, deep });
-	// A MaskedView draws the shape of its mask, such as the You bar's background, from `maskElement` rather than its children.
 	const maskElement = roundTree(props.maskElement, rule, {
 		depth: depth + 1,
 		level,

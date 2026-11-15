@@ -1,7 +1,5 @@
-/** A node of Discord's message content tree. */
 export type ContentNode = { type: string; content?: unknown };
 
-/** The parts of a chat row's message Compact Mode changes. */
 export type CompactMessage = {
 	authorId?: string;
 	guildId?: string;

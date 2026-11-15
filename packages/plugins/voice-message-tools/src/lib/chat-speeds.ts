@@ -1,4 +1,3 @@
-/** Each conversation's remembered speed, by channel id, as the speed setting stores speeds. */
 export type ChatSpeeds = Record<string, string>;
 
 /**

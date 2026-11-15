@@ -2,7 +2,6 @@ const MIN_PERCENT = 50;
 const MAX_PERCENT = 200;
 const SAME_SIZE = 0.01;
 
-/** A message's remembered size: Discord's own, and the size the plugin last gave it. */
 export type RememberedSize = { base: number; applied: number };
 
 /**

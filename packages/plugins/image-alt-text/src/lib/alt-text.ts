@@ -1,4 +1,3 @@
-/** A node of Discord's message content tree. */
 export type ContentNode = { type: string; content?: unknown };
 
 const DEBUG_PAYLOAD = /^ubd\d+:/;

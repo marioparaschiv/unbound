@@ -7,13 +7,9 @@ import type {
 
 import { attachMainThreadProxy, type ProxyAttachment } from './main-thread-proxy-worklets';
 
-/** A Java interface implemented on the main thread, with fixed answers, for listeners Android calls there and waits on. */
 export type MainThreadProxyOptions = {
-	/** The interfaces the proxy implements, such as `android.view.View$OnTouchListener`. */
 	interfaces: string[];
-	/** What each method returns at once; a method not listed returns its type's default. */
 	answers?: Record<string, NativeJavaArgument>;
-	/** The method that receives the proxy as its last argument, called on the main thread. */
 	attach: ProxyAttachment;
 };
 

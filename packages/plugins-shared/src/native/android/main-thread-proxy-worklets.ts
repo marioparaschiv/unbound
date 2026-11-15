@@ -8,7 +8,6 @@ import type {
 	NativeUIScope,
 } from '@unbound-app/api/native';
 
-/** The method a main-thread proxy is passed to, as its last argument. */
 export type ProxyAttachment = {
 	target: NativeJavaReference;
 	method: string;

@@ -17,7 +17,6 @@ const FORMAT_CHANGED = -2;
 const MAX_STEPS = 20_000;
 const SPEECH_RATE = 16_000;
 
-/** Decoded audio: a raw 16-bit PCM file, and its sample rate and channels. */
 export type PcmAudio = { path: string; sampleRate: number; channels: number };
 
 function numberOf(value: Parameters<typeof javaNumber>[0]): number {

@@ -96,7 +96,6 @@ function redrawOpenChat(): void {
 	const { channelId, newest } = chat;
 	const release = forceNextChangeset(chat.prototype);
 
-	// An update carrying the newest message's own content changes nothing, but makes the open chat rebuild its rows.
 	dispatch({
 		type: REBUILD_ACTION,
 		message: { id: newest.id, channel_id: channelId, content: newest.content ?? '' },

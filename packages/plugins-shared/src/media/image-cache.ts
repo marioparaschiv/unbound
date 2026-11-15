@@ -1,4 +1,3 @@
-/** Reads and writes for the image cache: downloads, and base64 files under the cache folder. */
 export type ImageCacheIO = {
 	download(url: string): Promise<Uint8Array | null>;
 	read(path: string): Promise<string | null>;
@@ -6,12 +5,9 @@ export type ImageCacheIO = {
 	remove(path: string): Promise<void>;
 };
 
-/** How much the cache keeps: decoded entries in memory, and bytes on disk. */
 export type ImageCacheLimits = { memoryEntries: number; diskBytes: number };
 
-/** Image bytes shared by every plugin: from memory, then disk, then the network. */
 export type ImageCache = {
-	/** The image's bytes, or `null` when it cannot be downloaded. */
 	bytes(url: string): Promise<Uint8Array | null>;
 };
 
@@ -62,7 +58,6 @@ function readIndex(text: string | null): Map<string, IndexEntry> {
 
 		return new Map(Object.entries(parsed));
 	} catch {
-		// A damaged index only costs downloads; the files it named are overwritten as they come back.
 		return new Map();
 	}
 }

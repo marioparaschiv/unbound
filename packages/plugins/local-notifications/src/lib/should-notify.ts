@@ -1,4 +1,3 @@
-/** What decides whether a new message notifies. */
 export type NotifyFacts = {
 	fromMe: boolean;
 	optimistic: boolean;

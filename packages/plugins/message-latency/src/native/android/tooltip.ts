@@ -199,7 +199,6 @@ export function createAndroidTooltips({ java, hooks, fabric }: Native): AndroidT
 
 		const metrics = await metricsOf(decor);
 		const insets = await systemBarInsets(java, decor);
-		// The decor view runs under the system bars on edge-to-edge screens, so the tooltip keeps inside them.
 		const bounds = insetFrame(
 			{
 				x: 0,

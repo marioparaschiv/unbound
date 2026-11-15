@@ -17,7 +17,6 @@ export type Target = {
 	/** The components whose render output gets re-rounded, by module path and export. */
 	components: { path: string; export?: string }[];
 	rule: Rule;
-	/** Whether the rounding also reaches into the components the target renders, such as the You bar's masked background. */
 	deep?: boolean;
 	/** Token overrides for corners no render output shows. */
 	tokens?: (active: () => boolean) => void;

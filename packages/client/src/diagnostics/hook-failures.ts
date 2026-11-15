@@ -1,7 +1,6 @@
 import { createLogger } from '@unbound-app/logger';
 import toError from '@unbound-app/utils/to-error';
 
-/** One native hook a plugin asked for that the loader could not install. */
 export type HookFailure = { addon: string; target: string; reason: string };
 
 const MAX_HOOK_FAILURES = 5;

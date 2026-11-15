@@ -1,13 +1,11 @@
 const VOICE_MESSAGE = 1 << 13;
 const AUDIO = /\.(ogg|opus|mp3|m4a|wav|aac)(\?|$)/i;
 
-/** What the plugin reads from a message. */
 export type VoiceMessage = {
 	flags?: number;
 	attachments?: { url?: string; content_type?: string; filename?: string }[];
 };
 
-/** Why a transcript failed, so the plugin can say what to do. */
 export type TranscriptFailure =
 	| 'needs-sideload'
 	| 'not-allowed'
@@ -15,7 +13,6 @@ export type TranscriptFailure =
 	| 'no-speech'
 	| 'failed';
 
-/** A transcript, or why there is none. */
 export type TranscriptResult = { text: string } | { failure: TranscriptFailure; detail?: string };
 
 /**

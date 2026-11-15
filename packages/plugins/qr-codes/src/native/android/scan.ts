@@ -19,7 +19,6 @@ type Java = NativeBridge['java'];
 
 let zxing: ZXingClasses | null | undefined;
 
-// Discord's build inlines the reader's empty constructor, so it is allocated without one; ZXing sets its readers up on first decode.
 function newReader(java: Java, name: string): NativeJavaReference {
 	const unsafe = javaReference(java.getField(java.getClass('sun.misc.Unsafe'), 'theUnsafe'));
 

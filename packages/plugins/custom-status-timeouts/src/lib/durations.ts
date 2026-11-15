@@ -2,7 +2,6 @@ const UNIT_MS = { m: 60_000, h: 3_600_000, d: 86_400_000, w: 604_800_000 } as co
 const MAX_MS = 30 * UNIT_MS.d;
 const ENTRY = /^(\d+)\s*([mhdw])$/;
 
-/** A duration's unit. */
 export type DurationUnit = keyof typeof UNIT_MS;
 
 /**

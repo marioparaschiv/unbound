@@ -1,7 +1,5 @@
-/** A notification's title and body. */
 export type NotificationText = { title: string; body: string };
 
-/** What the text is built from. */
 export type MessageParts = {
 	author: string;
 	channel?: string;

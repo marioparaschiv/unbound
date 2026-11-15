@@ -3,7 +3,6 @@ import type { NativeBridge, NativeObjectHandle } from '@unbound-app/api/native';
 const ALERT_SOUND_BADGE = 7;
 const MARKER = 'unboundLocalNotification';
 
-/** Where a notification leads when tapped. */
 export type NotificationTarget = { channelId: string; guildId?: string; messageId: string };
 
 type ObjC = NativeBridge['objc'];

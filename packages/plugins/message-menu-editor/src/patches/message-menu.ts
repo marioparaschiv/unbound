@@ -44,7 +44,6 @@ function isRow(node: unknown): node is Row {
 function remember(labels: readonly string[]) {
 	const next = withSeen(parseLabels(settings.seen), labels);
 
-	// Writing settings while Discord renders the sheet would update the editor mid-render, so it waits a tick.
 	if (next) setTimeout(() => (settings.seen = formatLabels(next)), 0);
 }
 
@@ -73,7 +72,6 @@ function reorder(result: unknown): unknown {
 		(index) => rows[index],
 	);
 
-	// The rows now all live in the first group; the others are dropped so they draw no empty cards.
 	for (const { group, siblings, index } of rest.toReversed()) {
 		if (siblings) siblings.splice(index, 1);
 		else group.props!.children = [];
