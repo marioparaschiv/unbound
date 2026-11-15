@@ -1,6 +1,7 @@
 rules:
     dangerous-triggers:
         ignore:
+            - dependabot-merge.yml
             - dependabot-title.yml
             - pr-builds-cleanup.yml
             - pr-builds-publish.yml

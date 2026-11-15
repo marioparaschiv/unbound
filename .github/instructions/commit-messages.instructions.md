@@ -22,7 +22,7 @@ Follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/
 | Type       | Use Case                                 |
 | ---------- | ---------------------------------------- |
 | `feat`     | New feature                              |
-| `fix`       | Bug fix                                   |
+| `fix`      | Bug fix                                  |
 | `docs`     | Documentation changes                    |
 | `style`    | Formatting, no logic change              |
 | `refactor` | Code restructuring, no behavior change   |
