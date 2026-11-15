@@ -1,0 +1,181 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "f0bbb014-694f-44b7-826e-e73b2f3cd8d9",
+  "prevIds": [
+    "3f7b8b5c-63f4-42ca-89d8-4dc4a16a006a"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "bot",
+        "star_post"
+      ],
+      "writes": [
+        "s|tbl|bot.star_post",
+        "n|tbl|bot.star_post",
+        "e|tbl|bot.star_post",
+        "n|rel|bot.star_post",
+        "n|type|bot.star_post",
+        "n|rel|bot.star_post_pkey",
+        "n|rel|bot.star_post_message_id_key"
+      ],
+      "reads": [
+        "n|sch|bot"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "name": "star_post",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "star_post",
+        "name": "source_message_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "star_post",
+        "name": "source_channel_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "star_post",
+        "name": "channel_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "star_post",
+        "name": "message_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "star_post",
+        "name": "posted_hash",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "star_post",
+        "name": "posted_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "star_post",
+        "name": "edited_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "star_post",
+        "name": "star_post_pkey",
+        "columns": [
+          "source_message_id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "star_post",
+        "name": "star_post_message_id_key",
+        "nameExplicit": false,
+        "columns": [
+          "message_id"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    }
+  ]
+}
