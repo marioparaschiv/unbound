@@ -40,7 +40,7 @@
 		"@babel/plugin-transform-block-scoping": "^7.29.7",
 		"@babel/plugin-transform-class-properties": "^8.0.1",
 		"@babel/plugin-transform-classes": "^7.29.7",
-		"@babel/plugin-transform-nullish-coalescing-operator": "^7.29.7",
+		"@babel/plugin-transform-nullish-coalescing-operator": "^8.0.1",
 		"@babel/plugin-transform-optional-chaining": "^7.29.7",
 		"@babel/plugin-transform-shorthand-properties": "^7.29.7",
 		"@babel/plugin-transform-template-literals": "^7.29.7",
