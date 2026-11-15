@@ -582,6 +582,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/better-invites": {
+      "name": "better-invites",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/better-plus-reacts": {
       "name": "better-plus-reacts",
       "dependencies": {
@@ -3752,6 +3766,8 @@
     "better-gif-alt-text": ["better-gif-alt-text@workspace:packages/plugins/better-gif-alt-text"],
 
     "better-gif-picker": ["better-gif-picker@workspace:packages/plugins/better-gif-picker"],
+
+    "better-invites": ["better-invites@workspace:packages/plugins/better-invites"],
 
     "better-plus-reacts": ["better-plus-reacts@workspace:packages/plugins/better-plus-reacts"],
 

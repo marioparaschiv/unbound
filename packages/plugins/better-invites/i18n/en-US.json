@@ -1,0 +1,9 @@
+{
+	"FROM_INVITER": "From {name}",
+	"TO_CHANNEL": "#{channel}",
+	"NEVER_EXPIRES": "Never expires",
+	"EXPIRES_IN_MINUTES": "{count, plural, one {Expires in # minute} other {Expires in # minutes}}",
+	"EXPIRES_IN_HOURS": "{count, plural, one {Expires in # hour} other {Expires in # hours}}",
+	"EXPIRES_IN_DAYS": "{count, plural, one {Expires in # day} other {Expires in # days}}",
+	"EXPIRED": "Expired"
+}
