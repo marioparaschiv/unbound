@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AddonKind } from '@unbound-app/types/addons';
 import { ADDON_KINDS } from '@unbound-app/types/addons';
-import { Dimensions, View } from 'react-native';
+import { View } from 'react-native';
 
 import MarketplaceList from '~/ui/marketplace/marketplace-list';
 import useOpenListing from '~/ui/marketplace/use-open-listing';
@@ -9,6 +9,7 @@ import BrowseContext from '~/ui/marketplace/browse-context';
 import FilterButton from '~/ui/marketplace/filter-button';
 import { DEFAULT_FILTERS } from '~/marketplace/filters';
 import FilterChips from '~/ui/marketplace/filter-chips';
+import usePageWidth from '~/ui/hooks/use-page-width';
 import MarketplaceStore from '~/marketplace/state';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
@@ -46,6 +47,7 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 	const catalog = MarketplaceStore((store) => (id ? store.state : undefined));
 	const lastOpened = useRef<string | undefined>(undefined);
 	const openListing = useOpenListing();
+	const page = usePageWidth();
 
 	useEffect(() => {
 		void MarketplaceStore.getState().load();
@@ -63,7 +65,7 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 
 	const state = Discord.useSegmentedControlState({
 		items,
-		pageWidth: Dimensions.get('window').width,
+		pageWidth: page.width,
 		defaultIndex: kind ? ADDON_KINDS.indexOf(kind) : 0,
 		onPageChange: setTab,
 	});
@@ -112,7 +114,7 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 				<FilterChips kind={active} filters={filters} onChange={setFilters} />
 			</View>
 			<BrowseContext.Provider value={browse}>
-				<View style={styles.fill}>
+				<View style={styles.fill} onLayout={page.onLayout}>
 					<Discord.SegmentedControlPages state={state} />
 				</View>
 			</BrowseContext.Provider>

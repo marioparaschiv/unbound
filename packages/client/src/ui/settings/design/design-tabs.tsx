@@ -1,7 +1,8 @@
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useMemo, useState, type ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
 import noop from '@unbound-app/utils/noop';
 
+import usePageWidth from '~/ui/hooks/use-page-width';
 import { Discord } from '~/metro/components';
 import { messages } from '~/i18n/api';
 
@@ -60,7 +61,7 @@ function DesignTabs({ renderPage, initialTab = 'theme', onTabChange = noop }: De
 	const styles = useStyles();
 	const headerHeight = HeaderElements.useHeaderHeight();
 	const [tabsHeight, setTabsHeight] = useState(0);
-	const { width } = useWindowDimensions();
+	const page = usePageWidth();
 
 	const items = useMemo(
 		() =>
@@ -74,7 +75,7 @@ function DesignTabs({ renderPage, initialTab = 'theme', onTabChange = noop }: De
 
 	const state = Discord.useSegmentedControlState({
 		items,
-		pageWidth: width,
+		pageWidth: page.width,
 		defaultIndex: Math.max(
 			TABS.findIndex(({ id }) => id === initialTab),
 			0,
@@ -83,7 +84,7 @@ function DesignTabs({ renderPage, initialTab = 'theme', onTabChange = noop }: De
 	});
 
 	return (
-		<View style={styles.frame}>
+		<View style={styles.frame} onLayout={page.onLayout}>
 			<HeaderElements.HeaderHeightContext.Provider value={headerHeight + tabsHeight}>
 				<View style={StyleSheet.absoluteFill}>
 					<Discord.SegmentedControlPages state={state} />
