@@ -101,7 +101,9 @@ export function debugAltText(
 		...(info.plugins && { plugins: `${info.plugins.enabled}/${info.plugins.installed}` }),
 		...(info.themes && { themes: `${info.themes.enabled}/${info.themes.installed}` }),
 		...(info.launch?.firstRenderMs && { firstRenderMs: String(info.launch.firstRenderMs) }),
-		...(sourceLabel(info.launch) && { bundleSource: sourceLabel(info.launch) }),
+		...(sourceLabel(info.launch, info.bundleBuiltAt, now) && {
+			bundleSource: sourceLabel(info.launch, info.bundleBuiltAt, now),
+		}),
 		...(lastCheckSummary(info.launch, now) && {
 			lastCheck: lastCheckSummary(info.launch, now),
 		}),

@@ -122,23 +122,53 @@ function fittedList(items: string[], room: number): string {
 	return `${first.slice(0, Math.max(0, room - more.length - 1))}…${more}`;
 }
 
+function builtAgo(builtAt: string | undefined, now: Date): string | undefined {
+	const at = builtAt ? Date.parse(builtAt) : Number.NaN;
+
+	if (Number.isNaN(at)) {
+		return undefined;
+	}
+
+	const minutes = Math.max(0, Math.round((now.getTime() - at) / 60_000));
+
+	if (minutes < 60) return `built ${minutes} min ago`;
+
+	const hours = Math.round(minutes / 60);
+
+	return hours < 48 ? `built ${hours} h ago` : `built ${Math.round(hours / 24)} d ago`;
+}
+
 /**
- * @description Names a bundle that did not come from the release channel.
+ * @description Names a bundle that did not come from the release channel, with how long ago a dev bundle was built.
  * @param launch The loader's launch report.
- * @returns `custom`, `dev` or `pr #<n>`, or `undefined` for a release bundle.
+ * @param builtAt When a local dev build of the bundle was made, as an ISO date.
+ * @param now When the report was taken.
+ * @returns `custom`, `dev`, `dev · built 3 min ago` or `pr #<n>`, or `undefined` for a release bundle.
  */
-export function sourceLabel(launch?: DebugCardLaunch): string | undefined {
+export function sourceLabel(
+	launch: DebugCardLaunch | undefined,
+	builtAt?: string,
+	now: Date = new Date(),
+): string | undefined {
 	if (!launch?.source) {
 		return undefined;
 	}
 
-	return launch.source === 'pr' && launch.pullRequest
-		? `pr #${launch.pullRequest}`
-		: launch.source;
+	if (launch.source === 'pr' && launch.pullRequest) {
+		return `pr #${launch.pullRequest}`;
+	}
+
+	const age = launch.source === 'dev' ? builtAgo(builtAt, now) : undefined;
+
+	return age ? `${launch.source} · ${age}` : launch.source;
 }
 
-function sourceNote(launch?: DebugCardLaunch): Span[] {
-	const label = sourceLabel(launch);
+function sourceNote(
+	launch: DebugCardLaunch | undefined,
+	builtAt: string | undefined,
+	now: Date,
+): Span[] {
+	const label = sourceLabel(launch, builtAt, now);
 
 	return label ? [warn(` · ${label}`)] : [];
 }
@@ -206,7 +236,7 @@ function rows(info: DebugInfo, now: Date, context: DebugCardContext): [string, S
 			[
 				value(info.client.replace(/^v/, '')),
 				accent(` @${info.commit}`),
-				...sourceNote(info.launch),
+				...sourceNote(info.launch, info.bundleBuiltAt, now),
 			],
 		],
 		['loader', [value(info.loader), dim(` ${joined([info.loaderOrigin, info.framework])}`)]],
