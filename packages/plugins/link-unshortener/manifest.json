@@ -1,0 +1,17 @@
+{
+	"id": "unbound.link-unshortener",
+	"name": "Link Unshortener",
+	"description": "Shows where a short link like bit.ly or t.co really goes, from the link's long-press menu, before you open it.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "LinkIcon",
+	"main": "index.tsx"
+}

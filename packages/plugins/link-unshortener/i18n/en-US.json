@@ -1,0 +1,9 @@
+{
+	"UNSHORTEN": "Unshorten Link",
+	"REAL_LINK": "Real Link",
+	"OPEN": "Open",
+	"COPY": "Copy",
+	"COPIED": "Copied the link.",
+	"FAILED": "Could not follow this link.",
+	"REDIRECTS": "{count, plural, one {Followed # redirect} other {Followed # redirects}}"
+}
