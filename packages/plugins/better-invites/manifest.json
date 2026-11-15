@@ -1,0 +1,25 @@
+{
+	"id": "unbound.better-invites",
+	"name": "Better Invites",
+	"description": "Shows who sent an invite, which channel it opens and when it expires, right on the invite in chat.",
+	"authors": [
+		{
+			"name": "iamme",
+			"id": "984392761929256980"
+		},
+		{
+			"name": "thororen",
+			"id": "848339671629299742"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "UserPlusIcon",
+	"main": "index.ts"
+}

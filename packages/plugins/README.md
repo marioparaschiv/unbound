@@ -1,6 +1,6 @@
 # Plugins
 
-140 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+141 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -16,6 +16,7 @@
 - <img src="../../assets/plugins/readme-icons/folder-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better Folders](https://unbound.rip/addons/unbound.better-folders): Collapses your other server folders when you open one, and gives closed folders a custom icon or a plain folder icon instead of server icons.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better GIF Alt Text](https://unbound.rip/addons/unbound.better-gif-alt-text): Names GIFs in chat for screen readers by their tags or file name, instead of just 'GIF'.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better GIF Picker](https://unbound.rip/addons/unbound.better-gif-picker): Opens the GIF picker on your favourite GIFs instead of the category grid.
+- <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better Invites](https://unbound.rip/addons/unbound.better-invites): Shows who sent an invite, which channel it opens and when it expires, right on the invite in chat.
 - <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better Plus Reacts](https://unbound.rip/addons/unbound.better-plus-reacts): Lets +:emoji: react to earlier messages too: each extra plus goes one message further back, so ++:fire: reacts to the second-last message.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better Search](https://unbound.rip/addons/unbound.better-search): Adds search filters Discord supports but doesn't offer, such as embedType:, repliedToUserId: and includeNsfw:.
 - <img src="../../assets/plugins/readme-icons/laptop-phone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better Sessions](https://unbound.rip/addons/unbound.better-sessions): Marks new sessions, shows exactly when each was last used and lets you name them, in Settings > Devices.
