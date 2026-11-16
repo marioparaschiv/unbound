@@ -134,12 +134,10 @@ export function patchMediaManager(): void {
 	}
 }
 
-function pointAtGif(source: MediaRecord, gifUrl: string) {
-	source.uri = gifUrl;
-	source.sourceURI = gifUrl;
-	source.contentType = 'image/gif';
-	delete source.videoURI;
-	delete source.isGIFV;
+function asGifSource(source: MediaRecord, gifUrl: string): MediaRecord {
+	const { videoURI: _video, isGIFV: _gifv, ...rest } = source;
+
+	return { ...rest, uri: gifUrl, sourceURI: gifUrl, contentType: 'image/gif' };
 }
 
 function patchShareActions(module: MediaShareActions) {
@@ -148,23 +146,15 @@ function patchShareActions(module: MediaShareActions) {
 
 		if (!isRecord(options) || !isRecord(options.source)) return;
 
-		const { source } = options;
-		const gifUrl = getPreferredGifUrl(source);
+		const gifUrl = getPreferredGifUrl(options.source);
 
-		if (gifUrl) {
-			pointAtGif(source, gifUrl);
-
-			return;
-		}
-
-		void resolveKlipyGifUrl(source).then((resolved) => {
-			if (resolved) pointAtGif(source, resolved);
-		});
+		if (gifUrl) args[0] = { ...options, source: asGifSource(options.source, gifUrl) };
 	});
 }
 
 /**
- * @description Points the media viewer's share and save actions at the GIF instead of its video rendition, patching each copy as Discord loads it.
+ * @description Points the media viewer's share and save actions at the GIF instead of its video rendition, through a copy of the
+ * media so the viewer keeps playing the video. Patches each copy of the module as Discord loads it.
  * Patches `useMediaShareActions` in every copy of the media viewer's share actions module: the loaded ones now, the rest as Discord loads them.
  */
 export function patchMediaShareActions(): void {
