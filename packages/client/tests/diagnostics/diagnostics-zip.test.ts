@@ -5,6 +5,7 @@ const FILES: Record<string, string> = {
 	'Unbound/Logs/unbound.log': 'started\ncontact me@example.com please',
 	'Unbound/Logs/native.1.log': 'native line',
 	'Unbound/native-crash.txt': 'SIGSEGV in Unbound.dylib',
+	'Unbound/Logs/unbound.1.log': `${'old line\n'.repeat(80_000)}newest line`,
 };
 
 mock.module('~/native/fs', () => ({
@@ -36,6 +37,7 @@ test('zips the logs, crash state, report and entitlements that exist', async () 
 		'Entitlements.xml',
 		'debug-info.json',
 		'logs/native.1.log',
+		'logs/unbound.1.log',
 		'logs/unbound.log',
 		'state/native-crash.txt',
 	]);
@@ -48,4 +50,13 @@ test('scrubs secrets from the logs', async () => {
 
 	expect(files['logs/unbound.log']).not.toContain('me@example.com');
 	expect(files['logs/unbound.log']).toContain('started');
+});
+
+test('keeps only the newest part of a long log, cut at a line', async () => {
+	const files = unzip(await buildDiagnosticsZip({ report: {} }));
+	const log = files['logs/unbound.1.log'] ?? '';
+
+	expect(log.length).toBeLessThanOrEqual(512 * 1024);
+	expect(log.endsWith('newest line')).toBe(true);
+	expect(log.startsWith('old line')).toBe(true);
 });

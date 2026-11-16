@@ -35,6 +35,7 @@ const CARD_DIRECTORY = 'Unbound/cache/debug';
 const UPLOAD_ORIGIN_FILE = 1;
 const UPLOAD_PLATFORM_REACT_NATIVE = 0;
 const MAX_CARD_ATTEMPTS = 8;
+const DIAGNOSTICS_TIMEOUT_MS = 45_000;
 
 const CloudUploader = findByProps('CloudUpload');
 const SelectedChannelStore = findStore('SelectedChannel');
@@ -86,6 +87,27 @@ async function uploadFile(channelId: string, file: UploadFile): Promise<CloudUpl
 	return upload.status === 'COMPLETED' ? upload : undefined;
 }
 
+function withinTime<T>(running: Promise<T>, ms: number, what: string): Promise<T | undefined> {
+	return new Promise((resolve) => {
+		const timer = setTimeout(() => {
+			Logger.error(`Failed to attach the debug ${what}: it took over ${ms / 1000} s`);
+			resolve(undefined);
+		}, ms);
+
+		running.then(
+			(value) => {
+				clearTimeout(timer);
+				resolve(value);
+			},
+			(cause: unknown) => {
+				clearTimeout(timer);
+				Logger.error(`Failed to attach the debug ${what}:`, cause);
+				resolve(undefined);
+			},
+		);
+	});
+}
+
 async function uploadDiagnostics(
 	channelId: string,
 	info: DebugInfo,
@@ -97,15 +119,11 @@ async function uploadDiagnostics(
 
 	await fs.writeFile(DIAGNOSTICS_PATH, zip, 'base64');
 
-	try {
-		return await uploadFile(channelId, {
-			path: DIAGNOSTICS_PATH,
-			mimeType: 'application/zip',
-			filename: `unbound-diagnostics-${Date.now()}.zip`,
-		});
-	} finally {
-		await fs.removeFile(DIAGNOSTICS_PATH).catch(() => false);
-	}
+	return uploadFile(channelId, {
+		path: DIAGNOSTICS_PATH,
+		mimeType: 'application/zip',
+		filename: `unbound-diagnostics-${Date.now()}.zip`,
+	});
 }
 
 function requiredOnly(info: DebugInfo): DebugInfo {
@@ -232,6 +250,7 @@ export async function sendDebugReport(
 		return await sendWithCard(target, info, cardPath, message, textReport, options);
 	} finally {
 		await fs.removeFile(cardPath).catch(() => false);
+		await fs.removeFile(DIAGNOSTICS_PATH).catch(() => false);
 	}
 }
 
@@ -245,7 +264,7 @@ async function sendWithCard(
 ): Promise<string | undefined> {
 	const card = await uploadQuietly('card', () => uploadCard(target, info, cardPath));
 	const diagnosticsZip = diagnostics
-		? await uploadQuietly('diagnostics', () => uploadDiagnostics(target, info))
+		? await withinTime(uploadDiagnostics(target, info), DIAGNOSTICS_TIMEOUT_MS, 'diagnostics')
 		: undefined;
 	const attachments = [card, diagnosticsZip].filter((upload): upload is CloudUpload =>
 		Boolean(upload),
