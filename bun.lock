@@ -2383,6 +2383,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/slowmode-queue": {
+      "name": "slowmode-queue",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/smart-paste": {
       "name": "smart-paste",
       "dependencies": {
@@ -5681,6 +5695,8 @@
     "skin-tone": ["skin-tone@2.0.0", "", { "dependencies": { "unicode-emoji-modifier-base": "^1.0.0" } }, "sha512-kUMbT1oBJCpgrnKoSr0o6wPtvRWT9W9UKvGLwfJYO2WuahZRHOpEyL1ckyMGgMWh0UdpmaoFqKKD29WTomNEGA=="],
 
     "slice-ansi": ["slice-ansi@10.0.1", "", { "dependencies": { "ansi-styles": "^7.0.0", "string-width": "^8.3.0" } }, "sha512-CJKEH3zwVX4bOnE+bFbmh+JK/YMT9VAazqBsVBTesnYKXlNtz6oVmrhNp1jHrxHzscuUkWiKZpzNzFraZcrorg=="],
+
+    "slowmode-queue": ["slowmode-queue@workspace:packages/plugins/slowmode-queue"],
 
     "smart-paste": ["smart-paste@workspace:packages/plugins/smart-paste"],
 
