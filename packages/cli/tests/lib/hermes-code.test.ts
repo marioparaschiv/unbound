@@ -13,9 +13,26 @@ describe('lowerForHermes', () => {
 		expect(runInNewContext(code)).toBe('1,2,3');
 	});
 
-	test('keeps the value of the last expression and top-level await', () => {
+	test('keeps the value of the last expression', () => {
 		expect(lowerForHermes('let total = 1; total + 1')).toBe('var total = 1;total + 1;');
-		expect(lowerForHermes('const value = await Promise.resolve(1); value')).toContain('await');
+	});
+
+	test('runs top-level await in an async function that returns the last expression', async () => {
+		const code = lowerForHermes('const value = await Promise.resolve(41); value + 1');
+
+		expect(await runInNewContext(code, { Promise })).toBe(42);
+	});
+
+	test('leaves await inside functions alone', () => {
+		const code = 'const load = async () => await 1; 2';
+
+		expect(lowerForHermes(code)).toBe('var load = async () => await 1;2;');
+	});
+
+	test('wraps a top-level for await loop', async () => {
+		const code = lowerForHermes('let sum = 0; for await (const x of [1, 2]) sum += x; sum');
+
+		expect(await runInNewContext(code, { Promise })).toBe(3);
 	});
 
 	test('passes code that does not parse through unchanged', () => {
