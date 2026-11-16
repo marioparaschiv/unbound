@@ -90,7 +90,7 @@ const client = new SapphireClient({
 		// The `/debug` help waits for a reaction once the asker opens their DMs.
 		GatewayIntentBits.GuildMessageReactions,
 		GatewayIntentBits.Guilds,
-		// Emoji created and deleted, for the server log.
+		// Keeps the server's emojis cached, so the starboard can tell its own emojis from foreign ones.
 		GatewayIntentBits.GuildExpressions,
 		// Voice channel joins, leaves and moves, for the server log.
 		GatewayIntentBits.GuildVoiceStates,
