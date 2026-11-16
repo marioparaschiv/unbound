@@ -1,14 +1,14 @@
 {
 	"id": "unbound.new-member-sprout",
 	"name": "New Member Sprout",
-	"description": "Shows a sprout beside the names of people who joined the server in the last week, like Discord's desktop app.",
+	"description": "Shows desktop's new member sprout beside people who joined the server in the last week, with its tooltip.",
 	"authors": [
 		{
 			"name": "adrian",
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"unbound": {
 		"min": "3.0.0"
 	},

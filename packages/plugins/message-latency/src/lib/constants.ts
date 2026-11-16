@@ -34,14 +34,6 @@ export const FILL_TOKENS: Record<LatencyColor, string> = {
 	warning: 'STATUS_WARNING',
 };
 
-export const Tooltip = {
-	maxWidth: 250,
-	arrowHeight: 8,
-	anchorGap: 3,
-	fontSize: 13,
-	duration: 3000,
-};
-
 // NSLayoutAttribute and NSLayoutRelation values from UIKit.
 export const LayoutAttribute = {
 	NotAnAttribute: 0,
