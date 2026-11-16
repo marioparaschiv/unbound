@@ -1,0 +1,22 @@
+{
+	"MAKE_GIF": "Make GIF",
+	"TITLE": "Make a GIF",
+	"START": "Start (seconds)",
+	"LENGTH": "Length (seconds)",
+	"SIZE": "Size",
+	"SIZE_SMALL": "Small",
+	"SIZE_MEDIUM": "Medium",
+	"SIZE_LARGE": "Large",
+	"CROP": "Crop",
+	"CROP_ORIGINAL": "Original",
+	"CROP_SQUARE": "Square",
+	"CAPTION": "Caption",
+	"CAPTION_PLACEHOLDER": "Optional text along the bottom",
+	"CREATE": "Make GIF",
+	"DOWNLOADING": "Downloading the video…",
+	"FRAMES": "Frame {done} of {total}",
+	"ENCODING": "Encoding the GIF…",
+	"ATTACHED": "GIF attached to your message.",
+	"FAILED": "Couldn't make a GIF from this video.",
+	"TOO_LONG": "GIFs are limited to {seconds} seconds."
+}

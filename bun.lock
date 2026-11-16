@@ -1197,6 +1197,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/gif-maker": {
+      "name": "gif-maker",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/gif-paste": {
       "name": "gif-paste",
       "dependencies": {
@@ -4563,6 +4577,8 @@
     "get-tsconfig": ["get-tsconfig@4.14.3", "", { "dependencies": { "resolve-pkg-maps": "^1.0.0" } }, "sha512-++QEw4DIY7WGoukz+/+A/8dGYPT9l9yIadnmSgZ8Rjr3YVSVDipQSO9CdnJo9ePqFqUUqh+wk9uIaoiAwsiPkA=="],
 
     "gif-collections": ["gif-collections@workspace:packages/plugins/gif-collections"],
+
+    "gif-maker": ["gif-maker@workspace:packages/plugins/gif-maker"],
 
     "gif-paste": ["gif-paste@workspace:packages/plugins/gif-paste"],
 

@@ -1,4 +1,5 @@
 import { patchChatInputButton } from '@unbound-plugins/shared/composer/input-button';
+import { attachFile } from '@unbound-plugins/shared/composer/attach-file';
 import { dialogs, metro, toasts } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
 
@@ -10,7 +11,6 @@ import {
 	singleLink,
 	type PasteFormat,
 } from '~/lib/paste-formats';
-import { attachText } from '~/lib/attach-text';
 
 type ChatInput = { insertText?: (text: string) => void };
 
@@ -36,12 +36,13 @@ function insert(channelId: string, text: string) {
 
 async function paste(channelId: string, format: PasteFormat, text: string, folder: string) {
 	if (format === 'file') {
-		const attached = await attachText(channelId, text, {
+		const attached = await attachFile(channelId, text, {
 			folder,
 			filename: messages.FILE_NAME,
+			mimeType: 'text/plain',
 		}).catch(() => false);
 
-		if (!attached) toasts.error('FILE_FAILED');
+		if (!attached) toasts.warning('FILE_FAILED');
 
 		return;
 	}
