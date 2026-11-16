@@ -1,6 +1,7 @@
 import type { RoleColorStyle } from '@unbound-plugins/shared/colors/role-colors';
 import type {
 	NativeClassHandle,
+	NativeHookToken,
 	NativeObjCBridge,
 	NativeObjectHandle,
 	NativeUIScope,
@@ -24,6 +25,15 @@ const SHEEN_TO = [0.6, 0.7, 0.8, 0.9, 1];
 const MAX_COLORS = 256;
 const MAX_UNMATCHED = 128;
 const SWEEP_INTERVAL_MS = 500;
+const FOLLOWED_SELECTORS = [
+	'setFrame:',
+	'setBounds:',
+	'setCenter:',
+	'setHidden:',
+	'setAlpha:',
+] as const;
+const VISIBLE_ALPHA = 0.01;
+const GRADIENT_LAYER_NAME = 'unbound.more-user-tags.gradient';
 
 export type TagAppearance = {
 	colors: string[];
@@ -59,6 +69,7 @@ type TagRecord = {
 	signature: string;
 	originalBackground: NativeObjectHandle | null;
 	originalOpaque: boolean;
+	follows: NativeHookToken[];
 };
 
 type TagState = {
@@ -369,8 +380,13 @@ function fit(current: TagState, record: TagRecord) {
 	const labelLayer = objc.invoke(record.label, 'layer', []) as NativeObjectHandle;
 	const radius = Number(objc.invoke(labelLayer, 'cornerRadius', []));
 
+	const hidden =
+		Boolean(objc.invoke(record.label, 'isHidden', [])) ||
+		Number(objc.invoke(record.label, 'alpha', [])) < VISIBLE_ALPHA;
+
 	objc.invoke(record.layer, 'setFrame:', [objc.invoke(record.label, 'frame', [])]);
 	objc.invoke(record.layer, 'setCornerRadius:', [radius]);
+	objc.invoke(record.layer, 'setHidden:', [hidden]);
 
 	if (record.sheen) {
 		objc.invoke(record.sheen, 'setFrame:', [objc.invoke(record.layer, 'bounds', [])]);
@@ -443,6 +459,11 @@ function removeRecord(current: TagState, id: string, record: TagRecord) {
 	const { objc } = current;
 
 	current.records.delete(id);
+
+	for (const follow of record.follows) {
+		follow.remove();
+	}
+
 	objc.invoke(record.layer, 'removeFromSuperlayer', []);
 
 	const background = objc.invoke(
@@ -458,6 +479,32 @@ function removeRecord(current: TagState, id: string, record: TagRecord) {
 	if (!objc.invoke(record.label, 'isOpaque', [])) {
 		objc.invoke(record.label, 'setOpaque:', [record.originalOpaque]);
 	}
+}
+
+function followLabel(current: TagState, record: TagRecord): NativeHookToken[] {
+	'worklet';
+	const follow = () => {
+		try {
+			fit(current, record);
+		} catch (error) {
+			console.error(`[More User Tags] ${String(error)}`);
+		}
+	};
+
+	return FOLLOWED_SELECTORS.flatMap((selector) => {
+		try {
+			return [
+				current.objc.hook(
+					LABEL_CLASS,
+					selector,
+					{ after: follow },
+					{ instance: record.label },
+				),
+			];
+		} catch {
+			return [];
+		}
+	});
 }
 
 function createRecord(
@@ -488,9 +535,12 @@ function createRecord(
 		signature: '',
 		originalBackground: objc.invoke(label, 'backgroundColor', []) as NativeObjectHandle | null,
 		originalOpaque: Boolean(objc.invoke(label, 'isOpaque', [])),
+		follows: [],
 	};
 
+	objc.invoke(layer, 'setName:', [GRADIENT_LAYER_NAME]);
 	objc.invoke(parentLayer, 'insertSublayer:below:', [layer, objc.invoke(label, 'layer', [])]);
+	record.follows = followLabel(current, record);
 
 	return record;
 }
@@ -600,6 +650,25 @@ function isInTagView(current: TagState, label: NativeObjectHandle): boolean {
 	);
 }
 
+function removeOrphanLayers(current: TagState, view: NativeObjectHandle) {
+	'worklet';
+	const { objc } = current;
+	const layer = objc.invoke(view, 'layer', []) as NativeObjectHandle | null;
+	const sublayers = layer ? objc.invoke(layer, 'sublayers', []) : null;
+	const owned = new Set<string>();
+
+	current.records.forEach((record) => owned.add(keyOf(objc, record.layer)));
+
+	for (const sublayer of Array.isArray(sublayers) ? (sublayers as NativeObjectHandle[]) : []) {
+		if (
+			objc.invoke(sublayer, 'name', []) === GRADIENT_LAYER_NAME &&
+			!owned.has(keyOf(objc, sublayer))
+		) {
+			objc.invoke(sublayer, 'removeFromSuperlayer', []);
+		}
+	}
+}
+
 function updateTagView(current: TagState, view: NativeObjectHandle) {
 	'worklet';
 	sweepDetached(current);
@@ -616,6 +685,8 @@ function updateTagView(current: TagState, view: NativeObjectHandle) {
 			updateLabel(current, child as NativeObjectHandle);
 		}
 	}
+
+	removeOrphanLayers(current, view);
 }
 
 function clearReusedCell(current: TagState, cell: NativeObjectHandle) {

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.9] - 2026-11-16
+
+### Fixed
+
+- On iOS, tags no longer show a block of another tag's color beside them. Gradients left behind in a reused tag are removed, and each gradient now moves, hides and fades with its tag.
+
 ## [1.3.8] - 2026-11-14
 
 ### Fixed
