@@ -238,17 +238,14 @@ static std::optional<std::string> addonName(const std::string &line)
 std::string nativeCrashHeadline(const std::string &stack)
 {
     std::vector<std::string> lines = linesOf(stack);
-    if (!lines.empty() && lines.front().starts_with("ANR "))
-    {
-        return "ANR (not responding)";
-    }
-
-    if (lines.empty() || !lines.front().starts_with("Signal "))
+    bool anr                       = !lines.empty() && lines.front().starts_with("ANR ");
+    if (!anr && (lines.empty() || !lines.front().starts_with("Signal ")))
     {
         return "";
     }
 
-    std::string headline = signalName(std::atoi(lines.front().c_str() + 7));
+    std::string headline =
+        anr ? "ANR (not responding)" : signalName(std::atoi(lines.front().c_str() + 7));
     for (size_t index = 1; index < lines.size(); index++)
     {
         if (std::optional<std::string> name = addonName(lines[index]))

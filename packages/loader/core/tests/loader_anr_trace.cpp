@@ -37,6 +37,15 @@ void readsTheMainThreadOfAnAnrTrace()
     assert(loader::nativeCrashHeadline(*stack) == "ANR (not responding)");
 }
 
+void namesTheAddonThatBlockedTheMainThread()
+{
+    std::optional<std::string> stack =
+        loader::anrTraceStack(kTrace, R"({"id":"chat-bubbles","name":"Chat Bubbles"})");
+    assert(stack);
+    assert(loader::nativeCrashHeadline(*stack) == "ANR (not responding) in Chat Bubbles");
+    assert(loader::describeNativeCrash(*stack).find("Addon Chat Bubbles\n") != std::string::npos);
+}
+
 void ignoresATraceWithoutAMainThread()
 {
     assert(!loader::anrTraceStack(
@@ -48,6 +57,7 @@ void ignoresATraceWithoutAMainThread()
 int main()
 {
     readsTheMainThreadOfAnAnrTrace();
+    namesTheAddonThatBlockedTheMainThread();
     ignoresATraceWithoutAMainThread();
     return 0;
 }
