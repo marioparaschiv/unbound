@@ -2,6 +2,7 @@ import type { GuildMember, PartialGuildMember } from 'discord.js';
 import { Events, Listener } from '@sapphire/framework';
 import { ApplyOptions } from '@sapphire/decorators';
 
+import { field, fieldBelow } from '~/lib/post-fields';
 import { COLOURS } from '~/lib/constants';
 import { stamp } from '~/lib/mod-case';
 
@@ -21,11 +22,12 @@ export class LogMemberRemoveListener extends Listener<typeof Events.GuildMemberR
 		await serverLog.post({
 			kind: 'joins',
 			title: 'Member Left',
+			icon: 'memberLeft',
 			colour: COLOURS.warning,
 			user: { id: member.id, name: member.user.username },
 			lines: [
-				member.joinedAt ? `Joined ${stamp(member.joinedAt, 'R')}` : '',
-				roles.length ? `**Roles:** ${roles.join(' ')}` : '',
+				member.joinedAt ? field('Joined', stamp(member.joinedAt, 'R')) : '',
+				roles.length ? fieldBelow('Roles', roles.join(' ')) : '',
 			],
 		});
 	}
