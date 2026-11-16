@@ -14,6 +14,7 @@ import { SafeArea } from '~/metro/components';
 import { Manager } from '~/addons/manager';
 import { show } from '~/toasts/api';
 
+import useInstalledRevision from './use-installed-revision';
 import MarketplaceSkeleton from './marketplace-skeleton';
 import MarketplaceCard from './marketplace-card';
 import useStyles from './marketplace-list.style';
@@ -46,7 +47,12 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 	const [now] = useState(Date.now);
 	const [pageReady, setPageReady] = useState(false);
 
+	const installs = useInstalledRevision(kind);
 	const browsing = !search.trim() && countActiveFilters(filters) === 0;
+
+	function isInstalled(addon: ListedAddon) {
+		return Manager.for(kind).getInstalledVersion(addon) !== undefined;
+	}
 
 	const addons = useMemo(() => {
 		if (state.status !== 'ready') {
@@ -59,8 +65,8 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 			sort: filters.sort,
 		});
 
-		return filterCatalog(found, filters, now);
-	}, [state, kind, search, filters, now]);
+		return filterCatalog(found, filters, now, isInstalled);
+	}, [state, kind, search, filters, now, installs]);
 
 	const featured = useMemo(
 		() =>
