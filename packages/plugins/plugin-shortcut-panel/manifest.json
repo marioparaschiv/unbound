@@ -1,0 +1,17 @@
+{
+	"id": "unbound.plugin-shortcut-panel",
+	"name": "Plugin Shortcut Panel",
+	"description": "Adds a shortcuts button to the chat input that opens your pinned plugin toggles and plugin commands in one compact panel.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "AppsIcon",
+	"main": "index.tsx"
+}
