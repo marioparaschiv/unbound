@@ -1,6 +1,6 @@
 # Plugins
 
-173 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+174 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -84,6 +84,7 @@
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Last Message Date](https://unbound.rip/addons/unbound.last-message-date): Shows when someone last sent a message in this server or your DMs, on their profile.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Link Unshortener](https://unbound.rip/addons/unbound.link-unshortener): Shows where a short link like bit.ly or t.co really goes, from the link's long-press menu, before you open it.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Live Markdown](https://unbound.rip/addons/unbound.live-markdown): Shows markdown as you type it in the message box: bold, italics, underline, strikethrough, code, spoilers, headings and quotes.
+- <img src="../../assets/plugins/readme-icons/camera-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Live Photo Sender](https://unbound.rip/addons/unbound.live-photo-sender): Lets you send a Live Photo as a still image, its video, or a GIF. iOS only.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Live Text](https://unbound.rip/addons/unbound.live-text): Reads the text in pictures from the image viewer's menu, so you can select and copy it. iOS only.
 - <img src="../../assets/plugins/readme-icons/bell-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Local Notifications](https://unbound.rip/addons/unbound.local-notifications): Notifies you of mentions and DMs on installs where Discord's push notifications do not arrive, by keeping Discord connected in the background. iOS only.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Masked Link Paste](https://unbound.rip/addons/unbound.masked-link-paste): Pasting a link over selected text in the message box turns it into a masked link, like [text](link).
