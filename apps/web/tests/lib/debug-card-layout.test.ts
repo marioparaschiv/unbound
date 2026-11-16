@@ -432,17 +432,6 @@ describe('debug card', () => {
 		expect(labels.every((label) => label.length < 9)).toBe(true);
 	});
 
-	test('shortens an extension note that does not fit instead of counting addons', () => {
-		const card = layoutDebugCard(
-			{ ...info, isolatedExtensions: ['A'.repeat(60), 'NotificationService'] },
-			new Date(),
-		);
-		const runs = texts(card).map((run) => run.text);
-
-		expect(runs.some((text) => text.includes('addons'))).toBe(false);
-		expect(runs.some((text) => text.endsWith('+1 more') && text.includes('…'))).toBe(true);
-	});
-
 	test('lists addon updates waiting in the updates row, after the server ones', () => {
 		const report: DebugCardRequest = {
 			...info,

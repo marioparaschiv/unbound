@@ -109,14 +109,26 @@ function supportSpans(support?: DiscordSupport): Span[] {
 	return support ? [dim(' · '), { text: support, color: SUPPORT_COLORS[support] }] : [];
 }
 
-function fittedList(items: string[], room: number): string {
-	for (let shown = items.length; shown > 0; shown--) {
-		const more = items.length - shown;
-		const text = joined([...items.slice(0, shown), more ? `+${more} more` : undefined]);
+function withCounter(shown: string[], total: number): string {
+	const more = total - shown.length;
 
-		if (text.length <= room) {
-			return text;
+	return joined([...shown, more ? `+${more} more` : undefined]);
+}
+
+function fittedList(items: string[], room: number): string {
+	const shown: string[] = [];
+
+	for (const item of items) {
+		const unseen = items.length - shown.length - 1;
+		const candidate = joined([...shown, item, unseen ? `+${unseen} more` : undefined]);
+
+		if (candidate.length <= room) {
+			shown.push(item);
 		}
+	}
+
+	if (shown.length) {
+		return withCounter(shown, items.length);
 	}
 
 	const more = items.length > 1 ? ` · +${items.length - 1} more` : '';
