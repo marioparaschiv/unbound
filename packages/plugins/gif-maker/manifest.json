@@ -1,0 +1,17 @@
+{
+	"id": "unbound.gif-maker",
+	"name": "GIF Maker",
+	"description": "Turns part of a video in chat into a GIF, cropped and captioned as you like, and attaches it to your message.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "GifIcon",
+	"main": "index.tsx"
+}

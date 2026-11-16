@@ -1,6 +1,6 @@
 # Plugins
 
-163 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+164 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -60,6 +60,7 @@
 - <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Friend Invites](https://unbound.rip/addons/unbound.friend-invites): Creates, lists and revokes your friend invite links with the /friend-invites command.
 - <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Friends Since](https://unbound.rip/addons/unbound.friends-since): Shows the date you became friends with someone on their profile.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Collections](https://unbound.rip/addons/unbound.gif-collections): Sort GIFs into your own collections and open them from the GIF picker.
+- <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Maker](https://unbound.rip/addons/unbound.gif-maker): Turns part of a video in chat into a GIF, cropped and captioned as you like, and attaches it to your message.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Paste](https://unbound.rip/addons/unbound.gif-paste): Makes GIF picker selections paste a link into the chat box instead of sending immediately.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Provider Switcher](https://unbound.rip/addons/unbound.gif-provider-switcher): Search GIFs from Tenor or Giphy instead of Klipy, and switch providers right from the GIF picker.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Greentext](https://unbound.rip/addons/unbound.greentext): Shows lines that start with > in green, like on imageboards.
