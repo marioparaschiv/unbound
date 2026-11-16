@@ -24,6 +24,7 @@
 #include "LoaderLaunchReport.h"
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
+#include "LoaderLogcat.h"
 #include "LoaderPreferences.h"
 #include "LoaderStallMarker.h"
 #include "LoaderStrings.h"
@@ -62,6 +63,11 @@ static void writeLog(loader::LogLevel level, const std::string &category,
     __android_log_write(androidPriority(level), "Unbound",
                         loader::formatLogLine(category, message).c_str());
     loader::appendLogFile(level, category, message);
+}
+
+static void writeSystemLog(loader::LogLevel level, const std::string &line)
+{
+    __android_log_write(androidPriority(level), loader::kLoaderLogcatTag, line.c_str());
 }
 
 static void nativeLog(JNIEnv *env, jclass, jint level, jstring category, jstring message)
@@ -645,6 +651,7 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
 {
     setJavaVM(vm);
     loader::setLogSink(writeLog);
+    loader::setSystemLogSink(writeSystemLog);
 
     JNIEnv *env = nullptr;
     if (vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) != JNI_OK)

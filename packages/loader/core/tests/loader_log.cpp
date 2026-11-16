@@ -1,5 +1,6 @@
 #include <cassert>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "LoaderLog.h"
@@ -50,5 +51,22 @@ int main()
     loader::setLogSink(nullptr);
     loader::log(loader::LogLevel::Info, LOG_CATEGORY_DEFAULT, "dropped");
     assert(entries.size() == 2);
+
+    assert(loader::scopedLogLine({"Plugins", "Petpet"}, "Ready.") == "[Plugins/Petpet] Ready.");
+    assert(loader::scopedLogLine({}, "Bare.") == "Bare.");
+
+    std::vector<std::pair<loader::LogLevel, std::string>> systemLines;
+    loader::setSystemLogSink([&](loader::LogLevel level, const std::string &line) {
+        systemLines.emplace_back(level, line);
+    });
+    loader::writeSystemLog(loader::LogLevel::Error, "[Plugins/Petpet] Failed.");
+    assert(systemLines.size() == 1);
+    assert(systemLines[0].first == loader::LogLevel::Error);
+    assert(systemLines[0].second == "[Plugins/Petpet] Failed.");
+    assert(entries.size() == 2);
+
+    loader::setSystemLogSink(nullptr);
+    loader::writeSystemLog(loader::LogLevel::Info, "dropped");
+    assert(systemLines.size() == 1);
     return 0;
 }

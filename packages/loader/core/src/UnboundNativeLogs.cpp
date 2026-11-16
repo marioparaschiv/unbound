@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "LoaderJSIJSON.h"
+#include "LoaderLog.h"
 #include "LoaderLogFile.h"
 #include "LoaderLogStream.h"
 #include "NativePluginRuntime.h"
@@ -119,8 +120,11 @@ static jsi::Function logFunction(jsi::Runtime &runtime)
                 throw jsi::JSError(rt, "log expects debug, info, warn or error");
             }
 
-            appendLogEntry({logNow(), LogSource::Unbound, *level, scopeArgument(rt, args[1]),
-                            args[2].getString(rt).utf8(rt)});
+            std::vector<std::string> scope = scopeArgument(rt, args[1]);
+            std::string message            = args[2].getString(rt).utf8(rt);
+            writeSystemLog(*level, scopedLogLine(scope, message));
+            appendLogEntry(
+                {logNow(), LogSource::Unbound, *level, std::move(scope), std::move(message)});
             return jsi::Value::undefined();
         });
 }
