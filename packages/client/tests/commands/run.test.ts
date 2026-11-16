@@ -21,18 +21,21 @@ type Harness = {
 	ephemeral: EphemeralReply[];
 	actions: AutocompleteAction[];
 	errors: unknown[];
+	thinking: string[];
 };
 
 function harness(): Harness {
 	const ephemeral: EphemeralReply[] = [];
 	const actions: AutocompleteAction[] = [];
 	const errors: unknown[] = [];
+	const thinking: string[] = [];
 	let nonce = 0;
 
 	return {
 		ephemeral,
 		actions,
 		errors,
+		thinking,
 		effects: {
 			resolvers: {
 				user: (id) => (id === mario.id ? mario : undefined),
@@ -40,6 +43,11 @@ function harness(): Harness {
 				role: () => undefined,
 			},
 			showEphemeral: (_, reply) => ephemeral.push(reply),
+			showThinking: (_, __, name) => {
+				thinking.push(`show ${name}`);
+
+				return () => thinking.push(`hide ${name}`);
+			},
 			dispatch: (action) => actions.push(action),
 			nonce: () => String(++nonce),
 			reportError: (_, error) => errors.push(error),
@@ -69,6 +77,30 @@ function greet(execute: (args: ErasedArgs) => Reply | Promise<Reply>): ErasedTre
 }
 
 describe('createExecute', () => {
+	test('shows that a slow command is thinking until it replies', async () => {
+		const { effects, thinking } = harness();
+		const execute = command(
+			greet(() => new Promise<Reply>((resolve) => setTimeout(() => resolve('hi'), 450))),
+			effects,
+		);
+
+		await execute([{ type: 6, name: 'user', value: '1' }], context);
+
+		expect(thinking).toEqual(['show greet', 'hide greet']);
+	});
+
+	test('shows nothing while a quick command runs', async () => {
+		const { effects, thinking } = harness();
+		const execute = command(
+			greet(() => 'hi'),
+			effects,
+		);
+
+		await execute([{ type: 6, name: 'user', value: '1' }], context);
+
+		expect(thinking).toEqual([]);
+	});
+
 	test('passes parsed args to the handler', async () => {
 		const { effects } = harness();
 		let received: ErasedArgs | undefined;

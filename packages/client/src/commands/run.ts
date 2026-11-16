@@ -69,6 +69,8 @@ export type CommandEffects = {
 	resolvers: Resolvers;
 	/** Shows a bot message only the user sees. */
 	showEphemeral(channelId: string, reply: EphemeralReply, section: Section): void;
+	/** Shows that a command is still working, as Discord shows a deferred interaction, until the returned function removes it. */
+	showThinking(channelId: string, section: Section, name: string): () => void;
 	dispatch(action: AutocompleteAction): void;
 	nonce(): string;
 	// UNKNOWN: whatever an author's handler threw.
@@ -78,6 +80,21 @@ export type CommandEffects = {
 type ParsedArgs = { ok: true; args: ErasedArgs } | { ok: false; message: string };
 
 const MAX_SUGGESTIONS = 25;
+const THINKING_DELAY_MS = 300;
+
+async function withThinking<T>(running: Promise<T>, show: () => () => void): Promise<T> {
+	let hide: (() => void) | undefined;
+	const timer = setTimeout(() => {
+		hide = show();
+	}, THINKING_DELAY_MS);
+
+	try {
+		return await running;
+	} finally {
+		clearTimeout(timer);
+		hide?.();
+	}
+}
 
 /**
  * @description Builds the `execute` Discord calls for one record. An autocomplete call answers suggestions
@@ -122,7 +139,13 @@ export function createExecute(record: CommandRecord, effects: CommandEffects): D
 				return;
 			}
 
-			return route(await record.execute(parsed.args, context), record, context, effects);
+			const reply = await withThinking(
+				Promise.resolve(record.execute(parsed.args, context)),
+				() =>
+					effects.showThinking(context.channel.id, record.section, record.path.join(' ')),
+			);
+
+			return route(reply, record, context, effects);
 		} catch (error) {
 			fail(record, error, context, effects);
 		}
