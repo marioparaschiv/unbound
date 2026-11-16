@@ -528,10 +528,11 @@ function truncatedLayout(
 	objc: NativeObjCBridge,
 	layout: NativeObjectHandle,
 	width: number,
+	replacement?: NativeObjectHandle,
 ): NativeObjectHandle | null {
 	'worklet';
 	const container = objc.invoke(layout, 'container', []) as NativeObjectHandle;
-	const text = objc.invoke(layout, 'text', []) as NativeObjectHandle;
+	const text = replacement ?? (objc.invoke(layout, 'text', []) as NativeObjectHandle);
 	const resized = objc.invoke(container, 'copy', []) as NativeObjectHandle;
 	const token = ellipsisLike(objc, text);
 	const LayoutClass = objc.getClass(
@@ -559,6 +560,70 @@ function truncatedLayout(
 	) as NativeObjectHandle | null;
 }
 
+function readRange(raw: unknown): { location: number; length: number } {
+	'worklet';
+	const boxed = raw as {
+		value?: { location?: number; length?: number };
+		location?: number;
+		length?: number;
+	} | null;
+	const value = boxed?.value ?? boxed;
+
+	return { location: Number(value?.location ?? 0), length: Number(value?.length ?? 0) };
+}
+
+function isolateStartAround(plain: string, index: number): number | undefined {
+	'worklet';
+	const opens: number[] = [];
+
+	for (let position = 0; position < plain.length; position++) {
+		const code = plain.charCodeAt(position);
+
+		if (ISOLATE_STARTS.includes(code)) {
+			opens.push(position);
+		} else if (code === POP_ISOLATE) {
+			const open = opens.pop();
+
+			if (open !== undefined && !opens.length && open < index && position >= index) {
+				return open;
+			}
+		}
+	}
+
+	return undefined;
+}
+
+function cutBeforeIsolate(
+	objc: NativeObjCBridge,
+	layout: NativeObjectHandle,
+	fitted: NativeObjectHandle,
+	width: number,
+): NativeObjectHandle {
+	'worklet';
+	const text = objc.invoke(layout, 'text', []) as NativeObjectHandle;
+	const string = objc.call(text, 'string');
+	const plain = typeof string === 'string' ? string : '';
+	const visible = readRange(objc.invoke(fitted, 'visibleRange', []));
+	const end = visible.location + visible.length;
+	const start = end < plain.length ? isolateStartAround(plain, end) : undefined;
+	const token = start === undefined ? null : ellipsisLike(objc, text);
+
+	if (start === undefined || !token) return fitted;
+
+	const kept = objc.invoke(text, 'attributedSubstringFromRange:', [
+		objc.struct('NSRange', { location: 0, length: start }),
+	]) as NativeObjectHandle | null;
+	const trimmed = kept
+		? (objc.invoke(kept, 'mutableCopy', []) as NativeObjectHandle | null)
+		: null;
+
+	if (!trimmed) return fitted;
+
+	objc.invoke(trimmed, 'appendAttributedString:', [token]);
+
+	return truncatedLayout(objc, layout, width, trimmed) ?? fitted;
+}
+
 function fittedLayout(
 	objc: NativeObjCBridge,
 	layout: NativeObjectHandle,
@@ -583,7 +648,7 @@ function fittedLayout(
 		fitted = truncatedLayout(objc, layout, room);
 	}
 
-	return fitted;
+	return fitted ? cutBeforeIsolate(objc, layout, fitted, width) : null;
 }
 
 function previewWidths(): Map<string, number> {

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.19] - 2026-11-16
+
+### Fixed
+
+- On iOS, a quoted reply cut off at a channel mention now ends with an ellipsis before the mention, instead of a stray dot.
+
 ## [1.6.18] - 2026-11-16
 
 ### Fixed
