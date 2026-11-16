@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.12] - 2026-11-16
+
+### Fixed
+
+- On Android the tooltip no longer wraps its last word onto a line it cuts off.
+
 ## [1.2.11] - 2026-11-15
 
 ### Fixed

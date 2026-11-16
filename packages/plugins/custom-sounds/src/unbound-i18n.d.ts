@@ -5,7 +5,7 @@ declare module '@unbound-app/i18n' {
 	export type Messages = {
 		/** Replace Discord's sounds */
 		readonly REPLACE_SECTION: string;
-		/** Play another of Discord's sounds or a file from a link instead. A link plays an mp3, m4a, wav or ogg file up to 5 MB. */
+		/** Play another of Discord's sounds or a file from a link instead. A link plays an mp3, m4a or wav file up to 5 MB; ogg works on Android only. */
 		readonly REPLACE_SECTION_SUBTITLE: string;
 		/** Discord's own */
 		readonly CHOICE_DEFAULT: string;

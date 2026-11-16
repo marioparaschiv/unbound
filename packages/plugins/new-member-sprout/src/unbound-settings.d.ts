@@ -132,12 +132,6 @@ declare module '@unbound-app/settings' {
 	/** The plugin's settings: reads apply defaults, and writes are validated and saved to its Bucket. */
 	export type Settings = {
 		/**
-		 * Days counted as new
-		 *
-		 * How long after joining a server someone keeps the sprout. Discord's desktop app uses 7.
-		 */
-		days: number;
-		/**
 		 * Show over role icons
 		 *
 		 * Shows the sprout in place of a new member's role icon, which otherwise takes its spot.
@@ -147,12 +141,6 @@ declare module '@unbound-app/settings' {
 
 	/** Each setting and section by its dot-separated key. */
 	type SettingValues = {
-		/**
-		 * Days counted as new
-		 *
-		 * How long after joining a server someone keeps the sprout. Discord's desktop app uses 7.
-		 */
-		"days": number;
 		/**
 		 * Show over role icons
 		 *

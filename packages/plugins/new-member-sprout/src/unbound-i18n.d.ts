@@ -3,12 +3,8 @@
 declare module '@unbound-app/i18n' {
 	/** Every en-US message, read in the user's locale. */
 	export type Messages = {
-		/** Hey, I'm new here! */
+		/** I'm new here, say hi! */
 		readonly NEW_HERE: string;
-		/** Days counted as new */
-		readonly DAYS: string;
-		/** How long after joining a server someone keeps the sprout. Discord's desktop app uses 7. */
-		readonly DAYS_SUBTITLE: string;
 		/** Show over role icons */
 		readonly OVER_ROLE_ICONS: string;
 		/** Shows the sprout in place of a new member's role icon, which otherwise takes its spot. */
