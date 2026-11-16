@@ -920,10 +920,14 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
         }
         else
         {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (state->active.load() && state->inlineRuntime
-                    && state->runtimeGeneration == loader::native::runtimeGeneration())
-                {
+            loader::native::postMainOperation(
+                [state, afterWork, operation]() {
+                    if (!state->active.load() || !state->inlineRuntime
+                        || state->runtimeGeneration != loader::native::runtimeGeneration())
+                    {
+                        return;
+                    }
+
                     loader::native::withRuntimeResource(
                         state->callbackResources, state->callbackRuntimeIdentity, operation,
                         [&](loader::native::RuntimeResourceRegistry &resources) {
@@ -935,8 +939,8 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
                             resources.drainDeferredReleases();
                             afterWork(*state->inlineRuntime);
                         });
-                }
-            });
+                },
+                "UI-runtime hook after callback");
         }
     }
 
