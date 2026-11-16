@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.4](https://github.com/marioparaschiv/unbound/compare/rollup-plugin-hermes-v3.0.3...rollup-plugin-hermes-v3.0.4) (2026-11-16)
+
+
+### Bug Fixes
+
+* **client:** clear main's lint errors and regenerate the SDK ([#1605](https://github.com/marioparaschiv/unbound/issues/1605)) ([c9ad7f5](https://github.com/marioparaschiv/unbound/commit/c9ad7f5feef538f78b044ed374a51571d29ce0d8))
+
 ## [3.0.3](https://github.com/marioparaschiv/unbound/compare/rollup-plugin-hermes-v3.0.2...rollup-plugin-hermes-v3.0.3) (2026-11-15)
 
 

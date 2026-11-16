@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.7.0](https://github.com/marioparaschiv/unbound/compare/contracts-v2.6.0...contracts-v2.7.0) (2026-11-16)
+
+
+### Features
+
+* **client:** name plugin hooks that fail to install on /debug ([#1572](https://github.com/marioparaschiv/unbound/issues/1572)) ([4065cce](https://github.com/marioparaschiv/unbound/commit/4065ccea804c75431109a3fa5b2ef045830ca590))
+* **loader:** probe libffi closures at launch and show it on /debug ([#1574](https://github.com/marioparaschiv/unbound/issues/1574)) ([e0aa7e1](https://github.com/marioparaschiv/unbound/commit/e0aa7e19762bcbb1a9801a25817fe08d05bc40e8))
+* **web:** flag tweak conflicts and add account notes to the card ([#1563](https://github.com/marioparaschiv/unbound/issues/1563)) ([2bb2380](https://github.com/marioparaschiv/unbound/commit/2bb2380eead2043370d6aa9000571e4f43cc109e))
+
+
+### Build System
+
+* **deps:** bump the minor-and-patch group with 7 updates ([#1596](https://github.com/marioparaschiv/unbound/issues/1596)) ([0134744](https://github.com/marioparaschiv/unbound/commit/013474465fd2a4d43f1f30c13f3c7651805a99d7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/types bumped to 1.7.0
+
 ## [2.6.0](https://github.com/marioparaschiv/unbound/compare/contracts-v2.5.0...contracts-v2.6.0) (2026-11-15)
 
 

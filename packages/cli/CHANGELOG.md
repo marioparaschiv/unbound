@@ -1,5 +1,47 @@
 # Changelog
 
+## [3.3.0](https://github.com/marioparaschiv/unbound/compare/cli-v3.2.3...cli-v3.3.0) (2026-11-16)
+
+
+### Features
+
+* **cli:** add local test messages with debug message ([#1684](https://github.com/marioparaschiv/unbound/issues/1684)) ([8deee9b](https://github.com/marioparaschiv/unbound/commit/8deee9b5b15c51d6048fb8a4d7a40832e4c23721))
+* **cli:** build only the addons named on the command line ([#1641](https://github.com/marioparaschiv/unbound/issues/1641)) ([6028262](https://github.com/marioparaschiv/unbound/commit/6028262ffd481bf2014910c1d5143a0e872f100f))
+* **cli:** copy files in and out of Discord with device pull/push ([#1685](https://github.com/marioparaschiv/unbound/issues/1685)) ([e6eecf5](https://github.com/marioparaschiv/unbound/commit/e6eecf54aa09f3feccc8b5bdf26ba2f6f738a8b2))
+* **cli:** debug eval takes --file and top-level await ([#1682](https://github.com/marioparaschiv/unbound/issues/1682)) ([a42b59d](https://github.com/marioparaschiv/unbound/commit/a42b59df0f59fef603edab724e080df4fd38b58f))
+* **client:** find the plugin causing a problem by halving ([#1625](https://github.com/marioparaschiv/unbound/issues/1625)) ([2eafb40](https://github.com/marioparaschiv/unbound/commit/2eafb40a7e4fdaaf908e54aaae1bae6d320ee541))
+* **cli:** give debug eval a native bridge with --native ([#1642](https://github.com/marioparaschiv/unbound/issues/1642)) ([c5e610f](https://github.com/marioparaschiv/unbound/commit/c5e610f4603aef9932810d9efca2957ea1542a3e))
+* **cli:** list Objective-C members in debug inspect class ([#1643](https://github.com/marioparaschiv/unbound/issues/1643)) ([1768142](https://github.com/marioparaschiv/unbound/commit/1768142e8805c1e0ecb15c12dbdbaddeb1ec80f7))
+* **cli:** run slash commands on the device with debug command ([#1683](https://github.com/marioparaschiv/unbound/issues/1683)) ([2204b8f](https://github.com/marioparaschiv/unbound/commit/2204b8f9b0181f9b5e4db19e2e0254e8adfe8495))
+
+
+### Bug Fixes
+
+* **cli:** find addons in nested workspaces from a monorepo root ([#1687](https://github.com/marioparaschiv/unbound/issues/1687)) ([f55b647](https://github.com/marioparaschiv/unbound/commit/f55b647070da53d8ac0bea08c83ce4d9301e6d0f))
+* **cli:** keep Babel plugins on 7 to match @babel/core ([#1607](https://github.com/marioparaschiv/unbound/issues/1607)) ([8c89860](https://github.com/marioparaschiv/unbound/commit/8c89860bddff80dc66fbb8052bb6e93b08d70fd4))
+
+
+### Build System
+
+* **deps:** bump @babel/plugin-transform-class-properties ([#1597](https://github.com/marioparaschiv/unbound/issues/1597)) ([34ca546](https://github.com/marioparaschiv/unbound/commit/34ca546ae6fd667d0b7d31f2f2ddeaa865eaa8a7))
+* **deps:** bump @babel/plugin-transform-unicode-regex ([#1599](https://github.com/marioparaschiv/unbound/issues/1599)) ([add5fb9](https://github.com/marioparaschiv/unbound/commit/add5fb96e722de8efb0bea351b66ffa096a39f90))
+* **deps:** bump the minor-and-patch group with 7 updates ([#1596](https://github.com/marioparaschiv/unbound/issues/1596)) ([0134744](https://github.com/marioparaschiv/unbound/commit/013474465fd2a4d43f1f30c13f3c7651805a99d7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger bumped to 1.2.3
+    * @unbound-app/debugger-protocol bumped to 2.2.3
+    * @unbound-app/rollup-plugin-hermes bumped to 3.0.4
+  * devDependencies
+    * @unbound-app/api bumped to 3.7.0
+    * @unbound-app/contracts bumped to 2.7.0
+    * @unbound-app/types bumped to 1.7.0
+    * @unbound-app/utils bumped to 1.0.7
+    * @unbound-app/web bumped to 2.7.0
+
 ## [3.2.3](https://github.com/marioparaschiv/unbound/compare/cli-v3.2.2...cli-v3.2.3) (2026-11-15)
 
 

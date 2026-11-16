@@ -1,5 +1,43 @@
 # Changelog
 
+## [2.7.0](https://github.com/marioparaschiv/unbound/compare/web-v2.6.0...web-v2.7.0) (2026-11-16)
+
+
+### Features
+
+* **client:** name plugin hooks that fail to install on /debug ([#1572](https://github.com/marioparaschiv/unbound/issues/1572)) ([4065cce](https://github.com/marioparaschiv/unbound/commit/4065ccea804c75431109a3fa5b2ef045830ca590))
+* **discord-bot:** port Carl-bot's moderation system ([#1562](https://github.com/marioparaschiv/unbound/issues/1562)) ([18ee11e](https://github.com/marioparaschiv/unbound/commit/18ee11e70108e757850006a153c561493d28ebe1))
+* **discord-bot:** post loader, bundle and API releases to feeds ([#1554](https://github.com/marioparaschiv/unbound/issues/1554)) ([82d9c80](https://github.com/marioparaschiv/unbound/commit/82d9c80e864e72ac730b23344fcb8959d0d0af8a))
+* **loader:** probe libffi closures at launch and show it on /debug ([#1574](https://github.com/marioparaschiv/unbound/issues/1574)) ([e0aa7e1](https://github.com/marioparaschiv/unbound/commit/e0aa7e19762bcbb1a9801a25817fe08d05bc40e8))
+* **web:** flag tweak conflicts and add account notes to the card ([#1563](https://github.com/marioparaschiv/unbound/issues/1563)) ([2bb2380](https://github.com/marioparaschiv/unbound/commit/2bb2380eead2043370d6aa9000571e4f43cc109e))
+
+
+### Bug Fixes
+
+* **client:** clear main's lint errors and regenerate the SDK ([#1605](https://github.com/marioparaschiv/unbound/issues/1605)) ([c9ad7f5](https://github.com/marioparaschiv/unbound/commit/c9ad7f5feef538f78b044ed374a51571d29ce0d8))
+* **client:** trim the binary line and always-true markers on /debug ([#1632](https://github.com/marioparaschiv/unbound/issues/1632)) ([26c135e](https://github.com/marioparaschiv/unbound/commit/26c135e23f8e33f9ea0170492b9b8b07b7c1b6d3))
+* **loader:** drop the Developer Mode marker from /debug ([#1595](https://github.com/marioparaschiv/unbound/issues/1595)) ([3ec1570](https://github.com/marioparaschiv/unbound/commit/3ec1570902deb246c5c64cb3578efd47804eb896))
+* **web:** fit every debug card list item that fits before the counter ([#1628](https://github.com/marioparaschiv/unbound/issues/1628)) ([c9c6285](https://github.com/marioparaschiv/unbound/commit/c9c6285914fd2566dbc41077cf047d90e4f8c737))
+* **web:** shorten the debug card's push notes ([#1585](https://github.com/marioparaschiv/unbound/issues/1585)) ([cb817b2](https://github.com/marioparaschiv/unbound/commit/cb817b2e908fcdb9a0df34c1515ca74548fb9b34))
+
+
+### Build System
+
+* **deps:** bump the minor-and-patch group with 7 updates ([#1596](https://github.com/marioparaschiv/unbound/issues/1596)) ([0134744](https://github.com/marioparaschiv/unbound/commit/013474465fd2a4d43f1f30c13f3c7651805a99d7))
+
+
+### Tests
+
+* **web:** keep debug card labels clear of their values ([#1558](https://github.com/marioparaschiv/unbound/issues/1558)) ([c676830](https://github.com/marioparaschiv/unbound/commit/c6768303e15e75387d5d722a72adfb02739c540a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.7.0
+    * @unbound-app/utils bumped to 1.0.7
+
 ## [2.6.0](https://github.com/marioparaschiv/unbound/compare/web-v2.5.0...web-v2.6.0) (2026-11-15)
 
 

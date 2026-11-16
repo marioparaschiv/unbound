@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.2.3](https://github.com/marioparaschiv/unbound/compare/debugger-protocol-v2.2.2...debugger-protocol-v2.2.3) (2026-11-16)
+
+
+### Build System
+
+* **deps:** bump the minor-and-patch group with 7 updates ([#1596](https://github.com/marioparaschiv/unbound/issues/1596)) ([0134744](https://github.com/marioparaschiv/unbound/commit/013474465fd2a4d43f1f30c13f3c7651805a99d7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/types bumped to 1.7.0
+
 ## [2.2.2](https://github.com/marioparaschiv/unbound/compare/debugger-protocol-v2.2.1...debugger-protocol-v2.2.2) (2026-11-15)
 
 

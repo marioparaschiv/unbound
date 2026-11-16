@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.4.0...devtools-v1.5.0) (2026-11-16)
+
+
+### Features
+
+* **devtools:** add an auto-scroll switch to the logs page ([#1691](https://github.com/marioparaschiv/unbound/issues/1691)) ([20e32a7](https://github.com/marioparaschiv/unbound/commit/20e32a7d07a11449f95d2ad644f6cbc2a9820ce3))
+
 ## [1.4.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.3.0...devtools-v1.4.0) (2026-11-14)
 
 
