@@ -1,0 +1,17 @@
+{
+	"id": "unbound.edit-diff-preview",
+	"name": "Edit Diff Preview",
+	"description": "Shows what an edit adds and removes before it is saved, for long messages and code.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "PencilIcon",
+	"main": "index.tsx"
+}

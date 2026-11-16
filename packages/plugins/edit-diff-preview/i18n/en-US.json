@@ -1,0 +1,9 @@
+{
+	"MIN_LENGTH": "Show from this many characters",
+	"MIN_LENGTH_SUBTITLE": "Edits to shorter messages save straight away. 0 shows every edit.",
+	"CODE": "Always show for code",
+	"CODE_SUBTITLE": "Edits to messages with a code block, whatever their length.",
+	"TITLE": "Save these changes?",
+	"SAVE": "Save edit",
+	"KEEP_EDITING": "Keep editing"
+}
