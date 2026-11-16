@@ -1,4 +1,6 @@
 #include <cassert>
+#include <cstdlib>
+#include <ctime>
 #include <filesystem>
 #include <string>
 
@@ -47,6 +49,11 @@ int64_t dayAfter()
 
 void parsesMetricKitValues()
 {
+    setenv("TZ", "CET-1", 1);
+    tzset();
+    assert(exits::parseMetricKitTimestamp("1970-01-02 01:00:00") == 86'400'000);
+    setenv("TZ", "UTC0", 1);
+    tzset();
     assert(exits::parseMetricKitTimestamp("1970-01-02 00:00:00") == 86'400'000);
     assert(exits::parseMetricKitTimestamp("garbage") == 0);
     assert(exits::parseMetricKitDuration("3.5 sec") == 3500);
