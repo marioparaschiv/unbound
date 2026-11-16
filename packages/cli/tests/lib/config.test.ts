@@ -1,10 +1,10 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { afterEach, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { findNestedWorkspaces, loadConfig } from '~/lib/config';
 import { readManifest } from '~/lib/manifest';
-import { loadConfig } from '~/lib/config';
 
 const roots: string[] = [];
 
@@ -47,4 +47,34 @@ test('readManifest refuses a manifest missing the fields the platform needs', ()
 	const dir = directoryWith('manifest.json', '{"id":"a.b","main":"index.js"}');
 
 	expect(() => readManifest(dir)).toThrow(`Invalid ${join(dir, 'manifest.json')}`);
+});
+
+test('loadConfig finds the one workspace below a monorepo root', () => {
+	const root = mkdtempSync(join(tmpdir(), 'ubd-config-test-'));
+
+	roots.push(root);
+	mkdirSync(join(root, 'packages', 'plugins'), { recursive: true });
+	mkdirSync(join(root, 'node_modules', 'other'), { recursive: true });
+	writeFileSync(join(root, 'packages', 'plugins', 'unbound.config.json'), '{}');
+	writeFileSync(join(root, 'node_modules', 'other', 'unbound.config.json'), '{}');
+
+	expect(loadConfig(root)).toMatchObject({ dir: join(root, 'packages', 'plugins'), bare: false });
+});
+
+test('findNestedWorkspaces lists every workspace below a folder, and none below an addon', () => {
+	const addon = directoryWith('manifest.json', '{}');
+	const ambiguous = mkdtempSync(join(tmpdir(), 'ubd-config-test-'));
+
+	roots.push(ambiguous);
+	mkdirSync(join(addon, 'nested'));
+	writeFileSync(join(addon, 'nested', 'unbound.config.json'), '{}');
+
+	for (const name of ['a', 'b']) {
+		mkdirSync(join(ambiguous, name));
+		writeFileSync(join(ambiguous, name, 'unbound.config.json'), '{}');
+	}
+
+	expect(findNestedWorkspaces(addon)).toEqual([]);
+	expect(findNestedWorkspaces(ambiguous)).toEqual([join(ambiguous, 'a'), join(ambiguous, 'b')]);
+	expect(loadConfig(ambiguous)).toMatchObject({ dir: ambiguous, bare: true });
 });
