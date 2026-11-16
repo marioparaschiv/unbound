@@ -15,7 +15,7 @@ In the Unbound repo run `bun packages/cli/src/index.ts <command>`; elsewhere `bu
 | `ubd i18n`    | A plugin's `i18n/` folder             | `check`, `fix [--prune]`, `unused`, `add <KEY> <text>`                                                                                                                      |
 | `ubd migrate` | Plugin source, rewritten in place     | `entry [dir]`                                                                                                                                                               |
 | `ubd debug`   | The running client, over the bridge   | `start`, `restart`, `status`, `push`, `reload`, `eval`, `command`, `message`, `open`, `route`, `modules`, `trace`, `views`, `inspect`, `spans`, `hook`, `profile`, `timing` |
-| `ubd device`  | Discord's files, over adb or jb-p1lot | `install`, `logs`, `reset`, `save <name>`, `restore <name>`, `snapshots`                                                                                                    |
+| `ubd device`  | Discord's files, over adb or jb-p1lot | `install`, `pull`, `push`, `logs`, `reset`, `save <name>`, `restore <name>`, `snapshots`                                                                                    |
 | `ubd auth`    | The Unbound website session           | `login`, `logout`                                                                                                                                                           |
 | `ubd mcp`     | An AI client, over stdio              | Serves `debug` tools by name (`eval`) and `device` tools prefixed (`device_install`)                                                                                        |
 

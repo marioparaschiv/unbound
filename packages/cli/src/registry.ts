@@ -2,6 +2,8 @@ import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry'
 
 import snapshotsCommand from '~/commands/device/snapshots';
 import installCommand from '~/commands/device/install';
+import devicePullCommand from '~/commands/device/pull';
+import devicePushCommand from '~/commands/device/push';
 import restoreCommand from '~/commands/device/restore';
 import commandCommand from '~/commands/debug/command';
 import inspectCommand from '~/commands/debug/inspect';
@@ -100,6 +102,7 @@ export const deviceGroup: CommandGroup = {
 	toolPrefix: true,
 	sections: [
 		{ title: 'Addons', entries: [installCommand] },
+		{ title: 'Files', entries: [devicePullCommand, devicePushCommand] },
 		{ title: 'Logs', entries: [logsCommand] },
 		{
 			title: 'State',
