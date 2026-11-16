@@ -41,8 +41,8 @@ describe('generated native capability files', () => {
 
 		expect(loader).toContain('{"native.java.hooks", "hooks", kJavaHooksMethods}');
 		expect(loader).toContain('std::array<std::string_view, 0> kRuntimeEventsMethods = {\n};');
-		expect(loader).not.toContain('"create"');
-		expect(Object.keys(NATIVE_BRIDGE_METHOD_CAPABILITIES)).toContain('objc.create');
+		expect(loader).not.toContain('"subscribe"');
+		expect(Object.keys(NATIVE_BRIDGE_METHOD_CAPABILITIES)).toContain('runtime.subscribe');
 	});
 
 	test('list each platform only the Capabilities its loader provides', () => {

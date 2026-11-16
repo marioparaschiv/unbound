@@ -232,8 +232,8 @@ describe('native Java bridge', () => {
 		Object.assign(nativePlatformBridge, { platform: 'android' });
 		hooksRemoved.length = 0;
 
-		const { describe: describeClass } = bridge.java;
-		const { hook } = bridge.hooks;
+		const describeClass = bridge.java.describe.bind(bridge.java);
+		const hook = bridge.hooks.hook.bind(bridge.hooks);
 		const hooked: string[][] = [];
 
 		Object.assign(bridge.java, {

@@ -1,8 +1,8 @@
 import type { AddonManifest } from '@unbound-app/types/addons';
 import type { PluginContext } from '@unbound-app/types';
 
-import { validateNativeBridgeRequirements } from '~/native/capabilities';
 import { clearPluginTempOncePerLaunch, pluginTempPath } from '~/native/plugin-temp';
+import { validateNativeBridgeRequirements } from '~/native/capabilities';
 import { resolveManifestCapabilities } from '~/addons/manifest';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { createScopedNativeBridge } from '~/native/scope';

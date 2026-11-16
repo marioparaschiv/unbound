@@ -15,10 +15,15 @@ import { persist } from '~/storage/api';
 
 const RELOAD_DELAY_MS = 500;
 
+/** Where a running bisect stands. */
 export type BisectStatus = {
+	/** The round being tested, from 1. */
 	round: number;
+	/** How many more rounds it takes at most. */
 	roundsLeft: number;
+	/** The plugins enabled for this round. */
 	tested: string[];
+	/** The plugins that may still cause the problem. */
 	suspects: string[];
 };
 

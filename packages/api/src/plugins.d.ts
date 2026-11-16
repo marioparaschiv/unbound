@@ -69,13 +69,20 @@ export declare function stopBisect(): void;
  * @returns Whether the plugin now runs a newer version.
  */
 export declare function update(id: string): Promise<boolean>;
+/** How a finished bisect ended. */
 export type BisectResult = {
+	/** The plugin that causes the problem, or `null` when the problem happens with every plugin off. */
 	culprit: string | null;
 };
+/** Where a running bisect stands. */
 export type BisectStatus = {
+	/** The round being tested, from 1. */
 	round: number;
+	/** How many more rounds it takes at most. */
 	roundsLeft: number;
+	/** The plugins enabled for this round. */
 	tested: string[];
+	/** The plugins that may still cause the problem. */
 	suspects: string[];
 };
 /** The outcome of an addon reload: success, or failure carrying the recorded error. */
