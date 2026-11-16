@@ -51,6 +51,15 @@ function FilterChips({ kind, filters, onChange }: FilterChipsProps) {
 		...(updated
 			? [{ field: messages.UNBOUND_FILTER_UPDATED, value: updated, clear: { updated: null } }]
 			: []),
+		...(filters.notInstalled
+			? [
+					{
+						field: messages.UNBOUND_FILTER_SHOW,
+						value: messages.UNBOUND_FILTER_NOT_INSTALLED,
+						clear: { notInstalled: false },
+					},
+				]
+			: []),
 	];
 
 	if (!chips.length) return null;

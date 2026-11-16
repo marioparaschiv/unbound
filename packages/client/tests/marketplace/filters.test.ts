@@ -93,6 +93,18 @@ describe('filterCatalog', () => {
 		expect(ids({ updated: 365, updatedMatch: 'none' })).toEqual(['a.other']);
 	});
 
+	test('hides installed addons only while Not installed is on', () => {
+		const installed = new Set(['a.solo', 'a.theme']);
+		const isInstalled = (addon: ListedAddon) => installed.has(addon.id);
+		const filtered = (notInstalled: boolean) =>
+			filterCatalog(addons, { ...DEFAULT_FILTERS, notInstalled }, NOW, isInstalled).map(
+				(addon) => addon.id,
+			);
+
+		expect(filtered(true)).toEqual(['a.pair', 'a.other']);
+		expect(filtered(false)).toEqual(['a.solo', 'a.pair', 'a.other', 'a.theme']);
+	});
+
 	test('applies both filters together', () => {
 		expect(ids({ authors: ['1'], updated: 365 })).toEqual(['a.solo', 'a.pair']);
 	});
@@ -103,6 +115,7 @@ describe('countActiveFilters', () => {
 		expect(countActiveFilters({ ...DEFAULT_FILTERS, sort: 'updated' })).toBe(0);
 		expect(countActiveFilters({ ...DEFAULT_FILTERS, authors: ['1'], updated: 30 })).toBe(2);
 		expect(countActiveFilters({ ...DEFAULT_FILTERS, tags: ['chat'], updated: 30 })).toBe(2);
+		expect(countActiveFilters({ ...DEFAULT_FILTERS, notInstalled: true })).toBe(1);
 	});
 });
 

@@ -22,6 +22,8 @@ export type MarketplaceFilters = {
 	/** Keeps addons published within this many days, or drops them with `none`; `null` is any time. */
 	updated: number | null;
 	updatedMatch: FilterMatch;
+	/** Hides the addons already installed. */
+	notInstalled: boolean;
 };
 
 /** One author the filter offers, with how many addons of the tab list them. */
@@ -51,6 +53,7 @@ export const DEFAULT_FILTERS: MarketplaceFilters = {
 	authorMatch: 'any',
 	updated: null,
 	updatedMatch: 'any',
+	notInstalled: false,
 };
 
 const DAY_MS = 86_400_000;
@@ -58,13 +61,14 @@ const DAY_MS = 86_400_000;
 /**
  * @description Counts the filters that narrow the list; the sort narrows nothing.
  * @param filters The page's filters.
- * @returns 0 to 3.
+ * @returns 0 to 4.
  */
 export function countActiveFilters(filters: MarketplaceFilters): number {
 	return (
 		Number(filters.tags.length > 0) +
 		Number(filters.authors.length > 0) +
-		Number(filters.updated !== null)
+		Number(filters.updated !== null) +
+		Number(filters.notInstalled)
 	);
 }
 
@@ -83,16 +87,19 @@ function matchesTags(addon: ListedAddon, picked: Set<string>, match: TagMatch): 
 }
 
 /**
- * @description Narrows listed addons by their tags, their authors and when their newest version was published.
+ * @description Narrows listed addons by their tags, their authors, when their newest version was published and whether
+ * they are installed.
  * @param addons The addons, already searched and sorted; their order is kept.
  * @param filters The page's filters.
  * @param now The current time in milliseconds, which the Updated window counts back from.
+ * @param isInstalled Tells whether an addon is installed, for the Not installed filter.
  * @returns The addons every filter keeps.
  */
 export function filterCatalog(
 	addons: ListedAddon[],
 	filters: MarketplaceFilters,
 	now: number,
+	isInstalled: (addon: ListedAddon) => boolean = () => false,
 ): ListedAddon[] {
 	const tags = new Set(filters.tags);
 	const authors = new Set(filters.authors);
@@ -100,6 +107,10 @@ export function filterCatalog(
 
 	return addons.filter((addon) => {
 		const { manifest, publishedAt } = addon.latestVersion;
+
+		if (filters.notInstalled && isInstalled(addon)) {
+			return false;
+		}
 
 		if (tags.size > 0 && !matchesTags(addon, tags, filters.tagMatch)) {
 			return false;

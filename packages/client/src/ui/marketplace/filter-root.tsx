@@ -93,6 +93,13 @@ function FilterRoot({ filters, options, tags, onChange, onOpen }: FilterRootProp
 						arrow
 						onPress={() => onOpen('updated')}
 					/>
+					<Discord.TableSwitchRow
+						label={messages.UNBOUND_FILTER_NOT_INSTALLED}
+						subLabel={messages.UNBOUND_FILTER_NOT_INSTALLED_DESC}
+						icon={<Discord.TableRowIcon source={icons['DownloadIcon'] ?? 0} />}
+						value={filters.notInstalled}
+						onValueChange={(notInstalled: boolean) => onChange({ notInstalled })}
+					/>
 				</Discord.TableRowGroup>
 			</View>
 		</>
