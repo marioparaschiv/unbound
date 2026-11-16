@@ -4,6 +4,7 @@ import { describe, expect, test } from 'bun:test';
 import { auditLogEntry, auditTitle, type AuditLogFacts } from '~/lib/audit-log-post';
 
 const FACTS: AuditLogFacts = {
+	guildId: '1',
 	action: AuditLogEvent.ChannelUpdate,
 	actionType: 'Update',
 	targetType: 'Channel',
@@ -72,6 +73,30 @@ describe('auditLogEntry', () => {
 		});
 
 		expect(entry?.lines).toContain('**Changes:**\n**Permissions added:** Administrator');
+	});
+
+	test('links a pinned message, and names an AutoMod rule', () => {
+		const pinned = auditLogEntry({
+			...FACTS,
+			action: AuditLogEvent.MessagePin,
+			actionType: 'Create',
+			targetType: 'User',
+			targetId: '100',
+			extra: { channelId: '300', messageId: '400' },
+		});
+		const blocked = auditLogEntry({
+			...FACTS,
+			action: AuditLogEvent.AutoModerationBlockMessage,
+			targetType: 'User',
+			targetId: '100',
+			extra: { ruleName: 'No invites', channelId: '300' },
+		});
+
+		expect(pinned?.title).toBe('Message Pinned');
+		expect(pinned?.lines).toContain(
+			'**Channel:** <#300> · [Jump to message](https://discord.com/channels/1/300/400)',
+		);
+		expect(blocked?.lines).toContain('**Rule:** No invites');
 	});
 
 	test('leaves bans, timeouts and message deletes to their own logs', () => {

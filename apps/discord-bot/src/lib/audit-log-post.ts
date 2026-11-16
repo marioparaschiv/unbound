@@ -9,6 +9,7 @@ import { COLOURS } from '~/lib/constants';
 
 /** The parts of a Discord audit log entry its misc log post shows. */
 export type AuditLogFacts = {
+	guildId: string;
 	action: AuditLogEvent;
 	actionType: GuildAuditLogsActionType;
 	/** What the action was taken on, e.g. `Channel`, `Role` or `User`. */
@@ -17,8 +18,19 @@ export type AuditLogFacts = {
 	executorId: string | null;
 	reason: string | null;
 	changes: readonly AuditLogChange[];
-	/** The channel a move, pin or unpin happened in. */
+	extra?: AuditExtra;
+};
+
+/** The details some actions carry beyond their changes: a move's channel, a prune's count, an AutoMod rule. */
+export type AuditExtra = {
 	channelId?: string;
+	messageId?: string;
+	/** Members moved or disconnected, or messages deleted. */
+	count?: number;
+	/** Members a prune removed, and the days of inactivity it asked for. */
+	removed?: number;
+	days?: number;
+	ruleName?: string;
 };
 
 // Message deletes post to the message logs; bans, kicks and timeouts post as cases.
@@ -33,7 +45,22 @@ const TITLES: Partial<Record<AuditLogEvent, string>> = {
 	[AuditLogEvent.AutoModerationFlagToChannel]: 'AutoMod Flagged a Message',
 	[AuditLogEvent.AutoModerationUserCommunicationDisabled]: 'AutoMod Timed Out a Member',
 	[AuditLogEvent.AutoModerationQuarantineUser]: 'AutoMod Quarantined a Member',
+	[AuditLogEvent.GuildScheduledEventCreate]: 'Event Created',
+	[AuditLogEvent.GuildScheduledEventUpdate]: 'Event Updated',
+	[AuditLogEvent.GuildScheduledEventDelete]: 'Event Deleted',
+	[AuditLogEvent.ApplicationCommandPermissionUpdate]: 'Command Permissions Updated',
 };
+
+// How a target type reads as a field label; `Unknown` and the server itself get no field.
+const TARGET_LABELS: Readonly<Record<string, string>> = {
+	GuildScheduledEvent: 'Event',
+	AutoModeration: 'AutoMod Rule',
+	SoundboardSound: 'Sound',
+	ApplicationCommand: 'Command',
+	GuildOnboardingPrompt: 'Onboarding Prompt',
+	StageInstance: 'Stage',
+};
+const UNLABELLED_TARGETS = new Set(['Guild', 'GuildOnboarding', 'Unknown', 'User']);
 
 const PAST: Readonly<Record<string, string>> = {
 	Create: 'Created',
@@ -180,6 +207,22 @@ function target(targetType: string, id: string) {
 	}
 }
 
+function extraLines(guildId: string, extra: AuditExtra) {
+	const { channelId, messageId, count, removed, days, ruleName } = extra;
+	const jump =
+		channelId && messageId
+			? ` · [Jump to message](https://discord.com/channels/${guildId}/${channelId}/${messageId})`
+			: '';
+
+	return [
+		ruleName ? field('Rule', ruleName) : '',
+		channelId ? field('Channel', `<#${channelId}>${jump}`) : '',
+		count === undefined ? '' : field('Count', String(count)),
+		removed === undefined ? '' : field('Members Removed', String(removed)),
+		days === undefined ? '' : field('Inactive For', `${days} days`),
+	];
+}
+
 function colourOf(actionType: GuildAuditLogsActionType) {
 	if (actionType === 'Create') {
 		return COLOURS.positive;
@@ -202,8 +245,16 @@ function iconOf(actionType: GuildAuditLogsActionType) {
  * @returns The log entry, or undefined for an action logged elsewhere.
  */
 export function auditLogEntry(facts: AuditLogFacts): LogEntry | undefined {
-	const { action, actionType, targetType, targetId, executorId, reason, changes, channelId } =
-		facts;
+	const {
+		action,
+		actionType,
+		targetType,
+		targetId,
+		executorId,
+		reason,
+		changes,
+		extra = {},
+	} = facts;
 
 	if (SKIPPED.has(action) || auditCaseOf({ action, changes })) return;
 
@@ -217,11 +268,11 @@ export function auditLogEntry(facts: AuditLogFacts): LogEntry | undefined {
 		colour: colourOf(actionType),
 		user: isUser ? { id: targetId, name: targetId } : undefined,
 		lines: [
-			targetId && !isUser && targetType !== 'Guild'
-				? field(targetType, target(targetType, targetId))
+			targetId && !UNLABELLED_TARGETS.has(targetType)
+				? field(TARGET_LABELS[targetType] ?? targetType, target(targetType, targetId))
 				: '',
 			field('By', executorId ? person(executorId) : '*Unknown*'),
-			channelId ? field('Channel', `<#${channelId}>`) : '',
+			...extraLines(facts.guildId, extra),
 			reason ? fieldBelow('Reason', truncate(reason, VALUE_LIMIT * 2)) : '',
 			changed.length
 				? fieldBelow('Changes', truncate(changed.join('\n'), CHANGES_LIMIT))
