@@ -40,7 +40,7 @@ export abstract class AddonSelection<I extends object> extends AddonLifecycle<I>
 
 		if (!resolved) return;
 
-		if (needsConsent(resolved.manifest, this.getConsents())) {
+		if (this.awaitsConsent(resolved)) {
 			return this.requestConsent(resolved).then((granted) =>
 				granted ? this.enableNow(resolved, true) : undefined,
 			);
@@ -219,6 +219,25 @@ export abstract class AddonSelection<I extends object> extends AddonLifecycle<I>
 	private setApplied(applied: string | null, id: string): void {
 		this.settings.set('applied', applied);
 		this.emit('record-changed', { key: 'applied', id });
+	}
+
+	/**
+	 * @description Whether starting an addon must first wait for the user's consent: it asks for consent-gated
+	 * capabilities the user has not allowed, and the manager does not trust it without asking.
+	 * @param addon The addon.
+	 * @returns Whether to ask first.
+	 */
+	protected awaitsConsent(addon: Addon<I>): boolean {
+		return needsConsent(addon.manifest, this.getConsents(), this.trustsWithoutConsent(addon));
+	}
+
+	/**
+	 * @description Whether an addon may use consent-gated capabilities without asking; none may unless a subclass allows it.
+	 * @param _addon The addon.
+	 * @returns Whether to skip the consent prompt.
+	 */
+	protected trustsWithoutConsent(_addon: Addon<I>): boolean {
+		return false;
 	}
 
 	/**

@@ -509,6 +509,16 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 	}
 
 	/**
+	 * @description Lets a development copy use direct native access without the consent prompt, in development builds only,
+	 * so pushing a plugin from a dev machine never waits on a tap.
+	 * @param addon The addon.
+	 * @returns Whether to skip the prompt.
+	 */
+	protected trustsWithoutConsent(addon: Addon<I>): boolean {
+		return Boolean(import.meta.env.DEV_TOOLS) && this.isDevelopmentCopy(addon.id);
+	}
+
+	/**
 	 * @description Whether an addon is a development copy pushed from a dev machine.
 	 * @param id The addon's id.
 	 * @returns `true` until the addon is installed from the store or deleted.

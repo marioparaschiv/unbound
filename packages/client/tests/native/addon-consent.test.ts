@@ -14,11 +14,45 @@ class ConsentAddons extends FakeAddons {
 	}
 }
 
+class TrustingAddons extends ConsentAddons {
+	protected trustsWithoutConsent() {
+		return true;
+	}
+}
+
 function ffiManifest(id: string, trust?: 'signed'): AddonManifest {
 	return { ...makeManifest(id), capabilities: ['native.ffi.call'], ...(trust ? { trust } : {}) };
 }
 
 describe('native consent', () => {
+	test('a release build still asks before a development copy gets direct native access', () => {
+		const addons = new ConsentAddons();
+
+		addons.load('bundle', ffiManifest('ffi.pushed'));
+		addons.markDevelopmentCopy('ffi.pushed');
+		addons.start('ffi.pushed');
+
+		expect(addons.getAddon('ffi.pushed')?.started).toBe(false);
+		expect(addons.errors.get('ffi.pushed')).toBeInstanceOf(NativeConsentRequiredError);
+	});
+
+	test('starts and enables a trusted addon without asking', async () => {
+		const addons = new TrustingAddons();
+		let asked = 0;
+
+		setConsentPrompt(async () => {
+			asked++;
+
+			return false;
+		});
+		addons.load('bundle', ffiManifest('ffi.trusted'));
+		await addons.enable('ffi.trusted');
+
+		expect(addons.getAddon('ffi.trusted')?.started).toBe(true);
+		expect(asked).toBe(0);
+		setConsentPrompt(undefined);
+	});
+
 	test('does not start an unsigned FFI plugin the user has not allowed', () => {
 		const addons = new ConsentAddons();
 		const required: string[] = [];

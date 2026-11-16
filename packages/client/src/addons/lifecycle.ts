@@ -18,15 +18,14 @@ import {
 import type { AddonAttribution, AddonFreeze, RunningAddon } from '~/addons/crash-guard';
 import { parseAddonManifest, resolveManifestCapabilities } from '~/addons/manifest';
 import type { AddonEvents, AddonResolveable, AddonState } from '~/addons/addon';
-import { needsConsent, NativeConsentRequiredError } from '~/native/consent';
 import { validateNativeBridgeRequirements } from '~/native/capabilities';
 import { announceFreeze, freezeDisables } from '~/addons/freezes';
 import { crashReportAddon } from '~/diagnostics/crash-report';
+import { NativeConsentRequiredError } from '~/native/consent';
 import { turnOffWithdrawnAddon } from '~/addons/withdrawn';
 import { disableIfCrashed } from '~/addons/crash-disable';
 import { reportCrash } from '~/diagnostics/crash-reports';
 import { beginNativeStop } from '~/native/plugin-context';
-import type { NativeConsents } from '~/native/consent';
 import { afterFirstFrame } from '~/core/first-frame';
 import { monotonicNow } from '~/core/monotonic-now';
 import { currentPlatform } from '~/native/platform';
@@ -92,10 +91,11 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	protected abstract select(addon: Addon<I>, enabled: boolean): void;
 
 	/**
-	 * @description Reads the consents the user gave for consent-gated capabilities.
-	 * @returns The consents keyed by addon id.
+	 * @description Whether starting an addon must first wait for the user's consent to its consent-gated capabilities.
+	 * @param addon The addon.
+	 * @returns Whether to ask first.
 	 */
-	protected abstract getConsents(): NativeConsents;
+	protected abstract awaitsConsent(addon: Addon<I>): boolean;
 
 	async shutdown(): Promise<void> {
 		this.pendingStarts.clear();
@@ -300,7 +300,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 		this.pendingStarts.delete(resolved.id);
 
-		if (!consented && needsConsent(resolved.manifest, this.getConsents())) {
+		if (!consented && this.awaitsConsent(resolved)) {
 			const error = new NativeConsentRequiredError(resolved.name);
 
 			this.logger.warn(error.message);
