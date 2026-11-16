@@ -18,13 +18,15 @@ export function formatClassReport(report: ClassReport, filter = ''): string {
 	}
 
 	if (report.interfaces.length) {
-		lines.push(`  implements ${report.interfaces.join(', ')}`);
+		lines.push(
+			`  ${report.platform === 'ios' ? 'conforms to' : 'implements'} ${report.interfaces.join(', ')}`,
+		);
 	}
 
 	if (!report.members) {
 		lines.push(
 			'',
-			'The Objective-C bridge lists no methods, properties or ivars, so iOS shows the superclass chain only.',
+			'Only a development build of Unbound lists Objective-C methods, properties and ivars, so this shows the superclass chain only.',
 		);
 
 		return lines.join('\n');
@@ -38,8 +40,13 @@ export function formatClassReport(report: ClassReport, filter = ''): string {
 		.filter((field) => matches(field.name))
 		.sort((a, b) => a.name.localeCompare(b.name));
 
-	lines.push('', `constructors (${constructors.length})`);
-	lines.push(...constructors.map((parameters) => `  ${simpleName}(${parameters.join(', ')})`));
+	if (report.platform !== 'ios') {
+		lines.push('', `constructors (${constructors.length})`);
+		lines.push(
+			...constructors.map((parameters) => `  ${simpleName}(${parameters.join(', ')})`),
+		);
+	}
+
 	lines.push('', `methods (${methods.length})`);
 	lines.push(
 		...methods.map(
@@ -47,7 +54,10 @@ export function formatClassReport(report: ClassReport, filter = ''): string {
 				`  ${method.static ? 'static ' : ''}${method.returnType} ${method.name}(${method.parameters.join(', ')})`,
 		),
 	);
-	lines.push('', `fields (${fields.length})`);
+	lines.push(
+		'',
+		`${report.platform === 'ios' ? 'properties and ivars' : 'fields'} (${fields.length})`,
+	);
 	lines.push(
 		...fields.map((field) => `  ${field.static ? 'static ' : ''}${field.type} ${field.name}`),
 	);
