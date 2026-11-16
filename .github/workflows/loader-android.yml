@@ -235,7 +235,7 @@ jobs:
                   sdk=$(sed -n 's/.*compileSdk = \([0-9]*\)/\1/p' "$gradle")
                   test -n "$ndk" && test -n "$cmake" && test -n "$sdk"
                   echo "ANDROID_NDK_VERSION=$ndk" >> "$GITHUB_ENV"
-                  "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$ndk" "cmake;$cmake" "platforms;android-$sdk" "build-tools;$sdk.0.0" > /dev/null
+                  "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$ndk" "cmake;$cmake" "platforms;android-$sdk.0" "build-tools;$sdk.0.0" > /dev/null
 
             - name: Configure persistent release signing
               env:
