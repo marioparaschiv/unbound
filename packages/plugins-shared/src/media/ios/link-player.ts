@@ -1,7 +1,7 @@
 import type { NativeBridge, NativeObjectHandle } from '@unbound-app/api/native';
 
-import type { LinkPlayer, PlayOptions } from '~/native/player';
-import { downloadSound } from '~/lib/download';
+import type { LinkPlayer, PlayOptions } from '@unbound-plugins/shared/media/link-player';
+import { downloadSound } from '@unbound-plugins/shared/media/sound-download';
 
 /**
  * @description Plays sound files from links on iOS with `AVAudioPlayer`, which mixes with Discord's audio session.

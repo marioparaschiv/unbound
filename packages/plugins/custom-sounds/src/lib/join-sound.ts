@@ -1,7 +1,7 @@
 import { settings } from '@unbound-app/settings';
 import { metro } from '@unbound-app/api';
 
-import type { LinkPlayer } from '~/native/player';
+import type { LinkPlayer } from '@unbound-plugins/shared/media/link-player';
 
 type SoundPlayer = { playSound(name: string, volume: number): void };
 
