@@ -77,6 +77,12 @@ object NativeBridge {
     @JvmStatic
     external fun nativeAddonOnMainThread(): String?
 
+    @JvmStatic
+    external fun nativeRecordMainThreadStall(at: Long)
+
+    @JvmStatic
+    external fun nativeClearMainThreadStall()
+
     /**
      * How Discord's main process last ended: 1 for a crash, a freeze or a failed start; 2 when the person or the
      * system ended it; 0 when Android keeps no record (before Android 11).

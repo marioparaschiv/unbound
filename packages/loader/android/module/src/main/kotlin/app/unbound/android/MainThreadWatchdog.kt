@@ -30,6 +30,7 @@ internal object MainThreadWatchdog {
             SystemClock.sleep(CHECK_INTERVAL_MS)
             val stalled = SystemClock.uptimeMillis() - lastBeat
             if (stalled < STALL_THRESHOLD_MS) {
+                if (reported) runCatching { NativeBridge.nativeClearMainThreadStall() }
                 reported = false
                 continue
             }
@@ -41,6 +42,7 @@ internal object MainThreadWatchdog {
     }
 
     private fun report(stalled: Long) {
+        NativeBridge.nativeRecordMainThreadStall(System.currentTimeMillis())
         val addon = runCatching { NativeBridge.nativeAddonOnMainThread() }.getOrNull()?.let(::addonName)
         Logger.error(LogCategory.DEFAULT, stallMessage(stalled, addon, mainStack()))
     }

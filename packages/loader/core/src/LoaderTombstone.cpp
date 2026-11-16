@@ -312,7 +312,7 @@ static std::string trimmed(const std::string &line)
     return start == std::string::npos ? "" : line.substr(start, end - start + 1);
 }
 
-std::optional<std::string> anrTraceStack(const std::string &trace)
+std::optional<std::string> anrTraceStack(const std::string &trace, const std::string &addonRecord)
 {
     constexpr size_t kMaxFrames = 60;
     std::string text;
@@ -352,6 +352,7 @@ std::optional<std::string> anrTraceStack(const std::string &trace)
         return std::nullopt;
     }
 
-    return "ANR in thread 1 (main), from Android's ANR trace\n" + text;
+    std::string addon = addonRecord.empty() ? std::string() : "Addon " + addonRecord + "\n";
+    return "ANR in thread 1 (main), from Android's ANR trace\n" + addon + text;
 }
 }

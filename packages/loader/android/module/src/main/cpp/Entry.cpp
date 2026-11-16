@@ -25,6 +25,7 @@
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
 #include "LoaderPreferences.h"
+#include "LoaderStallMarker.h"
 #include "LoaderTelemetry.h"
 #include "LoaderThreadWarnings.h"
 #include "LoaderTombstone.h"
@@ -147,12 +148,33 @@ static void nativeMarkMainThread(JNIEnv *, jclass)
     mainActivityThread.store(loader::currentActivityThread());
 }
 
-static jstring nativeAddonOnMainThread(JNIEnv *env, jclass)
+static std::string mainThreadAddonRecord()
 {
     uintptr_t thread = mainActivityThread.load();
-    std::string record =
-        thread ? loader::addonRecord(loader::addonOnThread(thread)) : std::string();
+    return thread ? loader::addonRecord(loader::addonOnThread(thread)) : std::string();
+}
+
+static jstring nativeAddonOnMainThread(JNIEnv *env, jclass)
+{
+    std::string record = mainThreadAddonRecord();
     return record.empty() ? nullptr : env->NewStringUTF(record.c_str());
+}
+
+static void nativeRecordMainThreadStall(JNIEnv *, jclass, jlong at)
+{
+    if (auto loader = currentLoader())
+    {
+        loader::recordMainThreadStall(loader->documents(), mainThreadAddonRecord(),
+                                      static_cast<int64_t>(at));
+    }
+}
+
+static void nativeClearMainThreadStall(JNIEnv *, jclass)
+{
+    if (auto loader = currentLoader())
+    {
+        loader::clearMainThreadStall(loader->documents());
+    }
 }
 
 static jboolean nativeAdoptAnrTrace(JNIEnv *env, jclass, jbyteArray trace, jlong at)
@@ -165,13 +187,17 @@ static jboolean nativeAdoptAnrTrace(JNIEnv *env, jclass, jbyteArray trace, jlong
     jsize length = env->GetArrayLength(trace);
     std::string bytes(static_cast<size_t>(length), '\0');
     env->GetByteArrayRegion(trace, 0, length, reinterpret_cast<jbyte *>(bytes.data()));
-    std::optional<std::string> stack = loader::anrTraceStack(bytes);
+    auto loader = currentLoader();
+    std::string addon =
+        loader ? loader::takeStallAddonBefore(loader->documents(), static_cast<int64_t>(at))
+               : std::string();
+    std::optional<std::string> stack = loader::anrTraceStack(bytes, addon);
     if (!stack || !loader::adoptPreviousNativeCrash(*stack))
     {
         return JNI_FALSE;
     }
 
-    if (auto loader = currentLoader())
+    if (loader)
     {
         loader::recordCrash(loader->documents(), *stack, static_cast<int64_t>(at));
     }
