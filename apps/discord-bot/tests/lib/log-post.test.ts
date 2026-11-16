@@ -12,7 +12,7 @@ describe('renderLogPost', () => {
 			title: 'Member Joined',
 			colour: 0x00_ff_00,
 			user: { id: '100', name: 'spam_bot' },
-			lines: ['16,917th to join', ''],
+			lines: ['**Member Count:** 16,917th to join', ''],
 		});
 
 		expect(body.flags).toBe(MessageFlags.IsComponentsV2);
@@ -20,7 +20,11 @@ describe('renderLogPost', () => {
 		expect(body.components[0].accent_color).toBe(0x00_ff_00);
 		expect(body.components[0].components).toHaveLength(3);
 		expect(messageText(body)).toBe(
-			['### Member Joined', '**User:** <@100> (100)', '16,917th to join'].join('\n'),
+			[
+				'### Member Joined',
+				'**User:** <@100> (100)',
+				'**Member Count:** 16,917th to join',
+			].join('\n'),
 		);
 	});
 
