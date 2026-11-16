@@ -23,7 +23,7 @@ export class LogRoleUpdateListener extends Listener<typeof Events.GuildRoleUpdat
 
 		await serverLog.post({
 			kind: 'misc',
-			title: 'Role updated',
+			title: 'Role Updated',
 			colour: COLOURS.info,
 			lines: [`<@&${after.id}>`, ...lines],
 			footer: after.id,

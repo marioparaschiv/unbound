@@ -14,7 +14,7 @@ export class LogRoleCreateListener extends Listener<typeof Events.GuildRoleCreat
 
 		await serverLog.post({
 			kind: 'misc',
-			title: 'Role created',
+			title: 'Role Created',
 			colour: COLOURS.positive,
 			lines: [`<@&${role.id}> **${escapeMarkdown(role.name)}**`],
 			footer: role.id,

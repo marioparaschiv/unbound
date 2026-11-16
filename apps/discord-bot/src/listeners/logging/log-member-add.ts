@@ -16,7 +16,7 @@ export class LogMemberAddListener extends Listener<typeof Events.GuildMemberAdd>
 
 		await serverLog.post({
 			kind: 'joins',
-			title: 'Member joined',
+			title: 'Member Joined',
 			colour: COLOURS.positive,
 			user: { id: member.id, name: member.user.username },
 			lines: [

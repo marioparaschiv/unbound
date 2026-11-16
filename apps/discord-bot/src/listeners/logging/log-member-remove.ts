@@ -20,7 +20,7 @@ export class LogMemberRemoveListener extends Listener<typeof Events.GuildMemberR
 
 		await serverLog.post({
 			kind: 'joins',
-			title: 'Member left',
+			title: 'Member Left',
 			colour: COLOURS.warning,
 			user: { id: member.id, name: member.user.username },
 			lines: [

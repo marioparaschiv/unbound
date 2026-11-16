@@ -1,6 +1,7 @@
 import { escapeMarkdown, type APIEmbedField } from 'discord.js';
 
 import type { CaseAction, modCase } from '~/db/schema';
+import type { IconEmojiSpec } from '~/lib/icon-emojis';
 import { formatDuration } from '~/lib/duration';
 import { truncate } from '~/lib/message-text';
 import { COLOURS } from '~/lib/constants';
@@ -8,8 +9,8 @@ import { COLOURS } from '~/lib/constants';
 export type ModCase = typeof modCase.$inferSelect;
 
 type ActionMeta = {
-	/** Names the action in a post's header. */
-	label: string;
+	/** Heads the action's mod log post, in title case. */
+	title: string;
 	/** The Nucleo Micro Bold icon its emoji shows, tinted `colour`. */
 	icon: string;
 	/** Completes "You were … in", "… **user**". */
@@ -27,7 +28,7 @@ type ActionMeta = {
 /** How each action reads and looks. */
 export const CASE_ACTIONS: Readonly<Record<CaseAction, ActionMeta>> = {
 	warn: {
-		label: 'Warning',
+		title: 'Member Warned',
 		icon: 'IconTriangleWarning',
 		past: 'warned',
 		colour: COLOURS.warning,
@@ -35,47 +36,56 @@ export const CASE_ACTIONS: Readonly<Record<CaseAction, ActionMeta>> = {
 		namesModerator: true,
 	},
 	mute: {
-		label: 'Mute',
+		title: 'Member Timed Out',
 		icon: 'IconMicrophoneSlash',
 		past: 'muted',
 		colour: COLOURS.warning,
 		notifies: true,
 	},
 	unmute: {
-		label: 'Unmute',
+		title: 'Timeout Removed',
 		icon: 'IconMicrophone',
 		past: 'unmuted',
 		colour: COLOURS.positive,
 		notifies: false,
 	},
 	kick: {
-		label: 'Kick',
+		title: 'Member Kicked',
 		icon: 'IconArrowDoorOut',
 		past: 'kicked',
 		colour: COLOURS.danger,
 		notifies: false,
 	},
 	softban: {
-		label: 'Softban',
+		title: 'Member Softbanned',
 		icon: 'IconBroom',
 		past: 'softbanned',
 		colour: COLOURS.danger,
 		notifies: false,
 	},
 	ban: {
-		label: 'Ban',
+		title: 'Member Banned',
 		icon: 'IconGavel',
 		past: 'banned',
 		colour: COLOURS.danger,
 		notifies: false,
 	},
 	unban: {
-		label: 'Unban',
+		title: 'Member Unbanned',
 		icon: 'IconUserCheck',
 		past: 'unbanned',
 		colour: COLOURS.positive,
 		notifies: false,
 	},
+};
+
+/** Names each case icon emoji: an action, or `pardon` for a pardoned warning. */
+export type CaseIconKey = CaseAction | 'pardon';
+
+/** The icon emojis case posts show: each action's, and a pardoned warning's, tinted green as its post is. */
+export const CASE_ICONS: Readonly<Record<CaseIconKey, IconEmojiSpec>> = {
+	...CASE_ACTIONS,
+	pardon: { icon: CASE_ACTIONS.warn.icon, colour: COLOURS.positive },
 };
 
 const FIELD_VALUE_LIMIT = 1024;
@@ -146,6 +156,7 @@ export function renderCaseField(entry: ModCase): APIEmbedField {
 
 export default {
 	CASE_ACTIONS,
+	CASE_ICONS,
 	DEFAULT_MUTE_MS,
 	AUDIT_REASON_LIMIT,
 	durationOf,

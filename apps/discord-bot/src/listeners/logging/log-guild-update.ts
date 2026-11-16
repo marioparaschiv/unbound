@@ -20,7 +20,7 @@ export class LogGuildUpdateListener extends Listener<typeof Events.GuildUpdate> 
 
 		await serverLog.post({
 			kind: 'misc',
-			title: 'Server updated',
+			title: 'Server Updated',
 			colour: COLOURS.info,
 			lines,
 			footer: after.id,

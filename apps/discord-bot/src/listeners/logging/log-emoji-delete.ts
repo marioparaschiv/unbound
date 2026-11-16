@@ -14,7 +14,7 @@ export class LogEmojiDeleteListener extends Listener<typeof Events.GuildEmojiDel
 
 		await serverLog.post({
 			kind: 'misc',
-			title: 'Emoji deleted',
+			title: 'Emoji Deleted',
 			colour: COLOURS.danger,
 			lines: [`**${escapeMarkdown(emoji.name ?? emoji.id)}**`],
 			footer: emoji.id,

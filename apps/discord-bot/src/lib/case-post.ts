@@ -1,38 +1,57 @@
 import { escapeMarkdown } from 'discord.js';
 
-import { CASE_ACTIONS, durationOf, stamp, type CaseNotice, type ModCase } from '~/lib/mod-case';
+import {
+	CASE_ACTIONS,
+	durationOf,
+	stamp,
+	type CaseIconKey,
+	type CaseNotice,
+	type ModCase,
+} from '~/lib/mod-case';
 import { containerMessage, textDisplay, type ContainerMessage } from '~/lib/container-message';
 import { COLOURS, type AppEmoji } from '~/lib/constants';
 import { quote, truncate } from '~/lib/message-text';
 import { formatDuration } from '~/lib/duration';
-import type { CaseAction } from '~/db/schema';
 
 /** A rendered case, sendable as an `OutgoingMessage`; it can never ping anyone. */
 export type CasePost = {
 	body: ContainerMessage & { allowed_mentions: { parse: [] } };
 };
 
-/** The uploaded icon emoji of each action; an action without one shows no icon. */
-export type CaseIcons = ReadonlyMap<CaseAction, AppEmoji>;
+/** The uploaded icon emoji of each action, and of a pardoned warning; a key without one shows no icon. */
+export type CaseIcons = ReadonlyMap<CaseIconKey, AppEmoji>;
 
-const NAME_LIMIT = 128;
 const REASON_LIMIT = 1024;
 
-function iconOf(icons: CaseIcons, action: CaseAction) {
-	const emoji = icons.get(action);
+function iconOf(icons: CaseIcons, key: CaseIconKey) {
+	const emoji = icons.get(key);
 
 	return emoji ? `<:${emoji.name}:${emoji.id}> ` : '';
 }
 
-function post(accent: number, text: string): CasePost {
+// Each block is its own text display, so Discord spaces them apart like embed fields.
+function post(accent: number, blocks: string[]): CasePost {
 	return {
-		body: { ...containerMessage(accent, [textDisplay(text)]), allowed_mentions: { parse: [] } },
+		body: {
+			...containerMessage(accent, blocks.map(textDisplay)),
+			allowed_mentions: { parse: [] },
+		},
 	};
 }
 
-// The case number, moderator and state, as one light subtext line; the message's own time dates the case.
+// One full-width field: a bold label, then its value on the same line.
+function field(label: string, value: string) {
+	return `**${label}:** ${value}`;
+}
+
+// The mention shows the current name; the id stays readable after the user leaves.
+function person(id: string) {
+	return `<@${id}> (${id})`;
+}
+
+// The case number and state, as one light subtext line; the message's own time dates the case.
 function details(entry: ModCase) {
-	const facts = [`Case ${entry.id}`, escapeMarkdown(entry.moderatorName)];
+	const facts = [`Case ${entry.id}`];
 
 	if (entry.expiresAt && !entry.closedAt) {
 		facts.push(`ends ${stamp(entry.expiresAt, 'R')}`);
@@ -48,26 +67,30 @@ function details(entry: ModCase) {
 }
 
 /**
- * @description Renders a case as a compact mod log post: the action and user, the reason, then the details.
+ * @description Renders a case as a mod log post: the title, then user, moderator and reason fields, then the details.
  * @param entry The case.
  * @param prefix The command prefix the missing-reason hint names.
  * @param icons The action icon emojis.
- * @returns The message body, for a post or an edit; a pardoned warning turns grey.
+ * @returns The message body, for a post or an edit; a pardoned warning turns green and says so in its title.
  */
 export function renderCasePost(entry: ModCase, prefix: string, icons: CaseIcons): CasePost {
 	const meta = CASE_ACTIONS[entry.action];
 	const pardoned = entry.action === 'warn' && entry.closedAt;
-	const name = escapeMarkdown(truncate(entry.userName, NAME_LIMIT));
 	const reason = entry.reason?.trim();
-	const lines = [
-		`${iconOf(icons, entry.action)}**${meta.label}** · ${name} <@${entry.userId}>`,
+	const blocks = [
+		pardoned
+			? `### ${iconOf(icons, 'pardon')}Member Warn Pardoned`
+			: `### ${iconOf(icons, entry.action)}${meta.title}`,
+		field('User', person(entry.userId)),
+		field('Moderator', person(entry.moderatorId)),
+		// A reason can run long, so it starts under its label; a missing one shows how to set it.
 		reason
-			? quote(truncate(reason, REASON_LIMIT))
-			: `> *No reason yet:* \`${prefix}reason ${entry.id} <reason>\``,
+			? `**Reason:**\n${truncate(reason, REASON_LIMIT)}`
+			: `**Reason:**\n*None yet*\n-# Set it with \`${prefix}reason ${entry.id} <reason>\``,
 		details(entry),
 	];
 
-	return post(pardoned ? COLOURS.muted : meta.colour, lines.join('\n'));
+	return post(pardoned ? COLOURS.positive : meta.colour, blocks);
 }
 
 /**
@@ -98,7 +121,7 @@ export function renderCaseNotice(
 		lines.push(`-# Moderator: ${escapeMarkdown(notice.moderatorName)} (${notice.moderatorId})`);
 	}
 
-	return post(meta.colour, lines.join('\n'));
+	return post(meta.colour, [lines.join('\n')]);
 }
 
 export default { renderCasePost, renderCaseNotice };

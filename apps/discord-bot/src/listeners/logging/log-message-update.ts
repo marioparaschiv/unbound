@@ -24,7 +24,7 @@ export class LogMessageUpdateListener extends Listener<typeof Events.MessageUpda
 
 		await serverLog.post({
 			kind: 'messages',
-			title: 'Message edited',
+			title: 'Message Edited',
 			colour: COLOURS.info,
 			user: { id: message.author.id, name: message.author.username },
 			lines: [

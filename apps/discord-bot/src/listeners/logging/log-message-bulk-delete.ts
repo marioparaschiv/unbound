@@ -19,7 +19,7 @@ export class LogMessageBulkDeleteListener extends Listener<typeof Events.Message
 
 		await serverLog.post({
 			kind: 'messages',
-			title: 'Messages purged',
+			title: 'Messages Purged',
 			colour: COLOURS.danger,
 			lines: [`**${messages.size}** messages in <#${channel.id}>`],
 			footer: channel.id,

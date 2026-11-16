@@ -14,7 +14,7 @@ export class LogRoleDeleteListener extends Listener<typeof Events.GuildRoleDelet
 
 		await serverLog.post({
 			kind: 'misc',
-			title: 'Role deleted',
+			title: 'Role Deleted',
 			colour: COLOURS.danger,
 			lines: [`**${escapeMarkdown(role.name)}**`],
 			footer: role.id,
