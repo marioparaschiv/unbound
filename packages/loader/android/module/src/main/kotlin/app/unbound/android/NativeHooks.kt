@@ -10,6 +10,8 @@ import java.lang.reflect.Modifier
 import java.lang.reflect.Proxy
 
 object NativeHooks {
+    private const val RESULT_PREFIX = "{\"result\":"
+
     interface Installer {
         fun install(method: Executable, hook: Hook): Removable
     }
@@ -55,6 +57,7 @@ object NativeHooks {
         val receiver: Class<*>?,
         val replaces: Boolean,
         val rewritesArguments: Boolean,
+        val rewritesResult: Boolean,
         val notifies: Boolean,
         val payload: PayloadSelection,
         var removable: Removable?,
@@ -120,12 +123,17 @@ object NativeHooks {
         ) {
             "Rewriting arguments requires a non-replacing, uncoalesced hook that notifies before the method runs"
         }
+        val rewritesResult = options.optBoolean("rewriteResult", false)
+        require(!rewritesResult || (notify != false && !coalesce && !options.optBoolean("replace", false))) {
+            "Rewriting results requires a non-replacing, uncoalesced hook that notifies"
+        }
         val registration = Registration(
             token,
             method,
             owner.takeIf { method.declaringClass != it },
             options.optBoolean("replace", false),
             rewritesArguments,
+            rewritesResult,
             notify != false,
             payload,
             null,
@@ -235,17 +243,27 @@ object NativeHooks {
             val cacheDescription = if (registration.replaces) describe(self, arguments) else null
             var eventDescription: Description? = null
             var rewritten: Array<Any?>? = null
+            var replacement: ResultRewrite? = null
 
             if (registration.notifies && registration.payload.phase == HookPhase.BEFORE) {
                 val notified = notify(registration, self, arguments, cacheDescription, HookPhase.BEFORE)
                 eventDescription = notified?.description
-                rewritten = notified?.rewrittenArguments?.let { rewrittenArguments(registration, it) }
+                replacement = notified?.rewrittenArguments?.let { rewrittenResult(registration, it) }
+                if (replacement == null) {
+                    rewritten = notified?.rewrittenArguments?.let { rewrittenArguments(registration, it) }
+                }
             }
 
-            val result = if (rewritten != null) chain.proceedWith(rewritten) else result(registration, chain, cacheDescription)
+            var result = when {
+                replacement != null -> replacement.value
+                rewritten != null -> chain.proceedWith(rewritten)
+                else -> result(registration, chain, cacheDescription)
+            }
 
             if (registration.notifies && registration.payload.phase == HookPhase.AFTER) {
-                eventDescription = notify(registration, self, arguments, cacheDescription, HookPhase.AFTER)?.description
+                val notified = notify(registration, self, arguments, cacheDescription, HookPhase.AFTER)
+                eventDescription = notified?.description
+                notified?.rewrittenArguments?.let { rewrittenResult(registration, it) }?.let { result = it.value }
             }
 
             if (cacheDescription != null && cacheDescription !== eventDescription) {
@@ -272,8 +290,18 @@ object NativeHooks {
         return coerceReturn(registration.method, value)
     }
 
+    private class ResultRewrite(val value: Any?)
+
+    private fun rewrittenResult(registration: Registration, rewrite: String): ResultRewrite? {
+        if (!registration.rewritesResult || !rewrite.startsWith(RESULT_PREFIX) || !rewrite.endsWith("}")) return null
+        return runCatching {
+            ResultRewrite(coerceReturn(registration.method, NativeJava.decode(rewrite.substring(RESULT_PREFIX.length, rewrite.length - 1))))
+        }.onFailure { Logger.error(LogCategory.HOOKS, "Failed to decode a rewritten Android hook result", it) }
+            .getOrNull()
+    }
+
     private fun rewrittenArguments(registration: Registration, argumentsJSON: String): Array<Any?>? {
-        if (!registration.rewritesArguments) return null
+        if (!registration.rewritesArguments || !argumentsJSON.startsWith("[")) return null
         return runCatching { NativeJava.decodeArguments(registration.method.parameterTypes, argumentsJSON) }
             .onFailure { Logger.error(LogCategory.HOOKS, "Failed to decode rewritten Android hook arguments", it) }
             .getOrNull()

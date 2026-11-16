@@ -46,7 +46,7 @@ namespace {
         std::atomic_bool active{true};
         std::atomic_bool originalCalled{false};
         std::atomic_bool deferredOriginalRequested{false};
-        std::vector<std::pair<size_t, void *>> deferredReplacements;
+        std::vector<std::pair<size_t, std::vector<uint8_t>>> deferredReplacements;
         void *originalObject = nullptr;
     };
 }
@@ -117,10 +117,9 @@ static void copyHookResult(const std::shared_ptr<HookInvocation> &invocation, vo
 static void applyDeferredHookReplacements(const std::shared_ptr<HookInvocation> &invocation)
 {
     std::lock_guard<std::mutex> lock(invocation->lifecycleMutex);
-    for (const auto &[index, rawObject] : invocation->deferredReplacements)
+    for (const auto &[index, bytes] : invocation->deferredReplacements)
     {
-        void *value = rawObject;
-        memcpy(invocation->nativeArguments[index], &value, sizeof(value));
+        memcpy(invocation->nativeArguments[index], bytes.data(), bytes.size());
     }
 
     invocation->deferredReplacements.clear();
@@ -329,6 +328,21 @@ static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selecto
     return completed;
 }
 
+static void storeHookArgument(const std::shared_ptr<HookInvocation> &invocation, size_t index,
+                              const void *bytes, size_t size)
+{
+    memcpy(invocation->arguments[index].data(), bytes, size);
+    if (std::this_thread::get_id() != invocation->hookThread)
+    {
+        const auto *begin = static_cast<const uint8_t *>(bytes);
+        invocation->deferredReplacements.emplace_back(index,
+                                                      std::vector<uint8_t>(begin, begin + size));
+        return;
+    }
+
+    memcpy(invocation->nativeArguments[index], bytes, size);
+}
+
 static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation> &invocation,
                           id object, SEL selector, bool allowOriginal,
                           const std::shared_ptr<HookState> &state, const char *phase)
@@ -412,14 +426,68 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                         std::make_shared<ObjCHandleHost>(object, liveObjCRetains()));
                 }
 
-                memcpy(original->arguments[argumentIndex].data(), &rawObject, sizeof(rawObject));
-                if (std::this_thread::get_id() != original->hookThread)
+                storeHookArgument(original, argumentIndex, &rawObject, sizeof(rawObject));
+                return Value::undefined();
+            }));
+    context.setProperty(
+        runtime, "replaceArgument",
+        Function::createFromHostFunction(
+            runtime, PropNameID::forUtf8(runtime, "replaceArgument"), 2,
+            [original, allowOriginal, addon = state->addon, selector, argumentIndexes](
+                Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                std::lock_guard<std::mutex> lock(original->lifecycleMutex);
+                if (!original->active.load())
                 {
-                    original->deferredReplacements.emplace_back(argumentIndex, rawObject);
+                    if (allowOriginal)
+                    {
+                        logDroppedHookCall(addon, selector, "argument replacement");
+                    }
+
+                    throw JSError(rt,
+                                  "Native hook arguments are unavailable after the hook returns");
+                }
+
+                if (!allowOriginal)
+                {
+                    throw JSError(rt, "Native hook arguments can only be replaced synchronously");
+                }
+
+                if (count < 2 || !args[0].isNumber())
+                {
+                    throw JSError(rt, "Native hook replaceArgument expects an index and value");
+                }
+
+                size_t selectedIndex = loader::native::selectedPayloadArgument(
+                    rt, args[0].getNumber(), argumentIndexes.size());
+                size_t argumentIndex = argumentIndexes[selectedIndex] + 2;
+                const loader::ffi::Type &spec =
+                    original->dispatcher->signature->arguments[argumentIndex];
+
+                if (spec.name == "object" || spec.name == "class")
+                {
+                    id object       = args[1].isNull() ? nil : objcValue(rt, args[1]);
+                    void *rawObject = (__bridge void *) object;
+                    if (object)
+                    {
+                        original->retainedObjects.emplace_back(
+                            std::make_shared<ObjCHandleHost>(object, liveObjCRetains()));
+                    }
+
+                    storeHookArgument(original, argumentIndex, &rawObject, sizeof(rawObject));
                     return Value::undefined();
                 }
 
-                memcpy(original->nativeArguments[argumentIndex], &rawObject, sizeof(rawObject));
+                if (spec.name == "cstring" || spec.name == "selector")
+                {
+                    throw JSError(rt, "Native hook replaceArgument cannot replace " + spec.name
+                                          + " arguments");
+                }
+
+                std::vector<uint8_t> bytes(loader::ffi::valueStorageSize(spec));
+                loader::ffi::ArgumentStorage storage;
+                loader::ffi::writeValue(rt, args[1], spec, bytes.data(), storage);
+                storeHookArgument(original, argumentIndex, bytes.data(),
+                                  loader::ffi::typeSize(spec));
                 return Value::undefined();
             }));
     context.setProperty(

@@ -88,7 +88,22 @@ namespace {
             types.push_back(resolveType(typeName(runtime, list.getValueAtIndex(runtime, index))));
         }
 
-        return makeSignature(resolveType(typeName(runtime, result)), std::move(types));
+        Signature parsed = makeSignature(resolveType(typeName(runtime, result)), std::move(types));
+        jsi::Value fixed = signature.getProperty(runtime, "fixedArgs");
+        if (!fixed.isUndefined())
+        {
+            double count = fixed.isNumber() ? fixed.getNumber() : -1;
+            if (count < 1 || count != static_cast<double>(static_cast<std::size_t>(count))
+                || static_cast<std::size_t>(count) > parsed.arguments.size())
+            {
+                throw std::invalid_argument(
+                    "Native FFI fixedArgs must be a whole number from 1 to the argument count");
+            }
+
+            parsed.fixedArguments = static_cast<std::size_t>(count);
+        }
+
+        return parsed;
     }
 
     std::optional<void *> resolvedPointer(jsi::Runtime &runtime, const jsi::Value &value)
@@ -430,7 +445,7 @@ jsi::Value callFunction(jsi::Runtime &runtime, const jsi::Value *args, std::size
         throw std::invalid_argument("Native FFI argument count does not match the signature");
     }
 
-    CallFrame frame(callInterface(signature.result, signature.arguments));
+    CallFrame frame(callInterface(signature.result, signature.arguments, signature.fixedArguments));
     for (std::size_t index = 0; index < signature.arguments.size(); index++)
     {
         writeValue(runtime, args[index + 2], signature.arguments[index], frame.argument(index),

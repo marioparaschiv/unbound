@@ -194,6 +194,7 @@ export function createFakeObjc(log: NativeCallLog = createCallLog()): FakeObjc {
 				phase,
 				original,
 				replaceObjectArgument: (index, value) => void (args[index] = value),
+				replaceArgument: (index, value) => void (args[index] = value),
 			};
 		}
 

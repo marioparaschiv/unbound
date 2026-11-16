@@ -23,12 +23,14 @@ export type NativeFFITypeName =
 /** An FFI type: a scalar or pointer name, or a registered struct by name, such as `{ struct: 'CGRect' }`. */
 export type NativeFFIType = NativeFFITypeName | { struct: string };
 
-/** A non-variadic C function signature for `ffi.call`. */
+/** A C function signature for `ffi.call`. */
 export type NativeFFISignature = {
 	/** The result type; `i64` and `u64` results come back as `BigInt`. */
 	returnType: NativeFFIType;
 	/** The argument types, at most 16 and none `void`. */
 	args: NativeFFIType[];
+	/** For a variadic function, how many of `args` are its fixed parameters; pass extra floats as `double` and small integers as `i32`, as C promotes them. */
+	fixedArgs?: number;
 };
 
 /** Calls C functions in images Discord already loaded. An unsigned plugin needs the user's consent to use it. */

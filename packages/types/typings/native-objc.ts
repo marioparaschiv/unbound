@@ -67,6 +67,8 @@ export type NativeHookContext<Receiver extends boolean = true> = {
 	original: (...args: unknown[]) => NativeObjCResult;
 	/** Swaps the object argument at an index of `args` before the original runs; only during a synchronous handler. */
 	replaceObjectArgument(index: number, value: NativeObjectHandle | null): void;
+	/** Swaps any argument at an index of `args` before the original runs: a number, boolean, struct, pointer or object; only during a synchronous handler. */
+	replaceArgument(index: number, value: NativeObjCResult): void;
 };
 
 /** The handlers an Objective-C hook runs around each call; it needs at least one, unless `cacheOnly` is set. */

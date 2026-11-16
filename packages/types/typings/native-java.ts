@@ -66,6 +66,10 @@ export type NativeJavaHookOptions<Receiver extends boolean = boolean> = {
 	notify?: boolean | 'after';
 	/** Lets a `before` listener hooked from a UI scope return `{ arguments }` to run the method with them instead. */
 	rewriteArguments?: boolean;
+	/** Lets a listener hooked from a UI scope return `{ result }`: before the method, it runs instead of it; after, it replaces what the method returned. */
+	rewriteResult?: boolean;
+	/** Hooks every overload of the method instead of the one `parameterTypes` names, under one token. */
+	overloads?: 'all';
 	/** Trims the receiver, arguments and phase each event sends, to cut crossing cost on hot methods. */
 	payload?: NativeHookPayload<Receiver>;
 	/** Also hooks every subclass that declares the method itself, found by `java.findClasses` once it answers. */
@@ -74,11 +78,16 @@ export type NativeJavaHookOptions<Receiver extends boolean = boolean> = {
 	waitForClass?: boolean;
 };
 
-/** What a `rewriteArguments` listener returns to run the hooked method with other arguments, one per parameter. */
-export type NativeJavaHookRewrite = {
-	/** The arguments to run the method with, in parameter order. */
-	arguments: NativeJavaArgument[];
-};
+/** What a `rewriteArguments` listener returns to run the hooked method with other arguments, or a `rewriteResult` listener returns as its result. */
+export type NativeJavaHookRewrite =
+	| {
+			/** The arguments to run the method with, in parameter order. */
+			arguments: NativeJavaArgument[];
+	  }
+	| {
+			/** The value the call returns. */
+			result: NativeJavaArgument | null;
+	  };
 
 /** What a proxy handler receives for one call of an interface method. */
 export type NativeJavaProxyCall = {
