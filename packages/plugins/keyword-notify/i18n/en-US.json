@@ -24,5 +24,7 @@
 	"UNKNOWN_USER": "Unknown user",
 	"UNKNOWN_CHANNEL": "Unknown channel",
 	"UNKNOWN_SERVER": "Unknown server",
-	"REMOVE": "Remove"
+	"REMOVE": "Remove",
+	"KEYWORD_IN_SERVER": "**{author}** used a keyword in **{server}** - **{channel}**:",
+	"KEYWORD_IN_DM": "**{author}** used a keyword:"
 }

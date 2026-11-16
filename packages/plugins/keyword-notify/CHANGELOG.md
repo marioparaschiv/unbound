@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-16
+
+### Added
+
+- Keyword messages show up in the bell's notifications and in recent mentions, and stay there after Discord reloads them or restarts, until you remove them.
+
 ## [1.1.1] - 2026-11-13
 
 ### Changed

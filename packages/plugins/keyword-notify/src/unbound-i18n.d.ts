@@ -55,10 +55,17 @@ declare module '@unbound-app/i18n' {
 		readonly UNKNOWN_SERVER: string;
 		/** Remove */
 		readonly REMOVE: string;
+		/** **{author}** used a keyword in **{server}** - **{channel}**: */
+		readonly KEYWORD_IN_SERVER: string;
+		/** **{author}** used a keyword: */
+		readonly KEYWORD_IN_DM: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
-	export type FormatVars = Record<never, never>;
+	export type FormatVars = {
+		KEYWORD_IN_SERVER: { author: string | number; server: string | number; channel: string | number };
+		KEYWORD_IN_DM: { author: string | number };
+	};
 
 	/** Each message in the user's locale, falling back to en-US. */
 	export const messages: Messages;
