@@ -147,6 +147,12 @@ function invalidInput(output: FailedOutput, json: boolean): never {
 	process.exit(2);
 }
 
+function writeFully(stream: NodeJS.WriteStream, text: string): Promise<void> {
+	return new Promise((resolve) => {
+		stream.write(text, () => resolve());
+	});
+}
+
 async function run(
 	definition: CommandDefinition<TObject>,
 	input: CommandInput,
@@ -179,11 +185,11 @@ async function run(
 		if (json) {
 			const printed = output.ok ? (output.data ?? output) : failureJson(output);
 
-			process.stdout.write(`${JSON.stringify(printed)}\n`);
+			await writeFully(process.stdout, `${JSON.stringify(printed)}\n`);
 		} else if (output.ok) {
-			process.stdout.write(`${output.text}\n`);
+			await writeFully(process.stdout, `${output.text}\n`);
 		} else {
-			process.stderr.write(`${output.text}\n`);
+			await writeFully(process.stderr, `${output.text}\n`);
 		}
 
 		if (output.ok) {
