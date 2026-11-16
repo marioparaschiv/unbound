@@ -2,10 +2,10 @@ import type { CommandErrorCode } from '@unbound-app/debugger-protocol/registry';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { discoverAddons, type DiscoveredAddon } from '~/lib/discovery';
+import { loadAddonWorkspace } from '~/lib/addon-workspace';
+import type { DiscoveredAddon } from '~/lib/discovery';
 import { DEV_BUILD_CHECKS } from '~/lib/build-checks';
 import { buildAddon } from '~/lib/build-addon';
-import { loadConfig } from '~/lib/config';
 
 /** The addon, or why it could not be found (`not-found`) or built (no code). */
 export type AddonTarget = { addon: DiscoveredAddon } | { error: string; code?: CommandErrorCode };
@@ -30,13 +30,16 @@ export async function resolveAddonTarget(
 	{ build, hot, timeoutMs }: AddonTargetOptions,
 ): Promise<AddonTarget> {
 	const directory = resolve(target);
-	const resolved = loadConfig(existsSync(directory) ? directory : void 0);
+	const workspace = await loadAddonWorkspace(
+		[target],
+		existsSync(directory) ? directory : void 0,
+	);
 
-	if ('error' in resolved) {
-		return resolved;
+	if ('error' in workspace) {
+		return workspace;
 	}
 
-	const addons = await discoverAddons(resolved);
+	const { resolved, addons } = workspace;
 	const addon = addons.find((entry) => entry.id === target || resolve(entry.dir) === directory);
 
 	if (!addon) {

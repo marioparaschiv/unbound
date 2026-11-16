@@ -1,15 +1,14 @@
 import { namedAddons, unknownAddonNames } from '~/lib/addon-filter';
 import { formatReport, isOverBudget } from '~/lib/report-format';
 import type { BuildReport } from '~/rollup/build-report-schema';
+import { loadAddonWorkspace } from '~/lib/addon-workspace';
 import { buildConcurrency } from '~/lib/build-concurrency';
 import type { CommandHandler } from '~/lib/lazy-handler';
 import { createCheckCache } from '~/lib/check/check';
 import { inShard, parseShard } from '~/lib/shard';
 import { buildChecks } from '~/lib/build-checks';
-import { discoverAddons } from '~/lib/discovery';
 import { buildAddon } from '~/lib/build-addon';
 import { mapInParallel } from '~/lib/parallel';
-import { loadConfig } from '~/lib/config';
 
 import type buildCommand from './build';
 
@@ -23,11 +22,13 @@ const handler: CommandHandler<typeof buildCommand.schema> = async ({
 	shard,
 	verbose,
 }) => {
-	const resolved = loadConfig();
+	const workspace = await loadAddonWorkspace(names);
 
-	if ('error' in resolved) {
-		return { ok: false, text: resolved.error };
+	if ('error' in workspace) {
+		return { ok: false, text: workspace.error };
 	}
+
+	const { resolved, addons: discovered } = workspace;
 
 	const part = parseShard(shard);
 
@@ -35,7 +36,6 @@ const handler: CommandHandler<typeof buildCommand.schema> = async ({
 		return { ok: false, text: `"${shard}" is not a shard; use index/count, such as 2/3.` };
 	}
 
-	const discovered = await discoverAddons(resolved);
 	const unknown = unknownAddonNames(discovered, names);
 
 	if (unknown.length > 0) {
