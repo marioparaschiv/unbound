@@ -111,6 +111,27 @@ describe('formatClassReport', () => {
 		expect(text).toContain('fields (0)');
 	});
 
+	test('lists Objective-C members as methods, protocols, properties and ivars', () => {
+		const text = formatClassReport({
+			platform: 'ios',
+			name: 'DCDLabel',
+			superclasses: ['UILabel', 'NSObject'],
+			interfaces: ['NSCoding'],
+			constructors: [],
+			methods: [
+				{ name: 'setText:', parameters: ['NSString *'], returnType: 'void', static: false },
+				{ name: 'layerClass', parameters: [], returnType: 'Class', static: true },
+			],
+			fields: [{ name: 'text', type: 'NSString *', static: false }],
+			members: true,
+		});
+
+		expect(text).toContain('  conforms to NSCoding');
+		expect(text).not.toContain('constructors');
+		expect(text).toContain('  static Class layerClass()');
+		expect(text).toContain('properties and ivars (1)');
+	});
+
 	test('explains the missing members on iOS', () => {
 		expect(
 			formatClassReport({
@@ -126,7 +147,7 @@ describe('formatClassReport', () => {
 				'class UILabel',
 				'  extends UIView < UIResponder < NSObject',
 				'',
-				'The Objective-C bridge lists no methods, properties or ivars, so iOS shows the superclass chain only.',
+				'Only a development build of Unbound lists Objective-C methods, properties and ivars, so this shows the superclass chain only.',
 			].join('\n'),
 		);
 	});

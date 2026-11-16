@@ -7,6 +7,22 @@ import type {
 import type { InspectReport, ViewRecord } from '~/lib/inspect-report';
 import type { DevicePrelude } from '~/lib/device-prelude';
 
+type InspectedMember = { name: string; type?: string; returnType?: string; parameters?: string[] };
+
+type InspectKind = 'methods' | 'classMethods' | 'properties' | 'ivars' | 'protocols';
+
+type InspectPage = { offset: number; limit: number };
+
+type InspectedMembers = { members: InspectedMember[] };
+
+type ObjCInspector = {
+	inspectMembers?: (className: string, kind: InspectKind, page: InspectPage) => InspectedMembers;
+};
+
+type InspectorGlobal = typeof globalThis & {
+	__unboundDevInspector?: () => ObjCInspector | undefined;
+};
+
 export type InspectRequest =
 	| { kind: 'class'; name: string }
 	| { kind: 'views'; className: string; maxDepth: number; maxNodes: number; chunk: number }
@@ -281,15 +297,49 @@ export async function inspectNative(
 				parent = objc.call(parent, 'superclass') as NativeObjectHandle | null;
 			}
 
+			const name = objc.className(found) ?? request.name;
+			const inspector = (globalThis as InspectorGlobal).__unboundDevInspector?.();
+			const list = (kind: InspectKind) =>
+				inspector?.inspectMembers?.(name, kind, { offset: 0, limit: 5000 }).members ?? [];
+
+			if (!inspector?.inspectMembers) {
+				return {
+					platform: 'ios',
+					name,
+					superclasses,
+					interfaces: [],
+					constructors: [],
+					methods: [],
+					fields: [],
+					members: false,
+				};
+			}
+
+			const methods = (['methods', 'classMethods'] as const).flatMap((kind) =>
+				list(kind).map((member) => ({
+					name: member.name,
+					parameters: member.parameters ?? [],
+					returnType: member.returnType ?? 'void',
+					static: kind === 'classMethods',
+				})),
+			);
+			const fields = (['properties', 'ivars'] as const).flatMap((kind) =>
+				list(kind).map((member) => ({
+					name: member.name,
+					type: member.type ?? '?',
+					static: false,
+				})),
+			);
+
 			return {
 				platform: 'ios',
-				name: objc.className(found) ?? request.name,
+				name,
 				superclasses,
-				interfaces: [],
+				interfaces: list('protocols').map((member) => member.name),
 				constructors: [],
-				methods: [],
-				fields: [],
-				members: false,
+				methods,
+				fields,
+				members: true,
 			};
 		}
 
