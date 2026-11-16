@@ -1923,6 +1923,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/photo-metadata": {
+      "name": "photo-metadata",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/picture-in-picture": {
       "name": "picture-in-picture",
       "dependencies": {
@@ -5283,6 +5297,8 @@
     "pdf-viewer": ["pdf-viewer@workspace:packages/plugins/pdf-viewer"],
 
     "permissions-viewer": ["permissions-viewer@workspace:packages/plugins/permissions-viewer"],
+
+    "photo-metadata": ["photo-metadata@workspace:packages/plugins/photo-metadata"],
 
     "picocolors": ["picocolors@1.1.1", "", {}, "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA=="],
 
