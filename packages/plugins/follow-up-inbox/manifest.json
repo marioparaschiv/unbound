@@ -1,0 +1,17 @@
+{
+	"id": "unbound.follow-up-inbox",
+	"name": "Follow Up Inbox",
+	"description": "Marks messages you still need to answer, lists them in one place apart from unreads, and clears each once you reply.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ChatDotsIcon",
+	"main": "index.tsx"
+}

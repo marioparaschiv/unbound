@@ -1085,6 +1085,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/follow-up-inbox": {
+      "name": "follow-up-inbox",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/follow-voice-user": {
       "name": "follow-voice-user",
       "dependencies": {
@@ -4441,6 +4455,8 @@
     "flow-estree": ["flow-estree@0.327.0", "", {}, "sha512-f9vK751YUzD0qaHSpKc5/qQM6gqOlgGS+4ZRqTNcZOpVqn3mC55yEQ6dUG2K1eaVm5FbKkz9CFWe6XNvrkQFQg=="],
 
     "flow-parser": ["flow-parser@0.327.0", "", { "dependencies": { "flow-estree": "0.327.0" } }, "sha512-/MYZ5hXWf5ozpbdfUDmazMgQXviLxWEiRLH3MppEGDdW0itRVqmB5UaU7QX+SBCDNiq+gEesSVn8nlxmPDyDkw=="],
+
+    "follow-up-inbox": ["follow-up-inbox@workspace:packages/plugins/follow-up-inbox"],
 
     "follow-voice-user": ["follow-voice-user@workspace:packages/plugins/follow-voice-user"],
 
