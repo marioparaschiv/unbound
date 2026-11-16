@@ -2,6 +2,7 @@ import type { Message, PartialMessage } from 'discord.js';
 import { Events, Listener } from '@sapphire/framework';
 import { ApplyOptions } from '@sapphire/decorators';
 
+import { field, fieldBelow } from '~/lib/post-fields';
 import { quoteContent } from '~/lib/log-changes';
 import { COLOURS } from '~/lib/constants';
 
@@ -25,15 +26,15 @@ export class LogMessageUpdateListener extends Listener<typeof Events.MessageUpda
 		await serverLog.post({
 			kind: 'messages',
 			title: 'Message Edited',
+			icon: 'messageEdited',
 			colour: COLOURS.info,
 			user: { id: message.author.id, name: message.author.username },
 			lines: [
-				`in <#${message.channelId}> · [Jump to message](${message.url})`,
-				'**Before:**',
-				quoteContent(before.partial ? null : before.content),
-				'**After:**',
-				quoteContent(message.content),
+				field('Channel', `<#${message.channelId}> · [Jump to message](${message.url})`),
+				fieldBelow('Before', quoteContent(before.partial ? null : before.content)),
+				fieldBelow('After', quoteContent(message.content)),
 			],
+			footer: message.id,
 		});
 	}
 }

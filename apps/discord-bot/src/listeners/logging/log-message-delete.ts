@@ -2,6 +2,7 @@ import type { Message, PartialMessage } from 'discord.js';
 import { Events, Listener } from '@sapphire/framework';
 import { ApplyOptions } from '@sapphire/decorators';
 
+import { field, fieldBelow } from '~/lib/post-fields';
 import { quoteContent } from '~/lib/log-changes';
 import { COLOURS } from '~/lib/constants';
 
@@ -25,14 +26,15 @@ export class LogMessageDeleteListener extends Listener<typeof Events.MessageDele
 		await serverLog.post({
 			kind: 'messages',
 			title: 'Message Deleted',
+			icon: 'messageDeleted',
 			colour: COLOURS.danger,
 			user: { id: author.id, name: author.username },
 			lines: [
-				`in <#${message.channelId}>`,
-				quoteContent(message.content),
-				files.length ? `**Attachments:** ${files.join(', ')}` : undefined,
-				`-# Message ID: ${message.id}`,
-			].filter((line) => line !== undefined),
+				field('Channel', `<#${message.channelId}>`),
+				fieldBelow('Content', quoteContent(message.content)),
+				files.length ? fieldBelow('Attachments', files.join('\n')) : '',
+			],
+			footer: message.id,
 		});
 	}
 }
