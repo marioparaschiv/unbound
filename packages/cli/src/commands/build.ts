@@ -4,6 +4,13 @@ import { lazyHandler } from '~/lib/lazy-handler';
 import { defaulted, Type } from '~/lib/schema';
 
 const schema = Type.Object({
+	addons: defaulted(
+		Type.Array(Type.String(), {
+			description:
+				'The addons to build, by manifest id or directory. Without any, every addon in the workspace builds.',
+		}),
+		[],
+	),
 	declaredCapabilities: defaulted(
 		Type.Boolean({
 			description:
@@ -36,10 +43,11 @@ const schema = Type.Object({
 const buildCommand: CommandDefinition<typeof schema> = {
 	name: 'build',
 	description:
-		"Build every addon in the workspace once, then run the post-build checks on each, reporting per-addon success and failure, and each plugin's size against its budgets.",
-	summary: 'Build every addon in the workspace.',
+		"Build every addon in the workspace once, or only the ones named, then run the post-build checks on each, reporting per-addon success and failure, and each plugin's size against its budgets.",
+	summary: 'Build the addons in the workspace.',
 	mcp: false,
 	schema,
+	cli: { positionals: ['addons'] },
 	handler: lazyHandler(() => import('./build-handler')),
 };
 

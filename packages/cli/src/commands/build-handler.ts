@@ -1,3 +1,4 @@
+import { namedAddons, unknownAddonNames } from '~/lib/addon-filter';
 import { formatReport, isOverBudget } from '~/lib/report-format';
 import type { BuildReport } from '~/rollup/build-report-schema';
 import { buildConcurrency } from '~/lib/build-concurrency';
@@ -16,6 +17,7 @@ import type buildCommand from './build';
 type BuiltAddonReport = { id: string; ok: boolean; report: BuildReport | null };
 
 const handler: CommandHandler<typeof buildCommand.schema> = async ({
+	addons: names,
 	declaredCapabilities,
 	strictBudget,
 	shard,
@@ -33,7 +35,17 @@ const handler: CommandHandler<typeof buildCommand.schema> = async ({
 		return { ok: false, text: `"${shard}" is not a shard; use index/count, such as 2/3.` };
 	}
 
-	const addons = inShard(await discoverAddons(resolved), part);
+	const discovered = await discoverAddons(resolved);
+	const unknown = unknownAddonNames(discovered, names);
+
+	if (unknown.length > 0) {
+		return {
+			ok: false,
+			text: `No addon in this workspace has the id or directory ${unknown.join(', ')}.`,
+		};
+	}
+
+	const addons = inShard(namedAddons(discovered, names), part);
 
 	if (addons.length === 0) {
 		return { ok: true, text: 'No addons found.' };
