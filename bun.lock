@@ -1489,6 +1489,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/mention-guard": {
+      "name": "mention-guard",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/mention-haptics": {
       "name": "mention-haptics",
       "dependencies": {
@@ -4825,6 +4839,8 @@
     "memoize-one": ["memoize-one@5.2.1", "", {}, "sha512-zYiwtZUcYyXKo/np96AGZAckk+FWWsUdJ3cHGGmld7+AhvcWmQyGCYUh1hc4Q/pkOhb65dQR/pqCyK0cOaHz4Q=="],
 
     "mention-avatars": ["mention-avatars@workspace:packages/plugins/mention-avatars"],
+
+    "mention-guard": ["mention-guard@workspace:packages/plugins/mention-guard"],
 
     "mention-haptics": ["mention-haptics@workspace:packages/plugins/mention-haptics"],
 
