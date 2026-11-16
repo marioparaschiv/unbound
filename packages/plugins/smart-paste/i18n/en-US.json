@@ -1,0 +1,12 @@
+{
+	"BUTTON": "Paste as",
+	"TITLE": "Paste as",
+	"EMPTY": "The clipboard holds no text.",
+	"PLAIN": "Plain text",
+	"CODE": "Code block",
+	"QUOTE": "Quote",
+	"LINK": "Link without a preview",
+	"FILE": "Text file",
+	"FILE_NAME": "message.txt",
+	"FILE_FAILED": "Couldn't attach the text file."
+}

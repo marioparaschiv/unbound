@@ -1,0 +1,17 @@
+{
+	"id": "unbound.smart-paste",
+	"name": "Smart Paste",
+	"description": "Adds a paste button to the chat input that pastes the clipboard as plain text, a code block, a quote, a link without a preview, or a text file.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TextIcon",
+	"main": "index.tsx"
+}
