@@ -7,7 +7,10 @@ export type LogIconKey =
 	| 'messageEdited'
 	| 'messagesPurged'
 	| 'memberJoined'
-	| 'memberLeft';
+	| 'memberLeft'
+	| 'auditCreated'
+	| 'auditUpdated'
+	| 'auditDeleted';
 
 /** The uploaded icon emoji of each event; an event without one shows no icon. */
 export type LogIcons = ReadonlyMap<LogIconKey, AppEmoji>;
@@ -19,6 +22,10 @@ export const LOG_ICONS: Readonly<Record<LogIconKey, IconEmojiSpec>> = {
 	messagesPurged: { icon: 'IconBroom', colour: COLOURS.danger },
 	memberJoined: { icon: 'IconUserPlus', colour: COLOURS.positive },
 	memberLeft: { icon: 'IconUserMinus', colour: COLOURS.warning },
+	// Audit log actions, by whether they created, changed or removed something.
+	auditCreated: { icon: 'IconCirclePlus', colour: COLOURS.positive },
+	auditUpdated: { icon: 'IconPen', colour: COLOURS.info },
+	auditDeleted: { icon: 'IconTrash', colour: COLOURS.danger },
 };
 
 export default { LOG_ICONS };
