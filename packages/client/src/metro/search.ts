@@ -20,6 +20,7 @@ import { attachRunner, type MetroFactory } from '~/metro/capture';
 import { benchModuleName } from '~/metro/bench-module-name';
 import { blacklist, data, loadedIds } from '~/metro/state';
 import { isInvalidExport } from '~/metro/invalid-exports';
+import { recordModuleStub } from '~/metro/module-stubs';
 import type { MetroFilter } from '~/metro/filters';
 import { benchSpan } from '~/core/bench-span';
 import { CACHE_KEY } from '~/metro/cache-key';
@@ -112,7 +113,7 @@ function onModuleExports(exported: MetroExport, id: number) {
 
 /**
  * @description Runs one-time patches against a module's exports the first time it is required:
- * blacklisting the RTN profiler, hardening `requireNativeComponent`, and hooking the import tracker.
+ * blacklisting the RTN profiler, hardening `requireNativeComponent`, hooking the import tracker and recording module stubs.
  * @param exports The module's resolved exports.
  * @param id The id of the module being required.
  */
@@ -165,6 +166,8 @@ function onModuleRequire(exports: any, id: number) {
 		data.importTrackerId = id;
 		data.patchedImportTracker = true;
 	}
+
+	recordModuleStub(exports, id);
 
 	if (data.listeners.size === 0) return;
 
