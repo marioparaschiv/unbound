@@ -4,6 +4,7 @@ import { NativeBridgeCapabilityError, NativeBridgeVersionError } from '~/native/
 import { DeviceInfo, getNativeResources, getRuntimeProperties } from '~/native/native';
 import { CLIENT_VERSION, MINIMUM_DISCORD_VERSIONS, VERSION } from '~/core/constants';
 import { isOlderThanSupported, discordChannel } from '~/core/discord-support';
+import { environmentFacts } from '~/diagnostics/environment-facts';
 import missingExtensions from '~/diagnostics/missing-extensions';
 import { readBundleInfo } from '~/native/read-bundle-info';
 import { currentEnvironment } from '~/core/environment';
@@ -390,7 +391,7 @@ export function readDebugInfo(): DebugInfo {
 		installDetails: android
 			? ''
 			: installDetailsOf(attempt(() => platform?.app.getInstallDetails?.(), '')),
-		environment: attempt(() => platform?.app.getEnvironment?.(), undefined),
+		environment: environmentFacts(attempt(() => platform?.app.getEnvironment?.(), undefined)),
 		framework: attempt(() => platform?.app.getFramework(), ''),
 		jailbreak: attempt(() => platform?.device.getJailbreak?.(), ''),
 		react: React.version,
