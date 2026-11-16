@@ -1,0 +1,17 @@
+{
+	"id": "unbound.pdf-viewer",
+	"name": "PDF Viewer",
+	"description": "Opens PDF attachments in your phone's PDF viewer, with pages, search and sharing, instead of a browser.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "FileIcon",
+	"main": "index.tsx"
+}
