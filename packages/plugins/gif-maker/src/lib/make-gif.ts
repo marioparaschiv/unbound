@@ -1,7 +1,7 @@
 import type { Crop, FrameReader } from '~/native/frames';
-import { encodeGif } from '~/lib/gif-encoder';
-import { buildPalette } from '~/lib/palette';
-import { fromBase64 } from '~/lib/base64';
+import { encodeGif } from '@unbound-plugins/shared/media/gif/gif-encoder';
+import { buildPalette } from '@unbound-plugins/shared/media/gif/palette';
+import { fromBase64 } from '@unbound-plugins/shared/media/gif/base64';
 
 export type GifRequest = {
 	start: number;

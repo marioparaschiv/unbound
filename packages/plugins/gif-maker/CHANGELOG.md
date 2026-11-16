@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.1] - 2026-11-16
+
+### Fixed
+
+- Keeps all of a clip's colours when one colour covers most of the frame, instead of flattening the rest to a few.
+
 ## [1.0.0] - 2026-11-16
 
 ### Added
