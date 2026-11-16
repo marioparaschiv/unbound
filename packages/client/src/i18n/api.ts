@@ -16,6 +16,7 @@ import createMomentCalendarLocale from './create-moment-calendar-locale';
 import createMomentLocaleDefiner from './create-moment-locale-definer';
 import createMomentLocaleSetter from './create-moment-locale-setter';
 import resolveMomentLocale from './resolve-moment-locale';
+import { LOADER_STRINGS_FILE, pickLoaderStrings } from './loader-strings';
 import { parseLocaleStrings } from './locale-strings';
 import { createAddonLocales } from './addon-locales';
 import { getLocale, setLocale } from './locale';
@@ -197,6 +198,22 @@ async function ensureLocale(locale: string): Promise<void> {
 	}
 }
 
+let writtenLoaderStrings: string | undefined;
+
+// Hands the native loader its screens' text for the active locale, read at its next launch.
+async function syncLoaderStrings(locale: string): Promise<void> {
+	const text = JSON.stringify(pickLoaderStrings(strings[locale], enUS));
+
+	if (text === writtenLoaderStrings) return;
+
+	try {
+		await fs.writeFile(LOADER_STRINGS_FILE, text);
+		writtenLoaderStrings = text;
+	} catch (error) {
+		logger.error(`Failed to write loader strings for ${locale}:`, error);
+	}
+}
+
 /** The core messages proxy, resolving Unbound's own UI strings against the active Discord locale. */
 export const messages = createMessages(strings, getLocale, enUS);
 
@@ -272,6 +289,7 @@ async function load() {
 		await ensureLocale(activeLocale);
 		// Listeners such as the commands re-read strings, so they hear of a change once its table has loaded.
 		setLocale(activeLocale);
+		void syncLoaderStrings(activeLocale);
 	}
 
 	Dispatcher.subscribe('I18N_LOAD_SUCCESS', handler);
@@ -287,6 +305,7 @@ async function load() {
 
 	setLocale(activeLocale);
 	syncMomentLocale(activeLocale);
+	void syncLoaderStrings(activeLocale);
 }
 
 /**

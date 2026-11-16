@@ -5,6 +5,7 @@
 #include "LoaderFonts.h"
 #include "LoaderJSON.h"
 #include "LoaderPreferences.h"
+#include "LoaderStrings.h"
 #include "LoaderThemes.h"
 
 namespace loader {
@@ -136,6 +137,7 @@ Loader::Loader(LoaderOptions options, std::shared_ptr<LoaderHost> host,
       provider_(provider ? std::move(provider) : std::make_shared<NativePlatformProvider>()),
       settings_(joinPath(options_.documents, preferences::kSettingsFile))
 {
+    loadStrings(options_.documents);
 }
 
 void Loader::start()

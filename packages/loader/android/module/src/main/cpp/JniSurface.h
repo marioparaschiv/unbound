@@ -124,6 +124,7 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
       nativeToolbox)                                                                               \
     X("nativeActiveThemeId", "()" UNBOUND_JNI_STRING, nativeActiveThemeId)                         \
     X("nativeRecoveryActionLabel", "()" UNBOUND_JNI_STRING, nativeRecoveryActionLabel)             \
+    X("nativeText", "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING, nativeText)  \
     X("nativeGestureEnabled", "(" UNBOUND_JNI_STRING ")Z", nativeGestureEnabled)                   \
     X("nativeSetGestureEnabled", "(" UNBOUND_JNI_STRING "Z)V", nativeSetGestureEnabled)            \
     X("nativeDevOverlayVisible", "(ZZ)Z", nativeDevOverlayVisible)                                 \

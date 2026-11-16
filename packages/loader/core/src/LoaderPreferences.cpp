@@ -2,6 +2,8 @@
 
 #include <cstdio>
 
+#include "LoaderStrings.h"
+
 namespace loader::preferences {
 static constexpr const char *kRecovery             = "recovery";
 static constexpr const char *kDeveloperMode        = "developer-mode";
@@ -241,11 +243,13 @@ bool setGestureEnabled(SettingsStore &settings, ToolboxGesture gesture, bool ena
 
 std::string recoveryActionLabel(bool enabled)
 {
-    return enabled ? "Disable Recovery Mode" : "Enable Recovery Mode";
+    return enabled ? text("UNBOUND_NATIVE_DISABLE_RECOVERY", "Disable Recovery Mode")
+                   : text("UNBOUND_NATIVE_ENABLE_RECOVERY", "Enable Recovery Mode");
 }
 
 std::string recoveryStatusText(bool enabled)
 {
-    return enabled ? "Recovery Mode enabled" : "Recovery Mode disabled";
+    return enabled ? text("UNBOUND_NATIVE_RECOVERY_ENABLED", "Recovery Mode enabled")
+                   : text("UNBOUND_NATIVE_RECOVERY_DISABLED", "Recovery Mode disabled");
 }
 }

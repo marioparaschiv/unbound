@@ -12,6 +12,7 @@
 #include "LoaderLog.h"
 #include "LoaderPreferences.h"
 #include "LoaderRequiredLoader.h"
+#include "LoaderStrings.h"
 #include "LoaderVersion.h"
 #include "NativePluginVersion.h"
 
@@ -283,24 +284,27 @@ bool BundleUpdater::isActiveManifest(const std::string &url, const std::string &
 
 static std::string loaderTooOldNotice(LoaderInstall install)
 {
-    const std::string outdated =
-        "This version of Unbound is out of date, so Discord opened without it. ";
-
     switch (install)
     {
         case LoaderInstall::Apk:
-            return outdated + "Install the latest Unbound APK, then reopen Discord.";
+            return text("UNBOUND_NATIVE_OUTDATED_APK",
+                        "This version of Unbound is out of date, so Discord opened without it. "
+                        "Install the latest Unbound APK, then reopen Discord.");
         case LoaderInstall::Ipa:
-            return outdated + "Install the latest Unbound IPA, then reopen Discord.";
+            return text("UNBOUND_NATIVE_OUTDATED_IPA",
+                        "This version of Unbound is out of date, so Discord opened without it. "
+                        "Install the latest Unbound IPA, then reopen Discord.");
         case LoaderInstall::Tweak:
-            return outdated
-                   + "Update the Unbound tweak in your package manager, then reopen Discord.";
+            return text("UNBOUND_NATIVE_OUTDATED_TWEAK",
+                        "This version of Unbound is out of date, so Discord opened without it. "
+                        "Update the Unbound tweak in your package manager, then reopen Discord.");
         case LoaderInstall::Unknown:
             break;
     }
 
-    return "Unbound's latest bundle needs a newer loader, so Discord started without it. "
-           "Update Unbound's loader, then reopen Discord.";
+    return text("UNBOUND_NATIVE_OUTDATED",
+                "Unbound's latest bundle needs a newer loader, so Discord started without it. "
+                "Update Unbound's loader, then reopen Discord.");
 }
 
 std::string bundleFailureNotice(BundleUpdateFailure failure, LoaderInstall install)
@@ -308,19 +312,22 @@ std::string bundleFailureNotice(BundleUpdateFailure failure, LoaderInstall insta
     switch (failure)
     {
         case BundleUpdateFailure::Network:
-            return "Unbound could not download its bundle, so Discord started without it. Check "
-                   "your connection and reopen Discord to try again.";
+            return text("UNBOUND_NATIVE_BUNDLE_NETWORK",
+                        "Unbound could not download its bundle, so Discord started without it. "
+                        "Check your connection and reopen Discord to try again.");
         case BundleUpdateFailure::LoaderTooOld:
             return loaderTooOldNotice(install);
         case BundleUpdateFailure::Storage:
-            return "Unbound could not save its bundle, so Discord started without it. Free up some "
-                   "storage and reopen Discord.";
+            return text("UNBOUND_NATIVE_BUNDLE_STORAGE",
+                        "Unbound could not save its bundle, so Discord started without it. Free up "
+                        "some storage and reopen Discord.");
         case BundleUpdateFailure::Verification:
             break;
     }
 
-    return "Unbound's bundle failed verification, so Discord started without it. Reopen Discord "
-           "to try again, and report this to the developers if it keeps happening.";
+    return text("UNBOUND_NATIVE_BUNDLE_VERIFICATION",
+                "Unbound's bundle failed verification, so Discord started without it. Reopen "
+                "Discord to try again, and report this to the developers if it keeps happening.");
 }
 
 std::optional<double> retryAfterSeconds(const std::string &header)

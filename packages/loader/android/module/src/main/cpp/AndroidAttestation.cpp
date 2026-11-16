@@ -15,6 +15,7 @@
 #include "LoaderAttestation.h"
 #include "LoaderCrypto.h"
 #include "LoaderDiagnostics.h"
+#include "LoaderStrings.h"
 
 namespace attestation = loader::attestation;
 
@@ -128,7 +129,9 @@ static nlohmann::json evaluation()
 jstring nativeAttestation(JNIEnv *env, jclass)
 {
     nlohmann::json result    = evaluation();
-    result["warningTitle"]   = loader::diagnostics::kAttestationWarningTitle;
-    result["warningMessage"] = loader::diagnostics::kAttestationWarningMessage;
+    result["warningTitle"]   = loader::text("UNBOUND_NATIVE_ATTESTATION_WARNING_TITLE",
+                                            loader::diagnostics::kAttestationWarningTitle);
+    result["warningMessage"] = loader::text("UNBOUND_NATIVE_ATTESTATION_WARNING",
+                                            loader::diagnostics::kAttestationWarningMessage);
     return unbound::android::toJavaString(env, result.dump());
 }

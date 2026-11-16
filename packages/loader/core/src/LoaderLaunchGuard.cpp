@@ -4,6 +4,7 @@
 
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
+#include "LoaderStrings.h"
 
 namespace loader {
 LaunchGuard::LaunchGuard(std::string directory) : directory_(std::move(directory)) {}
@@ -150,14 +151,17 @@ bool LaunchGuard::markShown() const
 
 std::string launchRollBackNotice(int failures)
 {
-    return "Discord closed during startup " + std::to_string(failures)
-           + " times in a row, so Unbound went back to the bundle it ran before its last update.";
+    return text("UNBOUND_NATIVE_LAUNCH_ROLLED_BACK",
+                "Discord closed during startup {count} times in a row, so Unbound went back to "
+                "the bundle it ran before its last update.",
+                {{"count", std::to_string(failures)}});
 }
 
 std::string launchRecoveryNotice(int failures)
 {
-    return "Discord closed during startup " + std::to_string(failures)
-           + " times in a row, so Unbound turned on Recovery Mode. Turn it off from the toolbox "
-             "once you have removed what caused it.";
+    return text("UNBOUND_NATIVE_LAUNCH_RECOVERY",
+                "Discord closed during startup {count} times in a row, so Unbound turned on "
+                "Recovery Mode. Turn it off from the toolbox once you have removed what caused it.",
+                {{"count", std::to_string(failures)}});
 }
 }

@@ -11,6 +11,7 @@
 #include "LoaderCrashHandler.h"
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
+#include "LoaderStrings.h"
 
 namespace loader {
 struct CrashRecord {
@@ -305,13 +306,23 @@ std::vector<CrashedAddon> takeUnannouncedCrashDisabledAddons(const std::string &
 
 std::string crashDisabledNotice(const CrashedAddon &addon)
 {
-    if (addon.phase == CrashPhase::Frozen)
+    switch (addon.phase)
     {
-        return "Disabled " + addon.name + " because Discord froze in it and had to be closed.";
+        case CrashPhase::Frozen:
+            return text("UNBOUND_NATIVE_DISABLED_FROZEN",
+                        "Disabled {name} because Discord froze in it and had to be closed.",
+                        {{"name", addon.name}});
+        case CrashPhase::Running:
+            return text("UNBOUND_NATIVE_DISABLED_RUNNING",
+                        "Disabled {name} because Discord crashed while running it.",
+                        {{"name", addon.name}});
+        case CrashPhase::Starting:
+            break;
     }
 
-    return "Disabled " + addon.name + " because Discord crashed while " + crashActivity(addon.phase)
-           + " it.";
+    return text("UNBOUND_NATIVE_DISABLED_STARTING",
+                "Disabled {name} because Discord crashed while starting it.",
+                {{"name", addon.name}});
 }
 
 nlohmann::json crashedAddonsJSON(const std::vector<CrashedAddon> &addons)
