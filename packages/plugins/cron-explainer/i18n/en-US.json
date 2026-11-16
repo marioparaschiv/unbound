@@ -1,0 +1,23 @@
+{
+	"CRON_DESC": "Explain a cron expression and list its next runs",
+	"CRON_EXPRESSION": "Five fields or a macro, like 30 9 * * MON-FRI or @daily",
+	"CRON_TIMEZONE": "Timezone for the runs; yours when empty",
+	"CRON_COUNT": "How many runs to list (1–10)",
+	"CRON_SEND": "Send the explanation to the channel",
+	"EVERY_MINUTE": "Every minute",
+	"EVERY_N_MINUTES": "Every {n} minutes",
+	"AT_MINUTE_EVERY_HOUR": "At minute {minute} of every hour",
+	"AT_TIMES": "At {times}",
+	"AT_MINUTES_HOURS": "At minutes {minutes} past hours {hours}",
+	"AT_MINUTES_EVERY_HOUR": "At minutes {minutes} of every hour",
+	"ON_WEEKDAYS": "on {weekdays}",
+	"ON_MONTH_DAYS": "on day {days} of the month",
+	"ON_MONTH_DAYS_OR_WEEKDAYS": "on day {days} of the month or on {weekdays}",
+	"IN_MONTHS": "in {months}",
+	"NEXT_RUNS": "Next runs ({timezone}):",
+	"NO_RUNS": "It never runs in the next eight years.",
+	"FIELD_COUNT": "A cron expression has five fields: minute, hour, day of month, month and weekday.",
+	"BAD_FIELD": "\"{field}\" isn't a valid cron field here.",
+	"UNKNOWN_MACRO": "{field} isn't a cron macro. Try @hourly, @daily, @weekly, @monthly or @yearly.",
+	"BAD_TIMEZONE": "\"{timezone}\" isn't a timezone. Use a name like Europe/Berlin or America/New_York."
+}

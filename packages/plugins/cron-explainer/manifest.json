@@ -1,0 +1,17 @@
+{
+	"id": "unbound.cron-explainer",
+	"name": "Cron Explainer",
+	"description": "Explains cron expressions with /cron and lists their next runs in the timezone you pick.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "CalendarIcon",
+	"main": "index.tsx"
+}
