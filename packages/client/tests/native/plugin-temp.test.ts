@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
-import { clearPluginTemp, pluginTempPath } from '~/native/plugin-temp';
+import {
+	clearPluginTemp,
+	clearPluginTempOncePerLaunch,
+	pluginTempPath,
+} from '~/native/plugin-temp';
 
 const original = globalThis.NativePlatform;
 
@@ -48,5 +52,18 @@ describe('clearPluginTemp', () => {
 		installPlatform([], true);
 
 		expect(() => clearPluginTemp('adrian.clips')).not.toThrow();
+	});
+});
+
+describe('clearPluginTempOncePerLaunch', () => {
+	test('empties the folder on the first start only, so a restart keeps its files', () => {
+		const removed: string[] = [];
+
+		installPlatform(removed);
+		clearPluginTempOncePerLaunch('adrian.launch');
+		clearPluginTempOncePerLaunch('adrian.launch');
+		clearPluginTempOncePerLaunch('adrian.other');
+
+		expect(removed).toEqual(['Temp/adrian.launch', 'Temp/adrian.other']);
 	});
 });

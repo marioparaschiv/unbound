@@ -2,7 +2,7 @@ import type { AddonManifest } from '@unbound-app/types/addons';
 import type { PluginContext } from '@unbound-app/types';
 
 import { validateNativeBridgeRequirements } from '~/native/capabilities';
-import { clearPluginTemp, pluginTempPath } from '~/native/plugin-temp';
+import { clearPluginTempOncePerLaunch, pluginTempPath } from '~/native/plugin-temp';
 import { resolveManifestCapabilities } from '~/addons/manifest';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { createScopedNativeBridge } from '~/native/scope';
@@ -24,7 +24,7 @@ export function beginNativeStop(context: PluginContext | undefined): void {
  * @description Builds a plugin's context, with a native bridge scoped to its declared capabilities.
  * @param manifest The plugin's manifest.
  * @param attribute Marks the plugin as active in the loader's crash attribution while its native calls run.
- * @returns The plugin context; call its `dispose` to release the plugin's native resources and empty its temporary folder.
+ * @returns The plugin context; call its `dispose` to release the plugin's native resources; its temporary folder stays until the app restarts.
  */
 export function createPluginContext(
 	manifest: AddonManifest,
@@ -37,7 +37,7 @@ export function createPluginContext(
 	const scoped = createScopedNativeBridge(capabilities, platform, attribute, manifest.id);
 
 	stoppers.set(scoped.bridge, scoped.beginStop);
-	clearPluginTemp(manifest.id);
+	clearPluginTempOncePerLaunch(manifest.id);
 
 	return {
 		manifest,
@@ -47,11 +47,7 @@ export function createPluginContext(
 		native: scoped.bridge,
 		tempPath: pluginTempPath(manifest.id),
 		dispose() {
-			try {
-				scoped.dispose();
-			} finally {
-				clearPluginTemp(manifest.id);
-			}
+			scoped.dispose();
 		},
 	};
 }
