@@ -20,6 +20,7 @@ export type InputButtonOptions = {
 	icon: string;
 	label: () => string;
 	onPress: (channelId: string) => void;
+	showWhenEmpty?: boolean;
 };
 
 type ButtonProps = InputButtonOptions & {
@@ -28,11 +29,18 @@ type ButtonProps = InputButtonOptions & {
 	trailingGap: number;
 };
 
-function ActionButton({ channelId, label, onPress, assetId, trailingGap }: ButtonProps) {
+function ActionButton({
+	channelId,
+	label,
+	onPress,
+	assetId,
+	trailingGap,
+	showWhenEmpty,
+}: ButtonProps) {
 	const styles = useStyles();
 	const state = useComposerState(channelId);
 
-	if (state === 'empty') return null;
+	if (state === 'empty' && !showWhenEmpty) return null;
 
 	return createElement(
 		View,
@@ -61,7 +69,7 @@ const drawButton = definePlatform({ ios, android });
 
 /**
  * @description Adds a button to the chat input, where the input's toggles go: in front of `ChatInputRightActions` on iOS
- * and of `ChatInputSendButton` on Android. It hides while the input is empty, since it acts on the draft.
+ * and of `ChatInputSendButton` on Android. It hides while the input is empty, since it acts on the draft, unless `showWhenEmpty` is set.
  * @param options The button's key, icon, label and what it does.
  */
 export function patchChatInputButton(options: InputButtonOptions): void {
