@@ -610,6 +610,75 @@ Value invokeWithThreadPolicy(Runtime &runtime, id target, SEL selector, NSArray 
                                             options);
 }
 
+static id allocateAndInitialize(Class cls, SEL selector, NSArray *arguments)
+{
+    id allocated             = [cls alloc];
+    NSInvocation *invocation = prepareInvocation(allocated, selector, arguments);
+    if (!returnsRetainableObject(invocation.methodSignature.methodReturnType))
+    {
+        throw std::runtime_error("objc.create expects an initializer that returns an object");
+    }
+
+    invokeFollowingOwnership(invocation);
+    __unsafe_unretained id initialized = nil;
+    [invocation getReturnValue:&initialized];
+    return initialized;
+}
+
+Value instantiateWithThreadPolicy(Runtime &runtime, Class cls, SEL selector, NSArray *arguments,
+                                  const Value *options)
+{
+    std::string policy = loader::native::threadPolicy(runtime, options);
+    if (loader::native::runsInPlace(policy, [NSThread isMainThread]))
+    {
+        return objcHandleResult(runtime, allocateAndInitialize(cls, selector, arguments));
+    }
+
+    if (!loader::native::crossesToMain(policy))
+    {
+        throw JSError(runtime, "Unsupported native thread policy");
+    }
+
+    if (loader::native::mainThreadIsWaitingForRuntime())
+    {
+        throwWrongThread(runtime, loader::native::kMainWaitsForRuntimeMessage);
+    }
+
+    __strong id instance = nil;
+    NSException *failure = nil;
+    std::string error;
+    executeMainSynchronouslyUnlessMainWaits([&]() {
+        @try
+        {
+            try
+            {
+                instance = allocateAndInitialize(cls, selector, arguments);
+            }
+            catch (const std::exception &exception)
+            {
+                error = exception.what();
+            }
+        }
+
+        @catch (NSException *exception)
+        {
+            failure = exception;
+        }
+    });
+    if (failure)
+    {
+        throw JSError(runtime, std::string("Objective-C invocation failed: ")
+                                   + (failure.reason.UTF8String ?: "unknown"));
+    }
+
+    if (!error.empty())
+    {
+        throw JSError(runtime, error);
+    }
+
+    return objcHandleResult(runtime, instance);
+}
+
 namespace {
     struct NativeRetainedObject {
         __strong id value = nil;

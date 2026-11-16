@@ -438,7 +438,13 @@ export type NativeObjCInspector = {
 	inspectClasses(imagePath: string, page?: NativeInspectPage): NativeInspectedClasses;
 };
 
-/** The `objc` namespace the loader publishes, before the client adds `create` and scopes it to a plugin. */
-export type LoaderObjCBridge = Omit<NativeObjCBridge, 'create'> &
-	Partial<NativeObjCInspector> &
+/** The `objc` namespace the loader publishes, before the client scopes it to a plugin. Older loaders lack `create`. */
+export type LoaderObjCBridge = Omit<NativeObjCBridge, 'create'> & {
+	create?(
+		classOrName: string | NativeClassHandle,
+		initSelector: string,
+		args?: unknown[],
+		options?: NativeCallOptions,
+	): NativeObjectHandle | null;
+} & Partial<NativeObjCInspector> &
 	NativeUIScopeFactory;

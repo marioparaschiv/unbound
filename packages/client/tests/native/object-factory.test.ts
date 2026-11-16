@@ -43,6 +43,16 @@ function fakeBridge(options: FakeOptions = {}) {
 
 				return handle(nameOf(classOrName));
 			},
+			create: (
+				target: NativeHandle | string,
+				selector: string,
+				_args?: unknown[],
+				callOptions?: NativeCallOptions,
+			) => {
+				calls.push(`create ${nameOf(target)} ${selector} ${JSON.stringify(callOptions)}`);
+
+				return selector === 'initReturningNil' ? null : handle(nameOf(target));
+			},
 			invoke: (
 				target: NativeObjectHandle,
 				selector: string,
@@ -105,7 +115,19 @@ describe('main-thread alloc', () => {
 });
 
 describe('object create', () => {
-	test('allocates without init and sends only the init selector', () => {
+	test('falls back to alloc then the init selector on loaders without create', () => {
+		const { bridge, calls } = fakeBridge();
+		const { create } = createObjectFactory({ ...bridge, create: undefined });
+
+		create('AVPictureInPictureController', 'initWithPlayerLayer:', []);
+
+		expect(calls.slice(1)).toEqual([
+			'invoke AVPictureInPictureController alloc {"thread":"current"}',
+			'invoke AVPictureInPictureController initWithPlayerLayer: {"thread":"current"}',
+		]);
+	});
+
+	test('creates through the loader with only the init selector', () => {
 		const { bridge, calls } = fakeBridge();
 		const { create } = createObjectFactory(bridge);
 
@@ -114,8 +136,7 @@ describe('object create', () => {
 		);
 		expect(calls).toEqual([
 			'call AVPictureInPictureController isSubclassOfClass:',
-			'invoke AVPictureInPictureController alloc {"thread":"current"}',
-			'invoke AVPictureInPictureController initWithPlayerLayer: {"thread":"current"}',
+			'create AVPictureInPictureController initWithPlayerLayer: {"thread":"current"}',
 		]);
 		expect(calls.some((call) => call.startsWith('alloc'))).toBe(false);
 	});
@@ -126,10 +147,7 @@ describe('object create', () => {
 
 		create('UIView', 'initWithFrame:', [{}]);
 
-		expect(calls.slice(1)).toEqual([
-			'invoke UIView alloc {"thread":"main"}',
-			'invoke UIView initWithFrame: {"thread":"main"}',
-		]);
+		expect(calls.slice(1)).toEqual(['create UIView initWithFrame: {"thread":"main"}']);
 	});
 
 	test('uses the thread the caller asks for', () => {
@@ -138,10 +156,7 @@ describe('object create', () => {
 
 		create('UIView', 'init', [], { thread: 'main-post' });
 
-		expect(calls).toEqual([
-			'invoke UIView alloc {"thread":"main-post"}',
-			'invoke UIView init {"thread":"main-post"}',
-		]);
+		expect(calls).toEqual(['create UIView init {"thread":"main-post"}']);
 	});
 
 	test('throws when the initializer returns nil', () => {

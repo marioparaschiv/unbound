@@ -26,7 +26,8 @@ inline constexpr std::array<std::string_view, 8> kObjcClassesMethods = {
     "data",
     "bytes",
 };
-inline constexpr std::array<std::string_view, 7> kObjcInvokeMethods = {
+inline constexpr std::array<std::string_view, 8> kObjcInvokeMethods = {
+    "create",
     "call",
     "callSuper",
     "invoke",
