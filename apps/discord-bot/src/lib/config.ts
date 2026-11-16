@@ -15,10 +15,9 @@ const DISCORD_IDS = {
 	BUNDLE_RELEASES_CHANNEL_ID: '1571505880426483853',
 	API_RELEASES_CHANNEL_ID: '1571505882888405122',
 	STARBOARD_CHANNEL_ID: '1005948907571925063',
-	/** Where moderation cases are posted; unset, cases are stored but not posted. */
-	MOD_LOG_CHANNEL_ID: '962962199255601192',
-	/** The server logs, as Carl-bot's logging split them: bans and timeouts, edits and deletes, server changes, joins. */
-	MODERATION_LOGS_CHANNEL_ID: '962523935101034556',
+	/** The moderation logs, where every case is posted, bans, kicks and timeouts included; unset, cases are stored but not posted. */
+	MOD_LOG_CHANNEL_ID: '962523935101034556',
+	/** The server logs, as Carl-bot's logging split them: edits and deletes, server changes, joins. */
 	MESSAGE_LOGS_CHANNEL_ID: '962523967183282176',
 	MISC_LOGS_CHANNEL_ID: '962524004617453658',
 	JOIN_LOGS_CHANNEL_ID: '962524499721453661',

@@ -3,8 +3,8 @@ import { escapeMarkdown } from 'discord.js';
 import { containerMessage, textDisplay, type ContainerMessage } from '~/lib/container-message';
 import { truncate } from '~/lib/message-text';
 
-/** Which of the server's log channels an event goes to, as Carl-bot's logging split them. */
-export type LogKind = 'moderation' | 'messages' | 'misc' | 'joins';
+/** Which of the server's log channels an event goes to; bans and timeouts post as cases to the mod log instead. */
+export type LogKind = 'messages' | 'misc' | 'joins';
 
 /** One server event, as its log post reads. */
 export type LogEntry = {

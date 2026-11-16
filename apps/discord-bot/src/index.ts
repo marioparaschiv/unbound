@@ -131,7 +131,6 @@ function startRuntime(ready: Client<true>) {
 	container.serverLog = createServerLog({
 		messages,
 		channels: {
-			moderation: config.ids.MODERATION_LOGS_CHANNEL_ID,
 			messages: config.ids.MESSAGE_LOGS_CHANNEL_ID,
 			misc: config.ids.MISC_LOGS_CHANNEL_ID,
 			joins: config.ids.JOIN_LOGS_CHANNEL_ID,
