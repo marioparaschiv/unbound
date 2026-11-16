@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.6] - 2026-11-16
+
+### Fixed
+
+- Opening a GIF no longer shows a spinner and then a black screen. Share and save still use the GIF, through their own copy of the media, so the viewer keeps playing the video.
+
 ## [1.0.5] - 2026-11-11
 
 ### Changed
