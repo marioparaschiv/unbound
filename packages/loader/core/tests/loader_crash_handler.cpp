@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <functional>
 #include <nlohmann/json.hpp>
+#include <pthread.h>
 #include <string>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -10,6 +11,11 @@
 #include "LoaderAddonActivity.h"
 #include "LoaderCrashHandler.h"
 #include "LoaderFiles.h"
+
+extern "C" const char *__asan_default_options()
+{
+    return "use_sigaltstack=0";
+}
 
 namespace {
 constexpr unsigned kChildDeadlineSeconds = 30;
@@ -268,6 +274,30 @@ void aStackOverflowStillWritesTheStack(const std::filesystem::path &root)
     assert(stack.rfind("Signal " + std::to_string(WTERMSIG(status)) + "\n", 0) == 0);
     assert(stack.find("\n#0 0x") != std::string::npos);
 }
+#if defined(__APPLE__)
+void *overflowOnThisThread(void *)
+{
+    overflowStack(0);
+    return nullptr;
+}
+
+void aStackOverflowOnALaterThreadStillWritesTheStack(const std::filesystem::path &root)
+{
+    int status = runInChild([&]() {
+        signal(SIGSEGV, SIG_DFL);
+        signal(SIGBUS, SIG_DFL);
+        expect(loader::installAddonCrashHandler((root / "running").string()), 100);
+        pthread_t thread;
+        expect(pthread_create(&thread, nullptr, overflowOnThisThread, nullptr) == 0, 102);
+        pthread_join(thread, nullptr);
+        _exit(101);
+    });
+    assert(WIFSIGNALED(status));
+    std::string stack = readFile(root / loader::kPendingNativeCrashFile);
+    assert(stack.rfind("Signal " + std::to_string(WTERMSIG(status)) + "\n", 0) == 0);
+    assert(stack.find("\n#0 0x") != std::string::npos);
+}
+#endif
 }
 
 int main()
@@ -289,6 +319,9 @@ int main()
     run("adopted", adoptedStackSurvivesAnInstallWithoutAWrittenStack);
     run("written", writtenStackWinsOverAnAdoptedOne);
     run("overflow", aStackOverflowStillWritesTheStack);
+#if defined(__APPLE__)
+    run("thread-overflow", aStackOverflowOnALaterThreadStillWritesTheStack);
+#endif
 
     std::filesystem::remove_all(root);
     return 0;

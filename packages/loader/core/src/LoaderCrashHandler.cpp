@@ -351,6 +351,7 @@ bool installAddonCrashHandler(const std::string &markerPath)
     gStackDescriptor.store(stack, std::memory_order_release);
 
     ensureAlternateSignalStack();
+    ensureAlternateSignalStacksOnNewThreads();
 
     struct sigaction action = {};
     action.sa_sigaction     = recordCrashingAddon;

@@ -8,6 +8,9 @@
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <pthread.h>
+#if defined(__APPLE__)
+#include <pthread/introspection.h>
+#endif
 #include <sys/mman.h>
 #include <type_traits>
 #include <unistd.h>
@@ -117,6 +120,35 @@ void ensureAlternateSignalStack()
     }
 
     tClaim.alternateStack = memory;
+}
+
+#if defined(__APPLE__)
+static std::atomic<pthread_introspection_hook_t> gPreviousThreadHook{nullptr};
+
+static void giveStartingThreadAnAlternateStack(unsigned int event, pthread_t thread, void *address,
+                                               size_t size)
+{
+    if (event == PTHREAD_INTROSPECTION_THREAD_START)
+    {
+        ensureAlternateSignalStack();
+    }
+
+    if (pthread_introspection_hook_t previous = gPreviousThreadHook.load())
+    {
+        previous(event, thread, address, size);
+    }
+}
+#endif
+
+void ensureAlternateSignalStacksOnNewThreads()
+{
+#if defined(__APPLE__)
+    static std::once_flag installed;
+    std::call_once(installed, []() {
+        gPreviousThreadHook.store(
+            pthread_introspection_hook_install(giveStartingThreadAnAlternateStack));
+    });
+#endif
 }
 
 static ThreadActivity *claimThreadActivity()
