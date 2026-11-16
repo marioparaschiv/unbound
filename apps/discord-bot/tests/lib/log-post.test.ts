@@ -6,7 +6,7 @@ import { ordinal, renderLogPost } from '~/lib/log-post';
 import { messageText } from '../helpers/container-message';
 
 describe('renderLogPost', () => {
-	test('reads as the title and user, the body, then the id, and pings no one', () => {
+	test('reads as the title, the user field, then the body, each spaced apart, and pings no one', () => {
 		const { body } = renderLogPost({
 			kind: 'joins',
 			title: 'Member Joined',
@@ -18,8 +18,9 @@ describe('renderLogPost', () => {
 		expect(body.flags).toBe(MessageFlags.IsComponentsV2);
 		expect(body.allowed_mentions).toEqual({ parse: [] });
 		expect(body.components[0].accent_color).toBe(0x00_ff_00);
+		expect(body.components[0].components).toHaveLength(3);
 		expect(messageText(body)).toBe(
-			['**Member Joined** · spam\\_bot <@100>', '16,917th to join', '-# ID: 100'].join('\n'),
+			['### Member Joined', '**User:** <@100> (100)', '16,917th to join'].join('\n'),
 		);
 	});
 
@@ -32,7 +33,23 @@ describe('renderLogPost', () => {
 			footer: '42',
 		});
 
-		expect(messageText(body)).toBe('**Role Deleted**\n**Muted**\n-# ID: 42');
+		expect(messageText(body)).toBe('### Role Deleted\n**Muted**\n-# ID: 42');
+	});
+
+	test('heads the title with its icon emoji once uploaded', () => {
+		const entry = {
+			kind: 'messages',
+			title: 'Message Deleted',
+			icon: 'messageDeleted',
+			colour: 0,
+		} as const;
+		const { body } = renderLogPost(
+			entry,
+			new Map([['messageDeleted', { name: 'mb_log_x', id: '1' }]]),
+		);
+
+		expect(messageText(body)).toBe('### <:mb_log_x:1> Message Deleted');
+		expect(messageText(renderLogPost(entry).body)).toBe('### Message Deleted');
 	});
 });
 

@@ -3,6 +3,7 @@ import { Events, Listener } from '@sapphire/framework';
 import { ApplyOptions } from '@sapphire/decorators';
 
 import { COLOURS } from '~/lib/constants';
+import { field } from '~/lib/post-fields';
 
 /** Logs a purge as one post, with how many messages went. */
 @ApplyOptions<Listener.Options>({ event: Events.MessageBulkDelete })
@@ -20,8 +21,9 @@ export class LogMessageBulkDeleteListener extends Listener<typeof Events.Message
 		await serverLog.post({
 			kind: 'messages',
 			title: 'Messages Purged',
+			icon: 'messagesPurged',
 			colour: COLOURS.danger,
-			lines: [`**${messages.size}** messages in <#${channel.id}>`],
+			lines: [field('Channel', `<#${channel.id}>`), field('Messages', String(messages.size))],
 			footer: channel.id,
 		});
 	}

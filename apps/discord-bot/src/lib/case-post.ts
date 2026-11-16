@@ -9,6 +9,7 @@ import {
 	type ModCase,
 } from '~/lib/mod-case';
 import { containerMessage, textDisplay, type ContainerMessage } from '~/lib/container-message';
+import { field, fieldBelow, person } from '~/lib/post-fields';
 import { COLOURS, type AppEmoji } from '~/lib/constants';
 import { quote, truncate } from '~/lib/message-text';
 import { formatDuration } from '~/lib/duration';
@@ -37,16 +38,6 @@ function post(accent: number, blocks: string[]): CasePost {
 			allowed_mentions: { parse: [] },
 		},
 	};
-}
-
-// One full-width field: a bold label, then its value on the same line.
-function field(label: string, value: string) {
-	return `**${label}:** ${value}`;
-}
-
-// The mention shows the current name; the id stays readable after the user leaves.
-function person(id: string) {
-	return `<@${id}> (${id})`;
 }
 
 // The case number and state, as one light subtext line; the message's own time dates the case.
@@ -84,9 +75,12 @@ export function renderCasePost(entry: ModCase, prefix: string, icons: CaseIcons)
 		field('User', person(entry.userId)),
 		field('Moderator', person(entry.moderatorId)),
 		// A reason can run long, so it starts under its label; a missing one shows how to set it.
-		reason
-			? `**Reason:**\n${truncate(reason, REASON_LIMIT)}`
-			: `**Reason:**\n*None yet*\n-# Set it with \`${prefix}reason ${entry.id} <reason>\``,
+		fieldBelow(
+			'Reason',
+			reason
+				? truncate(reason, REASON_LIMIT)
+				: `*None yet*\n-# Set it with \`${prefix}reason ${entry.id} <reason>\``,
+		),
 		details(entry),
 	];
 

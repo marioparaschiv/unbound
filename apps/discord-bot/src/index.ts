@@ -21,6 +21,7 @@ import { startDispatchers } from '~/runtime/start';
 import { createDispatchers } from '~/dispatchers';
 import { checkTriggers } from '~/db/triggers';
 import { setDatabase } from '~/db/instance';
+import { LOG_ICONS } from '~/lib/log-icons';
 import { CASE_ICONS } from '~/lib/mod-case';
 import { AUTOMOD } from '~/automod/config';
 
@@ -135,6 +136,7 @@ function startRuntime(ready: Client<true>) {
 			misc: config.ids.MISC_LOGS_CHANNEL_ID,
 			joins: config.ids.JOIN_LOGS_CHANNEL_ID,
 		},
+		loadIcons: () => syncIconEmojis(ready.rest, ready.application.id, 'mb_log_', LOG_ICONS),
 	});
 	container.automod = createAutomod({
 		db,
