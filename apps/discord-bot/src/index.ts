@@ -20,8 +20,8 @@ import { syncIconEmojis } from '~/lib/icon-emojis';
 import { startDispatchers } from '~/runtime/start';
 import { createDispatchers } from '~/dispatchers';
 import { checkTriggers } from '~/db/triggers';
-import { CASE_ACTIONS } from '~/lib/mod-case';
 import { setDatabase } from '~/db/instance';
+import { CASE_ICONS } from '~/lib/mod-case';
 import { AUTOMOD } from '~/automod/config';
 
 declare module '@sapphire/pieces' {
@@ -123,7 +123,7 @@ function startRuntime(ready: Client<true>) {
 		guildId: config.guildId,
 		logChannelId: config.ids.MOD_LOG_CHANNEL_ID,
 		prefix: PREFIX,
-		loadIcons: () => syncIconEmojis(ready.rest, ready.application.id, 'mb_case_', CASE_ACTIONS),
+		loadIcons: () => syncIconEmojis(ready.rest, ready.application.id, 'mb_case_', CASE_ICONS),
 	});
 
 	container.moderation = moderation;

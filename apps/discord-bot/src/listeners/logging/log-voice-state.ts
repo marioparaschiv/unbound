@@ -7,18 +7,18 @@ import { COLOURS } from '~/lib/constants';
 function describe(before: string | null, after: string | null) {
 	if (!before && after) {
 		return {
-			title: 'Joined voice channel',
+			title: 'Joined Voice Channel',
 			line: `joined <#${after}>`,
 			colour: COLOURS.positive,
 		};
 	}
 
 	if (before && !after) {
-		return { title: 'Left voice channel', line: `left <#${before}>`, colour: COLOURS.danger };
+		return { title: 'Left Voice Channel', line: `left <#${before}>`, colour: COLOURS.danger };
 	}
 
 	return {
-		title: 'Moved voice channel',
+		title: 'Moved Voice Channel',
 		line: `<#${before}> → <#${after}>`,
 		colour: COLOURS.info,
 	};

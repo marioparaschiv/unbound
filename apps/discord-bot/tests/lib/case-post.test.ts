@@ -23,27 +23,31 @@ const CASE: ModCase = {
 const ICONS: CaseIcons = new Map([
 	['ban', { name: 'mb_case_ban_abc123', id: '1' }],
 	['mute', { name: 'mb_case_mute_abc123', id: '2' }],
+	['pardon', { name: 'mb_case_pardon_abc123', id: '3' }],
 ]);
 
 describe('renderCasePost', () => {
-	test('reads as three lines in one accented container: who, why, details', () => {
+	test('reads as a title, then user, moderator and reason fields, then details', () => {
 		const { body } = renderCasePost(CASE, '!', ICONS);
 		const [container] = body.components;
 
 		expect(body.flags).toBe(MessageFlags.IsComponentsV2);
 		expect(body.allowed_mentions).toEqual({ parse: [] });
 		expect(container.accent_color).toBe(0xff_00_00);
-		expect(container.components).toHaveLength(1);
+		expect(container.components).toHaveLength(5);
 		expect(messageText(body)).toBe(
 			[
-				'<:mb_case_ban_abc123:1> **Ban** · spam\\_bot <@100000000000000001>',
-				'> Posting scams',
-				'-# Case 12 · mod · ends <t:1795305600:R>',
+				'### <:mb_case_ban_abc123:1> Member Banned',
+				'**User:** <@100000000000000001> (100000000000000001)',
+				'**Moderator:** <@200> (200)',
+				'**Reason:**',
+				'Posting scams',
+				'-# Case 12 · ends <t:1795305600:R>',
 			].join('\n'),
 		);
 	});
 
-	test('asks for a missing reason, and greys out a pardoned warning', () => {
+	test('asks for a missing reason, and turns a pardoned warning green', () => {
 		const { body } = renderCasePost(
 			{ ...CASE, action: 'warn', reason: null, expiresAt: null, closedAt: CASE.createdAt },
 			'!',
@@ -51,9 +55,9 @@ describe('renderCasePost', () => {
 		);
 		const text = messageText(body);
 
-		expect(body.components[0].accent_color).toBe(0x80_84_8e);
-		expect(text).toStartWith('**Warning** · ');
-		expect(text).toContain('> *No reason yet:* `!reason 12 <reason>`');
+		expect(body.components[0].accent_color).toBe(0x00_ff_00);
+		expect(text).toStartWith('### <:mb_case_pardon_abc123:3> Member Warn Pardoned\n');
+		expect(text).toContain('**Reason:**\n*None yet*\n-# Set it with `!reason 12 <reason>`');
 		expect(text).toContain('pardoned <t:1794700800:R>');
 		expect(text).not.toContain('ends');
 	});

@@ -24,7 +24,7 @@ export class LogMessageDeleteListener extends Listener<typeof Events.MessageDele
 
 		await serverLog.post({
 			kind: 'messages',
-			title: 'Message deleted',
+			title: 'Message Deleted',
 			colour: COLOURS.danger,
 			user: { id: author.id, name: author.username },
 			lines: [

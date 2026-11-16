@@ -14,7 +14,7 @@ export class LogEmojiCreateListener extends Listener<typeof Events.GuildEmojiCre
 
 		await serverLog.post({
 			kind: 'misc',
-			title: 'Emoji created',
+			title: 'Emoji Created',
 			colour: COLOURS.positive,
 			lines: [`${emoji.toString()} ${escapeMarkdown(emoji.name ?? '')}`],
 			footer: emoji.id,

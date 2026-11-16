@@ -9,7 +9,7 @@ describe('renderLogPost', () => {
 	test('reads as the title and user, the body, then the id, and pings no one', () => {
 		const { body } = renderLogPost({
 			kind: 'joins',
-			title: 'Member joined',
+			title: 'Member Joined',
 			colour: 0x00_ff_00,
 			user: { id: '100', name: 'spam_bot' },
 			lines: ['16,917th to join', ''],
@@ -19,20 +19,20 @@ describe('renderLogPost', () => {
 		expect(body.allowed_mentions).toEqual({ parse: [] });
 		expect(body.components[0].accent_color).toBe(0x00_ff_00);
 		expect(messageText(body)).toBe(
-			['**Member joined** · spam\\_bot <@100>', '16,917th to join', '-# ID: 100'].join('\n'),
+			['**Member Joined** · spam\\_bot <@100>', '16,917th to join', '-# ID: 100'].join('\n'),
 		);
 	});
 
 	test('shows the footer id for an event without a user', () => {
 		const { body } = renderLogPost({
 			kind: 'misc',
-			title: 'Role deleted',
+			title: 'Role Deleted',
 			colour: 0,
 			lines: ['**Muted**'],
 			footer: '42',
 		});
 
-		expect(messageText(body)).toBe('**Role deleted**\n**Muted**\n-# ID: 42');
+		expect(messageText(body)).toBe('**Role Deleted**\n**Muted**\n-# ID: 42');
 	});
 });
 
