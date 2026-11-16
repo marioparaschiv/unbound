@@ -1,0 +1,17 @@
+{
+	"id": "unbound.undo-send",
+	"name": "Undo Send",
+	"description": "Holds each message you send for a few seconds, with an Undo button that puts it back in the chat input before it goes out.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TimerIcon",
+	"main": "index.tsx"
+}
