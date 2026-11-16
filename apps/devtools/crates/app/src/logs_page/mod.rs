@@ -1,6 +1,7 @@
 //! The Logs page: the device's log lines live as they arrive, filtered by source
 //! (All, Unbound, JS, React Native, Native) and sorted by when the device wrote them, oldest or
-//! newest first. It follows the newest line while scrolled to its end.
+//! newest first. With auto-scroll on it stays pinned to the newest line; off, it keeps the reader's
+//! place.
 
 mod rows;
 
@@ -12,6 +13,7 @@ use gpui::{
 	Context, Entity, ScrollStrategy, SharedString, UniformListScrollHandle, Window, div,
 	prelude::*, px,
 };
+use gpui_component::switch::Switch;
 use unbound_devtools_core::{
 	Devtools, LOG_CAPACITY, LogEntry, LogOrder, LogView, insert_by_time, sort_by_time,
 };
@@ -37,6 +39,8 @@ pub struct LogsPage {
 	rows: VecDeque<Arc<LogEntry>>,
 	view: LogView,
 	order: LogOrder,
+	/// Whether new lines scroll the list to the newest one.
+	auto_scroll: bool,
 	/// Whether the debugger connection has a device on it.
 	connected: bool,
 	scroll: UniformListScrollHandle,
@@ -82,6 +86,7 @@ impl LogsPage {
 			rows: VecDeque::new(),
 			view: LogView::default(),
 			order: LogOrder::default(),
+			auto_scroll: true,
 			scroll: UniformListScrollHandle::new(),
 			mcp,
 			_watch: [lines, status],
@@ -105,8 +110,6 @@ impl LogsPage {
 			return;
 		};
 		self.read = last.seq;
-		// Read before the list grows: a reader scrolled away from the newest line keeps their place.
-		let follow = self.at_newest();
 		for entry in fresh {
 			if self.view.matches(&entry.line) {
 				insert_by_time(&mut self.rows, entry.clone());
@@ -121,18 +124,10 @@ impl LogsPage {
 				self.rows.retain(|row| row.seq >= first);
 			}
 		}
-		if follow {
+		if self.auto_scroll {
 			self.scroll_to_newest();
 		}
 		cx.notify();
-	}
-
-	/// Whether the list sits at its newest end: the bottom oldest first, the top newest first.
-	fn at_newest(&self) -> bool {
-		match self.order {
-			LogOrder::OldestFirst => self.scroll.is_scrolled_to_end().unwrap_or(true),
-			LogOrder::NewestFirst => self.scroll.0.borrow().base_handle.offset().y >= px(0.),
-		}
 	}
 
 	fn scroll_to_newest(&self) {
@@ -148,6 +143,14 @@ impl LogsPage {
 		}
 		self.order = order;
 		self.scroll_to_newest();
+		cx.notify();
+	}
+
+	fn set_auto_scroll(&mut self, on: bool, cx: &mut Context<Self>) {
+		self.auto_scroll = on;
+		if on {
+			self.scroll_to_newest();
+		}
 		cx.notify();
 	}
 
@@ -205,6 +208,13 @@ impl LogsPage {
 				}),
 			))
 			.child(div().flex_1())
+			.child(
+				Switch::new("log-auto-scroll")
+					.label("Auto-Scroll")
+					.checked(self.auto_scroll)
+					.tooltip("Keep the Newest Line in View")
+					.on_click(cx.listener(|this, on: &bool, _, cx| this.set_auto_scroll(*on, cx))),
+			)
 			.child(segmented(
 				"log-order",
 				&orders,
