@@ -1,8 +1,9 @@
 import { createLogger } from '@unbound-app/logger';
 
 import { afterFirstFrame, watchFirstFrame } from '~/core/first-frame';
+import { captureMetro, setModuleStubs } from '~/metro/capture';
+import { resolveModuleStub } from '~/metro/module-stubs';
 import { markRendered } from '~/native/unbound-native';
-import { captureMetro } from '~/metro/capture';
 import { benchMark } from '~/core/bench-span';
 
 // `window` is referenced throughout the client but the host only defines it later in its own
@@ -60,6 +61,7 @@ export default function deferUntilReady(onReady: () => void | Promise<void>): vo
 	}
 
 	captureMetro();
+	setModuleStubs(resolveModuleStub);
 
 	let requireFn: ((id: number) => ReturnType<MetroRequire>) | undefined;
 

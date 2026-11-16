@@ -12,6 +12,9 @@ object Analytics {
     private const val APPSFLYER = "com.appsflyer.AppsFlyerLib"
     private const val APPSFLYER_LISTENER = "com.appsflyer.attribution.AppsFlyerRequestListener"
     private const val APPSFLYER_CONVERSION_LISTENER = "com.appsflyer.AppsFlyerConversionListener"
+    private const val ADS_MODULE = "com.discord.ads.AdsModule"
+    private const val INSTALL_REFERRER_MODULE = "com.discord.analytics.InstallReferrerModule"
+    private const val TOUCH_ANALYTICS_MODULE = "com.discord.analytics.touch.TouchEventAnalyticsModule"
 
     fun block(xposed: XposedInterface, classLoader: ClassLoader) {
         runCatching { blockInitProvider(xposed, classLoader) }
@@ -20,6 +23,44 @@ object Analytics {
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to block the Sentry native SDK", it) }
         runCatching { blockAppsFlyer(xposed, classLoader) }
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to block AppsFlyer", it) }
+        runCatching { resolveNull(xposed, classLoader, ADS_MODULE, "getGoogleAdvertisingId", "the advertising ID") }
+            .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to block the advertising ID", it) }
+        runCatching { resolveNull(xposed, classLoader, INSTALL_REFERRER_MODULE, "get", "the install referrer") }
+            .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to block the install referrer", it) }
+        runCatching { blockTouchLogging(xposed, classLoader) }
+            .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to block touch analytics", it) }
+    }
+
+    // Answers one of Discord's promise-returning native modules with null, the value it resolves when the data is unavailable.
+    private fun resolveNull(
+        xposed: XposedInterface,
+        classLoader: ClassLoader,
+        moduleName: String,
+        methodName: String,
+        what: String,
+    ) {
+        val promiseClass = classLoader.loadClass(REACT_PROMISE)
+        val method = classLoader.loadClass(moduleName).getDeclaredMethod(methodName, promiseClass)
+        val resolve = promiseClass.getMethod("resolve", Any::class.java)
+
+        xposed.hook(method)
+            .setExceptionMode(ExceptionMode.PROTECTIVE)
+            .intercept { chain ->
+                Logger.info(LogCategory.DEFAULT, "Blocked $what.")
+                resolve.invoke(chain.getArg(0), null)
+                null
+            }
+    }
+
+    private fun blockTouchLogging(xposed: XposedInterface, classLoader: ClassLoader) {
+        val module = classLoader.loadClass(TOUCH_ANALYTICS_MODULE)
+
+        xposed.hook(module.getDeclaredMethod("enableTouchLogging"))
+            .setExceptionMode(ExceptionMode.PROTECTIVE)
+            .intercept {
+                Logger.info(LogCategory.DEFAULT, "Blocked touch analytics.")
+                null
+            }
     }
 
     private fun blockAppsFlyer(xposed: XposedInterface, classLoader: ClassLoader) {

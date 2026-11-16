@@ -9,6 +9,9 @@ export type MetroFactory = (
 	dependencyMap: number[] | undefined,
 ) => void;
 
+/** Returns a factory to run in place of a module's own, or `undefined` to run its own. */
+export type ModuleStubResolver = (id: number) => MetroFactory | undefined;
+
 /** Runs a module's original factory the first time Metro requires the module. */
 export type ModuleRunner = (
 	factory: MetroFactory,
@@ -21,15 +24,18 @@ const factories = new Map<number, MetroFactory>();
 // Modules that ran before a runner was attached, in the order they ran.
 const ranEarly: number[] = [];
 let runner: ModuleRunner | undefined;
+let resolveStub: ModuleStubResolver | undefined;
 
 // One function stands in for every factory, so defining a module allocates nothing; Metro sets `module.id` before calling it.
 function sharedFactory(...args: Parameters<MetroFactory>) {
 	const id = args[4].id;
-	const factory = factories.get(id);
+	const original = factories.get(id);
 
-	if (!factory) return;
+	if (!original) return;
 
 	factories.delete(id);
+
+	const factory = resolveStub?.(id) ?? original;
 
 	if (runner) {
 		runner(factory, id, args);
@@ -85,6 +91,14 @@ export function captureMetro(): void {
 			define = value;
 		},
 	});
+}
+
+/**
+ * @description Lets `resolve` replace the factory of any module that has not run yet. Must be set before Discord's bundle runs.
+ * @param resolve Returns a stand-in factory for a module id, or `undefined` to run the module's own.
+ */
+export function setModuleStubs(resolve: ModuleStubResolver): void {
+	resolveStub = resolve;
 }
 
 /**

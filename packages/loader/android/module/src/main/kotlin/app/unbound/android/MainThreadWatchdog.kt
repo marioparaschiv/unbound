@@ -12,6 +12,7 @@ internal object MainThreadWatchdog {
     private const val STACK_FRAMES = 24
 
     @Volatile private var lastBeat = 0L
+
     @Volatile private var started = false
 
     fun start() {
