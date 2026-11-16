@@ -9,15 +9,15 @@ In the Unbound repo run `bun packages/cli/src/index.ts <command>`; elsewhere `bu
 
 ## Pick the group by how it reaches the phone
 
-| Group         | Reaches                               | Commands                                                                                                                                              |
-| ------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| root          | The addon workspace on this computer  | `create`, `dev`, `build`, `check`, `publish`                                                                                                          |
-| `ubd i18n`    | A plugin's `i18n/` folder             | `check`, `fix [--prune]`, `unused`, `add <KEY> <text>`                                                                                                |
-| `ubd migrate` | Plugin source, rewritten in place     | `entry [dir]`                                                                                                                                         |
-| `ubd debug`   | The running client, over the bridge   | `start`, `restart`, `status`, `push`, `reload`, `eval`, `open`, `route`, `modules`, `trace`, `views`, `inspect`, `spans`, `hook`, `profile`, `timing` |
-| `ubd device`  | Discord's files, over adb or jb-p1lot | `install`, `logs`, `reset`, `save <name>`, `restore <name>`, `snapshots`                                                                              |
-| `ubd auth`    | The Unbound website session           | `login`, `logout`                                                                                                                                     |
-| `ubd mcp`     | An AI client, over stdio              | Serves `debug` tools by name (`eval`) and `device` tools prefixed (`device_install`)                                                                  |
+| Group         | Reaches                               | Commands                                                                                                                                                                    |
+| ------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| root          | The addon workspace on this computer  | `create`, `dev`, `build`, `check`, `publish`                                                                                                                                |
+| `ubd i18n`    | A plugin's `i18n/` folder             | `check`, `fix [--prune]`, `unused`, `add <KEY> <text>`                                                                                                                      |
+| `ubd migrate` | Plugin source, rewritten in place     | `entry [dir]`                                                                                                                                                               |
+| `ubd debug`   | The running client, over the bridge   | `start`, `restart`, `status`, `push`, `reload`, `eval`, `command`, `message`, `open`, `route`, `modules`, `trace`, `views`, `inspect`, `spans`, `hook`, `profile`, `timing` |
+| `ubd device`  | Discord's files, over adb or jb-p1lot | `install`, `logs`, `reset`, `save <name>`, `restore <name>`, `snapshots`                                                                                                    |
+| `ubd auth`    | The Unbound website session           | `login`, `logout`                                                                                                                                                           |
+| `ubd mcp`     | An AI client, over stdio              | Serves `debug` tools by name (`eval`) and `device` tools prefixed (`device_install`)                                                                                        |
 
 - A `ubd debug` command fails with `No device is connected to the debugger.` until a bridge runs (`ubd debug start`) and Discord dials it: the `unbound-debugger` skill.
 - A `ubd device` command needs no bridge: Android over adb by default (`--serial` when several), a jailbroken iPhone with `--ios` or `--udid`.
@@ -29,7 +29,7 @@ In the Unbound repo run `bun packages/cli/src/index.ts <command>`; elsewhere `bu
 - **`--json`** prints the result's data as one JSON line on stdout. Progress and warnings go to stderr.
 - **A failure under `--json`** prints `{ ok: false, text, error }`, or the command's data with `error` added. `error` is `{ code, message, hint?, field?, stack? }`; branch on `code`: `invalid-input` (`field` names the flag or argument), `no-device`, `timeout`, `bridge-unreachable`, `device-disconnected`, `device-error`, `not-found`, `tool-failed`, `unsupported`, `command-failed`. A failed `eval` prints its `eval-result`, whose `code` is set only when the bridge failed it. MCP tools return the same `error` as structured content.
 - **Exit codes**: `0` done; `1` the command ran and failed (a check error, a thrown `eval`); `2` a usage error, an unknown command, or no device connected.
-- **Stdin**: a missing required first argument is read from a pipe: `echo 'unbound.version' | ubd debug eval`.
+- **Stdin**: a missing required first argument is read from a pipe: `echo 'unbound.version' | ubd debug eval -`. `ubd debug eval --file script.js` runs a file.
 - **Port**: `ubd debug` commands, `dev` and `mcp` take `--port` (default `9090`).
 
 ## When a command is unknown

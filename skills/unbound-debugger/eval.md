@@ -1,6 +1,8 @@
 # Evaluating on the device
 
-`eval` runs code in the global scope of Discord's runtime; `unbound` is the client's API. The bridge waits 10 s (`--timeout` to change), and a returned Promise is awaited.
+`eval` runs code in the global scope of Discord's runtime; `unbound` is the client's API. The bridge waits 10 s (`--timeout` to change), and a returned Promise is awaited. Top-level `await` works and returns the last expression. `--file <path>` runs a script from disk, and `-` reads the code from stdin.
+
+To run a plugin's slash command without sending its reply, use `ubd debug command <name> name=value… [--channel <id>]` instead of calling `execute` by hand. To see how a plugin renders a message, `ubd debug message add "text" [--author me|clyde|<id>] [--attachment <url>] [--state sent|sending|failed]` shows one only on the device, and `ubd debug message remove` takes them away.
 
 | Value         | Prints as                                                                                            |
 | ------------- | ---------------------------------------------------------------------------------------------------- |

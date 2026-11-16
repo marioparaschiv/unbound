@@ -5,6 +5,7 @@ import installCommand from '~/commands/device/install';
 import restoreCommand from '~/commands/device/restore';
 import commandCommand from '~/commands/debug/command';
 import inspectCommand from '~/commands/debug/inspect';
+import messageCommand from '~/commands/debug/message';
 import modulesCommand from '~/commands/debug/modules';
 import profileCommand from '~/commands/debug/profile';
 import restartCommand from '~/commands/debug/restart';
@@ -121,6 +122,7 @@ export const debugGroup: CommandGroup = {
 			entries: [
 				evalCommand,
 				commandCommand,
+				messageCommand,
 				openCommand,
 				routeCommand,
 				reportCommand,
