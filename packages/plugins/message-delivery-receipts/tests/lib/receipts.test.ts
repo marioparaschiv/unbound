@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { receiptOf, withReceiptMark } from '~/lib/receipts';
+import { receiptOf, withReceipt } from '~/lib/receipts';
 
 const rules = { sentHere: (nonce: string) => nonce === 'n1', allMessages: false };
 
@@ -20,9 +20,26 @@ describe('receipts', () => {
 		expect(receiptOf({ state: 'SENT' }, { ...rules, allMessages: true })).toBe('acknowledged');
 	});
 
-	test('puts the mark after "edited" once', () => {
-		expect(withReceiptMark('', 'acknowledged')).toBe('✓');
-		expect(withReceiptMark('edited', 'sending')).toBe('edited · 🕓');
-		expect(withReceiptMark('edited · ✓', 'acknowledged')).toBe('edited · ✓');
+	test('puts the mark after the text as small text, once', () => {
+		const text = { type: 'text', content: 'hi' };
+		const acked = withReceipt([text], 'acknowledged');
+
+		expect(acked).toEqual([
+			text,
+			{ type: 'subtext', content: [{ type: 'text', content: ' ✓' }] },
+		]);
+		expect(withReceipt(acked, 'failed')).toEqual([
+			text,
+			{ type: 'subtext', content: [{ type: 'text', content: ' ⚠' }] },
+		]);
+	});
+
+	test("leaves a message's own small text alone", () => {
+		const own = { type: 'subtext', content: [{ type: 'text', content: 'footnote' }] };
+
+		expect(withReceipt([own], 'sending')).toEqual([
+			own,
+			{ type: 'subtext', content: [{ type: 'text', content: ' 🕓' }] },
+		]);
 	});
 });

@@ -2,16 +2,16 @@ import { onMessageRow, type RowMessage } from '@unbound-plugins/shared/metro/mes
 import { settings } from '@unbound-app/settings';
 import { flux } from '@unbound-app/api';
 
-import { receiptOf, withReceiptMark, type ReceiptMessage } from '~/lib/receipts';
+import { receiptOf, withReceipt, type ContentNode, type ReceiptMessage } from '~/lib/receipts';
 import { sentHere } from '~/flux/sent-here';
 
 type UserStore = { getCurrentUser(): { id: string } | undefined };
 
-type ReceiptRow = { edited?: string };
+type ReceiptRow = { content?: unknown };
 
 /**
- * @description Marks your messages as sending, failed or acknowledged by Discord's server, after their text where
- * Discord shows "edited". Hooks `generateMessageRowData` after it runs.
+ * @description Marks your messages as sending, failed or acknowledged by Discord's server, as small text right
+ * after their content. Hooks `generateMessageRowData` after it runs.
  */
 export function patchMessageRows(): void {
 	const Users = flux.getStore('User') as unknown as UserStore;
@@ -26,7 +26,9 @@ export function patchMessageRows(): void {
 
 			const receipt = receiptOf(message, { sentHere, allMessages: settings.allMessages });
 
-			if (receipt) receiptRow.edited = withReceiptMark(receiptRow.edited ?? '', receipt);
+			if (receipt && Array.isArray(receiptRow.content)) {
+				receiptRow.content = withReceipt(receiptRow.content as ContentNode[], receipt);
+			}
 		},
 	});
 }

@@ -4,6 +4,8 @@ banner: media/banner.png
 
 ## :sparkle: What it does
 
+Your messages end in a small grey mark, the way chat apps show ticks:
+
 - :clock: 🕓 after a message of yours means it's still on its way to Discord.
 - :circle-check: ✓ means Discord's server acknowledged it.
 - :triangle-warning: ⚠ means it failed to send.

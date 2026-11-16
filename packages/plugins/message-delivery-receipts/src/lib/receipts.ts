@@ -28,18 +28,37 @@ export function receiptOf(
 	return undefined;
 }
 
-/**
- * @description Adds a receipt's mark to the label Discord shows after a message's text, next to "edited".
- * @param label The current label, empty for an unedited message.
- * @param receipt The receipt.
- * @returns The label with the mark.
- */
-export function withReceiptMark(label: string, receipt: Receipt): string {
-	const mark = MARKS[receipt];
+export type ContentNode = { type: string; content?: unknown };
 
-	if (label.endsWith(mark)) return label;
+const RECEIPT_TYPE = 'subtext';
 
-	return label ? `${label} · ${mark}` : mark;
+function receiptNode(receipt: Receipt): ContentNode {
+	return { type: RECEIPT_TYPE, content: [{ type: 'text', content: ` ${MARKS[receipt]}` }] };
 }
 
-export default { receiptOf, withReceiptMark };
+function isReceiptNode(node: ContentNode | undefined): boolean {
+	const text = Array.isArray(node?.content)
+		? (node.content[0] as ContentNode | undefined)?.content
+		: undefined;
+
+	return (
+		node?.type === RECEIPT_TYPE &&
+		typeof text === 'string' &&
+		Object.values(MARKS).some((mark) => text === ` ${mark}`)
+	);
+}
+
+/**
+ * @description Ends a message's content with its receipt as small muted text on the same line, the way chat apps
+ * put ticks after a message, replacing a receipt it already ends with.
+ * @param content The row's content nodes.
+ * @param receipt The receipt.
+ * @returns The content with the receipt last.
+ */
+export function withReceipt(content: ContentNode[], receipt: Receipt): ContentNode[] {
+	const kept = isReceiptNode(content.at(-1)) ? content.slice(0, -1) : content;
+
+	return [...kept, receiptNode(receipt)];
+}
+
+export default { receiptOf, withReceipt };
