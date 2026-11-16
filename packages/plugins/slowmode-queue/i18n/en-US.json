@@ -1,0 +1,4 @@
+{
+	"WAITING": "Sends in {seconds} s, when slowmode ends",
+	"CANCEL": "Cancel"
+}

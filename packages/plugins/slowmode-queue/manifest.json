@@ -1,0 +1,17 @@
+{
+	"id": "unbound.slowmode-queue",
+	"name": "Slowmode Queue",
+	"description": "Lets you send while slowmode is cooling down: the message waits with a countdown you can cancel, then sends.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "HourglassIcon",
+	"main": "index.tsx"
+}
