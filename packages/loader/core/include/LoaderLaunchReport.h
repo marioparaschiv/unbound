@@ -36,6 +36,7 @@ struct LaunchReport {
 struct NativeCrashRecord {
     int64_t at = 0;
     std::string crash;
+    std::string stack;
 };
 
 LaunchReport launchReport();

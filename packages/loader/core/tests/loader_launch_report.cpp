@@ -75,6 +75,8 @@ static void checkCrashHistory()
     assert(history.size() == kCrashHistoryLimit);
     assert(history.front().at == 3);
     assert(history.back().crash == "SIGSEGV in Chat Bubbles");
+    assert(history.back().stack == kStack);
+    assert(readCrashHistory(root.string()).back().stack == kStack);
 
     LaunchReport report;
     report.revision     = "abc1234";
@@ -83,6 +85,7 @@ static void checkCrashHistory()
     assert(json["revision"] == "abc1234");
     assert(json["crashes"].size() == kCrashHistoryLimit);
     assert(json["crashes"][0]["at"] == 3);
+    assert(!json["crashes"][0].contains("stack"));
 
     std::filesystem::remove_all(root);
 }
