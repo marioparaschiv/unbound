@@ -2,6 +2,7 @@ import type { NativeBridge, NativeObjectHandle } from '@unbound-app/api/native';
 
 import { declaresUsage } from '@unbound-plugins/shared/native/ios/usage-keys';
 
+import { groupWords, type TimedWord } from '~/lib/segments';
 import type { TranscriptResult } from '~/lib/voice';
 
 const SPEECH_KEY = 'NSSpeechRecognitionUsageDescription';
@@ -42,12 +43,38 @@ async function download(objc: ObjC, url: string): Promise<NativeObjectHandle> {
 	const file = objc.call(
 		directory,
 		'URLByAppendingPathComponent:',
-		`unbound-transcript.${extension}`,
+		`unbound-transcript-${Date.now()}.${extension}`,
 	) as NativeObjectHandle;
 
 	objc.invoke(objc.data(await response.arrayBuffer()), 'writeToURL:atomically:', [file, true]);
 
 	return file;
+}
+
+type BoxedRange = { value?: { location?: number }; location?: number } | null;
+
+function locationOf(raw: unknown): number {
+	const boxed = raw as BoxedRange;
+
+	return Number((boxed?.value ?? boxed)?.location ?? 0);
+}
+
+function timedWords(objc: ObjC, transcription: NativeObjectHandle, text: string): TimedWord[] {
+	const list = objc.invoke(transcription, 'segments', []);
+	const segments = (
+		Array.isArray(list) ? list : objc.array(list as NativeObjectHandle)
+	) as NativeObjectHandle[];
+	const starts = segments.map((segment) =>
+		locationOf(objc.invoke(segment, 'substringRange', [])),
+	);
+
+	return segments.map((segment, index) => ({
+		text:
+			text.slice(starts[index], starts[index + 1] ?? text.length).trim() ||
+			String(objc.invoke(segment, 'substring', [])),
+		start: Number(objc.invoke(segment, 'timestamp', [])),
+		duration: Number(objc.invoke(segment, 'duration', [])),
+	}));
 }
 
 function recognize(objc: ObjC, file: NativeObjectHandle): Promise<TranscriptResult> {
@@ -93,7 +120,17 @@ function recognize(objc: ObjC, file: NativeObjectHandle): Promise<TranscriptResu
 			) as NativeObjectHandle;
 			const text = String(objc.invoke(transcription, 'formattedString', []) ?? '').trim();
 
-			resolve(text ? { text } : { failure: 'no-speech' });
+			if (!text) {
+				resolve({ failure: 'no-speech' });
+
+				return;
+			}
+
+			resolve({
+				text,
+				segments: groupWords(timedWords(objc, transcription, text)),
+				audioPath: String(objc.invoke(file, 'path', [])),
+			});
 		}) as never);
 
 		objc.invoke(recognizer, 'recognitionTaskWithRequest:resultHandler:', [request, handler]);

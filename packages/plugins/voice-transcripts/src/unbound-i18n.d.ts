@@ -23,6 +23,12 @@ declare module '@unbound-app/i18n' {
 		readonly UNAVAILABLE: string;
 		/** Could not transcribe this message. */
 		readonly FAILED: string;
+		/** Tap a passage to play the message from there. */
+		readonly TAP_TO_PLAY: string;
+		/** Stop */
+		readonly STOP: string;
+		/** Couldn't play this message's audio. */
+		readonly PLAY_FAILED: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

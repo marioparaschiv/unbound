@@ -6,6 +6,7 @@ import { messages } from '@unbound-app/i18n';
 
 import { audioOf, type TranscriptFailure, type VoiceMessage } from '~/lib/voice';
 import { openTranscript } from '~/transcript-page';
+import { createSegmentPlayer } from '~/native/segment-player';
 import { transcribe } from '~/native/transcribe';
 
 type SheetProps = { message?: VoiceMessage & { id?: string } };
@@ -29,7 +30,13 @@ async function transcribeMessage(native: NativeBridge, url: string, messageId: s
 		const result = await transcribe(native, url);
 
 		if ('text' in result) {
-			openTranscript(result.text);
+			openTranscript({
+				text: result.text,
+				segments: result.segments,
+				player: result.audioPath
+					? createSegmentPlayer(native, result.audioPath)
+					: undefined,
+			});
 
 			return;
 		}

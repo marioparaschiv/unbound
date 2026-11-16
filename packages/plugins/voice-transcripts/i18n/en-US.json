@@ -8,5 +8,8 @@
 	"NOT_ALLOWED": "Speech recognition is turned off for Discord in Settings.",
 	"NEEDS_SIDELOAD": "Transcripts need Unbound installed as an app; this install cannot ask for speech recognition.",
 	"UNAVAILABLE": "Speech recognition is not available on this device.",
-	"FAILED": "Could not transcribe this message."
+	"FAILED": "Could not transcribe this message.",
+	"TAP_TO_PLAY": "Tap a passage to play the message from there.",
+	"STOP": "Stop",
+	"PLAY_FAILED": "Couldn't play this message's audio."
 }

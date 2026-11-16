@@ -1,3 +1,5 @@
+import type { TranscriptSegment } from '~/lib/segments';
+
 const VOICE_MESSAGE = 1 << 13;
 const AUDIO = /\.(ogg|opus|mp3|m4a|wav|aac)(\?|$)/i;
 
@@ -13,7 +15,9 @@ export type TranscriptFailure =
 	| 'no-speech'
 	| 'failed';
 
-export type TranscriptResult = { text: string } | { failure: TranscriptFailure; detail?: string };
+export type TranscriptResult =
+	| { text: string; segments?: TranscriptSegment[]; audioPath?: string }
+	| { failure: TranscriptFailure; detail?: string };
 
 /**
  * @description Finds the audio a message carries: a voice message's clip, or an audio attachment.
