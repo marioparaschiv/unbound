@@ -441,6 +441,42 @@ class NativeHooksTest {
         assertNull(chain.proceededWith)
     }
 
+    @Test
+    fun resultRewritesBeforeTheMethodSkipIt() {
+        NativeHooks.hook("java.lang.String", "concat", """["java.lang.String"]""", """{"rewriteResult":true}""")
+        rewriteResponse = """{"result":{"type":"string","value":"skipped"}}"""
+        val chain = FakeChain("a", listOf("b"), "ab")
+
+        val result = installer.installed[0].hook.intercept(chain)
+
+        assertEquals("skipped", result)
+        assertFalse(chain.proceeded)
+    }
+
+    @Test
+    fun resultRewritesAfterTheMethodReplaceItsResult() {
+        NativeHooks.hook("java.lang.String", "concat", """["java.lang.String"]""", """{"rewriteResult":true,"notify":"after"}""")
+        rewriteResponse = """{"result":{"type":"string","value":"replaced"}}"""
+        val chain = FakeChain("a", listOf("b"), "ab")
+
+        val result = installer.installed[0].hook.intercept(chain)
+
+        assertEquals("replaced", result)
+        assertTrue(chain.proceeded)
+    }
+
+    @Test
+    fun hooksWithoutTheOptionIgnoreResultRewrites() {
+        NativeHooks.hook("java.lang.String", "concat", """["java.lang.String"]""", "{}")
+        rewriteResponse = """{"result":{"type":"string","value":"skipped"}}"""
+        val chain = FakeChain("a", listOf("b"), "ab")
+
+        val result = installer.installed[0].hook.intercept(chain)
+
+        assertEquals("ab", result)
+        assertTrue(chain.proceeded)
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun rewritingArgumentsRequiresABeforeNotification() {
         NativeHooks.hook("java.lang.String", "concat", """["java.lang.String"]""", """{"rewriteArguments":true,"notify":"after"}""")

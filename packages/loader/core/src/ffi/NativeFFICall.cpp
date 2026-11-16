@@ -49,9 +49,12 @@ namespace {
         return result;
     }
 
-    std::string signatureKey(const Type &result, const std::vector<Type> &arguments)
+    std::string signatureKey(const Type &result, const std::vector<Type> &arguments,
+                             std::optional<std::size_t> fixedArguments)
     {
-        std::string key = result.name;
+        std::string key = fixedArguments
+                              ? "..." + std::to_string(*fixedArguments) + '\0' + result.name
+                              : result.name;
         for (const Type &argument : arguments)
         {
             key.push_back('\0');
@@ -166,9 +169,10 @@ ffi_type *libffiType(const Type &type)
     throw std::invalid_argument("Unsupported native FFI type " + type.name);
 }
 
-std::shared_ptr<CallInterface> callInterface(const Type &result, const std::vector<Type> &arguments)
+std::shared_ptr<CallInterface> callInterface(const Type &result, const std::vector<Type> &arguments,
+                                             std::optional<std::size_t> fixedArguments)
 {
-    std::string key = signatureKey(result, arguments);
+    std::string key = signatureKey(result, arguments, fixedArguments);
     if (auto cached = callInterfaceCache().find(key))
     {
         return cached;
@@ -183,10 +187,14 @@ std::shared_ptr<CallInterface> callInterface(const Type &result, const std::vect
         created->argumentTypes.push_back(libffiType(argument));
     }
 
-    if (ffi_prep_cif(&created->cif, FFI_DEFAULT_ABI,
-                     static_cast<unsigned>(created->argumentTypes.size()), libffiType(result),
-                     created->argumentTypes.data())
-        != FFI_OK)
+    auto total          = static_cast<unsigned>(created->argumentTypes.size());
+    ffi_status prepared = fixedArguments
+                              ? ffi_prep_cif_var(&created->cif, FFI_DEFAULT_ABI,
+                                                 static_cast<unsigned>(*fixedArguments), total,
+                                                 libffiType(result), created->argumentTypes.data())
+                              : ffi_prep_cif(&created->cif, FFI_DEFAULT_ABI, total,
+                                             libffiType(result), created->argumentTypes.data());
+    if (prepared != FFI_OK)
     {
         throw std::invalid_argument("Native FFI signature could not be prepared");
     }

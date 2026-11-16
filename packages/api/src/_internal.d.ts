@@ -4094,12 +4094,14 @@ export type NativeFFIRebinding = {
 	/** How many import slots now point at the replacement. */
 	slots: number;
 };
-/** A non-variadic C function signature for `ffi.call`. */
+/** A C function signature for `ffi.call`. */
 export type NativeFFISignature = {
 	/** The result type; `i64` and `u64` results come back as `BigInt`. */
 	returnType: NativeFFIType;
 	/** The argument types, at most 16 and none `void`. */
 	args: NativeFFIType[];
+	/** For a variadic function, how many of `args` are its fixed parameters; pass extra floats as `double` and small integers as `i32`, as C promotes them. */
+	fixedArgs?: number;
 };
 /** An FFI type: a scalar or pointer name, or a registered struct by name, such as `{ struct: 'CGRect' }`. */
 export type NativeFFIType =
@@ -4276,6 +4278,8 @@ export type NativeHookContext<Receiver extends boolean = true> = {
 	original: (...args: unknown[]) => NativeObjCResult;
 	/** Swaps the object argument at an index of `args` before the original runs; only during a synchronous handler. */
 	replaceObjectArgument(index: number, value: NativeObjectHandle | null): void;
+	/** Swaps any argument at an index of `args` before the original runs: a number, boolean, struct, pointer or object; only during a synchronous handler. */
+	replaceArgument(index: number, value: NativeObjCResult): void;
 };
 /** The handlers an Objective-C hook runs around each call; it needs at least one, unless `cacheOnly` is set. */
 export type NativeHookHandlers<Receiver extends boolean = true> = {
@@ -4618,6 +4622,10 @@ export type NativeJavaHookOptions<Receiver extends boolean = boolean> = {
 	notify?: boolean | 'after';
 	/** Lets a `before` listener hooked from a UI scope return `{ arguments }` to run the method with them instead. */
 	rewriteArguments?: boolean;
+	/** Lets a listener hooked from a UI scope return `{ result }`: before the method, it runs instead of it; after, it replaces what the method returned. */
+	rewriteResult?: boolean;
+	/** Hooks every overload of the method instead of the one `parameterTypes` names, under one token. */
+	overloads?: 'all';
 	/** Trims the receiver, arguments and phase each event sends, to cut crossing cost on hot methods. */
 	payload?: NativeHookPayload<Receiver>;
 	/** Also hooks every subclass that declares the method itself, found by `java.findClasses` once it answers. */
@@ -4625,11 +4633,16 @@ export type NativeJavaHookOptions<Receiver extends boolean = boolean> = {
 	/** Waits for a class that is not loaded yet, retrying with backoff for up to ten minutes. */
 	waitForClass?: boolean;
 };
-/** What a `rewriteArguments` listener returns to run the hooked method with other arguments, one per parameter. */
-export type NativeJavaHookRewrite = {
-	/** The arguments to run the method with, in parameter order. */
-	arguments: NativeJavaArgument[];
-};
+/** What a `rewriteArguments` listener returns to run the hooked method with other arguments, or a `rewriteResult` listener returns as its result. */
+export type NativeJavaHookRewrite =
+	| {
+			/** The arguments to run the method with, in parameter order. */
+			arguments: NativeJavaArgument[];
+	  }
+	| {
+			/** The value the call returns. */
+			result: NativeJavaArgument | null;
+	  };
 /** An installed Java hook; the plugin scope removes it on dispose. */
 export type NativeJavaHookToken = {
 	/** The id the loader issued, such as `hook-1`. */

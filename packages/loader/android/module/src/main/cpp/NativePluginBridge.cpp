@@ -331,13 +331,17 @@ static jsi::Object makeHooksNamespace(jsi::Runtime &runtime, const JavaCallbacks
                 count > 3 && args[3].isObject()
                     ? args[3].asObject(rt).getProperty(rt, "rewriteArguments")
                     : jsi::Value::undefined();
-            bool rewritesArguments = rewriteOption.isBool() && rewriteOption.getBool();
+            jsi::Value resultOption = count > 3 && args[3].isObject()
+                                          ? args[3].asObject(rt).getProperty(rt, "rewriteResult")
+                                          : jsi::Value::undefined();
+            bool rewritesArguments  = (rewriteOption.isBool() && rewriteOption.getBool())
+                                      || (resultOption.isBool() && resultOption.getBool());
             if (rewritesArguments
                 && (count <= 4 || !args[4].isObject() || !args[4].asObject(rt).isFunction(rt)
                     || !loader::native::currentUIScopeRuntime()))
             {
                 throw std::invalid_argument(
-                    "Rewriting arguments requires a callback hooked from a UI scope");
+                    "Rewriting arguments or results requires a callback hooked from a UI scope");
             }
 
             loader::native::NativeResourceReservation reservation(

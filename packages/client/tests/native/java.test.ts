@@ -227,6 +227,63 @@ describe('native Java bridge', () => {
 		expect(hooksRemoved).toEqual([javaHookToken]);
 	});
 
+	test('hooks every overload of a method when asked, and removes them together', () => {
+		Object.assign(nativePlatformBridge.device, { platform: 'android' });
+		Object.assign(nativePlatformBridge, { platform: 'android' });
+		hooksRemoved.length = 0;
+
+		const { describe: describeClass } = bridge.java;
+		const { hook } = bridge.hooks;
+		const hooked: string[][] = [];
+
+		Object.assign(bridge.java, {
+			describe: (name: string) => ({
+				...describeClass(name),
+				methods: [
+					{ name: 'valueOf', parameters: ['int'], returnType: name, static: true },
+					{
+						name: 'valueOf',
+						parameters: ['java.lang.String'],
+						returnType: name,
+						static: true,
+					},
+					{
+						name: 'toString',
+						parameters: [],
+						returnType: 'java.lang.String',
+						static: false,
+					},
+				],
+			}),
+		});
+		Object.assign(bridge.hooks, {
+			hook: (_className: string, _methodName: string, parameters: string[]) => ({
+				id: `hook-${hooked.push(parameters)}`,
+			}),
+		});
+
+		try {
+			const context = createPluginContext({
+				...manifest,
+				platforms: { android: {} },
+				capabilities: ['native.java.hooks'],
+			});
+			const token = context.native.hooks.hook('java.lang.Integer', 'valueOf', [], {
+				overloads: 'all',
+			});
+
+			expect(hooked).toEqual([['int'], ['java.lang.String']]);
+
+			context.native.hooks.remove(token);
+
+			expect(hooksRemoved.map(({ id }) => id).sort()).toEqual(['hook-1', 'hook-2']);
+			context.dispose();
+		} finally {
+			Object.assign(bridge.java, { describe: describeClass });
+			Object.assign(bridge.hooks, { hook });
+		}
+	});
+
 	test('scopes batching, associations and debug to their capabilities', () => {
 		Object.assign(nativePlatformBridge.device, { platform: 'android' });
 		Object.assign(nativePlatformBridge, { platform: 'android' });

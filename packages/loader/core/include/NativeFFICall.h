@@ -20,8 +20,9 @@ struct CallInterface {
 constexpr std::size_t kCallInterfaceCacheCapacity = 128;
 
 ffi_type *libffiType(const Type &type);
-std::shared_ptr<CallInterface> callInterface(const Type &result,
-                                             const std::vector<Type> &arguments);
+std::shared_ptr<CallInterface>
+callInterface(const Type &result, const std::vector<Type> &arguments,
+              std::optional<std::size_t> fixedArguments = std::nullopt);
 std::size_t cachedCallInterfaceCount();
 void invoke(const CallInterface &interface, void *function, void *result, void **arguments);
 

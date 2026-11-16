@@ -53,6 +53,7 @@ struct StructLayout {
 struct Signature {
     Type result;
     std::vector<Type> arguments;
+    std::optional<std::size_t> fixedArguments;
 };
 
 constexpr std::size_t kMaximumArguments = 16;

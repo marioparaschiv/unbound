@@ -25,6 +25,66 @@
 			"file": "src/native/scope-objc-hook.ts",
 			"error": "TS2349: This expression is not callable.",
 			"reason": "The optional findClasses call above; it returns no classes on older loaders."
+		},
+		{
+			"file": "src/native/scope.ts",
+			"error": "TS2353: Object literal may only specify known properties, and 'findClasses' does not exist in type 'NativeObjCBridge'.",
+			"reason": "The scoped bridge exposes findClasses through scopeBridgeMethod, which throws an unavailable error on older loaders."
+		},
+		{
+			"file": "src/native/scope.ts",
+			"error": "TS2345: Argument of type '\"findClasses\"' is not assignable to parameter of type '\"alloc\" | \"array\" | \"batch\" | \"call\" | \"callSuper\" | \"className\" | \"createAssociationKey\" | \"data\" | \"disposePlan\" | \"findViews\" | \"getAssociatedObject\" | \"getClass\" | \"getIvar\" | ... 12 more ... | \"struct\"'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders."
+		},
+		{
+			"file": "src/native/scope.ts",
+			"error": "TS2349: This expression is not callable.",
+			"reason": "The scopeBridgeMethod result for findClasses; it throws an unavailable error on older loaders instead of calling."
+		},
+		{
+			"file": "src/native/scope.ts",
+			"error": "TS2345: Argument of type '\"block\"' is not assignable to parameter of type '\"alloc\" | \"array\" | \"batch\" | \"call\" | \"callSuper\" | \"className\" | \"createAssociationKey\" | \"data\" | \"disposePlan\" | \"findViews\" | \"getAssociatedObject\" | \"getClass\" | \"getIvar\" | ... 12 more ... | \"struct\"'.",
+			"reason": "scopeBridgeMethod checks objc.block exists and throws an unavailable error on older loaders."
+		},
+		{
+			"file": "src/native/scope.ts",
+			"error": "TS2345: Argument of type '\"callBlock\"' is not assignable to parameter of type '\"alloc\" | \"array\" | \"batch\" | \"call\" | \"callSuper\" | \"className\" | \"createAssociationKey\" | \"data\" | \"disposePlan\" | \"findViews\" | \"getAssociatedObject\" | \"getClass\" | \"getIvar\" | ... 12 more ... | \"struct\"'.",
+			"reason": "scopeBridgeMethod checks objc.callBlock exists and throws an unavailable error on older loaders."
+		},
+		{
+			"file": "src/native/scope.ts",
+			"error": "TS2345: Argument of type '\"defineClass\"' is not assignable to parameter of type '\"alloc\" | \"array\" | \"batch\" | \"call\" | \"callSuper\" | \"className\" | \"createAssociationKey\" | \"data\" | \"disposePlan\" | \"findViews\" | \"getAssociatedObject\" | \"getClass\" | \"getIvar\" | ... 12 more ... | \"struct\"'.",
+			"reason": "scopeBridgeMethod checks objc.defineClass exists and throws an unavailable error on older loaders."
+		},
+		{
+			"file": "src/native/scope.ts",
+			"error": "TS18046: 'method' is of type 'unknown'.",
+			"reason": "Follows from defineClass being untyped on older typings; the call is only reached on loaders that have it."
+		},
+		{
+			"file": "src/native/scope.ts",
+			"error": "TS2339: Property 'subclasses' does not exist on type 'NativeJavaHookOptions<Receiver>'.",
+			"reason": "The client handles subclasses itself and strips it before calling the loader's hooks.hook."
+		},
+		{
+			"file": "src/native/scope.ts",
+			"error": "TS2339: Property 'waitForClass' does not exist on type 'NativeJavaHookOptions<Receiver>'.",
+			"reason": "The client retries waitForClass hooks itself and strips the option before calling the loader."
+		},
+		{
+			"file": "src/native/scope.ts",
+			"error": "TS2339: Property 'overloads' does not exist on type 'NativeJavaHookOptions<Receiver>'.",
+			"reason": "The client expands overloads from java.describe itself and strips the option before calling the loader."
+		},
+		{
+			"file": "src/native/scope.ts",
+			"error": "TS2339: Property 'findClasses' does not exist on type 'NativeJavaBridge'.",
+			"reason": "Java subclass hooks check java.findClasses exists and fall back to the class alone."
+		},
+		{
+			"file": "tests/native/java.test.ts",
+			"error": "TS2353: Object literal may only specify known properties, and 'overloads' does not exist in type 'NativeJavaHookOptions<true>'.",
+			"reason": "The client expands overloads from java.describe itself and strips the option before calling the loader."
 		}
 	]
 }

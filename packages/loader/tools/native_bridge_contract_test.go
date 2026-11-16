@@ -101,6 +101,8 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 		"fallbackHook<CGSize>(\"struct:CGSize\", {})",
 		"fallbackHook<void, id, id>(\"void\", {\"object\", \"object\"})",
 		"replaceObjectArgument",
+		"storeHookArgument",
+		"\"replaceArgument\"",
 		"instanceTarget",
 		"isExecutableAddress",
 		"invokeHookOriginal",

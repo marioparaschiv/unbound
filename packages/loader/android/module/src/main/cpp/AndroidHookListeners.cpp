@@ -110,27 +110,33 @@ static std::optional<std::string> returnedValue(jsi::Runtime &runtime, const jsi
     return serializeJavaValue(runtime, result);
 }
 
-static std::optional<std::string> rewrittenArguments(jsi::Runtime &runtime,
-                                                     const jsi::Value &returned)
+static std::optional<std::string> rewrittenCall(jsi::Runtime &runtime, const jsi::Value &returned)
 {
     if (!returned.isObject())
     {
         return std::nullopt;
     }
 
-    jsi::Value result = returned.asObject(runtime).getProperty(runtime, "result");
-    if (!result.isObject())
+    jsi::Value rewrite = returned.asObject(runtime).getProperty(runtime, "result");
+    if (!rewrite.isObject())
     {
         return std::nullopt;
     }
 
-    jsi::Value arguments = result.asObject(runtime).getProperty(runtime, "arguments");
-    if (!arguments.isObject() || !arguments.asObject(runtime).isArray(runtime))
+    jsi::Object fields   = rewrite.asObject(runtime);
+    jsi::Value arguments = fields.getProperty(runtime, "arguments");
+    if (arguments.isObject() && arguments.asObject(runtime).isArray(runtime))
+    {
+        return serializeJavaArguments(runtime, &arguments, 1, 0);
+    }
+
+    if (!fields.hasProperty(runtime, "result"))
     {
         return std::nullopt;
     }
 
-    return serializeJavaArguments(runtime, &arguments, 1, 0);
+    return "{\"result\":" + serializeJavaValue(runtime, fields.getProperty(runtime, "result"))
+           + "}";
 }
 
 std::optional<std::string> dispatchHookEvent(const std::string &token, const std::string &payload)
@@ -228,7 +234,7 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
                 return returnedValue(runtime, failure);
             }
 
-            return rewrites ? rewrittenArguments(runtime, failure) : std::nullopt;
+            return rewrites ? rewrittenCall(runtime, failure) : std::nullopt;
         }
 
         std::optional<std::string> message =

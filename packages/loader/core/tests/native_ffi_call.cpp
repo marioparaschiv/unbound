@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
@@ -147,6 +148,29 @@ static void sixteenArgumentsAreSupported()
            == 136);
 }
 
+static void variadicCallsPassTheirExtraArguments()
+{
+    std::vector<Type> arguments = {type("pointer"), type("u64"), type("cstring"), type("i32"),
+                                   type("double")};
+    auto fixed                  = loader::ffi::callInterface(type("i32"), arguments);
+    auto variadic               = loader::ffi::callInterface(type("i32"), arguments, 3);
+    assert(fixed != variadic);
+
+    char buffer[32] = {};
+    CallFrame frame(variadic);
+    void *destination = buffer;
+    memcpy(frame.argument(0), &destination, sizeof(destination));
+    loader::ffi::encodeValue(type("u64"), NativeValue{static_cast<double>(sizeof(buffer))},
+                             frame.argument(1), frame.storage());
+    loader::ffi::encodeValue(type("cstring"), NativeValue{std::string("%d %.1f")},
+                             frame.argument(2), frame.storage());
+    loader::ffi::encodeValue(type("i32"), NativeValue{7.0}, frame.argument(3), frame.storage());
+    loader::ffi::encodeValue(type("double"), NativeValue{2.5}, frame.argument(4), frame.storage());
+    frame.invoke(reinterpret_cast<void *>(&std::snprintf));
+
+    assert(std::string(buffer) == "7 2.5");
+}
+
 static void extensionTypesResolveThroughTheirCodec()
 {
     bool rejectedUnknown = false;
@@ -228,6 +252,7 @@ int main()
     structsTravelByValue();
     nullCStringsReachNativeCode();
     sixteenArgumentsAreSupported();
+    variadicCallsPassTheirExtraArguments();
     extensionTypesResolveThroughTheirCodec();
     onlyInstructionsAreCallable();
     return 0;

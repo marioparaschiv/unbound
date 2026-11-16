@@ -501,6 +501,16 @@ export function createScopedNativeBridge(
 	};
 
 	const javaSubclassHooks = new Map<string, NativeJavaHookToken[]>();
+
+	function removeJavaHookChildren(parent: NativeJavaHookToken) {
+		for (const child of javaSubclassHooks.get(parent.id) ?? []) {
+			javaHookTokens.delete(child);
+			removeJavaHookChildren(child);
+			removeJavaHook(child);
+		}
+
+		javaSubclassHooks.delete(parent.id);
+	}
 	const javaDeferredHooks = new Map<string, NativeJavaHookToken>();
 	const javaHookRetries = new Map<string, HookRetry>();
 	let pendingJavaHooks = 0;
@@ -518,18 +528,62 @@ export function createScopedNativeBridge(
 
 			requireGranted('hooks.hook');
 
-			const { subclasses, waitForClass, ...nativeOptions } = options ?? {};
+			const { subclasses, waitForClass, overloads, ...nativeOptions } = options ?? {};
 
-			function install(name: string) {
+			function addChildren(base: NativeJavaHookToken, children: NativeJavaHookToken[]) {
+				if (children.length) {
+					javaSubclassHooks.set(base.id, [
+						...(javaSubclassHooks.get(base.id) ?? []),
+						...children,
+					]);
+				}
+			}
+
+			function overloadParameters(name: string): string[][] {
+				if (overloads !== 'all') return [parameterTypes];
+
+				const found = javaSource
+					.describe(name)
+					.methods.filter((method) => method.name === methodName)
+					.map((method) => method.parameters);
+
+				return found.length ? found : [parameterTypes];
+			}
+
+			function installOne(name: string, parameters: string[]) {
 				const token = hooksBridge.hook<Receiver>(
 					name,
 					methodName,
-					parameterTypes,
+					parameters,
 					nativeOptions,
 					listener,
 				);
 
 				javaHookTokens.add(token);
+
+				return token;
+			}
+
+			function install(name: string) {
+				const [first = parameterTypes, ...rest] = overloadParameters(name);
+				const token = installOne(name, first);
+
+				addChildren(
+					token,
+					rest.flatMap((parameters) => {
+						try {
+							return [installOne(name, parameters)];
+						} catch (error) {
+							recordHookFailure(
+								owner ?? 'unknown',
+								hookTarget(name, methodName, parameters),
+								error,
+							);
+
+							return [];
+						}
+					}),
+				);
 
 				return token;
 			}
@@ -560,7 +614,7 @@ export function createScopedNativeBridge(
 							}
 						});
 
-						javaSubclassHooks.set(base.id, children);
+						addChildren(base, children);
 					})
 					.catch((error: Error) =>
 						logger.warn(`Failed to find subclasses of ${className}:`, error),
@@ -625,12 +679,7 @@ export function createScopedNativeBridge(
 
 			javaDeferredHooks.delete(token.id);
 
-			for (const child of javaSubclassHooks.get(installed.id) ?? []) {
-				javaHookTokens.delete(child);
-				removeJavaHook(child);
-			}
-
-			javaSubclassHooks.delete(installed.id);
+			removeJavaHookChildren(installed);
 
 			if (installed.id.startsWith('pending-')) return;
 
