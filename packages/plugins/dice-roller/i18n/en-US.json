@@ -1,0 +1,10 @@
+{
+	"ROLL_DESC": "Roll dice, like 2d20kh1+5",
+	"ROLL_DICE": "Dice to roll: 2d20kh1+5, 4d6dl1, d%, 3d6!",
+	"ROLL_PRIVATE": "Show the roll only to you",
+	"EMPTY": "Write dice to roll, like 2d20kh1+5.",
+	"UNREADABLE": "Couldn't read \"{text}\". Try something like 2d20kh1+5.",
+	"DICE_COUNT": "Roll between 1 and {max} dice at a time.",
+	"SIDES": "Dice need between 2 and {max} sides.",
+	"KEEP_COUNT": "Keep or drop between 1 and {max} dice."
+}

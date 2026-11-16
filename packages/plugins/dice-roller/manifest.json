@@ -1,0 +1,17 @@
+{
+	"id": "unbound.dice-roller",
+	"name": "Dice Roller",
+	"description": "Rolls dice from expressions like 2d20kh1+5 with /roll, showing each die and the total.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "DiceIcon",
+	"main": "index.tsx"
+}

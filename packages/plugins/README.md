@@ -1,6 +1,6 @@
 # Plugins
 
-164 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+165 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -42,6 +42,7 @@
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Dearrow](https://unbound.rip/addons/unbound.dearrow): Makes YouTube embed titles and thumbnails less sensationalist, powered by DeArrow.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Declutter](https://unbound.rip/addons/unbound.declutter): Hides buttons, upsells and profile decorations you never use: gift and call buttons, Quests, Nitro, avatar decorations, server tags and more.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Decor](https://unbound.rip/addons/unbound.decor): Shows the custom avatar decorations people pick on Decor, in chat and on profiles.
+- <img src="../../assets/plugins/readme-icons/dice-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Dice Roller](https://unbound.rip/addons/unbound.dice-roller): Rolls dice from expressions like 2d20kh1+5 with /roll, showing each die and the total.
 - <img src="../../assets/plugins/readme-icons/language-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Dictionary](https://unbound.rip/addons/unbound.dictionary): Looks up the words of a message: definitions, pronunciation with audio, and a vocabulary list of words you save.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [DOOM](https://unbound.rip/addons/unbound.doom): Plays the DOOM shareware episode inside Discord, from /doom or this plugin's settings, with on-screen controls.
 - <img src="../../assets/plugins/readme-icons/pencil-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Edit Diff Preview](https://unbound.rip/addons/unbound.edit-diff-preview): Shows what an edit adds and removes before it is saved, for long messages and code.
