@@ -13,5 +13,12 @@
 		"min": "3.0.0"
 	},
 	"icon": "CalendarIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "c2e29f4eedef4249b5afba0618f59c7ccb5263085f2c9199051b13dc5c9f62a579c5fefca5f9935b3cc475f3bce300d428ddb7cf79f7be35d4ff609956a08e32"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "oKs/3tajpkbndLsbq1MHG5WGle4qFkKCZWHLYBeZ25PnQW3fVo0sPxzZnUFiyedyZ0In15n0PJxpD/sbLyCpAA=="
+	}
 }
