@@ -172,8 +172,6 @@ export function renderBanner(svg: string): Uint8Array {
 	return markGenerated(resvg.render().asPng());
 }
 
-const FALLBACK_ICON = 'SettingsIcon';
-
 export type BannerSelection = { names: Set<string>; all: boolean };
 
 /**
@@ -210,13 +208,13 @@ export function shouldDrawBanner(
 function readIcon(icon: string): string {
 	const path = join(PLUGIN_ICONS_DIR, `${icon}.png`);
 
-	if (existsSync(path)) return readFileSync(path).toString('base64');
+	if (!existsSync(path)) {
+		throw new Error(
+			`Plugin icon ${icon} is missing from assets/plugins/icons; run plugins:sync-icons to add it.`,
+		);
+	}
 
-	console.warn(
-		`No ${icon}.png in assets/plugins/icons; using ${FALLBACK_ICON}. Run plugins:sync-icons to add it.`,
-	);
-
-	return readFileSync(join(PLUGIN_ICONS_DIR, `${FALLBACK_ICON}.png`)).toString('base64');
+	return readFileSync(path).toString('base64');
 }
 
 function main(): void {

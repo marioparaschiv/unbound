@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 
 import { pluginIcon, readPluginManifests } from './plugin-manifests';
 import { PLUGIN_ICONS_DIR, PLUGINS_DIR } from './paths';
+import { latestLoaderIpa } from './latest-loader-ipa';
 
 const pluginsDir = PLUGINS_DIR;
 const iconsDir = PLUGIN_ICONS_DIR;
@@ -25,7 +26,7 @@ function findIconPath(icon: string, entries: Set<string>): string {
 		}
 	}
 
-	throw new Error(`Could not find ${icon} in the latest loader IPA.`);
+	throw new Error(`Could not find ${icon} in the loader IPA.`);
 }
 
 function readIconFiles(archivePath: string, icons: Set<string>): Map<string, Buffer> {
@@ -41,8 +42,7 @@ function readIconFiles(archivePath: string, icons: Set<string>): Map<string, Buf
 		const contents = execFileSync('unzip', ['-p', archivePath, path], {
 			maxBuffer: 16 * 1024 * 1024,
 		});
-		if (!contents.length)
-			throw new Error(`The latest loader IPA contains an empty ${icon} asset.`);
+		if (!contents.length) throw new Error(`The loader IPA contains an empty ${icon} asset.`);
 
 		files.set(icon, contents);
 	}
@@ -68,10 +68,4 @@ function syncIcons(archivePath: string): void {
 	}
 }
 
-const archivePath = process.argv[2];
-if (!archivePath)
-	throw new Error(
-		'Usage: bun packages/plugin-scripts/src/sync-plugin-icons.ts <loader-ipa-path>',
-	);
-
-syncIcons(archivePath);
+syncIcons(process.argv[2] ?? latestLoaderIpa());
