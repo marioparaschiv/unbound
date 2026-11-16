@@ -40,6 +40,9 @@ type MemoState = {
 const Patcher = createPatcher('unbound::commands');
 const Logger = createLogger('Commands');
 const DEFAULT_ICON = 'ic_application_command_24px';
+const EPHEMERAL_FLAG = 1 << 6;
+const LOADING_FLAG = 1 << 7;
+const CHAT_INPUT_COMMAND = 2;
 
 // Keeps each unchanged command's identity across versions, so Discord's memoized lists stay valid.
 const discordCommands = new WeakMap<CommandRecord, DiscordCommand>();
@@ -128,6 +131,7 @@ function createEffects(): CommandEffects {
 				guildId ? (Roles.getRole?.(guildId, id) ?? undefined) : undefined,
 		},
 		showEphemeral,
+		showThinking,
 		dispatch: (action) => Dispatcher.dispatch(action),
 		nonce: () => `${Date.now()}${nonce++}`,
 		reportError: (record, error) =>
@@ -135,12 +139,13 @@ function createEffects(): CommandEffects {
 	};
 }
 
-function showEphemeral(channelId: string, reply: EphemeralReply, section: Section) {
-	const message = Clyde.createBotMessage({
-		channelId,
-		content: reply.content ?? '',
-		embeds: reply.embeds ?? [],
-	});
+function sectionMessage(
+	channelId: string,
+	content: string,
+	embeds: readonly unknown[],
+	section: Section,
+) {
+	const message = Clyde.createBotMessage({ channelId, content, embeds: [...embeds] });
 
 	message.author = {
 		...message.author,
@@ -150,7 +155,30 @@ function showEphemeral(channelId: string, reply: EphemeralReply, section: Sectio
 		avatar: registerAvatar(section),
 	};
 
+	return message;
+}
+
+function showEphemeral(channelId: string, reply: EphemeralReply, section: Section) {
+	Messages.receiveMessage(
+		channelId,
+		sectionMessage(channelId, reply.content ?? '', reply.embeds ?? [], section),
+		true,
+	);
+}
+
+function showThinking(channelId: string, section: Section, name: string): () => void {
+	const message = sectionMessage(channelId, '', [], section);
+
+	message.flags = (message.flags ?? EPHEMERAL_FLAG) | EPHEMERAL_FLAG | LOADING_FLAG;
+	message.interaction = {
+		id: message.id,
+		name,
+		type: CHAT_INPUT_COMMAND,
+		user: Users.getCurrentUser?.(),
+	};
 	Messages.receiveMessage(channelId, message, true);
+
+	return () => Dispatcher.dispatch({ type: 'MESSAGE_DELETE', id: message.id, channelId });
 }
 
 // Discord draws a bot author's avatar from BOT_AVATARS[author.avatar]: an asset id or an image uri string.
