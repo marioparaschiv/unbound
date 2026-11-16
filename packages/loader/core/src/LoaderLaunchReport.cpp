@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "LoaderCrashHandler.h"
 #include "LoaderFiles.h"
 
 namespace loader {
@@ -147,7 +148,9 @@ bool recordCrash(const std::string &directory, const std::string &stack, int64_t
         json.push_back(std::move(entry));
     }
 
-    return writeTextFileAtomically(joinPath(directory, kCrashHistoryFile), json.dump());
+    bool kept =
+        writeTextFileAtomically(joinPath(directory, kNativeCrashFile), history.back().stack);
+    return writeTextFileAtomically(joinPath(directory, kCrashHistoryFile), json.dump()) && kept;
 }
 
 std::string bundleStateName(BundleState state)

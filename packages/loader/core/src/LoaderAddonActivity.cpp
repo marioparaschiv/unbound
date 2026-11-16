@@ -92,7 +92,7 @@ struct ThreadClaim {
 
 static thread_local ThreadClaim tClaim;
 
-static void ensureAlternateSignalStack()
+void ensureAlternateSignalStack()
 {
     stack_t current = {};
     if (sigaltstack(nullptr, &current) != 0 || !(current.ss_flags & SS_DISABLE))

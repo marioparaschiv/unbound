@@ -19,6 +19,7 @@ AddonSlot currentAddon();
 uint32_t *claimActivityCell();
 uintptr_t currentActivityThread();
 AddonSlot addonOnThread(uintptr_t thread);
+void ensureAlternateSignalStack();
 
 bool writeCrashingAddonRecord(int descriptor);
 bool writeCrashingAddonLine(int descriptor);

@@ -334,22 +334,23 @@ bool installAddonCrashHandler(const std::string &markerPath)
 
     gMarkerDescriptor.store(descriptor, std::memory_order_release);
 
-    size_t slash = markerPath.find_last_of('/');
-    std::string stackPath =
-        joinPath(slash == std::string::npos ? "." : markerPath.substr(0, slash), kNativeCrashFile);
+    size_t slash             = markerPath.find_last_of('/');
+    std::string directory    = slash == std::string::npos ? "." : markerPath.substr(0, slash);
+    std::string stackPath    = joinPath(directory, kPendingNativeCrashFile);
     std::string writtenStack = readTextFile(stackPath).value_or("");
     if (!writtenStack.empty())
     {
         struct stat info = {};
         int64_t at =
             stat(stackPath.c_str(), &info) == 0 ? static_cast<int64_t>(info.st_mtime) * 1000 : 0;
-        recordCrash(slash == std::string::npos ? "." : markerPath.substr(0, slash), writtenStack,
-                    at);
+        recordCrash(directory, writtenStack, at);
         gPreviousNativeCrash = std::move(writtenStack);
     }
 
     int stack = open(stackPath.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
     gStackDescriptor.store(stack, std::memory_order_release);
+
+    ensureAlternateSignalStack();
 
     struct sigaction action = {};
     action.sa_sigaction     = recordCrashingAddon;
@@ -379,7 +380,8 @@ std::string previousNativeCrash()
 
 bool nativeCrashRecorded(const std::string &directory)
 {
-    return !readTextFile(joinPath(directory, kNativeCrashFile)).value_or("").empty();
+    return !gPreviousNativeCrash.empty()
+           || !readTextFile(joinPath(directory, kPendingNativeCrashFile)).value_or("").empty();
 }
 
 bool adoptPreviousNativeCrash(const std::string &stack)
