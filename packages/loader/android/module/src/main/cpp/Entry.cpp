@@ -26,6 +26,7 @@
 #include "LoaderLogFile.h"
 #include "LoaderPreferences.h"
 #include "LoaderStallMarker.h"
+#include "LoaderStrings.h"
 #include "LoaderTelemetry.h"
 #include "LoaderThreadWarnings.h"
 #include "LoaderTombstone.h"
@@ -394,6 +395,11 @@ static jstring nativeRecoveryActionLabel(JNIEnv *env, jclass)
                   : nullptr;
 }
 
+static jstring nativeText(JNIEnv *env, jclass, jstring key, jstring english)
+{
+    return toJavaString(env, loader::text(toStdString(env, key), toStdString(env, english)));
+}
+
 static jboolean nativeGestureEnabled(JNIEnv *env, jclass, jstring name)
 {
     auto loader  = currentLoader();
@@ -596,7 +602,8 @@ static void nativeSaveDevOverlayCenter(JNIEnv *env, jclass, jdouble x, jdouble y
 
 static jstring nativeIncompatibleHostMessage(JNIEnv *env, jclass)
 {
-    return toJavaString(env, loader::diagnostics::kIncompatibleHostMessage);
+    return toJavaString(env, loader::text("UNBOUND_NATIVE_INCOMPATIBLE_HOST",
+                                          loader::diagnostics::kIncompatibleHostMessage));
 }
 
 static jstring nativeDevelopmentBuildBanner(JNIEnv *env, jclass, jstring commit, jstring subject,

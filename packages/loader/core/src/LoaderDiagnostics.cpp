@@ -3,6 +3,8 @@
 #include <map>
 #include <set>
 
+#include "LoaderStrings.h"
+
 namespace loader::diagnostics {
 static bool isContinuationByte(char byte)
 {
@@ -145,18 +147,20 @@ std::vector<StartupWarning> missingExtensionWarnings(bool hasSafariExtension,
     std::vector<StartupWarning> warnings;
     if (!hasSafariExtension)
     {
-        warnings.push_back({"Missing Safari Extension",
-                            "The Safari extension (OpenInDiscord.appex) is missing. You won't be "
-                            "able to open Discord links directly in the app.",
+        warnings.push_back({text("UNBOUND_NATIVE_MISSING_SAFARI_TITLE", "Missing Safari Extension"),
+                            text("UNBOUND_NATIVE_MISSING_SAFARI",
+                                 "The Safari extension (OpenInDiscord.appex) is missing. You won't "
+                                 "be able to open Discord links directly in the app."),
                             "OpenInDiscord extension missing, showing alert"});
     }
 
     if (!hasShareExtension)
     {
-        warnings.push_back({"Missing Share Extension",
-                            "The Share extension (Share.appex) is missing. You won't be able to "
-                            "receive shared media and files from other apps through the share "
-                            "sheet.",
+        warnings.push_back({text("UNBOUND_NATIVE_MISSING_SHARE_TITLE", "Missing Share Extension"),
+                            text("UNBOUND_NATIVE_MISSING_SHARE",
+                                 "The Share extension (Share.appex) is missing. You won't be able "
+                                 "to receive shared media and files from other apps through the "
+                                 "share sheet."),
                             "Share extension missing, showing alert"});
     }
 

@@ -1,5 +1,7 @@
 #import "UpdateBanner.h"
 
+#import "CoreBridge.h"
+
 static const NSTimeInterval kRetrySeconds = 0.25;
 static const CGFloat kPillHeight          = 36.0;
 static const CGFloat kPillPadding         = 16.0;
@@ -41,7 +43,7 @@ static UIView *pillView(void)
     [spinner startAnimating];
 
     UILabel *label = [[UILabel alloc] init];
-    label.text     = @"Updating Unbound…";
+    label.text     = [CoreBridge text:@"UNBOUND_NATIVE_UPDATING" english:@"Updating Unbound…"];
     label.font     = [UIFont systemFontOfSize:14.0 weight:UIFontWeightSemibold];
 
     UIStackView *stack = [[UIStackView alloc] initWithArrangedSubviews:@[ spinner, label ]];

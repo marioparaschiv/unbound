@@ -46,8 +46,8 @@ object StartupAlert {
             AlertDialog.Builder(activity, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
                 .setTitle(TITLE)
                 .setMessage(message)
-                .setPositiveButton("Open Toolbox") { _, _ -> Toolbox.show() }
-                .setNegativeButton("Keep Waiting", null)
+                .setPositiveButton(NativeBridge.text("UNBOUND_NATIVE_OPEN_TOOLBOX", "Open Toolbox")) { _, _ -> Toolbox.show() }
+                .setNegativeButton(NativeBridge.text("UNBOUND_NATIVE_KEEP_WAITING", "Keep Waiting"), null)
                 .show()
         }
     }
@@ -60,7 +60,7 @@ object StartupAlert {
             .setMessage(alert.message)
             .setPositiveButton(android.R.string.ok, null)
         if (alert.reportable) {
-            builder.setNeutralButton("Report") { _, _ -> openCrashReport(activity) }
+            builder.setNeutralButton(NativeBridge.text("UNBOUND_NATIVE_REPORT", "Report")) { _, _ -> openCrashReport(activity) }
         }
         builder.show()
     }

@@ -22,6 +22,7 @@
 #import "LoaderJSI.h"
 #import "LoaderPipeline.h"
 #import "LoaderShared.h"
+#include "LoaderStrings.h"
 #include "LoaderToolbox.h"
 #import "MetricKitReports.h"
 #import "NativeLogCapture.h"
@@ -435,12 +436,15 @@ public:
             }
 
             UIAlertAction *open = [UIAlertAction
-                actionWithTitle:@"Open Toolbox"
+                actionWithTitle:[CoreBridge text:@"UNBOUND_NATIVE_OPEN_TOOLBOX"
+                                         english:@"Open Toolbox"]
                           style:UIAlertActionStyleDefault
                         handler:^(UIAlertAction *action) { [Toolbox showToolboxMenu]; }];
-            UIAlertAction *wait = [UIAlertAction actionWithTitle:@"Keep Waiting"
-                                                           style:UIAlertActionStyleCancel
-                                                         handler:nil];
+            UIAlertAction *wait =
+                [UIAlertAction actionWithTitle:[CoreBridge text:@"UNBOUND_NATIVE_KEEP_WAITING"
+                                                        english:@"Keep Waiting"]
+                                         style:UIAlertActionStyleCancel
+                                       handler:nil];
             [Utilities alert:text title:@"Unbound" buttons:@[ open, wait ]];
         });
     }
@@ -458,7 +462,7 @@ public:
                 toStdString(buildNumber)));
 
             UIAlertAction *report = [UIAlertAction
-                actionWithTitle:@"Report"
+                actionWithTitle:[CoreBridge text:@"UNBOUND_NATIVE_REPORT" english:@"Report"]
                           style:UIAlertActionStyleDefault
                         handler:^(UIAlertAction *action) {
                             NSString *link = [CoreBridge toolbox:@"crash-report-url"
@@ -471,9 +475,10 @@ public:
                                                          completionHandler:nil];
                             }
                         }];
-            UIAlertAction *okay   = [UIAlertAction actionWithTitle:@"Okay"
-                                                             style:UIAlertActionStyleCancel
-                                                           handler:nil];
+            UIAlertAction *okay   = [UIAlertAction
+                actionWithTitle:[CoreBridge text:@"UNBOUND_NATIVE_OKAY" english:@"Okay"]
+                          style:UIAlertActionStyleCancel
+                        handler:nil];
             [Utilities alert:text title:@"Unbound" buttons:@[ okay, report ]];
         });
     }
@@ -652,8 +657,12 @@ static void prepareLoading(id instance)
             {
                 [Logger error:LOG_CATEGORY_DEFAULT
                        format:@"Embedded tweak attestation verification failed"];
-                [Utilities alert:@(loader::diagnostics::kAttestationWarningMessage)
-                           title:@(loader::diagnostics::kAttestationWarningTitle)
+                [Utilities alert:@(loader::text("UNBOUND_NATIVE_ATTESTATION_WARNING",
+                                                loader::diagnostics::kAttestationWarningMessage)
+                                       .c_str())
+                           title:@(loader::text("UNBOUND_NATIVE_ATTESTATION_WARNING_TITLE",
+                                                loader::diagnostics::kAttestationWarningTitle)
+                                       .c_str())
                          timeout:loader::diagnostics::kAttestationWarningSeconds
                          warning:YES];
             }
@@ -661,14 +670,18 @@ static void prepareLoading(id instance)
     });
 #endif
 
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(),
-                   ^{
-                       if (![Utilities isLoadedWithElleKit])
-                       {
-                           [Utilities alert:@(loader::diagnostics::kElleKitWarningMessage)
-                                      title:@(loader::diagnostics::kElleKitWarningTitle)];
-                       }
-                   });
+    dispatch_after(
+        dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+            if (![Utilities isLoadedWithElleKit])
+            {
+                [Utilities alert:@(loader::text("UNBOUND_NATIVE_ELLEKIT_WARNING",
+                                                loader::diagnostics::kElleKitWarningMessage)
+                                       .c_str())
+                           title:@(loader::text("UNBOUND_NATIVE_ELLEKIT_WARNING_TITLE",
+                                                loader::diagnostics::kElleKitWarningTitle)
+                                       .c_str())];
+            }
+        });
 
     dispatch_after(
         dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{

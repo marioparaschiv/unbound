@@ -17,6 +17,7 @@
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
 #include "LoaderPreferences.h"
+#include "LoaderStrings.h"
 #include "LoaderThemes.h"
 #include "LoaderToolbox.h"
 #import "Logger.h"
@@ -278,6 +279,11 @@ static loader::FontOverrideRegistry &UnboundFontOverrides()
     return @(loader::preferences::recoveryActionLabel(enabled).c_str());
 }
 
++ (NSString *)text:(NSString *)key english:(NSString *)english
+{
+    return @(loader::text(toStdString(key), toStdString(english)).c_str());
+}
+
 + (BOOL)toolboxGestureEnabled:(NSString *)gesture
 {
     auto named = loader::preferences::gestureNamed(toStdString(gesture));
@@ -376,7 +382,9 @@ static CGRect cgRect(const loader::devoverlay::Frame &frame)
 
 + (NSString *)incompatibleHostMessage
 {
-    return @(loader::diagnostics::kIncompatibleHostMessage);
+    return @(loader::text("UNBOUND_NATIVE_INCOMPATIBLE_HOST",
+                          loader::diagnostics::kIncompatibleHostMessage)
+                 .c_str());
 }
 
 + (NSString *)developmentBuildBanner

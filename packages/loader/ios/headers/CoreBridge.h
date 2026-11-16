@@ -31,6 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSTimeInterval)toolboxHoldDuration;
 + (NSString *)activeThemeId;
 + (NSString *)recoveryActionLabel;
++ (NSString *)text:(NSString *)key english:(NSString *)english;
 + (BOOL)toolboxGestureEnabled:(NSString *)gesture;
 + (void)setToolboxGesture:(NSString *)gesture enabled:(BOOL)enabled;
 

@@ -179,7 +179,9 @@ static const NSTimeInterval kAlertRetrySeconds = 0.5;
     if (!alertButtons || alertButtons.count == 0)
     {
         alertButtons = @[
-            [UIAlertAction actionWithTitle:@"Okay" style:UIAlertActionStyleDefault handler:nil],
+            [UIAlertAction actionWithTitle:[CoreBridge text:@"UNBOUND_NATIVE_OKAY" english:@"Okay"]
+                                     style:UIAlertActionStyleDefault
+                                   handler:nil],
             [self createDiscordInviteButton]
         ];
     }

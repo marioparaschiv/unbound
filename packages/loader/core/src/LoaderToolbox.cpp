@@ -15,6 +15,7 @@
 #include "LoaderLogFile.h"
 #include "LoaderPipeline.h"
 #include "LoaderPreferences.h"
+#include "LoaderStrings.h"
 #include "LoaderVersion.h"
 #include "NativePlatformBridge.h"
 
@@ -341,48 +342,74 @@ static MenuItem gestureToggle(const SettingsStore &settings, preferences::Toolbo
 static std::string previousBundleTitle(const std::string &revision)
 {
     constexpr size_t kShortRevision = 7;
-    return revision.empty() ? "Use Previous Bundle"
-                            : "Use Previous Bundle (" + revision.substr(0, kShortRevision) + ")";
+    return revision.empty() ? text("UNBOUND_NATIVE_USE_PREVIOUS_BUNDLE", "Use Previous Bundle")
+                            : text("UNBOUND_NATIVE_USE_PREVIOUS_BUNDLE_REVISION",
+                                   "Use Previous Bundle ({revision})",
+                                   {{"revision", revision.substr(0, kShortRevision)}});
 }
 
 static MenuSection bundleSection(const MenuOptions &options)
 {
     MenuItem refetch =
-        restartingAction("refetch-bundle", "Refetch Bundle", "refetch-bundle", false);
-    refetch.progress = kRefetchProgressMessage;
-    refetch.failure  = kRefetchFailedMessage;
+        restartingAction("refetch-bundle", text("UNBOUND_NATIVE_REFETCH_BUNDLE", "Refetch Bundle"),
+                         "refetch-bundle", false);
+    refetch.progress = text("UNBOUND_NATIVE_REFETCH_PROGRESS", kRefetchProgressMessage);
+    refetch.failure  = text("UNBOUND_NATIVE_REFETCH_FAILED", kRefetchFailedMessage);
 
-    MenuItem custom =
-        restartingAction("custom-bundle", "Load Custom Bundle", "custom-bundle", false);
-    custom.failure = kCustomBundleInvalidText;
-    custom.prompt =
-        MenuPrompt{"Custom Bundle URL", "Enter the URL to download a custom bundle from",
-                   "https://example.com/unbound.bundle", "Download", kCancelText};
+    MenuItem custom = restartingAction(
+        "custom-bundle", text("UNBOUND_NATIVE_LOAD_CUSTOM_BUNDLE", "Load Custom Bundle"),
+        "custom-bundle", false);
+    custom.failure = text("UNBOUND_NATIVE_CUSTOM_BUNDLE_INVALID", kCustomBundleInvalidText);
+    custom.prompt  = MenuPrompt{text("UNBOUND_NATIVE_CUSTOM_BUNDLE_URL", "Custom Bundle URL"),
+                                text("UNBOUND_NATIVE_CUSTOM_BUNDLE_PROMPT",
+                                     "Enter the URL to download a custom bundle from"),
+                                "https://example.com/unbound.bundle",
+                                text("UNBOUND_NATIVE_DOWNLOAD", "Download"),
+                                text("UNBOUND_NATIVE_CANCEL", kCancelText)};
 
-    MenuSection section{"Bundle", {std::move(refetch)}};
+    MenuSection section{text("UNBOUND_NATIVE_SECTION_BUNDLE", "Bundle"), {std::move(refetch)}};
     if (options.previousBundle)
     {
         MenuItem previous =
             restartingAction("previous-bundle", previousBundleTitle(*options.previousBundle),
                              "previous-bundle", false);
-        previous.failure = kPreviousBundleFailedMessage;
+        previous.failure =
+            text("UNBOUND_NATIVE_PREVIOUS_BUNDLE_FAILED", kPreviousBundleFailedMessage);
         section.items.push_back(std::move(previous));
     }
 
-    section.items.push_back(
-        restartingAction("delete-bundle", "Delete Bundle", "delete-bundle", true));
+    section.items.push_back(restartingAction("delete-bundle",
+                                             text("UNBOUND_NATIVE_DELETE_BUNDLE", "Delete Bundle"),
+                                             "delete-bundle", true));
     section.items.push_back(std::move(custom));
     return section;
 }
 
+static std::string wipeTitle(AddonKind kind)
+{
+    switch (kind)
+    {
+        case AddonKind::Plugins:
+            return text("UNBOUND_NATIVE_WIPE_PLUGINS", "Wipe Plugins");
+        case AddonKind::Themes:
+            return text("UNBOUND_NATIVE_WIPE_THEMES", "Wipe Themes");
+        case AddonKind::Icons:
+            return text("UNBOUND_NATIVE_WIPE_ICONS", "Wipe Icon Packs");
+        case AddonKind::Fonts:
+            return text("UNBOUND_NATIVE_WIPE_FONTS", "Wipe Fonts");
+    }
+
+    return std::string("Wipe ") + addonTitle(kind);
+}
+
 static MenuSection addonsSection()
 {
-    MenuSection section{"Addons", {}};
+    MenuSection section{text("UNBOUND_NATIVE_SECTION_ADDONS", "Addons"), {}};
     for (auto kind : {AddonKind::Plugins, AddonKind::Themes, AddonKind::Fonts, AddonKind::Icons})
     {
-        section.items.push_back(restartingAction(
-            std::string("wipe-") + lowercase(addonDirectoryName(kind)),
-            std::string("Wipe ") + addonTitle(kind), "wipe", true, addonDirectoryName(kind)));
+        section.items.push_back(
+            restartingAction(std::string("wipe-") + lowercase(addonDirectoryName(kind)),
+                             wipeTitle(kind), "wipe", true, addonDirectoryName(kind)));
     }
 
     return section;
@@ -390,24 +417,29 @@ static MenuSection addonsSection()
 
 static MenuSection utilitiesSection(const SettingsStore &settings, const MenuOptions &options)
 {
-    MenuSection section{"Utilities", {}};
+    MenuSection section{text("UNBOUND_NATIVE_SECTION_UTILITIES", "Utilities"), {}};
     section.items.push_back(restartingAction(
         "toggle-recovery", preferences::recoveryActionLabel(preferences::recoveryEnabled(settings)),
         "toggle-recovery", false));
-    section.items.push_back(
-        restartingAction("factory-reset", "Factory Reset", "factory-reset", true));
+    section.items.push_back(restartingAction("factory-reset",
+                                             text("UNBOUND_NATIVE_FACTORY_RESET", "Factory Reset"),
+                                             "factory-reset", true));
     if (options.openAppFolder)
     {
-        section.items.push_back(platformItem("open-app-folder", "Open App Folder"));
+        section.items.push_back(platformItem(
+            "open-app-folder", text("UNBOUND_NATIVE_OPEN_APP_FOLDER", "Open App Folder")));
     }
 
     if (options.copyAppFolderPath)
     {
-        section.items.push_back(platformItem("copy-app-folder-path", "Copy App Folder Path"));
+        section.items.push_back(
+            platformItem("copy-app-folder-path",
+                         text("UNBOUND_NATIVE_COPY_APP_FOLDER_PATH", "Copy App Folder Path")));
     }
 
-    MenuItem issue = platformItem("open-issue", "Open GitHub Issue");
-    issue.failure  = kIssueFailedMessage;
+    MenuItem issue =
+        platformItem("open-issue", text("UNBOUND_NATIVE_OPEN_ISSUE", "Open GitHub Issue"));
+    issue.failure = text("UNBOUND_NATIVE_ISSUE_FAILED", kIssueFailedMessage);
     section.items.push_back(std::move(issue));
     return section;
 }
@@ -415,10 +447,11 @@ static MenuSection utilitiesSection(const SettingsStore &settings, const MenuOpt
 static MenuSection settingsSection(const SettingsStore &settings, const MenuOptions &options)
 {
     MenuSection section{
-        "Settings",
-        {gestureToggle(settings, preferences::ToolboxGesture::Shake, "Enable Shake Motion"),
+        text("UNBOUND_NATIVE_SECTION_SETTINGS", "Settings"),
+        {gestureToggle(settings, preferences::ToolboxGesture::Shake,
+                       text("UNBOUND_NATIVE_ENABLE_SHAKE", "Enable Shake Motion")),
          gestureToggle(settings, preferences::ToolboxGesture::ThreeFinger,
-                       "Enable Three Finger Press")}};
+                       text("UNBOUND_NATIVE_ENABLE_THREE_FINGER", "Enable Three Finger Press"))}};
     return section;
 }
 
@@ -523,13 +556,14 @@ nlohmann::json menuJSON(const SettingsStore &settings, const MenuOptions &option
         sections.push_back({{"title", section.title}, {"items", std::move(items)}});
     }
 
-    return {{"title", kToolboxTitle},
-            {"close", kCloseText},
-            {"confirmation",
-             {{"message", kDestructiveConfirmation},
-              {"confirm", kConfirmText},
-              {"cancel", kCancelText}}},
-            {"sections", std::move(sections)}};
+    return {
+        {"title", text("UNBOUND_NATIVE_TOOLBOX_TITLE", kToolboxTitle)},
+        {"close", text("UNBOUND_NATIVE_CLOSE", kCloseText)},
+        {"confirmation",
+         {{"message", text("UNBOUND_NATIVE_DESTRUCTIVE_CONFIRMATION", kDestructiveConfirmation)},
+          {"confirm", text("UNBOUND_NATIVE_CONFIRM", kConfirmText)},
+          {"cancel", text("UNBOUND_NATIVE_CANCEL", kCancelText)}}},
+        {"sections", std::move(sections)}};
 }
 
 static std::string provided(const std::function<std::string()> &value)

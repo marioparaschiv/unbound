@@ -19,6 +19,7 @@
 #include "LoaderLogFile.h"
 #include "LoaderPipelineTime.h"
 #include "LoaderPreferences.h"
+#include "LoaderStrings.h"
 #include "LoaderVersion.h"
 
 namespace loader {
@@ -520,7 +521,7 @@ void LoaderPipeline::offerHelpIfStuck()
     }
 
     log(LogLevel::Warning, LOG_CATEGORY_DEFAULT, kStuckLaunchNotice);
-    host_->stuckLaunch(kStuckLaunchNotice);
+    host_->stuckLaunch(text("UNBOUND_NATIVE_STUCK_LAUNCH", kStuckLaunchNotice));
 }
 
 void LoaderPipeline::markHealthy()
