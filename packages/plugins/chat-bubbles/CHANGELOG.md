@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.20] - 2026-11-16
+
+### Fixed
+
+- On iOS with Discord 355, a quoted reply wider than its bubble now ends with an ellipsis inside the quote box instead of being cut off. Discord 355 draws replies with a different text view, which the earlier fix did not reach.
+
 ## [1.6.19] - 2026-11-16
 
 ### Fixed

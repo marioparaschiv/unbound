@@ -5,6 +5,8 @@ import type { BubbleColor } from '~/lib/style';
 import { lastAvatarFrame } from '~/native/ios/last-avatar';
 import { messageIdOf } from '~/native/ios/message-id';
 import { placeFollowingSwipe } from '~/native/ios/swipe-follow';
+import { ellipsisLike, isolateStartAround } from '~/native/ios/preview-truncation';
+import { fitAttributedPreview } from '~/native/ios/attributed-preview-fit';
 import { ReplyIcon } from '~/lib/constants';
 
 export const AVATAR_TAG = 0x0b0b26;
@@ -13,10 +15,6 @@ const DECORATION_TAG = 0x0b0b28;
 const QUOTE_TAG = 0x0b0b29;
 const REPLY_ICON_TAG = 0x0b0b2a;
 const REPLY_BUBBLE_TAG = 0x0b0b2b;
-const OBJECT_REPLACEMENT = '\uFFFC';
-const POP_ISOLATE = 0x2069;
-const ISOLATE_STARTS = [0x2066, 0x2067, 0x2068];
-const ELLIPSIS = '\u2026';
 const TRUNCATE_END = 2;
 const MAX_REFITS = 4;
 const WIDTH_SLACK = 0.5;
@@ -489,41 +487,6 @@ function previewLabelIn(
 	return undefined;
 }
 
-function ellipsisLike(objc: NativeObjCBridge, text: NativeObjectHandle): NativeObjectHandle | null {
-	'worklet';
-	const string = objc.call(text, 'string');
-	const plain = typeof string === 'string' ? string : '';
-	let index = plain.length - 1;
-	let isolated = 0;
-
-	for (; index >= 0; index--) {
-		const code = plain.charCodeAt(index);
-
-		if (code === POP_ISOLATE) isolated++;
-		else if (ISOLATE_STARTS.includes(code)) isolated = Math.max(0, isolated - 1);
-		else if (!isolated && plain[index] !== OBJECT_REPLACEMENT && plain[index].trim() !== '')
-			break;
-	}
-
-	if (index < 0) return null;
-
-	const sample = objc.invoke(text, 'attributedSubstringFromRange:', [
-		objc.struct('NSRange', { location: index, length: 1 }),
-	]) as NativeObjectHandle | null;
-	const token = sample
-		? (objc.invoke(sample, 'mutableCopy', []) as NativeObjectHandle | null)
-		: null;
-
-	if (!token) return null;
-
-	objc.invoke(token, 'replaceCharactersInRange:withString:', [
-		objc.struct('NSRange', { location: 0, length: 1 }),
-		ELLIPSIS,
-	]);
-
-	return token;
-}
-
 function truncatedLayout(
 	objc: NativeObjCBridge,
 	layout: NativeObjectHandle,
@@ -570,27 +533,6 @@ function readRange(raw: unknown): { location: number; length: number } {
 	const value = boxed?.value ?? boxed;
 
 	return { location: Number(value?.location ?? 0), length: Number(value?.length ?? 0) };
-}
-
-function isolateStartAround(plain: string, index: number): number | undefined {
-	'worklet';
-	const opens: number[] = [];
-
-	for (let position = 0; position < plain.length; position++) {
-		const code = plain.charCodeAt(position);
-
-		if (ISOLATE_STARTS.includes(code)) {
-			opens.push(position);
-		} else if (code === POP_ISOLATE) {
-			const open = opens.pop();
-
-			if (open !== undefined && !opens.length && open < index && position >= index) {
-				return open;
-			}
-		}
-	}
-
-	return undefined;
 }
 
 function cutBeforeIsolate(
@@ -745,7 +687,10 @@ function paintQuote(
 
 		if (layer && objc.invoke(layer, 'mask', [])) objc.invoke(layer, 'setMask:', [null]);
 
-		if (holder) fitPreviewText(objc, holder, undefined);
+		if (holder) {
+			fitPreviewText(objc, holder, undefined);
+			fitAttributedPreview(objc, holder, undefined);
+		}
 
 		return;
 	}
@@ -785,6 +730,7 @@ function paintQuote(
 
 	objc.invoke(mask, 'setFrame:', [cgRect(objc, quote.clip)]);
 	fitPreviewText(objc, holder as NativeObjectHandle, quote.clip);
+	fitAttributedPreview(objc, holder as NativeObjectHandle, quote.clip);
 }
 
 function capture(objc: NativeObjCBridge, cell: NativeObjectHandle): Picture | undefined {
