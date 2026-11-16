@@ -166,7 +166,8 @@ int64_t parseMetricKitTimestamp(const std::string &timestamp)
 
     parsed.tm_year -= 1900;
     parsed.tm_mon -= 1;
-    return static_cast<int64_t>(timegm(&parsed)) * 1000;
+    parsed.tm_isdst = -1;
+    return static_cast<int64_t>(mktime(&parsed)) * 1000;
 }
 
 int64_t parseMetricKitDuration(const std::string &duration)
