@@ -27,15 +27,44 @@ function isThemeActive(): boolean {
 	return Boolean(custom?.getCustomTheme?.() || gradient?.getLinearGradient?.());
 }
 
-type HeaderElements = { HeaderHeightContext?: Context<number | undefined> };
+type HeaderModule = { HeaderHeightContext?: Context<number | undefined> };
 
-const Headers: HeaderElements | undefined = metro.findByProps(
-	'HeaderHeightContext',
-	'useHeaderHeight',
-	{
-		lazy: true,
-	},
-);
+let headerContexts: Context<number | undefined>[] | undefined;
+
+function findHeaderContexts(): Context<number | undefined>[] {
+	if (headerContexts) return headerContexts;
+
+	const modules = (metro.findByProps('HeaderHeightContext', { all: true }) ??
+		[]) as HeaderModule[];
+
+	headerContexts = [
+		...new Set(
+			modules.flatMap((module) =>
+				module.HeaderHeightContext ? [module.HeaderHeightContext] : [],
+			),
+		),
+	];
+
+	return headerContexts;
+}
+
+function HeaderHeight({
+	contexts,
+	children,
+}: {
+	contexts: Context<number | undefined>[];
+	children: (height: number) => ReactNode;
+}) {
+	const [first, ...rest] = contexts;
+	const height = useContext(first ?? NoHeaderHeight) ?? 0;
+
+	if (!rest.length) return children(height);
+
+	return (
+		<HeaderHeight contexts={rest}>{(other) => children(Math.max(height, other))}</HeaderHeight>
+	);
+}
+
 const NoHeaderHeight = createContext<number | undefined>(undefined);
 
 function ThemeBackdrop() {
@@ -60,12 +89,14 @@ function ThemeBackdrop() {
 }
 
 function ThemedScreen({ children }: { children: ReactNode }) {
-	const headerHeight = useContext(Headers?.HeaderHeightContext ?? NoHeaderHeight) ?? 0;
-
 	return (
 		<View style={{ flex: 1 }}>
 			<ThemeBackdrop />
-			<View style={{ flex: 1, paddingTop: headerHeight }}>{children}</View>
+			<HeaderHeight contexts={findHeaderContexts()}>
+				{(headerHeight) => (
+					<View style={{ flex: 1, paddingTop: headerHeight }}>{children}</View>
+				)}
+			</HeaderHeight>
 		</View>
 	);
 }
