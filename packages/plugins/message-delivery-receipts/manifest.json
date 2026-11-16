@@ -1,0 +1,17 @@
+{
+	"id": "unbound.message-delivery-receipts",
+	"name": "Message Delivery Receipts",
+	"description": "Marks your messages as sending, failed, or acknowledged by Discord's server. It can't tell whether anyone has read them.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "DoubleCheckmarkIcon",
+	"main": "index.tsx"
+}

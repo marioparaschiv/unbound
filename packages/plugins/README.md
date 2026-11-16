@@ -1,6 +1,6 @@
 # Plugins
 
-168 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+169 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -94,6 +94,7 @@
 - <img src="../../assets/plugins/readme-icons/bell-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Mention Haptics](https://unbound.rip/addons/unbound.mention-haptics): Taps your phone when a new message mentions you or arrives in a DM while Discord is open.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Burst](https://unbound.rip/addons/unbound.message-burst): Merges messages you send in quick succession into your previous message, as an edit, while nobody else has replied in between.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Colors](https://unbound.rip/addons/unbound.message-colors): Shows hex, rgb() and hsl() colors in messages as pills tinted with that color.
+- <img src="../../assets/plugins/readme-icons/double-checkmark-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Delivery Receipts](https://unbound.rip/addons/unbound.message-delivery-receipts): Marks your messages as sending, failed, or acknowledged by Discord's server. It can't tell whether anyone has read them.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Latency](https://unbound.rip/addons/unbound.message-latency): Marks messages that took at least the selected threshold to send.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Link Embeds](https://unbound.rip/addons/unbound.message-link-embeds): Adds previews to messages that link to other Discord messages.
 - <img src="../../assets/plugins/readme-icons/eye-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Message Logger](https://unbound.rip/addons/unbound.message-logger): Keeps deleted and edited messages in the chat.
