@@ -3,6 +3,7 @@ import { ApplyOptions } from '@sapphire/decorators';
 import type { GuildMember } from 'discord.js';
 
 import { COLOURS } from '~/lib/constants';
+import { field } from '~/lib/post-fields';
 import { ordinal } from '~/lib/log-post';
 import { stamp } from '~/lib/mod-case';
 
@@ -17,11 +18,12 @@ export class LogMemberAddListener extends Listener<typeof Events.GuildMemberAdd>
 		await serverLog.post({
 			kind: 'joins',
 			title: 'Member Joined',
+			icon: 'memberJoined',
 			colour: COLOURS.positive,
 			user: { id: member.id, name: member.user.username },
 			lines: [
-				`${ordinal(member.guild.memberCount)} to join`,
-				`Account created ${stamp(member.user.createdAt, 'R')}`,
+				field('Account Created', stamp(member.user.createdAt, 'R')),
+				field('Member Count', `${ordinal(member.guild.memberCount)} to join`),
 			],
 		});
 	}
