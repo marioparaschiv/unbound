@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "Documentație",
 	"UNBOUND_SUPPORT_SERVER": "Server de asistență",
 	"UNBOUND_DEBUG_INFO": "Informații de depanare",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Entitlements.xml nu a putut fi atașat, așa că informațiile de depanare au fost trimise ca text.",
 	"UNBOUND_THEME_RESTART_CONFIRM": "Repornești acum ca tema să se aplice peste tot?",
 	"UNBOUND_FFI_CONSENT_TITLE": "Permiți accesul nativ direct?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} vrea să apeleze direct funcții native. Un plugin cu acest acces poate citi și modifica orice în Discord, iar o greșeală în el poate bloca aplicația. Permite-l doar dacă ai încredere în sursa lui.",

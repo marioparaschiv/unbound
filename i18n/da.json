@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "Dokumentation",
 	"UNBOUND_SUPPORT_SERVER": "Supportserver",
 	"UNBOUND_DEBUG_INFO": "Fejlfindingsinfo",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Entitlements.xml kunne ikke vedhæftes, så fejlfindingsinfoen blev sendt som tekst.",
 	"UNBOUND_THEME_RESTART_CONFIRM": "Genstart nu, så temaet anvendes overalt?",
 	"UNBOUND_FFI_CONSENT_TITLE": "Tillad direkte native adgang?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} vil kalde native funktioner direkte. Et plugin med denne adgang kan læse og ændre alt i Discord, og en fejl i det kan få appen til at gå ned. Tillad det kun, hvis du stoler på, hvor det kommer fra.",

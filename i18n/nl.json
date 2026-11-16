@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "Documentatie",
 	"UNBOUND_SUPPORT_SERVER": "Ondersteuningsserver",
 	"UNBOUND_DEBUG_INFO": "Debuginfo",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Entitlements.xml kon niet worden bijgevoegd, dus de debuginfo is als tekst verstuurd.",
 	"UNBOUND_THEME_RESTART_CONFIRM": "Nu opnieuw opstarten zodat het thema overal wordt toegepast?",
 	"UNBOUND_FFI_CONSENT_TITLE": "Directe native toegang toestaan?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} wil native functies rechtstreeks aanroepen. Een plug-in met deze toegang kan alles in Discord lezen en wijzigen, en een fout erin kan de app laten crashen. Sta dit alleen toe als je de bron vertrouwt.",

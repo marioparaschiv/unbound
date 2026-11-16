@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "Dokumentacija",
 	"UNBOUND_SUPPORT_SERVER": "Pagalbos serveris",
 	"UNBOUND_DEBUG_INFO": "Derinimo informacija",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Nepavyko prisegti Entitlements.xml, todėl derinimo informacija išsiųsta tekstu.",
 	"UNBOUND_THEME_RESTART_CONFIRM": "Paleisti iš naujo dabar, kad tema būtų pritaikyta visur?",
 	"UNBOUND_FFI_CONSENT_TITLE": "Leisti tiesioginę prieigą prie sistemos?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} nori tiesiogiai kviesti sistemines (native) funkcijas. Papildinys su tokia prieiga gali skaityti ir keisti bet ką Discord, o jo klaida gali nulaužti programėlę. Leiskite tik tuo atveju, jei pasitikite jo šaltiniu.",

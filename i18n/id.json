@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "Dokumentasi",
 	"UNBOUND_SUPPORT_SERVER": "Server Dukungan",
 	"UNBOUND_DEBUG_INFO": "Info Debug",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Entitlements.xml tidak dapat dilampirkan, jadi info debug dikirim sebagai teks.",
 	"UNBOUND_THEME_RESTART_CONFIRM": "Mulai ulang sekarang agar tema diterapkan di semua tempat?",
 	"UNBOUND_FFI_CONSENT_TITLE": "Izinkan akses native langsung?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} ingin memanggil fungsi native secara langsung. Plugin dengan akses ini dapat membaca dan mengubah apa pun di Discord, dan kesalahan di dalamnya dapat membuat aplikasi crash. Izinkan hanya jika kamu memercayai sumbernya.",

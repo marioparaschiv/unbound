@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "문서",
 	"UNBOUND_SUPPORT_SERVER": "지원 서버",
 	"UNBOUND_DEBUG_INFO": "디버그 정보",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Entitlements.xml을 첨부하지 못해서 디버그 정보를 텍스트로 보냈어요.",
 	"UNBOUND_THEME_RESTART_CONFIRM": "테마를 모든 곳에 적용하려면 지금 다시 시작할까요?",
 	"UNBOUND_FFI_CONSENT_TITLE": "네이티브 직접 접근을 허용할까요?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name}이(가) 네이티브 함수를 직접 호출하려고 해요. 이 권한이 있는 플러그인은 Discord의 모든 것을 읽고 바꿀 수 있으며, 플러그인에 오류가 있으면 앱이 강제 종료될 수 있어요. 출처를 신뢰할 때만 허용하세요.",

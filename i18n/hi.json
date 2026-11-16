@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "डॉक्यूमेंटेशन",
 	"UNBOUND_SUPPORT_SERVER": "सपोर्ट सर्वर",
 	"UNBOUND_DEBUG_INFO": "डीबग जानकारी",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Entitlements.xml अटैच नहीं हो सका, इसलिए डीबग जानकारी टेक्स्ट के रूप में भेजी गई।",
 	"UNBOUND_THEME_RESTART_CONFIRM": "अभी रीस्टार्ट करें ताकि थीम हर जगह लागू हो जाए?",
 	"UNBOUND_FFI_CONSENT_TITLE": "सीधे नेटिव एक्सेस की अनुमति दें?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} सीधे नेटिव फ़ंक्शन कॉल करना चाहता है। इस एक्सेस वाला प्लगइन Discord में कुछ भी पढ़ और बदल सकता है, और इसमें कोई गलती ऐप को क्रैश कर सकती है। इसकी अनुमति तभी दें जब आपको भरोसा हो कि यह कहाँ से आया है।",

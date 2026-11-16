@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "Tài liệu",
 	"UNBOUND_SUPPORT_SERVER": "Máy chủ hỗ trợ",
 	"UNBOUND_DEBUG_INFO": "Thông tin gỡ lỗi",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Không thể đính kèm Entitlements.xml nên thông tin gỡ lỗi đã được gửi dưới dạng văn bản.",
 	"UNBOUND_THEME_RESTART_CONFIRM": "Khởi động lại ngay để chủ đề được áp dụng ở mọi nơi?",
 	"UNBOUND_FFI_CONSENT_TITLE": "Cho phép truy cập native trực tiếp?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} muốn gọi trực tiếp các hàm native. Plugin có quyền này có thể đọc và thay đổi mọi thứ trong Discord, và chỉ một lỗi trong đó cũng có thể làm ứng dụng bị treo. Chỉ cho phép nếu bạn tin tưởng nguồn gốc của nó.",

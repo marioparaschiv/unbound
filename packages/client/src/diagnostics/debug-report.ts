@@ -2,8 +2,6 @@ import { createLogger } from '@unbound-app/logger';
 
 import { Messages as MessageActions } from '~/metro/api';
 import { findByProps, findStore } from '~/metro/lookups';
-import { readLogLines } from '~/logs/tail';
-import { LOG_FILES } from '~/logs/files';
 import { messages } from '~/i18n/api';
 import { show } from '~/toasts/api';
 import fs from '~/native/fs';
@@ -11,7 +9,7 @@ import fs from '~/native/fs';
 import { rejectedField, withoutRejectedField } from './rejected-field';
 import formatDebugInfo, { type DebugInfo } from './format-debug-info';
 import { readDebugReport, readEntitlements } from './read-debug-info';
-import { crashLogExcerpt } from './crash-report';
+import { buildDiagnosticsZip } from './diagnostics-zip';
 
 type CloudUpload = {
 	status: string;
@@ -28,12 +26,11 @@ type UploadFile = {
 };
 
 /** What `/debug` attaches beyond the card. */
-export type DebugReportOptions = { log?: boolean; entitlements?: boolean };
+export type DebugReportOptions = { diagnostics?: boolean };
 
 type SendResult = { ok?: boolean; status?: number } | undefined;
 
-const ENTITLEMENTS_PATH = 'Unbound/cache/debug/Entitlements.xml';
-const LOG_PATH = 'Unbound/cache/debug/unbound.log';
+const DIAGNOSTICS_PATH = 'Unbound/cache/debug/unbound-diagnostics.zip';
 const CARD_DIRECTORY = 'Unbound/cache/debug';
 const UPLOAD_ORIGIN_FILE = 1;
 const UPLOAD_PLATFORM_REACT_NATIVE = 0;
@@ -55,7 +52,7 @@ function selectedChannelId(): string | undefined {
 function warnTextOnly() {
 	show({
 		title: messages.UNBOUND_DEBUG_INFO,
-		content: messages.UNBOUND_DEBUG_ENTITLEMENTS_FAILED,
+		content: messages.UNBOUND_DEBUG_ATTACH_FAILED,
 		icon: 'WarningIcon',
 	});
 }
@@ -89,46 +86,26 @@ async function uploadFile(channelId: string, file: UploadFile): Promise<CloudUpl
 	return upload.status === 'COMPLETED' ? upload : undefined;
 }
 
-async function uploadEntitlements(channelId: string): Promise<CloudUpload | undefined> {
-	const plist = readEntitlements();
-
-	if (!plist) {
-		return undefined;
-	}
-
-	await fs.writeFile(ENTITLEMENTS_PATH, plist);
-
-	return uploadFile(channelId, {
-		path: ENTITLEMENTS_PATH,
-		mimeType: 'application/xml',
-		filename: 'Entitlements.xml',
+async function uploadDiagnostics(
+	channelId: string,
+	info: DebugInfo,
+): Promise<CloudUpload | undefined> {
+	const zip = await buildDiagnosticsZip({
+		report: info,
+		entitlements: readEntitlements() || undefined,
 	});
-}
 
-// The excerpt keeps only the newest lines that fit a report, so more than this never shows.
-const LOG_LINES = 500;
+	await fs.writeFile(DIAGNOSTICS_PATH, zip, 'base64');
 
-async function logSection(path: string): Promise<string | undefined> {
-	const excerpt = crashLogExcerpt((await readLogLines(path, LOG_LINES)).join('\n'));
-
-	return excerpt && `== ${path.slice(path.lastIndexOf('/') + 1)} ==\n${excerpt}`;
-}
-
-async function uploadLog(channelId: string): Promise<CloudUpload | undefined> {
-	const sections = await Promise.all(LOG_FILES.map(logSection));
-	const excerpt = sections.filter(Boolean).join('\n\n');
-
-	if (!excerpt) {
-		return undefined;
+	try {
+		return await uploadFile(channelId, {
+			path: DIAGNOSTICS_PATH,
+			mimeType: 'application/zip',
+			filename: `unbound-diagnostics-${Date.now()}.zip`,
+		});
+	} finally {
+		await fs.removeFile(DIAGNOSTICS_PATH).catch(() => false);
 	}
-
-	await fs.writeFile(LOG_PATH, excerpt);
-
-	return uploadFile(channelId, {
-		path: LOG_PATH,
-		mimeType: 'text/plain',
-		filename: 'unbound.log',
-	});
 }
 
 function requiredOnly(info: DebugInfo): DebugInfo {
@@ -232,7 +209,7 @@ function uploadQuietly(what: string, run: () => Promise<CloudUpload | undefined>
  * @description Sends the debug report as a rendered card whose alt text carries it as JSON, with the user's note; falls back to the text report when the card cannot be drawn.
  * @param channelId The channel the command ran in, or the open channel when it is not known.
  * @param note Text the user added to the command, sent as the message.
- * @param options `log` attaches the newest lines of both loader logs, scrubbed of secrets; `entitlements` attaches the app's Entitlements.xml on iOS.
+ * @param options `diagnostics` attaches a zip of the loader's logs, scrubbed of secrets, its crash and addon state and the report, with the app's Entitlements.xml on iOS.
  * @returns The text for Discord to send when nothing could be attached, otherwise nothing once it is sent.
  */
 export async function sendDebugReport(
@@ -264,19 +241,18 @@ async function sendWithCard(
 	cardPath: string,
 	message: string,
 	textReport: string,
-	{ log = false, entitlements: withEntitlements = false }: DebugReportOptions,
+	{ diagnostics = false }: DebugReportOptions,
 ): Promise<string | undefined> {
 	const card = await uploadQuietly('card', () => uploadCard(target, info, cardPath));
-	const entitlements = withEntitlements
-		? await uploadQuietly('entitlements', () => uploadEntitlements(target))
+	const diagnosticsZip = diagnostics
+		? await uploadQuietly('diagnostics', () => uploadDiagnostics(target, info))
 		: undefined;
-	const logFile = log ? await uploadQuietly('log', () => uploadLog(target)) : undefined;
-	const attachments = [card, entitlements, logFile].filter((upload): upload is CloudUpload =>
+	const attachments = [card, diagnosticsZip].filter((upload): upload is CloudUpload =>
 		Boolean(upload),
 	);
 
 	if (!attachments.length) {
-		if (withEntitlements && readEntitlements()) {
+		if (diagnostics) {
 			warnTextOnly();
 		}
 

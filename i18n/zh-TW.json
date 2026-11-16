@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "說明文件",
 	"UNBOUND_SUPPORT_SERVER": "支援伺服器",
 	"UNBOUND_DEBUG_INFO": "偵錯資訊",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "無法附加 Entitlements.xml，因此偵錯資訊以文字形式傳送。",
 	"UNBOUND_THEME_RESTART_CONFIRM": "要立即重新啟動，讓主題套用到所有地方嗎？",
 	"UNBOUND_FFI_CONSENT_TITLE": "允許直接存取原生功能？",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} 想要直接呼叫原生函式。擁有此權限的外掛程式可以讀取和變更 Discord 中的任何內容，且其中的錯誤可能導致應用程式當機。請只在你信任其來源時允許。",

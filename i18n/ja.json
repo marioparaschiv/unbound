@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "ドキュメント",
 	"UNBOUND_SUPPORT_SERVER": "サポートサーバー",
 	"UNBOUND_DEBUG_INFO": "デバッグ情報",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Entitlements.xmlを添付できなかったため、デバッグ情報をテキストで送信しました。",
 	"UNBOUND_THEME_RESTART_CONFIRM": "テーマを全体に適用するため、今すぐ再起動しますか?",
 	"UNBOUND_FFI_CONSENT_TITLE": "ネイティブ機能への直接アクセスを許可しますか?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name}がネイティブ関数を直接呼び出そうとしています。このアクセス権を持つプラグインはDiscord内のあらゆるものを読み取り・変更でき、プラグインに不具合があるとアプリがクラッシュすることがあります。入手元を信頼できる場合のみ許可してください。",

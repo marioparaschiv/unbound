@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "Dokumentace",
 	"UNBOUND_SUPPORT_SERVER": "Server podpory",
 	"UNBOUND_DEBUG_INFO": "Ladicí informace",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Soubor Entitlements.xml se nepodařilo připojit, takže ladicí informace byly odeslány jako text.",
 	"UNBOUND_THEME_RESTART_CONFIRM": "Restartovat teď, aby se motiv projevil všude?",
 	"UNBOUND_FFI_CONSENT_TITLE": "Povolit přímý nativní přístup?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} chce přímo volat nativní funkce. Plugin s tímto přístupem může číst a měnit cokoli v Discordu a chyba v něm může aplikaci shodit. Povol to, jen pokud věříš jeho zdroji.",

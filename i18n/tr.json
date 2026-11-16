@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "Belgeler",
 	"UNBOUND_SUPPORT_SERVER": "Destek Sunucusu",
 	"UNBOUND_DEBUG_INFO": "Hata Ayıklama Bilgisi",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Entitlements.xml eklenemediği için hata ayıklama bilgisi metin olarak gönderildi.",
 	"UNBOUND_THEME_RESTART_CONFIRM": "Temanın her yerde uygulanması için şimdi yeniden başlatılsın mı?",
 	"UNBOUND_FFI_CONSENT_TITLE": "Doğrudan yerel erişime izin verilsin mi?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name}, yerel işlevleri doğrudan çağırmak istiyor. Bu erişime sahip bir eklenti Discord’daki her şeyi okuyup değiştirebilir ve içindeki bir hata uygulamanın çökmesine yol açabilir. Yalnızca nereden geldiğine güveniyorsan izin ver.",
