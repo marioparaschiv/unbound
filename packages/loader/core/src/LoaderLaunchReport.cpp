@@ -5,6 +5,7 @@
 #include <mutex>
 #include <optional>
 #include <regex>
+#include <utility>
 #include <vector>
 
 #include "LoaderFiles.h"
@@ -90,6 +91,8 @@ std::string bundleSourceOf(const std::string &updateURL, bool development)
     return pullRequestOf(updateURL) ? "pr" : "custom";
 }
 
+constexpr size_t kCrashStackLimit = 16000;
+
 std::vector<NativeCrashRecord> readCrashHistory(const std::string &directory)
 {
     nlohmann::json parsed = nlohmann::json::parse(
@@ -105,7 +108,11 @@ std::vector<NativeCrashRecord> readCrashHistory(const std::string &directory)
         if (entry.is_object() && entry.contains("at") && entry["at"].is_number_integer()
             && entry.contains("crash") && entry["crash"].is_string())
         {
-            history.push_back({entry["at"].get<int64_t>(), entry["crash"].get<std::string>()});
+            std::string stack = entry.contains("stack") && entry["stack"].is_string()
+                                    ? entry["stack"].get<std::string>()
+                                    : "";
+            history.push_back(
+                {entry["at"].get<int64_t>(), entry["crash"].get<std::string>(), std::move(stack)});
         }
     }
 
@@ -121,7 +128,7 @@ bool recordCrash(const std::string &directory, const std::string &stack, int64_t
     }
 
     std::vector<NativeCrashRecord> history = readCrashHistory(directory);
-    history.push_back({at, crash});
+    history.push_back({at, crash, stack.substr(0, kCrashStackLimit)});
     if (history.size() > kCrashHistoryLimit)
     {
         history.erase(history.begin(),
@@ -131,7 +138,13 @@ bool recordCrash(const std::string &directory, const std::string &stack, int64_t
     nlohmann::json json = nlohmann::json::array();
     for (const NativeCrashRecord &record : history)
     {
-        json.push_back({{"at", record.at}, {"crash", record.crash}});
+        nlohmann::json entry{{"at", record.at}, {"crash", record.crash}};
+        if (!record.stack.empty())
+        {
+            entry["stack"] = record.stack;
+        }
+
+        json.push_back(std::move(entry));
     }
 
     return writeTextFileAtomically(joinPath(directory, kCrashHistoryFile), json.dump());
@@ -269,8 +282,6 @@ std::string describeNativeCrash(const std::string &stack)
 
     return described;
 }
-
-constexpr size_t kCrashStackLimit = 16000;
 
 nlohmann::json launchReportJSON(const LaunchReport &report, const std::string &nativeCrash,
                                 const std::vector<NativeCrashRecord> &history)
