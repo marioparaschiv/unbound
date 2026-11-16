@@ -961,6 +961,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/custom-upload-hosts": {
+      "name": "custom-upload-hosts",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/dearrow": {
       "name": "dearrow",
       "dependencies": {
@@ -4435,6 +4449,8 @@
     "custom-status-timeouts": ["custom-status-timeouts@workspace:packages/plugins/custom-status-timeouts"],
 
     "custom-timestamps": ["custom-timestamps@workspace:packages/plugins/custom-timestamps"],
+
+    "custom-upload-hosts": ["custom-upload-hosts@workspace:packages/plugins/custom-upload-hosts"],
 
     "cwise-compiler": ["cwise-compiler@1.1.3", "", { "dependencies": { "uniq": "^1.0.0" } }, "sha512-WXlK/m+Di8DMMcCjcWr4i+XzcQra9eCdXIJrgh4TUgh0pIS/yJduLxS9JgefsHJ/YVLdgPtXm9r62W92MvanEQ=="],
 

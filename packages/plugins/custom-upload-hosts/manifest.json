@@ -1,0 +1,17 @@
+{
+	"id": "unbound.custom-upload-hosts",
+	"name": "Custom Upload Hosts",
+	"description": "Uploads files you attach to Catbox, Litterbox or your own host instead of Discord, and puts the links in your message.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "UploadIcon",
+	"main": "index.tsx"
+}

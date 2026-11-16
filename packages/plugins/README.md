@@ -1,6 +1,6 @@
 # Plugins
 
-174 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+175 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -43,6 +43,7 @@
 - <img src="../../assets/plugins/readme-icons/voice-normal-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom Sounds](https://unbound.rip/addons/unbound.custom-sounds): Replaces Discord's sounds with others or files from links, and plays a sound only you hear when chosen friends join your voice channel.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom Status Timeouts](https://unbound.rip/addons/unbound.custom-status-timeouts): Adds your own durations, like 15 minutes, 8 hours or a week, to the Clear after list of your custom status.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom Timestamps](https://unbound.rip/addons/unbound.custom-timestamps): Writes message times your way, with separate formats for today and older messages.
+- <img src="../../assets/plugins/readme-icons/upload-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom Upload Hosts](https://unbound.rip/addons/unbound.custom-upload-hosts): Uploads files you attach to Catbox, Litterbox or your own host instead of Discord, and puts the links in your message.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Dearrow](https://unbound.rip/addons/unbound.dearrow): Makes YouTube embed titles and thumbnails less sensationalist, powered by DeArrow.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Declutter](https://unbound.rip/addons/unbound.declutter): Hides buttons, upsells and profile decorations you never use: gift and call buttons, Quests, Nitro, avatar decorations, server tags and more.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Decor](https://unbound.rip/addons/unbound.decor): Shows the custom avatar decorations people pick on Decor, in chat and on profiles.
