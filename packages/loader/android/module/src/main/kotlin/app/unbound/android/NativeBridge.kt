@@ -654,7 +654,8 @@ object NativeBridge {
             updateToast = null
             if (!showing) return@post
             val context = Platform.application() ?: return@post
-            updateToast = Toast.makeText(context, text("UNBOUND_NATIVE_UPDATING", "Updating Unbound…"), Toast.LENGTH_LONG).also { it.show() }
+            updateToast =
+                Toast.makeText(context, text("UNBOUND_NATIVE_UPDATING", "Updating Unbound…"), Toast.LENGTH_LONG).also { it.show() }
         }
     }
 
