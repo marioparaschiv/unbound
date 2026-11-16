@@ -1,0 +1,17 @@
+{
+	"REMOVE_LOCATION": "Remove locations",
+	"REMOVE_LOCATION_SUBTITLE": "Removes the metadata of photos that record where they were taken before they are attached.",
+	"REMOVE_ALL": "Remove all metadata",
+	"REMOVE_ALL_SUBTITLE": "Also removes the camera, date and software from every photo you attach.",
+	"REMOVED": "Removed metadata from {count} photos.",
+	"LOCATED": "{count} photos you attached record where they were taken.",
+	"DETAILS": "Details",
+	"DETAILS_TITLE": "Photo metadata",
+	"LOCATION": "Location: {value}",
+	"CAMERA": "Camera: {value}",
+	"TAKEN": "Taken: {value}",
+	"SOFTWARE": "Software: {value}",
+	"STATE_REMOVED": "Removed before attaching.",
+	"STATE_KEPT": "Attached as it is.",
+	"STRIP_FAILED": "Couldn't remove the metadata of {name}, so it was attached as it is."
+}
