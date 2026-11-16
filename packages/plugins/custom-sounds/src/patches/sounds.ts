@@ -1,7 +1,7 @@
 import { settings } from '@unbound-app/settings';
 import { metro, patcher } from '@unbound-app/api';
 
-import type { LinkPlayer } from '~/native/player';
+import type { LinkPlayer } from '@unbound-plugins/shared/media/link-player';
 import { overrideFor, readMap } from '~/lib/sounds';
 
 type Sound = { name: string; _volume?: number };

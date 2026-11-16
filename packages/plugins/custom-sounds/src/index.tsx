@@ -3,7 +3,7 @@ import type { PluginContext } from '@unbound-app/api/native';
 import { settings } from '@unbound-app/settings';
 import { flux, patcher } from '@unbound-app/api';
 
-import { linkPlayer, type LinkPlayer } from '~/native/player';
+import { linkPlayer, type LinkPlayer } from '@unbound-plugins/shared/media/link-player';
 import { joinedUsers, type VoiceStateUpdate } from '~/lib/joins';
 import { playJoinSound } from '~/lib/join-sound';
 import { setActivePlayer } from '~/lib/active-player';

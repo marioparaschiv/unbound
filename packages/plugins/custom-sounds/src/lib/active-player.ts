@@ -1,4 +1,4 @@
-import type { LinkPlayer } from '~/native/player';
+import type { LinkPlayer } from '@unbound-plugins/shared/media/link-player';
 
 let current: LinkPlayer | undefined;
 

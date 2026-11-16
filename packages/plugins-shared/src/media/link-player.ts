@@ -1,7 +1,7 @@
 import { native } from '@unbound-app/api';
 
-import { linkPlayerAndroid as android } from '~/native/android/player';
-import { linkPlayerIOS as ios } from '~/native/ios/player';
+import { linkPlayerAndroid as android } from '@unbound-plugins/shared/media/android/link-player';
+import { linkPlayerIOS as ios } from '@unbound-plugins/shared/media/ios/link-player';
 
 export type PlayOptions = { volume: number; loop: boolean };
 

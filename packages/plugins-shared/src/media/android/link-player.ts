@@ -7,8 +7,8 @@ import {
 import type { NativeBridge, NativeJavaReference } from '@unbound-app/api/native';
 import { fs } from '@unbound-app/api';
 
-import { downloadSound, toBase64 } from '~/lib/download';
-import type { LinkPlayer, PlayOptions } from '~/native/player';
+import { downloadSound, toBase64 } from '@unbound-plugins/shared/media/sound-download';
+import type { LinkPlayer, PlayOptions } from '@unbound-plugins/shared/media/link-player';
 
 const MAX_PLAYERS = 8;
 

@@ -1,0 +1,20 @@
+{
+	"DEFINE_WORDS": "Define Words",
+	"PICK_WORD": "Define a word",
+	"NO_WORDS": "This message has no words to look up.",
+	"LOADING": "Looking it up…",
+	"NOT_FOUND": "No definition found for this word.",
+	"PLAY": "Play Pronunciation",
+	"NO_RECORDING": "No recording of this word was found.",
+	"SAVE": "Save to Vocabulary",
+	"SAVED": "Saved to Vocabulary",
+	"SOURCE": "From {source}",
+	"EXAMPLE": "“{example}”",
+	"VOCABULARY": "Vocabulary",
+	"VOCABULARY_EMPTY": "No saved words yet. Look a word up and pick Save to Vocabulary.",
+	"VOCABULARY_HINT": "Tap a word to see it again. Long-press to remove it.",
+	"REMOVED": "Removed from your vocabulary.",
+	"DEFINE_DESC": "Looks up a word.",
+	"WORD_DESC": "The word to look up.",
+	"VOCABULARY_DESC": "Lists the words you saved."
+}
