@@ -36,7 +36,8 @@ export type DeviceStateOptions = {
 	snapshotRoot?: string;
 };
 
-type ScriptResult = { ok: true; value: string } | { ok: false; error: string };
+/** A device script's `UBD_RESULT=` value, or the error it reported. */
+export type ScriptResult = { ok: true; value: string } | { ok: false; error: string };
 
 /** The scripts that find, pack, unpack and hand back Discord's Unbound folder on one platform. */
 type SnapshotScripts = {
@@ -69,6 +70,16 @@ const SNAPSHOT_SCRIPTS: Record<DevicePlatform, SnapshotScripts> = {
 	},
 };
 
+/**
+ * @description Builds the script lines that set `$parent` to the folder holding Discord's `Unbound` folder: `files`
+ * on Android, the data container's `Documents` on an iPhone.
+ * @param platform The device's platform.
+ * @returns The script lines; they exit with an error when Discord has no data folder.
+ */
+export function discordFolderScript(platform: DevicePlatform): string {
+	return SNAPSHOT_SCRIPTS[platform].parentScript;
+}
+
 function snapshotTarget(target: DeviceTarget): SnapshotTarget {
 	return { ...SNAPSHOT_SCRIPTS[target.platform], stopScript: target.stopDiscordScript };
 }
@@ -86,7 +97,14 @@ function scriptResult(ok: boolean, output: string, error: string): ScriptResult 
 	};
 }
 
-async function runScript(
+/**
+ * @description Runs a root script on the device and reads its `UBD_RESULT=` or `UBD_ERROR=` line.
+ * @param target The device.
+ * @param script The script.
+ * @param timeoutMs How long to wait; the platform default when left out.
+ * @returns The result value, or the error.
+ */
+export async function runScript(
 	target: Pick<DeviceTarget, 'shell'>,
 	script: string,
 	timeoutMs?: number,
@@ -279,14 +297,35 @@ export async function pushInParts(
 	return joined.ok ? { ok: true, stdout: remote } : { ok: false, error: joined.error };
 }
 
-// jb-p1lot carries a limited frame, so an iPhone moves snapshot archives in parts.
-function pushArchive(target: DeviceTarget, local: string, remote: string) {
+/**
+ * @description Copies a file here to the device, in parts on an iPhone, whose jb-p1lot carries a limited frame.
+ * @param target The device.
+ * @param local The file here.
+ * @param remote Where to write it on the device.
+ * @returns Whether it arrived.
+ */
+export function pushArchive(
+	target: DeviceTarget,
+	local: string,
+	remote: string,
+): Promise<CommandResult> {
 	return target.platform === 'ios'
 		? pushInParts(local, remote, target)
 		: target.push(local, remote, TRANSFER_TIMEOUT_MS);
 }
 
-function pullArchive(target: DeviceTarget, remote: string, local: string) {
+/**
+ * @description Copies a device file to this computer, in parts on an iPhone, whose jb-p1lot carries a limited frame.
+ * @param target The device.
+ * @param remote The file on the device.
+ * @param local Where to write it here.
+ * @returns Whether it arrived.
+ */
+export function pullArchive(
+	target: DeviceTarget,
+	remote: string,
+	local: string,
+): Promise<CommandResult> {
 	return target.platform === 'ios'
 		? pullInParts(remote, local, target)
 		: target.pull(remote, local, TRANSFER_TIMEOUT_MS);
@@ -307,7 +346,16 @@ async function snapshotOwner(target: DeviceTarget): Promise<string> {
 	return (serial.ok && serial.stdout.trim()) || 'device';
 }
 
-async function restartIfAsked(target: DeviceTarget, restart: boolean | undefined): Promise<string> {
+/**
+ * @description Relaunches Discord when asked, and says what happened as the end of a sentence.
+ * @param target The device.
+ * @param restart Whether to relaunch it.
+ * @returns A sentence fragment to append to the command's text.
+ */
+export async function restartIfAsked(
+	target: DeviceTarget,
+	restart: boolean | undefined,
+): Promise<string> {
 	if (!restart) {
 		return ' Launch Discord to load it.';
 	}
