@@ -1,0 +1,15 @@
+{
+	"EVERYONE": "Ask before @everyone and @here",
+	"EVERYONE_SUBTITLE": "Only where you are allowed to ping everyone, since elsewhere they ping nobody.",
+	"USERS": "Ask from this many people",
+	"USERS_SUBTITLE": "Different people mentioned in one message.",
+	"ROLES": "Ask from this many roles",
+	"ROLES_SUBTITLE": "Different roles mentioned in one message.",
+	"CONFIRM_TITLE": "Send this ping?",
+	"CONFIRM_BROAD": "This message pings {mentions}.",
+	"CONFIRM_USERS": "This message pings {users} people.",
+	"CONFIRM_ROLES": "This message pings {roles} roles.",
+	"CONFIRM_MANY": "This message pings {users} people and {roles} roles.",
+	"CONFIRM_SEND": "Send",
+	"CONFIRM_EDIT": "Keep editing"
+}
