@@ -1,0 +1,17 @@
+{
+	"id": "unbound.sensitive-paste-guard",
+	"name": "Sensitive Paste Guard",
+	"description": "Warns before you send what looks like a password, token or private key, such as one pasted by accident, and offers to redact it.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ShieldUserIcon",
+	"main": "index.tsx"
+}

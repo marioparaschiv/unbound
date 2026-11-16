@@ -1,0 +1,18 @@
+{
+	"TITLE": "Send this secret?",
+	"BODY": "This message looks like it contains {kinds}. Anyone who reads it could use it.",
+	"REDACT": "Redact and send",
+	"SEND": "Send anyway",
+	"EDIT": "Keep editing",
+	"MARKER": "[redacted]",
+	"KIND_PRIVATE_KEY": "a private key",
+	"KIND_DISCORD_TOKEN": "a Discord token",
+	"KIND_GITHUB_TOKEN": "a GitHub token",
+	"KIND_AWS_KEY": "an AWS access key",
+	"KIND_SLACK_TOKEN": "a Slack token",
+	"KIND_STRIPE_KEY": "a Stripe secret key",
+	"KIND_GOOGLE_KEY": "a Google API key",
+	"KIND_AI_KEY": "an AI service API key",
+	"KIND_JWT": "a login token (JWT)",
+	"KIND_PASSWORD": "a password"
+}
