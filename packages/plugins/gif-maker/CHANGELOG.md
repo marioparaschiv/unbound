@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2] - 2026-11-16
+
+### Changed
+
+- Reads video frames straight from native memory instead of through base64 text, so making a GIF is quicker.
+
 ## [1.0.1] - 2026-11-16
 
 ### Fixed

@@ -25,6 +25,8 @@ export type {
 	NativeHookPayload,
 	NativeHookToken,
 	NativeJavaArgument,
+	NativeJavaBytes,
+	NativeJavaCallArgument,
 	NativeJavaAssociationKey,
 	NativeJavaBatchOperation,
 	NativeJavaCallPlan,

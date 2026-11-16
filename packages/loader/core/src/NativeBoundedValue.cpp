@@ -2,8 +2,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <optional>
 #include <stdexcept>
 #include <vector>
+
+#include "LoaderBase64.h"
 
 namespace loader::native {
 namespace jsi = facebook::jsi;
@@ -46,6 +49,37 @@ static std::string boundedString(jsi::Runtime &runtime, const jsi::Value &value,
     }
 
     return text;
+}
+
+static std::optional<std::string> boundedBinary(jsi::Runtime &runtime, jsi::Object &object,
+                                                NativeConversionBudget &budget)
+{
+    const std::uint8_t *bytes = nullptr;
+    size_t length             = 0;
+    if (object.isArrayBuffer(runtime))
+    {
+        jsi::ArrayBuffer buffer = object.getArrayBuffer(runtime);
+        bytes                   = buffer.data(runtime);
+        length                  = buffer.size(runtime);
+    }
+    else if (object.isTypedArray(runtime))
+    {
+        jsi::TypedArray array   = object.getTypedArray(runtime);
+        jsi::ArrayBuffer buffer = array.buffer(runtime);
+        bytes                   = buffer.data(runtime) + array.byteOffset(runtime);
+        length                  = array.byteLength(runtime);
+    }
+    else
+    {
+        return std::nullopt;
+    }
+
+    if (!budget.addBinary(length))
+    {
+        throw std::invalid_argument("Native binary values exceed their byte limit");
+    }
+
+    return loader::base64Encode(bytes, length);
 }
 
 nlohmann::json serializeBounded(jsi::Runtime &runtime, const jsi::Value &value,
@@ -93,6 +127,11 @@ nlohmann::json serializeBounded(jsi::Runtime &runtime, const jsi::Value &value,
     if (object.isFunction(runtime))
     {
         throw std::invalid_argument("Functions cannot be serialized as native values");
+    }
+
+    if (std::optional<std::string> binary = boundedBinary(runtime, object, budget))
+    {
+        return *binary;
     }
 
     if (object.isArray(runtime))
@@ -206,6 +245,14 @@ static void writeBounded(jsi::Runtime &runtime, const jsi::Value &value,
         throw std::invalid_argument("Functions cannot be serialized as native values");
     }
 
+    if (std::optional<std::string> binary = boundedBinary(runtime, object, budget))
+    {
+        out += '"';
+        out += *binary;
+        out += '"';
+        return;
+    }
+
     if (object.isArray(runtime))
     {
         jsi::Array array = object.asArray(runtime);
@@ -288,7 +335,7 @@ std::string serializeBounded(jsi::Runtime &runtime, const jsi::Value &value,
     NativeConversionBudget budget(profile);
     std::string serialized;
     writeBounded(runtime, value, budget, serialized);
-    if (serialized.size() > profile.maximumBytes)
+    if (serialized.size() > profile.maximumBytes + budget.encodedBinaryBytes())
     {
         throw std::invalid_argument("Native value exceeds " + std::to_string(profile.maximumBytes)
                                     + " serialized bytes");

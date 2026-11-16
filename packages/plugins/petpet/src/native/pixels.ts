@@ -11,13 +11,13 @@ const readPlatformPixels = native.definePlatform({ ios, android });
  * @param bridge The plugin's native bridge.
  * @param path The image's absolute path.
  * @param size The square's width and height.
- * @returns The pixels as base64, or `undefined` when the image can't be read.
+ * @returns The RGBA pixels, or `undefined` when the image can't be read.
  */
 export function readSquarePixels(
 	bridge: NativeBridge,
 	path: string,
 	size: number,
-): string | undefined {
+): Uint8Array | undefined {
 	return readPlatformPixels(bridge, path, size) ?? undefined;
 }
 

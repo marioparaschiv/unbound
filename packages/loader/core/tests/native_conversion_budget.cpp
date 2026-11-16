@@ -77,4 +77,15 @@ int main()
     NativeConversionBudget values;
     assert(values.addName(1));
     assert(values.addString(1024 * 1024));
+
+    NativeConversionBudget arguments(kNativeArgumentsConversion);
+    assert(arguments.addBinary(5));
+    assert(arguments.encodedBinaryBytes() == 10);
+    assert(arguments.addBinary(kNativeArgumentsConversion.maximumBinaryBytes - 5));
+    assert(!arguments.addBinary(1));
+    assert(!arguments.addBytes(kNativeArgumentsConversion.maximumBytes + 1));
+
+    NativeConversionBudget batch(kNativeBatchConversion);
+    assert(batch.addBinary(0));
+    assert(!batch.addBinary(1));
 }

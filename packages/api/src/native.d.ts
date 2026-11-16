@@ -36,6 +36,8 @@ export type {
 	NativeJavaAssociationKey,
 	NativeJavaBatchOperation,
 	NativeJavaBridge,
+	NativeJavaBytes,
+	NativeJavaCallArgument,
 	NativeJavaCallPlan,
 	NativeJavaClassDescription,
 	NativeJavaFieldDescription,

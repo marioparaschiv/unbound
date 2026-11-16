@@ -80,6 +80,7 @@ facebook::jsi::Value pointerResult(facebook::jsi::Runtime &runtime, void *pointe
 facebook::jsi::Value objcResult(facebook::jsi::Runtime &runtime, id value);
 id valueToObjC(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value);
 id valueToData(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value);
+facebook::jsi::Value dataBytes(facebook::jsi::Runtime &runtime, NSData *data);
 facebook::jsi::Value structResult(facebook::jsi::Runtime &runtime, NSString *name, NSValue *value);
 facebook::jsi::Value structValue(facebook::jsi::Runtime &runtime, NSString *name,
                                  const facebook::jsi::Value &fields);

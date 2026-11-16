@@ -8,18 +8,17 @@ const PREMULTIPLIED_LAST = 1;
  * @param native The plugin's native bridge.
  * @param path The image's absolute path.
  * @param size The square's width and height.
- * @returns The pixels as base64, or `undefined` when the file is not an image UIKit can read.
+ * @returns The RGBA pixels, or `undefined` when the file is not an image UIKit can read.
  */
 export function readPixels(
 	{ objc, ffi }: NativeBridge,
 	path: string,
 	size: number,
-): string | undefined {
+): Uint8Array | undefined {
 	const UIImage = objc.getClass('UIImage');
-	const NSData = objc.getClass('NSData');
 	const msgSend = ffi.symbol('objc_msgSend');
 
-	if (!UIImage || !NSData || !msgSend) return undefined;
+	if (!UIImage || !msgSend) return undefined;
 
 	const cf = <T>(
 		name: string,
@@ -68,24 +67,7 @@ export function readPixels(
 		);
 		cf('CGContextRelease', 'void', ['pointer'], bitmap);
 
-		const data = ffi.call(
-			msgSend,
-			{ returnType: 'pointer', args: ['class', 'selector', 'pointer', 'u64'] },
-			NSData,
-			'dataWithBytes:length:',
-			buffer,
-			bytes,
-		);
-
-		return String(
-			ffi.call(
-				msgSend,
-				{ returnType: 'object', args: ['pointer', 'selector', 'u64'] },
-				data,
-				'base64EncodedStringWithOptions:',
-				0,
-			),
-		);
+		return ffi.readBytes(buffer, bytes);
 	} finally {
 		cf('CGColorSpaceRelease', 'void', ['pointer'], colorSpace);
 		ffi.free(buffer);

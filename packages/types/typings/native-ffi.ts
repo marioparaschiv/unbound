@@ -46,6 +46,10 @@ export type NativeFFIBridge = {
 	free(pointer: NativePointer): boolean;
 	/** Reads a value of a type at a pointer, `offset` bytes in, failing safely on an unreadable address. Needs `native.ffi.memory`. */
 	read(pointer: NativePointer, type: NativeFFIType, offset?: number): NativeFFIValue;
+	/** Copies `length` bytes at a pointer, `offset` bytes in, into a `Uint8Array`, up to 64 MB. Needs `native.ffi.memory`. */
+	readBytes(pointer: NativePointer, length: number, offset?: number): Uint8Array;
+	/** Copies bytes into memory from `alloc`, `offset` bytes in. Needs `native.ffi.memory`. */
+	writeBytes(pointer: NativePointer, bytes: Uint8Array | ArrayBuffer, offset?: number): void;
 	/** Writes a value of a type into memory from `alloc`, `offset` bytes in. Needs `native.ffi.memory`. */
 	write(
 		pointer: NativePointer,

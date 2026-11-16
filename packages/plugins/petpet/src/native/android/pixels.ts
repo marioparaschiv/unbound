@@ -1,8 +1,6 @@
 import type { NativeBridge, NativeJavaValue } from '@unbound-app/api/native';
 import { javaReference } from '@unbound-plugins/shared/native/android/java-values';
 
-const BASE64_NO_WRAP = 2;
-
 const string = (value: string): NativeJavaValue => ({ type: 'string', value });
 const int = (value: number): NativeJavaValue => ({ type: 'int', value });
 const bool = (value: boolean): NativeJavaValue => ({ type: 'boolean', value });
@@ -13,9 +11,13 @@ const bool = (value: boolean): NativeJavaValue => ({ type: 'boolean', value });
  * @param native The plugin's native bridge.
  * @param path The image's absolute path.
  * @param size The square's width and height.
- * @returns The pixels as base64, or `undefined` when the file is not an image Android can read.
+ * @returns The RGBA pixels, or `undefined` when the file is not an image Android can read.
  */
-export function readPixels({ java }: NativeBridge, path: string, size: number): string | undefined {
+export function readPixels(
+	{ java }: NativeBridge,
+	path: string,
+	size: number,
+): Uint8Array | undefined {
 	const decoded = javaReference(
 		java.invoke(java.getClass('android.graphics.BitmapFactory'), 'decodeFile', [string(path)]),
 	);
@@ -36,16 +38,11 @@ export function readPixels({ java }: NativeBridge, path: string, size: number): 
 
 	java.invoke(pixels, 'copyPixelsToBuffer', [buffer]);
 
-	const base64 = java.invoke(java.getClass('android.util.Base64'), 'encodeToString', [
-		javaReference(java.invoke(buffer, 'array', []))!,
-		int(BASE64_NO_WRAP),
-	]) as { value?: unknown } | string | null;
+	const rgba = java.bytes(javaReference(java.invoke(buffer, 'array', []))!);
 
 	for (const bitmap of [decoded, scaled, pixels]) java.invoke(bitmap, 'recycle', []);
 
-	const text = typeof base64 === 'string' ? base64 : base64?.value;
-
-	return typeof text === 'string' ? text : undefined;
+	return rgba;
 }
 
 export default { readPixels };

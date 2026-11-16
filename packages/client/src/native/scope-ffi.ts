@@ -39,6 +39,8 @@ export function createScopedFFIBridge(
 		},
 		read: scopeBridgeMethod(source, 'read', 'ffi.read'),
 		write: scopeBridgeMethod(source, 'write', 'ffi.write'),
+		readBytes: scopeBridgeMethod(source, 'readBytes', 'ffi.readBytes'),
+		writeBytes: scopeBridgeMethod(source, 'writeBytes', 'ffi.writeBytes'),
 		callback: (signature, implementation) => {
 			const pointer = scopeBridgeMethod(
 				source,

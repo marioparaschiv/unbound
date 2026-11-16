@@ -219,6 +219,8 @@ export type NativeObjCBridge = {
 	array(handle: NativeObjectHandle): NativeObjCResult[];
 	/** Copies bytes into a new `NSData` object. */
 	data(value: ArrayBuffer | Uint8Array): NativeObjectHandle;
+	/** Copies an `NSData` handle or pointer into a `Uint8Array`, up to 64 MB. */
+	bytes(data: NativeObjectHandle): Uint8Array;
 	/** Hooks a method by class and selector, or a class method with a `+` before the selector; handlers run in registration order, and the scope removes the hook on dispose. */
 	hook<Receiver extends boolean = true>(
 		className: string,

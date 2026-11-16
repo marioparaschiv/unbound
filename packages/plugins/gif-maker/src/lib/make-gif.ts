@@ -1,7 +1,6 @@
 import type { Crop, FrameReader } from '~/native/frames';
 import { encodeGif } from '@unbound-plugins/shared/media/gif/gif-encoder';
 import { buildPalette } from '@unbound-plugins/shared/media/gif/palette';
-import { fromBase64 } from '@unbound-plugins/shared/media/gif/base64';
 
 export type GifRequest = {
 	start: number;
@@ -62,7 +61,7 @@ export async function makeGif(
 
 		if (frame && (!size || (frame.width === size.width && frame.height === size.height))) {
 			size ??= { width: frame.width, height: frame.height };
-			frames.push(fromBase64(frame.rgba));
+			frames.push(frame.rgba);
 		}
 
 		onProgress(index + 1, times.length);

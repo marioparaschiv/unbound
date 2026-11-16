@@ -453,6 +453,12 @@ id valueToData(Runtime &runtime, const Value &value)
     return nil;
 }
 
+Value dataBytes(Runtime &runtime, NSData *data)
+{
+    ArrayBuffer buffer(runtime, std::make_shared<NativeDataBuffer>(data));
+    return Uint8Array(runtime, buffer, 0, buffer.size(runtime));
+}
+
 Value structResult(Runtime &runtime, NSString *name, NSValue *value)
 {
     return Object::createFromHostObject(runtime, std::make_shared<StructHost>(name, value));

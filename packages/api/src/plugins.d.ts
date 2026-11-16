@@ -54,7 +54,8 @@ export declare function bisectStatus(): BisectStatus | undefined;
  */
 export declare function selfTest(id: string): Promise<PluginSelfTestResult | undefined>;
 /**
- * @description Starts finding the plugin that causes a problem: turns Recovery Mode off and every plugin off for a first check.
+ * @description Starts finding the plugin that causes a problem: turns Recovery Mode off and every plugin off for a first
+ * check. Each round saves which plugins are on and reloads Discord, so no plugin starts or stops mid-session.
  * @returns The first round, or `undefined` when no plugin is on to test.
  */
 export declare function startBisect(): BisectStatus | undefined;
