@@ -41,6 +41,5 @@ export const NATIVE_BRIDGE_CAPABILITY_PLATFORMS = {
 
 /** The methods the client implements in JavaScript, so the loader's bridge need not install them. */
 export const NATIVE_BRIDGE_CLIENT_METHODS = [
-	'objc.create',
 	'runtime.subscribe',
 ] as const satisfies readonly NativeBridgeMethod[];

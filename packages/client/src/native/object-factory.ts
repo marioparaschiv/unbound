@@ -1,13 +1,17 @@
 import type {
 	NativeCallOptions,
 	NativeClassHandle,
-	NativeObjCBridge,
+	LoaderObjCBridge,
+	NativeObjCResult,
 	NativeObjectHandle,
 } from '@unbound-app/types';
 
 type ClassReference = string | NativeClassHandle;
 
-type AllocBridge = Pick<NativeObjCBridge, 'alloc' | 'call' | 'className' | 'getClass' | 'invoke'>;
+type AllocBridge = Pick<
+	LoaderObjCBridge,
+	'alloc' | 'call' | 'className' | 'create' | 'getClass' | 'invoke'
+>;
 
 const MAIN_THREAD_ROOT_CLASS = 'UIResponder';
 
@@ -28,7 +32,7 @@ function isObjectHandle(value: unknown): value is NativeObjectHandle {
 /**
  * @description Creates the factory behind `objc.alloc` and `objc.create`, which builds UIKit objects on the main thread and everything else on the calling thread.
  * @param bridge The Objective-C bridge.
- * @returns `alloc`, which returns an instance initialized with `init` and falls back to the calling thread when the main thread cannot be reached, and `create`, which allocates an uninitialized instance and sends it only the given init selector.
+ * @returns `alloc`, which returns an instance initialized with `init` and falls back to the calling thread when the main thread cannot be reached, and `create`, which allocates an instance and returns what the given init selector returns, as a handle.
  */
 export function createObjectFactory(bridge: AllocBridge): ObjectFactory {
 	const needsMainThread = new Map<string, boolean>();
@@ -77,6 +81,21 @@ export function createObjectFactory(bridge: AllocBridge): ObjectFactory {
 		return bridge.alloc(classOrName);
 	}
 
+	function allocateThenInitialize(
+		cls: NativeClassHandle,
+		initSelector: string,
+		args: unknown[],
+		options: NativeCallOptions,
+	): NativeObjCResult {
+		const instance = bridge.invoke(cls, 'alloc', [], { thread: options.thread });
+
+		if (!isObjectHandle(instance)) {
+			throw new Error(`Allocating ${bridge.className(cls) ?? 'the class'} returned nil.`);
+		}
+
+		return bridge.invoke(instance, initSelector, args, options);
+	}
+
 	function create(
 		classOrName: ClassReference,
 		initSelector: string,
@@ -92,19 +111,15 @@ export function createObjectFactory(bridge: AllocBridge): ObjectFactory {
 		}
 
 		const thread = options?.thread ?? (isMainThreadClass(cls) ? 'main' : 'current');
-		const instance = bridge.invoke(cls, 'alloc', [], { thread });
+		const instance = bridge.create
+			? bridge.create(cls, initSelector, args, { ...options, thread })
+			: allocateThenInitialize(cls, initSelector, args, { ...options, thread });
 
 		if (!isObjectHandle(instance)) {
-			throw new Error(`Allocating ${bridge.className(cls) ?? 'the class'} returned nil.`);
-		}
-
-		const initialized = bridge.invoke(instance, initSelector, args, { ...options, thread });
-
-		if (!isObjectHandle(initialized)) {
 			throw new Error(`${initSelector} returned nil.`);
 		}
 
-		return initialized;
+		return instance;
 	}
 
 	return { alloc, create };

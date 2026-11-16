@@ -46,6 +46,9 @@ invokeInvocationWithThreadPolicy(facebook::jsi::Runtime &runtime, NSInvocation *
 facebook::jsi::Value invokeWithThreadPolicy(facebook::jsi::Runtime &runtime, id target,
                                             SEL selector, NSArray *arguments,
                                             const facebook::jsi::Value *options);
+facebook::jsi::Value instantiateWithThreadPolicy(facebook::jsi::Runtime &runtime, Class cls,
+                                                 SEL selector, NSArray *arguments,
+                                                 const facebook::jsi::Value *options);
 facebook::jsi::Value
 invokeInvocationAsync(facebook::jsi::Runtime &runtime, NSInvocation *invocation,
                       std::shared_ptr<ObjCCallPlanHost> preparedPlan = nullptr);

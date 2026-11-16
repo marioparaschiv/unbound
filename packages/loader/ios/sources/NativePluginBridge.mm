@@ -163,6 +163,33 @@ static void installObjC(Runtime &runtime, Object &objc)
                      }));
 
     objc.setProperty(
+        runtime, "create",
+        makeFunction("create", 4, runtime,
+                     [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                         Class cls = count ? classFromValue(rt, args[0]) : Nil;
+                         if (!cls || count < 2 || !args[1].isString())
+                         {
+                             throw JSError(rt, "objc.create expects a class and an init selector");
+                         }
+
+                         NSMutableArray *arguments = [NSMutableArray array];
+                         if (count > 2 && args[2].isObject() && args[2].asObject(rt).isArray(rt))
+                         {
+                             Array array = args[2].asObject(rt).asArray(rt);
+                             for (size_t index = 0; index < array.size(rt); index++)
+                             {
+                                 [arguments
+                                     addObject:valueToObjC(rt, array.getValueAtIndex(rt, index))
+                                                   ?: [NSNull null]];
+                             }
+                         }
+
+                         return instantiateWithThreadPolicy(
+                             rt, cls, NSSelectorFromString(jsiString(rt, args[1])), arguments,
+                             count > 3 ? &args[3] : nullptr);
+                     }));
+
+    objc.setProperty(
         runtime, "className",
         makeFunction("className", 1, runtime,
                      [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {

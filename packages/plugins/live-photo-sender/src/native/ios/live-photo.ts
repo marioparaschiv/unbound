@@ -138,51 +138,14 @@ function durationOf(native: Bridge, asset: NativeObjectHandle): number {
 	}
 }
 
-function ownedDictionary(native: Bridge): NativePointer {
-	const send = sender(native);
-	const allocated = send<NativePointer>(
-		'pointer',
-		['class', 'selector'],
-		native.objc.getClass('NSMutableDictionary'),
-		'alloc',
-	);
+function gifProperties({ objc }: Bridge, key: string, value: number): NativeObjectHandle {
+	const inner = objc.create('NSMutableDictionary', 'init', []);
+	const outer = objc.create('NSMutableDictionary', 'init', []);
 
-	return send<NativePointer>('pointer', ['pointer', 'selector'], allocated, 'init');
-}
+	objc.invoke(inner, 'setObject:forKey:', [value, key]);
+	objc.invoke(outer, 'setObject:forKey:', [inner, '{GIF}']);
 
-function gifProperties(native: Bridge, key: string, value: number): NativePointer[] {
-	const send = sender(native);
-	const inner = ownedDictionary(native);
-	const outer = ownedDictionary(native);
-
-	send(
-		'void',
-		['pointer', 'selector', 'object', 'object'],
-		inner,
-		'setObject:forKey:',
-		value,
-		key,
-	);
-	send(
-		'void',
-		['pointer', 'selector', 'pointer', 'object'],
-		outer,
-		'setObject:forKey:',
-		inner,
-		'{GIF}',
-	);
-
-	return [outer, inner];
-}
-
-function release(native: Bridge, dictionaries: NativePointer[]) {
-	for (const dictionary of dictionaries) {
-		native.ffi.call(
-			native.ffi.symbol('CFRelease')!,
-			{ returnType: 'void', args: ['pointer'] },
-			dictionary,
-		);
-	}
+	return outer;
 }
 
 /**
@@ -253,9 +216,9 @@ export function videoToGif(
 	call(
 		'CGImageDestinationSetProperties',
 		'void',
-		['pointer', 'pointer'],
+		['pointer', 'object'],
 		destination,
-		fileProperties[0],
+		fileProperties,
 	);
 
 	for (let index = 0; index < count; index++) {
@@ -281,10 +244,10 @@ export function videoToGif(
 			call(
 				'CGImageDestinationAddImage',
 				'void',
-				['pointer', 'pointer', 'pointer'],
+				['pointer', 'pointer', 'object'],
 				destination,
 				image,
-				frameProperties[0],
+				frameProperties,
 			);
 			call('CGImageRelease', 'void', ['pointer'], image);
 		} finally {
@@ -295,7 +258,6 @@ export function videoToGif(
 	const finished = call<boolean>('CGImageDestinationFinalize', 'bool', ['pointer'], destination);
 
 	call('CFRelease', 'void', ['pointer'], destination);
-	release(native, [...frameProperties, ...fileProperties]);
 
 	return finished ? size : undefined;
 }
