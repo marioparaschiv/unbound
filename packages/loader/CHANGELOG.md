@@ -1,5 +1,39 @@
 # Changelog
 
+## [1.8.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.7.1...loader-v1.8.0) (2026-11-16)
+
+
+### Features
+
+* block additional tracking on iOS and Android ([#1692](https://github.com/marioparaschiv/unbound/issues/1692)) ([b27ce30](https://github.com/marioparaschiv/unbound/commit/b27ce30aefc2e065f32b526c53b13a42311adbe5))
+* **loader:** add prebuilt hook trampolines for common UIKit signatures ([#1576](https://github.com/marioparaschiv/unbound/issues/1576)) ([0a2b0dd](https://github.com/marioparaschiv/unbound/commit/0a2b0ddbc3403af131b7b9d5b061c64856ab3089))
+* **loader:** cache Android theme resource ids per Discord build ([#1577](https://github.com/marioparaschiv/unbound/issues/1577)) ([99b82ff](https://github.com/marioparaschiv/unbound/commit/99b82ffb06440724ef7847b1579bc6eca95a4ee4))
+* **loader:** give every new iOS thread a spare signal stack ([#1660](https://github.com/marioparaschiv/unbound/issues/1660)) ([ec30440](https://github.com/marioparaschiv/unbound/commit/ec3044034af08d9d74a688102e895b7eed81aebb))
+* **loader:** keep iOS crash stacks MetricKit reports on the next launch ([#1590](https://github.com/marioparaschiv/unbound/issues/1590)) ([11cf018](https://github.com/marioparaschiv/unbound/commit/11cf0188b73dc3bf7283ca0fccdd2d997f297de7))
+* **loader:** let plugins show Live Activities on iOS ([#1602](https://github.com/marioparaschiv/unbound/issues/1602)) ([931052e](https://github.com/marioparaschiv/unbound/commit/931052e16f0daffd9419a376a145fd63c335b105))
+* **loader:** mirror JS log lines to logcat and os_log ([#1680](https://github.com/marioparaschiv/unbound/issues/1680)) ([e933896](https://github.com/marioparaschiv/unbound/commit/e933896337f231c00da7af98fb30a623971b1027))
+* **loader:** name the plugin that blocked the main thread in ANRs ([#1621](https://github.com/marioparaschiv/unbound/issues/1621)) ([c27d262](https://github.com/marioparaschiv/unbound/commit/c27d2620f348fcde1139f873c4c4354ff052c271))
+* **loader:** pass bytes across the native bridge ([#1674](https://github.com/marioparaschiv/unbound/issues/1674)) ([4b12f44](https://github.com/marioparaschiv/unbound/commit/4b12f4421bd000b7bf1945a14792394f196ba8b1))
+* **loader:** probe libffi closures at launch and show it on /debug ([#1574](https://github.com/marioparaschiv/unbound/issues/1574)) ([e0aa7e1](https://github.com/marioparaschiv/unbound/commit/e0aa7e19762bcbb1a9801a25817fe08d05bc40e8))
+* **loader:** report Android main thread stalls with the blocking plugin ([#1588](https://github.com/marioparaschiv/unbound/issues/1588)) ([bf86ab9](https://github.com/marioparaschiv/unbound/commit/bf86ab9d678b32699f05abc00c8fc573c1089f5f))
+* **loader:** scalar ObjC args, Java results, variadic FFI, overloads ([#1620](https://github.com/marioparaschiv/unbound/issues/1620)) ([dd49b45](https://github.com/marioparaschiv/unbound/commit/dd49b4570e799d8f895b43aea8359143d11ac56e))
+* **loader:** translate native screens from the client's locale files ([#1624](https://github.com/marioparaschiv/unbound/issues/1624)) ([ab1269d](https://github.com/marioparaschiv/unbound/commit/ab1269d27da584ea6128990246ab47c5ef502cdd))
+
+
+### Bug Fixes
+
+* **loader:** count the loader's own Swift classes in the compat scan ([#1606](https://github.com/marioparaschiv/unbound/issues/1606)) ([652b729](https://github.com/marioparaschiv/unbound/commit/652b7299b3162e2dfbced15c91bf3f8306e60523))
+* **loader:** drop the Developer Mode marker from /debug ([#1595](https://github.com/marioparaschiv/unbound/issues/1595)) ([3ec1570](https://github.com/marioparaschiv/unbound/commit/3ec1570902deb246c5c64cb3578efd47804eb896))
+* **loader:** keep deallocating objects away from iOS plugin hooks ([#1659](https://github.com/marioparaschiv/unbound/issues/1659)) ([2006d84](https://github.com/marioparaschiv/unbound/commit/2006d843538026f4ac2c7aea2fce5b3e2a062d48))
+* **loader:** keep each crash's stack in the crash history ([#1636](https://github.com/marioparaschiv/unbound/issues/1636)) ([80a2f37](https://github.com/marioparaschiv/unbound/commit/80a2f37f1951959bc4f5571e3fc1953482fe1a99))
+* **loader:** keep native-crash.txt and write it on stack overflows ([#1638](https://github.com/marioparaschiv/unbound/issues/1638)) ([5721f85](https://github.com/marioparaschiv/unbound/commit/5721f85af9bbce1e7b434af9482ba770243da2d2))
+* **loader:** post off-main UI hook callbacks safely ([#1679](https://github.com/marioparaschiv/unbound/issues/1679)) ([903d246](https://github.com/marioparaschiv/unbound/commit/903d246bc78fc86969f4859850c1d9e2b95b14cb))
+* **loader:** read MetricKit report times as local time ([#1640](https://github.com/marioparaschiv/unbound/issues/1640)) ([e8f56df](https://github.com/marioparaschiv/unbound/commit/e8f56df7ef00645113278afbe974bb9929e3f36a))
+* **loader:** return init's object from objc.create ([#1675](https://github.com/marioparaschiv/unbound/issues/1675)) ([4042a5b](https://github.com/marioparaschiv/unbound/commit/4042a5b18f7bae9b866a45300c503ca79ae76d26))
+* **loader:** run loader:validate's Gradle steps on a pinned JDK on macOS ([#1644](https://github.com/marioparaschiv/unbound/issues/1644)) ([a6ece90](https://github.com/marioparaschiv/unbound/commit/a6ece90c541571825a4eba4fc6fdea6ec53680f4))
+* **loader:** show only unusual Android device markers on /debug ([#1591](https://github.com/marioparaschiv/unbound/issues/1591)) ([fe47105](https://github.com/marioparaschiv/unbound/commit/fe47105ffdad27c91b214ff6729848ec773bad51))
+* **loader:** stop the compat scan flagging runtime classes and strings ([#1580](https://github.com/marioparaschiv/unbound/issues/1580)) ([80dea85](https://github.com/marioparaschiv/unbound/commit/80dea85e5f3c38f4dc6fd622025e67d404f2b439))
+
 ## [1.7.1](https://github.com/marioparaschiv/unbound/compare/loader-v1.7.0...loader-v1.7.1) (2026-11-15)
 
 
