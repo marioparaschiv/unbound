@@ -1,0 +1,17 @@
+{
+	"id": "unbound.calculator",
+	"name": "Calculator",
+	"description": "Adds a calculator button to the chat input when your draft is a calculation, to insert the result or the full calculation.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "PlusLargeIcon",
+	"main": "index.tsx"
+}

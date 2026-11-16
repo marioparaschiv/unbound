@@ -1,6 +1,6 @@
 # Plugins
 
-165 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+166 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -24,6 +24,7 @@
 - <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better Status Indicators](https://unbound.rip/addons/unbound.better-status-indicators): Draws a ring in the status colour around avatars, so online, idle, do not disturb and streaming read at a glance.
 - <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better You Bar](https://unbound.rip/addons/unbound.better-you-bar): Adds Favorites and Settings shortcuts to the You bar, and can keep favorite channels past Discord's limit on this device.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Blur NSFW](https://unbound.rip/addons/unbound.blur-nsfw): Blurs attachments and embedded media in age-restricted channels until you tap them.
+- <img src="../../assets/plugins/readme-icons/plus-large-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Calculator](https://unbound.rip/addons/unbound.calculator): Adds a calculator button to the chat input when your draft is a calculation, to insert the result or the full calculation.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Channel Badges](https://unbound.rip/addons/unbound.channel-badges): Labels channels in the channel list with badges for NSFW, locked and rules channels, and optionally their type.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Channel Typing Indicators](https://unbound.rip/addons/unbound.channel-typing-indicators): Shows animated typing dots and avatars beside channels where people are typing.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Character Counter](https://unbound.rip/addons/unbound.character-counter): Shows the current message length and Discord's character limit in the composer.
