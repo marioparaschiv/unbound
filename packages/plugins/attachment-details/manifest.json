@@ -1,0 +1,17 @@
+{
+	"id": "unbound.attachment-details",
+	"name": "Attachment Details",
+	"description": "Shows each attachment's file name, type, size, dimensions, duration and alt text from a message's long-press menu.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "FileIcon",
+	"main": "index.tsx"
+}

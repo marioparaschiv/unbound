@@ -472,6 +472,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/attachment-details": {
+      "name": "attachment-details",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/aussie-mode": {
       "name": "aussie-mode",
       "dependencies": {
@@ -3991,6 +4005,8 @@
     "asap": ["asap@2.0.6", "", {}, "sha512-BSHWgDSAiKs50o2Re8ppvp3seVHXSRM44cdSsT9FfNEUUZLOGWVCsiWaRPWM1Znn+mqZ1OfVZ3z3DWEzSp7hRA=="],
 
     "astring": ["astring@1.9.0", "", { "bin": { "astring": "bin/astring" } }, "sha512-LElXdjswlqjWrPpJFg1Fx4wpkOCxj1TDHlSV4PlaRxHGWko024xICaa97ZkMfs6DRKlCguiAI+rbXv5GWwXIkg=="],
+
+    "attachment-details": ["attachment-details@workspace:packages/plugins/attachment-details"],
 
     "aussie-mode": ["aussie-mode@workspace:packages/plugins/aussie-mode"],
 

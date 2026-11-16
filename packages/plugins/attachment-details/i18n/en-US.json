@@ -1,0 +1,15 @@
+{
+	"DETAILS": "Attachment Details",
+	"TITLE": "Attachment details",
+	"ATTACHMENT": "Attachment {number} of {count}",
+	"NAME": "File name",
+	"TYPE": "Type",
+	"ORIGINAL_TYPE": "Uploaded as",
+	"SIZE": "Size",
+	"DIMENSIONS": "Dimensions",
+	"DURATION": "Duration",
+	"ALT_TEXT": "Alt text",
+	"SPOILER": "Spoiler",
+	"COPY_LINK": "Copy Link",
+	"COPIED": "Link copied."
+}
