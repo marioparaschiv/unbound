@@ -3,6 +3,7 @@ import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry'
 import snapshotsCommand from '~/commands/device/snapshots';
 import installCommand from '~/commands/device/install';
 import restoreCommand from '~/commands/device/restore';
+import commandCommand from '~/commands/debug/command';
 import inspectCommand from '~/commands/debug/inspect';
 import modulesCommand from '~/commands/debug/modules';
 import profileCommand from '~/commands/debug/profile';
@@ -117,7 +118,14 @@ export const debugGroup: CommandGroup = {
 		{ title: 'Addons', entries: [pushCommand, reloadCommand] },
 		{
 			title: 'Runtime',
-			entries: [evalCommand, openCommand, routeCommand, reportCommand, bisectCommand],
+			entries: [
+				evalCommand,
+				commandCommand,
+				openCommand,
+				routeCommand,
+				reportCommand,
+				bisectCommand,
+			],
 		},
 		{ title: 'Discord modules', entries: [modulesCommand, traceCommand] },
 		{ title: 'Native', entries: [viewsCommand, inspectCommand, spansCommand, hookCommand] },
