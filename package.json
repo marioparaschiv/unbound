@@ -75,6 +75,7 @@
 		"plugins:banners": "bun packages/plugin-scripts/src/generate-plugin-banners.ts",
 		"plugins:readme": "bun packages/plugin-scripts/src/generate-plugins-readme.ts",
 		"plugins:sync-icons": "bun packages/plugin-scripts/src/sync-plugin-icons.ts",
+		"plugins:release": "bun packages/plugin-scripts/src/release-plugin.ts",
 		"plugins:device-matrix": "bun packages/plugin-scripts/src/device-matrix.ts",
 		"plugins:collect-device-matrix": "bun packages/plugin-scripts/src/collect-device-matrix.ts",
 		"plugins:run-device-matrix": "bun packages/plugin-scripts/src/run-device-matrix.ts",
