@@ -119,6 +119,10 @@ func runValidate(args []string) error {
 		return err
 	}
 
+	if err := usePinnedJDK(); err != nil {
+		return err
+	}
+
 	if err := runModuleGradle(rootPath, ":module:testDebugUnitTest", defaultRunner); err != nil {
 		return err
 	}
