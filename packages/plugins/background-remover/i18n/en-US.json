@@ -1,0 +1,7 @@
+{
+	"REMOVE_BACKGROUND": "Remove Background",
+	"WORKING": "Removing the background…",
+	"ADDED": "Added the cutout to your message.",
+	"NO_SUBJECT": "Couldn't find a subject to cut out of this image.",
+	"FAILED": "Couldn't remove the background."
+}

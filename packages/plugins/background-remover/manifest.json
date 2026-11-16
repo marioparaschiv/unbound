@@ -1,0 +1,17 @@
+{
+	"id": "unbound.background-remover",
+	"name": "Background Remover",
+	"description": "Cuts the subject out of an image in a message and adds it to your message as a transparent PNG.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "MagicWandIcon",
+	"main": "index.tsx"
+}
