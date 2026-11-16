@@ -1,0 +1,4 @@
+{
+	"OPENING": "Opening {name}…",
+	"FAILED": "Couldn't open the PDF, so it opens in the browser."
+}

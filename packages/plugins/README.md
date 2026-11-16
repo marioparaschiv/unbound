@@ -1,6 +1,6 @@
 # Plugins
 
-161 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+162 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -110,6 +110,7 @@
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Normalize Names](https://unbound.rip/addons/unbound.normalize-names): Shows names written in fancy Unicode, such as 𝓯𝓪𝓷𝓬𝔂, ｗｉｄｅ or ᴛɪɴʏ letters, as plain letters in chat.
 - <img src="../../assets/plugins/readme-icons/bell-z-icon.svg" width="20" height="20" align="absmiddle" alt=""> [One Ping Per DM](https://unbound.rip/addons/unbound.one-ping-per-dm): Plays the in-app message sound only for the first unread message in a DM, until you read it.
 - <img src="../../assets/plugins/readme-icons/forum-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Override Forum Defaults](https://unbound.rip/addons/unbound.override-forum-defaults): Sets your own default layout and sort order for forum channels. You can still change them per channel.
+- <img src="../../assets/plugins/readme-icons/file-icon.svg" width="20" height="20" align="absmiddle" alt=""> [PDF Viewer](https://unbound.rip/addons/unbound.pdf-viewer): Opens PDF attachments in your phone's PDF viewer, with pages, search and sharing, instead of a browser.
 - <img src="../../assets/plugins/readme-icons/shield-user-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Permissions Viewer](https://unbound.rip/addons/unbound.permissions-viewer): View the permissions a member or channel has, and the roles of a server.
 - <img src="../../assets/plugins/readme-icons/video-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Picture In Picture](https://unbound.rip/addons/unbound.picture-in-picture): Adds a picture in picture button to videos and video embeds such as YouTube in the media viewer, so they keep playing in a floating window.
 - <img src="../../assets/plugins/readme-icons/laptop-phone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Platform Indicators](https://unbound.rip/addons/unbound.platform-indicators): Shows which platforms users are online on, such as desktop, mobile, web, console or VR, in the member list, profiles and messages.
