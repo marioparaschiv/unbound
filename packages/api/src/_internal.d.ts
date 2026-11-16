@@ -4458,6 +4458,7 @@ export type NativeInspectedValue = {
 	/** The class of an object or class value. */
 	className?: string;
 };
+/** An argument to a Java call: a tagged value or a handle. */
 export type NativeJavaArgument = NativeJavaValue | NativeJavaHandle;
 /** A key from `java.createAssociationKey` that names one associated value. */
 export type NativeJavaAssociationKey = NativeHandle;
@@ -4559,10 +4560,11 @@ export type NativeJavaBridge = {
 	/** Drops the plugin's hold on a handle so the loader can free the object. */
 	release(handle: NativeJavaReference): void;
 };
-/** An argument to a Java call: a tagged value or a handle. */
 /** Bytes passed as a Java `byte[]` argument, up to 32 MB per call. */
 export type NativeJavaBytes = {
+	/** Marks the argument as raw bytes. */
 	type: 'bytes';
+	/** The bytes, copied into a new `byte[]`. */
 	value: Uint8Array | ArrayBuffer;
 };
 /** An argument to a Java call: a value, a handle, or bytes for a `byte[]` parameter. */

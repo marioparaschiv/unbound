@@ -5,7 +5,11 @@ export type BisectState = {
 	round: number;
 };
 
-export type BisectResult = { culprit: string | null };
+/** How a finished bisect ended. */
+export type BisectResult = {
+	/** The plugin that causes the problem, or `null` when the problem happens with every plugin off. */
+	culprit: string | null;
+};
 
 /**
  * @description Starts a bisect over the enabled plugins, first checking the problem with every plugin off.
