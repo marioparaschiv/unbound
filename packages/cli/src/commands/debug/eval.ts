@@ -3,10 +3,17 @@ import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry'
 
 import { lazyHandler } from '~/lib/lazy-handler';
 import { bridgePortField } from '~/lib/context';
-import { Type } from '~/lib/schema';
+import { defaulted, Type } from '~/lib/schema';
 
 const schema = Type.Object({
 	code: Type.String({ description: 'The JavaScript to evaluate on the device.' }),
+	native: defaulted(
+		Type.Boolean({
+			description:
+				'Give the code a `native` variable: a native bridge with every capability, kept for the debugger session. Development builds only.',
+		}),
+		false,
+	),
 	port: bridgePortField,
 	timeout: Type.Optional(
 		Type.Integer({

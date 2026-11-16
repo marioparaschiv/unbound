@@ -241,7 +241,7 @@ Keys built at run time, such as `messages[name]`, are not found. The report coun
 | `ubd debug status` | Shows the device, its Discord, loader and client versions, started plugins and native resources. `--watch` reports which resources keep growing. |
 | `ubd debug open <screen>` | Opens an Unbound or Discord settings screen from anywhere. `--params` takes route parameters as JSON. |
 | `ubd debug route` | Prints the focused navigation route, its params and navigator path. |
-| `ubd debug eval <code>` | Evaluates JavaScript in the client and prints the result and console output. `--timeout` in milliseconds. |
+| `ubd debug eval <code>` | Evaluates JavaScript in the client and prints the result and console output. `--timeout` in milliseconds. `--native` gives the code a `native` variable, a native bridge with every capability that lasts for the debugger session (development builds only). |
 | `ubd debug reload` | Reloads the bundle and waits for it to reconnect to the bridge. `--timeout` defaults to `60000`. |
 | `ubd debug modules [pattern]` | Searches Metro modules by file path or export name: id, loaded state, exports. `--max` defaults to `40`. |
 | `ubd debug trace <props...>` | Records calls to a Discord module function, such as `generateMessageRowData`, and summarises arguments and results. |

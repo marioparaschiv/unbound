@@ -23,6 +23,7 @@ import {
 	listViews,
 	resetViewFinder,
 } from '~/debugger/view-finder.dev';
+import { installDevNative, removeDevNative } from '~/debugger/dev-native.dev';
 import { isTrusted, promptToConnect } from '~/debugger/discovery-prompt.dev';
 import { answerExplorer, resetExplorer } from '~/debugger/explorer.dev';
 import type { DiscoveredBridge } from '~/debugger/bridge-service.dev';
@@ -75,6 +76,7 @@ const DEBUG_REPORT_GLOBAL = '__UNBOUND_DEBUG_REPORT__';
 export function start() {
 	stopped = false;
 	Reflect.set(globalThis, DEBUG_REPORT_GLOBAL, readDebugReport);
+	installDevNative();
 
 	// A loader with `UnboundNative.logs` streams console output with every other source, so the hook is only
 	// patched on older loaders.
@@ -100,6 +102,7 @@ export function start() {
 export function stop() {
 	stopped = true;
 	Reflect.deleteProperty(globalThis, DEBUG_REPORT_GLOBAL);
+	removeDevNative();
 	Patcher.unpatchAll();
 
 	clearReconnectTimer();
