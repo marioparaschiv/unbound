@@ -1671,6 +1671,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/message-delivery-receipts": {
+      "name": "message-delivery-receipts",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/message-latency": {
       "name": "message-latency",
       "dependencies": {
@@ -5067,6 +5081,8 @@
     "message-burst": ["message-burst@workspace:packages/plugins/message-burst"],
 
     "message-colors": ["message-colors@workspace:packages/plugins/message-colors"],
+
+    "message-delivery-receipts": ["message-delivery-receipts@workspace:packages/plugins/message-delivery-receipts"],
 
     "message-latency": ["message-latency@workspace:packages/plugins/message-latency"],
 
