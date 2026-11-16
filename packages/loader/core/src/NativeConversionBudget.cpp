@@ -60,3 +60,20 @@ bool NativeConversionBudget::addName(size_t count)
 {
     return count > 0 && count <= profile_.maximumNameBytes && addBytes(count);
 }
+
+bool NativeConversionBudget::addBinary(size_t count)
+{
+    if (count > profile_.maximumBinaryBytes - binary)
+    {
+        return false;
+    }
+
+    binary += count;
+    encoded += (count + 2) / 3 * 4 + 2;
+    return true;
+}
+
+size_t NativeConversionBudget::encodedBinaryBytes() const
+{
+    return encoded;
+}

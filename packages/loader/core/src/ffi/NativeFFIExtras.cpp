@@ -802,6 +802,126 @@ jsi::Value read(jsi::Runtime &runtime, const jsi::Value *args, std::size_t count
     return readValue(runtime, type, buffer.data());
 }
 
+static constexpr std::size_t kMaximumByteTransfer = 64 * 1024 * 1024;
+
+std::optional<std::vector<std::uint8_t>> copyMemorySafely(const void *pointer, std::size_t length)
+{
+    std::vector<std::uint8_t> bytes(length);
+    if (length && !readMemorySafely(pointer, bytes.data(), length))
+    {
+        return std::nullopt;
+    }
+
+    return bytes;
+}
+
+bool writeAllocatedMemory(void *pointer, const std::uint8_t *bytes, std::size_t length)
+{
+    if (length == 0)
+    {
+        return true;
+    }
+
+    if (!isAllocatedRange(pointer, length))
+    {
+        return false;
+    }
+
+    std::memcpy(pointer, bytes, length);
+    return true;
+}
+
+namespace {
+    class OwnedBytes final : public jsi::MutableBuffer
+    {
+    public:
+        explicit OwnedBytes(std::vector<std::uint8_t> bytes) : bytes_(std::move(bytes)) {}
+
+        std::size_t size() const override
+        {
+            return bytes_.size();
+        }
+
+        std::uint8_t *data() override
+        {
+            return bytes_.data();
+        }
+
+    private:
+        std::vector<std::uint8_t> bytes_;
+    };
+
+    std::size_t lengthArgument(jsi::Runtime &runtime, const jsi::Value &value, const char *method)
+    {
+        if (!value.isNumber() || value.getNumber() < 0 || value.getNumber() > kMaximumByteTransfer
+            || value.getNumber()
+                   != static_cast<double>(static_cast<std::size_t>(value.getNumber())))
+        {
+            throw std::invalid_argument(std::string(method) + " expects a byte length up to 64 MB");
+        }
+
+        return static_cast<std::size_t>(value.getNumber());
+    }
+}
+
+jsi::Value readBytes(jsi::Runtime &runtime, const jsi::Value *args, std::size_t count)
+{
+    if (count < 2)
+    {
+        throw std::invalid_argument("ffi.readBytes expects a pointer and a length");
+    }
+
+    auto *base = static_cast<std::uint8_t *>(pointerArgument(runtime, args[0], "ffi.readBytes"));
+    std::size_t length = lengthArgument(runtime, args[1], "ffi.readBytes");
+    std::size_t offset = offsetArgument(runtime, args, count, 2);
+    std::optional<std::vector<std::uint8_t>> bytes = copyMemorySafely(base + offset, length);
+    if (!bytes)
+    {
+        throw std::invalid_argument("ffi.readBytes could not read that address");
+    }
+
+    jsi::ArrayBuffer buffer(runtime, std::make_shared<OwnedBytes>(std::move(*bytes)));
+    return jsi::Uint8Array(runtime, buffer, 0, length);
+}
+
+jsi::Value writeBytes(jsi::Runtime &runtime, const jsi::Value *args, std::size_t count)
+{
+    if (count < 2 || !args[1].isObject())
+    {
+        throw std::invalid_argument("ffi.writeBytes expects a pointer and a Uint8Array");
+    }
+
+    auto *base = static_cast<std::uint8_t *>(pointerArgument(runtime, args[0], "ffi.writeBytes"));
+    std::size_t offset        = offsetArgument(runtime, args, count, 2);
+    jsi::Object object        = args[1].asObject(runtime);
+    const std::uint8_t *bytes = nullptr;
+    std::size_t length        = 0;
+    if (object.isTypedArray(runtime))
+    {
+        jsi::TypedArray array   = object.getTypedArray(runtime);
+        jsi::ArrayBuffer buffer = array.buffer(runtime);
+        bytes                   = buffer.data(runtime) + array.byteOffset(runtime);
+        length                  = array.byteLength(runtime);
+    }
+    else if (object.isArrayBuffer(runtime))
+    {
+        jsi::ArrayBuffer buffer = object.getArrayBuffer(runtime);
+        bytes                   = buffer.data(runtime);
+        length                  = buffer.size(runtime);
+    }
+    else
+    {
+        throw std::invalid_argument("ffi.writeBytes expects a Uint8Array or ArrayBuffer");
+    }
+
+    if (!writeAllocatedMemory(base + offset, bytes, length))
+    {
+        throw std::invalid_argument("ffi.writeBytes only writes inside memory from ffi.alloc");
+    }
+
+    return jsi::Value::undefined();
+}
+
 jsi::Value write(jsi::Runtime &runtime, const jsi::Value *args, std::size_t count)
 {
     if (count < 3)

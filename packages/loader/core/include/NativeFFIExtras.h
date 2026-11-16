@@ -46,6 +46,12 @@ facebook::jsi::Value release(facebook::jsi::Runtime &runtime, const facebook::js
                              std::size_t count);
 facebook::jsi::Value read(facebook::jsi::Runtime &runtime, const facebook::jsi::Value *args,
                           std::size_t count);
+facebook::jsi::Value readBytes(facebook::jsi::Runtime &runtime, const facebook::jsi::Value *args,
+                               std::size_t count);
+facebook::jsi::Value writeBytes(facebook::jsi::Runtime &runtime, const facebook::jsi::Value *args,
+                                std::size_t count);
+std::optional<std::vector<std::uint8_t>> copyMemorySafely(const void *pointer, std::size_t length);
+bool writeAllocatedMemory(void *pointer, const std::uint8_t *bytes, std::size_t length);
 facebook::jsi::Value write(facebook::jsi::Runtime &runtime, const facebook::jsi::Value *args,
                            std::size_t count);
 facebook::jsi::Value callback(facebook::jsi::Runtime &runtime, const facebook::jsi::Value *args,

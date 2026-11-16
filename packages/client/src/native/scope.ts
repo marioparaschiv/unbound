@@ -274,6 +274,7 @@ export function createScopedNativeBridge(
 		struct: scopeBridgeMethod(objcSource, 'struct', 'objc.struct'),
 		array: scopeBridgeMethod(objcSource, 'array', 'objc.array'),
 		data: scopeBridgeMethod(objcSource, 'data', 'objc.data'),
+		bytes: scopeBridgeMethod(objcSource, 'bytes', 'objc.bytes'),
 		findClasses: scopeBridgeMethod(objcSource, 'findClasses', 'objc.findClasses'),
 		block: (signature, implementation) =>
 			scopeBridgeMethod(

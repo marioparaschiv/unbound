@@ -9,7 +9,6 @@ const KEY_DURATION = 9;
 const KEY_WIDTH = 18;
 const KEY_HEIGHT = 19;
 const KEY_ROTATION = 24;
-const BASE64_NO_WRAP = 2;
 const ANTI_ALIAS = 1;
 
 type Java = NativeBridge['java'];
@@ -70,7 +69,7 @@ function drawCaption(
 
 /**
  * @description Reads video frames on Android with `MediaMetadataRetriever`, crops and scales them as bitmaps, draws
- * the caption with a `Canvas`, and copies their RGBA bytes out as base64.
+ * the caption with a `Canvas`, and copies their RGBA bytes out.
  * @param native The plugin's native bridge.
  * @param path The video's absolute path.
  * @returns The reader, or `undefined` when the video can't be opened.
@@ -146,12 +145,7 @@ export function createFrameReader({ java }: NativeBridge, path: string): FrameRe
 
 			java.invoke(frame, 'copyPixelsToBuffer', [buffer]);
 
-			const rgba = textOf(
-				java.invoke(java.getClass('android.util.Base64'), 'encodeToString', [
-					javaReference(java.invoke(buffer, 'array', []))!,
-					int(BASE64_NO_WRAP),
-				]),
-			);
+			const rgba = java.bytes(javaReference(java.invoke(buffer, 'array', []))!);
 
 			for (const bitmap of [decoded, full, croppedBitmap, frame])
 				java.invoke(bitmap, 'recycle', []);

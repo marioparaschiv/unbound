@@ -1,5 +1,7 @@
 import type {
 	NativeJavaArgument,
+	NativeJavaBytes,
+	NativeJavaCallArgument,
 	NativeJavaAssociationKey,
 	NativeJavaBatchOperation,
 	NativeJavaBridge,
@@ -29,6 +31,8 @@ export type JavaPlain =
 	| undefined
 	| NativeJavaValue
 	| NativeJavaHandle
+	| NativeJavaBytes
+	| Uint8Array
 	| JavaPlain[];
 
 /** A method a test registers on a Java class: it receives the object and the call's plain arguments, and returns a plain value. */
@@ -120,9 +124,10 @@ const TAGGED = new Set([
 	'double',
 	'char',
 	'array',
+	'bytes',
 ]);
 
-function isTagged(value: JavaPlain): value is NativeJavaValue {
+function isTagged(value: JavaPlain): value is NativeJavaValue | NativeJavaBytes {
 	return (
 		typeof value === 'object' &&
 		value !== null &&
@@ -215,6 +220,8 @@ export function createFakeJava(log: NativeCallLog = createCallLog()): FakeJava {
 				return brand<NativeJavaHandle>(objects.get(value.value) ?? {});
 			case 'array':
 				return value.value.map(plain);
+			case 'bytes':
+				return new Uint8Array(value.value);
 			default:
 				return value.value;
 		}
@@ -246,7 +253,7 @@ export function createFakeJava(log: NativeCallLog = createCallLog()): FakeJava {
 			return { type: 'handle', value: value.id };
 		}
 
-		return isTagged(value) ? value : { type: 'null' };
+		return isTagged(value) && value.type !== 'bytes' ? value : { type: 'null' };
 	}
 
 	function memberOf(
@@ -289,7 +296,11 @@ export function createFakeJava(log: NativeCallLog = createCallLog()): FakeJava {
 		}
 	}
 
-	function invoke(reference: NativeJavaReference, name: string, args: NativeJavaArgument[] = []) {
+	function invoke(
+		reference: NativeJavaReference,
+		name: string,
+		args: NativeJavaCallArgument[] = [],
+	) {
 		const target = resolve(reference, 'invoke');
 
 		log.record({ bridge: 'java', method: 'invoke', target: target.className, name, args });

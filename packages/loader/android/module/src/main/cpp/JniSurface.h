@@ -22,6 +22,7 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
     X(installer, "installer", "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING)    \
     X(javaGetClass, "javaGetClass", "(" UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING)                 \
     X(javaClassName, "javaClassName", "(" UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING)               \
+    X(javaBytes, "javaBytes", "(" UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING)                       \
     X(javaDescribe, "javaDescribe", "(" UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING)                 \
     X(javaFindClasses, "javaFindClasses", "(" UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING)           \
     X(javaConstruct, "javaConstruct",                                                              \

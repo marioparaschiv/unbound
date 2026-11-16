@@ -1,5 +1,5 @@
 import { encodeGif } from '@unbound-plugins/shared/media/gif/gif-encoder';
-import { fromBase64, toBase64 } from '@unbound-plugins/shared/media/gif/base64';
+import { toBase64 } from '@unbound-plugins/shared/media/gif/base64';
 import { attachFile } from '@unbound-plugins/shared/composer/attach-file';
 import { buildPalette } from '@unbound-plugins/shared/media/gif/palette';
 import type { NativeBridge } from '@unbound-app/api/native';
@@ -42,7 +42,7 @@ export async function makePetPet(
 
 		if (!pixels) throw new Error('the image could not be decoded');
 
-		const frames = petpetFrames(fromBase64(pixels), SOURCE_SIZE);
+		const frames = petpetFrames(pixels, SOURCE_SIZE);
 		const gif = encodeGif(frames, {
 			width: FRAME_SIZE,
 			height: FRAME_SIZE,

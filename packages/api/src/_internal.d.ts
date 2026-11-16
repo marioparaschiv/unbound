@@ -142,6 +142,7 @@ export declare const NATIVE_BRIDGE_METHOD_CAPABILITIES: {
 	readonly 'objc.struct': 'native.objc.classes';
 	readonly 'objc.array': 'native.objc.classes';
 	readonly 'objc.data': 'native.objc.classes';
+	readonly 'objc.bytes': 'native.objc.classes';
 	readonly 'objc.hook': 'native.objc.hooks';
 	readonly 'objc.block': 'native.objc.blocks';
 	readonly 'objc.callBlock': 'native.objc.blocks';
@@ -158,6 +159,8 @@ export declare const NATIVE_BRIDGE_METHOD_CAPABILITIES: {
 	readonly 'ffi.free': 'native.ffi.memory';
 	readonly 'ffi.read': 'native.ffi.memory';
 	readonly 'ffi.write': 'native.ffi.memory';
+	readonly 'ffi.readBytes': 'native.ffi.memory';
+	readonly 'ffi.writeBytes': 'native.ffi.memory';
 	readonly 'ffi.callback': 'native.ffi.callbacks';
 	readonly 'ffi.releaseCallback': 'native.ffi.callbacks';
 	readonly 'ffi.rebind': 'native.ffi.rebind';
@@ -180,6 +183,7 @@ export declare const NATIVE_BRIDGE_METHOD_CAPABILITIES: {
 	readonly 'runtime.subscribe': 'native.runtime.events';
 	readonly 'java.getClass': 'native.java.classes';
 	readonly 'java.className': 'native.java.classes';
+	readonly 'java.bytes': 'native.java.classes';
 	readonly 'java.describe': 'native.java.classes';
 	readonly 'java.findClasses': 'native.java.classSearch';
 	readonly 'java.construct': 'native.java.construct';
@@ -4062,6 +4066,10 @@ export type NativeFFIBridge = {
 	free(pointer: NativePointer): boolean;
 	/** Reads a value of a type at a pointer, `offset` bytes in, failing safely on an unreadable address. Needs `native.ffi.memory`. */
 	read(pointer: NativePointer, type: NativeFFIType, offset?: number): NativeFFIValue;
+	/** Copies `length` bytes at a pointer, `offset` bytes in, into a `Uint8Array`, up to 64 MB. Needs `native.ffi.memory`. */
+	readBytes(pointer: NativePointer, length: number, offset?: number): Uint8Array;
+	/** Copies bytes into memory from `alloc`, `offset` bytes in. Needs `native.ffi.memory`. */
+	writeBytes(pointer: NativePointer, bytes: Uint8Array | ArrayBuffer, offset?: number): void;
 	/** Writes a value of a type into memory from `alloc`, `offset` bytes in. Needs `native.ffi.memory`. */
 	write(
 		pointer: NativePointer,
@@ -4444,7 +4452,6 @@ export type NativeInspectedValue = {
 	/** The class of an object or class value. */
 	className?: string;
 };
-/** An argument to a Java call: a tagged value or a handle. */
 export type NativeJavaArgument = NativeJavaValue | NativeJavaHandle;
 /** A key from `java.createAssociationKey` that names one associated value. */
 export type NativeJavaAssociationKey = NativeHandle;
@@ -4497,16 +4504,22 @@ export type NativeJavaBridge = {
 	): void;
 	/** Reads an object's class name, as a string value. */
 	className(handle: NativeJavaReference): NativeJavaValue;
+	/** Copies a `byte[]` into a `Uint8Array`, up to 64 MB. Pass bytes the other way as `{ type: 'bytes', value }`. */
+	bytes(handle: NativeJavaReference): Uint8Array;
 	/** Calls the constructor matching `args` and returns a handle the scope holds until released. */
-	construct(name: string, args?: NativeJavaArgument[]): NativeJavaHandle;
+	construct(name: string, args?: NativeJavaCallArgument[]): NativeJavaHandle;
 	/** Checks whether the object has a method `name` callable with `args`, as a boolean value. */
 	respondsTo(
 		handle: NativeJavaReference,
 		name: string,
-		args?: NativeJavaArgument[],
+		args?: NativeJavaCallArgument[],
 	): NativeJavaValue;
 	/** Calls a method on the JavaScript thread. */
-	invoke(handle: NativeJavaReference, name: string, args?: NativeJavaArgument[]): NativeJavaValue;
+	invoke(
+		handle: NativeJavaReference,
+		name: string,
+		args?: NativeJavaCallArgument[],
+	): NativeJavaValue;
 	/** Resolves a method by name and parameter types once, for repeated calls through `invokePrepared`. */
 	prepare(
 		target: NativeJavaReference,
@@ -4517,13 +4530,13 @@ export type NativeJavaBridge = {
 	invokePrepared(
 		plan: NativeJavaCallPlan,
 		target: NativeJavaReference,
-		args?: NativeJavaArgument[],
+		args?: NativeJavaCallArgument[],
 	): NativeJavaValue;
 	/** Calls a prepared method on the main thread and resolves with its result, like `invokeAsync`. */
 	invokePreparedAsync(
 		plan: NativeJavaCallPlan,
 		target: NativeJavaReference,
-		args?: NativeJavaArgument[],
+		args?: NativeJavaCallArgument[],
 	): NativeCancelablePromise<NativeJavaValue>;
 	/** Frees a call plan; using it afterwards throws. */
 	disposePlan(plan: NativeJavaCallPlan): void;
@@ -4531,7 +4544,7 @@ export type NativeJavaBridge = {
 	invokeAsync(
 		handle: NativeJavaReference,
 		name: string,
-		args?: NativeJavaArgument[],
+		args?: NativeJavaCallArgument[],
 	): NativeCancelablePromise<NativeJavaValue>;
 	/** Reads a field by name. */
 	getField(handle: NativeJavaReference, name: string): NativeJavaValue;
@@ -4540,6 +4553,14 @@ export type NativeJavaBridge = {
 	/** Drops the plugin's hold on a handle so the loader can free the object. */
 	release(handle: NativeJavaReference): void;
 };
+/** An argument to a Java call: a tagged value or a handle. */
+/** Bytes passed as a Java `byte[]` argument, up to 32 MB per call. */
+export type NativeJavaBytes = {
+	type: 'bytes';
+	value: Uint8Array | ArrayBuffer;
+};
+/** An argument to a Java call: a value, a handle, or bytes for a `byte[]` parameter. */
+export type NativeJavaCallArgument = NativeJavaArgument | NativeJavaBytes;
 /** A method resolved once by `java.prepare`, for calling many times without the lookup. */
 export type NativeJavaCallPlan = NativeJavaHandle & {
 	readonly [nativeJavaCallPlan]: true;
@@ -4915,6 +4936,8 @@ export type NativeObjCBridge = {
 	array(handle: NativeObjectHandle): NativeObjCResult[];
 	/** Copies bytes into a new `NSData` object. */
 	data(value: ArrayBuffer | Uint8Array): NativeObjectHandle;
+	/** Copies an `NSData` handle or pointer into a `Uint8Array`, up to 64 MB. */
+	bytes(data: NativeObjectHandle): Uint8Array;
 	/** Hooks a method by class and selector, or a class method with a `+` before the selector; handlers run in registration order, and the scope removes the hook on dispose. */
 	hook<Receiver extends boolean = true>(
 		className: string,

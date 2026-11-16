@@ -21,6 +21,7 @@
 #include "JavaHandleRelease.h"
 #include "JniCall.h"
 #include "LoaderAddonActivity.h"
+#include "LoaderBase64.h"
 #include "LoaderBootstrap.h"
 #include "LoaderJSIJSON.h"
 #include "LoaderLog.h"
@@ -62,6 +63,27 @@ static void define(jsi::Runtime &runtime, jsi::Object &target, const char *name,
             }));
 }
 
+namespace {
+    class OwnedJavaBytes final : public jsi::MutableBuffer
+    {
+    public:
+        explicit OwnedJavaBytes(std::vector<std::uint8_t> bytes) : bytes_(std::move(bytes)) {}
+
+        size_t size() const override
+        {
+            return bytes_.size();
+        }
+
+        uint8_t *data() override
+        {
+            return bytes_.data();
+        }
+
+    private:
+        std::vector<std::uint8_t> bytes_;
+    };
+}
+
 static void requireArguments(size_t count, size_t minimum, const char *message)
 {
     if (count < minimum)
@@ -84,6 +106,21 @@ static jsi::Object makeJavaNamespace(jsi::Runtime &runtime, const JavaCallbacks 
                requireArguments(count, 1, "Java class names require a handle");
                return javaSynchronously(rt, callbacks, callbacks.javaClassName,
                                         {serializeJavaHandle(rt, args[0])});
+           });
+    define(runtime, java, "bytes", 1,
+           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               requireArguments(count, 1, "java.bytes requires a byte[] handle");
+               std::string encoded = callJavaString(callbacks, callbacks.javaBytes,
+                                                    {serializeJavaHandle(rt, args[0])});
+               std::optional<std::vector<std::uint8_t>> bytes = loader::base64Decode(encoded);
+               if (!bytes)
+               {
+                   throw std::runtime_error("java.bytes received invalid data");
+               }
+
+               size_t length = bytes->size();
+               jsi::ArrayBuffer buffer(rt, std::make_shared<OwnedJavaBytes>(std::move(*bytes)));
+               return jsi::Value(rt, jsi::Uint8Array(rt, buffer, 0, length));
            });
     define(runtime, java, "describe", 1,
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
@@ -271,6 +308,14 @@ static jsi::Object makeFFINamespace(jsi::Runtime &runtime)
     define(runtime, ffi, "write", 4, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
         return loader::ffi::write(rt, args, count);
     });
+    define(runtime, ffi, "readBytes", 3,
+           [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               return loader::ffi::readBytes(rt, args, count);
+           });
+    define(runtime, ffi, "writeBytes", 3,
+           [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               return loader::ffi::writeBytes(rt, args, count);
+           });
     define(runtime, ffi, "callback", 2, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
         return loader::ffi::callback(rt, args, count);
     });

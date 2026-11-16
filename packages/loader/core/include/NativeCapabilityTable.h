@@ -16,7 +16,7 @@ struct NativeCapabilityBinding {
     std::span<const std::string_view> methods;
 };
 
-inline constexpr std::array<std::string_view, 7> kObjcClassesMethods = {
+inline constexpr std::array<std::string_view, 8> kObjcClassesMethods = {
     "getClass",
     "alloc",
     "className",
@@ -24,6 +24,7 @@ inline constexpr std::array<std::string_view, 7> kObjcClassesMethods = {
     "struct",
     "array",
     "data",
+    "bytes",
 };
 inline constexpr std::array<std::string_view, 7> kObjcInvokeMethods = {
     "call",
@@ -81,11 +82,13 @@ inline constexpr std::array<std::string_view, 1> kFfiSymbolsMethods = {
 inline constexpr std::array<std::string_view, 1> kFfiCallMethods = {
     "call",
 };
-inline constexpr std::array<std::string_view, 4> kFfiMemoryMethods = {
+inline constexpr std::array<std::string_view, 6> kFfiMemoryMethods = {
     "alloc",
     "free",
     "read",
     "write",
+    "readBytes",
+    "writeBytes",
 };
 inline constexpr std::array<std::string_view, 2> kFfiCallbacksMethods = {
     "callback",
@@ -116,9 +119,10 @@ inline constexpr std::array<std::string_view, 8> kFabricAsyncMethods = {
 };
 inline constexpr std::array<std::string_view, 0> kRuntimeEventsMethods = {
 };
-inline constexpr std::array<std::string_view, 5> kJavaClassesMethods = {
+inline constexpr std::array<std::string_view, 6> kJavaClassesMethods = {
     "getClass",
     "className",
+    "bytes",
     "describe",
     "respondsTo",
     "release",

@@ -53,6 +53,28 @@ class NativeJavaTest {
     }
 
     @Test
+    fun bytesTravelAsByteArraysBothWays() {
+        val encoded = java.util.Base64.getEncoder().encodeToString(byteArrayOf(1, 2, 3, -1))
+        val buffer = value(
+            NativeJava.invoke(
+                NativeJava.getClass("java.nio.ByteBuffer"),
+                "wrap",
+                "[{\"type\":\"bytes\",\"value\":\"$encoded\"}]",
+            ),
+        ).getString("value")
+        val array = value(NativeJava.invoke("{\"id\":\"$buffer\"}", "array", "[]")).getString("value")
+
+        assertEquals(encoded, NativeJava.bytes("{\"id\":\"$array\"}"))
+    }
+
+    @Test
+    fun bytesRejectsHandlesThatAreNotByteArrays() {
+        val builder = NativeJava.construct("java.lang.StringBuilder", "[]")
+
+        assertThrows(IllegalArgumentException::class.java) { NativeJava.bytes(builder) }
+    }
+
+    @Test
     fun constructPicksTheMostSpecificOverload() {
         val color = NativeJava.construct("android.graphics.drawable.ColorDrawable", "[]")
         val insets = listOf(10, 20, 30, 40).joinToString(",") { """{"type":"int","value":$it}""" }

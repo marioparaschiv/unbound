@@ -141,10 +141,9 @@ export function createFrameReader(
 	const AVURLAsset = objc.getClass('AVURLAsset');
 	const CIImage = objc.getClass('CIImage');
 	const CIContext = objc.getClass('CIContext');
-	const NSData = objc.getClass('NSData');
 	const msgSend = ffi.symbol('objc_msgSend');
 
-	if (!NSURL || !AVURLAsset || !CIImage || !CIContext || !NSData || !msgSend) return undefined;
+	if (!NSURL || !AVURLAsset || !CIImage || !CIContext || !msgSend) return undefined;
 
 	const url = objc.call(NSURL, 'fileURLWithPath:', path) as NativeObjectHandle;
 	const asset = objc.call(
@@ -213,27 +212,6 @@ export function createFrameReader(
 		return ffi.call(ffi.symbol(name)!, { returnType, args }, ...values) as T;
 	}
 
-	function base64Of(bytes: NativePointer, length: number): string {
-		const data = ffi.call(
-			msgSend!,
-			{ returnType: 'pointer', args: ['class', 'selector', 'pointer', 'u64'] },
-			NSData,
-			'dataWithBytes:length:',
-			bytes,
-			length,
-		);
-
-		return String(
-			ffi.call(
-				msgSend!,
-				{ returnType: 'object', args: ['pointer', 'selector', 'u64'] },
-				data,
-				'base64EncodedStringWithOptions:',
-				0,
-			),
-		);
-	}
-
 	function drawPacked(
 		cgImage: NativePointer,
 		buffer: NativePointer,
@@ -267,7 +245,7 @@ export function createFrameReader(
 		cf('CGContextRelease', 'void', ['pointer'], bitmap);
 	}
 
-	function render(image: NativeObjectHandle, width: number, height: number): string {
+	function render(image: NativeObjectHandle, width: number, height: number): Uint8Array {
 		const bytes = width * height * 4;
 		const buffer = ffi.alloc(bytes);
 		const cgImage = objc.invoke(context, 'createCGImage:fromRect:', [
@@ -281,7 +259,7 @@ export function createFrameReader(
 		try {
 			drawPacked(cgImage, buffer, width, height);
 
-			return base64Of(buffer, bytes);
+			return ffi.readBytes(buffer, bytes);
 		} finally {
 			cf('CGImageRelease', 'void', ['pointer'], cgImage);
 			ffi.free(buffer);

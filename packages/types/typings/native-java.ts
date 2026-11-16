@@ -42,7 +42,13 @@ export type NativeJavaCallPlan = NativeJavaHandle & {
 };
 
 /** An argument to a Java call: a tagged value or a handle. */
+/** Bytes passed as a Java `byte[]` argument, up to 32 MB per call. */
+export type NativeJavaBytes = { type: 'bytes'; value: Uint8Array | ArrayBuffer };
+
 export type NativeJavaArgument = NativeJavaValue | NativeJavaHandle;
+
+/** An argument to a Java call: a value, a handle, or bytes for a `byte[]` parameter. */
+export type NativeJavaCallArgument = NativeJavaArgument | NativeJavaBytes;
 
 /** What a Java hook listener receives for one call of the hooked method. */
 export type NativeJavaHookEvent<Receiver extends boolean = true> = {
@@ -239,16 +245,22 @@ export type NativeJavaBridge = {
 	): void;
 	/** Reads an object's class name, as a string value. */
 	className(handle: NativeJavaReference): NativeJavaValue;
+	/** Copies a `byte[]` into a `Uint8Array`, up to 64 MB. Pass bytes the other way as `{ type: 'bytes', value }`. */
+	bytes(handle: NativeJavaReference): Uint8Array;
 	/** Calls the constructor matching `args` and returns a handle the scope holds until released. */
-	construct(name: string, args?: NativeJavaArgument[]): NativeJavaHandle;
+	construct(name: string, args?: NativeJavaCallArgument[]): NativeJavaHandle;
 	/** Checks whether the object has a method `name` callable with `args`, as a boolean value. */
 	respondsTo(
 		handle: NativeJavaReference,
 		name: string,
-		args?: NativeJavaArgument[],
+		args?: NativeJavaCallArgument[],
 	): NativeJavaValue;
 	/** Calls a method on the JavaScript thread. */
-	invoke(handle: NativeJavaReference, name: string, args?: NativeJavaArgument[]): NativeJavaValue;
+	invoke(
+		handle: NativeJavaReference,
+		name: string,
+		args?: NativeJavaCallArgument[],
+	): NativeJavaValue;
 	/** Resolves a method by name and parameter types once, for repeated calls through `invokePrepared`. */
 	prepare(
 		target: NativeJavaReference,
@@ -259,13 +271,13 @@ export type NativeJavaBridge = {
 	invokePrepared(
 		plan: NativeJavaCallPlan,
 		target: NativeJavaReference,
-		args?: NativeJavaArgument[],
+		args?: NativeJavaCallArgument[],
 	): NativeJavaValue;
 	/** Calls a prepared method on the main thread and resolves with its result, like `invokeAsync`. */
 	invokePreparedAsync(
 		plan: NativeJavaCallPlan,
 		target: NativeJavaReference,
-		args?: NativeJavaArgument[],
+		args?: NativeJavaCallArgument[],
 	): NativeCancelablePromise<NativeJavaValue>;
 	/** Frees a call plan; using it afterwards throws. */
 	disposePlan(plan: NativeJavaCallPlan): void;
@@ -273,7 +285,7 @@ export type NativeJavaBridge = {
 	invokeAsync(
 		handle: NativeJavaReference,
 		name: string,
-		args?: NativeJavaArgument[],
+		args?: NativeJavaCallArgument[],
 	): NativeCancelablePromise<NativeJavaValue>;
 	/** Reads a field by name. */
 	getField(handle: NativeJavaReference, name: string): NativeJavaValue;

@@ -40,6 +40,8 @@ using namespace facebook;
 using namespace facebook::jsi;
 
 namespace loader::ios {
+static constexpr NSUInteger kMaximumObjCByteRead = 64 * 1024 * 1024;
+
 static Value makeFunction(const char *name, unsigned int argCount, Runtime &runtime,
                           const HostFunctionType &handler)
 {
@@ -487,6 +489,34 @@ static void installObjC(Runtime &runtime, Object &objc)
                          return objcHandleResult(rt, data);
                      }));
 
+    objc.setProperty(
+        runtime, "bytes",
+        makeFunction("bytes", 1, runtime,
+                     [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                         id object = nil;
+                         if (count && objcHost(rt, args[0]))
+                         {
+                             object = objcHost(rt, args[0])->value();
+                         }
+                         else if (count && loader::ffi::pointerHost(rt, args[0]))
+                         {
+                             object = (__bridge id) loader::ffi::pointerHost(rt, args[0])->value();
+                         }
+
+                         if (![object isKindOfClass:[NSData class]])
+                         {
+                             throw JSError(rt, "objc.bytes expects an NSData handle or pointer");
+                         }
+
+                         NSData *data = (NSData *) object;
+                         if (data.length > kMaximumObjCByteRead)
+                         {
+                             throw JSError(rt, "objc.bytes reads at most 64 MB");
+                         }
+
+                         return dataBytes(rt, data);
+                     }));
+
     objc.setProperty(runtime, "hook", makeFunction("hook", 3, runtime, makeHook));
     installObjCBlocks(runtime, objc);
     installObjCClassDefinition(runtime, objc);
@@ -505,6 +535,10 @@ static void installFFI(Runtime &runtime, Object &ffi)
     ffi.setProperty(runtime, "free", makeFunction("free", 1, runtime, loader::ffi::release));
     ffi.setProperty(runtime, "read", makeFunction("read", 3, runtime, loader::ffi::read));
     ffi.setProperty(runtime, "write", makeFunction("write", 4, runtime, loader::ffi::write));
+    ffi.setProperty(runtime, "readBytes",
+                    makeFunction("readBytes", 3, runtime, loader::ffi::readBytes));
+    ffi.setProperty(runtime, "writeBytes",
+                    makeFunction("writeBytes", 3, runtime, loader::ffi::writeBytes));
     ffi.setProperty(runtime, "callback",
                     makeFunction("callback", 2, runtime, loader::ffi::callback));
     ffi.setProperty(runtime, "releaseCallback",

@@ -8,17 +8,20 @@ struct NativeConversionProfile {
     size_t maximumBytes;
     size_t maximumStringBytes;
     size_t maximumNameBytes;
+    size_t maximumBinaryBytes;
 };
 
 inline constexpr NativeConversionProfile kNativeValueConversion = {
-    32, 10000, 64 * 1024 * 1024, 64 * 1024 * 1024, 64 * 1024 * 1024,
+    32, 10000, 64 * 1024 * 1024, 64 * 1024 * 1024, 64 * 1024 * 1024, 64 * 1024 * 1024,
 };
 
-inline constexpr NativeConversionProfile kNativePropertiesConversion = {8, 512, 16384, 4096, 64};
+inline constexpr NativeConversionProfile kNativePropertiesConversion = {8, 512, 16384, 4096, 64, 0};
 
-inline constexpr NativeConversionProfile kNativeArgumentsConversion = {8, 512, 16384, 4096, 64};
+inline constexpr NativeConversionProfile kNativeArgumentsConversion = {
+    8, 512, 16384, 4096, 64, 32 * 1024 * 1024,
+};
 
-inline constexpr NativeConversionProfile kNativeBatchConversion = {8, 4096, 65536, 4096, 64};
+inline constexpr NativeConversionProfile kNativeBatchConversion = {8, 4096, 65536, 4096, 64, 0};
 
 inline constexpr size_t kMaximumNativeArguments = 16;
 
@@ -36,10 +39,14 @@ public:
     bool addBytes(size_t count);
     bool addString(size_t count);
     bool addName(size_t count);
+    bool addBinary(size_t count);
+    size_t encodedBinaryBytes() const;
 
 private:
     NativeConversionProfile profile_;
     size_t depth   = 0;
     size_t entries = 0;
     size_t bytes   = 0;
+    size_t binary  = 0;
+    size_t encoded = 0;
 };

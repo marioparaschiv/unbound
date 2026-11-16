@@ -8,7 +8,7 @@ export type Crop = 'original' | 'square';
 
 export type FrameOptions = { width: number; crop: Crop; caption: string };
 
-export type Frame = { width: number; height: number; rgba: string };
+export type Frame = { width: number; height: number; rgba: Uint8Array };
 
 export type FrameReader = {
 	duration(): number;

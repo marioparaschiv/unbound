@@ -147,6 +147,7 @@ export function createScopedJavaBridge({
 	const scopedBridge: NativeJavaBridge = {
 		getClass: (name) => trackHandle(getClass(name)),
 		className: scopeBridgeMethod(source, 'className', 'java.className'),
+		bytes: scopeBridgeMethod(source, 'bytes', 'java.bytes'),
 		describe: scopeBridgeMethod(source, 'describe', 'java.describe'),
 		findClasses: scopeBridgeAsyncMethod(
 			source,

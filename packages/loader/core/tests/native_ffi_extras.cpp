@@ -24,6 +24,23 @@ void allocationsBoundWrites()
     assert(!loader::ffi::allocateMemory(0));
 }
 
+void bytesCopyInAndOutOfAllocatedMemory()
+{
+    auto *memory                 = static_cast<std::uint8_t *>(loader::ffi::allocateMemory(8));
+    const std::uint8_t written[] = {1, 2, 3, 4, 5};
+    assert(loader::ffi::writeAllocatedMemory(memory + 2, written, sizeof(written)));
+    assert(!loader::ffi::writeAllocatedMemory(memory + 4, written, sizeof(written)));
+    assert(loader::ffi::writeAllocatedMemory(memory, written, 0));
+
+    std::uint8_t outside[4] = {};
+    assert(!loader::ffi::writeAllocatedMemory(outside, written, 4));
+
+    auto copied = loader::ffi::copyMemorySafely(memory + 2, 5);
+    assert(copied && *copied == std::vector<std::uint8_t>({1, 2, 3, 4, 5}));
+    assert(loader::ffi::copyMemorySafely(memory, 0)->empty());
+    assert(loader::ffi::freeMemory(memory));
+}
+
 void callbackSlotsRunTheirHandler()
 {
     auto code = loader::ffi::acquireCallbackSlot(
@@ -77,6 +94,7 @@ void rebindingPointsImportsAtTheReplacement()
 int main()
 {
     allocationsBoundWrites();
+    bytesCopyInAndOutOfAllocatedMemory();
     callbackSlotsRunTheirHandler();
     floatCallbacksReturnInFloatRegisters();
     rebindingPointsImportsAtTheReplacement();

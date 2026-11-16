@@ -10,6 +10,7 @@ import java.lang.reflect.Modifier
 
 object NativeJava {
     private const val MAX_RESULT_STRING_LENGTH = 1 shl 20
+    private const val MAX_BYTE_TRANSFER = 64 shl 20
     private const val MAX_LISTED_OVERLOADS = 6
     private const val MAX_PREPARED_CALLS = 256
 
@@ -47,6 +48,13 @@ object NativeJava {
     fun className(handleJSON: String): String {
         val target = resolve(parseHandle(handleJSON))
         return serialize(target.javaClass.name)
+    }
+
+    fun bytes(handleJSON: String): String {
+        val target = resolve(parseHandle(handleJSON))
+        require(target is ByteArray) { "java.bytes expects a byte[] handle" }
+        require(target.size <= MAX_BYTE_TRANSFER) { "java.bytes reads at most 64 MB" }
+        return java.util.Base64.getEncoder().encodeToString(target)
     }
 
     fun describe(name: String): String {
@@ -499,6 +507,8 @@ object NativeJava {
             "double" -> Scalar(boundedDouble(value), java.lang.Double.TYPE)
 
             "array" -> parseArray(value)
+
+            "bytes" -> Scalar(java.util.Base64.getDecoder().decode(value.getString("value")), ByteArray::class.java)
 
             else -> throw IllegalArgumentException("Unsupported Java value type: $type")
         }

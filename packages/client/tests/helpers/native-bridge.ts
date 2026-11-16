@@ -9,7 +9,7 @@ import type {
 	NativeUIScopeFactory,
 	NativePlatformBridge,
 	NativeHandle,
-	NativeJavaArgument,
+	NativeJavaCallArgument,
 	NativeJavaCallPlan,
 	NativeObjCCallPlan,
 	NativeObjCResult,
@@ -81,7 +81,7 @@ export const cleared: unknown[] = [];
 export const unmounted: NativeFabricSurface[] = [];
 export const asynchronouslyUnmounted: NativeFabricSurface[] = [];
 export const cancelled: string[] = [];
-export const javaInvokeArguments: (NativeJavaArgument[] | undefined)[] = [];
+export const javaInvokeArguments: (NativeJavaCallArgument[] | undefined)[] = [];
 export const javaReleased: NativeJavaHandle[] = [];
 export const javaHandle: NativeJavaHandle = Object.create(null);
 const javaCallPlan: NativeJavaCallPlan = Object.create(null);
@@ -190,6 +190,7 @@ const fakeBridge: LoaderBridge = {
 		createAssociationKey: () => nativeHandle,
 		createUIScope: createUnavailableUIScope,
 		data: () => nativeHandle,
+		bytes: () => new Uint8Array(),
 		getAssociatedObject: () => null,
 		getClass: () => nativeHandle,
 		getIvar: () => null,
@@ -240,6 +241,8 @@ const fakeBridge: LoaderBridge = {
 		free: () => true,
 		read: () => 0,
 		write: () => undefined,
+		readBytes: () => new Uint8Array(),
+		writeBytes: () => undefined,
 		callback: () => nativeHandle,
 		releaseCallback: () => true,
 		rebind: () => ({ original: nativeHandle, slots: 0 }),
@@ -269,6 +272,7 @@ const fakeBridge: LoaderBridge = {
 	java: {
 		getClass: () => nativeHandle,
 		className: () => ({ type: 'string', value: 'java.lang.Class' }),
+		bytes: () => new Uint8Array(),
 		describe: (name: string) => ({
 			name,
 			superclass: 'java.lang.Object',
@@ -282,7 +286,7 @@ const fakeBridge: LoaderBridge = {
 		construct: () => javaHandle,
 		findClasses: () => cancellable(Promise.resolve([]), 'findClasses'),
 		respondsTo: () => ({ type: 'boolean', value: true }),
-		invoke: (_handle: NativeJavaReference, _name: string, args?: NativeJavaArgument[]) => {
+		invoke: (_handle: NativeJavaReference, _name: string, args?: NativeJavaCallArgument[]) => {
 			javaInvokeArguments.push(args);
 
 			if (javaInvoke.fails) {
