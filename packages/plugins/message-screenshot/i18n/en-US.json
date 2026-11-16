@@ -1,0 +1,12 @@
+{
+	"SCREENSHOT": "Screenshot",
+	"COUNT": "Messages to include",
+	"COUNT_SUBTITLE": "The message you pressed and the ones right after it that are on screen.",
+	"OUTPUT": "After taking it",
+	"OUTPUT_SUBTITLE": "Open the share sheet, or copy the picture to paste it anywhere.",
+	"OUTPUT_SHARE": "Share",
+	"OUTPUT_COPY": "Copy",
+	"COPIED": "Screenshot copied.",
+	"NOT_VISIBLE": "Scroll so the message is on screen, then try again.",
+	"FAILED": "Couldn't take the screenshot."
+}

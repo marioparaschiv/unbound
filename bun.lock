@@ -1586,6 +1586,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/message-screenshot": {
+      "name": "message-screenshot",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/message-text-size": {
       "name": "message-text-size",
       "dependencies": {
@@ -4828,6 +4842,8 @@
     "message-logger": ["message-logger@workspace:packages/plugins/message-logger"],
 
     "message-menu-editor": ["message-menu-editor@workspace:packages/plugins/message-menu-editor"],
+
+    "message-screenshot": ["message-screenshot@workspace:packages/plugins/message-screenshot"],
 
     "message-text-size": ["message-text-size@workspace:packages/plugins/message-text-size"],
 
