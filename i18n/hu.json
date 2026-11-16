@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "Dokumentáció",
 	"UNBOUND_SUPPORT_SERVER": "Támogatási szerver",
 	"UNBOUND_DEBUG_INFO": "Hibakeresési adatok",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Az Entitlements.xml-t nem sikerült csatolni, ezért a hibakeresési adatok szövegként lettek elküldve.",
 	"UNBOUND_THEME_RESTART_CONFIRM": "Újraindítod most, hogy a téma mindenhol érvényesüljön?",
 	"UNBOUND_FFI_CONSENT_TITLE": "Engedélyezed a közvetlen natív hozzáférést?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} közvetlenül szeretne natív függvényeket hívni. Egy ilyen hozzáféréssel rendelkező bővítmény bármit olvashat és módosíthat a Discordban, és egy benne lévő hiba összeomlaszthatja az alkalmazást. Csak akkor engedélyezd, ha megbízol a forrásában.",

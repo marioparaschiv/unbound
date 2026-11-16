@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "Dokumentacija",
 	"UNBOUND_SUPPORT_SERVER": "Server za podršku",
 	"UNBOUND_DEBUG_INFO": "Informacije za otklanjanje grešaka",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Entitlements.xml nije bilo moguće priložiti pa su informacije za otklanjanje grešaka poslane kao tekst.",
 	"UNBOUND_THEME_RESTART_CONFIRM": "Ponovno pokrenuti sada kako bi se tema primijenila posvuda?",
 	"UNBOUND_FFI_CONSENT_TITLE": "Dopustiti izravan nativni pristup?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} želi izravno pozivati nativne funkcije. Plugin s ovim pristupom može čitati i mijenjati bilo što u Discordu, a greška u njemu može srušiti aplikaciju. Dopusti samo ako vjeruješ njegovom izvoru.",

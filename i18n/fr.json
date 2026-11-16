@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "Documentation",
 	"UNBOUND_SUPPORT_SERVER": "Serveur d’assistance",
 	"UNBOUND_DEBUG_INFO": "Infos de débogage",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Impossible de joindre Entitlements.xml, les infos de débogage ont donc été envoyées en texte.",
 	"UNBOUND_THEME_RESTART_CONFIRM": "Redémarrer maintenant pour que le thème s’applique partout ?",
 	"UNBOUND_FFI_CONSENT_TITLE": "Autoriser l’accès natif direct ?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} veut appeler directement des fonctions natives. Un plugin disposant de cet accès peut lire et modifier n’importe quoi dans Discord, et une erreur de sa part peut faire planter l’application. N’autorisez cet accès que si vous faites confiance à sa provenance.",

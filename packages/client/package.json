@@ -26,6 +26,7 @@
 		"@unbound-app/types": "workspace:*",
 		"@unbound-app/utils": "workspace:*",
 		"@unbound-app/web": "workspace:*",
+		"fflate": "0.8.2",
 		"possess": "catalog:",
 		"zustand": "^5.1.0"
 	},

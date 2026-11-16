@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "Dokumentacja",
 	"UNBOUND_SUPPORT_SERVER": "Serwer wsparcia",
 	"UNBOUND_DEBUG_INFO": "Informacje debugowania",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Nie udało się dołączyć pliku Entitlements.xml, więc informacje debugowania wysłano jako tekst.",
 	"UNBOUND_THEME_RESTART_CONFIRM": "Uruchomić ponownie teraz, aby motyw został zastosowany wszędzie?",
 	"UNBOUND_FFI_CONSENT_TITLE": "Zezwolić na bezpośredni dostęp natywny?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} chce bezpośrednio wywoływać funkcje natywne. Wtyczka z takim dostępem może odczytać i zmienić wszystko w Discordzie, a błąd w niej może spowodować awarię aplikacji. Zezwól tylko wtedy, gdy ufasz jej źródłu.",

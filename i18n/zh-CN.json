@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "文档",
 	"UNBOUND_SUPPORT_SERVER": "支持服务器",
 	"UNBOUND_DEBUG_INFO": "调试信息",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "无法附加 Entitlements.xml，因此调试信息已以文本形式发送。",
 	"UNBOUND_THEME_RESTART_CONFIRM": "立即重启，让主题在所有地方生效？",
 	"UNBOUND_FFI_CONSENT_TITLE": "允许直接访问原生代码？",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} 想要直接调用原生函数。拥有此权限的插件可以读取和更改 Discord 中的任何内容，其中的错误也可能导致应用崩溃。请仅在您信任其来源时允许。",

@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "Documentazione",
 	"UNBOUND_SUPPORT_SERVER": "Server di supporto",
 	"UNBOUND_DEBUG_INFO": "Informazioni di debug",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Impossibile allegare Entitlements.xml, quindi le informazioni di debug sono state inviate come testo.",
 	"UNBOUND_THEME_RESTART_CONFIRM": "Riavviare ora per applicare il tema ovunque?",
 	"UNBOUND_FFI_CONSENT_TITLE": "Consentire l’accesso nativo diretto?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} vuole chiamare direttamente funzioni native. Un plugin con questo accesso può leggere e modificare qualsiasi cosa in Discord, e un suo errore può far crashare l’app. Consentilo solo se ti fidi della sua provenienza.",

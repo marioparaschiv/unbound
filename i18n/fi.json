@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "Dokumentaatio",
 	"UNBOUND_SUPPORT_SERVER": "Tukipalvelin",
 	"UNBOUND_DEBUG_INFO": "Vianmääritystiedot",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Entitlements.xml-tiedostoa ei voitu liittää, joten vianmääritystiedot lähetettiin tekstinä.",
 	"UNBOUND_THEME_RESTART_CONFIRM": "Käynnistetäänkö uudelleen nyt, jotta teema tulee käyttöön kaikkialla?",
 	"UNBOUND_FFI_CONSENT_TITLE": "Sallitaanko suora natiivikäyttö?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} haluaa kutsua natiivifunktioita suoraan. Laajennus, jolla on tämä käyttöoikeus, voi lukea ja muuttaa mitä tahansa Discordissa, ja virhe siinä voi kaataa sovelluksen. Salli se vain, jos luotat sen lähteeseen.",

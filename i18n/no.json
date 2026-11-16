@@ -320,7 +320,6 @@
 	"UNBOUND_DOCS": "Dokumentasjon",
 	"UNBOUND_SUPPORT_SERVER": "Støtteserver",
 	"UNBOUND_DEBUG_INFO": "Feilsøkingsinfo",
-	"UNBOUND_DEBUG_ENTITLEMENTS_FAILED": "Entitlements.xml kunne ikke legges ved, så feilsøkingsinfoen ble sendt som tekst.",
 	"UNBOUND_THEME_RESTART_CONFIRM": "Starte på nytt nå så temaet gjelder overalt?",
 	"UNBOUND_FFI_CONSENT_TITLE": "Tillate direkte innebygd tilgang?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} vil kalle innebygde funksjoner direkte. En plugin med denne tilgangen kan lese og endre alt i Discord, og en feil i den kan få appen til å krasje. Tillat det bare hvis du stoler på kilden.",
