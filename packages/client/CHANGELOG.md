@@ -1,5 +1,63 @@
 # Changelog
 
+## [3.7.0](https://github.com/marioparaschiv/unbound/compare/client-v3.6.0...client-v3.7.0) (2026-11-16)
+
+
+### Features
+
+* block additional tracking on iOS and Android ([#1692](https://github.com/marioparaschiv/unbound/issues/1692)) ([b27ce30](https://github.com/marioparaschiv/unbound/commit/b27ce30aefc2e065f32b526c53b13a42311adbe5))
+* **client:** attach a diagnostics zip to /debug ([#1627](https://github.com/marioparaschiv/unbound/issues/1627)) ([6addb35](https://github.com/marioparaschiv/unbound/commit/6addb353097b49cdd9a037e8a99e5941e8b1ed17))
+* **client:** filter the marketplace to what isn't installed ([#1633](https://github.com/marioparaschiv/unbound/issues/1633)) ([f14e62a](https://github.com/marioparaschiv/unbound/commit/f14e62a317028700e7354935a9042ec4fe0a9c84))
+* **client:** find the plugin causing a problem by halving ([#1625](https://github.com/marioparaschiv/unbound/issues/1625)) ([2eafb40](https://github.com/marioparaschiv/unbound/commit/2eafb40a7e4fdaaf908e54aaae1bae6d320ee541))
+* **client:** give each plugin a temp folder emptied on stop ([#1571](https://github.com/marioparaschiv/unbound/issues/1571)) ([b8a5dfd](https://github.com/marioparaschiv/unbound/commit/b8a5dfd008d79f5b889a9f43672d3cca795ffbbb))
+* **client:** name plugin hooks that fail to install on /debug ([#1572](https://github.com/marioparaschiv/unbound/issues/1572)) ([4065cce](https://github.com/marioparaschiv/unbound/commit/4065ccea804c75431109a3fa5b2ef045830ca590))
+* **client:** put each recorded crash's stack in the diagnostics zip ([#1637](https://github.com/marioparaschiv/unbound/issues/1637)) ([7c2884e](https://github.com/marioparaschiv/unbound/commit/7c2884e184096d3b4a2353e20b6d7229c0cf672a))
+* **client:** redraw the open chat when a plugin starts or stops ([#1573](https://github.com/marioparaschiv/unbound/issues/1573)) ([0cbc89b](https://github.com/marioparaschiv/unbound/commit/0cbc89b4e18faa99424b1b01f699892fecb0edfb))
+* **client:** show that a slow command is thinking ([#1630](https://github.com/marioparaschiv/unbound/issues/1630)) ([d372c81](https://github.com/marioparaschiv/unbound/commit/d372c81814cbeaa4b364342e0043f8b9baedd488))
+* **client:** skip native consent for dev copies in dev builds ([#1686](https://github.com/marioparaschiv/unbound/issues/1686)) ([3afd3c0](https://github.com/marioparaschiv/unbound/commit/3afd3c0c72788688a8b3a77043c1b91db3c1750e))
+* **cli:** give debug eval a native bridge with --native ([#1642](https://github.com/marioparaschiv/unbound/issues/1642)) ([c5e610f](https://github.com/marioparaschiv/unbound/commit/c5e610f4603aef9932810d9efca2957ea1542a3e))
+* **cli:** list Objective-C members in debug inspect class ([#1643](https://github.com/marioparaschiv/unbound/issues/1643)) ([1768142](https://github.com/marioparaschiv/unbound/commit/1768142e8805c1e0ecb15c12dbdbaddeb1ec80f7))
+* **loader:** pass bytes across the native bridge ([#1674](https://github.com/marioparaschiv/unbound/issues/1674)) ([4b12f44](https://github.com/marioparaschiv/unbound/commit/4b12f4421bd000b7bf1945a14792394f196ba8b1))
+* **loader:** probe libffi closures at launch and show it on /debug ([#1574](https://github.com/marioparaschiv/unbound/issues/1574)) ([e0aa7e1](https://github.com/marioparaschiv/unbound/commit/e0aa7e19762bcbb1a9801a25817fe08d05bc40e8))
+* **loader:** report Android main thread stalls with the blocking plugin ([#1588](https://github.com/marioparaschiv/unbound/issues/1588)) ([bf86ab9](https://github.com/marioparaschiv/unbound/commit/bf86ab9d678b32699f05abc00c8fc573c1089f5f))
+* **loader:** scalar ObjC args, Java results, variadic FFI, overloads ([#1620](https://github.com/marioparaschiv/unbound/issues/1620)) ([dd49b45](https://github.com/marioparaschiv/unbound/commit/dd49b4570e799d8f895b43aea8359143d11ac56e))
+* **loader:** translate native screens from the client's locale files ([#1624](https://github.com/marioparaschiv/unbound/issues/1624)) ([ab1269d](https://github.com/marioparaschiv/unbound/commit/ab1269d27da584ea6128990246ab47c5ef502cdd))
+* **web:** flag tweak conflicts and add account notes to the card ([#1563](https://github.com/marioparaschiv/unbound/issues/1563)) ([2bb2380](https://github.com/marioparaschiv/unbound/commit/2bb2380eead2043370d6aa9000571e4f43cc109e))
+
+
+### Bug Fixes
+
+* **client:** clear main's lint errors and regenerate the SDK ([#1605](https://github.com/marioparaschiv/unbound/issues/1605)) ([c9ad7f5](https://github.com/marioparaschiv/unbound/commit/c9ad7f5feef538f78b044ed374a51571d29ce0d8))
+* **client:** find icons registered through a late registry copy ([#1612](https://github.com/marioparaschiv/unbound/issues/1612)) ([9e52a90](https://github.com/marioparaschiv/unbound/commit/9e52a9011f574280ea3fe4dfe799db81ab5a8e79))
+* **client:** green client CI after today's bridge changes ([#1690](https://github.com/marioparaschiv/unbound/issues/1690)) ([ee4d5fe](https://github.com/marioparaschiv/unbound/commit/ee4d5feeff7a2ff4a3255f0e6c091857d04b1be9))
+* **client:** keep /debug's diagnostics zip until the reply is sent ([#1631](https://github.com/marioparaschiv/unbound/issues/1631)) ([eef4d4e](https://github.com/marioparaschiv/unbound/commit/eef4d4eb4c2497e268a789911033e928ca8e33fd))
+* **client:** keep plugin temp files until the app restarts ([#1681](https://github.com/marioparaschiv/unbound/issues/1681)) ([e7b7151](https://github.com/marioparaschiv/unbound/commit/e7b71515be6357079f4d2a7503d9aa4a5201e7fa))
+* **client:** save the announced client version at once ([388c0d1](https://github.com/marioparaschiv/unbound/commit/388c0d1fd5a540e416e9104f2c7848adf09b73a6))
+* **client:** show the marketplace's first tab on Android ([#1608](https://github.com/marioparaschiv/unbound/issues/1608)) ([f31720f](https://github.com/marioparaschiv/unbound/commit/f31720f57957abb1324f67759b9772cf469b5923))
+* **client:** trim the binary line and always-true markers on /debug ([#1632](https://github.com/marioparaschiv/unbound/issues/1632)) ([26c135e](https://github.com/marioparaschiv/unbound/commit/26c135e23f8e33f9ea0170492b9b8b07b7c1b6d3))
+* **loader:** return init's object from objc.create ([#1675](https://github.com/marioparaschiv/unbound/issues/1675)) ([4042a5b](https://github.com/marioparaschiv/unbound/commit/4042a5b18f7bae9b866a45300c503ca79ae76d26))
+
+
+### Build System
+
+* **deps:** bump the minor-and-patch group with 7 updates ([#1596](https://github.com/marioparaschiv/unbound/issues/1596)) ([0134744](https://github.com/marioparaschiv/unbound/commit/013474465fd2a4d43f1f30c13f3c7651805a99d7))
+
+
+### Continuous Integration
+
+* check the client against minLoaderVersion's native typings ([#1614](https://github.com/marioparaschiv/unbound/issues/1614)) ([804d5d0](https://github.com/marioparaschiv/unbound/commit/804d5d0469ff8566687739e01fd21e6496257b9f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.7.0
+    * @unbound-app/debugger-protocol bumped to 2.2.3
+    * @unbound-app/types bumped to 1.7.0
+    * @unbound-app/utils bumped to 1.0.7
+    * @unbound-app/web bumped to 2.7.0
+
 ## [3.6.0](https://github.com/marioparaschiv/unbound/compare/client-v3.5.1...client-v3.6.0) (2026-11-15)
 
 

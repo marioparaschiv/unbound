@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.7.0](https://github.com/marioparaschiv/unbound/compare/types-v1.6.0...types-v1.7.0) (2026-11-16)
+
+
+### Features
+
+* **client:** give each plugin a temp folder emptied on stop ([#1571](https://github.com/marioparaschiv/unbound/issues/1571)) ([b8a5dfd](https://github.com/marioparaschiv/unbound/commit/b8a5dfd008d79f5b889a9f43672d3cca795ffbbb))
+* **loader:** pass bytes across the native bridge ([#1674](https://github.com/marioparaschiv/unbound/issues/1674)) ([4b12f44](https://github.com/marioparaschiv/unbound/commit/4b12f4421bd000b7bf1945a14792394f196ba8b1))
+* **loader:** probe libffi closures at launch and show it on /debug ([#1574](https://github.com/marioparaschiv/unbound/issues/1574)) ([e0aa7e1](https://github.com/marioparaschiv/unbound/commit/e0aa7e19762bcbb1a9801a25817fe08d05bc40e8))
+* **loader:** scalar ObjC args, Java results, variadic FFI, overloads ([#1620](https://github.com/marioparaschiv/unbound/issues/1620)) ([dd49b45](https://github.com/marioparaschiv/unbound/commit/dd49b4570e799d8f895b43aea8359143d11ac56e))
+
+
+### Bug Fixes
+
+* **client:** green client CI after today's bridge changes ([#1690](https://github.com/marioparaschiv/unbound/issues/1690)) ([ee4d5fe](https://github.com/marioparaschiv/unbound/commit/ee4d5feeff7a2ff4a3255f0e6c091857d04b1be9))
+* **client:** keep plugin temp files until the app restarts ([#1681](https://github.com/marioparaschiv/unbound/issues/1681)) ([e7b7151](https://github.com/marioparaschiv/unbound/commit/e7b71515be6357079f4d2a7503d9aa4a5201e7fa))
+* **loader:** return init's object from objc.create ([#1675](https://github.com/marioparaschiv/unbound/issues/1675)) ([4042a5b](https://github.com/marioparaschiv/unbound/commit/4042a5b18f7bae9b866a45300c503ca79ae76d26))
+
 ## [1.6.0](https://github.com/marioparaschiv/unbound/compare/types-v1.5.0...types-v1.6.0) (2026-11-15)
 
 
