@@ -5,6 +5,15 @@ import { shownMarkers } from './markers';
 
 type DebugCardEnvironment = NonNullable<DebugCardRequest['environment']>;
 
+const NOISE_BINARY_PARTS = /^(\d+ dylibs|\d+ injected|UUID \S+)$/;
+
+function binaryText(binary: string): string {
+	return binary
+		.split(' · ')
+		.filter((part) => !NOISE_BINARY_PARTS.test(part))
+		.join(' · ');
+}
+
 function httpsSpans(https: NonNullable<DebugCardEnvironment['https']>): Span[] {
 	if (https.intercepted) {
 		return [warn(`intercepted by ${https.issuer ?? 'an unknown CA'}`)];
@@ -28,7 +37,7 @@ export function environmentRows(environment?: DebugCardEnvironment): [string, Sp
 	const markers = shownMarkers(environment.markers ?? []);
 	const candidates: [string, Span[]][] = [
 		['signer', environment.signer ? [value(environment.signer)] : []],
-		['binary', environment.binary ? [value(environment.binary)] : []],
+		['binary', environment.binary ? [value(binaryText(environment.binary))] : []],
 		['install', environment.install ? [value(environment.install)] : []],
 		['markers', markers.length ? [dim(joined(markers))] : []],
 		['https', environment.https ? httpsSpans(environment.https) : []],
