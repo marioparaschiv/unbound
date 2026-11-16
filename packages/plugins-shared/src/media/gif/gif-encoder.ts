@@ -1,11 +1,16 @@
-import type { Palette } from '~/lib/palette';
+import type { Palette } from './palette';
 
 export type GifOptions = {
 	width: number;
 	height: number;
 	delayCentiseconds: number;
 	palette: Palette;
+	transparent?: boolean;
 };
+
+const TRANSPARENT_INDEX = 255;
+const OPAQUE = 128;
+const RESTORE_BACKGROUND_WITH_TRANSPARENCY = 0x09;
 
 class ByteWriter {
 	private chunks: number[] = [];
@@ -101,27 +106,31 @@ function subBlocks(writer: ByteWriter, data: Uint8Array) {
 	writer.byte(0);
 }
 
-function indexFrame(frame: Uint8Array, palette: Palette): Uint8Array {
+function indexFrame(frame: Uint8Array, palette: Palette, transparent: boolean): Uint8Array {
 	const indices = new Uint8Array(frame.length / 4);
 
 	for (let pixel = 0; pixel < indices.length; pixel++) {
 		const offset = pixel * 4;
 
-		indices[pixel] = palette.lookup(frame[offset]!, frame[offset + 1]!, frame[offset + 2]!);
+		indices[pixel] =
+			transparent && frame[offset + 3]! < OPAQUE
+				? TRANSPARENT_INDEX
+				: palette.lookup(frame[offset]!, frame[offset + 1]!, frame[offset + 2]!);
 	}
 
 	return indices;
 }
 
 /**
- * @description Encodes RGBA frames of the same size as a looping GIF89a with one shared palette.
+ * @description Encodes RGBA frames of the same size as a looping GIF89a with one shared palette. With `transparent`,
+ * mostly transparent pixels stay see-through: build the palette with at most 255 colours, since index 255 is reserved.
  * @param frames The frames' RGBA bytes, in order.
- * @param options The size, the delay between frames, and the palette from `buildPalette`.
+ * @param options The size, the delay between frames, the palette from `buildPalette`, and whether to keep transparency.
  * @returns The GIF file's bytes.
  */
 export function encodeGif(
 	frames: Uint8Array[],
-	{ width, height, delayCentiseconds, palette }: GifOptions,
+	{ width, height, delayCentiseconds, palette, transparent = false }: GifOptions,
 ): Uint8Array {
 	const writer = new ByteWriter();
 
@@ -137,9 +146,9 @@ export function encodeGif(
 	writer.bytes([0x03, 0x01, 0x00, 0x00, 0x00]);
 
 	for (const frame of frames) {
-		writer.bytes([0x21, 0xf9, 0x04, 0x00]);
+		writer.bytes([0x21, 0xf9, 0x04, transparent ? RESTORE_BACKGROUND_WITH_TRANSPARENCY : 0x00]);
 		writer.short(delayCentiseconds);
-		writer.bytes([0x00, 0x00]);
+		writer.bytes([transparent ? TRANSPARENT_INDEX : 0x00, 0x00]);
 		writer.byte(0x2c);
 		writer.short(0);
 		writer.short(0);
@@ -147,7 +156,7 @@ export function encodeGif(
 		writer.short(height);
 		writer.byte(0);
 		writer.byte(8);
-		subBlocks(writer, lzw(indexFrame(frame, palette), 8));
+		subBlocks(writer, lzw(indexFrame(frame, palette, transparent), 8));
 	}
 
 	writer.byte(0x3b);

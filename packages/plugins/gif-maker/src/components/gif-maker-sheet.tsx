@@ -9,7 +9,7 @@ import { useState } from 'react';
 
 import { openFrameReader, type Crop } from '~/native/frames';
 import { downloadVideo } from '~/lib/video';
-import { toBase64 } from '~/lib/base64';
+import { toBase64 } from '@unbound-plugins/shared/media/gif/base64';
 import { makeGif } from '~/lib/make-gif';
 
 /** What the GIF Maker sheet works on: the video, the channel, the native bridge and the temporary folder. */

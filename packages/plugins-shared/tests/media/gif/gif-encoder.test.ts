@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { encodeGif } from '~/lib/gif-encoder';
-import { buildPalette } from '~/lib/palette';
+import { encodeGif } from '~/media/gif/gif-encoder';
+import { buildPalette } from '~/media/gif/palette';
 
 function solid(width: number, height: number, [r, g, b]: number[]): Uint8Array {
 	const frame = new Uint8Array(width * height * 4);
@@ -44,4 +44,32 @@ describe('encodeGif', () => {
 		expect(gif.at(-1)).toBe(0x3b);
 		expect(text.split('\x21\xf9\x04').length - 1).toBe(3);
 	});
+});
+
+test('keeps transparent pixels see-through with a reserved index', () => {
+	const frame = new Uint8Array([255, 0, 0, 255, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0]);
+	const palette = buildPalette([frame], 255);
+	const gif = encodeGif([frame], {
+		width: 2,
+		height: 2,
+		delayCentiseconds: 10,
+		palette,
+		transparent: true,
+	});
+	const control = gif.indexOf(0xf9);
+
+	expect(gif[control + 2]).toBe(0x09);
+	expect(gif[control + 5]).toBe(255);
+});
+
+test('keeps splitting colours when one colour outweighs the rest', () => {
+	const frame = new Uint8Array(4 * 2000);
+
+	for (let pixel = 0; pixel < 2000; pixel++) {
+		const color = pixel < 1500 ? [250, 250, 250] : [(pixel % 64) * 4, 0, 0];
+
+		frame.set([...color, 255], pixel * 4);
+	}
+
+	expect(buildPalette([frame], 64).size).toBeGreaterThan(30);
 });

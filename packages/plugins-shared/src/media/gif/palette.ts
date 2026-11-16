@@ -8,6 +8,7 @@ type Box = { indices: number[]; count: number };
 
 const BINS = 32 * 32 * 32;
 const SAMPLE_STEP = 2;
+const OPAQUE = 128;
 
 function bin(red: number, green: number, blue: number): number {
 	return ((red >> 3) << 10) | ((green >> 3) << 5) | (blue >> 3);
@@ -22,6 +23,8 @@ function histogramOf(frames: Uint8Array[]): Uint32Array {
 
 	for (const frame of frames) {
 		for (let offset = 0; offset < frame.length; offset += 4 * SAMPLE_STEP) {
+			if (frame[offset + 3]! < OPAQUE) continue;
+
 			histogram[bin(frame[offset]!, frame[offset + 1]!, frame[offset + 2]!)]! += 1;
 		}
 	}
@@ -59,7 +62,7 @@ function split(box: Box, histogram: Uint32Array): [Box, Box] {
 	let seen = 0;
 	let cut = 1;
 
-	for (; cut < sorted.length; cut++) {
+	for (; cut < sorted.length - 1; cut++) {
 		seen += histogram[sorted[cut - 1]!]!;
 
 		if (seen >= box.count / 2) break;
@@ -97,7 +100,8 @@ function average(box: Box, histogram: Uint32Array): [number, number, number] {
 
 /**
  * @description Builds one palette of up to 256 colours for a set of RGBA frames by median cut over a 15-bit
- * histogram, so every frame of the GIF shares it and colours don't flicker between frames.
+ * histogram, so every frame of the GIF shares it and colours don't flicker between frames. Mostly transparent pixels
+ * are left out.
  * @param frames The frames' RGBA bytes.
  * @param maxColors How many colours the palette may hold, at most 256.
  * @returns The palette and a lookup from a colour to its nearest palette entry.

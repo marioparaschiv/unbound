@@ -1,0 +1,8 @@
+{
+	"PETPET_DESC": "Turn someone's avatar into a head-patting GIF",
+	"PETPET_USER": "Whose avatar to pat",
+	"PET_AUTHOR": "Pet {name}",
+	"PET_IMAGE": "Pet This Image",
+	"ADDED": "Added the petpet GIF to your message.",
+	"FAILED": "Couldn't make the petpet GIF."
+}

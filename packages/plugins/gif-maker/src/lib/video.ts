@@ -1,6 +1,6 @@
 import { fs } from '@unbound-app/api';
 
-import { toBase64 } from '~/lib/base64';
+import { toBase64 } from '@unbound-plugins/shared/media/gif/base64';
 
 export type VideoAttachment = {
 	url?: string;
