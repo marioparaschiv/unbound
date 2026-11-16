@@ -2,6 +2,7 @@ import { View } from 'react-native';
 import { useRef } from 'react';
 
 import FlashList, { type FlashListHandle } from '~/ui/components/flash-list';
+import BisectCard from '~/ui/settings/bisect/bisect-card';
 import { Discord, SafeArea } from '~/metro/components';
 import InstallMenu from '~/ui/addons/install-menu';
 import Empty from '~/ui/components/empty-state';
@@ -104,6 +105,9 @@ function PluginsPage({ route }: PluginsPageProps) {
 				<InstallMenu kind='plugin' size='md' />
 				<FilterMenu value={filter} counts={counts} labels={labels} onChange={pick} />
 			</Discord.Stack>
+			<View style={styles.bisect}>
+				<BisectCard />
+			</View>
 			{visible.length ? (
 				<FlashList
 					ref={list}

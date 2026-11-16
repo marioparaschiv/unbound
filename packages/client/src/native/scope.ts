@@ -27,6 +27,7 @@ import { NativeBridgeDisposedError, NativeBridgeUnavailableError } from '~/nativ
 import { hookTarget, recordHookFailure } from '~/diagnostics/hook-failures';
 import { createScopeGate, type ScopeLifecycle } from '~/native/scope-gate';
 import { retryUntilInstalled, type HookRetry } from '~/native/hook-retry';
+import { attributeBridge, withFallback } from '~/native/scope-proxies';
 import { createFluxRuntimeBridge } from '~/flux/runtime-bridge';
 import { unavailableNativeBridge } from '~/native/capabilities';
 import { createScopedObjCHook } from '~/native/scope-objc-hook';
@@ -49,51 +50,6 @@ type ScopedNativeBridge = {
 	beginStop: () => void;
 	dispose: () => void;
 };
-
-function withFallback<T extends object>(bridge: Partial<T> | undefined, fallback: T): T {
-	return new Proxy(fallback, {
-		get: (target, property) => {
-			const key = property as keyof T;
-
-			return bridge?.[key] ?? target[key];
-		},
-	});
-}
-
-type AttributedMethod = {
-	original: unknown;
-	attributed: unknown;
-};
-
-function attributeBridge<T extends object>(source: T, attribute?: AddonAttribution): T {
-	if (!attribute) {
-		return source;
-	}
-
-	const methods = new Map<PropertyKey, AttributedMethod>();
-
-	return new Proxy(source, {
-		get: (target, property) => {
-			const value: unknown = Reflect.get(target, property);
-
-			if (typeof value !== 'function') {
-				return value;
-			}
-
-			const cached = methods.get(property);
-
-			if (cached?.original === value) {
-				return cached.attributed;
-			}
-
-			const attributed = attribute(value.bind(target));
-
-			methods.set(property, { original: value, attributed });
-
-			return attributed;
-		},
-	});
-}
 
 /**
  * @description Wraps the native bridge in a scope that allows only the declared capabilities and
@@ -540,7 +496,9 @@ export function createScopedNativeBridge(
 			}
 
 			function overloadParameters(name: string): string[][] {
-				if (overloads !== 'all') return [parameterTypes];
+				if (overloads !== 'all') {
+					return [parameterTypes];
+				}
 
 				const found = javaSource
 					.describe(name)

@@ -12,11 +12,11 @@ import fs from '~/native/fs';
 import type { AddonLocales, LocaleSource } from './addon-locales';
 import type { FormatVars, LocaleStrings } from './locale-strings';
 
+import { LOADER_STRINGS_FILE, pickLoaderStrings } from './loader-strings';
 import createMomentCalendarLocale from './create-moment-calendar-locale';
 import createMomentLocaleDefiner from './create-moment-locale-definer';
 import createMomentLocaleSetter from './create-moment-locale-setter';
 import resolveMomentLocale from './resolve-moment-locale';
-import { LOADER_STRINGS_FILE, pickLoaderStrings } from './loader-strings';
 import { parseLocaleStrings } from './locale-strings';
 import { createAddonLocales } from './addon-locales';
 import { getLocale, setLocale } from './locale';

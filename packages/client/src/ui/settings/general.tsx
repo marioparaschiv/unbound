@@ -14,7 +14,9 @@ import { messages } from '~/i18n/api';
 import { icons } from '~/assets/api';
 
 import confirmRestart from './confirm-restart';
+import BisectCard from './bisect/bisect-card';
 import GeneralHeader from './general-header';
+import BisectRow from './bisect/bisect-row';
 import QuickActions from './quick-actions';
 import SponsorCard from './sponsor-card';
 
@@ -110,7 +112,9 @@ function GeneralPage() {
 						value={settings.get('recovery')}
 						onValueChange={setRecoveryMode}
 					/>
+					<BisectRow />
 				</Discord.TableRowGroup>
+				<BisectCard />
 			</Discord.Stack>
 
 			<SponsorCard />

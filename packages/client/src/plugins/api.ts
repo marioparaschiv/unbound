@@ -5,6 +5,8 @@ import { readSelfTest } from '~/plugins/self-test';
 import { apply, check } from '~/updates/api';
 import { plugins } from '~/plugins/manager';
 
+export { answerBisect, bisectStatus, startBisect, stopBisect } from '~/plugins/bisect';
+
 /** Lists every installed plugin. */
 export const getAll: () => AddonHandle[] = plugins.getAddons.bind(plugins);
 /** Reads one installed plugin by id. */

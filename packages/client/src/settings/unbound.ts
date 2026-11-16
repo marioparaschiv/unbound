@@ -2,6 +2,7 @@ import type { PredicateResult, Widen } from '@unbound-app/types';
 import { CORE_BUCKET } from '@unbound-app/types/settings';
 
 import { DEFAULT_BACKGROUND_OPACITY, type ChatBackgroundSource } from '~/themes/chat-background';
+import type { BisectState } from '~/plugins/bisect-steps';
 import type { SettingsPayload } from '~/storage/api';
 import { getBucket, useBucket } from '~/storage/api';
 
@@ -30,6 +31,7 @@ const DEFAULTS = {
 	'chat-background.blur': 0,
 	'chat-background.opacity': DEFAULT_BACKGROUND_OPACITY,
 	'plugins.showLibraries': false,
+	'plugins.bisect': null as BisectState | null,
 	'marketplace.lastVisit': 0,
 	/** The loader reads it at launch; off keeps the cached bundle until the user refetches. */
 	'updater.auto.client': true,

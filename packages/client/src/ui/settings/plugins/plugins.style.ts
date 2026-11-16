@@ -12,6 +12,10 @@ export default Discord.createStyles({
 		borderBottomWidth: 1,
 		borderBottomColor: Theme.colors.BORDER_SUBTLE,
 	},
+	bisect: {
+		paddingHorizontal: 16,
+		paddingTop: 12,
+	},
 	search: {
 		flex: 1,
 		minWidth: 0,

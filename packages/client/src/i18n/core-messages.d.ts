@@ -10,6 +10,8 @@ declare module '@unbound-app/i18n' {
 	export type FormatVars = {
 		UNBOUND_ACCOUNT_SIGN_OUT_CONFIRM: { name: string | number };
 		UNBOUND_CLOUD_SYNC_LAST_SYNCED: { date: string | number };
+		UNBOUND_BISECT_ROUND: { round: string | number; left: number; count: number };
+		UNBOUND_BISECT_FOUND: { name: string | number };
 		UNBOUND_SEARCH: { type: string | number };
 		UNBOUND_NO_ADDONS: { type: string | number };
 		UNBOUND_NO_ADDONS_BODY: { type: string | number };
@@ -110,5 +112,11 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_APP_ICON_PENDING: { name: string | number };
 		UNBOUND_PATCH_REMOVED: { name: string | number };
 		UNBOUND_ADDON_RENAMED_TOAST: { from: string | number; to: string | number };
+		UNBOUND_NATIVE_DISABLED_FROZEN: { name: string | number };
+		UNBOUND_NATIVE_DISABLED_RUNNING: { name: string | number };
+		UNBOUND_NATIVE_DISABLED_STARTING: { name: string | number };
+		UNBOUND_NATIVE_LAUNCH_RECOVERY: { count: string | number };
+		UNBOUND_NATIVE_LAUNCH_ROLLED_BACK: { count: string | number };
+		UNBOUND_NATIVE_USE_PREVIOUS_BUNDLE_REVISION: { revision: string | number };
 	};
 }

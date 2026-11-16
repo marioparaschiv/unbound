@@ -8,6 +8,7 @@ import modulesCommand from '~/commands/debug/modules';
 import profileCommand from '~/commands/debug/profile';
 import restartCommand from '~/commands/debug/restart';
 import i18nCheckCommand from '~/commands/i18n/check';
+import bisectCommand from '~/commands/debug/bisect';
 import reloadCommand from '~/commands/debug/reload';
 import reportCommand from '~/commands/debug/report';
 import statusCommand from '~/commands/debug/status';
@@ -114,7 +115,10 @@ export const debugGroup: CommandGroup = {
 	sections: [
 		{ title: 'Bridge', entries: [startCommand, restartCommand, statusCommand] },
 		{ title: 'Addons', entries: [pushCommand, reloadCommand] },
-		{ title: 'Runtime', entries: [evalCommand, openCommand, routeCommand, reportCommand] },
+		{
+			title: 'Runtime',
+			entries: [evalCommand, openCommand, routeCommand, reportCommand, bisectCommand],
+		},
 		{ title: 'Discord modules', entries: [modulesCommand, traceCommand] },
 		{ title: 'Native', entries: [viewsCommand, inspectCommand, spansCommand, hookCommand] },
 		{ title: 'Performance', entries: [profileCommand, timingCommand] },
