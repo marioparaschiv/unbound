@@ -20,6 +20,7 @@
 #import "Logger.h"
 #import "NativeHookKeys.h"
 #import "NativeHookOptions.h"
+#import "NativeObjectLifetime.h"
 #import "NativePluginHookReturnCache.h"
 #import "NativePluginHooks.h"
 #import "NativePluginInvocation.h"
@@ -587,6 +588,28 @@ static void logHookFailure(const std::exception &exception)
     }
 }
 
+static bool touchesDeallocatingObject(const std::shared_ptr<HookDispatcher> &dispatcher,
+                                      void **arguments)
+{
+    const std::vector<loader::ffi::Type> &specs = dispatcher->signature->arguments;
+    for (size_t index = 0; index < specs.size(); index++)
+    {
+        if (specs[index].name != "object")
+        {
+            continue;
+        }
+
+        __unsafe_unretained id object = nil;
+        memcpy(&object, arguments[index], sizeof(object));
+        if (isDeallocating(object))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *userData)
 {
     __unsafe_unretained id object = nil;
@@ -600,7 +623,7 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
 
     HookCallGuard guard(dispatcher);
     std::vector<std::shared_ptr<HookState>> hooks = activeHookStates(dispatcher, object);
-    if (hooks.empty())
+    if (hooks.empty() || touchesDeallocatingObject(dispatcher, arguments))
     {
         invokeHookOriginal(dispatcher, arguments, returnValue);
         return;
