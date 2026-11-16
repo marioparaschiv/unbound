@@ -213,6 +213,11 @@ nlohmann::json UnboundFontCatalog()
                 category:category.c_str()
                   format:@"%@", [NSString stringWithUTF8String:message.c_str()] ?: @""];
         });
+    loader::setSystemLogSink([](loader::LogLevel level, const std::string &line) {
+        [Logger system:iosLogLevel(level)
+              category:"JavaScript"
+               message:[NSString stringWithUTF8String:line.c_str()] ?: @""];
+    });
 }
 
 + (void)openLogFile

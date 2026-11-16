@@ -17,6 +17,7 @@ typedef NS_ENUM(NSInteger, LogLevel) {
 + (void)initialize;
 
 + (void)log:(LogLevel)level category:(const char *)category format:(NSString *)format, ...;
++ (void)system:(LogLevel)level category:(const char *)category message:(NSString *)message;
 
 + (void)debug:(const char *)category format:(NSString *)format, ...;
 + (void)info:(const char *)category format:(NSString *)format, ...;

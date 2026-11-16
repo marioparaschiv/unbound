@@ -16,10 +16,36 @@ static LogSink &currentSink()
     return sink;
 }
 
+static SystemLogSink &currentSystemSink()
+{
+    static SystemLogSink sink;
+    return sink;
+}
+
 void setLogSink(LogSink sink)
 {
     std::lock_guard<std::mutex> lock(sinkMutex());
     currentSink() = std::move(sink);
+}
+
+void setSystemLogSink(SystemLogSink sink)
+{
+    std::lock_guard<std::mutex> lock(sinkMutex());
+    currentSystemSink() = std::move(sink);
+}
+
+void writeSystemLog(LogLevel level, const std::string &line)
+{
+    SystemLogSink sink;
+    {
+        std::lock_guard<std::mutex> lock(sinkMutex());
+        sink = currentSystemSink();
+    }
+
+    if (sink)
+    {
+        sink(level, line);
+    }
 }
 
 void log(LogLevel level, const std::string &category, const std::string &message)
@@ -61,6 +87,17 @@ LogLevel logLevelFromIndex(int index)
 std::string formatLogLine(const std::string &category, const std::string &message)
 {
     return "[" + category + "] " + message;
+}
+
+std::string scopedLogLine(const std::vector<std::string> &scope, const std::string &message)
+{
+    std::string joined;
+    for (const std::string &part : scope)
+    {
+        joined += (joined.empty() ? "" : "/") + part;
+    }
+
+    return joined.empty() ? message : formatLogLine(joined, message);
 }
 
 void logFromPlatform(int level, const std::string &category, const std::string &message)

@@ -3,6 +3,7 @@
 #include <array>
 #include <functional>
 #include <string>
+#include <vector>
 
 #include "LoaderLogCategories.h"
 
@@ -23,10 +24,15 @@ inline constexpr std::array<const char *, 12> kLogCategories = {
 
 using LogSink = std::function<void(LogLevel, const std::string &, const std::string &)>;
 
+using SystemLogSink = std::function<void(LogLevel, const std::string &)>;
+
 void setLogSink(LogSink sink);
+void setSystemLogSink(SystemLogSink sink);
+void writeSystemLog(LogLevel level, const std::string &line);
 void log(LogLevel level, const std::string &category, const std::string &message);
 bool isLogCategory(const std::string &category);
 LogLevel logLevelFromIndex(int index);
 std::string formatLogLine(const std::string &category, const std::string &message);
+std::string scopedLogLine(const std::vector<std::string> &scope, const std::string &message);
 void logFromPlatform(int level, const std::string &category, const std::string &message);
 }

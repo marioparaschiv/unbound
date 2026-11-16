@@ -49,9 +49,15 @@ static os_log_t getLoggerForCategory(const char *category)
     NSString *message = [[NSString alloc] initWithFormat:format arguments:args];
     va_end(args);
 
-    os_log_t logger = getLoggerForCategory(category);
     UnboundAppendLogFile((int) level, category, message.UTF8String);
+    [self system:level category:category message:message];
+}
 
++ (void)system:(LogLevel)level category:(const char *)category message:(NSString *)message
+{
+    [self initialize];
+
+    os_log_t logger = getLoggerForCategory(category);
     dispatch_async(_logQueue, ^{
         switch (level)
         {
