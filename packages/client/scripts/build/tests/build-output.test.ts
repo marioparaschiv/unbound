@@ -145,6 +145,7 @@ describe('bundle flavours', () => {
 			'packages/client/src/assets/builtin.dev.ts',
 			'packages/client/src/debugger/bridge-service.dev.ts',
 			'packages/client/src/debugger/builtin.dev.ts',
+			'packages/client/src/debugger/dev-native.dev.ts',
 			'packages/client/src/debugger/discovery-android-worklets.dev.ts',
 			'packages/client/src/debugger/discovery-android.dev.ts',
 			'packages/client/src/debugger/discovery-ios.dev.ts',
