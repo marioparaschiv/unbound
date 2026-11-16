@@ -1,0 +1,6 @@
+{
+	"SECONDS": "Seconds to wait",
+	"SECONDS_SUBTITLE": "How long each message waits before it is sent. Undo works until then.",
+	"SENDING": "Sending in {seconds} s",
+	"UNDO": "Undo"
+}
