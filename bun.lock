@@ -2049,6 +2049,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/plugin-shortcut-panel": {
+      "name": "plugin-shortcut-panel",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/preview-message": {
       "name": "preview-message",
       "dependencies": {
@@ -5425,6 +5439,8 @@
     "platform-indicators": ["platform-indicators@workspace:packages/plugins/platform-indicators"],
 
     "plugin-sdk-test": ["plugin-sdk-test@workspace:packages/plugin-test"],
+
+    "plugin-shortcut-panel": ["plugin-shortcut-panel@workspace:packages/plugins/plugin-shortcut-panel"],
 
     "pluralize": ["pluralize@8.0.0", "", {}, "sha512-Nc3IT5yHzflTfbjgqWcCPpo7DaKy4FnpB0l/zCAW0Tc7jxAiuqSxHasntB3D7887LSrA93kDJ9IXovxJYxyLCA=="],
 

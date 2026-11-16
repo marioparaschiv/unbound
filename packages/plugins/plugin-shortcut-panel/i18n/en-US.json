@@ -1,0 +1,9 @@
+{
+	"BUTTON": "Plugin shortcuts",
+	"TITLE": "Shortcuts",
+	"EDIT": "Edit",
+	"DONE": "Done",
+	"PLUGINS": "Turn plugins on or off",
+	"COMMANDS": "Run commands",
+	"EMPTY": "Nothing pinned yet. Tap Edit to pick plugins to turn on or off and commands to run from here."
+}
