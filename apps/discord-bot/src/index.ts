@@ -5,6 +5,7 @@ import { container, LogLevel, SapphireClient } from '@sapphire/framework';
 import { createBotReads } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
 
+import { createInviteTracker, type InviteTracker } from '~/logging/invite-tracker';
 import { createModeration, type Moderation } from '~/moderation/moderation';
 import { createStarboard, type Starboard } from '~/starboard/starboard';
 import { createServerLog, type ServerLog } from '~/logging/server-log';
@@ -36,6 +37,8 @@ declare module '@sapphire/pieces' {
 		moderation?: Moderation;
 		/** Set once the client is ready. */
 		serverLog?: ServerLog;
+		/** Set once the client is ready; unset while the bot is not in the guild. */
+		inviteTracker?: InviteTracker;
 		/** Set once the client is ready. */
 		automod?: Automod;
 	}
@@ -129,6 +132,13 @@ function startRuntime(ready: Client<true>) {
 
 	container.moderation = moderation;
 	moderation.start(ready);
+	const guild = ready.guilds.cache.get(config.guildId);
+
+	if (guild) {
+		container.inviteTracker = createInviteTracker(guild);
+		void container.inviteTracker.prime();
+	}
+
 	container.serverLog = createServerLog({
 		messages,
 		channels: {
