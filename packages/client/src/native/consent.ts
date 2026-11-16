@@ -81,10 +81,15 @@ export function consentKey(manifest: AddonManifest): string {
  * addons never do; others do when they ask for a consent-gated capability the user has not allowed.
  * @param manifest The addon's manifest.
  * @param consents The consents the user gave.
+ * @param trusted Whether the manager trusts this addon without asking, as it does a development copy in a dev build.
  * @returns Whether to ask before starting the addon.
  */
-export function needsConsent(manifest: AddonManifest, consents: NativeConsents): boolean {
+export function needsConsent(
+	manifest: AddonManifest,
+	consents: NativeConsents,
+	trusted = false,
+): boolean {
 	const key = consentKey(manifest);
 
-	return key !== '' && manifest.trust !== 'signed' && consents[manifest.id] !== key;
+	return !trusted && key !== '' && manifest.trust !== 'signed' && consents[manifest.id] !== key;
 }
