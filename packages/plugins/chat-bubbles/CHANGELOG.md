@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.18] - 2026-11-16
+
+### Fixed
+
+- On iOS, a reply quoted inside a bubble no longer runs past its box. The preview wraps to the box and ends with an ellipsis, as Discord's own does.
+
 ## [1.6.17] - 2026-11-15
 
 ### Added

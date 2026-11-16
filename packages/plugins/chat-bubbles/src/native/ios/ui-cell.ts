@@ -13,6 +13,15 @@ const DECORATION_TAG = 0x0b0b28;
 const QUOTE_TAG = 0x0b0b29;
 const REPLY_ICON_TAG = 0x0b0b2a;
 const REPLY_BUBBLE_TAG = 0x0b0b2b;
+const OBJECT_REPLACEMENT = '\uFFFC';
+const POP_ISOLATE = 0x2069;
+const ISOLATE_STARTS = [0x2066, 0x2067, 0x2068];
+const ELLIPSIS = '\u2026';
+const TRUNCATE_END = 2;
+const MAX_REFITS = 4;
+const WIDTH_SLACK = 0.5;
+const PREVIEW_WIDTHS_KEY = '__unboundChatBubblesPreviewWidths';
+const PREVIEW_LABEL_CLASS = 'DCDReusableYYLabel';
 const REPLY_SYMBOL = { name: 'arrowshape.turn.up.left.fill', top: 2 };
 const MAX_PICTURES = 128;
 const SPINE_CLASS = 'DCDSpine';
@@ -102,6 +111,18 @@ function readBox(raw: unknown): Box {
 		width: Number(size?.width ?? 0),
 		height: Number(size?.height ?? 0),
 	};
+}
+
+function readSize(raw: unknown): { width: number; height: number } {
+	'worklet';
+	const boxed = raw as {
+		value?: { width?: number; height?: number };
+		width?: number;
+		height?: number;
+	} | null;
+	const value = boxed?.value ?? boxed;
+
+	return { width: Number(value?.width ?? 0), height: Number(value?.height ?? 0) };
 }
 
 function cgRect(objc: NativeObjCBridge, { x, y, width, height }: Box) {
@@ -446,6 +467,196 @@ function quoteIn(objc: NativeObjCBridge, fill: NativeObjectHandle): NativeObject
 	return quote;
 }
 
+function previewLabelIn(
+	objc: NativeObjCBridge,
+	holder: NativeObjectHandle,
+): NativeObjectHandle | undefined {
+	'worklet';
+	let level = [holder];
+
+	for (let depth = 0; depth < 5 && level.length; depth++) {
+		const next: NativeObjectHandle[] = [];
+
+		for (const view of level) {
+			if ((objc.className(view) ?? '').includes('YYLabel')) return view;
+
+			next.push(...subviewsOf(objc, view));
+		}
+
+		level = next;
+	}
+
+	return undefined;
+}
+
+function ellipsisLike(objc: NativeObjCBridge, text: NativeObjectHandle): NativeObjectHandle | null {
+	'worklet';
+	const string = objc.call(text, 'string');
+	const plain = typeof string === 'string' ? string : '';
+	let index = plain.length - 1;
+	let isolated = 0;
+
+	for (; index >= 0; index--) {
+		const code = plain.charCodeAt(index);
+
+		if (code === POP_ISOLATE) isolated++;
+		else if (ISOLATE_STARTS.includes(code)) isolated = Math.max(0, isolated - 1);
+		else if (!isolated && plain[index] !== OBJECT_REPLACEMENT && plain[index].trim() !== '')
+			break;
+	}
+
+	if (index < 0) return null;
+
+	const sample = objc.invoke(text, 'attributedSubstringFromRange:', [
+		objc.struct('NSRange', { location: index, length: 1 }),
+	]) as NativeObjectHandle | null;
+	const token = sample
+		? (objc.invoke(sample, 'mutableCopy', []) as NativeObjectHandle | null)
+		: null;
+
+	if (!token) return null;
+
+	objc.invoke(token, 'replaceCharactersInRange:withString:', [
+		objc.struct('NSRange', { location: 0, length: 1 }),
+		ELLIPSIS,
+	]);
+
+	return token;
+}
+
+function truncatedLayout(
+	objc: NativeObjCBridge,
+	layout: NativeObjectHandle,
+	width: number,
+): NativeObjectHandle | null {
+	'worklet';
+	const container = objc.invoke(layout, 'container', []) as NativeObjectHandle;
+	const text = objc.invoke(layout, 'text', []) as NativeObjectHandle;
+	const resized = objc.invoke(container, 'copy', []) as NativeObjectHandle;
+	const token = ellipsisLike(objc, text);
+	const LayoutClass = objc.getClass(
+		objc.className(layout) ?? 'YYTextLayout',
+	) as NativeObjectHandle;
+
+	objc.invoke(resized, 'setSize:', [
+		objc.struct('CGSize', {
+			width,
+			height: readSize(objc.invoke(container, 'size', [])).height,
+		}),
+	]);
+	objc.invoke(resized, 'setTruncationType:', [TRUNCATE_END]);
+	objc.invoke(resized, 'setMaximumNumberOfRows:', [
+		Number(objc.invoke(layout, 'rowCount', [])) || 1,
+	]);
+
+	if (token) objc.invoke(resized, 'setTruncationToken:', [token]);
+
+	return objc.call(
+		LayoutClass,
+		'layoutWithContainer:text:',
+		resized,
+		text,
+	) as NativeObjectHandle | null;
+}
+
+function fittedLayout(
+	objc: NativeObjCBridge,
+	layout: NativeObjectHandle,
+	width: number,
+): NativeObjectHandle | null {
+	'worklet';
+	const container = objc.invoke(layout, 'container', []) as NativeObjectHandle;
+	const laidOut = readSize(objc.invoke(container, 'size', [])).width;
+
+	if (width <= 0 || laidOut <= width + WIDTH_SLACK) return null;
+
+	let fitted = truncatedLayout(objc, layout, width);
+	let room = width;
+
+	for (let tries = 0; fitted && tries < MAX_REFITS; tries++) {
+		const cut = objc.invoke(fitted, 'truncatedLine', []) as NativeObjectHandle | null;
+		const overshoot = cut ? Number(objc.invoke(cut, 'right', [])) - width : 0;
+
+		if (overshoot <= 0) break;
+
+		room -= Math.ceil(overshoot);
+		fitted = truncatedLayout(objc, layout, room);
+	}
+
+	return fitted;
+}
+
+function previewWidths(): Map<string, number> {
+	'worklet';
+	const holder = globalThis as unknown as Record<
+		typeof PREVIEW_WIDTHS_KEY,
+		Map<string, number> | undefined
+	>;
+
+	holder[PREVIEW_WIDTHS_KEY] ??= new Map();
+
+	return holder[PREVIEW_WIDTHS_KEY];
+}
+
+function labelKey(objc: NativeObjCBridge, label: NativeObjectHandle): string {
+	'worklet';
+
+	return String(objc.call(label, 'hash') as number);
+}
+
+function fitPreviewText(objc: NativeObjCBridge, holder: NativeObjectHandle, clip: Box | undefined) {
+	'worklet';
+	const label = previewLabelIn(objc, holder);
+
+	if (!label) return;
+
+	if (!clip) {
+		previewWidths().delete(labelKey(objc, label));
+
+		return;
+	}
+
+	const parent = objc.invoke(label, 'superview', []) as NativeObjectHandle;
+	const frame = readBox(objc.invoke(label, 'frame', []));
+	const origin = readBox(
+		objc.invoke(parent, 'convertRect:toView:', [cgRect(objc, frame), holder]),
+	);
+	const width = Math.floor(clip.x + clip.width - origin.x);
+	const layout = objc.invoke(label, 'textLayout', []) as NativeObjectHandle | null;
+
+	previewWidths().set(labelKey(objc, label), width);
+
+	const fitted = layout ? fittedLayout(objc, layout, width) : null;
+
+	if (fitted) objc.invoke(label, 'setTextLayout:', [fitted]);
+}
+
+/**
+ * @description Lays a quoted reply's preview out at its quote box's width as Discord sets it, so the text wraps and ends with an ellipsis inside the box instead of running past it.
+ * @param objc The UI scope's Objective-C bridge.
+ */
+export function installPreviewFit(objc: NativeObjCBridge) {
+	'worklet';
+	const widths = previewWidths();
+	const labelClass = objc.getClass(PREVIEW_LABEL_CLASS) ? PREVIEW_LABEL_CLASS : 'YYLabel';
+
+	widths.clear();
+
+	if (!objc.getClass(labelClass)) return;
+
+	objc.hook(labelClass, 'setTextLayout:', {
+		before: (context) => {
+			if (!widths.size) return;
+
+			const width = widths.get(labelKey(objc, context.self));
+			const layout = context.args[0] as NativeObjectHandle | null;
+			const fitted = width !== undefined && layout ? fittedLayout(objc, layout, width) : null;
+
+			if (fitted) context.replaceObjectArgument(0, fitted);
+		},
+	});
+}
+
 // The quote box sits in the bubble's fill, whose mask clips it to the bubble; the preview is clipped to the box.
 function paintQuote(
 	objc: NativeObjCBridge,
@@ -468,6 +679,8 @@ function paintQuote(
 		if (existing) objc.invoke(existing as NativeObjectHandle, 'setHidden:', [true]);
 
 		if (layer && objc.invoke(layer, 'mask', [])) objc.invoke(layer, 'setMask:', [null]);
+
+		if (holder) fitPreviewText(objc, holder, undefined);
 
 		return;
 	}
@@ -506,6 +719,7 @@ function paintQuote(
 	}
 
 	objc.invoke(mask, 'setFrame:', [cgRect(objc, quote.clip)]);
+	fitPreviewText(objc, holder as NativeObjectHandle, quote.clip);
 }
 
 function capture(objc: NativeObjCBridge, cell: NativeObjectHandle): Picture | undefined {
