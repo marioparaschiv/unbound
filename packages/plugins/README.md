@@ -1,6 +1,6 @@
 # Plugins
 
-167 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+168 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -36,6 +36,7 @@
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Compact Mode](https://unbound.rip/addons/unbound.compact-mode): Drops message headers and avatars and puts each author's name inline with their message, like desktop's compact layout.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Copy Image](https://unbound.rip/addons/unbound.copy-image): Adds Copy Image to the media viewer's share menu, which copies the picture itself as a PNG that any app can paste.
 - <img src="../../assets/plugins/readme-icons/calendar-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Cron Explainer](https://unbound.rip/addons/unbound.cron-explainer): Explains cron expressions with /cron and lists their next runs in the timezone you pick.
+- <img src="../../assets/plugins/readme-icons/shop-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Currency Conversions](https://unbound.rip/addons/unbound.currency-conversions): Adds approximate conversions to your currency next to prices in messages, like $25 (≈ €22.62).
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom Commands](https://unbound.rip/addons/unbound.custom-commands): Create slash commands that send saved text, images, and videos.
 - <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom RPC](https://unbound.rip/addons/unbound.custom-rpc): Shows a Rich Presence of your own on your profile: any name, text, images, timer and buttons.
 - <img src="../../assets/plugins/readme-icons/voice-normal-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom Sounds](https://unbound.rip/addons/unbound.custom-sounds): Replaces Discord's sounds with others or files from links, and plays a sound only you hear when chosen friends join your voice channel.
