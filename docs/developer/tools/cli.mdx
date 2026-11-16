@@ -66,7 +66,7 @@ A command that moved into a group names its new place: `ubd eval` answers `Did y
 
 		| Command | What it does |
 		| --- | --- |
-		| `ubd build` | Builds every addon once and reports which succeeded. `--verbose` also logs each [custom filter](/docs/developer/plugins/metro#custom-filters) rewritten into a built-in one, with file and line. |
+		| `ubd build [addons...]` | Builds every addon once, or only the ones named by manifest id or directory, and reports which succeeded. `--verbose` also logs each [custom filter](/docs/developer/plugins/metro#custom-filters) rewritten into a built-in one, with file and line. |
 		| `ubd dev` | Watches every addon, rebuilds the one that changed, and reloads it on the device. |
 		| `ubd debug push <name>` | Builds one plugin, installs it if missing, and hot reloads it. `--build=false` pushes the existing build. |
 	</Step>
