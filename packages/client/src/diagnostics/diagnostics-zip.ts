@@ -2,14 +2,16 @@ import { strToU8, zipSync, type Zippable } from 'fflate';
 
 import fs from '~/native/fs';
 
+import { crashStackFiles } from './crash-stack-files';
 import { scrubLogLine } from './crash-report';
 
 const LOG_FOLDER = 'Unbound/Logs';
 const LOG_NAMES = ['unbound', 'native'] as const;
 const LOG_ROTATIONS = ['', '.1', '.2', '.3'] as const;
+const CRASH_HISTORY = 'Unbound/crash-history.json';
 const STATE_FILES = [
 	'Unbound/native-crash.txt',
-	'Unbound/crash-history.json',
+	CRASH_HISTORY,
 	'Unbound/addon-running.json',
 	'Unbound/addon-starting.json',
 ] as const;
@@ -56,7 +58,7 @@ function toBase64(bytes: Uint8Array): string {
 }
 
 /**
- * @description Zips the loader's logs, scrubbed of secrets, its crash and addon state files and the debug report.
+ * @description Zips the loader's logs, scrubbed of secrets, its crash and addon state files, each recorded crash's stack and the debug report.
  * @param input The debug report and, on iOS, the app's entitlements.
  * @returns The zip as base64, ready to write to a file.
  */
@@ -82,6 +84,12 @@ export async function buildDiagnosticsZip({
 		if (text) {
 			files[`state/${path.slice(path.lastIndexOf('/') + 1)}`] = strToU8(text);
 		}
+	}
+
+	for (const [name, stack] of Object.entries(
+		crashStackFiles((await readIfPresent(CRASH_HISTORY)) ?? '[]'),
+	)) {
+		files[name] = strToU8(stack);
 	}
 
 	if (entitlements) {

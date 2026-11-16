@@ -5,6 +5,10 @@ const FILES: Record<string, string> = {
 	'Unbound/Logs/unbound.log': 'started\ncontact me@example.com please',
 	'Unbound/Logs/native.1.log': 'native line',
 	'Unbound/native-crash.txt': 'SIGSEGV in Unbound.dylib',
+	'Unbound/crash-history.json': JSON.stringify([
+		{ at: 0, crash: 'SIGTRAP in New Member Sprout', stack: 'Signal 5\n#0 0x1' },
+		{ at: 1000, crash: 'SIGSEGV' },
+	]),
 	'Unbound/Logs/unbound.1.log': `${'old line\n'.repeat(80_000)}newest line`,
 };
 
@@ -35,14 +39,19 @@ test('zips the logs, crash state, report and entitlements that exist', async () 
 
 	expect(Object.keys(files).sort()).toEqual([
 		'Entitlements.xml',
+		'crashes/1970-01-01T00-00-00-000Z-SIGTRAP-in-New-Member-Sprout.txt',
 		'debug-info.json',
 		'logs/native.1.log',
 		'logs/unbound.1.log',
 		'logs/unbound.log',
+		'state/crash-history.json',
 		'state/native-crash.txt',
 	]);
 	expect(JSON.parse(files['debug-info.json'] ?? '')).toEqual({ client: 'v3' });
 	expect(files['state/native-crash.txt']).toBe('SIGSEGV in Unbound.dylib');
+	expect(files['crashes/1970-01-01T00-00-00-000Z-SIGTRAP-in-New-Member-Sprout.txt']).toBe(
+		'Signal 5\n#0 0x1',
+	);
 });
 
 test('scrubs secrets from the logs', async () => {
