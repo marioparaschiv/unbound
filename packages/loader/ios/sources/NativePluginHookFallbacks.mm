@@ -12,9 +12,19 @@ using namespace facebook;
 using namespace facebook::jsi;
 
 namespace loader::ios {
+template <typename Value> struct UnretainedHookValue {
+    using type = Value;
+};
+
+template <> struct UnretainedHookValue<id> {
+    using type = __unsafe_unretained id;
+};
+
+template <typename Value> using HookValue = typename UnretainedHookValue<Value>::type;
+
 template <typename Result, typename... Arguments>
-static Result dispatchTypedHook(HookDispatcher *dispatcher, id object, SEL selector,
-                                Arguments... values)
+static Result dispatchTypedHook(HookDispatcher *dispatcher, __unsafe_unretained id object,
+                                SEL selector, HookValue<Arguments>... values)
 {
     @autoreleasepool
     {
@@ -42,9 +52,10 @@ template <typename Result, typename... Arguments>
 static IMP makeTypedHook(HookDispatcher *dispatcher)
 {
     SEL selector = dispatcher->selector;
-    return imp_implementationWithBlock(^Result(id object, Arguments... values) {
-        return dispatchTypedHook<Result, Arguments...>(dispatcher, object, selector, values...);
-    });
+    return imp_implementationWithBlock(
+        ^Result(__unsafe_unretained id object, HookValue<Arguments>... values) {
+            return dispatchTypedHook<Result, Arguments...>(dispatcher, object, selector, values...);
+        });
 }
 
 namespace {
