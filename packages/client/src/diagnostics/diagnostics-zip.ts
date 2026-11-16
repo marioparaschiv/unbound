@@ -13,7 +13,8 @@ const STATE_FILES = [
 	'Unbound/addon-running.json',
 	'Unbound/addon-starting.json',
 ] as const;
-const COMPRESSION_LEVEL = 6;
+const COMPRESSION_LEVEL = 4;
+const MAX_LOG_CHARS = 512 * 1024;
 const BASE64_CHUNK = 0x8000;
 
 export type DiagnosticsInput = {
@@ -30,7 +31,12 @@ async function readIfPresent(path: string): Promise<string | undefined> {
 }
 
 function scrubLog(text: string): string {
-	return text.split('\n').map(scrubLogLine).join('\n');
+	const newest =
+		text.length > MAX_LOG_CHARS
+			? text.slice(text.indexOf('\n', text.length - MAX_LOG_CHARS) + 1)
+			: text;
+
+	return newest.split('\n').map(scrubLogLine).join('\n');
 }
 
 function logPaths(): string[] {
