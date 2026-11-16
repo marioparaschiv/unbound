@@ -1,9 +1,9 @@
 package app.unbound.android
 
-import java.io.File
-import java.nio.file.Files
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.io.File
+import java.nio.file.Files
 
 class ResourceIdCacheTest {
     private fun cacheFile(): File = Files.createTempDirectory("resource-ids").toFile().resolve("ids.tsv")
@@ -18,8 +18,20 @@ class ResourceIdCacheTest {
 
         var lookups = 0
         val next = ResourceIdCache(file, "350008")
-        assertEquals(7, next.id("color", "primary_100") { lookups++; 9 })
-        assertEquals(0, next.id("color", "missing") { lookups++; 9 })
+        assertEquals(
+            7,
+            next.id("color", "primary_100") {
+                lookups++
+                9
+            },
+        )
+        assertEquals(
+            0,
+            next.id("color", "missing") {
+                lookups++
+                9
+            },
+        )
         assertEquals(0, lookups)
     }
 
