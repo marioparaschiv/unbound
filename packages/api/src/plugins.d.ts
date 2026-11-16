@@ -35,17 +35,48 @@ export declare const toggle: (id: string) => void;
 /** Stops and removes an installed plugin. */
 export declare const uninstall: (id: string) => Promise<void>;
 /**
+ * @description Answers the current round and moves to the next, turning on the plugins it tests.
+ * @param stillHappens Whether the problem still happens with this round's plugins on.
+ * @returns The next round, or the result once found, when every plugin is back on except the culprit.
+ */
+export declare function answerBisect(
+	stillHappens: boolean,
+): BisectStatus | BisectResult | undefined;
+/**
+ * @description Reads the bisect in progress.
+ * @returns Its round, how many rounds are left and which plugins are on, or `undefined` when none runs.
+ */
+export declare function bisectStatus(): BisectStatus | undefined;
+/**
  * @description Runs a running plugin's self-test, as the device matrix does after restarting it.
  * @param id The plugin's id.
  * @returns Its report, or `undefined` when it is not running or has no self-test; rejects with what the self-test threw.
  */
 export declare function selfTest(id: string): Promise<PluginSelfTestResult | undefined>;
 /**
+ * @description Starts finding the plugin that causes a problem: turns Recovery Mode off and every plugin off for a first check.
+ * @returns The first round, or `undefined` when no plugin is on to test.
+ */
+export declare function startBisect(): BisectStatus | undefined;
+/**
+ * @description Stops the bisect and turns back on every plugin that was on when it started.
+ */
+export declare function stopBisect(): void;
+/**
  * @description Checks for updates, then applies this plugin's pending update.
  * @param id The plugin's id.
  * @returns Whether the plugin now runs a newer version.
  */
 export declare function update(id: string): Promise<boolean>;
+export type BisectResult = {
+	culprit: string | null;
+};
+export type BisectStatus = {
+	round: number;
+	roundsLeft: number;
+	tested: string[];
+	suspects: string[];
+};
 /** The outcome of an addon reload: success, or failure carrying the recorded error. */
 export type ReloadResult =
 	| {

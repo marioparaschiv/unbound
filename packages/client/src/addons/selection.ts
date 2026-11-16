@@ -116,6 +116,17 @@ export abstract class AddonSelection<I extends object> extends AddonLifecycle<I>
 	}
 
 	/**
+	 * @description Records whether an addon is on without starting or stopping it, for a change the next launch or reload applies.
+	 * @param id The addon's id.
+	 * @param enabled Whether it is on.
+	 */
+	storeEnabled(id: string, enabled: boolean): void {
+		if (this.selection === 'many') {
+			this.states.set(id, enabled);
+		}
+	}
+
+	/**
 	 * @description Whether the user has an addon on: enabled, or for a single-select kind, applied.
 	 * @param id The addon's id.
 	 * @returns Its persisted state.
