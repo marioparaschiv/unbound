@@ -10,6 +10,7 @@ import type { BubbleColor } from '~/lib/style';
 import { messageIdOf, messageIdOfViewModel } from '~/native/ios/message-id';
 import { paintBlur } from '~/native/ios/ui-blur';
 import {
+	installPreviewFit,
 	paintCell,
 	paintUnmeasured,
 	resetCell,
@@ -492,6 +493,7 @@ export function installBubbleGuards(
 	};
 
 	holder()[STATE_KEY] = current;
+	installPreviewFit(objc);
 
 	if (!clear) {
 		return;
