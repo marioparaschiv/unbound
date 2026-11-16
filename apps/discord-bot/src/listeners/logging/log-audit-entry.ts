@@ -16,7 +16,6 @@ function readExtra(extra: GuildAuditLogsEntry['extra']): AuditExtra {
 		count: 'count' in extra ? extra.count : undefined,
 		removed: 'removed' in extra ? extra.removed : undefined,
 		days: 'days' in extra ? extra.days : undefined,
-		ruleName: 'autoModerationRuleName' in extra ? extra.autoModerationRuleName : undefined,
 	};
 }
 

@@ -75,7 +75,7 @@ describe('auditLogEntry', () => {
 		expect(entry?.lines).toContain('**Changes:**\n**Permissions added:** Administrator');
 	});
 
-	test('links a pinned message, and names an AutoMod rule', () => {
+	test('links a pinned message', () => {
 		const pinned = auditLogEntry({
 			...FACTS,
 			action: AuditLogEvent.MessagePin,
@@ -84,23 +84,18 @@ describe('auditLogEntry', () => {
 			targetId: '100',
 			extra: { channelId: '300', messageId: '400' },
 		});
-		const blocked = auditLogEntry({
-			...FACTS,
-			action: AuditLogEvent.AutoModerationBlockMessage,
-			targetType: 'User',
-			targetId: '100',
-			extra: { ruleName: 'No invites', channelId: '300' },
-		});
 
 		expect(pinned?.title).toBe('Message Pinned');
 		expect(pinned?.lines).toContain(
 			'**Channel:** <#300> · [Jump to message](https://discord.com/channels/1/300/400)',
 		);
-		expect(blocked?.lines).toContain('**Rule:** No invites');
 	});
 
-	test('leaves bans, timeouts and message deletes to their own logs', () => {
+	test('leaves bans, timeouts, message deletes and AutoMod actions to their own logs', () => {
 		expect(auditLogEntry({ ...FACTS, action: AuditLogEvent.MemberBanAdd })).toBeUndefined();
+		expect(
+			auditLogEntry({ ...FACTS, action: AuditLogEvent.AutoModerationBlockMessage }),
+		).toBeUndefined();
 		expect(auditLogEntry({ ...FACTS, action: AuditLogEvent.MessageDelete })).toBeUndefined();
 		expect(
 			auditLogEntry({

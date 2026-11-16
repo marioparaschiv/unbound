@@ -21,7 +21,7 @@ export type AuditLogFacts = {
 	extra?: AuditExtra;
 };
 
-/** The details some actions carry beyond their changes: a move's channel, a prune's count, an AutoMod rule. */
+/** The details some actions carry beyond their changes: a pin's message, a move's count, a prune's size. */
 export type AuditExtra = {
 	channelId?: string;
 	messageId?: string;
@@ -30,21 +30,24 @@ export type AuditExtra = {
 	/** Members a prune removed, and the days of inactivity it asked for. */
 	removed?: number;
 	days?: number;
-	ruleName?: string;
 };
 
-// Message deletes post to the message logs; bans, kicks and timeouts post as cases.
-const SKIPPED = new Set([AuditLogEvent.MessageDelete, AuditLogEvent.MessageBulkDelete]);
+// Message deletes post to the message logs, and bans, kicks and timeouts as cases. AutoMod reports its own
+// actions to its alert channel, so only changes to its rules are logged here.
+const SKIPPED = new Set([
+	AuditLogEvent.MessageDelete,
+	AuditLogEvent.MessageBulkDelete,
+	AuditLogEvent.AutoModerationBlockMessage,
+	AuditLogEvent.AutoModerationFlagToChannel,
+	AuditLogEvent.AutoModerationUserCommunicationDisabled,
+	AuditLogEvent.AutoModerationQuarantineUser,
+]);
 
 const TITLES: Partial<Record<AuditLogEvent, string>> = {
 	[AuditLogEvent.MemberRoleUpdate]: 'Member Roles Updated',
 	[AuditLogEvent.ChannelOverwriteCreate]: 'Channel Permissions Added',
 	[AuditLogEvent.ChannelOverwriteUpdate]: 'Channel Permissions Updated',
 	[AuditLogEvent.ChannelOverwriteDelete]: 'Channel Permissions Removed',
-	[AuditLogEvent.AutoModerationBlockMessage]: 'AutoMod Blocked a Message',
-	[AuditLogEvent.AutoModerationFlagToChannel]: 'AutoMod Flagged a Message',
-	[AuditLogEvent.AutoModerationUserCommunicationDisabled]: 'AutoMod Timed Out a Member',
-	[AuditLogEvent.AutoModerationQuarantineUser]: 'AutoMod Quarantined a Member',
 	[AuditLogEvent.GuildScheduledEventCreate]: 'Event Created',
 	[AuditLogEvent.GuildScheduledEventUpdate]: 'Event Updated',
 	[AuditLogEvent.GuildScheduledEventDelete]: 'Event Deleted',
@@ -208,14 +211,13 @@ function target(targetType: string, id: string) {
 }
 
 function extraLines(guildId: string, extra: AuditExtra) {
-	const { channelId, messageId, count, removed, days, ruleName } = extra;
+	const { channelId, messageId, count, removed, days } = extra;
 	const jump =
 		channelId && messageId
 			? ` · [Jump to message](https://discord.com/channels/${guildId}/${channelId}/${messageId})`
 			: '';
 
 	return [
-		ruleName ? field('Rule', ruleName) : '',
 		channelId ? field('Channel', `<#${channelId}>${jump}`) : '',
 		count === undefined ? '' : field('Count', String(count)),
 		removed === undefined ? '' : field('Members Removed', String(removed)),
