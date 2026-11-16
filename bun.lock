@@ -1532,6 +1532,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/live-photo-sender": {
+      "name": "live-photo-sender",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/live-text": {
       "name": "live-text",
       "dependencies": {
@@ -5015,6 +5029,8 @@
     "linkify-it": ["linkify-it@5.0.2", "", { "dependencies": { "uc.micro": "^2.0.0" } }, "sha512-ONTm2jCMAVZjgQa/Fy1kScXsuOoF5NPTsoFBdE1KVIZ2vAh/r9+Bqo+0jINCBYnavTPQZz38QzFTme79ENoN3Q=="],
 
     "live-markdown": ["live-markdown@workspace:packages/plugins/live-markdown"],
+
+    "live-photo-sender": ["live-photo-sender@workspace:packages/plugins/live-photo-sender"],
 
     "live-text": ["live-text@workspace:packages/plugins/live-text"],
 

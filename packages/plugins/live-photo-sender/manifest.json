@@ -1,0 +1,17 @@
+{
+	"id": "unbound.live-photo-sender",
+	"name": "Live Photo Sender",
+	"description": "Lets you send a Live Photo as a still image, its video, or a GIF. iOS only.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "CameraIcon",
+	"main": "index.tsx"
+}

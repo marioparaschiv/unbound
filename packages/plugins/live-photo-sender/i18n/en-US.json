@@ -1,0 +1,12 @@
+{
+	"SEND_AS": "Send Live Photos as",
+	"SEND_AS_SUBTITLE": "What a Live Photo you pick turns into before it's attached.",
+	"ASK": "Ask each time",
+	"STILL": "Still image",
+	"VIDEO": "Video",
+	"GIF": "GIF",
+	"DIALOG_TITLE": "Send the Live Photo as",
+	"DIALOG_TITLE_MANY": "Send {count} Live Photos as",
+	"CONVERTING": "Converting the Live Photo…",
+	"CONVERT_FAILED": "Couldn't convert the Live Photo, so the still image is attached instead."
+}
