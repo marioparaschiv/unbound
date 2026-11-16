@@ -98,11 +98,11 @@ void unopenableMarkerLeavesTheHandlerUninstalled(const std::filesystem::path &ro
         expect(!loader::installAddonCrashHandler((root / "missing" / "running").string()), 10);
         raise(SIGTRAP);
         expect(gPreviousCalls == 1, 11);
-        expect(!std::filesystem::exists(root / loader::kNativeCrashFile), 12);
+        expect(!std::filesystem::exists(root / loader::kPendingNativeCrashFile), 12);
 
         expect(loader::installAddonCrashHandler((root / "running").string()), 13);
         expect(std::filesystem::exists(root / "running"), 14);
-        expect(std::filesystem::exists(root / loader::kNativeCrashFile), 15);
+        expect(std::filesystem::exists(root / loader::kPendingNativeCrashFile), 15);
     });
     assert(exitedCleanly(status));
 }
@@ -113,13 +113,14 @@ void installingTwiceKeepsTheFirstMarker(const std::filesystem::path &root)
     std::filesystem::path second = root / "second";
     std::filesystem::create_directories(first);
     std::filesystem::create_directories(second);
-    assert(loader::writeTextFileAtomically((second / loader::kNativeCrashFile).string(), "kept"));
+    assert(loader::writeTextFileAtomically((second / loader::kPendingNativeCrashFile).string(),
+                                           "kept"));
 
     int status = runInChild([&]() {
         expect(loader::installAddonCrashHandler((first / "running").string()), 20);
         expect(loader::installAddonCrashHandler((second / "running").string()), 21);
         expect(!std::filesystem::exists(second / "running"), 22);
-        expect(readFile(second / loader::kNativeCrashFile) == "kept", 23);
+        expect(readFile(second / loader::kPendingNativeCrashFile) == "kept", 23);
         expect(loader::previousNativeCrash().empty(), 24);
     });
     assert(exitedCleanly(status));
@@ -154,7 +155,7 @@ void onlyTheFirstCrashIsRecorded(const std::filesystem::path &root)
 
         expect(gPreviousCalls == 1 && gPreviousSignal == SIGTRAP, 41);
         std::string record = readFile(marker);
-        std::string stack  = readFile(root / loader::kNativeCrashFile);
+        std::string stack  = readFile(root / loader::kPendingNativeCrashFile);
         expect(nlohmann::json::parse(record, nullptr, false)
                    == nlohmann::json({{"id", "plugins:first"}, {"name", "First"}}),
                42);
@@ -167,7 +168,7 @@ void onlyTheFirstCrashIsRecorded(const std::filesystem::path &root)
 
         expect(gPreviousCalls == 2, 44);
         expect(readFile(marker) == record, 45);
-        expect(readFile(root / loader::kNativeCrashFile) == stack, 46);
+        expect(readFile(root / loader::kPendingNativeCrashFile) == stack, 46);
     });
     assert(exitedCleanly(status));
 }
@@ -182,7 +183,7 @@ void forwardsToASiginfoHandler(const std::filesystem::path &root)
         expect(gPreviousSignal == SIGILL, 52);
         expect(gPreviousHadContext == 1, 53);
         expect(readFile(root / "running").empty(), 54);
-        expect(readFile(root / loader::kNativeCrashFile)
+        expect(readFile(root / loader::kPendingNativeCrashFile)
                        .rfind("Signal " + std::to_string(SIGILL) + "\n", 0)
                    == 0,
                55);
@@ -199,7 +200,7 @@ void ignoredSignalsFallBackToTheDefaultAction(const std::filesystem::path &root)
         _exit(61);
     });
     assert(WIFSIGNALED(status) && WTERMSIG(status) == SIGFPE);
-    assert(readFile(root / loader::kNativeCrashFile)
+    assert(readFile(root / loader::kPendingNativeCrashFile)
                .rfind("Signal " + std::to_string(SIGFPE) + "\n", 0)
            == 0);
 }
@@ -215,7 +216,7 @@ void bareMarkerPathWritesTheStackInTheWorkingDirectory(const std::filesystem::pa
     });
     assert(exitedCleanly(status));
     assert(std::filesystem::exists(root / "running"));
-    assert(readFile(root / loader::kNativeCrashFile)
+    assert(readFile(root / loader::kPendingNativeCrashFile)
                .rfind("Signal " + std::to_string(SIGTRAP) + "\n", 0)
            == 0);
 }
@@ -236,7 +237,7 @@ void adoptedStackSurvivesAnInstallWithoutAWrittenStack(const std::filesystem::pa
 
 void writtenStackWinsOverAnAdoptedOne(const std::filesystem::path &root)
 {
-    assert(loader::writeTextFileAtomically((root / loader::kNativeCrashFile).string(),
+    assert(loader::writeTextFileAtomically((root / loader::kPendingNativeCrashFile).string(),
                                            "Signal 11\n#0 0x2\n"));
     int status = runInChild([&]() {
         expect(loader::adoptPreviousNativeCrash("Signal 6\n#0 0x1\n"), 90);
@@ -244,6 +245,28 @@ void writtenStackWinsOverAnAdoptedOne(const std::filesystem::path &root)
         expect(loader::previousNativeCrash() == "Signal 11\n#0 0x2\n", 92);
     });
     assert(exitedCleanly(status));
+}
+
+[[gnu::noinline]] unsigned overflowStack(unsigned depth)
+{
+    volatile char frame[1024];
+    frame[0] = static_cast<char>(depth);
+    return overflowStack(depth + 1) + static_cast<unsigned>(frame[0]);
+}
+
+void aStackOverflowStillWritesTheStack(const std::filesystem::path &root)
+{
+    int status = runInChild([&]() {
+        signal(SIGSEGV, SIG_DFL);
+        signal(SIGBUS, SIG_DFL);
+        expect(loader::installAddonCrashHandler((root / "running").string()), 100);
+        overflowStack(0);
+        _exit(101);
+    });
+    assert(WIFSIGNALED(status));
+    std::string stack = readFile(root / loader::kPendingNativeCrashFile);
+    assert(stack.rfind("Signal " + std::to_string(WTERMSIG(status)) + "\n", 0) == 0);
+    assert(stack.find("\n#0 0x") != std::string::npos);
 }
 }
 
@@ -265,6 +288,7 @@ int main()
     run("bare", bareMarkerPathWritesTheStackInTheWorkingDirectory);
     run("adopted", adoptedStackSurvivesAnInstallWithoutAWrittenStack);
     run("written", writtenStackWinsOverAnAdoptedOne);
+    run("overflow", aStackOverflowStillWritesTheStack);
 
     std::filesystem::remove_all(root);
     return 0;

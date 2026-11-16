@@ -31,9 +31,11 @@ int main()
     assert(record.take(false) == PreviousExit::Unknown);
 
     assert(!nativeCrashRecorded(root.string()));
-    assert(writeTextFileAtomically((root / kNativeCrashFile).string(), ""));
+    assert(writeTextFileAtomically((root / kNativeCrashFile).string(), "Signal 6\n"));
     assert(!nativeCrashRecorded(root.string()));
-    assert(writeTextFileAtomically((root / kNativeCrashFile).string(), "Signal 11\n"));
+    assert(writeTextFileAtomically((root / kPendingNativeCrashFile).string(), ""));
+    assert(!nativeCrashRecorded(root.string()));
+    assert(writeTextFileAtomically((root / kPendingNativeCrashFile).string(), "Signal 11\n"));
     assert(nativeCrashRecorded(root.string()));
 
     std::filesystem::remove_all(root);

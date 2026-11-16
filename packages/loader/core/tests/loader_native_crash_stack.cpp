@@ -50,14 +50,15 @@ void writesTheCrashingStackForTheNextLaunch()
     assert(WIFSIGNALED(status) && WTERMSIG(status) == SIGSEGV);
 
     std::optional<std::string> stack =
-        loader::readTextFile((directory / loader::kNativeCrashFile).string());
+        loader::readTextFile((directory / loader::kPendingNativeCrashFile).string());
     assert(stack && stack->rfind("Signal 11\nImage ", 0) == 0);
     assert(stack->find("\n#0 0x") != std::string::npos);
 
-    // The next process reads it before its own handler starts a fresh file.
     assert(loader::installAddonCrashHandler(marker));
     assert(loader::previousNativeCrash() == *stack);
-    assert(loader::readTextFile((directory / loader::kNativeCrashFile).string()) == "");
+    assert(loader::readTextFile((directory / loader::kPendingNativeCrashFile).string()) == "");
+    assert(loader::readTextFile((directory / loader::kNativeCrashFile).string()) == *stack);
+    assert(loader::nativeCrashRecorded(directory.string()));
     std::filesystem::remove_all(directory);
 }
 

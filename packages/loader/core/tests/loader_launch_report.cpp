@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <string>
 
+#include "LoaderCrashHandler.h"
 #include "LoaderLaunchReport.h"
 
 using namespace loader;
@@ -77,6 +78,7 @@ static void checkCrashHistory()
     assert(history.back().crash == "SIGSEGV in Chat Bubbles");
     assert(history.back().stack == kStack);
     assert(readCrashHistory(root.string()).back().stack == kStack);
+    assert(std::filesystem::exists(root / kNativeCrashFile));
 
     LaunchReport report;
     report.revision     = "abc1234";
