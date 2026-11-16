@@ -13,5 +13,24 @@
 		"min": "3.0.0"
 	},
 	"icon": "CameraIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.ffi.call",
+				"native.ffi.memory",
+				"native.ffi.symbols",
+				"native.objc.blocks",
+				"native.objc.classes",
+				"native.objc.invoke"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "34ee2b2a8eeba16995cf766edb3d41bae6459a3a51ab3782a910d4ff1bc8441b2f2c6a68ae56ddd89fa2c6913a0741f1a959e6566ecbca1bf33b9a6fe01b9fb8"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "zB+ZDugN2pPj/qn6ZMUJ2RVZYjG8Fwct0Db4S93nXFo2LpK8ylhS8rfuUnGvQV/A5AkJA5QD6pgzINAJIc2cDw=="
+	}
 }
