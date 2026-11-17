@@ -23,9 +23,22 @@ function row(name: string, value: string | number | boolean | undefined | null):
 	return value === undefined || value === null || value === '' ? [] : [`| ${name} | ${value} |`];
 }
 
+function enabledAddons(addons: string[] | undefined): string[] {
+	return addons?.length
+		? [
+				`<details><summary>Enabled addons (${addons.length})</summary>`,
+				'',
+				addons.map((addon) => `- \`${addon}\``).join('\n'),
+				'',
+				'</details>',
+				'',
+			]
+		: [];
+}
+
 /**
- * @description Writes the issue body: the environment, the message and stack, and the fingerprint. The log stays on
- * the server, since it can hold the reporter's ids and messages.
+ * @description Writes the issue body: the environment, enabled addons, the message and stack, and the fingerprint. The
+ * log and breadcrumbs stay on the server, since they can hold the reporter's ids and messages.
  * @param report The crash report.
  * @param reportId The stored report's id.
  * @param fingerprint The crash's fingerprint.
@@ -52,7 +65,11 @@ export function crashIssueBody(report: CrashReport, reportId: string, fingerprin
 		...row('Addon', addon),
 		...row('Phase', report.phase),
 		...row('Seconds', report.seconds),
+		...row('Discord build', report.context?.discordBuild),
+		...row('Installed from', report.context?.installSource),
+		...row('Injected', report.context?.injected?.join(', ')),
 		'',
+		...enabledAddons(report.context?.addons),
 		...(report.message ? ['### Message', '', '```text', report.message, '```', ''] : []),
 		...(report.stack
 			? ['### Stack', '', '```text', report.stack.slice(0, STACK_LIMIT), '```', '']

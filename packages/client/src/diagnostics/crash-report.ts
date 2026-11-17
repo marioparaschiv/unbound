@@ -1,5 +1,5 @@
+import type { CrashContext, CrashReport } from '@unbound-app/contracts/crash-reports';
 import { CRASH_REPORT_LOG_LIMIT } from '@unbound-app/contracts/crash-report-limits';
-import type { CrashReport } from '@unbound-app/contracts/crash-reports';
 
 import { readableLogLine } from '~/logs/entry';
 import type { Addon } from '~/addons/addon';
@@ -98,18 +98,21 @@ export function crashLogExcerpt(log: string): string | undefined {
  * @param event The failure the manager saw.
  * @param environment The app, loader and device details.
  * @param log The loader's log file, whose newest lines go into the report scrubbed of secrets.
+ * @param context What else was running, already scrubbed.
  * @returns The report; the server validates it.
  */
 export function buildCrashReport(
 	event: CrashEvent,
 	environment: CrashEnvironment,
 	log?: string,
+	context?: CrashContext,
 ): CrashReport {
 	const excerpt = log === undefined ? undefined : crashLogExcerpt(log);
 
 	return {
 		...event,
 		...environment,
+		...(context && Object.keys(context).length ? { context } : {}),
 		...(excerpt === undefined ? {} : { log: excerpt }),
 		...(event.message === undefined ? {} : { message: event.message.slice(0, 2_000) }),
 		...(event.stack === undefined ? {} : { stack: event.stack.slice(0, 16_000) }),

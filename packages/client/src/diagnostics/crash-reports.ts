@@ -46,12 +46,23 @@ async function consentToReport(event: CrashEvent): Promise<boolean> {
 	return (await askToReportCrash(event.addon?.id)) !== 'declined';
 }
 
-async function sendCrashReport(event: CrashEvent): Promise<string | undefined> {
+async function sendCrashReport(
+	event: CrashEvent,
+	breadcrumbs: string[],
+): Promise<string | undefined> {
 	try {
 		const { CLIENT_VERSION } = await import('~/core/constants');
 		const { createUnboundClient } = await import('~/account/client');
 		const environment = currentEnvironment(CLIENT_VERSION);
-		const report = environment && buildCrashReport(event, environment, await readLoaderLog());
+		const { crashContext } = await import('~/diagnostics/crash-context');
+		const report =
+			environment &&
+			buildCrashReport(
+				event,
+				environment,
+				await readLoaderLog(),
+				await crashContext(breadcrumbs),
+			);
 
 		if (!report) {
 			return undefined;
@@ -81,7 +92,13 @@ async function sendCrashReport(event: CrashEvent): Promise<string | undefined> {
  * @returns The report's id, or `undefined` when the user declined or the report was not sent.
  */
 export async function reportCrash(event: CrashEvent): Promise<string | undefined> {
-	return (await consentToReport(event)) ? sendCrashReport(event) : undefined;
+	if (!(await consentToReport(event))) {
+		return undefined;
+	}
+
+	const { recentBreadcrumbs } = await import('~/diagnostics/breadcrumbs');
+
+	return sendCrashReport(event, recentBreadcrumbs());
 }
 
 /**
@@ -105,7 +122,8 @@ export async function reportNativeCrash(launch = getLoader()?.launch): Promise<v
 		return;
 	}
 
-	const id = await sendCrashReport(event);
+	const { previousBreadcrumbs } = await import('~/diagnostics/breadcrumbs');
+	const id = await sendCrashReport(event, await previousBreadcrumbs());
 
 	if (!id) {
 		return;

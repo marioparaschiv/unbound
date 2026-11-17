@@ -1,4 +1,13 @@
-import { boolean, pgTable, text, index, integer, doublePrecision } from 'drizzle-orm/pg-core';
+import {
+	boolean,
+	pgTable,
+	text,
+	index,
+	integer,
+	doublePrecision,
+	jsonb,
+} from 'drizzle-orm/pg-core';
+import type { CrashContext } from '@unbound-app/contracts/crash-reports';
 
 import { timestampMs } from './columns';
 
@@ -22,6 +31,7 @@ export const crashReport = pgTable(
 		message: text('message'),
 		stack: text('stack'),
 		log: text('log'),
+		context: jsonb('context').$type<CrashContext>(),
 		fingerprint: text('fingerprint'),
 		receivedAt: timestampMs('received_at').notNull(),
 	},

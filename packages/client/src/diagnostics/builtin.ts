@@ -15,6 +15,7 @@ let previousHandler: ErrorHandler | undefined;
 export function start() {
 	setRejectionTracker();
 	startAppSession();
+	void import('./breadcrumbs').then(({ startBreadcrumbs }) => startBreadcrumbs());
 	void import('./crash-reports').then(({ reportNativeCrash }) => reportNativeCrash());
 
 	if (typeof ErrorUtils === 'undefined') {
@@ -35,6 +36,7 @@ export function start() {
 export function stop() {
 	setRejectionTracker(noop);
 	stopAppSession();
+	void import('./breadcrumbs').then(({ stopBreadcrumbs }) => stopBreadcrumbs());
 
 	if (!previousHandler) {
 		return;
