@@ -1,0 +1,17 @@
+{
+	"id": "unbound.cross-mod-badges",
+	"name": "Cross Mod Badges",
+	"description": "Shows the badges people have from other client mods, such as Vencord, Aliucord and BetterDiscord, on their profile.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "StarIcon",
+	"main": "index.tsx"
+}
