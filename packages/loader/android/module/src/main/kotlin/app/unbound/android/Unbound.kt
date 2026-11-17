@@ -61,9 +61,9 @@ class Unbound : XposedModule() {
         NativeBridge.documents = documents
         val cache = StartupCache(File(appInfo.dataDir, STARTUP_CACHE))
         val (bytecodeVersion, packagedIcon) = discordAPKFacts(File(appInfo.sourceDir), cache)
-        val lsPatched = Platform.isLSPatched(appInfo, param.classLoader)
-        val launcherIcons = !lsPatched
-        val platformInfo = Platform.describe(appInfo, Platform.frameworkLabel(frameworkName, frameworkVersion, lsPatched))
+        val patcher = Platform.patcher(appInfo, param.classLoader)
+        val launcherIcons = patcher.isEmpty()
+        val platformInfo = Platform.describe(appInfo, Platform.frameworkLabel(frameworkName, frameworkVersion, patcher))
         platformInfo.put("appIcons", AndroidAppIcons.describe(moduleInfo, appInfo, packagedIcon, cache, launcherIcons))
             .put("launcherIcons", launcherIcons)
         val bootstrapScripts = cache.value(BOOTSTRAP_SCRIPTS, File(moduleInfo.sourceDir)) {

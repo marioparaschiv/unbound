@@ -185,7 +185,17 @@ std::shared_ptr<loader::NativePlatformProvider> AndroidLoader::platformProvider(
         markers.customROM         = device.value("rom", std::string());
         markers.pageSize          = device.value("pageSize", 0L);
         markers.webView           = device.value("webView", std::string());
-        environment["markers"]    = loader::environment_report::androidMarkers(markers);
+        markers.host              = device.value("host", std::string());
+        markers.skin              = device.value("skin", std::string());
+        nlohmann::json background = device.value("background", nlohmann::json::object());
+        if (background.is_object())
+        {
+            markers.batteryOptimized     = background.value("optimized", false);
+            markers.backgroundRestricted = background.value("restricted", false);
+            markers.standbyBucket        = background.value("bucket", 0);
+        }
+
+        environment["markers"] = loader::environment_report::androidMarkers(markers);
         return environment;
     };
     provider->isVerifiedBuild = [callbacks]() {

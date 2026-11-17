@@ -107,6 +107,33 @@ static bool isUsualWebView(const std::string &webView)
     return false;
 }
 
+static std::vector<std::string> backgroundLimits(const AndroidDeviceFacts &facts)
+{
+    constexpr int kRareBucket       = 40;
+    constexpr int kRestrictedBucket = 45;
+    std::vector<std::string> limits;
+    if (facts.backgroundRestricted)
+    {
+        limits.emplace_back("bg restricted");
+    }
+
+    if (facts.standbyBucket >= kRestrictedBucket)
+    {
+        limits.emplace_back("standby restricted");
+    }
+    else if (facts.standbyBucket >= kRareBucket)
+    {
+        limits.emplace_back("standby rare");
+    }
+
+    if (!limits.empty() && facts.batteryOptimized)
+    {
+        limits.emplace_back("battery optimized");
+    }
+
+    return limits;
+}
+
 std::vector<std::string> androidMarkers(const AndroidDeviceFacts &facts)
 {
     std::vector<std::string> markers;
@@ -139,6 +166,18 @@ std::vector<std::string> androidMarkers(const AndroidDeviceFacts &facts)
         markers.push_back("WebView " + facts.webView);
     }
 
+    if (!facts.host.empty())
+    {
+        markers.push_back(facts.host);
+    }
+
+    std::vector<std::string> background = backgroundLimits(facts);
+    if (!background.empty() && !facts.skin.empty())
+    {
+        markers.push_back(facts.skin);
+    }
+
+    markers.insert(markers.end(), background.begin(), background.end());
     return markers;
 }
 
