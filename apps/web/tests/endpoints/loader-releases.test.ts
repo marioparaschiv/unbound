@@ -58,7 +58,7 @@ function release(
 	return {
 		platform,
 		version,
-		url: `https://github.com/unbound-app/loader/releases/tag/${platform}-${version}`,
+		url: `https://github.com/marioparaschiv/unbound/releases/tag/${platform}-${version}`,
 		changelog: `Changes in ${version}.`,
 	};
 }

@@ -201,7 +201,7 @@ Unbound wouldn't exist without the work of:
 - [@acquitelol](https://github.com/acquitelol) for the bundle, the debugger, and several ideas.
 - [@castdrian](https://github.com/castdrian) for the iOS loader, vbound, autosupport, the automatic decryption service, and build automation / CI pipelines.
 - [@NotZoeyDev](https://github.com/NotZoeyDev) for [Enmity](https://github.com/enmity-mod), and for paving the way for client modifications on iOS and mobile in general.
-- [@rushiiMachine](https://github.com/rushiiMachine) for [libunbound-android](https://github.com/unbound-app/libunbound-android).
+- [@rushiiMachine](https://github.com/rushiiMachine) for [libunbound-android](https://github.com/marioparaschiv/unbound/tree/main/packages/loader/android), now part of the loader.
 
 <div align="center">
 

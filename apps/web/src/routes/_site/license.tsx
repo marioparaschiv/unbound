@@ -109,7 +109,7 @@ function LicensePage() {
 
 			<ProseSection title='Source Code'>
 				<ProseParagraph>The source code for Unbound is available on GitHub:</ProseParagraph>
-				<ExternalLink href='https://github.com/unbound-app' />
+				<ExternalLink href='https://github.com/marioparaschiv/unbound' />
 			</ProseSection>
 
 			<ProseSection title='Questions'>

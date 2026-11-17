@@ -40,7 +40,7 @@ type Member = {
 	caller: Caller;
 };
 
-const FIRST_PARTY = 'unbound-app/unbound';
+const FIRST_PARTY = 'marioparaschiv/unbound';
 const THIRD_PARTY = 'acme/addons';
 
 const s3 = serveMemoryS3();

@@ -4,7 +4,7 @@ import { describe, expect, test } from 'bun:test';
 import { formatBytes, sourceUrl } from '~/marketplace/listing-facts';
 
 const PIN: SourcePin = {
-	repository: 'unbound-app/addons',
+	repository: 'marioparaschiv/unbound',
 	repositoryId: 1,
 	path: 'plugins/hello',
 	ref: 'main',
@@ -27,13 +27,13 @@ describe('formatBytes', () => {
 describe('sourceUrl', () => {
 	test('links the addon directory at the pinned commit', () => {
 		expect(sourceUrl(PIN)).toBe(
-			`https://github.com/unbound-app/addons/tree/${'a'.repeat(40)}/plugins/hello`,
+			`https://github.com/marioparaschiv/unbound/tree/${'a'.repeat(40)}/plugins/hello`,
 		);
 	});
 
 	test('links the repository root when the addon sits there', () => {
 		expect(sourceUrl({ ...PIN, path: '' })).toBe(
-			`https://github.com/unbound-app/addons/tree/${'a'.repeat(40)}`,
+			`https://github.com/marioparaschiv/unbound/tree/${'a'.repeat(40)}`,
 		);
 	});
 });

@@ -51,8 +51,8 @@ func TestPublishLoaderReleasesSendsBothPlatformRequests(t *testing.T) {
 		endpoint:   server.URL + "/api/v1/loader/releases",
 		apiKey:     "ci-key",
 		version:    "1.0.1",
-		iosURL:     "https://github.com/unbound-app/loader/releases/download/v352.0/Unbound.deb",
-		androidURL: "https://github.com/unbound-app/loader/releases/download/v352.0/Unbound.apk",
+		iosURL:     "https://github.com/marioparaschiv/unbound/releases/download/v352.0/Unbound.deb",
+		androidURL: "https://github.com/marioparaschiv/unbound/releases/download/v352.0/Unbound.apk",
 		changelog:  "Loader version 1.0.1 adds native bridge validation.",
 	})
 	if err != nil {

@@ -37,7 +37,7 @@ const LEGAL_LINKS: FooterLink[] = [
 ];
 
 const SOCIAL_LINKS = [
-	{ icon: GitHubIcon, href: 'https://github.com/unbound-app', label: 'GitHub' },
+	{ icon: GitHubIcon, href: 'https://github.com/marioparaschiv/unbound', label: 'GitHub' },
 	{ icon: DiscordIcon, href: 'https://discord.gg/rMdzhWUaGT', label: 'Discord' },
 ];
 

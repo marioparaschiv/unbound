@@ -13,7 +13,7 @@ const UPDATE: LoaderUpdateResponse = {
 	update: {
 		platform: 'ios',
 		version: '3.1.0',
-		url: 'https://github.com/unbound-app/loader-ios/releases/tag/3.1.0',
+		url: 'https://github.com/marioparaschiv/unbound/releases/tag/3.1.0',
 		changelog: 'Faster startup.',
 		publishedAt: '2026-10-17T12:00:00.000Z',
 		changelogs: [
@@ -44,7 +44,7 @@ afterAll(() => server.stop(true));
 
 function loader(version: string, requiredVersion?: string): UnboundLoaderInfo {
 	return {
-		origin: 'unbound-app/loader-ios',
+		origin: 'marioparaschiv/unbound',
 		version,
 		bytecodeVersion: 96,
 		...(requiredVersion ? { requiredVersion } : {}),
