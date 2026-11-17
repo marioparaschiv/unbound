@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.22] - 2026-11-17
+
+### Fixed
+
+- On Android, bubbles now cover a sticker's whole heading and the full width of bot and link embeds.
+
 ## [1.6.21] - 2026-11-17
 
 ### Fixed

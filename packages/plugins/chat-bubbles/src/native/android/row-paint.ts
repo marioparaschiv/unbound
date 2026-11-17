@@ -156,8 +156,9 @@ export function rowFrame(layout: RowLayout, style: BubbleAppearance): RowFrame {
 		layout.contentRight - layout.body.x,
 		room ? room.minWidth - padding * 2 : 0,
 	);
+	const reach = Math.min(contentWidth, layout.width - layout.body.x - padding);
 	const wrapped = bubbleFrame(
-		layout.body,
+		{ ...layout.body, width: Math.max(layout.body.width, reach) },
 		contentWidth,
 		{ horizontal: padding, vertical: style.verticalPadding },
 		inside || layout.headerBottom === undefined ? undefined : layout.headerBottom - lifted,
