@@ -12,7 +12,7 @@ export type PatchFailures = {
 };
 
 /** How many failures in a row remove a patch. */
-const FAILURE_LIMIT = 3;
+export const FAILURE_LIMIT = 3;
 
 const logger = createLogger('Patcher', 'React');
 
@@ -28,6 +28,14 @@ export function recordFailure(failures: PatchFailures, cause: unknown): void {
 
 	if (failures.count !== FAILURE_LIMIT) return;
 
+	removeFailingPatch(failures);
+}
+
+/**
+ * @description Removes a patch that failed too often in a row and tells the user which one.
+ * @param failures The patch's failure count.
+ */
+export function removeFailingPatch(failures: PatchFailures): void {
 	failures.unpatch();
 
 	// Imported here: the toasts pull in React Native and i18n, which the patcher loads before.

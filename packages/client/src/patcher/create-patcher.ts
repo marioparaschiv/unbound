@@ -1,9 +1,11 @@
 import type { PatchCallback, PatchOptions, PatchParent } from 'possess';
+import noop from '@unbound-app/utils/noop';
 import uuid from '@unbound-app/utils/uuid';
 import * as Possess from 'possess';
 
 import { patchWhenLoaded, unpatchKeepingReplacement } from '~/patcher/apply';
 import type { ReactPatcher, PatchPlace } from '~/patcher/react';
+import { guardedCallback } from '~/patcher/guarded-callback';
 import type { after, before, instead } from '~/patcher/api';
 import { createReactPatcher } from '~/patcher/react';
 import { patch } from '~/hot-refresh/live-patch';
@@ -65,12 +67,18 @@ export function createPatcher(defaultOptions: string | PatchOptions): PatcherIns
 			callback: PatchCallback,
 			options?: PatchOptions,
 		): () => void {
-			return patchAt(
+			const caller = options?.caller ?? defaults.caller;
+			let remove = noop;
+			const guarded = guardedCallback(callback, `${caller} ${method}`, () => remove());
+
+			remove = patchAt(
 				type,
 				parent,
-				(target) => ({ parent: target, method, callback }),
+				(target) => ({ parent: target, method, callback: guarded }),
 				options,
 			);
+
+			return remove;
 		};
 	}
 
