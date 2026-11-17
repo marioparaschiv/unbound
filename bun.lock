@@ -2691,6 +2691,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/spell-with-reactions": {
+      "name": "spell-with-reactions",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/split-large-messages": {
       "name": "split-large-messages",
       "dependencies": {
@@ -6111,6 +6125,8 @@
     "spdx-expression-parse": ["spdx-expression-parse@5.0.0", "", { "dependencies": { "spdx-exceptions": "^2.1.0", "spdx-license-ids": "^3.0.0" } }, "sha512-vngmw3Rgn+o2arXNbnZaj5UtOEBuWBfvaI+Wc8GFfykIhA5/vdK9/Sp/XkLv63dykz2rxKDvKEHupF5P0FORcQ=="],
 
     "spdx-license-ids": ["spdx-license-ids@3.0.24", "", {}, "sha512-cLS9TtWkIQFyLkJ3/5aFQAOHOSKTlOs/7WDut/XPSdjom1fJhUdkepeJAKXa9Y05+FabHd0sti+Et559vDtkpQ=="],
+
+    "spell-with-reactions": ["spell-with-reactions@workspace:packages/plugins/spell-with-reactions"],
 
     "split-large-messages": ["split-large-messages@workspace:packages/plugins/split-large-messages"],
 
