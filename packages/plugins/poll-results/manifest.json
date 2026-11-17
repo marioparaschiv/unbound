@@ -1,0 +1,17 @@
+{
+	"id": "unbound.poll-results",
+	"name": "Poll Results",
+	"description": "Shows how a poll stands before you vote, with Discord's Go back to vote button to cast yours.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "CheckmarkLargeIcon",
+	"main": "index.tsx"
+}
