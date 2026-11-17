@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.2] - 2026-11-17
+
+### Fixed
+
+- Its chat input button folds into the shared plugin button when the row is too narrow, so the send button stays on screen.
+
 ## [1.2.1] - 2026-11-14
 
 ### Fixed

@@ -3,12 +3,16 @@ import { useRef } from 'react';
 import type { FluxStore } from '@unbound-app/api/flux';
 import { flux } from '@unbound-app/api';
 
-import { composerState, type ComposerState } from './composer-layout';
+import { composerState, MIN_LINE_CHARACTERS, type ComposerState } from './composer-layout';
 
 declare module '@unbound-app/api/flux' {
 	// oxlint-disable-next-line typescript/consistent-type-definitions -- merging needs an interface.
 	interface FluxStores {
 		Draft: FluxStore & { getDraft(channelId: string, draftType: number): string | undefined };
+		EditMessage: FluxStore & {
+			isEditingAny(channelId: string): boolean;
+			getEditingTextValue(channelId: string): string | undefined;
+		};
 		UploadAttachment: FluxStore & {
 			getUploadCount(channelId: string, draftType: number): number;
 		};
@@ -27,18 +31,37 @@ function charactersPerLine(buttonCount: number): number {
 }
 
 /**
- * @description Follows the text of a channel's chat input.
+ * @description Whether the chat input's buttons leave a line wide enough to type on, or should fold into one button.
+ * @param buttonCount How many plugin buttons share the input's row.
+ * @returns Whether they fit inline.
+ */
+export function buttonsFit(buttonCount: number): boolean {
+	return charactersPerLine(buttonCount) >= MIN_LINE_CHARACTERS;
+}
+
+/**
+ * @description Follows the text of a channel's chat input: the message being edited while there is one, else the draft.
  * @param channelId The channel whose input to follow.
- * @returns The draft, or an empty string.
+ * @returns The text, or an empty string.
  */
 export function useDraft(channelId: string): string {
 	const DraftStore = flux.getStore('Draft');
-
-	return flux.useStore(
+	const EditStore = flux.getStore('EditMessage');
+	const draft = flux.useStore(
 		DraftStore,
 		() => DraftStore.getDraft(channelId, CHANNEL_MESSAGE_DRAFT) ?? '',
 		{ deps: [channelId] },
 	);
+	const editing = flux.useStore(
+		EditStore,
+		() =>
+			EditStore?.isEditingAny(channelId)
+				? (EditStore.getEditingTextValue(channelId) ?? ' ')
+				: undefined,
+		{ deps: [channelId] },
+	);
+
+	return editing ?? draft;
 }
 
 /**
