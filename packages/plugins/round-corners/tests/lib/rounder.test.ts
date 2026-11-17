@@ -42,6 +42,23 @@ describe('roundTree', () => {
 		expect(tree.props.style[1]).toEqual({ borderRadius: FULL });
 	});
 
+	test('keeps corners Discord squares to join another view, such as the quest dock', () => {
+		const bar = {
+			type: 'View',
+			props: {
+				style: {
+					borderRadius: FULL,
+					borderTopLeftRadius: 0,
+					borderTopRightRadius: 0,
+					borderBottomLeftRadius: 28,
+				},
+			},
+		};
+		const tree = roundTree(bar, rules.fullRoundIf(8)) as { props: { style: unknown[] } };
+
+		expect(tree.props.style[1]).toEqual({ borderRadius: FULL, borderBottomLeftRadius: FULL });
+	});
+
 	test('replaces the corner radii a fully rounded view sets', () => {
 		const bar = {
 			type: 'View',
