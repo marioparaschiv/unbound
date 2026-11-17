@@ -1,0 +1,9 @@
+{
+	"CHECK": "Check for Flashing",
+	"CHECKING": "Reading frames without playing them",
+	"FAILED": "This media couldn't be read.",
+	"FLAGGED": "Rapid flashing: {count} flashes within a second, from {start}s to {end}s. Consider not playing it.",
+	"MILD": "No rapid flashing. The most in one second is {count}.",
+	"CLEAR": "No flashing found.",
+	"FRAME": "Frame {index} of {count} · {time}s"
+}

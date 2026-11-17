@@ -1,6 +1,6 @@
 # Plugins
 
-204 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+205 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -71,6 +71,7 @@
 - <img src="../../assets/plugins/readme-icons/ic-swipe-reply-24px.svg" width="20" height="20" align="absmiddle" alt=""> [Find Reply](https://unbound.rip/addons/unbound.find-reply): Jumps from a message to the first reply to it, from its long-press menu.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Fix GIF Downloads](https://unbound.rip/addons/unbound.fix-gif-download): Save Discord GIFs as GIF files instead of videos.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Fix Youtube Embeds](https://unbound.rip/addons/unbound.fix-youtube-embeds): Plays YouTube videos that are blocked from playing in Discord, such as music videos from UMG, instead of showing an error.
+- <img src="../../assets/plugins/readme-icons/eye-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Flashing Media Warning](https://unbound.rip/addons/unbound.flashing-media-warning): Checks GIFs and videos for rapid flashing before you play them, and lets you step through their frames.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Follow Up Inbox](https://unbound.rip/addons/unbound.follow-up-inbox): Marks messages you still need to answer, lists them in one place apart from unreads, and clears each once you reply.
 - <img src="../../assets/plugins/readme-icons/headphones-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Follow Voice User](https://unbound.rip/addons/unbound.follow-voice-user): Follows a friend from voice channel to voice channel: /follow them, and you join wherever they go.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Font Attachment Preview](https://unbound.rip/addons/unbound.font-attachment-preview): Previews .ttf, .otf and .woff attachments with sample text before you download or install them.

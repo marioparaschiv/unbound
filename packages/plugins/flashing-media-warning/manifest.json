@@ -1,0 +1,17 @@
+{
+	"id": "unbound.flashing-media-warning",
+	"name": "Flashing Media Warning",
+	"description": "Checks GIFs and videos for rapid flashing before you play them, and lets you step through their frames.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "EyeIcon",
+	"main": "index.tsx"
+}

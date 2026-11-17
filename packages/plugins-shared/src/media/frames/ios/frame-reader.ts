@@ -5,8 +5,8 @@ import type {
 	NativePointer,
 } from '@unbound-app/api/native';
 
-import type { Frame, FrameOptions, FrameReader } from '~/native/frames';
-import { cropRect, outputSize } from '~/lib/frame-size';
+import type { Frame, FrameOptions, FrameReader } from '../frame-reader';
+import { cropRect, outputSize } from '../frame-size';
 
 const TIMESCALE = 600;
 const PREMULTIPLIED_LAST = 1;

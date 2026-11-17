@@ -2,7 +2,7 @@ import { inflateSync } from 'node:zlib';
 import { describe, expect, test } from 'bun:test';
 
 import { cleanPrefix, cutTiles, gridFor, mosaicText, TILE } from '~/lib/tiles';
-import { crc32, encodePng } from '~/lib/png';
+import { crc32, encodePng } from '@unbound-plugins/shared/media/png';
 
 describe('gridFor', () => {
 	test('keeps the artwork shape', () => {

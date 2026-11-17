@@ -2,7 +2,7 @@ import { flux, metro } from '@unbound-app/api';
 
 import { toBase64 } from '@unbound-plugins/shared/media/gif/base64';
 
-import { encodePng } from '~/lib/png';
+import { encodePng } from '@unbound-plugins/shared/media/png';
 import { TILE, type Tile } from '~/lib/tiles';
 
 const STATIC_SLOTS: Record<number, number> = { 0: 50, 1: 100, 2: 150, 3: 250 };

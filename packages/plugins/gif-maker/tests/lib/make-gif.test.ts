@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { cropRect, outputSize } from '~/lib/frame-size';
+import { cropRect, outputSize } from '@unbound-plugins/shared/media/frames/frame-size';
 import { frameTimes } from '~/lib/make-gif';
 
 describe('frameTimes', () => {
