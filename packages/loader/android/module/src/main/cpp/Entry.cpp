@@ -10,6 +10,7 @@
 #include "AndroidLoader.h"
 #include "AndroidLogcat.h"
 #include "HermesBytecodeHeader.h"
+#include "HermesSampling.h"
 #include "JniEnvironment.h"
 #include "JniSurface.h"
 #include "LoaderAddonActivity.h"
@@ -174,6 +175,14 @@ static jstring nativeAddonOnMainThread(JNIEnv *env, jclass)
 {
     std::string record = mainThreadAddonRecord();
     return record.empty() ? nullptr : env->NewStringUTF(record.c_str());
+}
+
+static jstring nativeSampleJavaScriptStack(JNIEnv *env, jclass)
+{
+    constexpr std::chrono::milliseconds kSampling{300};
+    std::vector<std::string> frames = loader::native::sampleJavaScriptStack(kSampling);
+    std::string stack               = loader::native::formatSampledStack(frames);
+    return stack.empty() ? nullptr : env->NewStringUTF(stack.c_str());
 }
 
 static void nativeRecordMainThreadStall(JNIEnv *, jclass, jlong at)

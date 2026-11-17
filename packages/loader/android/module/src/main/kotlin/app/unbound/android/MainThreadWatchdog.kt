@@ -45,7 +45,8 @@ internal object MainThreadWatchdog {
     private fun report(stalled: Long) {
         NativeBridge.nativeRecordMainThreadStall(System.currentTimeMillis())
         val addon = runCatching { NativeBridge.nativeAddonOnMainThread() }.getOrNull()?.let(::addonName)
-        Logger.error(LogCategory.DEFAULT, stallMessage(stalled, addon, mainStack()))
+        val javaScript = runCatching { NativeBridge.nativeSampleJavaScriptStack() }.getOrNull()
+        Logger.error(LogCategory.DEFAULT, stallMessage(stalled, addon, mainStack(), javaScript))
     }
 
     private fun mainStack(): List<String> =
@@ -54,9 +55,10 @@ internal object MainThreadWatchdog {
     private fun addonName(record: String): String? =
         runCatching { JSONObject(record).optString("name").ifEmpty { null } }.getOrNull()
 
-    internal fun stallMessage(stalled: Long, addon: String?, stack: List<String>): String {
+    internal fun stallMessage(stalled: Long, addon: String?, stack: List<String>, javaScript: String? = null): String {
         val blame = addon?.let { " while $it ran on it" }.orEmpty()
+        val script = javaScript?.takeIf { it.isNotBlank() }?.let { "\nJavaScript thread:\n$it" }.orEmpty()
         return "Discord's main thread has been blocked for $stalled ms$blame.\n" +
-            stack.joinToString("\n") { "    at $it" }
+            stack.joinToString("\n") { "    at $it" } + script
     }
 }
