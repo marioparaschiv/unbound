@@ -21,6 +21,7 @@ void rememberHookListener(jsi::Runtime &runtime, const std::string &token,
                           const jsi::Value &listener, bool coalesce, bool rewritesArguments,
                           bool returnsValue, JavaCallbacks callbacks);
 void forgetHookListener(const std::string &token);
+std::string hookOwnerName(const std::string &token);
 std::string hookTokenId(jsi::Runtime &runtime, const jsi::Value &value);
 loader::native::NativeResourceRegistry &installedHooks();
 loader::native::HookReturnCache &hookReturnValues();

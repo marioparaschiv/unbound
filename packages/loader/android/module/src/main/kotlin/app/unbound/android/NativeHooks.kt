@@ -3,6 +3,7 @@ package app.unbound.android
 import org.json.JSONArray
 import org.json.JSONObject
 import org.json.JSONTokener
+import java.lang.reflect.Constructor
 import java.lang.reflect.Executable
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
@@ -166,6 +167,17 @@ object NativeHooks {
         }
         for (proxy in currentProxies) proxy.active = false
         for (registration in current) registration.removable?.remove()
+    }
+
+    fun hookedFrames(frames: List<StackTraceElement>): List<Pair<String, String>> {
+        val current = synchronized(this) { registrations.values.toList() }
+        return frames.flatMap { frame ->
+            current.filter { registration ->
+                val method = registration.method
+                frame.className == method.declaringClass.name &&
+                    frame.methodName == (if (method is Constructor<*>) "<init>" else method.name)
+            }.map { it.token to "${frame.className.substringAfterLast('.')}.${frame.methodName}" }
+        }.distinctBy { it.first }
     }
 
     fun installedCount(): Int = synchronized(this) { registrations.size + proxies.size }

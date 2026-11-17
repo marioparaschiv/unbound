@@ -472,3 +472,19 @@ void watchRuntimeGenerations(const JavaCallbacks &callbacks)
     });
 }
 }
+
+namespace unbound::android {
+std::string hookOwnerName(const std::string &token)
+{
+    {
+        std::lock_guard<std::mutex> lock(gHookMutex);
+        auto found = gHookListeners.find(token);
+        if (found != gHookListeners.end())
+        {
+            return loader::native::addonDisplayName(found->second.addon);
+        }
+    }
+
+    return loader::native::rewritingHookOwner(token);
+}
+}

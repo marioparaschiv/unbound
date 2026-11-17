@@ -34,7 +34,9 @@ void forgetsRemovedHooks()
     native::recordRewritingHook("hook-1", "View.onLayout", first);
     native::recordRewritingHook("hook-2", "View.onLayout", second);
     assert(native::conflictsAmong(native::recordedRewritingHooks()).size() == 1);
+    assert(native::rewritingHookOwner("hook-2") == "Two");
     native::forgetRewritingHook("hook-2");
+    assert(native::rewritingHookOwner("hook-2").empty());
     assert(native::conflictsAmong(native::recordedRewritingHooks()).empty());
 }
 }

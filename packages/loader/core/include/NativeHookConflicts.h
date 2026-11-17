@@ -18,4 +18,5 @@ void recordRewritingHook(const std::string &token, const std::string &target, Ad
 void forgetRewritingHook(const std::string &token);
 void forgetAllRewritingHooks();
 std::vector<RewritingHook> recordedRewritingHooks();
+std::string rewritingHookOwner(const std::string &token);
 }
