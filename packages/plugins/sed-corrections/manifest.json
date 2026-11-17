@@ -1,0 +1,17 @@
+{
+	"id": "unbound.sed-corrections",
+	"name": "Sed Corrections",
+	"description": "Fixes your last message when you send s/typo/fix/, like on IRC, instead of sending it.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "PencilIcon",
+	"main": "index.tsx"
+}
