@@ -21,4 +21,13 @@ class MainThreadWatchdogTest {
             MainThreadWatchdog.stallMessage(4000, null, emptyList()),
         )
     }
+
+    @Test
+    fun aSampledJavaScriptStackFollowsTheMainStack() {
+        val message = MainThreadWatchdog.stallMessage(4000, null, listOf("a.B.c(B.java:1)"), "    at render (chat.js:1:2)")
+        assertEquals(
+            "Discord's main thread has been blocked for 4000 ms.\n    at a.B.c(B.java:1)\nJavaScript thread:\n    at render (chat.js:1:2)",
+            message,
+        )
+    }
 }

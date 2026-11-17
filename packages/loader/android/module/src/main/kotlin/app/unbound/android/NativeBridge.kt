@@ -78,6 +78,9 @@ object NativeBridge {
     external fun nativeAddonOnMainThread(): String?
 
     @JvmStatic
+    external fun nativeSampleJavaScriptStack(): String?
+
+    @JvmStatic
     external fun nativeRecordMainThreadStall(at: Long)
 
     @JvmStatic
