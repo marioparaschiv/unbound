@@ -381,3 +381,21 @@ func TestCompatScanTreatsAnUnknownChannelAsALabel(t *testing.T) {
 		t.Fatalf("a label channel with no build to scan must ask for one, got %v", err)
 	}
 }
+
+func TestPlainModulePathBesideAnAndroidCopyIsIOSOnly(t *testing.T) {
+	set := newCompatSourceSet()
+	location := compatLocation{}
+	set.add(compatReference{Kind: referenceModulePath, Name: "modules/touch/Manager.tsx"}, location)
+	set.add(compatReference{Kind: referenceModulePath, Name: "modules/touch/Manager.android.tsx"}, location)
+	set.add(compatReference{Kind: referenceModulePath, Name: "modules/app/Shared.tsx"}, location)
+	set.narrowPlainModulePaths()
+
+	platforms := map[string]string{}
+	for _, reference := range set.sorted() {
+		platforms[reference.Name] = reference.Platform
+	}
+
+	if platforms["modules/touch/Manager.tsx"] != "ios" || platforms["modules/touch/Manager.android.tsx"] != "android" || platforms["modules/app/Shared.tsx"] != "" {
+		t.Fatalf("unexpected platforms %v", platforms)
+	}
+}
