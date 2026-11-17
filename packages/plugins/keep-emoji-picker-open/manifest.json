@@ -1,0 +1,17 @@
+{
+	"id": "unbound.keep-emoji-picker-open",
+	"name": "Keep Emoji Picker Open",
+	"description": "Keeps the reaction emoji picker open after each pick, so you can add several reactions at once.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ReactionIcon",
+	"main": "index.tsx"
+}

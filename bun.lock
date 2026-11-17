@@ -1644,6 +1644,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/keep-emoji-picker-open": {
+      "name": "keep-emoji-picker-open",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/keyword-notify": {
       "name": "keyword-notify",
       "dependencies": {
@@ -5301,6 +5315,8 @@
     "kaomoji": ["kaomoji@workspace:packages/plugins/kaomoji"],
 
     "keep-current-channel": ["keep-current-channel@workspace:packages/plugins/keep-current-channel"],
+
+    "keep-emoji-picker-open": ["keep-emoji-picker-open@workspace:packages/plugins/keep-emoji-picker-open"],
 
     "keyv": ["keyv@5.6.0", "", { "dependencies": { "@keyv/serialize": "^1.1.1" } }, "sha512-CYDD3SOtsHtyXeEORYRx2qBtpDJFjRTGXUtmNEMGyzYOKj1TE3tycdlho7kA1Ufx9OYWZzg52QFBGALTirzDSw=="],
 
