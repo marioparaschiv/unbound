@@ -849,6 +849,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/copy-command-mentions": {
+      "name": "copy-command-mentions",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/copy-image": {
       "name": "copy-image",
       "dependencies": {
@@ -4433,6 +4447,8 @@
     "cookie-es": ["cookie-es@3.1.1", "", {}, "sha512-UaXxwISYJPTr9hwQxMFYZ7kNhSXboMXP+Z3TRX6f1/NyaGPfuNUZOWP1pUEb75B2HjfklIYLVRfWiFZJyC6Npg=="],
 
     "cookie-signature": ["cookie-signature@1.2.2", "", {}, "sha512-D76uU73ulSXrD1UXF4KE2TMxVVwhsnCgfAyTg9k8P6KGZjlXKrOLe4dJQKI3Bxi5wjesZoFXJWElNWBjPZMbhg=="],
+
+    "copy-command-mentions": ["copy-command-mentions@workspace:packages/plugins/copy-command-mentions"],
 
     "copy-image": ["copy-image@workspace:packages/plugins/copy-image"],
 

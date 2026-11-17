@@ -1,6 +1,6 @@
 # Plugins
 
-176 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+177 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -35,6 +35,7 @@
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Clear URLs](https://unbound.rip/addons/unbound.clear-urls): Removes tracking garbage from URLs before you send them.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Client Side Block](https://unbound.rip/addons/unbound.client-side-block): Hides messages from blocked, ignored and hand-picked users, replies to them, and messages with keywords you pick, without blocking anyone on Discord.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Compact Mode](https://unbound.rip/addons/unbound.compact-mode): Drops message headers and avatars and puts each author's name inline with their message, like desktop's compact layout.
+- <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Copy Command Mentions](https://unbound.rip/addons/unbound.copy-command-mentions): Copies the clickable mention of the slash command a bot reply came from, like </ping:123>, from the message's long-press menu.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Copy Image](https://unbound.rip/addons/unbound.copy-image): Adds Copy Image to the media viewer's share menu, which copies the picture itself as a PNG that any app can paste.
 - <img src="../../assets/plugins/readme-icons/calendar-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Cron Explainer](https://unbound.rip/addons/unbound.cron-explainer): Explains cron expressions with /cron and lists their next runs in the timezone you pick.
 - <img src="../../assets/plugins/readme-icons/shop-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Currency Conversions](https://unbound.rip/addons/unbound.currency-conversions): Adds approximate conversions to your currency next to prices in messages, like $25 (≈ €22.62).

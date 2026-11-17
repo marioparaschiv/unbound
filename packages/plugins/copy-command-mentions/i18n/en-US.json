@@ -1,0 +1,5 @@
+{
+	"COPY_MENTION": "Copy Command Mention",
+	"COPIED": "Copied {mention}",
+	"NOT_FOUND": "Couldn't find the command /{name} here anymore."
+}

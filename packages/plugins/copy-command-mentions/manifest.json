@@ -1,0 +1,17 @@
+{
+	"id": "unbound.copy-command-mentions",
+	"name": "Copy Command Mentions",
+	"description": "Copies the clickable mention of the slash command a bot reply came from, like </ping:123>, from the message's long-press menu.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TextIcon",
+	"main": "index.tsx"
+}
