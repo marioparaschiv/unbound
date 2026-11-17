@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.9.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.8.1...loader-v1.9.0) (2026-11-17)
+
+
+### Features
+
+* file crash reports as GitHub issues and catch exceptions ([#1715](https://github.com/marioparaschiv/unbound/issues/1715)) ([0852994](https://github.com/marioparaschiv/unbound/commit/08529945ebc4c5dec222b7fa80dc7c8e7adf086a))
+* **loader:** name the app behind Android installs ([#1743](https://github.com/marioparaschiv/unbound/issues/1743)) ([ccade1e](https://github.com/marioparaschiv/unbound/commit/ccade1ee832d222cc502f1bfa9482dc224808d57))
+* **loader:** record registers and every thread in iOS crashes ([#1736](https://github.com/marioparaschiv/unbound/issues/1736)) ([dc98580](https://github.com/marioparaschiv/unbound/commit/dc985802e1a85242967de154a0b7d97496f53ca2))
+
+
+### Bug Fixes
+
+* **loader:** accept block arguments in iOS hooks and calls ([#1733](https://github.com/marioparaschiv/unbound/issues/1733)) ([8dac3c3](https://github.com/marioparaschiv/unbound/commit/8dac3c38e9479ffb805af27f3c386010bb9ab2e2))
+* **loader:** only wrap Objective-C objects a handle can own ([#1711](https://github.com/marioparaschiv/unbound/issues/1711)) ([26d3f68](https://github.com/marioparaschiv/unbound/commit/26d3f68dc8490d88c8192e44665f6adcbc3b3dae))
+* **loader:** run view calls on main; quiet stopped plugin worklets ([#1713](https://github.com/marioparaschiv/unbound/issues/1713)) ([23fd749](https://github.com/marioparaschiv/unbound/commit/23fd7493622a24e3e9cbdb16047b604ca8da6684))
+* **loader:** scope plain module paths and the ObjC factory to iOS ([#1716](https://github.com/marioparaschiv/unbound/issues/1716)) ([bf8d9ca](https://github.com/marioparaschiv/unbound/commit/bf8d9cabbd6975d8f05f0bd511b441a8414491d8))
+* **loader:** search Java classes off the main thread ([#1732](https://github.com/marioparaschiv/unbound/issues/1732)) ([89f65e5](https://github.com/marioparaschiv/unbound/commit/89f65e59abf7e511150cf8b828512ce83b7f08d1))
+* **web:** link GitHub to the unbound monorepo ([#1765](https://github.com/marioparaschiv/unbound/issues/1765)) ([b914ef2](https://github.com/marioparaschiv/unbound/commit/b914ef207773766700d32d889eef3b72040a8c67))
+
 ## [1.8.1](https://github.com/marioparaschiv/unbound/compare/loader-v1.8.0...loader-v1.8.1) (2026-11-17)
 
 
