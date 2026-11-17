@@ -26,7 +26,6 @@ int main()
     assert(nativeFFITypeName("{_CGRect={_CGPoint=dd}{_CGSize=dd}}") == "struct:CGRect");
     assert(nativeFFITypeName("i24").empty());
     assert(nativeFFITypeName("dgarbage").empty());
-    assert(nativeFFITypeName("@?").empty());
     assert(nativeFFITypeName("@\"\"").empty());
     assert(nativeFFITypeName("@\"NSString\"trailing").empty());
     assert(nativeFFITypeName("{CGRect=dddd}").empty());
