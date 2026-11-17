@@ -399,3 +399,15 @@ func TestPlainModulePathBesideAnAndroidCopyIsIOSOnly(t *testing.T) {
 		t.Fatalf("unexpected platforms %v", platforms)
 	}
 }
+
+func TestCompatPlatformsSkipKindsFromTheOtherPlatformsFiles(t *testing.T) {
+	iosJava := compatReference{Kind: referenceJavaClass, Name: "UIResponder", Platform: "ios"}
+	if platforms := iosJava.platforms(); len(platforms) != 0 {
+		t.Fatalf("a Java class named in an iOS file is checked on %v", platforms)
+	}
+
+	shared := compatReference{Kind: referenceJavaClass, Name: "android.view.View"}
+	if platforms := shared.platforms(); len(platforms) != 1 || platforms[0] != "android" {
+		t.Fatalf("a Java class named in a shared file is checked on %v", platforms)
+	}
+}
