@@ -1,0 +1,17 @@
+{
+	"id": "unbound.friend-markers",
+	"name": "Friend Markers",
+	"description": "Marks messages from your friends with a small Friend label beside their name.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "HeartIcon",
+	"main": "index.tsx"
+}
