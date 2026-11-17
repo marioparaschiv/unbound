@@ -1,0 +1,17 @@
+{
+	"id": "unbound.call-join-confirmation",
+	"name": "Call Join Confirmation",
+	"description": "Asks before you join a voice channel or start a call, so a stray tap doesn't put you in one.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "VoiceNormalIcon",
+	"main": "index.tsx"
+}

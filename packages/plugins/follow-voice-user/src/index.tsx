@@ -1,3 +1,4 @@
+import { joinOnPurpose } from '@unbound-plugins/shared/voice/intended-join';
 import { commands, flux, metro } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
 import { format, messages } from '@unbound-app/i18n';
@@ -38,7 +39,7 @@ function onVoiceUpdates(updates: readonly VoiceUpdate[]) {
 
 	if (step && 'join' in step) {
 		followed = { ...followed, channelId: step.join };
-		VoiceChannels.selectVoiceChannel(step.join);
+		joinOnPurpose(() => VoiceChannels.selectVoiceChannel(step.join));
 	} else if (step) {
 		followed = { ...followed, channelId: null };
 		VoiceChannels.selectVoiceChannel(null);

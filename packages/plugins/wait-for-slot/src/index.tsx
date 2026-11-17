@@ -1,3 +1,4 @@
+import { joinOnPurpose } from '@unbound-plugins/shared/voice/intended-join';
 import { commands, flux, metro, toasts } from '@unbound-app/api';
 import { format, messages } from '@unbound-app/i18n';
 
@@ -41,7 +42,9 @@ function joinIfRoom(): boolean {
 	)
 		return false;
 
-	VoiceChannels.selectVoiceChannel(waiting.channelId);
+	const { channelId } = waiting;
+
+	joinOnPurpose(() => VoiceChannels.selectVoiceChannel(channelId));
 	waiting = undefined;
 
 	return true;
