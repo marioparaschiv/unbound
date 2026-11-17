@@ -1,6 +1,6 @@
 # Plugins
 
-193 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+194 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -124,6 +124,7 @@
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Mutual Group DMs](https://unbound.rip/addons/unbound.mutual-group-dms): Shows the group DMs you share with someone on their profile, and opens them from there.
 - <img src="../../assets/plugins/readme-icons/bell-icon.svg" width="20" height="20" align="absmiddle" alt=""> [New Guild Settings](https://unbound.rip/addons/unbound.new-guild-settings): Mutes new servers and applies your notification and channel defaults as soon as you join them.
 - <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [New Member Sprout](https://unbound.rip/addons/unbound.new-member-sprout): Shows desktop's new member sprout beside people who joined the server in the last week, with its tooltip.
+- <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [No Image Mosaic](https://unbound.rip/addons/unbound.no-image-mosaic): Shows each image of a message on its own row at full size, instead of cropped into a grid.
 - <img src="../../assets/plugins/readme-icons/bell-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [No Pending Count](https://unbound.rip/addons/unbound.no-pending-count): Hides the red counts for incoming friend requests and message requests.
 - <img src="../../assets/plugins/readme-icons/ic-swipe-reply-24px.svg" width="20" height="20" align="absmiddle" alt=""> [No Reply Mention](https://unbound.rip/addons/unbound.no-reply-mention): Disable reply mentions by default.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [No Typing Animation](https://unbound.rip/addons/unbound.no-typing-animation): Stops the typing dots from animating, so they sit still wherever someone is typing.
