@@ -9,8 +9,9 @@ import { withComposerButton } from '../composer-stack';
  * above the emoji and send buttons instead.
  * @param button Draws the toggle for a channel.
  * @param name What log lines call the toggle.
+ * @param key The button's key, which the Plugin Shortcut Panel collects buttons by.
  */
-export function patchRightActions(button: ToggleButtonFactory, name: string): void {
+export function patchRightActions(button: ToggleButtonFactory, name: string, key?: string): void {
 	const RightActions = metro.findByFilePath(
 		'modules/chat_input/native/action_buttons/ChatInputRightActions.tsx',
 	);
@@ -29,6 +30,7 @@ export function patchRightActions(button: ToggleButtonFactory, name: string): vo
 		return withComposerButton(result, {
 			channelId,
 			draw: (gap: number) => button(channelId, gap),
+			key,
 			inline: 'prepend',
 			rowGap: 0,
 		});

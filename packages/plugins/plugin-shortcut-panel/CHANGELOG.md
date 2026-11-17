@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.0] - 2026-11-17
+
+### Added
+
+- Collects the buttons other plugins add to the chat input into the panel, so the input shows only the shortcuts button.
+
+### Changed
+
+- Pinned plugins are switches that show whether each plugin is on.
+
 ## [1.0.1] - 2026-11-17
 
 ### Fixed

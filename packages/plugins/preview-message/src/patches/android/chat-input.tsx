@@ -36,6 +36,7 @@ export function patchChatInputSendButton(icon: number, modules: PreviewModules):
 
 		return withComposerButton(result, {
 			channelId,
+			key: 'preview-message',
 			draw: (gap) => (
 				<PreviewButton
 					key='unbound-preview-message'

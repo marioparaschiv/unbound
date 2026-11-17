@@ -10,8 +10,9 @@ const BUTTON_GAP = 8;
  * a crowded draft stacks it above the send button instead.
  * @param button Draws the toggle for a channel.
  * @param name What log lines call the toggle.
+ * @param key The button's key, which the Plugin Shortcut Panel collects buttons by.
  */
-export function patchSendButton(button: ToggleButtonFactory, name: string): void {
+export function patchSendButton(button: ToggleButtonFactory, name: string, key?: string): void {
 	const SendButton = metro.findByFilePath(
 		'modules/chat_input/native/accessories/ChatInputSendButton.tsx',
 	);
@@ -30,6 +31,7 @@ export function patchSendButton(button: ToggleButtonFactory, name: string): void
 		return withComposerButton(result, {
 			channelId,
 			draw: (gap: number) => button(channelId, gap),
+			key,
 			inline: 'row',
 			rowGap: BUTTON_GAP,
 		});

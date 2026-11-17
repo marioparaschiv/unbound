@@ -1,8 +1,9 @@
 import type { SheetProps } from '@unbound-plugins/shared/action-sheets/open-sheet';
+import { composerButtonsFor } from '@unbound-plugins/shared/composer/composer-stack';
 import { BottomSheets, Discord, GorhomSheet } from '@unbound-app/api/metro/components';
 import { plugins, ui } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { View } from 'react-native';
 
 import { pinnedShortcuts, setPinned, type Shortcut } from '~/lib/shortcuts';
@@ -10,19 +11,61 @@ import { savePinned, usePinned } from '~/lib/store';
 import { availableShortcuts } from '~/lib/available';
 import { runShortcut } from '~/lib/run';
 
+const BUTTON_GAP = 16;
+
 export type ShortcutSheetProps = SheetProps & { channelId: string };
 
-function Tile({ shortcut, onPress }: { shortcut: Shortcut; onPress: () => void }) {
-	const active = shortcut.kind === 'plugin' && plugins.isEnabled(shortcut.pluginId);
-
+function CommandTile({ shortcut, onPress }: { shortcut: Shortcut; onPress: () => void }) {
 	return (
 		<Discord.Button
 			text={shortcut.label}
 			size='sm'
-			variant={shortcut.kind === 'command' ? 'secondary' : active ? 'primary' : 'tertiary'}
+			variant='secondary'
 			onPress={onPress}
 			grow={false}
 		/>
+	);
+}
+
+function PluginToggles({
+	shortcuts,
+	onToggle,
+}: {
+	shortcuts: Shortcut[];
+	onToggle: (shortcut: Shortcut) => void;
+}) {
+	if (!shortcuts.length) return null;
+
+	return (
+		<ui.Section>
+			{shortcuts.map((shortcut) => (
+				<ui.SwitchRow
+					key={shortcut.id}
+					label={shortcut.label}
+					value={shortcut.kind === 'plugin' && plugins.isEnabled(shortcut.pluginId)}
+					onValueChange={() => onToggle(shortcut)}
+				/>
+			))}
+		</ui.Section>
+	);
+}
+
+function InputButtons({ channelId }: { channelId: string }) {
+	const buttons = composerButtonsFor(channelId);
+
+	if (!buttons.length) return null;
+
+	return (
+		<View style={{ gap: 8 }}>
+			<Discord.Text variant='text-sm/semibold' color='text-muted'>
+				{messages.INPUT_BUTTONS}
+			</Discord.Text>
+			<View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
+				{buttons.map(({ key, draw }, index) => (
+					<Fragment key={key ?? index}>{draw(BUTTON_GAP)}</Fragment>
+				))}
+			</View>
+		</View>
 	);
 }
 
@@ -54,8 +97,8 @@ function PinList({
 }
 
 /**
- * @description The shortcut panel: pinned plugin toggles and commands as compact buttons, and an edit mode listing
- * every plugin and option-free command to pin or unpin.
+ * @description The shortcut panel: the chat input buttons other plugins add, pinned plugins as switches and pinned
+ * commands as compact buttons, and an edit mode listing every plugin and option-free command to pin or unpin.
  * @param props The channel the panel was opened in, and a way to close it.
  * @returns The sheet.
  */
@@ -106,16 +149,25 @@ export default function ShortcutSheet({ channelId, onClose }: ShortcutSheetProps
 							pinned={pinned}
 						/>
 					</>
-				) : shown.length ? (
-					<View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-						{shown.map((shortcut) => (
-							<Tile
-								key={shortcut.id}
-								shortcut={shortcut}
-								onPress={() => press(shortcut)}
-							/>
-						))}
-					</View>
+				) : shown.length || composerButtonsFor(channelId).length ? (
+					<>
+						<InputButtons channelId={channelId} />
+						<PluginToggles
+							shortcuts={shown.filter((shortcut) => shortcut.kind === 'plugin')}
+							onToggle={press}
+						/>
+						<View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+							{shown
+								.filter((shortcut) => shortcut.kind === 'command')
+								.map((shortcut) => (
+									<CommandTile
+										key={shortcut.id}
+										shortcut={shortcut}
+										onPress={() => press(shortcut)}
+									/>
+								))}
+						</View>
+					</>
 				) : (
 					<Discord.Text variant='text-md/normal' color='text-muted'>
 						{messages.EMPTY}

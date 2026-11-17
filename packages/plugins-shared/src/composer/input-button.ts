@@ -95,7 +95,7 @@ export function patchChatInputButton(options: InputButtonOptions): void {
 			trailingGap,
 		});
 
-	drawButton(button, options.name);
+	drawButton(button, options.name, options.key);
 }
 
 export default { patchChatInputButton };

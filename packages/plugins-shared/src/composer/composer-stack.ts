@@ -15,7 +15,7 @@ import {
 	type PressableStateCallbackType,
 	type ViewStyle,
 } from 'react-native';
-import { assets } from '@unbound-app/api';
+import { assets, plugins } from '@unbound-app/api';
 
 import useButtonStyles from './input-button.style';
 import { buttonsFit, useComposerState } from './composer-state';
@@ -29,6 +29,8 @@ type StackProps = {
 	unboundComposerStack: true;
 	channelId: string;
 	draws: ComposerButtonDraw[];
+	/** Each draw's button key, by index; bundles that predate keys leave theirs out. */
+	keys?: (string | undefined)[];
 	target: ReactNode;
 	inline: 'row' | 'prepend';
 	rowGap: number;
@@ -36,6 +38,51 @@ type StackProps = {
 };
 
 type HiddenProps = { channelId: string; target: ReactNode };
+
+/** A plugin's chat input button: its key and how to draw it. */
+export type ComposerButton = { key?: string; draw: ComposerButtonDraw };
+
+const PANEL_ID = 'unbound.plugin-shortcut-panel';
+const PANEL_KEY = 'plugin-shortcut-panel';
+const REGISTRY_KEY = '__unboundComposerButtons';
+
+type ButtonRegistry = Map<string, ComposerButton[]>;
+
+function buttonRegistry(): ButtonRegistry {
+	const holder = globalThis as unknown as Record<typeof REGISTRY_KEY, ButtonRegistry | undefined>;
+
+	holder[REGISTRY_KEY] ??= new Map();
+
+	return holder[REGISTRY_KEY];
+}
+
+/**
+ * @description Lists the chat input buttons other plugins added in a channel, for the Plugin Shortcut Panel to show.
+ * @param channelId The channel.
+ * @returns The buttons, without the panel's own, as the chat input last drew them.
+ */
+export function composerButtonsFor(channelId: string): ComposerButton[] {
+	return buttonRegistry().get(channelId) ?? [];
+}
+
+/**
+ * @description Whether the chat input's plugin buttons live in the Plugin Shortcut Panel instead of beside the input.
+ * @returns Whether the panel is on.
+ */
+export function buttonsInPanel(): boolean {
+	return plugins.isEnabled(PANEL_ID);
+}
+
+function placedDraws(channelId: string, draws: ComposerButtonDraw[], keys: StackProps['keys']) {
+	const buttons = draws.map((draw, index) => ({ key: keys?.[index], draw }));
+	const others = buttons.filter((button) => button.key !== PANEL_KEY);
+
+	buttonRegistry().set(channelId, others);
+
+	return buttonsInPanel() && others.length < buttons.length
+		? buttons.filter((button) => button.key === PANEL_KEY).map((button) => button.draw)
+		: draws;
+}
 
 const ROW = { flexDirection: 'row', alignItems: 'center' } as const;
 const COLUMN = { flexDirection: 'column', alignItems: 'flex-end' } as const;
@@ -117,12 +164,14 @@ function inlineGroup(inline: StackProps['inline'], shown: ReactNode, children: R
  */
 export function ComposerStack({
 	channelId,
-	draws,
+	draws: allDraws,
+	keys,
 	target,
 	inline,
 	rowGap,
 	hideTargetWhenEmpty = false,
 }: StackProps) {
+	const draws = placedDraws(channelId, allDraws, keys);
 	const state = useComposerState(channelId, draws.length);
 	const [open, setOpen] = useState(false);
 	const shown = hideTargetWhenEmpty && state === 'empty' ? null : target;
@@ -159,7 +208,7 @@ function HiddenWhileEmpty({ channelId, target }: HiddenProps) {
 /**
  * @description Adds a button to the chat input's shared group, joining the group another plugin already made around the target.
  * @param target What Discord rendered, or another plugin's group.
- * @param options The channel, how to draw the button and where the group sits.
+ * @param options The channel, how to draw the button, its key and where the group sits.
  * @returns The group to render.
  */
 export function withComposerButton(
@@ -167,18 +216,29 @@ export function withComposerButton(
 	options: {
 		channelId: string;
 		draw: ComposerButtonDraw;
+		key?: string;
 		inline: 'row' | 'prepend';
 		rowGap: number;
 	},
 ): ReactElement {
 	if (isStack(target)) {
-		return cloneElement(target, { draws: [...target.props.draws, options.draw] });
+		const keys = target.props.keys ?? [];
+
+		return cloneElement(target, {
+			draws: [...target.props.draws, options.draw],
+			keys: [
+				...keys,
+				...Array.from({ length: target.props.draws.length - keys.length }, () => undefined),
+				options.key,
+			],
+		});
 	}
 
 	return createElement(ComposerStack, {
 		unboundComposerStack: true,
 		channelId: options.channelId,
 		draws: [options.draw],
+		keys: [options.key],
 		target,
 		inline: options.inline,
 		rowGap: options.rowGap,

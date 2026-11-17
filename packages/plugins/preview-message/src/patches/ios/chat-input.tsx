@@ -36,6 +36,7 @@ export function patchChatInputRightActions(icon: number, modules: PreviewModules
 
 		return withComposerButton(result, {
 			channelId,
+			key: 'preview-message',
 			draw: () => (
 				<PreviewButton
 					key='unbound-preview-message'
