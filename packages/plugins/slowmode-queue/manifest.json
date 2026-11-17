@@ -13,5 +13,12 @@
 		"min": "3.0.0"
 	},
 	"icon": "HourglassIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "eddc85e9a69c2a6192eea733746450d6f3af36634f480a477ae914b89c262bec404424e0f67e98c3f8d62ba6c60a6f48286bc019a8d7b008c1f76ad8835123b6"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "pXtDh7rG5HyPe/t6uplNOBU5gHYoZ4njtYFNY863SgOQNAs3Q2SfPMHcQTss0f/5Q9RlbqY2lvdnBnzLToryDg=="
+	}
 }
