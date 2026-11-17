@@ -139,7 +139,7 @@ export function patchChatInputToggle(options: InputToggleOptions): void {
 			trailingGap,
 		});
 
-	drawToggle(button, options.name);
+	drawToggle(button, options.name, options.key);
 }
 
 /**

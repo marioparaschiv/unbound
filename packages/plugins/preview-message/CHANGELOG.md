@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.3] - 2026-11-17
+
+### Changed
+
+- Its chat input button moves into the Plugin Shortcut Panel while that plugin is on.
+
 ## [1.1.2] - 2026-11-17
 
 ### Fixed

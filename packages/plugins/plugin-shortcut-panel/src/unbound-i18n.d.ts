@@ -15,8 +15,10 @@ declare module '@unbound-app/i18n' {
 		readonly PLUGINS: string;
 		/** Run commands */
 		readonly COMMANDS: string;
-		/** Nothing pinned yet. Tap Edit to pick plugins to turn on or off and commands to run from here. */
+		/** Nothing pinned yet. Tap Edit to pick plugins to turn on or off and commands to run from here. Buttons other plugins add to the chat input show here too. */
 		readonly EMPTY: string;
+		/** Chat input buttons */
+		readonly INPUT_BUTTONS: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
