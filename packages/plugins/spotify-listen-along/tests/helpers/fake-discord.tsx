@@ -6,6 +6,19 @@ export type OverflowButtons = { text: string; disabled?: boolean; onPress: () =>
 
 export const sent: unknown[][] = [];
 export const cleared: unknown[][] = [];
+export const discordJoins: unknown[] = [];
+
+export type JoinEvent = { nativeEvent: { messageId: string } };
+
+export const MessagesRenderer = {
+	default: (): ReactElement => (
+		<Chat onTapJoinRichPresence={(event: JoinEvent) => discordJoins.push(event)} />
+	),
+};
+
+function Chat(_props: { onTapJoinRichPresence: (event: JoinEvent) => void }): ReactElement {
+	return <Text>chat</Text>;
+}
 
 export const ActivityButtons = {
 	PlayOnSpotifyButton: (_props: { activity?: unknown }): ReactElement => (
@@ -37,7 +50,7 @@ export const MediaKeyboardActions = memo(MediaKeyboardBottomSheetActions);
 
 /** Registers the Discord modules the plugin looks up, each recording what the plugin calls on it. */
 export function registerDiscord() {
-	for (const list of [sent, cleared]) list.length = 0;
+	for (const list of [sent, cleared, discordJoins]) list.length = 0;
 
 	metro.register({
 		getAPIBaseURL: () => 'https://discord.com/api',
@@ -53,4 +66,5 @@ export function registerDiscord() {
 		receiveMessage: () => undefined,
 	});
 	metro.register({ clearDraft: (...args: unknown[]) => cleared.push(args) });
+	metro.register(MessagesRenderer, 'modules/messages/native/MessagesRenderer.tsx');
 }

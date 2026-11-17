@@ -100,6 +100,12 @@ export function joinSpotifyParty(partyId: string | undefined): boolean {
 
 	if (!userId) return false;
 
+	if (userId === UserStore.getCurrentUser?.()?.id) {
+		toasts.show({ title: addon.name, content: reasonText('YOURSELF') });
+
+		return true;
+	}
+
 	const activity = spotifyActivityOf(userId);
 
 	if (!activity) {
