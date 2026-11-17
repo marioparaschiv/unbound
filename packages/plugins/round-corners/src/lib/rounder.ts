@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-/** A view's size and corner as its style sets them. */
+/** A view's size and corner as its style sets them; `corners` lists the rounded ones, never a squared joint. */
 export type Box = { width?: number; height?: number; radius: number; corners: string[] };
 
 /** What corner a view with this box gets, or `undefined` to leave it as Discord drew it. */
@@ -50,6 +50,11 @@ function restingStyle(style: unknown): unknown {
 	}
 }
 
+// UNKNOWN: a corner value may be anything a style holds.
+function isRoundedCorner(value: unknown): boolean {
+	return typeof value === 'number' && value > 0;
+}
+
 // UNKNOWN: a style may be anything React Native accepts.
 function boxOf(style: unknown): Box | undefined {
 	let flat: Record<string, unknown> | undefined;
@@ -71,7 +76,7 @@ function boxOf(style: unknown): Box | undefined {
 		width: typeof flat?.width === 'number' ? flat.width : undefined,
 		height: typeof flat?.height === 'number' ? flat.height : undefined,
 		radius,
-		corners: CORNER_KEYS.filter((key) => typeof flat?.[key] === 'number'),
+		corners: CORNER_KEYS.filter((key) => isRoundedCorner(flat?.[key])),
 	};
 }
 

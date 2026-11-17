@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2] - 2026-11-17
+
+### Fixed
+
+- The You bar keeps its shape under a quest banner: corners Discord squares to join the banner stay square.
+
 ## [1.0.1] - 2026-11-15
 
 ### Fixed
