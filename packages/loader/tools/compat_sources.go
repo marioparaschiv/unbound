@@ -245,8 +245,50 @@ func collectCompatReferences(root string) (*compatSourceSet, error) {
 	}
 
 	analyzeScripts(set, scripts)
+	set.narrowPlainModulePaths()
 
 	return set, nil
+}
+
+// A plain `Foo.tsx` listed beside `Foo.android.tsx` is the other platform's copy of that module.
+func (set *compatSourceSet) narrowPlainModulePaths() {
+	variants := map[string]bool{}
+
+	for _, reference := range set.references {
+		if reference.Kind == referenceModulePath && reference.Platform != "" {
+			variants[reference.Platform+"#"+reference.Name] = true
+		}
+	}
+
+	for identity, reference := range set.references {
+		if reference.Kind != referenceModulePath || reference.Platform != "" {
+			continue
+		}
+
+		extension := filepath.Ext(reference.Name)
+		stem := strings.TrimSuffix(reference.Name, extension)
+		hasAndroid := variants["android#"+stem+".android"+extension]
+
+		hasIOS := variants["ios#"+stem+".ios"+extension]
+		if hasAndroid == hasIOS {
+			continue
+		}
+
+		narrowed := *reference
+
+		narrowed.Platform = "ios"
+		if hasIOS {
+			narrowed.Platform = "android"
+		}
+
+		delete(set.references, identity)
+
+		for _, location := range reference.Locations {
+			copied := narrowed
+			copied.Locations = nil
+			set.add(copied, location)
+		}
+	}
 }
 
 type compatTokenKind int

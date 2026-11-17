@@ -31,7 +31,7 @@ import { attributeBridge, withFallback } from '~/native/scope-proxies';
 import { createFluxRuntimeBridge } from '~/flux/runtime-bridge';
 import { unavailableNativeBridge } from '~/native/capabilities';
 import { createScopedObjCHook } from '~/native/scope-objc-hook';
-import { createObjectFactory } from '~/native/object-factory';
+import { createObjectFactory } from '~/native/object-factory-ios';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { createScopedJavaBridge } from '~/native/scope-java';
 import { createScopedFFIBridge } from '~/native/scope-ffi';

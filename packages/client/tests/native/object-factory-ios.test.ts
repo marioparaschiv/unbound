@@ -1,7 +1,7 @@
 import type { NativeCallOptions, NativeHandle, NativeObjectHandle } from '@unbound-app/types';
 import { describe, expect, test } from 'bun:test';
 
-import { createObjectFactory } from '~/native/object-factory';
+import { createObjectFactory } from '~/native/object-factory-ios';
 
 type Named = { name?: string };
 
