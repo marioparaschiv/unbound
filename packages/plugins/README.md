@@ -1,6 +1,6 @@
 # Plugins
 
-180 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+181 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -8,6 +8,7 @@
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Always Animate](https://unbound.rip/addons/unbound.always-animate): Animates anything that can be animated: avatars, decorations, nameplates, profile effects, server icons, emojis, stickers and GIFs.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Always Trust](https://unbound.rip/addons/unbound.always-trust): Opens links and downloads without asking whether you trust the site or the file first.
 - <img src="../../assets/plugins/readme-icons/file-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Anonymise File Names](https://unbound.rip/addons/unbound.anonymise-filenames): Replaces the names of files you upload with random characters, a fixed name or a timestamp, keeping the extension.
+- <img src="../../assets/plugins/readme-icons/shield-user-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Anti Rickroll](https://unbound.rip/addons/unbound.anti-rickroll): Asks before opening a link that leads to Never Gonna Give You Up, even through a short link.
 - <img src="../../assets/plugins/readme-icons/file-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Attachment Details](https://unbound.rip/addons/unbound.attachment-details): Shows each attachment's file name, type, size, dimensions, duration and alt text from a message's long-press menu.
 - <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Aussie Mode](https://unbound.rip/addons/adrian.aussie-mode): Discord designed for Aussies.
 - <img src="../../assets/plugins/readme-icons/microphone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Aussie Speech](https://unbound.rip/addons/adrian.aussie-speech): Turns every message into Aussie English before you send it.

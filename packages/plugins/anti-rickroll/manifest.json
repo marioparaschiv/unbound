@@ -1,0 +1,17 @@
+{
+	"id": "unbound.anti-rickroll",
+	"name": "Anti Rickroll",
+	"description": "Asks before opening a link that leads to Never Gonna Give You Up, even through a short link.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ShieldUserIcon",
+	"main": "index.tsx"
+}
