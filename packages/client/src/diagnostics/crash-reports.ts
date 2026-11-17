@@ -2,6 +2,12 @@ import type { CrashOrigin } from '@unbound-app/contracts/crash-reports';
 import { createLogger } from '@unbound-app/logger';
 import uuid from '@unbound-app/utils/uuid';
 
+import {
+	crashSignature,
+	rememberReported,
+	repeatsOf,
+	wasJustReported,
+} from '~/diagnostics/crash-repeats';
 import { buildCrashReport } from '~/diagnostics/crash-report';
 import type { CrashEvent } from '~/diagnostics/crash-report';
 import { getSetting, setSetting } from '~/settings/unbound';
@@ -77,6 +83,7 @@ function installId(): string {
 async function sendCrashReport(
 	event: CrashEvent,
 	breadcrumbs: string[],
+	{ signature = crashSignature(event), repeats }: { signature?: string; repeats?: number } = {},
 ): Promise<string | undefined> {
 	try {
 		const { CLIENT_VERSION } = await import('~/core/constants');
@@ -89,7 +96,7 @@ async function sendCrashReport(
 				event,
 				environment,
 				await readLoaderLog(),
-				await crashContext(breadcrumbs),
+				{ ...(await crashContext(breadcrumbs)), ...(repeats ? { repeats } : {}) },
 				installId(),
 			);
 
@@ -102,6 +109,7 @@ async function sendCrashReport(
 			body: report,
 		});
 
+		rememberReported(signature);
 		await announceReport(issue, origin, event.addon?.id);
 
 		return id;
@@ -114,12 +122,12 @@ async function sendCrashReport(
 
 /**
  * @description Sends a crash report when the user turned reporting on, and otherwise asks once per launch whether
- * to send it. Failures are logged and never thrown.
+ * to send it. The same crash within an hour is sent once. Failures are logged and never thrown.
  * @param event The failure the manager saw.
  * @returns The report's id, or `undefined` when the user declined or the report was not sent.
  */
 export async function reportCrash(event: CrashEvent): Promise<string | undefined> {
-	if (!(await consentToReport(event))) {
+	if (wasJustReported(crashSignature(event)) || !(await consentToReport(event))) {
 		return undefined;
 	}
 
@@ -130,7 +138,7 @@ export async function reportCrash(event: CrashEvent): Promise<string | undefined
 
 /**
  * @description Sends the previous launch's native crash once, asking first while reporting is off, and remembers the
- * report's id for `/debug`. A declined crash is not asked about again.
+ * report's id for `/debug`. A declined crash is not asked about again; a crash loop is sent once, with its repeat count.
  * @param launch The loader's launch report.
  */
 export async function reportNativeCrash(launch = getLoader()?.launch): Promise<void> {
@@ -142,15 +150,19 @@ export async function reportNativeCrash(launch = getLoader()?.launch): Promise<v
 	}
 
 	const event: CrashEvent = { kind: 'native-crash', message: launch.lastCrash, stack };
+	const signature = crashSignature({ kind: event.kind, message: newest.crash });
 
-	if (!(await consentToReport(event))) {
+	if (wasJustReported(signature) || !(await consentToReport(event))) {
 		setSetting('crash-reports.nativeAt', newest.at);
 
 		return;
 	}
 
 	const { previousBreadcrumbs } = await import('~/diagnostics/breadcrumbs');
-	const id = await sendCrashReport(event, await previousBreadcrumbs());
+	const id = await sendCrashReport(event, await previousBreadcrumbs(), {
+		signature,
+		repeats: repeatsOf(newest.crash, launch.crashes),
+	});
 
 	if (!id) {
 		return;

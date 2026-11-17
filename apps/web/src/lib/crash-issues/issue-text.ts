@@ -68,6 +68,7 @@ export function crashIssueBody(report: CrashReport, reportId: string, fingerprin
 		...row('Discord build', report.context?.discordBuild),
 		...row('Installed from', report.context?.installSource),
 		...row('Injected', report.context?.injected?.join(', ')),
+		...row('Repeats', report.context?.repeats && `${report.context.repeats}× in 1 h`),
 		'',
 		...enabledAddons(report.context?.addons),
 		...(report.message ? ['### Message', '', '```text', report.message, '```', ''] : []),

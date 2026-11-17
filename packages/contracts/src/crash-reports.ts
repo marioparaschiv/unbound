@@ -52,6 +52,7 @@ export const crashReportSchema = Type.Object({
 					maxItems: CRASH_CONTEXT_LIMITS.breadcrumbs,
 				}),
 			),
+			repeats: Type.Optional(Type.Integer({ minimum: 2, maximum: 1_000 })),
 		}),
 	),
 });
