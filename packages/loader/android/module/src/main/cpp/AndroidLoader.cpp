@@ -15,6 +15,7 @@
 #include "LoaderJSON.h"
 #include "LoaderLog.h"
 #include "LoaderSystemExits.h"
+#include "NativeHookConflicts.h"
 #include "NativePluginBridge.h"
 
 namespace unbound::android {
@@ -159,6 +160,8 @@ std::shared_ptr<loader::NativePlatformProvider> AndroidLoader::platformProvider(
         }
 
         state["injected"] = injectedModules();
+        state["hookConflicts"] =
+            loader::native::conflictsAmong(loader::native::recordedRewritingHooks());
         return state;
     };
     provider->environment = [callbacks]() {

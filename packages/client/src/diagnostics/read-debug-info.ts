@@ -429,6 +429,7 @@ export function readDebugInfo(): DebugInfo {
 		storage: attempt(() => storageOf(state), undefined),
 		errors: recentErrors(),
 		hookFailures: hookFailures(),
+		hookConflicts: attempt(() => state?.hookConflicts?.slice(0, 8), undefined),
 		ffiClosures: state?.ffiClosures,
 		ffiClosureProbe: state?.ffiClosureProbe,
 		patches: attempt(patchCounts, undefined),

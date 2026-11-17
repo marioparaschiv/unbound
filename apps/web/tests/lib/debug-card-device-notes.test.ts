@@ -91,3 +91,16 @@ describe('device notes', () => {
 		expect(extensionNotes(info)).toEqual([]);
 	});
 });
+
+describe('hook notes', () => {
+	test('list methods two plugins rewrite after failed hooks', async () => {
+		const { hookNotes } = await import('~/lib/debug-card/issue-notes');
+
+		expect(
+			hookNotes({
+				hookFailures: [{ addon: 'a', target: 'X -y', reason: 'r' }],
+				hookConflicts: ['Chat Bubbles × Message Text Size · DCDMessageCell -setText:'],
+			}),
+		).toEqual(['a: X -y', 'Chat Bubbles × Message Text Size · DCDMessageCell -setText:']);
+	});
+});
