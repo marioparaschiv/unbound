@@ -13,6 +13,7 @@ use std::time::Duration;
 use anyhow::{Context as _, anyhow};
 use lsp_types::{
 	CompletionResponse, CompletionTextEdit, Diagnostic, Hover, NumberOrString, Position,
+	SignatureHelp,
 };
 use parking_lot::Mutex;
 use serde_json::{Value, json};
@@ -231,6 +232,7 @@ impl Checker {
 					"textDocument": {
 						"completion": { "completionItem": { "snippetSupport": false, "documentationFormat": ["markdown", "plaintext"] } },
 						"hover": { "contentFormat": ["markdown", "plaintext"] },
+						"signatureHelp": { "signatureInformation": { "documentationFormat": ["markdown", "plaintext"] } },
 						"diagnostic": {},
 					},
 				},
@@ -330,6 +332,29 @@ impl Checker {
 		}
 
 		Ok(hover)
+	}
+
+	/// The signatures of the call `position` sits in, with the argument it is on. `showing` says
+	/// the help already shows, so tsrs keeps it while the caret moves through the call.
+	pub fn signature_help(
+		&self,
+		buffer: &str,
+		position: Position,
+		showing: bool,
+	) -> anyhow::Result<Option<SignatureHelp>> {
+		let _query = self.inner.query.lock();
+		self.sync(BUFFER, buffer);
+		let result = self.request(
+			"textDocument/signatureHelp",
+			json!({
+				"textDocument": { "uri": self.uri(BUFFER) },
+				"position": to_lsp(buffer, position),
+				// 1 is invoked, 3 a content change while the help shows.
+				"context": { "triggerKind": if showing { 3 } else { 1 }, "isRetrigger": showing },
+			}),
+		)?;
+
+		Ok(serde_json::from_value(result)?)
 	}
 
 	/// The buffer's type errors, less the ones the console's rewriting causes.

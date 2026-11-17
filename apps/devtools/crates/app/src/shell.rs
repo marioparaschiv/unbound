@@ -135,11 +135,10 @@ impl Shell {
 	}
 
 	fn open_settings(&mut self, _: &OpenSettings, window: &mut Window, cx: &mut Context<Self>) {
-		if self
-			.settings
-			.as_ref()
-			.is_some_and(|dialog| !dialog.read(cx).is_closing())
-		{
+		if let Some(dialog) = &self.settings {
+			// One closing turns back from where its exit is, instead of a new one popping in.
+			dialog.update(cx, |dialog, cx| dialog.reopen(cx));
+			window.focus(&dialog.focus_handle(cx), cx);
 			return;
 		}
 		let dialog = cx.new(|cx| SettingsDialog::new(window, cx));

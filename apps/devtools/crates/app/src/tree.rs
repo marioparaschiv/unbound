@@ -4,14 +4,16 @@ use gpui::{
 	AnyElement, ClickEvent, Context, MouseButton, Pixels, SharedString, TextRun, Window, div, font,
 	prelude::*, px, uniform_list,
 };
-use unbound_devtools_core::{Element, ElementKind, Row, Store};
+use unbound_devtools_core::{Element, ElementKind, Row};
 
 use crate::app::Workspace;
+use crate::indent_follow::guide_left;
 use crate::smooth_scroll::SmoothScroll;
 use crate::widgets::{badge, chevron, icon, icon_button, panel_header, tooltip};
 use crate::{assets, theme};
 
-const VISIBLE_LEVELS: u32 = 16;
+/// The list's padding above its first row.
+const LIST_TOP: f32 = 4.;
 const CRUMB_PADDING: f32 = 4.;
 const CRUMB_GAP: f32 = 2.;
 
@@ -70,12 +72,6 @@ fn ui_text_width(window: &Window, text: &str, size: Pixels) -> f32 {
 }
 
 impl Workspace {
-	fn indent_shift(&self, store: &Store) -> u32 {
-		self.synced_selection
-			.and_then(|id| store.get(id))
-			.map_or(0, |element| element.depth.saturating_sub(VISIBLE_LEVELS))
-	}
-
 	fn render_rows(
 		&self,
 		range: Range<usize>,
@@ -84,7 +80,7 @@ impl Workspace {
 	) -> Vec<AnyElement> {
 		let focused = self.tree_focus.contains_focused(window, cx);
 		let store = self.devtools.store();
-		let shift = self.indent_shift(&store);
+		let shift = self.indent.shift();
 		range
 			.filter_map(|ix| {
 				let row = *self.rows.get(ix)?;
@@ -99,23 +95,21 @@ impl Workspace {
 		ix: usize,
 		row: Row,
 		element: &Element,
-		shift: u32,
+		shift: f32,
 		focused: bool,
 		cx: &mut Context<Self>,
 	) -> AnyElement {
 		let id = row.id;
 		let selected = self.synced_selection == Some(id);
 		let matched = self.search.set.contains(&id);
-		let indent = (row.depth as f32 - shift as f32) * theme::INDENT;
-		let depth = row.depth.saturating_sub(shift);
-		let guides = (0..depth).map(|level| {
+		let indent = (row.depth as f32 - shift) * theme::INDENT;
+		// Levels shifted out past the left edge draw no guide.
+		let guides = (shift.floor() as u32..row.depth).map(|level| {
 			div()
 				.absolute()
 				.top_0()
 				.bottom_0()
-				.left(px(theme::INSET
-					+ level as f32 * theme::INDENT
-					+ theme::INDENT / 2.))
+				.left(px(guide_left(level, shift)))
 				.w(px(1.))
 				.bg(theme::color(theme::BORDER))
 		});
@@ -302,6 +296,15 @@ impl Workspace {
 		cx: &mut Context<Self>,
 	) -> impl IntoElement {
 		let width = crate::app::page_width(window) - self.inspector_width(window) - 1.;
+		let rows = self.rows.clone();
+		self.indent.follow(
+			&self.scroll,
+			rows.len(),
+			LIST_TOP,
+			|ix| rows[ix].depth,
+			window,
+			cx,
+		);
 		let list = uniform_list(
 			"tree",
 			self.rows.len(),
@@ -311,7 +314,7 @@ impl Workspace {
 		)
 		.track_scroll(&self.scroll)
 		.flex_1()
-		.py(px(4.));
+		.py(px(LIST_TOP));
 		div()
 			.flex_1()
 			.min_w_0()

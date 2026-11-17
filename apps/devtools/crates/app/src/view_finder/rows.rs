@@ -2,16 +2,19 @@
 
 use std::ops::Range;
 
-use gpui::{AnyElement, ClickEvent, Context, MouseButton, div, prelude::*, px, uniform_list};
+use gpui::{
+	AnyElement, ClickEvent, Context, MouseButton, Window, div, prelude::*, px, uniform_list,
+};
 use unbound_devtools_core::{ViewNode, Visibility};
 
 use super::{Row, ViewFinder};
+use crate::indent_follow::guide_left;
 use crate::smooth_scroll::SmoothScroll;
 use crate::theme;
 use crate::widgets::{badge, chevron, panel_header};
 
-/// Rows deeper than this below the selection's level shift left, so deep trees stay readable.
-const VISIBLE_LEVELS: u32 = 16;
+/// The list's padding above its first row.
+const LIST_TOP: f32 = 4.;
 
 pub(super) fn visibility_label(visibility: Visibility) -> &'static str {
 	match visibility {
@@ -54,22 +57,29 @@ fn name_spans(node: &ViewNode) -> gpui::Div {
 		.child(div().text_color(theme::color(theme::TEXT_FAINT)).child(">"))
 }
 
-/// The vertical lines that join a row to its ancestors, one per visible level.
-fn guides(depth: u32) -> impl Iterator<Item = gpui::Div> {
-	(0..depth).map(|level| {
+/// The vertical lines that join a row to its ancestors, one per level not shifted out of view.
+fn guides(depth: u32, shift: f32) -> impl Iterator<Item = gpui::Div> {
+	(shift.floor() as u32..depth).map(move |level| {
 		div()
 			.absolute()
 			.top_0()
 			.bottom_0()
-			.left(px(theme::INSET
-				+ level as f32 * theme::INDENT
-				+ theme::INDENT / 2.))
+			.left(px(guide_left(level, shift)))
 			.w(px(1.))
 			.bg(theme::color(theme::BORDER))
 	})
 }
 
-fn row_shell(ix: usize, depth: u32) -> gpui::Stateful<gpui::Div> {
+/// How far a row `depth` levels deep is indented once rows shift left by `shift` levels; negative
+/// once it has shifted past the left edge.
+fn indent(depth: u32, shift: f32) -> f32 {
+	(depth as f32 - shift) * theme::INDENT
+}
+
+/// A row `depth` levels deep, its indent less `shift` levels. A row shifted past the left edge
+/// pulls its first child left by [`indent`]'s overhang, as the Components tree does.
+fn row_shell(ix: usize, depth: u32, shift: f32) -> gpui::Stateful<gpui::Div> {
+	let indent = indent(depth, shift);
 	div()
 		.id(("view-row", ix))
 		.relative()
@@ -78,26 +88,32 @@ fn row_shell(ix: usize, depth: u32) -> gpui::Stateful<gpui::Div> {
 		.flex()
 		.items_center()
 		.gap(px(4.))
-		.pl(px(theme::INSET + depth as f32 * theme::INDENT))
+		.pl(px(theme::INSET + indent.max(0.)))
 		.pr(px(theme::INSET))
 		.whitespace_nowrap()
 		.overflow_hidden()
 		.mx(px(4.))
 		.rounded(theme::RADIUS_ITEM)
 		.border_1()
-		.children(guides(depth))
+		.children(guides(depth, shift))
 }
 
 /// A row of text in place of views: a level loading or failing, or the rest of a long level.
 fn note_row(
 	ix: usize,
 	depth: u32,
+	shift: f32,
 	text: gpui::SharedString,
 	tone: theme::Token,
 ) -> gpui::Stateful<gpui::Div> {
-	row_shell(ix, depth)
+	row_shell(ix, depth, shift)
 		.border_color(gpui::transparent_black())
-		.child(div().flex_none().w(px(theme::CHEVRON_SLOT)))
+		.child(
+			div()
+				.flex_none()
+				.ml(px(indent(depth, shift).min(0.)))
+				.w(px(theme::CHEVRON_SLOT)),
+		)
 		.child(
 			div()
 				.min_w_0()
@@ -109,32 +125,22 @@ fn note_row(
 }
 
 impl ViewFinder {
-	fn indent_shift(&self) -> u32 {
-		let selected = self.selected.as_deref();
-		self.rows
-			.iter()
-			.find_map(|row| match row {
-				Row::View { id, depth, .. } if Some(id.as_str()) == selected => Some(*depth),
-				_ => None,
-			})
-			.map_or(0, |depth| depth.saturating_sub(VISIBLE_LEVELS))
-	}
-
 	fn render_rows(&self, range: Range<usize>, cx: &mut Context<Self>) -> Vec<AnyElement> {
-		let shift = self.indent_shift();
+		let shift = self.indent.shift();
 		range
 			.filter_map(|ix| {
 				let row = self.rows.get(ix)?;
-				let depth = row.depth().saturating_sub(shift);
+				let depth = row.depth();
 				match row {
 					Row::View { id, expanded, .. } => {
 						let node = self.nodes.get(id)?;
-						Some(self.render_view(ix, node, depth, *expanded, cx))
+						Some(self.render_view(ix, node, depth, shift, *expanded, cx))
 					}
 					Row::Note { text, error, .. } => Some(
 						note_row(
 							ix,
 							depth,
+							shift,
 							text.clone(),
 							if *error {
 								theme::ERROR
@@ -153,6 +159,7 @@ impl ViewFinder {
 						let row = note_row(
 							ix,
 							depth,
+							shift,
 							text.clone(),
 							if *loading {
 								theme::TEXT_FAINT
@@ -182,13 +189,14 @@ impl ViewFinder {
 		ix: usize,
 		node: &ViewNode,
 		depth: u32,
+		shift: f32,
 		expanded: bool,
 		cx: &mut Context<Self>,
 	) -> AnyElement {
 		let id = node.id.clone();
 		let selected = self.selected.as_deref() == Some(id.as_str());
 		let has_children = node.child_count > 0;
-		row_shell(ix, depth)
+		row_shell(ix, depth, shift)
 			.map(|row| {
 				if selected {
 					row.bg(theme::accent_soft())
@@ -202,6 +210,7 @@ impl ViewFinder {
 				div()
 					.id(("view-chevron", ix))
 					.flex_none()
+					.ml(px(indent(depth, shift).min(0.)))
 					.w(px(theme::CHEVRON_SLOT))
 					.h_full()
 					.flex()
@@ -256,7 +265,20 @@ impl ViewFinder {
 			.into_any_element()
 	}
 
-	pub(super) fn render_tree_panel(&self, cx: &mut Context<Self>) -> impl IntoElement {
+	pub(super) fn render_tree_panel(
+		&mut self,
+		window: &mut Window,
+		cx: &mut Context<Self>,
+	) -> impl IntoElement {
+		let rows = self.rows.clone();
+		self.indent.follow(
+			&self.scroll,
+			rows.len(),
+			LIST_TOP,
+			|ix| rows[ix].depth(),
+			window,
+			cx,
+		);
 		let list = uniform_list(
 			"views",
 			self.rows.len(),
@@ -264,7 +286,7 @@ impl ViewFinder {
 		)
 		.track_scroll(&self.scroll)
 		.flex_1()
-		.py(px(4.));
+		.py(px(LIST_TOP));
 		div()
 			.flex_1()
 			.min_w_0()

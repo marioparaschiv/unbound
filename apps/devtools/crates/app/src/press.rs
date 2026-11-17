@@ -1,13 +1,14 @@
 //! The web's `.press` motion (`press-springs.tsx`): a raised control lifts 1px under the mouse,
 //! sinks onto its ledge when pressed, and overshoots a touch on release. Only translate and the
 //! ledge's depth change, so a press never moves the controls beside it. A flat control
-//! (`.press-flat`) scales to 0.96 instead; gpui has no transforms, so it redraws its face with
-//! every length multiplied.
+//! (`.press-flat`) shrinks its plate, the background drawn behind its content, to 0.96 about its
+//! centre. gpui has no transforms, so scaling text means re-laying it out at a fractional font
+//! size every frame, which wobbles; the content holds still while the plate presses.
 
 use gpui::{
 	AnimationExt, AnyElement, App, Div, ElementId, Hsla, InteractiveElement, Interactivity,
 	IntoElement, MouseButton, ParentElement, RenderOnce, SpringAnimation, SpringConfig, Stateful,
-	StatefulInteractiveElement, StyleRefinement, Styled, Window, px,
+	StatefulInteractiveElement, StyleRefinement, Styled, Window, div, px, relative,
 };
 
 use crate::theme;
@@ -20,13 +21,13 @@ pub(crate) const RELEASE: SpringConfig = SpringConfig::new(520., 22., 1.);
 /// A flat control's scale while pressed; the web's `press-flat`.
 pub(crate) const FLAT_SCALE: f32 = 0.96;
 
-/// Draws a flat control's face at a scale.
-type Face = Box<dyn FnOnce(f32) -> AnyElement>;
+/// Styles a flat control's plate: its background, border and corners, drawn at a scale.
+type Plate = Box<dyn FnOnce(Div, f32) -> Div>;
 
-/// What a press moves: a raised body on its ledge, or a flat control's scaled face.
+/// What a press moves: a raised body on its ledge, or a flat control's plate.
 enum Kind {
 	Ledge { ledge: Hsla, highlight: f32 },
-	Flat(Face),
+	Flat(Plate),
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 enum PressState {
@@ -55,6 +56,8 @@ impl PressState {
 pub struct Pressable {
 	id: ElementId,
 	body: Stateful<Div>,
+	/// Drawn after a flat control's plate, so they sit on it.
+	children: Vec<AnyElement>,
 	kind: Kind,
 	enabled: bool,
 }
@@ -72,23 +75,26 @@ impl Pressable {
 		Self {
 			body: body.id(id.clone()),
 			id,
+			children: Vec::new(),
 			kind: Kind::Ledge { ledge, highlight },
 			enabled,
 		}
 	}
 
-	/// A flat control, such as a sidebar row, whose `face` shrinks a touch while pressed. `body`
-	/// holds its place in the layout; `face` draws inside it at the scale it is given.
+	/// A flat control, such as a sidebar row, whose plate shrinks a touch while pressed. `body`
+	/// lays out its content, added as children, at full size; `plate` styles the background
+	/// behind them, given the plate's box and the scale its corners are drawn at.
 	pub fn flat(
 		id: impl Into<ElementId>,
 		body: Div,
-		face: impl FnOnce(f32) -> AnyElement + 'static,
+		plate: impl FnOnce(Div, f32) -> Div + 'static,
 	) -> Self {
 		let id = id.into();
 		Self {
 			body: body.id(id.clone()),
 			id,
-			kind: Kind::Flat(Box::new(face)),
+			children: Vec::new(),
+			kind: Kind::Flat(Box::new(plate)),
 			enabled: true,
 		}
 	}
@@ -110,7 +116,7 @@ impl StatefulInteractiveElement for Pressable {}
 
 impl ParentElement for Pressable {
 	fn extend(&mut self, elements: impl IntoIterator<Item = AnyElement>) {
-		self.body.extend(elements);
+		self.children.extend(elements);
 	}
 }
 
@@ -169,7 +175,7 @@ impl RenderOnce for Pressable {
 			self.body
 		};
 		let target = current.target(&self.kind);
-		let kind = self.kind;
+		let (kind, children) = (self.kind, self.children);
 		body.with_spring(
 			self.id,
 			SpringAnimation::new(config).to(target),
@@ -178,13 +184,23 @@ impl RenderOnce for Pressable {
 				// stays put.
 				Kind::Ledge { ledge, highlight } => {
 					let depth = (f32::from(theme::LEDGE) - value).max(0.);
-					body.relative().top(px(value)).shadow(ledge_with_highlight(
-						ledge,
-						highlight,
-						px(depth),
-					))
+					body.relative()
+						.top(px(value))
+						.shadow(ledge_with_highlight(ledge, highlight, px(depth)))
+						.children(children)
 				}
-				Kind::Flat(face) => body.relative().child(face(value)),
+				Kind::Flat(plate) => {
+					let inset = relative((1. - value) / 2.);
+					let shrunk = div()
+						.absolute()
+						.top(inset)
+						.bottom(inset)
+						.left(inset)
+						.right(inset);
+					body.relative()
+						.child(plate(shrunk, value))
+						.children(children)
+				}
 			},
 		)
 	}

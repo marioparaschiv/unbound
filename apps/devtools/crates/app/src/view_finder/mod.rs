@@ -21,6 +21,7 @@ use crate::app::on_runtime;
 use crate::empty::no_device;
 use crate::empty_state::EmptyState;
 use crate::explorer::{Entry, Explorer, ExplorerHost};
+use crate::indent_follow::IndentFollow;
 use crate::mcp_menu::McpButton;
 use crate::nav;
 use crate::theme;
@@ -110,6 +111,8 @@ pub struct ViewFinder {
 	/// Bumped whenever the roots are listed again; an answer from an older listing names stale ids.
 	epoch: u64,
 	scroll: UniformListScrollHandle,
+	/// How far the rows shift left to keep the deep ones on screen.
+	indent: IndentFollow,
 	/// The details pane: the selected view's page, and the objects opened from it.
 	explorer: Explorer,
 	mcp: Entity<McpButton>,
@@ -154,6 +157,7 @@ impl ViewFinder {
 			opened: false,
 			epoch: 0,
 			scroll: UniformListScrollHandle::new(),
+			indent: IndentFollow::default(),
 			explorer,
 			mcp,
 			_watch: watch,
@@ -505,14 +509,14 @@ fn device_connected(link: Option<&LinkStatus>) -> bool {
 }
 
 impl Render for ViewFinder {
-	fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+	fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
 		let listed = matches!(self.children.get(&None), Some(Children::Loaded(_)));
 		let body = if self.connected && listed {
 			div()
 				.flex_1()
 				.min_h_0()
 				.flex()
-				.child(self.render_tree_panel(cx))
+				.child(self.render_tree_panel(window, cx))
 				.child(div().flex_none().w(px(1.)).bg(theme::color(theme::BORDER)))
 				.child(self.render_properties(cx))
 				.into_any_element()

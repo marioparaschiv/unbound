@@ -1,19 +1,28 @@
 //! The Console page: TypeScript typed against Unbound's API, run on the device. Enter runs the
-//! buffer and Shift+Enter adds a line. Each result stays on the device as `$n`; the page gets a
-//! bounded preview and the value's shape, which types `$n` for later entries.
+//! buffer, or adds a line inside a block or while a bracket is open; Shift+Enter always adds one. Each result stays
+//! on the device as `$n`; the page gets a bounded preview and the value's shape, which types `$n`
+//! for later entries.
 
 mod assist;
 mod assist_view;
+mod brackets;
 mod highlight;
+mod keys;
+mod lines;
 mod recall;
+mod signature;
 mod types;
 mod view;
 
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
-use gpui::{AppContext, Context, Entity, ScrollHandle, SharedString, Task, Window};
-use gpui_component::input::{EditorState, InputEvent, RopeExt};
+use gpui::{App, AppContext, Context, Entity, ScrollHandle, SharedString, Task, Window};
+use gpui_component::input::language_config::LanguageConfig;
+use gpui_component::input::{
+	AutoClosingPair, EditorState, InputEvent, RangeDecoration, RangeDecorationCollection, RopeExt,
+	SyntaxContext, set_language_config,
+};
 use unbound_devtools_core::Devtools;
 use unbound_devtools_repl::{checker, device, transpile};
 
@@ -22,10 +31,22 @@ use self::highlight::Highlighted;
 use self::recall::Recall;
 use crate::app::on_runtime;
 use crate::mcp_menu::McpButton;
+use crate::theme;
 
 const CHECK_DEBOUNCE: Duration = Duration::from_millis(200);
 /// Older entries drop off, so the page never lays out an unbounded list.
 const MAX_ENTRIES: usize = 200;
+const LANGUAGE: &str = "typescript";
+
+/// Binds the Console editor's keys and closes backticks as it closes quotes.
+pub fn init(cx: &mut App) {
+	keys::bind_keys(cx);
+	let mut config = LanguageConfig::default();
+	config.auto_closing_pairs.get_or_insert_default().push(
+		AutoClosingPair::new("`", "`").not_in([SyntaxContext::String, SyntaxContext::Comment]),
+	);
+	set_language_config(LANGUAGE, config, cx);
+}
 
 pub enum Outcome {
 	Running,
@@ -63,6 +84,9 @@ pub struct Console {
 	/// `$n` declarations.
 	results: String,
 	recall: Recall,
+	/// The frames around the bracket at the caret and its partner.
+	bracket_frames: RangeDecorationCollection,
+	framed: Option<(usize, usize)>,
 	types: TypesState,
 	scroll: ScrollHandle,
 	mcp: Entity<McpButton>,
@@ -102,12 +126,17 @@ impl Console {
 	) -> Self {
 		let editor = cx.new(|cx| {
 			EditorState::new(window, cx)
-				.language("typescript")
+				.language(LANGUAGE)
 				.line_number(true)
 				.submit_on_enter(true)
 				.placeholder("unbound.flux.getStore('User').getCurrentUser()")
 		});
 		let assist = cx.new(|cx| Assist::new(editor.clone(), cx));
+		let bracket_frames = editor.update(cx, |editor, cx| {
+			editor.create_range_decorations_collection(Vec::new(), cx)
+		});
+		cx.observe(&editor, |this, _, cx| this.frame_brackets(cx))
+			.detach();
 		let types = Rc::new(types::Types {
 			assist: assist.downgrade(),
 		});
@@ -150,6 +179,8 @@ impl Console {
 			history: String::new(),
 			results: String::new(),
 			recall: Recall::default(),
+			bracket_frames,
+			framed: None,
 			types: TypesState::Loading,
 			scroll: ScrollHandle::new(),
 			mcp,
@@ -286,6 +317,28 @@ impl Console {
 		});
 
 		true
+	}
+
+	/// Frames the bracket touching the caret and its partner, when the caret moved onto another.
+	fn frame_brackets(&mut self, cx: &mut Context<Self>) {
+		let editor = self.editor.read(cx);
+		let framed = editor
+			.selected_range()
+			.is_empty()
+			.then(|| brackets::matching(&editor.value(), editor.cursor()))
+			.flatten();
+		if framed == self.framed {
+			return;
+		}
+		self.framed = framed;
+		let color: gpui::Hsla = theme::alpha(theme::TEXT_MUTED, 0.7).into();
+		let frames = framed.map_or_else(Vec::new, |(open, close)| {
+			[open, close]
+				.into_iter()
+				.map(|at| RangeDecoration::new(at..at + 1).with_color(color))
+				.collect()
+		});
+		self.bracket_frames.set(frames, cx);
 	}
 
 	pub fn clear(&mut self, cx: &mut Context<Self>) {

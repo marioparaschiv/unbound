@@ -3,21 +3,26 @@
 //! along, and slides back out when dismissed or when a passing message times out.
 
 use std::rc::Rc;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use gpui::{
 	App, BorrowAppContext as _, FontWeight, Global, MouseButton, SharedString, Window, div,
 	prelude::*, px,
 };
 
+use crate::transition::{Timing, Transition};
 use crate::widgets::{Raised, float_shadow, icon, raised_icon_button, tooltip};
 use crate::{assets, theme, title_bar};
 
 const WIDTH: f32 = 380.;
 /// The gap to the window's right edge and to the title bar.
 const INSET: f32 = 12.;
-const ENTER: Duration = Duration::from_millis(320);
-const EXIT: Duration = Duration::from_millis(200);
+/// In and out on one ease-out cubic, quick to arrive and settling gently.
+const TIMING: Timing = Timing {
+	open: Duration::from_millis(320),
+	close: Duration::from_millis(200),
+	ease: |t| 1. - (1. - t).powi(3),
+};
 /// How long a toast without an action stays up.
 const LINGER: Duration = Duration::from_secs(5);
 const GROUP: &str = "update-toast";
@@ -40,8 +45,8 @@ pub struct Toast {
 
 struct Shown {
 	toast: Rc<Toast>,
-	entered: Instant,
-	leaving: Option<Instant>,
+	/// Open while it stays; closed once dismissed.
+	motion: Transition,
 }
 
 /// The toast on screen; the shell observes it to redraw.
@@ -58,19 +63,20 @@ pub fn init(cx: &mut App) {
 	cx.set_global(Toasts::default());
 }
 
-/// Shows `toast`. One already up keeps its place and takes the new text without moving.
+/// Shows `toast`. One already up keeps its place and takes the new text without moving; one
+/// sliding out turns back in from where it is.
 pub fn show(toast: Toast, cx: &mut App) {
 	let linger = !toast.stays;
 	let generation = cx.update_global::<Toasts, _>(|toasts, _| {
 		toasts.generation += 1;
-		let entered = match &toasts.shown {
-			Some(shown) if shown.leaving.is_none() => shown.entered,
-			_ => Instant::now(),
-		};
+		let mut motion = toasts
+			.shown
+			.as_ref()
+			.map_or_else(Transition::opening, |shown| shown.motion);
+		motion.set(true, TIMING);
 		toasts.shown = Some(Shown {
 			toast: Rc::new(toast),
-			entered,
-			leaving: None,
+			motion,
 		});
 		toasts.generation
 	});
@@ -83,18 +89,19 @@ pub fn show(toast: Toast, cx: &mut App) {
 	}
 }
 
-/// Slides the toast out, then drops it.
+/// Slides the toast out from where it is, then drops it.
 pub fn hide(cx: &mut App) {
-	let generation = cx.update_global::<Toasts, _>(|toasts, _| {
-		if let Some(shown) = toasts.shown.as_mut()
-			&& shown.leaving.is_none()
-		{
-			shown.leaving = Some(Instant::now());
+	let (generation, left) = cx.update_global::<Toasts, _>(|toasts, _| {
+		let Some(shown) = toasts.shown.as_mut() else {
+			return (toasts.generation, Duration::ZERO);
+		};
+		if shown.motion.is_open() {
+			shown.motion.set(false, TIMING);
 			toasts.generation += 1;
 		}
-		toasts.generation
+		(toasts.generation, shown.motion.remaining(TIMING))
 	});
-	after(EXIT, cx, move |cx| {
+	after(left, cx, move |cx| {
 		cx.update_global::<Toasts, _>(|toasts, _| {
 			if toasts.generation == generation {
 				toasts.shown = None;
@@ -111,32 +118,15 @@ fn after(delay: Duration, cx: &mut App, run: impl FnOnce(&mut App) + 'static) {
 	.detach();
 }
 
-/// Ease-out cubic: quick to arrive, settling gently.
-fn ease_out(t: f32) -> f32 {
-	1. - (1. - t).powi(3)
-}
-
-/// How far in the toast is, 0 off the right edge to 1 in place, and whether it is still moving.
-fn progress(shown: &Shown) -> (f32, bool) {
-	let fraction = |since: Instant, length: Duration| {
-		(since.elapsed().as_secs_f32() / length.as_secs_f32()).min(1.)
-	};
-	match shown.leaving {
-		None => {
-			let t = fraction(shown.entered, ENTER);
-			(ease_out(t), t < 1.)
-		}
-		Some(leaving) => {
-			let t = fraction(leaving, EXIT);
-			(1. - ease_out(t), t < 1.)
-		}
-	}
-}
-
 /// The toast, positioned over the window, or nothing when none is up.
 pub fn render(window: &mut Window, cx: &App) -> Option<impl IntoElement> {
 	let shown = cx.global::<Toasts>().shown.as_ref()?;
-	let (shown_by, moving) = progress(shown);
+	// How far in it is, 0 off the right edge to 1 in place.
+	let (shown_by, moving) = if cx.reduce_motion() {
+		(f32::from(u8::from(shown.motion.is_open())), false)
+	} else {
+		(shown.motion.value(TIMING), shown.motion.is_moving(TIMING))
+	};
 	if moving {
 		window.request_animation_frame();
 	}

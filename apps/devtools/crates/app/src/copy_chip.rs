@@ -1,7 +1,7 @@
 //! An inline code chip: a value in the mono font on a raised key, with a copy glyph. Clicking
 //! anywhere on it copies the value; the chip presses like a flat control while its glyph swaps.
 
-use gpui::{App, SharedString, TextRun, Window, div, font, prelude::*, px, relative};
+use gpui::{App, SharedString, TextRun, Window, div, font, prelude::*, px};
 
 use crate::copy_glyph::{copied_state, copy_glyphs, copy_on_click, element_id};
 use crate::press::Pressable;
@@ -12,7 +12,7 @@ const HEIGHT: f32 = 34.;
 const PAD_X: f32 = 12.;
 const GAP: f32 = 10.;
 const GLYPH: f32 = 14.;
-/// The chip's hover reaches its face, which is drawn inside the pressable's unscaled box.
+/// The chip's hover reaches its plate, which a press shrinks inside the chip's box.
 const GROUP: &str = "copy-chip";
 
 #[derive(IntoElement)]
@@ -75,7 +75,7 @@ impl RenderOnce for CopyChip {
 		let id = self.id;
 		let state = copied_state(&id, window, cx);
 		let showing = state.read(cx).showing;
-		// The pressable keeps the chip's unscaled box in the layout; its face scales inside it.
+		// `scale` is the popout's growth; a press shrinks only the plate, under still text.
 		let s = self.scale;
 		let width = natural_width(window, &self.text).max(self.min_width) * s;
 		let body = div()
@@ -84,35 +84,30 @@ impl RenderOnce for CopyChip {
 			.h(px(HEIGHT * s))
 			.group(GROUP)
 			.cursor_pointer();
-		let text = self.text.clone();
-		let press = element_id(&id, "press");
-		let face = move |press: f32| {
-			let inset = relative((1. - press) / 2.);
-			let scale = press * s;
-			div()
-				.absolute()
-				.top(inset)
-				.bottom(inset)
-				.left(inset)
-				.right(inset)
-				.flex()
-				.items_center()
-				.gap(px(GAP * scale))
-				.px(px(PAD_X * scale))
-				.rounded(theme::RADIUS_CONTROL * scale)
+		let plate = move |plate: gpui::Div, press: f32| {
+			plate
+				.rounded(theme::RADIUS_CONTROL * (press * s))
 				.bg(theme::color(theme::ELEVATED))
 				.border_1()
 				.border_color(hairline())
 				.shadow(key_shadow())
-				.group_hover(GROUP, |face| face.bg(theme::color(theme::SECONDARY)))
-				.font_family(theme::mono_font())
-				.text_size(theme::TEXT_SMALL * scale)
-				.text_color(theme::color(theme::TEXT))
-				.child(div().flex_1().whitespace_nowrap().child(text))
-				.child(copy_glyphs(&id, GLYPH * scale, theme::TEXT_MUTED, showing))
-				.into_any_element()
+				.group_hover(GROUP, |plate| plate.bg(theme::color(theme::SECONDARY)))
 		};
+		let content = div()
+			.relative()
+			.size_full()
+			.flex()
+			.items_center()
+			.gap(px(GAP * s))
+			.px(px(PAD_X * s))
+			.font_family(theme::mono_font())
+			.text_size(theme::TEXT_SMALL * s)
+			.text_color(theme::color(theme::TEXT))
+			.child(div().flex_1().whitespace_nowrap().child(self.text.clone()))
+			.child(copy_glyphs(&id, GLYPH * s, theme::TEXT_MUTED, showing));
 		let view = window.current_view();
-		Pressable::flat(press, body, face).on_click(copy_on_click(state, view, self.text))
+		Pressable::flat(element_id(&id, "press"), body, plate)
+			.child(content)
+			.on_click(copy_on_click(state, view, self.text))
 	}
 }

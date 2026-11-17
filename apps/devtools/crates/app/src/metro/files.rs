@@ -8,7 +8,7 @@ use std::rc::Rc;
 use gpui::{AnyElement, Context, Div, SharedString, Stateful, div, prelude::*, px};
 use unbound_devtools_core::{FilesPage, MetroError, MetroFile, MetroModule, MetroModuleStatus};
 
-use super::unfold::{Fold, Turn};
+use super::unfold::{Fold, Turn, refold};
 use super::{MetroBrowser, Row, cancelled};
 use crate::app::on_runtime;
 use crate::theme;
@@ -279,16 +279,12 @@ impl MetroBrowser {
 			};
 			let (old, new) = (keys(&files.rows), keys(&next));
 			// An open grows into the new rows; a close shrinks the old ones, then `settle` drops them.
-			if open {
-				files.fold = Fold::between(old, new, true);
+			let (fold, take) = refold(&old, &new, files.fold.take());
+			if take {
 				files.rows = next;
-			} else {
-				files.fold = Fold::between(new, old, false);
-				if files.fold.is_none() {
-					files.rows = next;
-				}
 			}
-			files.turn = Some(Turn::new(path, open));
+			files.fold = fold;
+			files.turn = Some(Turn::new(path, open, files.turn.as_ref()));
 		}
 		self.rebuild_rows();
 		cx.notify();

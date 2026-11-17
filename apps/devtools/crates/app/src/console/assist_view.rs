@@ -2,8 +2,8 @@
 //! outer radius less the padding between them, so the curves share one centre.
 
 use gpui::{
-	Anchor, AnyElement, App, Context, FontWeight, IntoElement, Pixels, Window, anchored, deferred,
-	div, point, prelude::*, px,
+	Anchor, AnyElement, App, Context, FontWeight, HighlightStyle, IntoElement, Pixels, Point,
+	StyledText, UnderlineStyle, Window, anchored, deferred, div, point, prelude::*, px,
 };
 use gpui_component::text::{TextView, TextViewStyle};
 use lsp_types::{CompletionItem, CompletionItemKind};
@@ -159,11 +159,43 @@ fn render_row(ix: usize, item: &CompletionItem, typed: &str, selected: bool) -> 
 		.into_any_element()
 }
 
+/// Where the completion menu goes: its anchor corner and that corner's point.
+struct MenuPlacement {
+	anchor: Anchor,
+	origin: Point<Pixels>,
+	height: Pixels,
+}
+
 impl Assist {
+	/// The names line up with the one under the caret, badges hanging to their left. Below the
+	/// line when the menu fits, else above it, so it never covers the code.
+	fn menu_placement(&self, window: &Window, cx: &App) -> Option<MenuPlacement> {
+		let list = self.live_completions(cx)?;
+		let word = self
+			.editor
+			.read(cx)
+			.range_to_bounds(&(list.start..list.start))?;
+		let x = word.left() - px(1.) - MENU_PADDING - ROW_INSET - BADGE - BADGE_GAP;
+		let height =
+			ROW_HEIGHT * list.items.len().min(MENU_ROWS) as f32 + MENU_PADDING * 2. + px(2.);
+		let fits_below = word.bottom() + GAP + height + px(8.) <= window.viewport_size().height;
+		let (anchor, origin) = if fits_below {
+			(Anchor::TopLeft, point(x, word.bottom() + GAP))
+		} else {
+			(Anchor::BottomLeft, point(x, word.top() - GAP))
+		};
+
+		Some(MenuPlacement {
+			anchor,
+			origin,
+			height,
+		})
+	}
+
 	fn render_menu(&self, window: &Window, cx: &App) -> Option<AnyElement> {
 		let list = self.live_completions(cx)?;
+		let placement = self.menu_placement(window, cx)?;
 		let editor = self.editor.read(cx);
-		let word = editor.range_to_bounds(&(list.start..list.start))?;
 		let typed = editor
 			.text()
 			.slice(list.start..editor.cursor())
@@ -186,25 +218,93 @@ impl Assist {
 			.flex()
 			.flex_col()
 			.children(rows);
-		// The names line up with the one under the caret, badges hanging to their left. Below the
-		// line when the menu fits, else above it, so it never covers the code.
-		let x = word.left() - px(1.) - MENU_PADDING - ROW_INSET - BADGE - BADGE_GAP;
-		let height =
-			ROW_HEIGHT * list.items.len().min(MENU_ROWS) as f32 + MENU_PADDING * 2. + px(2.);
-		let fits_below = word.bottom() + GAP + height + px(8.) <= window.viewport_size().height;
-		let (anchor, origin) = if fits_below {
-			(Anchor::TopLeft, point(x, word.bottom() + GAP))
-		} else {
-			(Anchor::BottomLeft, point(x, word.top() - GAP))
-		};
 
 		Some(
 			deferred(
 				anchored()
-					.anchor(anchor)
-					.position(origin)
+					.anchor(placement.anchor)
+					.position(placement.origin)
 					.snap_to_window_with_margin(px(8.))
 					.child(menu),
+			)
+			.with_priority(1)
+			.into_any_element(),
+		)
+	}
+
+	/// The call's parameters above the caret's line, the argument being typed bright and underlined.
+	/// Over the completion menu when that opens above the line too.
+	fn render_signature(&self, window: &Window, cx: &App) -> Option<AnyElement> {
+		let card = self.signature.as_ref()?;
+		let editor = self.editor.read(cx);
+		let caret = editor.range_to_bounds(&(editor.cursor()..editor.cursor()))?;
+		let bottom = match self.menu_placement(window, cx) {
+			Some(menu) if menu.anchor == Anchor::BottomLeft => menu.origin.y - menu.height - GAP,
+			_ => caret.top() - GAP,
+		};
+		let active = HighlightStyle {
+			color: Some(theme::color(theme::TEXT).into()),
+			font_weight: Some(FontWeight::BOLD),
+			underline: Some(UnderlineStyle {
+				thickness: px(1.),
+				color: Some(theme::color(theme::TEXT).into()),
+				wavy: false,
+			}),
+			..HighlightStyle::default()
+		};
+		let label = StyledText::new(card.label.clone())
+			.with_highlights((!card.active.is_empty()).then(|| (card.active.clone(), active)));
+		let overloads = (card.count > 1).then(|| {
+			div()
+				.flex_none()
+				.font_family(theme::ui_font())
+				.text_size(theme::TEXT_SMALL)
+				.text_color(theme::color(theme::TEXT_FAINT))
+				.child(format!("{} of {}", card.index + 1, card.count))
+		});
+		let docs = card.docs.clone().map(|docs| {
+			div()
+				.mt(px(8.))
+				.pt(px(8.))
+				.border_t_1()
+				.border_color(theme::color(theme::BORDER_STRONG))
+				.text_size(theme::TEXT_SMALL)
+				.text_color(theme::color(theme::TEXT_SECONDARY))
+				.child(TextView::markdown("signature-docs", docs))
+		});
+		let body = surface()
+			.id("signature-card")
+			.max_w(px(560.))
+			.max_h(px(220.))
+			.overflow_y_scroll()
+			.px(CARD_PADDING)
+			.py(px(8.))
+			.font_family(theme::ui_font())
+			.child(
+				div()
+					.flex()
+					.items_start()
+					.gap(px(10.))
+					.child(
+						div()
+							.flex_1()
+							.min_w_0()
+							.font_family(theme::mono_font())
+							.text_size(theme::TEXT_MONO)
+							.text_color(theme::color(theme::TEXT_MUTED))
+							.child(label),
+					)
+					.children(overloads),
+			)
+			.children(docs);
+
+		Some(
+			deferred(
+				anchored()
+					.anchor(Anchor::BottomLeft)
+					.position(point(caret.left() - CARD_PADDING, bottom))
+					.snap_to_window_with_margin(px(8.))
+					.child(body),
 			)
 			.with_priority(1)
 			.into_any_element(),
@@ -271,9 +371,10 @@ impl Assist {
 impl Render for Assist {
 	fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
 		let menu = self.render_menu(window, cx);
+		let signature = self.render_signature(window, cx);
 		let hover = self.render_hover(cx);
 
-		div().children(menu).children(hover)
+		div().children(menu).children(signature).children(hover)
 	}
 }
 
