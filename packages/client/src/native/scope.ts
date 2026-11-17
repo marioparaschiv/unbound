@@ -34,6 +34,7 @@ import { unavailableNativeBridge } from '~/native/capabilities';
 import { createScopedObjCHook } from '~/native/scope-objc-hook';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { createScopedJavaBridge } from '~/native/scope-java';
+import { trackCapabilities } from '~/native/capability-use';
 import { createScopedFFIBridge } from '~/native/scope-ffi';
 import { createScopedUIBridge } from '~/native/ui';
 import { getNativeBridge } from '~/native/bridge';
@@ -131,7 +132,13 @@ export function createScopedNativeBridge(
 		scopeAsyncMethod,
 		scopeBridgeMethod,
 		scopeBridgeAsyncMethod,
-	} = createScopeGate({ capabilities, attribute, lifecycle, track: trackInvocation });
+	} = createScopeGate({
+		capabilities,
+		attribute,
+		lifecycle,
+		track: trackInvocation,
+		...(owner ? { onUse: trackCapabilities(owner, capabilities) } : {}),
+	});
 
 	const prepareObjC = scopeBridgeMethod(
 		objcSource,

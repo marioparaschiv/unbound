@@ -58,7 +58,8 @@ function toBase64(bytes: Uint8Array): string {
 }
 
 /**
- * @description Zips the loader's logs, scrubbed of secrets, its crash and addon state files, each recorded crash's stack and the debug report.
+ * @description Zips the loader's logs, scrubbed of secrets, its crash and addon state files, each recorded crash's stack,
+ * the debug report and each plugin's declared and used native capabilities.
  * @param input The debug report and, on iOS, the app's entitlements.
  * @returns The zip as base64, ready to write to a file.
  */
@@ -95,6 +96,10 @@ export async function buildDiagnosticsZip({
 	if (entitlements) {
 		files['Entitlements.xml'] = strToU8(entitlements);
 	}
+
+	const { capabilityUse } = await import('~/native/capability-use');
+
+	files['capability-use.json'] = strToU8(JSON.stringify(capabilityUse(), null, '\t'));
 
 	return toBase64(zipSync(files, { level: COMPRESSION_LEVEL }));
 }
