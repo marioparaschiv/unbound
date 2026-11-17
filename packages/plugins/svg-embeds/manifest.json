@@ -1,7 +1,7 @@
 {
 	"id": "unbound.svg-embeds",
-	"name": "SVG Embeds",
-	"description": "Shows SVG attachments in chat as pictures, like any other image, instead of as a file.",
+	"name": "Image Embeds",
+	"description": "Shows SVG, AVIF, HEIC, TIFF, BMP, ICO and JPEG XL attachments in chat as pictures, like any other image, instead of as files.",
 	"authors": [
 		{
 			"name": "Cynosphere",
@@ -12,7 +12,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"unbound": {
 		"min": "3.0.0"
 	},

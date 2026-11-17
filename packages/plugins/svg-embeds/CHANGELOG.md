@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-17
+
+### Added
+
+- AVIF, HEIC/HEIF, TIFF, BMP, ICO and JPEG XL attachments show as pictures too, decoded on the device: by ImageIO on iOS, and by Android's decoder on Android, which reads all but TIFF and JPEG XL. The plugin is now called Image Embeds.
+
 ## [1.1.0] - 2026-11-14
 
 ### Added
