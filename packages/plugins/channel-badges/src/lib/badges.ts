@@ -1,5 +1,14 @@
 /** A badge's label key and colour. */
-export type Badge = { label: BadgeLabel; color: string };
+/** A Discord semantic colour, so the badge follows the theme. */
+export type BadgeColor =
+	| 'BACKGROUND_BRAND'
+	| 'STATUS_POSITIVE'
+	| 'STATUS_WARNING'
+	| 'STATUS_DANGER'
+	| 'INTERACTIVE_MUTED'
+	| 'BACKGROUND_MOD_STRONG';
+
+export type Badge = { label: BadgeLabel; color: BadgeColor };
 
 /** The i18n key of a badge's label. */
 export type BadgeLabel =
@@ -37,22 +46,22 @@ export type BadgeOptions = {
 	oneBadge: boolean;
 };
 
-const NSFW: Badge = { label: 'BADGE_NSFW', color: '#e91e63' };
-const LOCKED: Badge = { label: 'BADGE_LOCKED', color: '#80848e' };
-const PRIVATE: Badge = { label: 'BADGE_PRIVATE', color: '#4e5058' };
-const RULES: Badge = { label: 'BADGE_RULES', color: '#5865f2' };
+const NSFW: Badge = { label: 'BADGE_NSFW', color: 'STATUS_DANGER' };
+const LOCKED: Badge = { label: 'BADGE_LOCKED', color: 'INTERACTIVE_MUTED' };
+const PRIVATE: Badge = { label: 'BADGE_PRIVATE', color: 'BACKGROUND_MOD_STRONG' };
+const RULES: Badge = { label: 'BADGE_RULES', color: 'BACKGROUND_BRAND' };
 
 const TYPE_BADGES: Partial<Record<number, Badge>> = {
-	0: { label: 'BADGE_TEXT', color: '#5865f2' },
-	2: { label: 'BADGE_VOICE', color: '#3ba55d' },
-	5: { label: 'BADGE_ANNOUNCEMENT', color: '#faa61a' },
-	10: { label: 'BADGE_THREAD', color: '#7289da' },
-	11: { label: 'BADGE_THREAD', color: '#7289da' },
-	12: { label: 'BADGE_PRIVATE_THREAD', color: '#7289da' },
-	13: { label: 'BADGE_STAGE', color: '#5865f2' },
-	14: { label: 'BADGE_DIRECTORY', color: '#faa61a' },
-	15: { label: 'BADGE_FORUM', color: '#5865f2' },
-	16: { label: 'BADGE_MEDIA', color: '#5865f2' },
+	0: { label: 'BADGE_TEXT', color: 'BACKGROUND_BRAND' },
+	2: { label: 'BADGE_VOICE', color: 'STATUS_POSITIVE' },
+	5: { label: 'BADGE_ANNOUNCEMENT', color: 'STATUS_WARNING' },
+	10: { label: 'BADGE_THREAD', color: 'BACKGROUND_BRAND' },
+	11: { label: 'BADGE_THREAD', color: 'BACKGROUND_BRAND' },
+	12: { label: 'BADGE_PRIVATE_THREAD', color: 'BACKGROUND_BRAND' },
+	13: { label: 'BADGE_STAGE', color: 'BACKGROUND_BRAND' },
+	14: { label: 'BADGE_DIRECTORY', color: 'STATUS_WARNING' },
+	15: { label: 'BADGE_FORUM', color: 'BACKGROUND_BRAND' },
+	16: { label: 'BADGE_MEDIA', color: 'BACKGROUND_BRAND' },
 };
 
 /**

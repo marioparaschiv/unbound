@@ -4,7 +4,7 @@ import { messages } from '@unbound-app/i18n';
 import { flux } from '@unbound-app/api';
 import { View } from 'react-native';
 
-import styles from '~/components/channel-badges.style';
+import useStyles from '~/components/channel-badges.style';
 import { DiscordConstants, PermissionStore, PermissionUtils } from '~/lib/modules';
 import { badgesFor } from '~/lib/badges';
 import type { Channel } from '~/lib/types';
@@ -50,6 +50,7 @@ function isPrivate(channel: Channel): boolean {
  * @returns The badges, or nothing when none apply.
  */
 export function ChannelBadges({ channel }: { channel: Channel }) {
+	const styles = useStyles();
 	const rulesChannelId = flux.useStore(flux.getStore('Guild'), (store) =>
 		rulesChannelOf(channel.guild_id ? store.getGuild(channel.guild_id) : undefined),
 	);
@@ -70,7 +71,7 @@ export function ChannelBadges({ channel }: { channel: Channel }) {
 	return (
 		<View style={styles.row}>
 			{badges.map((badge) => (
-				<View key={badge.label} style={[styles.badge, { backgroundColor: badge.color }]}>
+				<View key={badge.label} style={[styles.badge, styles[badge.color]]}>
 					<Discord.Text variant='text-xxs/bold' color='white'>
 						{messages[badge.label]}
 					</Discord.Text>
