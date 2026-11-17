@@ -1,4 +1,4 @@
-import type { Crop } from '~/native/frames';
+import type { Crop } from './frame-reader';
 
 export type Rect = { x: number; y: number; width: number; height: number };
 

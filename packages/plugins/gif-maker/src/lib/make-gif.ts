@@ -1,4 +1,4 @@
-import type { Crop, FrameReader } from '~/native/frames';
+import type { Crop, FrameReader } from '@unbound-plugins/shared/media/frames/frame-reader';
 import { encodeGif } from '@unbound-plugins/shared/media/gif/gif-encoder';
 import { buildPalette } from '@unbound-plugins/shared/media/gif/palette';
 

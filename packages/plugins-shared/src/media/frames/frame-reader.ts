@@ -1,8 +1,8 @@
 import type { NativeBridge } from '@unbound-app/api/native';
 import { native } from '@unbound-app/api';
 
-import { createFrameReader as android } from '~/native/android/frames';
-import { createFrameReader as ios } from '~/native/ios/frames';
+import { createFrameReader as android } from './android/frame-reader';
+import { createFrameReader as ios } from './ios/frame-reader';
 
 export type Crop = 'original' | 'square';
 

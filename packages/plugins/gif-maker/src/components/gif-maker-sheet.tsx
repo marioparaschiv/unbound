@@ -7,7 +7,7 @@ import { toasts } from '@unbound-app/api';
 import { Keyboard, View } from 'react-native';
 import { useState } from 'react';
 
-import { openFrameReader, type Crop } from '~/native/frames';
+import { openFrameReader, type Crop } from '@unbound-plugins/shared/media/frames/frame-reader';
 import { downloadVideo } from '~/lib/video';
 import { toBase64 } from '@unbound-plugins/shared/media/gif/base64';
 import { makeGif } from '~/lib/make-gif';

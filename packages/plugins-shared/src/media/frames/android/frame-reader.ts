@@ -1,8 +1,8 @@
 import type { NativeBridge, NativeJavaReference, NativeJavaValue } from '@unbound-app/api/native';
 import { javaReference } from '@unbound-plugins/shared/native/android/java-values';
 
-import type { Frame, FrameOptions, FrameReader } from '~/native/frames';
-import { cropRect, outputSize } from '~/lib/frame-size';
+import type { Frame, FrameOptions, FrameReader } from '../frame-reader';
+import { cropRect, outputSize } from '../frame-size';
 
 const OPTION_CLOSEST = 3;
 const KEY_DURATION = 9;

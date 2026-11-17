@@ -1352,6 +1352,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/flashing-media-warning": {
+      "name": "flashing-media-warning",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/follow-up-inbox": {
       "name": "follow-up-inbox",
       "dependencies": {
@@ -5114,6 +5128,8 @@
     "fix-gif-download": ["fix-gif-download@workspace:packages/plugins/fix-gif-download"],
 
     "fix-youtube-embeds": ["fix-youtube-embeds@workspace:packages/plugins/fix-youtube-embeds"],
+
+    "flashing-media-warning": ["flashing-media-warning@workspace:packages/plugins/flashing-media-warning"],
 
     "flat-cache": ["flat-cache@6.1.23", "", { "dependencies": { "cacheable": "^2.5.0", "flatted": "^3.4.2", "hookified": "^1.15.0" } }, "sha512-f++BY9pTk+983xK1FLzlLpmM0i0z+jHmx3QESGkURMXujQZz1k5wzwX6hjnQ8goaD0B+sYnDK1yZ6MTyZfUaqA=="],
 
