@@ -5,20 +5,19 @@ import { COLORS } from '~/lib/debug-card/spans';
 
 describe('tweakSpans', () => {
 	test('shows conflicting tweaks first in red and the rest in yellow', () => {
-		const spans = tweakSpans(['Crane', 'Choicy', 'ColorMyBattery'], 42);
+		const spans = tweakSpans(['Crane', 'Choicy', 'ColorMyBattery']);
 
 		expect(spans.map((span) => span.text).join('')).toBe('Choicy · Crane · ColorMyBattery');
 		expect(spans[0]).toEqual({ text: 'Choicy', color: COLORS.bad });
 		expect(spans[2]).toEqual({ text: 'Crane', color: COLORS.warn });
 	});
 
-	test('fits the room with a count of the rest', () => {
-		const text = tweakSpans(['AAAAAAAAAA', 'BBBBBBBBBB', 'CCCCCCCCCC', 'DDDDDDDDDD'], 30)
+	test('lists every tweak without a count', () => {
+		const text = tweakSpans(['AAAAAAAAAA', 'BBBBBBBBBB', 'CCCCCCCCCC', 'DDDDDDDDDD'])
 			.map((span) => span.text)
 			.join('');
 
-		expect(text.length).toBeLessThanOrEqual(30);
-		expect(text).toContain('more');
+		expect(text).toBe('AAAAAAAAAA · BBBBBBBBBB · CCCCCCCCCC · DDDDDDDDDD');
 	});
 
 	test('matches conflicts by name regardless of case', () => {

@@ -15,8 +15,8 @@ import { dnsNote, gatewayNote, powerNote, pushNotes } from './device-notes';
 import { storageMatters, storageSummary } from './storage';
 import { errorNotes, hookNotes } from './issue-notes';
 import { environmentRows } from './environment-rows';
-import { clipped, wrapped } from './wrap-lines';
 import { accountNotes } from './account';
+import { wrapped } from './wrap-lines';
 import { tweakSpans } from './tweaks';
 
 export { joined } from './spans';
@@ -71,10 +71,8 @@ const LINE_HEIGHT = 22;
 const CHAR_WIDTH = FONT_SIZE * 0.6;
 const LABEL_WIDTH = 9;
 const BADGE_CLEARANCE = 66;
-const MAX_DIAGNOSTIC_ROWS = 2;
 const DAY_MS = 86_400_000;
 const CRASH_WINDOW_MS = 7 * DAY_MS;
-const VALUE_ROOM = Math.floor((WIDTH - PADDING * 2) / CHAR_WIDTH) - LABEL_WIDTH;
 const FOOTER_HEIGHT = 52;
 
 const SIDELOADERS = new Set(['AltStore/SideStore']);
@@ -107,34 +105,6 @@ const SUPPORT_COLORS: Record<DiscordSupport, string> = {
 
 function supportSpans(support?: DiscordSupport): Span[] {
 	return support ? [dim(' · '), { text: support, color: SUPPORT_COLORS[support] }] : [];
-}
-
-function withCounter(shown: string[], total: number): string {
-	const more = total - shown.length;
-
-	return joined([...shown, more ? `+${more} more` : undefined]);
-}
-
-function fittedList(items: string[], room: number): string {
-	const shown: string[] = [];
-
-	for (const item of items) {
-		const unseen = items.length - shown.length - 1;
-		const candidate = joined([...shown, item, unseen ? `+${unseen} more` : undefined]);
-
-		if (candidate.length <= room) {
-			shown.push(item);
-		}
-	}
-
-	if (shown.length) {
-		return withCounter(shown, items.length);
-	}
-
-	const more = items.length > 1 ? ` · +${items.length - 1} more` : '';
-	const first = items[0] ?? '';
-
-	return `${first.slice(0, Math.max(0, room - more.length - 1))}…${more}`;
 }
 
 function builtAgo(builtAt: string | undefined, now: Date): string | undefined {
@@ -278,7 +248,7 @@ function rows(info: DebugInfo, now: Date, context: DebugCardContext): [string, S
 		...environmentRows(info.environment),
 		['react', [value(info.react), dim(` · react native ${info.reactNative}`)]],
 		['hermes', [value(info.hermes), dim(` · bytecode ${info.bytecode}`)]],
-		...diagnosticRows(info, now, context).slice(0, MAX_DIAGNOSTIC_ROWS),
+		...diagnosticRows(info, now, context),
 	];
 }
 
@@ -399,27 +369,19 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 	const gateway = gatewayNote(info.gateway);
 	const candidates: [string, Span[]][] = [
 		['crashes', crashes],
-		['updates', updates.length ? [warn(fittedList(updates, VALUE_ROOM))] : []],
-		[
-			'issues',
-			info.disabledAddons?.length ? [warn(fittedList(info.disabledAddons, VALUE_ROOM))] : [],
-		],
-		['tweaks', tweaks.length ? tweakSpans(tweaks, VALUE_ROOM) : []],
-		[
-			'appex',
-			extensionNotes(info).length ? [warn(fittedList(extensionNotes(info), VALUE_ROOM))] : [],
-		],
-		['errors', errors.length ? [warn(fittedList(errors, VALUE_ROOM))] : []],
-		['hooks', hooks.length ? [warn(fittedList(hooks, VALUE_ROOM))] : []],
-		['launch', launch.length ? [warn(fittedList(launch, VALUE_ROOM))] : []],
-		['gateway', gateway ? [warn(fittedList([gateway], VALUE_ROOM))] : []],
-		['push', push.length ? [warn(fittedList(push, VALUE_ROOM))] : []],
-		['memory', memory.length ? [warn(fittedList(memory, VALUE_ROOM))] : []],
+		['updates', updates.length ? [warn(joined(updates))] : []],
+		['issues', info.disabledAddons?.length ? [warn(joined(info.disabledAddons))] : []],
+		['tweaks', tweaks.length ? tweakSpans(tweaks) : []],
+		['appex', extensionNotes(info).length ? [warn(joined(extensionNotes(info)))] : []],
+		['errors', errors.length ? [warn(joined(errors))] : []],
+		['hooks', hooks.length ? [warn(joined(hooks))] : []],
+		['launch', launch.length ? [warn(joined(launch))] : []],
+		['gateway', gateway ? [warn(joined([gateway]))] : []],
+		['push', push.length ? [warn(joined(push))] : []],
+		['memory', memory.length ? [warn(joined(memory))] : []],
 		[
 			'account',
-			accountNotes(info.account).length
-				? [warn(fittedList(accountNotes(info.account), VALUE_ROOM))]
-				: [],
+			accountNotes(info.account).length ? [warn(joined(accountNotes(info.account)))] : [],
 		],
 		['storage', storage ? [warn(storage)] : []],
 		['power', power ? [warn(power)] : []],
@@ -500,17 +462,15 @@ function stateSpans(flags: string[], jailbreak?: string): Span[] {
 	});
 }
 
-function fittedState(spans: Span[], room: number): Span[] {
-	for (let shown = spans.length; shown > 0; shown--) {
-		const hidden = spans.length - shown;
-		const kept = [...spans.slice(0, shown), ...(hidden ? [dim(`  +${hidden}`)] : [])];
+function spansLength(spans: Span[]): number {
+	return spans.reduce((length, span) => length + span.text.length, 0);
+}
 
-		if (kept.reduce((length, span) => length + span.text.length, 0) <= room) {
-			return kept;
-		}
-	}
-
-	return clipped(spans, room);
+function stateRowSpans(spans: Span[]): Span[] {
+	return spans.flatMap((span, index) => [
+		...(index ? [dim(' · ')] : []),
+		{ ...span, text: span.text.replace(/^\s*● /, '') },
+	]);
 }
 
 /**
@@ -528,7 +488,12 @@ export function layoutDebugCard(
 	const room = Math.floor((WIDTH - PADDING * 2) / CHAR_WIDTH);
 	const valueRoom = room - LABEL_WIDTH;
 	const valueX = PADDING + LABEL_WIDTH * CHAR_WIDTH;
-	const lines = rows(info, now, context).flatMap(([label, spans]) =>
+	const footerRoom = Math.floor((WIDTH - PADDING - BADGE_CLEARANCE) / CHAR_WIDTH);
+	const allState = stateSpans(info.flags, info.jailbreak);
+	const stateFits = spansLength(allState) <= footerRoom;
+	const state = stateFits ? allState : [];
+	const stateRow: [string, Span[]][] = stateFits ? [] : [['state', stateRowSpans(allState)]];
+	const lines = [...rows(info, now, context), ...stateRow].flatMap(([label, spans]) =>
 		wrapped(spans, valueRoom).map((line, index) => ({ label: index ? '' : label, line })),
 	);
 	const footerTop = TITLE_HEIGHT + PADDING + lines.length * LINE_HEIGHT + PADDING / 2;
@@ -599,9 +564,7 @@ export function layoutDebugCard(
 		ops.push(...textRuns(line, valueX, baseline));
 	}
 
-	const footerRoom = Math.floor((WIDTH - PADDING - BADGE_CLEARANCE) / CHAR_WIDTH);
-	const state = fittedState(stateSpans(info.flags, info.jailbreak), footerRoom);
-	const stateLength = state.reduce((length, span) => length + span.text.length, 0);
+	const stateLength = spansLength(state);
 	const summary = addonSummaries(info).find(
 		(candidate) => stateLength + 2 + candidate.length <= footerRoom,
 	);

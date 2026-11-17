@@ -19,7 +19,7 @@ import {
 	powerSummary,
 	pushSummary,
 } from '~/lib/debug-card/device-notes';
-import { errorNotes, hookNotes } from '~/lib/debug-card/issue-notes';
+import { errorDetails, hookNotes } from '~/lib/debug-card/issue-notes';
 import type { DebugCardContext } from '~/lib/debug-card/context';
 import { storageSummary } from '~/lib/debug-card/storage';
 import { cleanNames } from '~/lib/debug-card/spans';
@@ -109,7 +109,7 @@ export function debugAltText(
 			lastCheck: lastCheckSummary(info.launch, now),
 		}),
 		...(info.launch?.settings && { settings: info.launch.settings }),
-		...(info.errors?.length && { errors: errorNotes(info.errors) }),
+		...(info.errors?.length && { errors: errorDetails(info.errors) }),
 		...(hookNotes(info).length && { hooks: hookNotes(info) }),
 		...(storageSummary(info.storage) && { storage: storageSummary(info.storage) }),
 		...(info.patches?.length && {
