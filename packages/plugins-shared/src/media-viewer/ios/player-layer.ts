@@ -1,7 +1,15 @@
 import { safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke';
 import type { NativeHandle, NativeObjCBridge } from '@unbound-app/api/native';
 
-import { IOS_LAYER_DEPTH, IOS_PORTAL_VIEW, IOS_VIEW_SEARCH } from '~/lib/constants';
+const IOS_LAYER_DEPTH = 4;
+const IOS_PORTAL_VIEW = 'DCDPortalView';
+const IOS_VIEW_SEARCH = {
+	maxDepth: 128,
+	maxVisited: 8_192,
+	maxResults: 4,
+	attachedOnly: true,
+	stopAtMatch: true,
+} as const;
 
 // UNKNOWN: the bridge returns untyped values; only object handles are kept.
 export function asHandle(value: unknown): NativeHandle | null {

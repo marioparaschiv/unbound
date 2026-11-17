@@ -23,15 +23,6 @@ export const VIDEO_EXTENSION = /\.(mp4|m4v|mov|webm|mkv)$/i;
 
 export const IOS_POLL_MS = 250;
 export const IOS_WATCH_MS = 1_000;
-export const IOS_LAYER_DEPTH = 4;
-export const IOS_PORTAL_VIEW = 'DCDPortalView';
-export const IOS_VIEW_SEARCH = {
-	maxDepth: 128,
-	maxVisited: 8_192,
-	maxResults: 4,
-	attachedOnly: true,
-	stopAtMatch: true,
-} as const;
 
 export const VIDEO_CONTROLS_PATH = 'modules/media_viewer/native/useVideoControls.tsx';
 export const VIDEO_PROTOTYPE = ['toTypeString', 'stringsOnlyObject'];
