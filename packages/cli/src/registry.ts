@@ -21,6 +21,7 @@ import entryCommand from '~/commands/migrate/entry';
 import logoutCommand from '~/commands/auth/logout';
 import resetCommand from '~/commands/device/reset';
 import unusedCommand from '~/commands/i18n/unused';
+import crashCommand from '~/commands/debug/crash';
 import routeCommand from '~/commands/debug/route';
 import spansCommand from '~/commands/debug/spans';
 import startCommand from '~/commands/debug/start';
@@ -124,6 +125,7 @@ export const debugGroup: CommandGroup = {
 			title: 'Runtime',
 			entries: [
 				evalCommand,
+				crashCommand,
 				commandCommand,
 				messageCommand,
 				openCommand,
