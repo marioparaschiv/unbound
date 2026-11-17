@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.5] - 2026-11-17
+
+### Fixed
+
+- Its chat input button hides on an empty draft whether it is on or off, also when Declutter keeps the send button there.
+
 ## [1.1.4] - 2026-11-17
 
 ### Changed
