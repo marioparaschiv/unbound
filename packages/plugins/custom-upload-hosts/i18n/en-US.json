@@ -1,6 +1,13 @@
 {
 	"HOST": "Upload to",
 	"HOST_SUBTITLE": "Where the files you attach go. Their links are put in your message instead.",
+	"UPLOAD_WHEN": "Send to the host",
+	"UPLOAD_WHEN_ALWAYS": "Every file",
+	"UPLOAD_WHEN_AUTO": "Over my upload limit",
+	"UPLOAD_WHEN_AUTO_SUBTITLE": "Files bigger than Discord lets you send in that channel; the rest attach to Discord",
+	"UPLOAD_WHEN_SIZE": "Over a size",
+	"UPLOAD_WHEN_SIZE_SUBTITLE": "Files bigger than the size below; the rest attach to Discord",
+	"MIN_SIZE": "Size in MB",
 	"CATBOX": "Catbox",
 	"CATBOX_SUBTITLE": "catbox.moe, kept until removed, up to 200 MB",
 	"LITTERBOX": "Litterbox",

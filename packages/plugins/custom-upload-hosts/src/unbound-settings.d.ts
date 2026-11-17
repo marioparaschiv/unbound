@@ -138,6 +138,14 @@ declare module '@unbound-app/settings' {
 		 */
 		host: "catbox" | "litterbox" | "custom";
 		/**
+		 * Send to the host
+		 */
+		uploadWhen: "always" | "auto" | "size";
+		/**
+		 * Size in MB
+		 */
+		minSizeMB: number;
+		/**
 		 * Delete after
 		 */
 		litterboxExpiry: "1h" | "12h" | "24h" | "72h";
@@ -185,6 +193,14 @@ declare module '@unbound-app/settings' {
 		 * Where the files you attach go. Their links are put in your message instead.
 		 */
 		"host": "catbox" | "litterbox" | "custom";
+		/**
+		 * Send to the host
+		 */
+		"uploadWhen": "always" | "auto" | "size";
+		/**
+		 * Size in MB
+		 */
+		"minSizeMB": number;
 		/**
 		 * Delete after
 		 */

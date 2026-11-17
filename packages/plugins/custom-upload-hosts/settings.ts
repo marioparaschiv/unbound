@@ -11,6 +11,23 @@ export default defineSettings({
 			custom: { title: 'CUSTOM', subtitle: 'CUSTOM_SUBTITLE' },
 		},
 	}),
+	uploadWhen: setting.choice({
+		title: 'UPLOAD_WHEN',
+		default: 'always',
+		options: {
+			always: { title: 'UPLOAD_WHEN_ALWAYS' },
+			auto: { title: 'UPLOAD_WHEN_AUTO', subtitle: 'UPLOAD_WHEN_AUTO_SUBTITLE' },
+			size: { title: 'UPLOAD_WHEN_SIZE', subtitle: 'UPLOAD_WHEN_SIZE_SUBTITLE' },
+		},
+	}),
+	minSizeMB: setting.number({
+		title: 'MIN_SIZE',
+		default: 10,
+		min: 1,
+		max: 500,
+		step: 1,
+		visibleWhen: (settings: { uploadWhen: string }) => settings.uploadWhen === 'size',
+	}),
 	litterboxExpiry: setting.choice({
 		title: 'EXPIRY',
 		default: '24h',

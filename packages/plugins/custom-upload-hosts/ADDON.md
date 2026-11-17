@@ -11,6 +11,7 @@ banner: media/banner.png
 ## :gear: Settings
 
 - **Upload to**: Catbox, Litterbox (with how long to keep files) or a custom host.
+- **Send to the host**: every file, only files bigger than Discord lets you send in that channel (your Nitro and the server's boosts count), or only files over a size in MB. Smaller files attach to Discord as usual.
 - **Custom host**: the upload address, the form field for the file, extra form fields and headers (one per line), and whether the host answers with the link as text or in JSON at a path such as `data.url`.
 
 Uploaded files are public to anyone with the link.
