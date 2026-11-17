@@ -2,7 +2,7 @@ import { unpackDebugAltText } from '@unbound-app/contracts/debug-card-alt-text';
 import type { DebugCardRequest } from '@unbound-app/contracts/debug-cards';
 import { describe, expect, test } from 'bun:test';
 
-import { dnsNote, gatewayNote, powerNote, pushNote } from '~/lib/debug-card/device-notes';
+import { dnsNote, gatewayNote, powerNote, pushNotes } from '~/lib/debug-card/device-notes';
 import { debugAltText } from '~/lib/debug-card/alt-text';
 import { extensionNotes } from '~/lib/debug-card/layout';
 
@@ -34,15 +34,16 @@ describe('device notes', () => {
 			'low power · battery 60% · charging',
 		);
 		expect(
-			pushNote({ permission: 'granted', registered: true, environment: 'production' }),
-		).toBe(undefined);
-		expect(pushNote({ permission: 'denied', playServices: false })).toBe(
-			'perm denied · no GMS',
-		);
+			pushNotes({ permission: 'granted', registered: true, environment: 'production' }),
+		).toEqual([]);
+		expect(pushNotes({ permission: 'denied', playServices: false })).toEqual([
+			'perm denied',
+			'no GMS',
+		]);
 		expect(
-			pushNote({ permission: 'granted', registered: true, focus: true, summary: true }),
-		).toBe('focus · summary');
-		expect(pushNote({ permission: 'granted', focus: false, summary: false })).toBe(undefined);
+			pushNotes({ permission: 'granted', registered: true, focus: true, summary: true }),
+		).toEqual(['focus', 'summary']);
+		expect(pushNotes({ permission: 'granted', focus: false, summary: false })).toEqual([]);
 		expect(dnsNote({ resolver: 'Cloudflare' })).toBeUndefined();
 		expect(dnsNote({ resolver: 'local', privateDns: 'NextDNS' })).toBe(
 			'local · private NextDNS',
@@ -71,14 +72,22 @@ describe('device notes', () => {
 		});
 	});
 
-	test('names stripped extensions and ones without the app group, but never OpenInDiscord', () => {
+	test('names stripped extensions and ones that need the app group they lack', () => {
 		expect(
 			extensionNotes({
 				...info,
 				missingExtensions: ['Safari'],
-				isolatedExtensions: ['BroadcastUpload', 'OpenInDiscord', 'Safari'],
+				isolatedExtensions: [
+					'BroadcastUpload',
+					'OpenInDiscord',
+					'UnboundActivities',
+					'Safari',
+				],
 			}),
 		).toEqual(['Safari', 'BroadcastUpload']);
+		expect(extensionNotes({ ...info, missingExtensions: ['UnboundActivities'] })).toEqual([
+			'UnboundActivities',
+		]);
 		expect(extensionNotes(info)).toEqual([]);
 	});
 });

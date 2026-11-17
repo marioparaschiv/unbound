@@ -11,7 +11,7 @@ import { launchNotes } from '@unbound-app/contracts/debug-card-launch';
 import type { DebugCardContext } from '~/lib/debug-card/context';
 
 import { accent, cleanNames, COLORS, dim, joined, value, warn, type Span } from './spans';
-import { dnsNote, gatewayNote, powerNote, pushNote } from './device-notes';
+import { dnsNote, gatewayNote, powerNote, pushNotes } from './device-notes';
 import { storageMatters, storageSummary } from './storage';
 import { errorNotes, hookNotes } from './issue-notes';
 import { environmentRows } from './environment-rows';
@@ -393,7 +393,7 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 	const storage = storageMatters(info.storage) ? storageSummary(info.storage) : undefined;
 	const updates = updateNotes(context, info.addonUpdates);
 	const tweaks = cleanNames(info.injected ?? []);
-	const push = pushNote(info.push);
+	const push = pushNotes(info.push);
 	const power = powerNote(info.power);
 	const dns = dnsNote(info.dns);
 	const gateway = gatewayNote(info.gateway);
@@ -413,7 +413,7 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 		['hooks', hooks.length ? [warn(fittedList(hooks, VALUE_ROOM))] : []],
 		['launch', launch.length ? [warn(fittedList(launch, VALUE_ROOM))] : []],
 		['gateway', gateway ? [warn(fittedList([gateway], VALUE_ROOM))] : []],
-		['push', push ? [warn(fittedList([push], VALUE_ROOM))] : []],
+		['push', push.length ? [warn(fittedList(push, VALUE_ROOM))] : []],
 		['memory', memory.length ? [warn(fittedList(memory, VALUE_ROOM))] : []],
 		[
 			'account',
@@ -429,11 +429,12 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 	return candidates.filter(([, spans]) => spans.length > 0);
 }
 
-const WORKS_WITHOUT_APP_GROUP = new Set(['OpenInDiscord']);
+const WORKS_WITHOUT_APP_GROUP = new Set(['OpenInDiscord', 'UnboundActivities']);
 
 /**
  * @description Names the app's extensions that are broken: ones a sideloader stripped, and ones signed without the app
- * group that need it. OpenInDiscord only opens links and needs no app group, so it is never named.
+ * group that need it. OpenInDiscord only opens links and UnboundActivities only draws Live Activities, so neither needs
+ * the app group and only a stripped one is named.
  * @param info The report.
  * @returns The extension names, each once.
  */
