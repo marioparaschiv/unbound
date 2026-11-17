@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-17
+
+### Added
+
+- The emoji picker draws unicode emoji from the chosen pack too.
+
 ## [1.0.0] - 2026-11-17
 
 ### Added
