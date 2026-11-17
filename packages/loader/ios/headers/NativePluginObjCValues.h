@@ -20,9 +20,21 @@ public:
         live_.fetch_add(1, std::memory_order_relaxed);
     }
 
+    // Hermes may finalize this on its GC thread; UIKit objects must take their last release on
+    // main.
     ~ObjCHandleHost() override
     {
         live_.fetch_sub(1, std::memory_order_relaxed);
+        if (!value_ || [NSThread isMainThread])
+        {
+            return;
+        }
+
+        void *owned = (__bridge_retained void *) value_;
+        value_      = nil;
+        dispatch_async_f(dispatch_get_main_queue(), owned, [](void *object) {
+            CFRelease(object);
+        });
     }
 
     id value(void) const
