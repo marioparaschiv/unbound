@@ -1,54 +1,19 @@
-import {
-	codepoints,
-	coverageKey,
-	isFlag,
-	padded,
-	toneTemplate,
-	withoutVariation,
-} from '~/lib/codepoints';
-import { FLUENT_BASE, NOTO_ANIMATED_BASE, NOTO_BASE } from '~/lib/sources';
+import { codepoints, coverageKey, isFlag, padded, withoutVariation } from '~/lib/codepoints';
+import type { CoverageSets } from '~/lib/coverage-sets';
+import { FLUENT_BASE, FLUENT_MOVING_BASE, NOTO_ANIMATED_BASE, NOTO_BASE } from '~/lib/sources';
 
 export type PackId = 'fluent-animated' | 'fluent' | 'noto-animated' | 'noto';
-
-export type Coverage = {
-	fluentAnimated: string;
-	fluentStill: string;
-	notoAnimated: string;
-};
-
-export type CoverageSets = { [K in keyof Coverage]: Set<string> };
-
-/**
- * @description Reads each coverage list into a set.
- * @param coverage The space-separated lists from coverage.json.
- * @returns The sets.
- */
-export function coverageSets(coverage: Coverage): CoverageSets {
-	'worklet';
-
-	return {
-		fluentAnimated: new Set(coverage.fluentAnimated.split(' ')),
-		fluentStill: new Set(coverage.fluentStill.split(' ')),
-		notoAnimated: new Set(coverage.notoAnimated.split(' ')),
-	};
-}
-
-function covers(set: Set<string>, key: string): boolean {
-	'worklet';
-
-	return set.has(key) || set.has(toneTemplate(key));
-}
 
 function fluentUrl(points: string[], sets: CoverageSets, animated: boolean): string | undefined {
 	'worklet';
 	const key = coverageKey(points);
-	const file = `${points.join('-')}.png`;
+	const name = points.join('-');
 
-	if (covers(sets.fluentAnimated, key)) {
-		return `${FLUENT_BASE}/${animated ? 'animated-static' : 'static'}/${file}`;
-	}
+	if (!sets.fluent.has(key)) return undefined;
 
-	return covers(sets.fluentStill, key) ? `${FLUENT_BASE}/static/${file}` : undefined;
+	if (animated && sets.fluentMoving.has(key)) return `${FLUENT_MOVING_BASE}/${name}.webp`;
+
+	return `${FLUENT_BASE}/static/${name}.png`;
 }
 
 function notoUrl(points: string[], sets: CoverageSets, animated: boolean): string | undefined {
@@ -56,7 +21,7 @@ function notoUrl(points: string[], sets: CoverageSets, animated: boolean): strin
 
 	if (isFlag(points)) return undefined;
 
-	if (animated && covers(sets.notoAnimated, coverageKey(points))) {
+	if (animated && sets.notoMoving.has(coverageKey(points))) {
 		return `${NOTO_ANIMATED_BASE}/${points.join('_')}/512.webp`;
 	}
 

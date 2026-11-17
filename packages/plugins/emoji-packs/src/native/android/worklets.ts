@@ -10,7 +10,8 @@ import type {
 	NativeUIScope,
 } from '@unbound-app/api/native';
 
-import { coverageSets, packUrl, type Coverage, type CoverageSets, type PackId } from '~/lib/packs';
+import { coverageSets, type Coverage, type CoverageSets } from '~/lib/coverage-sets';
+import { packUrl, type PackId } from '~/lib/packs';
 
 const STATE_KEY = '__unboundEmojiPacks';
 const UNICODE_PREFIX = 'Unicode(surrogates=';

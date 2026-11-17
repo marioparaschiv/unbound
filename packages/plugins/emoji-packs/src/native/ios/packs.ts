@@ -3,7 +3,8 @@ import { metro, patcher } from '@unbound-app/api';
 
 import coverage from '~/lib/coverage.json';
 import { swapMarkupEmoji, type Markup } from '~/lib/markup';
-import { coverageSets, packUrl, type PackId } from '~/lib/packs';
+import { coverageSets } from '~/lib/coverage-sets';
+import { packUrl, type PackId } from '~/lib/packs';
 
 const MARKUP_PARSERS = 'modules/messages/native/renderer/MarkupParsers.tsx';
 const PARSERS = [
