@@ -10,6 +10,7 @@
 #import "NativeAddressValidation.h"
 #import "NativeFFIClosureProbe.h"
 #import "NativeHookCallbacks.h"
+#include "NativeHookConflicts.h"
 #import "NativeHookKeys.h"
 #import "NativePluginHookDispatch.h"
 #import "NativePluginHookFallbacks.h"
@@ -460,5 +461,31 @@ Value makeHook(Runtime &runtime, const Value *args, size_t count)
 
     reservation.commit();
     return Object::createFromHostObject(runtime, std::make_shared<HookTokenHost>(state));
+}
+}
+
+namespace loader::ios {
+std::vector<std::string> replacingHookConflicts()
+{
+    std::vector<loader::native::RewritingHook> hooks;
+    {
+        std::lock_guard<std::mutex> lock(gHookMutex);
+        for (const auto &entry : gDispatchers)
+        {
+            const std::shared_ptr<HookDispatcher> &dispatcher = entry.second;
+            std::string target = std::string(class_getName(dispatcher->cls)) + " "
+                                 + (class_isMetaClass(dispatcher->cls) ? "+" : "-")
+                                 + sel_getName(dispatcher->selector);
+            for (const std::shared_ptr<HookState> &hook : dispatcher->hooks)
+            {
+                if (hook->hasReplace && hook->active.load())
+                {
+                    hooks.push_back({target, loader::native::addonDisplayName(hook->addon)});
+                }
+            }
+        }
+    }
+
+    return loader::native::conflictsAmong(hooks);
 }
 }

@@ -30,6 +30,7 @@
 #include "NativeGeometry.h"
 #include "NativeHandleLeases.h"
 #include "NativeHookCallbacks.h"
+#include "NativeHookConflicts.h"
 #include "NativeHookKeys.h"
 #include "NativeHookReturnCache.h"
 #include "NativeLimits.h"
@@ -465,6 +466,7 @@ void watchRuntimeGenerations(const JavaCallbacks &callbacks)
             retireHookListeners();
             hookReturnValues().clearAll();
             installedHooks().releaseAll();
+            loader::native::forgetAllRewritingHooks();
             invokeStaticVoid(callbacks.bridgeClass, callbacks.runtimeReplaced);
         });
     });

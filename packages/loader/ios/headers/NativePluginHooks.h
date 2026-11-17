@@ -90,6 +90,7 @@ private:
 void removeHook(const std::shared_ptr<HookState> &state, bool preserveAfter = false,
                 bool restoreImplementation = true);
 void invalidateRuntimeHooks(uint64_t generation);
+std::vector<std::string> replacingHookConflicts();
 std::shared_ptr<HookDispatcher> findHookDispatcher(id object, SEL selector,
                                                    void *closureData = nullptr);
 std::vector<std::shared_ptr<HookState>>

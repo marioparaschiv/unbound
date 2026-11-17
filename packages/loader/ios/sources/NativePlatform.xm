@@ -19,6 +19,7 @@
 #include "LoaderInjectedLibraries.h"
 #include "NativeFFIClosureProbe.h"
 #include "NativePlatformBridge.h"
+#import "NativePluginHooks.h"
 #import "Utilities+CodeSignature.h"
 #import "Utilities.h"
 
@@ -418,7 +419,8 @@ static nlohmann::json deviceStateJSON()
         {"thermal", thermalName(NSProcessInfo.processInfo.thermalState)},
         {"injected", loader::injectedIOSLibraries(loadedImagePaths())},
         {"ffiClosures", loader::ffi::closuresExecutable()},
-        {"ffiClosureProbe", loader::ffi::closureProbe()}};
+        {"ffiClosureProbe", loader::ffi::closureProbe()},
+        {"hookConflicts", loader::ios::replacingHookConflicts()}};
     if (nlohmann::json network = networkJSON(); !network.is_null())
     {
         state["network"] = network;

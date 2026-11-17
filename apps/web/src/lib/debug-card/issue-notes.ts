@@ -1,12 +1,13 @@
 import type { DebugCardRequest as DebugInfo } from '@unbound-app/contracts/debug-cards';
 
 /**
- * @description Lists hook problems: libffi closures failing the launch probe, then hooks that failed to install newest first, as `addon: target`.
+ * @description Lists hook problems: libffi closures failing the launch probe, hooks that failed to install newest first as
+ * `addon: target`, then methods two plugins rewrite as `addon × addon · target`.
  * @param info The report.
  * @returns One note per problem.
  */
 export function hookNotes(
-	info: Pick<DebugInfo, 'ffiClosures' | 'ffiClosureProbe' | 'hookFailures'>,
+	info: Pick<DebugInfo, 'ffiClosures' | 'ffiClosureProbe' | 'hookFailures' | 'hookConflicts'>,
 ): string[] {
 	const failures = (info.hookFailures ?? [])
 		.toReversed()
@@ -16,7 +17,11 @@ export function hookNotes(
 		? `libffi closures blocked (${info.ffiClosureProbe})`
 		: 'libffi closures blocked';
 
-	return info.ffiClosures === false ? [blocked, ...failures] : failures;
+	const conflicts = info.hookConflicts ?? [];
+
+	return info.ffiClosures === false
+		? [blocked, ...failures, ...conflicts]
+		: [...failures, ...conflicts];
 }
 
 /**

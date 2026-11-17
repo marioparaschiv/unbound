@@ -34,6 +34,7 @@
 #include "NativeGeometry.h"
 #include "NativeHandleLeases.h"
 #include "NativeHookCallbacks.h"
+#include "NativeHookConflicts.h"
 #include "NativeHookKeys.h"
 #include "NativeHookReturnCache.h"
 #include "NativeLimits.h"
@@ -335,6 +336,7 @@ static jsi::Object makeFFINamespace(jsi::Runtime &runtime)
 static void removeHook(const JavaCallbacks &callbacks, const std::string &token)
 {
     forgetHookListener(token);
+    loader::native::forgetRewritingHook(token);
     hookReturnValues().clear(token);
     installedHooks().release(token);
     callJavaVoid(callbacks, callbacks.hooksRemove, {loader::native::handleJSON(token)});
@@ -402,6 +404,16 @@ static jsi::Object makeHooksNamespace(jsi::Runtime &runtime, const JavaCallbacks
             }
 
             installedHooks().adopt(parsed["id"].get<std::string>(), reservation);
+            jsi::Value replaceOption = count > 3 && args[3].isObject()
+                                           ? args[3].asObject(rt).getProperty(rt, "replace")
+                                           : jsi::Value::undefined();
+            if (rewritesArguments || (replaceOption.isBool() && replaceOption.getBool()))
+            {
+                loader::native::recordRewritingHook(
+                    parsed["id"].get<std::string>(),
+                    javaName(rt, args[0]) + "." + javaName(rt, args[1]), loader::currentAddon());
+            }
+
             if (count > 4)
             {
                 rememberHookListener(rt, parsed["id"].get<std::string>(), args[4], coalesce,
