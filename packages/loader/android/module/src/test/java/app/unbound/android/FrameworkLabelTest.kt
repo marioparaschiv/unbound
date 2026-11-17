@@ -6,12 +6,17 @@ import org.junit.Test
 class FrameworkLabelTest {
     @Test
     fun aModuleFrameworkShowsItsNameAndVersion() {
-        assertEquals("Vector 1.11.0", Platform.frameworkLabel("Vector", "1.11.0", false))
+        assertEquals("Vector 1.11.0", Platform.frameworkLabel("Vector", "1.11.0", ""))
     }
 
     @Test
     fun aPatchedAppNamesLSPatch() {
-        assertEquals("LSPatch 0.6", Platform.frameworkLabel("LSPosed", "0.6", true))
+        assertEquals("LSPatch 0.6", Platform.frameworkLabel("LSPosed", "0.6", "LSPatch"))
+    }
+
+    @Test
+    fun aNPatchedAppNamesNPatch() {
+        assertEquals("NPatch 1.0", Platform.frameworkLabel("LSPosed", "1.0", "NPatch"))
     }
 
     @Test
@@ -32,6 +37,6 @@ class FrameworkLabelTest {
 
     @Test
     fun aMissingVersionIsLeftOut() {
-        assertEquals("Vector", Platform.frameworkLabel("Vector", "", false))
+        assertEquals("Vector", Platform.frameworkLabel("Vector", "", ""))
     }
 }

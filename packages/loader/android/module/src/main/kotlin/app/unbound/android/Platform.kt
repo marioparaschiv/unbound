@@ -48,7 +48,10 @@ object Platform {
         "/data/adb/ap",
     )
 
-    private const val LSPATCH_LOADER = "org.lsposed.lspatch.loader.LSPApplication"
+    private val PATCHERS = listOf(
+        Triple("NPatch", "npatch", "top.nkbe.npatch.loader.LSPApplication"),
+        Triple("LSPatch", "lspatch", "org.lsposed.lspatch.loader.LSPApplication"),
+    )
 
     private val ROOT_MANAGERS = listOf(
         "/debug_ramdisk/magisk" to "Magisk",
@@ -68,12 +71,14 @@ object Platform {
     fun rootManager(exists: (String) -> Boolean = { File(it).exists() }): String =
         ROOT_MANAGERS.firstOrNull { (path, _) -> exists(path) }?.second ?: ""
 
-    fun frameworkLabel(name: String, version: String, patched: Boolean): String =
-        listOf(if (patched) "LSPatch" else name, version).filter { it.isNotBlank() }.joinToString(" ")
+    fun frameworkLabel(name: String, version: String, patcher: String): String =
+        listOf(patcher.ifEmpty { name }, version).filter { it.isNotBlank() }.joinToString(" ")
 
-    fun isLSPatched(appInfo: ApplicationInfo, classLoader: ClassLoader): Boolean =
-        appInfo.appComponentFactory?.contains("lspatch", ignoreCase = true) == true ||
-            runCatching { Class.forName(LSPATCH_LOADER, false, classLoader) }.isSuccess
+    fun patcher(appInfo: ApplicationInfo, classLoader: ClassLoader): String =
+        PATCHERS.firstOrNull { (_, marker, loader) ->
+            appInfo.appComponentFactory?.contains(marker, ignoreCase = true) == true ||
+                runCatching { Class.forName(loader, false, classLoader) }.isSuccess
+        }?.first ?: ""
 
     fun describe(appInfo: ApplicationInfo, frameworkName: String): JSONObject = JSONObject()
         .put("deviceModel", DeviceName.current(application()))

@@ -79,7 +79,8 @@ object DiscordInstaller {
     /** Reads the installed manifest through PackageManager: in-process, LSPatch swaps its component factory back to Discord's. */
     private fun availability(context: Context): String {
         val info = packageInfo(context)
-        if (info.applicationInfo?.appComponentFactory?.contains("lspatch", ignoreCase = true) != true) return "unpatched"
+        val factory = info.applicationInfo?.appComponentFactory ?: ""
+        if (listOf("lspatch", "npatch").none { factory.contains(it, ignoreCase = true) }) return "unpatched"
         if (info.requestedPermissions?.contains(Manifest.permission.REQUEST_INSTALL_PACKAGES) != true) return "unsupported"
         return if (context.packageManager.canRequestPackageInstalls()) "ready" else "needs-permission"
     }

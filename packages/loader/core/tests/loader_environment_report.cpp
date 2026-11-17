@@ -37,6 +37,18 @@ void listsDeviceMarkers()
     android.customROM = "LineageOS 22.1";
     assert(report::androidMarkers(android)[2] == "LineageOS 22.1");
 
+    report::AndroidDeviceFacts limited;
+    limited.selinuxEnforcing = true;
+    limited.host             = "ChromeOS";
+    limited.skin             = "HyperOS 2.0";
+    limited.batteryOptimized = true;
+    assert((report::androidMarkers(limited) == std::vector<std::string>{"ChromeOS"}));
+    limited.standbyBucket        = 40;
+    limited.backgroundRestricted = true;
+    assert((report::androidMarkers(limited)
+            == std::vector<std::string>{"ChromeOS", "HyperOS 2.0", "bg restricted", "standby rare",
+                                        "battery optimized"}));
+
     report::AndroidDeviceFacts stock;
     stock.selinuxEnforcing  = true;
     stock.verifiedBootState = "green";

@@ -21,6 +21,11 @@ struct AndroidDeviceFacts {
     std::string customROM;
     long pageSize = 0;
     std::string webView;
+    std::string host;
+    std::string skin;
+    bool batteryOptimized     = false;
+    bool backgroundRestricted = false;
+    int standbyBucket         = 0;
 };
 
 struct HttpsCheck {
