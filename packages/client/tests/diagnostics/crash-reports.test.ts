@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
 const settings = new Map<string, string | number | boolean>();
 const sent: unknown[] = [];
+const toasts: unknown[][] = [];
+let answer: (count: number) => object = (count) => ({ id: `report-${count}` });
 
 mock.module('@unbound-app/logger', () => ({
 	createLogger: () => ({ warn: () => undefined, error: () => undefined }),
@@ -28,9 +30,11 @@ mock.module('~/account/client', () => ({
 		async (_route: string, { body }: { body: unknown }) => {
 			sent.push(body);
 
-			return { id: `report-${sent.length}` };
+			return answer(sent.length);
 		},
 }));
+
+mock.module('~/toasts/api', () => ({ info: (...args: unknown[]) => toasts.push(args) }));
 
 const { reportNativeCrash } = await import('~/diagnostics/crash-reports');
 
@@ -48,6 +52,8 @@ describe('reportNativeCrash', () => {
 	beforeEach(() => {
 		settings.clear();
 		sent.length = 0;
+		toasts.length = 0;
+		answer = (count) => ({ id: `report-${count}` });
 	});
 
 	test('sends nothing unless crash reporting is on', async () => {
@@ -76,5 +82,32 @@ describe('reportNativeCrash', () => {
 		});
 
 		expect(sent).toHaveLength(2);
+	});
+
+	test('tries again next launch when sending failed', async () => {
+		settings.set('crash-reports', true);
+		answer = () => {
+			throw new Error('offline');
+		};
+
+		await reportNativeCrash(launch);
+
+		answer = (count) => ({ id: `report-${count}` });
+		await reportNativeCrash(launch);
+
+		expect(sent).toHaveLength(2);
+		expect(settings.get('crash-reports.lastId')).toBe('report-2');
+	});
+
+	test('tells the user which issue tracks the crash', async () => {
+		settings.set('crash-reports', true);
+		answer = (count) => ({
+			id: `report-${count}`,
+			issue: { number: 77, url: 'u', created: false },
+		});
+
+		await reportNativeCrash(launch);
+
+		expect(toasts).toEqual([['UNBOUND_CRASH_REPORT_JOINED', { number: 77 }]]);
 	});
 });

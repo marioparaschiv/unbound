@@ -20,6 +20,12 @@ static void checkNativeCrashes()
                                  "Addon {\"id\":\"x\",\"name\":\"Chat Bubbles\"}\n")
            == "SIGSEGV in Chat Bubbles");
     assert(nativeCrashHeadline("Signal " + std::to_string(SIGABRT) + "\n#0 0x1\n") == "SIGABRT");
+    assert(nativeCrashHeadline("Signal " + std::to_string(SIGABRT)
+                               + "\nException NSInvalidArgumentException: bad selector\n#0 0x1\n")
+           == "SIGABRT (NSInvalidArgumentException)");
+    assert(nativeCrashHeadline("Exception java.lang.IllegalStateException: no view\n"
+                               "Addon {\"id\":\"x\",\"name\":\"Chat Bubbles\"}\n#0 at a.b(c)\n")
+           == "java.lang.IllegalStateException in Chat Bubbles");
     assert(nativeCrashHeadline("").empty());
     assert(nativeCrashHeadline("garbage").empty());
     assert(describeNativeCrash(kStack).find("Addon Chat Bubbles\n") != std::string::npos);

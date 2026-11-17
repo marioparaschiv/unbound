@@ -96,3 +96,87 @@ describe('crash reports', () => {
 		expect(statuses[3]).toBe(429);
 	});
 });
+
+type FakeIssueCall = { path: string; body: { title?: string; body?: string; labels?: string[] } };
+
+const calls: FakeIssueCall[] = [];
+const github = Bun.serve({
+	port: 0,
+	async fetch(request) {
+		const path = new URL(request.url).pathname;
+
+		calls.push({ path, body: await request.json() });
+
+		return Response.json(
+			path.endsWith('/comments')
+				? { id: 1 }
+				: { number: 77, html_url: 'https://github.com/owner/repo/issues/77' },
+			{ status: 201 },
+		);
+	},
+});
+const filed = await createTestContext({
+	GITHUB_ISSUES_TOKEN: 'issue-token',
+	GITHUB_API_URL: `http://localhost:${github.port}`,
+	CRASH_ISSUES_REPOSITORY: 'owner/repo',
+});
+
+afterAll(() => {
+	github.stop(true);
+
+	return filed.close();
+});
+
+describe('crash issues', () => {
+	function sendFiled(body: CrashReport, ip: string) {
+		return reportCrashEndpoint.handle(
+			filed.ctx,
+			new Request(new URL('/api/v1/crash-reports', filed.ctx.env.PUBLIC_URL), {
+				method: 'POST',
+				headers: {
+					'content-type': 'application/json',
+					[filed.ctx.env.IP_ADDRESS_HEADER]: ip,
+				},
+				body: JSON.stringify(body),
+			}),
+		);
+	}
+
+	const native: CrashReport = {
+		...report,
+		kind: 'native-crash',
+		stack: 'Signal 11\n#0 0x19d839974 libobjc.A.dylib + 0x1974 objc_release',
+	};
+
+	test('opens one issue per crash, and comments only for new versions', async () => {
+		const first = parse(
+			crashReportResponseSchema,
+			await (await sendFiled(native, '203.0.113.20')).json(),
+		);
+		const again = parse(
+			crashReportResponseSchema,
+			await (await sendFiled(native, '203.0.113.21')).json(),
+		);
+		const newer = parse(
+			crashReportResponseSchema,
+			await (await sendFiled({ ...native, clientVersion: '1.0.1' }, '203.0.113.22')).json(),
+		);
+
+		expect(first.issue).toEqual({
+			number: 77,
+			url: 'https://github.com/owner/repo/issues/77',
+			created: true,
+		});
+		expect(again.issue?.created).toBe(false);
+		expect(newer.issue?.number).toBe(77);
+		expect(calls.map(({ path }) => path)).toEqual([
+			'/repos/owner/repo/issues',
+			'/repos/owner/repo/issues/77/comments',
+		]);
+		expect(calls[0]?.body.title).toBe(
+			'crash: (unbound.example) Signal 11 in libobjc.A.dylib objc_release on iOS',
+		);
+		expect(calls[0]?.body.labels).toEqual(['Bug', 'crash', 'iOS']);
+		expect(calls[0]?.body.body).not.toContain('Failed to start addon');
+	});
+});

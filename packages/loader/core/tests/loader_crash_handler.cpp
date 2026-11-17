@@ -274,6 +274,40 @@ void aStackOverflowStillWritesTheStack(const std::filesystem::path &root)
     assert(stack.rfind("Signal " + std::to_string(WTERMSIG(status)) + "\n", 0) == 0);
     assert(stack.find("\n#0 0x") != std::string::npos);
 }
+
+void anAbortAfterAnExceptionNamesIt(const std::filesystem::path &root)
+{
+    int status = runInChild([&]() {
+        signal(SIGABRT, SIG_DFL);
+        expect(loader::installAddonCrashHandler((root / "running").string()), 100);
+        loader::noteUncaughtException("NSInvalidArgumentException: unrecognized selector\nsent");
+        abort();
+    });
+    assert(WIFSIGNALED(status));
+    std::string stack = readFile(root / loader::kPendingNativeCrashFile);
+    assert(stack.rfind("Signal " + std::to_string(SIGABRT)
+                           + "\nException "
+                             "NSInvalidArgumentException: unrecognized selector sent\n",
+                       0)
+           == 0);
+}
+
+void anUncaughtExceptionWritesItsRecordOnce(const std::filesystem::path &root)
+{
+    int status = runInChild([&]() {
+        expect(loader::installAddonCrashHandler((root / "running").string()), 100);
+        expect(loader::recordUncaughtException("java.lang.IllegalStateException: gone",
+                                               "#0 at a.b(c)\n"),
+               101);
+        expect(!loader::recordUncaughtException("second", ""), 102);
+        _exit(0);
+    });
+    assert(WIFEXITED(status) && WEXITSTATUS(status) == 0);
+    std::string stack = readFile(root / loader::kPendingNativeCrashFile);
+    assert(stack.rfind("Exception java.lang.IllegalStateException: gone\n", 0) == 0);
+    assert(stack.find("#0 at a.b(c)\n") != std::string::npos);
+}
+
 #if defined(__APPLE__)
 void *overflowOnThisThread(void *)
 {
@@ -319,6 +353,8 @@ int main()
     run("adopted", adoptedStackSurvivesAnInstallWithoutAWrittenStack);
     run("written", writtenStackWinsOverAnAdoptedOne);
     run("overflow", aStackOverflowStillWritesTheStack);
+    run("exception-abort", anAbortAfterAnExceptionNamesIt);
+    run("exception-record", anUncaughtExceptionWritesItsRecordOnce);
 #if defined(__APPLE__)
     run("thread-overflow", aStackOverflowOnALaterThreadStillWritesTheStack);
 #endif

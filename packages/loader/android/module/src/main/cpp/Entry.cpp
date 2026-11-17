@@ -83,6 +83,15 @@ static void nativeAppendLogFile(JNIEnv *env, jclass, jint level, jstring categor
                           message ? toStdString(env, message) : std::string());
 }
 
+static jboolean nativeRecordUncaughtException(JNIEnv *env, jclass, jstring description,
+                                              jstring frames)
+{
+    return loader::recordUncaughtException(description ? toStdString(env, description) : "",
+                                           frames ? toStdString(env, frames) : "")
+               ? JNI_TRUE
+               : JNI_FALSE;
+}
+
 static void nativeInitialize(JNIEnv *env, jclass, jstring documents, jstring bootstrapScripts,
                              jstring origin, jint bytecodeVersion, jstring platformInfo)
 {

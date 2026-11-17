@@ -1,6 +1,8 @@
 import { crashReportResponseSchema, crashReportSchema } from '@unbound-app/contracts/crash-reports';
 import { Type } from '@unbound-app/contracts/schema';
 
+import { fileCrashIssue } from '~/lib/crash-issues/file-crash-issue';
+import { crashFingerprint } from '~/lib/crash-issues/fingerprint';
 import { crashReport } from '~/db/schema';
 import endpoint from '~/lib/api/endpoint';
 
@@ -8,6 +10,7 @@ const reportCrashEndpoint = endpoint(
 	{ body: crashReportSchema, query: Type.Undefined(), response: crashReportResponseSchema },
 	async ({ ctx, body }) => {
 		const id = Bun.randomUUIDv7();
+		const fingerprint = crashFingerprint(body);
 
 		await ctx.db.insert(crashReport).values({
 			id,
@@ -27,10 +30,13 @@ const reportCrashEndpoint = endpoint(
 			message: body.message ?? null,
 			stack: body.stack ?? null,
 			log: body.log ?? null,
+			fingerprint,
 			receivedAt: ctx.now(),
 		});
 
-		return { id };
+		const issue = await fileCrashIssue(ctx, body, id, fingerprint);
+
+		return issue ? { id, issue } : { id };
 	},
 	{ rateLimit: { bucket: 'crash-reports', budget: 'CRASH_REPORTS' } },
 );

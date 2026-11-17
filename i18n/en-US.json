@@ -603,5 +603,7 @@
 	"UNBOUND_NATIVE_WIPE_FONTS": "Wipe Fonts",
 	"UNBOUND_NATIVE_WIPE_ICONS": "Wipe Icon Packs",
 	"UNBOUND_NATIVE_WIPE_PLUGINS": "Wipe Plugins",
-	"UNBOUND_NATIVE_WIPE_THEMES": "Wipe Themes"
+	"UNBOUND_NATIVE_WIPE_THEMES": "Wipe Themes",
+	"UNBOUND_CRASH_REPORT_FILED": "Crash reported as issue #{number}. Thanks!",
+	"UNBOUND_CRASH_REPORT_JOINED": "This crash is already tracked in issue #{number}; your report was added to it."
 }

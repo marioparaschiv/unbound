@@ -10,6 +10,8 @@ import fs from '~/native/fs';
 
 export type { CrashEvent, CrashReportAddon } from '~/diagnostics/crash-report';
 
+type CrashReportIssue = { number: number; created: boolean };
+
 const logger = createLogger('Crash Reports');
 
 /**
@@ -26,6 +28,12 @@ async function readLoaderLog(): Promise<string | undefined> {
 	} catch {
 		return undefined;
 	}
+}
+
+async function announceIssue({ number, created }: CrashReportIssue) {
+	const { info } = await import('~/toasts/api');
+
+	info(created ? 'UNBOUND_CRASH_REPORT_FILED' : 'UNBOUND_CRASH_REPORT_JOINED', { number });
 }
 
 /**
@@ -49,9 +57,13 @@ export async function reportCrash(event: CrashEvent): Promise<string | undefined
 		}
 
 		const request = createUnboundClient();
-		const { id } = await request('POST /api/v1/crash-reports', {
+		const { id, issue } = await request('POST /api/v1/crash-reports', {
 			body: report,
 		});
+
+		if (issue) {
+			await announceIssue(issue);
+		}
 
 		return id;
 	} catch (error) {
@@ -79,11 +91,12 @@ export async function reportNativeCrash(launch = getLoader()?.launch): Promise<v
 		return;
 	}
 
-	setSetting('crash-reports.nativeAt', newest.at);
-
 	const id = await reportCrash({ kind: 'native-crash', message: launch.lastCrash, stack });
 
-	if (id) {
-		setSetting('crash-reports.lastId', id);
+	if (!id) {
+		return;
 	}
+
+	setSetting('crash-reports.nativeAt', newest.at);
+	setSetting('crash-reports.lastId', id);
 }

@@ -1,4 +1,4 @@
-import { boolean, pgTable, text, index, doublePrecision } from 'drizzle-orm/pg-core';
+import { boolean, pgTable, text, index, integer, doublePrecision } from 'drizzle-orm/pg-core';
 
 import { timestampMs } from './columns';
 
@@ -22,6 +22,7 @@ export const crashReport = pgTable(
 		message: text('message'),
 		stack: text('stack'),
 		log: text('log'),
+		fingerprint: text('fingerprint'),
 		receivedAt: timestampMs('received_at').notNull(),
 	},
 	(table) => [
@@ -29,3 +30,14 @@ export const crashReport = pgTable(
 		index('crash_report_receivedAt_idx').on(table.receivedAt),
 	],
 );
+
+/** The GitHub issue that tracks one kind of crash, so repeated reports of it never open another. */
+export const crashIssue = pgTable('crash_issue', {
+	fingerprint: text('fingerprint').primaryKey(),
+	issueNumber: integer('issue_number'),
+	issueUrl: text('issue_url'),
+	reports: integer('reports').notNull().default(1),
+	versions: text('versions').notNull(),
+	firstSeenAt: timestampMs('first_seen_at').notNull(),
+	lastSeenAt: timestampMs('last_seen_at').notNull(),
+});
