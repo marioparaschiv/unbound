@@ -1,0 +1,17 @@
+{
+	"id": "unbound.composer-account-avatar",
+	"name": "Composer Account Avatar",
+	"description": "Shows the account you're signed in as above the message box while you write, so you notice before sending from the wrong one.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "UserCircleIcon",
+	"main": "index.tsx"
+}
