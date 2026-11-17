@@ -1,0 +1,21 @@
+{
+	"id": "unbound.no-image-mosaic",
+	"name": "No Image Mosaic",
+	"description": "Shows each image of a message on its own row at full size, instead of cropped into a grid.",
+	"authors": [
+		{
+			"name": "AutumnVN",
+			"id": "393694671383166998"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ImageIcon",
+	"main": "index.tsx"
+}

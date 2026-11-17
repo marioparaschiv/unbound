@@ -2077,6 +2077,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/no-image-mosaic": {
+      "name": "no-image-mosaic",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/no-pending-count": {
       "name": "no-pending-count",
       "dependencies": {
@@ -5627,6 +5641,8 @@
     "new-member-sprout": ["new-member-sprout@workspace:packages/plugins/new-member-sprout"],
 
     "nextgen-events": ["nextgen-events@1.5.3", "", {}, "sha512-P6qw6kenNXP+J9XlKJNi/MNHUQ+Lx5K8FEcSfX7/w8KJdZan5+BB5MKzuNgL2RTjHG1Svg8SehfseVEp8zAqwA=="],
+
+    "no-image-mosaic": ["no-image-mosaic@workspace:packages/plugins/no-image-mosaic"],
 
     "no-pending-count": ["no-pending-count@workspace:packages/plugins/no-pending-count"],
 
