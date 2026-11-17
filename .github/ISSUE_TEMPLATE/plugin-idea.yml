@@ -194,6 +194,7 @@ body:
               - Voice Message Tools
               - Voice Transcripts
               - Wait For Slot
+              - Xkcd Browser
               - Youtube Adblock
               - Zip Preview
       validations:

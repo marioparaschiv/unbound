@@ -1,0 +1,17 @@
+{
+	"id": "unbound.xkcd",
+	"name": "Xkcd Browser",
+	"description": "Browses and searches xkcd comics with /xkcd, and shares one into the chat you're in.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ImageIcon",
+	"main": "index.tsx"
+}
