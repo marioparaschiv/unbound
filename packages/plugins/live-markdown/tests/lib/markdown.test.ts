@@ -40,4 +40,11 @@ describe('markdownRuns', () => {
 		expect(styled('**open and * spaced *')).toEqual([]);
 		expect(styled('2 * 3 * 4')).toEqual([]);
 	});
+
+	test('leaves underscores in emoji names and words alone', () => {
+		expect(styled('nice :blob_cat_happy: and :party_parrot:')).toEqual([]);
+		expect(styled('<:blob_cat:123> <a:wave_hi:456>')).toEqual([]);
+		expect(styled('call snake_case_name or __init__')).toEqual([['underline', 'init']]);
+		expect(styled('an _italic_ word, a__b__c')).toEqual([['italic', 'italic']]);
+	});
 });

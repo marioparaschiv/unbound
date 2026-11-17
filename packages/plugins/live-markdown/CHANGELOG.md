@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2] - 2026-11-17
+
+### Fixed
+
+- Leaves underscores in emoji names and inside words alone, as Discord does, instead of styling them as italics or underline.
+
 ## [1.0.1] - 2026-11-17
 
 ### Fixed
