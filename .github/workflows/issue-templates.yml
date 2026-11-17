@@ -36,6 +36,7 @@ jobs:
             - name: Commit the forms
               env:
                   GH_TOKEN: ${{ github.token }}
+                  LEFTHOOK: '0'
               run: |
                   if git diff --quiet -- .github/ISSUE_TEMPLATE; then
                       echo "The issue forms already list every plugin."
