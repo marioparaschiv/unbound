@@ -1,9 +1,11 @@
 #pragma once
 
+#include <cstddef>
 #include <string>
 
 namespace loader {
 bool installAddonCrashHandler(const std::string &markerPath);
+size_t reclaimCrashHandlers();
 void noteUncaughtException(const std::string &description);
 bool recordUncaughtException(const std::string &description, const std::string &frames);
 

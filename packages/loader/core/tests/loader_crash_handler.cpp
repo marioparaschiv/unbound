@@ -97,6 +97,40 @@ void installInfoHandler(int signal)
     sigaction(signal, &previous, nullptr);
 }
 
+struct sigaction gLaterReporterPrevious   = {};
+volatile sig_atomic_t gLaterReporterCalls = 0;
+
+void laterReporter(int signal, siginfo_t *info, void *context)
+{
+    gLaterReporterCalls = gLaterReporterCalls + 1;
+    if (gLaterReporterPrevious.sa_flags & SA_SIGINFO)
+    {
+        gLaterReporterPrevious.sa_sigaction(signal, info, context);
+    }
+}
+
+void aLaterReporterIsMovedBehindWithoutLooping(const std::filesystem::path &root)
+{
+    int status = runInChild([&]() {
+        installPlainHandler(SIGTRAP);
+        expect(loader::installAddonCrashHandler((root / "running").string()), 70);
+        expect(loader::reclaimCrashHandlers() == 0, 71);
+
+        struct sigaction later = {};
+        later.sa_sigaction     = laterReporter;
+        later.sa_flags         = SA_SIGINFO;
+        sigemptyset(&later.sa_mask);
+        sigaction(SIGTRAP, &later, &gLaterReporterPrevious);
+
+        expect(loader::reclaimCrashHandlers() == 1, 72);
+        raise(SIGTRAP);
+        expect(gLaterReporterCalls == 1, 73);
+        expect(gPreviousCalls == 1, 74);
+        expect(!readFile(root / loader::kPendingNativeCrashFile).empty(), 75);
+    });
+    assert(exitedCleanly(status));
+}
+
 void unopenableMarkerLeavesTheHandlerUninstalled(const std::filesystem::path &root)
 {
     int status = runInChild([&]() {
@@ -344,6 +378,7 @@ int main()
     };
 
     run("unopenable", unopenableMarkerLeavesTheHandlerUninstalled);
+    run("reclaim", aLaterReporterIsMovedBehindWithoutLooping);
     run("twice", installingTwiceKeepsTheFirstMarker);
     run("stale", installClearsAStaleMarker);
     run("first-crash", onlyTheFirstCrashIsRecorded);
