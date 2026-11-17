@@ -1,6 +1,7 @@
 import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
 
 import { AvatarClass } from '~/lib/constants';
+import { reportWorkletError } from '@unbound-plugins/shared/native/report-worklet-error';
 
 const CIRCLE_RATIO = 0.44;
 const SQUARE_TOLERANCE = 1;
@@ -315,7 +316,7 @@ function guarded(action: () => void) {
 	try {
 		action();
 	} catch (error) {
-		console.error(`[Avatar Radius] ${String(error)}`);
+		reportWorkletError('Avatar Radius', error);
 	}
 }
 

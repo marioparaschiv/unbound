@@ -1,6 +1,7 @@
 import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
 
 import { ICON_TAG } from '~/lib/constants';
+import { reportWorkletError } from '@unbound-plugins/shared/native/report-worklet-error';
 
 const CELL_CLASS = 'DCDMessageTableViewCell';
 
@@ -23,7 +24,7 @@ export function installReuseGuard(scope: NativeUIScope) {
 					objc.invoke(icon, 'setHidden:', [true]);
 				}
 			} catch (error) {
-				console.error(`[Message Latency] ${String(error)}`);
+				reportWorkletError('Message Latency', error);
 			}
 		},
 	});

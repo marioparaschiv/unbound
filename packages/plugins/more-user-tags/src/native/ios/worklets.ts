@@ -6,6 +6,7 @@ import type {
 	NativeObjectHandle,
 	NativeUIScope,
 } from '@unbound-app/api/native';
+import { reportWorkletError } from '@unbound-plugins/shared/native/report-worklet-error';
 
 const STATE_KEY = '__unboundMoreUserTags';
 const LABEL_CLASS = 'DCDLabel';
@@ -487,7 +488,7 @@ function followLabel(current: TagState, record: TagRecord): NativeHookToken[] {
 		try {
 			fit(current, record);
 		} catch (error) {
-			console.error(`[More User Tags] ${String(error)}`);
+			reportWorkletError('More User Tags', error);
 		}
 	};
 
@@ -635,7 +636,7 @@ function updateLabel(current: TagState, label: NativeObjectHandle) {
 			removeRecord(current, id, record);
 		}
 	} catch (error) {
-		console.error(`[More User Tags] ${String(error)}`);
+		reportWorkletError('More User Tags', error);
 	} finally {
 		current.updating.delete(id);
 	}
@@ -767,7 +768,7 @@ export function installTagGradients(scope: NativeUIScope, settings: TagSettings)
 		try {
 			rememberUnmatched(current, keyOf(objc, self), self, labelNameOf(objc, self));
 		} catch (error) {
-			console.error(`[More User Tags] ${String(error)}`);
+			reportWorkletError('More User Tags', error);
 		}
 	};
 
@@ -841,7 +842,7 @@ export function removeTagGradients() {
 				removeRecord(current, id, record);
 			}
 		} catch (error) {
-			console.error(`[More User Tags] ${String(error)}`);
+			reportWorkletError('More User Tags', error);
 		}
 	}
 

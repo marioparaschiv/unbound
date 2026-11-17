@@ -20,6 +20,7 @@ import {
 } from '~/native/ios/ui-cell';
 import { isStandaloneCell } from '~/native/ios/standalone-cell';
 import { placeFollowingSwipe } from '~/native/ios/swipe-follow';
+import { reportWorkletError } from '@unbound-plugins/shared/native/report-worklet-error';
 
 const STATE_KEY = '__unboundChatBubbles';
 const MAX_CACHED = 400;
@@ -99,7 +100,7 @@ function clearColor(objc: NativeObjCBridge): NativeObjectHandle | null {
 
 function report(error: unknown) {
 	'worklet';
-	console.error(`[Chat Bubbles] ${String(error)}`);
+	reportWorkletError('Chat Bubbles', error);
 }
 
 function cellWidthOf(objc: NativeObjCBridge, cell: NativeObjectHandle): number {

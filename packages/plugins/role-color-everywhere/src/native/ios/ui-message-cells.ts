@@ -1,6 +1,7 @@
 import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
 
 import type { ColorRun } from '~/native/ios/ui-chat-input';
+import { reportWorkletError } from '@unbound-plugins/shared/native/report-worklet-error';
 
 const STATE_KEY = '__unboundRoleColorMessages';
 const CELL_CLASS = 'DCDMessageTableViewCell';
@@ -254,7 +255,7 @@ export function installMessageMentionHooks(
 				try {
 					paint(current, self);
 				} catch (error) {
-					console.error(`[Role Color Everywhere] ${String(error)}`);
+					reportWorkletError('Role Color Everywhere', error);
 				}
 			},
 		});
@@ -297,7 +298,7 @@ export function restoreMessageMentions() {
 				objc.invoke(entry.view, 'setAttributedText:', [entry.original]);
 			}
 		} catch (error) {
-			console.error(`[Role Color Everywhere] ${String(error)}`);
+			reportWorkletError('Role Color Everywhere', error);
 		}
 	});
 

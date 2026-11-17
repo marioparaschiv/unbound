@@ -11,6 +11,7 @@ import {
 	javaReference,
 	javaText,
 } from '@unbound-plugins/shared/native/android/java-values';
+import { reportWorkletError } from '@unbound-plugins/shared/native/report-worklet-error';
 
 const STATE_KEY = '__unboundRoleColorComposerAndroid';
 const CHAT_INPUT = 'com.discord.chat.input.views.DCDChatInput';
@@ -185,7 +186,7 @@ function repaintKnownInputs(current: ComposerState) {
 		try {
 			paint(current, input);
 		} catch (error) {
-			console.error(`[Role Color Everywhere] ${String(error)}`);
+			reportWorkletError('Role Color Everywhere', error);
 		}
 	}
 }
@@ -237,7 +238,7 @@ export function installAndroidComposerHooks(
 				try {
 					paint(current, input);
 				} catch (error) {
-					console.error(`[Role Color Everywhere] ${String(error)}`);
+					reportWorkletError('Role Color Everywhere', error);
 				}
 			},
 		);
@@ -284,7 +285,7 @@ export function restoreAndroidComposer() {
 		try {
 			java.setField(span, COLOR_FIELD, javaInt(original));
 		} catch (error) {
-			console.error(`[Role Color Everywhere] ${String(error)}`);
+			reportWorkletError('Role Color Everywhere', error);
 		}
 	}
 
@@ -292,7 +293,7 @@ export function restoreAndroidComposer() {
 		try {
 			java.invoke(input, 'invalidate', []);
 		} catch (error) {
-			console.error(`[Role Color Everywhere] ${String(error)}`);
+			reportWorkletError('Role Color Everywhere', error);
 		}
 	}
 

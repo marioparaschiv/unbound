@@ -14,6 +14,7 @@ import {
 } from '@unbound-plugins/shared/native/android/java-values';
 
 import type { TagAppearanceTable } from '~/native/ios/worklets';
+import { reportWorkletError } from '@unbound-plugins/shared/native/report-worklet-error';
 
 const STATE_KEY = '__unboundMoreUserTagsAndroid';
 const TAG_VIEW = 'com.discord.chat.presentation.message.MessageTagView';
@@ -243,7 +244,7 @@ export function installAndroidTagGradients(
 		try {
 			paint(current, tagView, text);
 		} catch (error) {
-			console.error(`[More User Tags] ${String(error)}`);
+			reportWorkletError('More User Tags', error);
 		}
 	});
 
@@ -276,7 +277,7 @@ export function setAndroidTagAppearances(appearances: TagAppearanceTable) {
 		try {
 			paint(current, entry.tagView, entry.text);
 		} catch (error) {
-			console.error(`[More User Tags] ${String(error)}`);
+			reportWorkletError('More User Tags', error);
 		}
 	}
 }
@@ -306,7 +307,7 @@ export function removeAndroidTagGradients() {
 				java.invoke(entry.layout, 'setBackground', [entry.original]);
 			}
 		} catch (error) {
-			console.error(`[More User Tags] ${String(error)}`);
+			reportWorkletError('More User Tags', error);
 		}
 	});
 

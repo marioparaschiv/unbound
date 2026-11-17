@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.13] - 2026-11-17
+
+### Fixed
+
+- Checks whether a message row is on screen from the main thread instead of touching the view from the JavaScript thread.
+
 ## [1.2.12] - 2026-11-16
 
 ### Fixed

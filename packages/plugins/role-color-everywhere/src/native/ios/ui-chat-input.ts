@@ -1,4 +1,5 @@
 import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
+import { reportWorkletError } from '@unbound-plugins/shared/native/report-worklet-error';
 
 const STATE_KEY = '__unboundRoleColorComposer';
 const COMPOSER_CLASS = 'DCDChatInputComponentView';
@@ -236,7 +237,7 @@ export function installComposerHooks(scope: NativeUIScope, mentions: ComposerMen
 				try {
 					paint(current, self);
 				} catch (error) {
-					console.error(`[Role Color Everywhere] ${String(error)}`);
+					reportWorkletError('Role Color Everywhere', error);
 				}
 			},
 		});
@@ -285,7 +286,7 @@ export function restoreComposer() {
 				}
 			}
 		} catch (error) {
-			console.error(`[Role Color Everywhere] ${String(error)}`);
+			reportWorkletError('Role Color Everywhere', error);
 		}
 	}
 

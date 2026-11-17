@@ -63,7 +63,7 @@ const SUPPORTED_WORKLET_RUNTIMES = new Map<string, string | undefined>([
 // Each `code` is a parenthesized expression: react-native-worklets evals it as is, and Reanimated 3 wraps it again harmlessly.
 const GUARDED_RUN = {
 	hash: 0x75_6e_62_01,
-	code: "(function unboundGuardedRun(){const{worklet}=this.__closure;try{worklet.apply(undefined,arguments);}catch(error){console.error('[Unbound] A UI worklet failed: '+String(error));}})",
+	code: "(function unboundGuardedRun(){const{worklet}=this.__closure;try{worklet.apply(undefined,arguments);}catch(error){if(Object(error).code!=='NATIVE_PLUGIN_SCOPE_DISPOSED'){console.error('[Unbound] A UI worklet failed: '+String(error));}}})",
 };
 
 const GUARDED_CALL = {
