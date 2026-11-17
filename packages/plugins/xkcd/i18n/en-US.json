@@ -1,0 +1,13 @@
+{
+	"XKCD_DESC": "Browse xkcd comics.",
+	"COMIC_DESC": "A comic number, latest, random, or words from its title.",
+	"LOADING": "Loading…",
+	"NOT_FOUND": "No xkcd comic matches that.",
+	"FAILED": "Couldn't reach xkcd.com. Try again.",
+	"PREVIOUS": "Previous",
+	"NEXT": "Next",
+	"RANDOM": "Random",
+	"SHARE": "Share to Chat",
+	"RESULTS": "Comics matching “{query}”",
+	"NO_CHANNEL": "Open a chat to share a comic in."
+}
