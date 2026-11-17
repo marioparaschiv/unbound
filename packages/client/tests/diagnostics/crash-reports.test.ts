@@ -36,6 +36,13 @@ mock.module('~/account/client', () => ({
 		},
 }));
 
+mock.module('~/diagnostics/crash-context', () => ({
+	crashContext: async (breadcrumbs: string[]) => ({ breadcrumbs }),
+}));
+mock.module('~/diagnostics/breadcrumbs', () => ({
+	recentBreadcrumbs: () => ['now'],
+	previousBreadcrumbs: async () => ['before the crash'],
+}));
 mock.module('~/diagnostics/crash-consent', () => ({
 	askToReportCrash: async (subject?: string) => {
 		asked.push(subject);
@@ -82,6 +89,7 @@ describe('reportNativeCrash', () => {
 
 		expect(sent).toHaveLength(1);
 		expect(settings.get('crash-reports.lastId')).toBe('report-1');
+		expect(sent[0]).toMatchObject({ context: { breadcrumbs: ['before the crash'] } });
 	});
 
 	test('does not ask when crash reporting is on', async () => {

@@ -1,8 +1,8 @@
-import { CRASH_REPORT_LOG_LIMIT } from './crash-report-limits';
+import { CRASH_CONTEXT_LIMITS, CRASH_REPORT_LOG_LIMIT } from './crash-report-limits';
 import { addonIdSchema, semverSchema } from './manifest';
 import { Type, type StaticDecode } from './schema';
 
-export { CRASH_REPORT_LOG_LIMIT } from './crash-report-limits';
+export { CRASH_CONTEXT_LIMITS, CRASH_REPORT_LOG_LIMIT } from './crash-report-limits';
 
 export const CRASH_REPORT_KINDS = ['crash', 'freeze', 'start-failure', 'native-crash'] as const;
 
@@ -30,6 +30,27 @@ export const crashReportSchema = Type.Object({
 	message: Type.Optional(Type.String({ maxLength: 2_000 })),
 	stack: Type.Optional(Type.String({ maxLength: 16_000 })),
 	log: Type.Optional(Type.String({ maxLength: CRASH_REPORT_LOG_LIMIT })),
+	context: Type.Optional(
+		Type.Object({
+			discordBuild: Type.Optional(Type.String({ maxLength: 32 })),
+			installSource: Type.Optional(Type.String({ maxLength: 120 })),
+			injected: Type.Optional(
+				Type.Array(Type.String({ maxLength: 120 }), {
+					maxItems: CRASH_CONTEXT_LIMITS.injected,
+				}),
+			),
+			addons: Type.Optional(
+				Type.Array(Type.String({ maxLength: 160 }), {
+					maxItems: CRASH_CONTEXT_LIMITS.addons,
+				}),
+			),
+			breadcrumbs: Type.Optional(
+				Type.Array(Type.String({ maxLength: 240 }), {
+					maxItems: CRASH_CONTEXT_LIMITS.breadcrumbs,
+				}),
+			),
+		}),
+	),
 });
 
 export const crashReportResponseSchema = Type.Object({
@@ -46,6 +67,8 @@ export const crashReportResponseSchema = Type.Object({
 });
 
 export type CrashReport = StaticDecode<typeof crashReportSchema>;
+
+export type CrashContext = NonNullable<CrashReport['context']>;
 
 export default {
 	CRASH_REPORT_KINDS,

@@ -30,6 +30,7 @@ const reportCrashEndpoint = endpoint(
 			message: body.message ?? null,
 			stack: body.stack ?? null,
 			log: body.log ?? null,
+			context: body.context ?? null,
 			fingerprint,
 			receivedAt: ctx.now(),
 		});

@@ -51,6 +51,17 @@ describe('crash reports', () => {
 		expect(report?.stack?.length).toBe(16_000);
 		expect(report?.deviceModel.length).toBe(64);
 	});
+
+	test('carry the context when it holds anything', () => {
+		const event = { kind: 'crash' as const };
+
+		expect(
+			buildCrashReport(event, environment, undefined, { discordBuild: '352010' }).context,
+		).toEqual({
+			discordBuild: '352010',
+		});
+		expect('context' in buildCrashReport(event, environment, undefined, {})).toBe(false);
+	});
 });
 
 describe('crash report logs', () => {
