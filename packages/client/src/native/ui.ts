@@ -12,6 +12,7 @@ import { createLogger } from '@unbound-app/logger';
 
 import { NativeBridgeDisposedError, NativeBridgeUnavailableError } from '~/native/errors';
 import type { AddonAttribution } from '~/addons/crash-guard';
+import { markUIScope } from '~/native/capability-use';
 import { getNativeBridge } from '~/native/bridge';
 import { findByProps } from '~/metro/lookups';
 
@@ -276,6 +277,7 @@ export function createScopedUIBridge(
 				const scope = attribute ? attribute(open)() : open();
 
 				scopes.add(scope);
+				markUIScope(owner);
 
 				return scope;
 			},

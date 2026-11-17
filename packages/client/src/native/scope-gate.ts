@@ -4,6 +4,7 @@ import type {
 	NativeBridgeMethod,
 } from '@unbound-app/types';
 import { NATIVE_BRIDGE_METHOD_CAPABILITIES } from '@unbound-app/types/native';
+import noop from '@unbound-app/utils/noop';
 
 import {
 	NativeBridgeCapabilityError,
@@ -27,6 +28,7 @@ type ScopeGateOptions = {
 	attribute?: AddonAttribution;
 	lifecycle: ScopeLifecycle;
 	track: Track;
+	onUse?: (capability: NativeBridgeCapability) => void;
 };
 
 /** The wrappers a plugin scope gates its native calls with. */
@@ -75,6 +77,7 @@ export function createScopeGate({
 	attribute,
 	lifecycle,
 	track,
+	onUse = noop,
 }: ScopeGateOptions): ScopeGate {
 	const granted = new Set(capabilities);
 	const activity = attribute?.activity;
@@ -85,6 +88,8 @@ export function createScopeGate({
 		if (!granted.has(capability)) {
 			throw new NativeBridgeCapabilityError(capability);
 		}
+
+		onUse(capability);
 	}
 
 	function gate<S, A extends unknown[], R>(
@@ -111,6 +116,8 @@ export function createScopeGate({
 			if (!call) {
 				throw new NativeBridgeUnavailableError(unavailableMessage);
 			}
+
+			onUse(capability);
 
 			let result: R;
 

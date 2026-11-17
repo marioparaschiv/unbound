@@ -32,13 +32,14 @@ function unzip(base64: string): Record<string, string> {
 	);
 }
 
-test('zips the logs, crash state, report and entitlements that exist', async () => {
+test('zips the logs, crash state, report, capability use and entitlements that exist', async () => {
 	const files = unzip(
 		await buildDiagnosticsZip({ report: { client: 'v3' }, entitlements: '<plist/>' }),
 	);
 
 	expect(Object.keys(files).sort()).toEqual([
 		'Entitlements.xml',
+		'capability-use.json',
 		'crashes/1970-01-01T00-00-00-000Z-SIGTRAP-in-New-Member-Sprout.txt',
 		'debug-info.json',
 		'logs/native.1.log',
