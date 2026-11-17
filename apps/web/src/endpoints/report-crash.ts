@@ -1,6 +1,7 @@
 import { crashReportResponseSchema, crashReportSchema } from '@unbound-app/contracts/crash-reports';
 import { Type } from '@unbound-app/contracts/schema';
 
+import { withdrawOnCrashSpike } from '~/lib/crash-issues/crash-withdrawal';
 import { crashOrigin, filesIssue } from '~/lib/crash-issues/crash-origin';
 import { fileCrashIssue } from '~/lib/crash-issues/file-crash-issue';
 import { crashFingerprint } from '~/lib/crash-issues/fingerprint';
@@ -25,6 +26,7 @@ const reportCrashEndpoint = endpoint(
 			osVersion: body.osVersion,
 			deviceModel: body.deviceModel,
 			verifiedBuild: body.verifiedBuild ?? null,
+			installId: body.installId ?? null,
 			addonId: body.addon?.id ?? null,
 			addonVersion: body.addon?.version ?? null,
 			addonTrust: body.addon?.trust ?? null,
@@ -38,6 +40,8 @@ const reportCrashEndpoint = endpoint(
 			fingerprint,
 			receivedAt: ctx.now(),
 		});
+
+		await withdrawOnCrashSpike(ctx, body);
 
 		const issue = filesIssue(body, origin)
 			? await fileCrashIssue(ctx, body, id, fingerprint)

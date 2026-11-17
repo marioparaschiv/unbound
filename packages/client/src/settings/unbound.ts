@@ -14,6 +14,7 @@ const DEFAULTS = {
 	'crash-reports': false,
 	'crash-reports.nativeAt': 0,
 	'crash-reports.lastId': '',
+	'crash-reports.installId': '',
 	'debugger.enabled': false,
 	'debugger.address': '',
 	/** Computers whose advertised bridge the device connects to without asking. */

@@ -90,6 +90,10 @@ describe('reportNativeCrash', () => {
 		expect(sent).toHaveLength(1);
 		expect(settings.get('crash-reports.lastId')).toBe('report-1');
 		expect(sent[0]).toMatchObject({ context: { breadcrumbs: ['before the crash'] } });
+		expect((sent[0] as { installId: string }).installId).toMatch(/^[0-9a-f]{32}$/);
+		expect(settings.get('crash-reports.installId')).toBe(
+			(sent[0] as { installId: string }).installId,
+		);
 	});
 
 	test('does not ask when crash reporting is on', async () => {

@@ -99,6 +99,7 @@ export function crashLogExcerpt(log: string): string | undefined {
  * @param environment The app, loader and device details.
  * @param log The loader's log file, whose newest lines go into the report scrubbed of secrets.
  * @param context What else was running, already scrubbed.
+ * @param installId This install's random id, which lets the server count separate installs without naming anyone.
  * @returns The report; the server validates it.
  */
 export function buildCrashReport(
@@ -106,6 +107,7 @@ export function buildCrashReport(
 	environment: CrashEnvironment,
 	log?: string,
 	context?: CrashContext,
+	installId?: string,
 ): CrashReport {
 	const excerpt = log === undefined ? undefined : crashLogExcerpt(log);
 
@@ -113,6 +115,7 @@ export function buildCrashReport(
 		...event,
 		...environment,
 		...(context && Object.keys(context).length ? { context } : {}),
+		...(installId ? { installId } : {}),
 		...(excerpt === undefined ? {} : { log: excerpt }),
 		...(event.message === undefined ? {} : { message: event.message.slice(0, 2_000) }),
 		...(event.stack === undefined ? {} : { stack: event.stack.slice(0, 16_000) }),

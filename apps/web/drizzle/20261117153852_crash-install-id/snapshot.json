@@ -1,0 +1,107 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "d1c61430-ae9f-4e78-a40a-12323883a168",
+  "prevIds": [
+    "2c3b56c0-009d-40b4-8887-969a14079ac4"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "crash_report",
+        "install_id"
+      ],
+      "writes": [
+        "s|col|public.crash_report.install_id",
+        "n|col|public.crash_report.install_id",
+        "e|col|public.crash_report.install_id"
+      ],
+      "reads": [
+        "n|tbl|public.crash_report",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "crash_report",
+        "crash_report_addon_version_idx"
+      ],
+      "writes": [
+        "s|idx|public.crash_report_addon_version_idx",
+        "n|idx|public.crash_report_addon_version_idx",
+        "e|idx|public.crash_report_addon_version_idx",
+        "n|rel|public.crash_report_addon_version_idx"
+      ],
+      "reads": [
+        "n|tbl|public.crash_report",
+        "n|sch|public",
+        "n|col|public.crash_report.addon_id",
+        "n|col|public.crash_report.addon_version",
+        "n|col|public.crash_report.received_at"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "crash_report",
+        "name": "install_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "crash_report",
+        "name": "crash_report_addon_version_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "addon_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "addon_version",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "received_at",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    }
+  ]
+}
