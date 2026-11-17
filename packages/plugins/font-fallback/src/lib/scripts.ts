@@ -8,7 +8,7 @@ export type ScriptId =
 	| 'thai'
 	| 'han'
 	| 'kana'
-	| 'hangul';
+	| 'hangeul';
 
 export type ScriptRun = { script: ScriptId; start: number; length: number };
 
@@ -84,7 +84,7 @@ export const SCRIPTS: readonly { id: ScriptId; blocks: readonly Block[] }[] = [
 		],
 	},
 	{
-		id: 'hangul',
+		id: 'hangeul',
 		blocks: [
 			[0x1100, 0x11ff],
 			[0x3130, 0x318f],
