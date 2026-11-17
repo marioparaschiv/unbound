@@ -1,0 +1,11 @@
+{
+	"ADDED": "Spelled {word}.",
+	"CANNOT_SPELL": "Can't spell that: {letters} repeat more often than there are emoji for them.",
+	"EMPTY": "Type a word to spell.",
+	"FAILED": "Stopped after {count} reactions: Discord refused the next one.",
+	"HELP": "Letters, digits, ! and ?. Repeated letters use look-alikes such as 🅰️ or ⭕.",
+	"REACT": "React",
+	"SPELL": "Spell With Reactions",
+	"TOO_MANY": "A message holds 20 reactions at most; this needs {count}.",
+	"UNSUPPORTED": "These can't be spelled: {characters}"
+}
