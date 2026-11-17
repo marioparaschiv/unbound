@@ -1,6 +1,7 @@
 package app.unbound.android
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 
 object InstallSource {
@@ -13,6 +14,19 @@ object InstallSource {
         "com.huawei.appmarket" to "AppGallery",
         "com.xiaomi.market" to "Xiaomi GetApps",
         "com.android.shell" to "ADB",
+        "dev.imranr.obtainium" to "Obtainium",
+        "dev.imranr.obtainium.fdroid" to "Obtainium",
+        "com.looker.droidify" to "Droid-ify",
+        "com.machiav3lli.fdroid" to "Neo Store",
+        "com.aefyr.sai" to "SAI",
+        "com.aefyr.sai.fdroid" to "SAI",
+        "io.github.muntashirakon.AppManager" to "App Manager",
+        "com.apkmirror.helper.prod" to "APKMirror Installer",
+        "app.accrescent.client" to "Accrescent",
+        "com.uptodown" to "Uptodown",
+        "com.apkpure.aegon" to "APKPure",
+        "com.rosan.installer.x" to "InstallerX",
+        "com.rosan.installer.x.revived" to "InstallerX",
     )
 
     private val PACKAGE_INSTALLERS = setOf(
@@ -21,21 +35,40 @@ object InstallSource {
         "com.samsung.android.packageinstaller",
     )
 
-    fun label(installer: String?): String = when {
-        installer.isNullOrBlank() || installer in PACKAGE_INSTALLERS -> "Sideloaded"
-        else -> STORES[installer] ?: installer
+    private const val SYSTEM = "android"
+
+    private data class Installers(val installing: String?, val initiating: String?)
+
+    private fun viaSystem(packageName: String?): Boolean =
+        packageName.isNullOrBlank() || packageName in PACKAGE_INSTALLERS || packageName == SYSTEM
+
+    private fun name(packageName: String): String = STORES[packageName] ?: packageName
+
+    fun label(installing: String?, initiating: String? = null): String = when {
+        !viaSystem(installing) -> name(installing!!)
+        !viaSystem(initiating) -> "Sideloaded via ${name(initiating!!)}"
+        else -> "Sideloaded"
     }
 
-    @Suppress("DEPRECATION")
-    private fun installer(context: Context): String? = runCatching {
-        val packages = context.packageManager
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            packages.getInstallSourceInfo(context.packageName).installingPackageName
-        } else {
-            packages.getInstallerPackageName(context.packageName)
-        }
+    private fun systemPackageManager(): PackageManager? = runCatching {
+        val threadClass = Class.forName("android.app.ActivityThread")
+        val thread = threadClass.getMethod("currentActivityThread").invoke(null)
+        (threadClass.getMethod("getSystemContext").invoke(thread) as? Context)?.packageManager
     }.getOrNull()
 
-    fun current(context: Context?): String = label(context?.let(::installer))
+    @Suppress("DEPRECATION")
+    private fun installers(packages: PackageManager, packageName: String): Installers = runCatching {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val info = packages.getInstallSourceInfo(packageName)
+            Installers(info.installingPackageName, info.initiatingPackageName)
+        } else {
+            Installers(packages.getInstallerPackageName(packageName), null)
+        }
+    }.getOrDefault(Installers(null, null))
+
+    fun current(context: Context?, packageName: String): String {
+        val packages = context?.packageManager ?: systemPackageManager() ?: return label(null)
+        val (installing, initiating) = installers(packages, packageName)
+        return label(installing, initiating)
+    }
 }

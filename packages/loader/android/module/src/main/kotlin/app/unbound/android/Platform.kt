@@ -80,7 +80,7 @@ object Platform {
         .put("osVersion", Build.VERSION.RELEASE)
         .put("isRooted", SU_PATHS.any { File(it).exists() })
         .put("isSystemApp", appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0)
-        .put("appSource", InstallSource.current(application()))
+        .put("appSource", InstallSource.current(application(), appInfo.packageName))
         .put("framework", frameworkName)
         .put("jailbreak", rootManager())
         .put("isVirtualDevice", isEmulator())
