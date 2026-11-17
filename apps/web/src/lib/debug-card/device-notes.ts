@@ -65,14 +65,12 @@ export function pushSummary(push: DebugCardPush): string {
 }
 
 /**
- * @description Flags anything that stops notifications arriving.
+ * @description Flags anything that stops notifications arriving, one short word each, so the card fits what it can.
  * @param push The push report.
- * @returns The note, or `undefined` when pushes should arrive.
+ * @returns The problems, empty when pushes should arrive.
  */
-export function pushNote(push?: DebugCardPush): string | undefined {
-	const problems = push ? pushProblems(push) : [];
-
-	return problems.length ? joined(problems) : undefined;
+export function pushNotes(push?: DebugCardPush): string[] {
+	return push ? pushProblems(push) : [];
 }
 
 /**
