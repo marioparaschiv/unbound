@@ -788,7 +788,8 @@ jobs:
 
                   jq --argjson newEntry "$NEW_ENTRY" --argjson index "$APP_INDEX" \
                     '.apps[$index].versions |= ([$newEntry] + map(select(.downloadURL != $newEntry.downloadURL)))
-                     | .apps[].versions |= map(.version |= (sub(" \\(.*\\)$"; "") | sub("_[0-9]+$"; "")))' \
+                     | .apps[].versions |= map(.version |= (sub(" \\(.*\\)$"; "") | sub("_[0-9]+$"; "")))
+                     | .apps[].versions |= (sort_by([((.buildVersion // "0") | tonumber? // 0), ((.version | split("_")[1] // "0") | split(".") | map(tonumber? // 0))]) | reverse)' \
                     apt-repo/repo/app-repo.json > temp.json
                   mv temp.json apt-repo/repo/app-repo.json
 
