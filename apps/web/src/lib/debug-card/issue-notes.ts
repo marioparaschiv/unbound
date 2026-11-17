@@ -20,12 +20,35 @@ export function hookNotes(
 }
 
 /**
- * @description Lists recent errors newest first, each prefixed with its addon.
+ * @description Lists each recent error in full, newest first, for the alt text.
  * @param errors The recent errors.
- * @returns One note per error.
+ * @returns One line per error, prefixed with its addon.
  */
-export function errorNotes(errors: DebugInfo['errors'] = []): string[] {
+export function errorDetails(errors: DebugInfo['errors'] = []): string[] {
 	return errors
 		.toReversed()
 		.map((error) => (error.addon ? `${error.addon}: ${error.message}` : error.message));
+}
+
+const ERROR_NAME = /\b([A-Z]\w*(?:Error|Exception))\b/;
+
+function errorKind(message: string): string {
+	return ERROR_NAME.exec(message)?.[1] ?? 'Error';
+}
+
+/**
+ * @description Groups the recent errors by addon and error type, newest first, such as `Chat Bubbles TypeError ×2`.
+ * @param errors The recent errors.
+ * @returns One note per addon and error type.
+ */
+export function errorNotes(errors: DebugInfo['errors'] = []): string[] {
+	const counts = new Map<string, number>();
+
+	for (const error of errors.toReversed()) {
+		const note = `${error.addon ?? 'unbound'} ${errorKind(error.message)}`;
+
+		counts.set(note, (counts.get(note) ?? 0) + 1);
+	}
+
+	return [...counts].map(([note, count]) => (count > 1 ? `${note} ×${count}` : note));
 }

@@ -16,11 +16,11 @@ function binaryText(binary: string): string {
 
 function httpsSpans(https: NonNullable<DebugCardEnvironment['https']>): Span[] {
 	if (https.intercepted) {
-		return [warn(`intercepted by ${https.issuer ?? 'an unknown CA'}`)];
+		return [warn(`MITM · ${https.issuer ?? 'unknown CA'}`)];
 	}
 
 	return https.failure
-		? [dim(`not checked: ${https.failure}`)]
+		? [dim(`unchecked · ${https.failure}`)]
 		: [value('direct'), dim(https.issuer ? ` · ${https.issuer}` : '')];
 }
 

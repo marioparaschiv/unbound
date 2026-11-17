@@ -200,8 +200,13 @@ describe('debug card', () => {
 		});
 
 		expect(texts(card).find((run) => run.text === 'untested')?.color).toBe('#eab308');
-		expect(texts(card).find((run) => run.text.startsWith('Chat Bubbles'))?.text).toBe(
-			'Chat Bubbles (crashed) · +2 more',
+		expect(
+			texts(card)
+				.filter((run) => run.x > 14)
+				.map((run) => run.text)
+				.join(' · '),
+		).toContain(
+			'Chat Bubbles (crashed) · Mention Avatars (froze) · Message Latency (failed to start)',
 		);
 	});
 
@@ -245,11 +250,11 @@ describe('debug card', () => {
 			disabledAddons: ['Chat Bubbles (crashed)'],
 		});
 
-		expect(texts(card).find((run) => run.text.startsWith('crash'))?.text).toBe(
-			'crash SIGSEGV in Chat Bubbles · +2 more',
-		);
+		expect(
+			texts(card).some((run) => run.text.startsWith('crash SIGSEGV in Chat Bubbles')),
+		).toBe(true);
+		expect(texts(card).some((run) => run.text.includes('more'))).toBe(false);
 		expect(JSON.parse(altJson({ ...info, launch: quiet })).launch).toBeUndefined();
-		expect(card.height / card.width).toBeLessThanOrEqual(0.85);
 	});
 	test('names the Android root manager in place of the generic rooted state', () => {
 		const card = layoutDebugCard({
@@ -266,7 +271,7 @@ describe('debug card', () => {
 
 		expect(texts(card).some((run) => run.text === 'issues')).toBe(true);
 	});
-	test('shows crash history, memory pressure and slow launches, two diagnostic rows at most', () => {
+	test('shows crash history, memory pressure and slow launches, every row in full', () => {
 		const now = new Date('2026-11-12T18:00:00Z');
 		const hour = 3_600_000;
 		const busy: DebugCardRequest = {
@@ -297,8 +302,8 @@ describe('debug card', () => {
 		);
 		expect(labels).toContain('crashes');
 		expect(labels).toContain('issues');
-		expect(labels).not.toContain('memory');
-		expect(card.height / card.width).toBeLessThanOrEqual(0.85);
+		expect(labels).toContain('memory');
+		expect(labels).toContain('launch');
 
 		const quiet = layoutDebugCard({ ...busy, launch: undefined, disabledAddons: [] }, now);
 

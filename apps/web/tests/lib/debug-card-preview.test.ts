@@ -62,14 +62,17 @@ function texts(card: ReturnType<typeof layoutDebugCard>): CardText[] {
 }
 
 describe('debug card preview', () => {
-	test('the busiest realistic card stays whole, readable and short', async () => {
+	test('the busiest realistic card stays whole and readable', async () => {
 		const card = layoutDebugCard(busiest, NOW, context);
 		const runs = texts(card);
 
 		expect(card.width).toBe(432);
 		expect(Math.min(...runs.map((run) => run.size))).toBeGreaterThanOrEqual(13);
-		expect(card.height / card.width).toBeLessThanOrEqual(0.85);
-		expect(runs.filter((run) => run.text.includes('…')).map((run) => run.text)).toEqual([]);
+		expect(
+			runs
+				.filter((run) => run.text.includes('…') || run.text.includes(' more'))
+				.map((run) => run.text),
+		).toEqual([]);
 
 		for (const run of runs) {
 			expect(run.x + run.text.length * run.size * 0.6).toBeLessThanOrEqual(card.width - 13);

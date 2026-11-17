@@ -31,18 +31,21 @@ function texts(card: ReturnType<typeof layoutDebugCard>): CardText[] {
 }
 
 describe('debug card lists', () => {
-	test('shortens an extension note that does not fit instead of counting addons', () => {
+	test('breaks an extension name longer than a line instead of cutting it', () => {
 		const card = layoutDebugCard(
 			{ ...info, isolatedExtensions: ['A'.repeat(60), 'B'.repeat(50)] },
 			new Date(),
 		);
 		const runs = texts(card).map((run) => run.text);
 
-		expect(runs.some((text) => text.includes('addons'))).toBe(false);
-		expect(runs.some((text) => text.endsWith('+1 more') && text.includes('…'))).toBe(true);
+		expect(runs.join('').replaceAll(' · ', '')).toContain('A'.repeat(42));
+		expect(runs.filter((text) => /^[AB]+$/.test(text)).join('')).toBe(
+			'A'.repeat(60) + 'B'.repeat(50),
+		);
+		expect(runs.some((text) => text.includes('…') || text.includes('more'))).toBe(false);
 	});
 
-	test('fits every extension that fits on the line before counting the rest', () => {
+	test('lists every extension, wrapping between them', () => {
 		const card = layoutDebugCard(
 			{
 				...info,
@@ -51,18 +54,9 @@ describe('debug card lists', () => {
 			},
 			new Date(),
 		);
-		const row = texts(card).find((run) => run.text.includes('Share')) as CardText;
+		const runs = texts(card).map((run) => run.text);
 
-		expect(row.text).toBe('Share · Safari · BroadcastUpload · +2 more');
-	});
-
-	test('skips an extension too long for the line and keeps the shorter ones after it', () => {
-		const card = layoutDebugCard(
-			{ ...info, isolatedExtensions: ['Share', 'NotificationServiceExtension', 'Safari'] },
-			new Date(),
-		);
-		const row = texts(card).find((run) => run.text.includes('+1 more')) as CardText;
-
-		expect(row.text).toBe('Share · Safari · +1 more');
+		expect(runs).toContain('Share · Safari · NotificationService');
+		expect(runs).toContain('BroadcastUpload · LockscreenWidget');
 	});
 });
