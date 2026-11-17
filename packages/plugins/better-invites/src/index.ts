@@ -4,7 +4,7 @@ import { flux, metro, patcher } from '@unbound-app/api';
 import { expiryOf, inviteCodes, type Expiry } from '~/lib/invites';
 
 type CodedLink = { type?: number; titleText?: string | null; headerText?: string | null };
-type Row = { message?: { id?: string; channelId?: string; codedLinks?: CodedLink[] } };
+type Row = { message?: { id?: string; channelId?: string; codedLinks?: (CodedLink | null)[] } };
 type MessageStore = {
 	getMessage(channelId: string, messageId: string): { content?: string } | undefined;
 };
@@ -49,7 +49,7 @@ function inviteHeader(invite: Invite): string {
 function describeInvites(row: Row): void {
 	const message = row?.message;
 	const links = message?.codedLinks?.filter(
-		(link) => link.type === INVITE_LINK && link.titleText,
+		(link): link is CodedLink => link?.type === INVITE_LINK && Boolean(link.titleText),
 	);
 
 	if (!links?.length || !message?.id || !message.channelId) return;
