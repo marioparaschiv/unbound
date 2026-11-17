@@ -13,6 +13,8 @@
 #include <sys/stat.h>
 #include <utility>
 #if defined(__APPLE__)
+#include <mach/mach.h>
+#include <pthread.h>
 #include <sys/ucontext.h>
 #else
 #include <ucontext.h>
@@ -42,6 +44,9 @@ static std::atomic_bool gInstalled{false};
 static std::atomic<int> gStackDescriptor{-1};
 static std::string gPreviousNativeCrash;
 static constexpr size_t kMaxNativeFrames = 32;
+static constexpr size_t kMaxThreadFrames = 24;
+static constexpr size_t kMaxOtherThreads = 64;
+static constexpr uintptr_t kMaxFrameSpan = 1024 * 1024;
 static char gException[512];
 static std::atomic<size_t> gExceptionLength{0};
 
@@ -159,7 +164,171 @@ static void writeFrame(int descriptor, size_t index, uintptr_t address)
     writeText(descriptor, "\n");
 }
 
-// Async-signal-safe apart from dladdr: walks the frame-pointer chain of the crashing thread.
+static bool readWord(uintptr_t address, uintptr_t &value)
+{
+    if (!address || (address % sizeof(uintptr_t)) != 0)
+    {
+        return false;
+    }
+
+#if defined(__APPLE__)
+    vm_size_t copied = 0;
+    return vm_read_overwrite(mach_task_self(), static_cast<vm_address_t>(address), sizeof(value),
+                             reinterpret_cast<vm_address_t>(&value), &copied)
+               == KERN_SUCCESS
+           && copied == sizeof(value);
+#else
+    value = *reinterpret_cast<const uintptr_t *>(address);
+    return true;
+#endif
+}
+
+static void writeFramesFrom(int descriptor, uintptr_t pc, uintptr_t lr, uintptr_t fp, size_t limit)
+{
+    size_t index = 0;
+    writeFrame(descriptor, index++, pc);
+    if (lr)
+    {
+        writeFrame(descriptor, index++, lr);
+    }
+
+    for (; index < limit; index++)
+    {
+        uintptr_t next = 0, returnTo = 0;
+        if (!readWord(fp, next) || !readWord(fp + sizeof(uintptr_t), returnTo) || !returnTo)
+        {
+            break;
+        }
+
+        writeFrame(descriptor, index, returnTo);
+        if (next <= fp || next - fp > kMaxFrameSpan)
+        {
+            break;
+        }
+
+        fp = next;
+    }
+}
+
+#if defined(__APPLE__) && defined(__arm64__)
+static void writeRegister(int descriptor, const char *name, uintptr_t value)
+{
+    writeText(descriptor, " ");
+    writeText(descriptor, name);
+    writeText(descriptor, "=");
+    writeHex(descriptor, value);
+}
+
+static void writeCrashRegisters(int descriptor, void *context)
+{
+    if (!context)
+    {
+        return;
+    }
+
+    const auto *machine               = static_cast<ucontext_t *>(context)->uc_mcontext;
+    const auto &state                 = machine->__ss;
+    static const char *const kNames[] = {"x0",  "x1",  "x2",  "x3",  "x4",  "x5",  "x6",  "x7",
+                                         "x8",  "x9",  "x10", "x11", "x12", "x13", "x14", "x15",
+                                         "x16", "x17", "x18", "x19", "x20", "x21", "x22", "x23",
+                                         "x24", "x25", "x26", "x27", "x28"};
+    writeText(descriptor, "Registers");
+    for (size_t index = 0; index < std::size(kNames); index++)
+    {
+        writeRegister(descriptor, kNames[index], static_cast<uintptr_t>(state.__x[index]));
+    }
+
+    writeRegister(descriptor, "fp",
+                  static_cast<uintptr_t>(__darwin_arm_thread_state64_get_fp(state)));
+    writeRegister(descriptor, "lr",
+                  static_cast<uintptr_t>(__darwin_arm_thread_state64_get_lr(state)));
+    writeRegister(descriptor, "sp",
+                  static_cast<uintptr_t>(__darwin_arm_thread_state64_get_sp(state)));
+    writeRegister(descriptor, "pc",
+                  static_cast<uintptr_t>(__darwin_arm_thread_state64_get_pc(state)));
+    writeRegister(descriptor, "far", static_cast<uintptr_t>(machine->__es.__far));
+    writeRegister(descriptor, "esr", static_cast<uintptr_t>(machine->__es.__esr));
+    writeText(descriptor, "\n");
+}
+
+static void writeThread(int descriptor, size_t number, thread_t thread)
+{
+    arm_thread_state64_t state       = {};
+    mach_msg_type_number_t stateSize = ARM_THREAD_STATE64_COUNT;
+    if (thread_get_state(thread, ARM_THREAD_STATE64, reinterpret_cast<thread_state_t>(&state),
+                         &stateSize)
+        != KERN_SUCCESS)
+    {
+        return;
+    }
+
+    writeText(descriptor, "Thread ");
+    writeDecimal(descriptor, static_cast<unsigned>(number));
+    char name[64] = {};
+    if (pthread_t handle = pthread_from_mach_thread_np(thread);
+        handle && pthread_getname_np(handle, name, sizeof(name)) == 0 && name[0])
+    {
+        writeText(descriptor, " ");
+        writeText(descriptor, name);
+    }
+
+    writeText(descriptor, "\n");
+    writeFramesFrom(descriptor, static_cast<uintptr_t>(__darwin_arm_thread_state64_get_pc(state)),
+                    static_cast<uintptr_t>(__darwin_arm_thread_state64_get_lr(state)),
+                    static_cast<uintptr_t>(__darwin_arm_thread_state64_get_fp(state)),
+                    kMaxThreadFrames);
+}
+
+static void writeOtherThreads(int descriptor)
+{
+    thread_act_array_t threads   = nullptr;
+    mach_msg_type_number_t count = 0;
+    if (task_threads(mach_task_self(), &threads, &count) != KERN_SUCCESS)
+    {
+        return;
+    }
+
+    thread_t self = mach_thread_self();
+    for (mach_msg_type_number_t index = 0; index < count; index++)
+    {
+        if (threads[index] != self)
+        {
+            thread_suspend(threads[index]);
+        }
+    }
+
+    size_t written = 0;
+    for (mach_msg_type_number_t index = 0; index < count && written < kMaxOtherThreads; index++)
+    {
+        if (threads[index] != self)
+        {
+            writeThread(descriptor, index, threads[index]);
+            written++;
+        }
+    }
+
+    for (mach_msg_type_number_t index = 0; index < count; index++)
+    {
+        if (threads[index] != self)
+        {
+            thread_resume(threads[index]);
+        }
+
+        mach_port_deallocate(mach_task_self(), threads[index]);
+    }
+
+    mach_port_deallocate(mach_task_self(), self);
+    vm_deallocate(mach_task_self(), reinterpret_cast<vm_address_t>(threads),
+                  count * sizeof(thread_t));
+}
+#else
+static void writeCrashRegisters(int, void *) {}
+
+static void writeOtherThreads(int) {}
+#endif
+
+// Async-signal-safe apart from dladdr, and on Apple platforms the thread names: walks the
+// frame-pointer chain of the crashing thread, then records its registers and every other thread.
 static void writeNativeStack(int signal, void *context)
 {
     int descriptor = gStackDescriptor.exchange(-1);
@@ -190,34 +359,11 @@ static void writeNativeStack(int signal, void *context)
     uintptr_t pc = 0, lr = 0, fp = 0;
     if (crashRegisters(context, pc, lr, fp))
     {
-        size_t index = 0;
-        writeFrame(descriptor, index++, pc);
-        if (lr)
-        {
-            writeFrame(descriptor, index++, lr);
-        }
-
-        for (; index < kMaxNativeFrames && fp && (fp % sizeof(uintptr_t)) == 0; index++)
-        {
-            const auto *frame  = reinterpret_cast<const uintptr_t *>(fp);
-            uintptr_t next     = frame[0];
-            uintptr_t returnTo = frame[1];
-            if (!returnTo)
-            {
-                break;
-            }
-
-            writeFrame(descriptor, index, returnTo);
-            // Frames grow towards higher addresses as the walk unwinds; anything else is corrupt.
-            if (next <= fp || next - fp > 1024 * 1024)
-            {
-                break;
-            }
-
-            fp = next;
-        }
+        writeFramesFrom(descriptor, pc, lr, fp, kMaxNativeFrames);
     }
 
+    writeCrashRegisters(descriptor, context);
+    writeOtherThreads(descriptor);
     fsync(descriptor);
     close(descriptor);
 }
