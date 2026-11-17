@@ -1,0 +1,17 @@
+{
+	"id": "unbound.font-attachment-preview",
+	"name": "Font Attachment Preview",
+	"description": "Previews .ttf, .otf and .woff attachments with sample text before you download or install them.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TextIcon",
+	"main": "index.tsx"
+}
