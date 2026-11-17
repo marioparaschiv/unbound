@@ -1,0 +1,12 @@
+{
+	"ADD": "Add",
+	"ADD_FAILED": "Couldn't load that pack: {reason}",
+	"ADDED": "Added {title}.",
+	"ATTACH_FAILED": "Couldn't attach that sticker.",
+	"BUTTON": "Sticker packs",
+	"EMPTY": "No packs yet. Paste a LINE sticker shop link above.",
+	"LINK_HELP": "A store.line.me sticker link or its pack number",
+	"NOT_A_PACK": "That isn't a LINE sticker pack link or number.",
+	"REMOVE": "Remove",
+	"TITLE": "Sticker Packs"
+}
