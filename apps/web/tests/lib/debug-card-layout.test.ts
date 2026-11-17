@@ -2,7 +2,12 @@ import { unpackDebugAltText } from '@unbound-app/contracts/debug-card-alt-text';
 import type { DebugCardRequest } from '@unbound-app/contracts/debug-cards';
 import { describe, expect, test } from 'bun:test';
 
-import { debugCardSvg, layoutDebugCard, type CardText } from '~/lib/debug-card/layout';
+import {
+	debugCardSvg,
+	isStolenCertificate,
+	layoutDebugCard,
+	type CardText,
+} from '~/lib/debug-card/layout';
 import { debugAltText } from '~/lib/debug-card/alt-text';
 
 const altJson = (...args: Parameters<typeof debugAltText>) =>
@@ -453,7 +458,7 @@ describe('debug card', () => {
 		});
 	});
 
-	test('shows recent errors and low storage', () => {
+	test('keeps recent errors in the alt text only and shows low storage', () => {
 		const report: DebugCardRequest = {
 			...info,
 			errors: [{ at: 1, message: 'undefined is not a function', addon: 'chat-bubbles' }],
@@ -466,7 +471,7 @@ describe('debug card', () => {
 			.filter((run) => run.x === 14)
 			.map((run) => run.text);
 
-		expect(labels).toContain('errors');
+		expect(labels).not.toContain('errors');
 		expect(labels).toContain('storage');
 		expect(texts(card).some((run) => run.text.includes('…'))).toBe(false);
 		expect(JSON.parse(altJson(report))).toMatchObject({
@@ -583,5 +588,21 @@ describe('row labels', () => {
 				expect(end).toBeLessThanOrEqual(sorted[index]!.x + 0.5);
 			}
 		}
+	});
+});
+
+describe('signing assets', () => {
+	test('flags a non-Discord enterprise certificate as stolen instead of showing its expiry', () => {
+		const card = layoutDebugCard({
+			...info,
+			installDetails: 'Enterprise (`ABCDE12345`) · exp 2027-01-01 · SideStore',
+		});
+		const runs = texts(card).map((run) => run.text);
+
+		expect(runs.join('')).toContain('stolen cert');
+		expect(runs.join('')).not.toContain('2027-01-01');
+		expect(runs).toContain('Sideloaded (SideStore)');
+		expect(isStolenCertificate('Enterprise (`53Q6R32WPB`)')).toBe(false);
+		expect(isStolenCertificate('Ad Hoc (`ABCDE12345`) · exp 2027-01-01')).toBe(false);
 	});
 });

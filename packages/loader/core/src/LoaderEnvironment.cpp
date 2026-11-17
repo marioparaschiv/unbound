@@ -75,6 +75,30 @@ std::string appSource(const InstallFacts &facts)
     return "Sideloaded";
 }
 
+static bool anyStartsWith(const std::vector<std::string> &values, const std::string &prefix)
+{
+    return std::any_of(values.begin(), values.end(), [&](const std::string &value) {
+        return value.starts_with(prefix);
+    });
+}
+
+std::string sideloaderName(const SideloaderMarkers &markers)
+{
+    if (anyStartsWith(markers.urlSchemes, "sidestore-")
+        || anyStartsWith(markers.exportedTypes, "io.sidestore.Installed."))
+    {
+        return "SideStore";
+    }
+
+    if (anyStartsWith(markers.urlSchemes, "altstore-")
+        || anyStartsWith(markers.exportedTypes, "io.altstore.Installed."))
+    {
+        return "AltStore";
+    }
+
+    return markers.altBundleIdentifier || markers.altDeviceIdentifier ? "AltStore/SideStore" : "";
+}
+
 std::string signingDetails(const SigningFacts &facts)
 {
     std::vector<std::string> parts;
@@ -114,9 +138,9 @@ std::string signingDetails(const SigningFacts &facts)
         parts.push_back("exp " + *facts.profileExpiry);
     }
 
-    if (facts.altStore)
+    if (!facts.sideloader.empty())
     {
-        parts.emplace_back("AltStore/SideStore");
+        parts.push_back(facts.sideloader);
     }
 
     std::string joined;

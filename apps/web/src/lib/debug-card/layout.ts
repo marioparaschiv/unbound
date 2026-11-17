@@ -13,8 +13,8 @@ import type { DebugCardContext } from '~/lib/debug-card/context';
 import { accent, cleanNames, COLORS, dim, joined, value, warn, type Span } from './spans';
 import { dnsNote, gatewayNote, powerNote, pushNotes } from './device-notes';
 import { storageMatters, storageSummary } from './storage';
-import { errorNotes, hookNotes } from './issue-notes';
 import { environmentRows } from './environment-rows';
+import { hookNotes } from './issue-notes';
 import { accountNotes } from './account';
 import { wrapped } from './wrap-lines';
 import { tweakSpans } from './tweaks';
@@ -75,7 +75,8 @@ const DAY_MS = 86_400_000;
 const CRASH_WINDOW_MS = 7 * DAY_MS;
 const FOOTER_HEIGHT = 52;
 
-const SIDELOADERS = new Set(['AltStore/SideStore']);
+const DISCORD_TEAM = '53Q6R32WPB';
+const SIDELOADERS = new Set(['AltStore/SideStore', 'AltStore', 'SideStore']);
 
 type InstallParts = { signing: string; sideloader: string };
 
@@ -88,12 +89,32 @@ function installParts(details = ''): InstallParts {
 	};
 }
 
+const ENTERPRISE = /^Enterprise \(`([A-Z0-9]{10})`\)/;
+const EXPIRY = / · exp(?:ires)? \d{4}-\d{2}-\d{2}/;
+
+/**
+ * @description Tells whether an install is signed with an enterprise certificate from a team other than Discord's.
+ * Individuals cannot hold one, so such a certificate is always a stolen one passed around by signing services.
+ * @param details The install's signing details.
+ * @returns Whether it is.
+ */
+export function isStolenCertificate(details = ''): boolean {
+	const team = ENTERPRISE.exec(details)?.[1];
+
+	return team !== undefined && team !== DISCORD_TEAM;
+}
+
 function installSpans(details: string): Span[] {
-	return details
-		.replace(' · expires ', ' · exp ')
-		.split('`')
-		.map((part, index) => (index % 2 ? accent(part) : value(part)))
-		.filter((span) => span.text);
+	const stolen = isStolenCertificate(details);
+	const shown = stolen ? details.replace(EXPIRY, '') : details.replace(' · expires ', ' · exp ');
+
+	return [
+		...shown
+			.split('`')
+			.map((part, index) => (index % 2 ? accent(part) : value(part)))
+			.filter((span) => span.text),
+		...(stolen ? [{ text: ' · stolen cert', color: COLORS.bad }] : []),
+	];
 }
 
 const SUPPORT_COLORS: Record<DiscordSupport, string> = {
@@ -358,7 +379,6 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 	const crashes = crashSummary(info.launch?.crashes ?? [], now);
 	const launch = launchNotes(info.launch);
 	const memory = memoryNotes(info.memory);
-	const errors = errorNotes(info.errors);
 	const hooks = hookNotes(info);
 	const storage = storageMatters(info.storage) ? storageSummary(info.storage) : undefined;
 	const updates = updateNotes(context, info.addonUpdates);
@@ -373,7 +393,6 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 		['issues', info.disabledAddons?.length ? [warn(joined(info.disabledAddons))] : []],
 		['tweaks', tweaks.length ? tweakSpans(tweaks) : []],
 		['appex', extensionNotes(info).length ? [warn(joined(extensionNotes(info)))] : []],
-		['errors', errors.length ? [warn(joined(errors))] : []],
 		['hooks', hooks.length ? [warn(joined(hooks))] : []],
 		['launch', launch.length ? [warn(joined(launch))] : []],
 		['gateway', gateway ? [warn(joined([gateway]))] : []],

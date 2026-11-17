@@ -32,7 +32,7 @@ struct SigningFacts {
     bool provisionsAllDevices = false;
     bool listsDevices         = false;
     std::optional<std::string> profileExpiry;
-    bool altStore = false;
+    std::string sideloader;
     std::string entitlementSource;
 };
 
@@ -42,6 +42,14 @@ constexpr const char *kTrollStoreLiteMarker  = "../_TrollStoreLite";
 constexpr const char *kDiscordTeamIdentifier = "53Q6R32WPB";
 constexpr const char *kVirtualDeviceMachine  = "iPhone99,11";
 
+struct SideloaderMarkers {
+    std::vector<std::string> urlSchemes;
+    std::vector<std::string> exportedTypes;
+    bool altBundleIdentifier = false;
+    bool altDeviceIdentifier = false;
+};
+
+std::string sideloaderName(const SideloaderMarkers &markers);
 Receipt receiptKind(const std::optional<std::string> &receiptName, bool receiptExists);
 bool isTrollStoreInstall(Receipt receipt, bool trollStore, bool trollStoreLite);
 std::string trollStoreVariant(bool trollStore, bool trollStoreLite);

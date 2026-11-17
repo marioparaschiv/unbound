@@ -70,6 +70,13 @@ static bool supportsIPad()
     return [families isKindOfClass:NSArray.class] && [families containsObject:@2];
 }
 
+static bool isManagedApp()
+{
+    id configuration =
+        [NSUserDefaults.standardUserDefaults objectForKey:@"com.apple.configuration.managed"];
+    return [configuration isKindOfClass:NSDictionary.class] && [configuration count] > 0;
+}
+
 static report::AppleDeviceFacts deviceFacts()
 {
     report::AppleDeviceFacts facts;
@@ -77,6 +84,7 @@ static report::AppleDeviceFacts deviceFacts()
     facts.iPhoneAppOnIPad =
         UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad && !supportsIPad();
     facts.iOSAppOnMac = NSProcessInfo.processInfo.isiOSAppOnMac;
+    facts.managedApp  = isManagedApp();
     return facts;
 }
 

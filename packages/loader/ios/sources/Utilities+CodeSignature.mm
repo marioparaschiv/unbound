@@ -69,6 +69,37 @@ static NSDictionary *kernelEntitlements()
     return entitlementsPlist(loader::codesign::entitlementsFromBlob(kernelBlob));
 }
 
+static std::vector<std::string> stringsAt(NSArray *entries, NSString *key)
+{
+    std::vector<std::string> values;
+    for (id entry in [entries isKindOfClass:NSArray.class] ? entries : @[])
+    {
+        id value       = [entry isKindOfClass:NSDictionary.class] ? entry[key] : nil;
+        NSArray *items = [value isKindOfClass:NSArray.class] ? value : (value ? @[ value ] : @[]);
+        for (id item in items)
+        {
+            if ([item isKindOfClass:NSString.class])
+            {
+                values.push_back(toStdString(item));
+            }
+        }
+    }
+
+    return values;
+}
+
+static loader::environment::SideloaderMarkers sideloaderMarkers(NSBundle *bundle)
+{
+    loader::environment::SideloaderMarkers markers;
+    markers.urlSchemes =
+        stringsAt([bundle objectForInfoDictionaryKey:@"CFBundleURLTypes"], @"CFBundleURLSchemes");
+    markers.exportedTypes = stringsAt(
+        [bundle objectForInfoDictionaryKey:@"UTExportedTypeDeclarations"], @"UTTypeIdentifier");
+    markers.altBundleIdentifier = [bundle objectForInfoDictionaryKey:@"ALTBundleIdentifier"] != nil;
+    markers.altDeviceIdentifier = [bundle objectForInfoDictionaryKey:@"ALTDeviceID"] != nil;
+    return markers;
+}
+
 @implementation Utilities (CodeSignature)
 
 + (NSDictionary *)getApplicationEntitlements
@@ -180,7 +211,7 @@ static NSDictionary *kernelEntitlements()
         }
     }
 
-    facts.altStore = [bundle objectForInfoDictionaryKey:@"ALTDeviceID"] != nil;
+    facts.sideloader = loader::environment::sideloaderName(sideloaderMarkers(bundle));
 
     return [NSString stringWithUTF8String:loader::environment::signingDetails(facts).c_str()];
 }

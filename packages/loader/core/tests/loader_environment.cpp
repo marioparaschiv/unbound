@@ -55,6 +55,15 @@ static void checkInstallSources()
     resigned.discordSigned.reset();
     assert(appSource(resigned) == "App Store");
 
+    SideloaderMarkers sideloaded;
+    assert(sideloaderName(sideloaded).empty());
+    sideloaded.altBundleIdentifier = true;
+    assert(sideloaderName(sideloaded) == "AltStore/SideStore");
+    sideloaded.exportedTypes = {"io.altstore.Installed.com.hammerandchisel.discord.ABCDE12345"};
+    assert(sideloaderName(sideloaded) == "AltStore");
+    sideloaded.urlSchemes = {"discord", "sidestore-com.hammerandchisel.discord.ABCDE12345"};
+    assert(sideloaderName(sideloaded) == "SideStore");
+
     SigningFacts signing;
     assert(signingDetails(signing) == "Unprovisioned");
     signing.teamIdentifier    = "ABCDE12345";
@@ -62,12 +71,11 @@ static void checkInstallSources()
     signing.getTaskAllow      = true;
     signing.listsDevices      = true;
     signing.profileExpiry     = "2026-11-18";
-    signing.altStore          = true;
+    signing.sideloader        = "SideStore";
     signing.entitlementSource = "kernel";
-    assert(signingDetails(signing)
-           == "Development (`ABCDE12345`) · exp 2026-11-18 · AltStore/SideStore");
+    assert(signingDetails(signing) == "Development (`ABCDE12345`) · exp 2026-11-18 · SideStore");
     signing.getTaskAllow = false;
-    signing.altStore     = false;
+    signing.sideloader   = "";
     assert(signingDetails(signing).rfind("Ad Hoc (`ABCDE12345`)", 0) == 0);
     signing.provisionsAllDevices = true;
     assert(signingDetails(signing).rfind("Enterprise (`ABCDE12345`)", 0) == 0);
