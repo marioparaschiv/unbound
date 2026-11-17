@@ -36,6 +36,8 @@ static constexpr std::array<int, 6> kCrashSignals = {SIGSEGV, SIGBUS, SIGABRT,
                                                      SIGILL,  SIGFPE, SIGTRAP};
 
 static std::array<struct sigaction, kCrashSignals.size()> gPreviousActions;
+static std::array<struct sigaction, kCrashSignals.size()> gOriginalActions;
+static std::atomic_bool gHandling{false};
 static std::atomic<int> gMarkerDescriptor{-1};
 static std::atomic_bool gRecorded{false};
 static char gImageLine[256];
@@ -390,7 +392,7 @@ static void raiseWithDefaultAction(int signal)
     raise(signal);
 }
 
-static void forwardToPreviousHandler(int signal, siginfo_t *info, void *context)
+static void forwardToPreviousHandler(int signal, siginfo_t *info, void *context, bool reentered)
 {
     int index = crashSignalIndex(signal);
     if (index < 0)
@@ -399,7 +401,8 @@ static void forwardToPreviousHandler(int signal, siginfo_t *info, void *context)
         return;
     }
 
-    const struct sigaction &previous = gPreviousActions[static_cast<size_t>(index)];
+    const struct sigaction &previous =
+        (reentered ? gOriginalActions : gPreviousActions)[static_cast<size_t>(index)];
     if (previous.sa_flags & SA_SIGINFO)
     {
         if (previous.sa_sigaction)
@@ -419,6 +422,12 @@ static void forwardToPreviousHandler(int signal, siginfo_t *info, void *context)
 
 static void recordCrashingAddon(int signal, siginfo_t *info, void *context)
 {
+    if (gHandling.exchange(true))
+    {
+        forwardToPreviousHandler(signal, info, context, true);
+        return;
+    }
+
     int savedErrno = errno;
     int descriptor = gMarkerDescriptor.load(std::memory_order_acquire);
     if (descriptor >= 0 && !gRecorded.exchange(true))
@@ -435,7 +444,8 @@ static void recordCrashingAddon(int signal, siginfo_t *info, void *context)
     }
 #endif
     errno = savedErrno;
-    forwardToPreviousHandler(signal, info, context);
+    forwardToPreviousHandler(signal, info, context, false);
+    gHandling.store(false);
 }
 
 static std::string describeHandler(const struct sigaction &action)
@@ -557,6 +567,7 @@ bool installAddonCrashHandler(const std::string &markerPath)
     for (size_t index = 0; index < kCrashSignals.size(); index++)
     {
         sigaction(kCrashSignals[index], &action, &gPreviousActions[index]);
+        gOriginalActions[index] = gPreviousActions[index];
     }
 
     gInstalled.store(true);
@@ -568,6 +579,48 @@ bool installAddonCrashHandler(const std::string &markerPath)
             + describeHandler(gPreviousActions[static_cast<size_t>(crashSignalIndex(SIGABRT))])
             + ".");
     return true;
+}
+
+static bool isOurs(const struct sigaction &action)
+{
+    return (action.sa_flags & SA_SIGINFO) && action.sa_sigaction == recordCrashingAddon;
+}
+
+size_t reclaimCrashHandlers()
+{
+    if (!gInstalled.load())
+    {
+        return 0;
+    }
+
+    struct sigaction action = {};
+    action.sa_sigaction     = recordCrashingAddon;
+    action.sa_flags         = SA_SIGINFO | SA_ONSTACK;
+    sigemptyset(&action.sa_mask);
+
+    size_t reclaimed = 0;
+    for (size_t index = 0; index < kCrashSignals.size(); index++)
+    {
+        struct sigaction current = {};
+        if (sigaction(kCrashSignals[index], nullptr, &current) != 0 || isOurs(current))
+        {
+            continue;
+        }
+
+        sigaction(kCrashSignals[index], &action, &gPreviousActions[index]);
+        reclaimed++;
+    }
+
+    if (reclaimed > 0)
+    {
+        log(LogLevel::Info, LOG_CATEGORY_PLUGINS,
+            "Moved addon crash attribution back in front of " + std::to_string(reclaimed)
+                + " signal handlers installed after it; SIGSEGV now continues to "
+                + describeHandler(gPreviousActions[static_cast<size_t>(crashSignalIndex(SIGSEGV))])
+                + ".");
+    }
+
+    return reclaimed;
 }
 
 std::string previousNativeCrash()

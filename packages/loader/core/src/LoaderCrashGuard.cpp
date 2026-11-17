@@ -229,6 +229,7 @@ bool AddonCrashGuard::beginStart(const std::string &id, const std::string &name)
         return false;
     }
 
+    reclaimCrashHandlers();
     std::string record  = recordJSON({id, name.empty() ? id : name}, 0).dump();
     StartMarkers &state = startMarkers();
     std::lock_guard<std::mutex> lock(state.mutex);
