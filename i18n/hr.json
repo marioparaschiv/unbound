@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "{name} je dodan u ikone aplikacije.",
 	"UNBOUND_APP_ICON_REMOVED": "{name} je uklonjen.",
 	"UNBOUND_APP_ICON_PENDING": "{name} traje dulje nego inače; za trenutak ponovno otvori odabir ikone aplikacije.",
-	"UNBOUND_PATCH_REMOVED": "Zakrpa na {name} stalno se rušila pa je isključena."
+	"UNBOUND_PATCH_REMOVED": "Zakrpa na {name} stalno se rušila pa je isključena.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "Prije nego što pišeš u #chat",
+	"UNBOUND_SUPPORT_GATE_HEADING": "Ovo nije kanal za podršku",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat je opći chat servera, ali nije kanal za podršku. Ovdje nitko neće pomoći s instalacijom, postavljanjem ili popravkom Unbounda, a pitanja o podršci ovdje ostaju bez odgovora.\n\nZa pomoć napravi objavu na forumu za podršku, gdje odgovaraju tim i pomagači.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Idi na forum za podršku",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Gdje tražiš pomoć s Unboundom?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Ovdje u #chat",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "Na forumu za podršku",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "Porukom članu tima",
+	"UNBOUND_SUPPORT_GATE_WRONG": "Nije to. Ponovno pročitaj upozorenje; brojač je krenuo ispočetka.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Nastavi čitati ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "Razumijem, #chat nije za podršku",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Prvo odgovori na pitanje iznad",
+	"UNBOUND_SUPPORT_GATE_LATER": "Ne sada",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "Prihvati upozorenje prije nego što pišeš u #chat",
+	"UNBOUND_SUPPORT_BANNER": "Trebaš pomoć? #chat nije za podršku.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Forum za podršku"
 }

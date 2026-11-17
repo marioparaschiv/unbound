@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "{name} lisätty sovelluskuvakkeisiisi.",
 	"UNBOUND_APP_ICON_REMOVED": "{name} poistettu.",
 	"UNBOUND_APP_ICON_PENDING": "{name} kestää tavallista kauemmin; avaa sovelluskuvakkeen valitsin uudelleen hetken kuluttua.",
-	"UNBOUND_PATCH_REMOVED": "Kohteen {name} paikkaus kaatui toistuvasti, joten se poistettiin käytöstä."
+	"UNBOUND_PATCH_REMOVED": "Kohteen {name} paikkaus kaatui toistuvasti, joten se poistettiin käytöstä.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "Ennen kuin kirjoitat kanavalle #chat",
+	"UNBOUND_SUPPORT_GATE_HEADING": "Tämä ei ole tukikanava",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat on palvelimen yleinen chat, mutta se ei ole tukikanava. Täällä kukaan ei auta Unboundin asentamisessa, määrittämisessä tai korjaamisessa, ja tänne kirjoitetut tukikysymykset jäävät vastaamatta.\n\nApua saat luomalla julkaisun tukifoorumille, jossa tiimi ja auttajat vastaavat.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Siirry tukifoorumille",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Mistä kysyt apua Unboundiin?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Täältä #chat-kanavalta",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "Tukifoorumilta",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "Viestillä tiimin jäsenelle",
+	"UNBOUND_SUPPORT_GATE_WRONG": "Väärin. Lue ilmoitus uudelleen; ajastin alkoi alusta.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Jatka lukemista ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "Ymmärrän, #chat ei ole tukea varten",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Vastaa ensin yllä olevaan kysymykseen",
+	"UNBOUND_SUPPORT_GATE_LATER": "Ei nyt",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "Hyväksy ilmoitus ennen kuin kirjoitat kanavalle #chat",
+	"UNBOUND_SUPPORT_BANNER": "Tarvitsetko apua? #chat ei ole tukea varten.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Tukifoorumi"
 }

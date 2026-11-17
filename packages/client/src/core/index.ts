@@ -32,6 +32,7 @@ import coreCommands from '~/commands/core-commands';
 import hotRefresh from '~/hot-refresh/builtin.dev';
 import { pluginsSection } from '~/plugins/builtin';
 import sync, { syncSection } from '~/sync/builtin';
+import supportGate from '~/builtins/support-gate';
 import { builtins } from '~/builtins/registry';
 import staffMode from '~/builtins/staff-mode';
 import { icons } from '~/icon-packs/manager';
@@ -103,6 +104,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	['settings', createSettings(SECTIONS_IN_OVERVIEW_ORDER)],
 	['sponsorBadges', sponsorBadges],
 	['staffMode', staffMode],
+	['supportGate', supportGate],
 	['appIcons', appIcons],
 	['themes', themes],
 	['toasts', toasts],

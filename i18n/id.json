@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "{name} ditambahkan ke ikon aplikasimu.",
 	"UNBOUND_APP_ICON_REMOVED": "{name} dihapus.",
 	"UNBOUND_APP_ICON_PENDING": "{name} memerlukan waktu lebih lama dari biasanya; buka kembali pemilih ikon aplikasi sebentar lagi.",
-	"UNBOUND_PATCH_REMOVED": "Sebuah patch pada {name} terus menyebabkan crash, jadi patch tersebut dinonaktifkan."
+	"UNBOUND_PATCH_REMOVED": "Sebuah patch pada {name} terus menyebabkan crash, jadi patch tersebut dinonaktifkan.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "Sebelum menulis di #chat",
+	"UNBOUND_SUPPORT_GATE_HEADING": "Ini bukan kanal dukungan",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat adalah obrolan umum server, tetapi bukan kanal dukungan. Di sini tidak ada yang akan membantu memasang, mengatur, atau memperbaiki Unbound, dan pertanyaan dukungan di sini tidak akan dijawab.\n\nUntuk bantuan, buat postingan di forum dukungan, tempat tim dan para pembantu menjawab.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Buka forum dukungan",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Di mana kamu meminta bantuan soal Unbound?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Di sini, di #chat",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "Di forum dukungan",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "Dengan mengirim pesan ke anggota tim",
+	"UNBOUND_SUPPORT_GATE_WRONG": "Bukan itu. Baca lagi pemberitahuannya; penghitung waktu dimulai ulang.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Terus membaca ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "Saya mengerti, #chat bukan untuk dukungan",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Jawab dulu pertanyaan di atas",
+	"UNBOUND_SUPPORT_GATE_LATER": "Nanti saja",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "Terima pemberitahuan sebelum menulis di #chat",
+	"UNBOUND_SUPPORT_BANNER": "Butuh bantuan? #chat bukan untuk dukungan.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Forum dukungan"
 }

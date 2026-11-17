@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "Dodano {name} do ikon aplikacji.",
 	"UNBOUND_APP_ICON_REMOVED": "Usunięto {name}.",
 	"UNBOUND_APP_ICON_PENDING": "{name}: trwa to dłużej niż zwykle. Za chwilę ponownie otwórz wybór ikony aplikacji.",
-	"UNBOUND_PATCH_REMOVED": "Łatka w {name} ciągle powodowała awarie, więc została wyłączona."
+	"UNBOUND_PATCH_REMOVED": "Łatka w {name} ciągle powodowała awarie, więc została wyłączona.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "Zanim napiszesz na #chat",
+	"UNBOUND_SUPPORT_GATE_HEADING": "To nie jest kanał pomocy",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat to ogólny czat serwera, ale nie kanał pomocy. Nikt tu nie pomoże w instalacji, konfiguracji ani naprawie Unbound, a pytania o pomoc zadane tutaj pozostaną bez odpowiedzi.\n\nPo pomoc utwórz post na forum pomocy, gdzie odpowiada ekipa i pomocnicy.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Przejdź do forum pomocy",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Gdzie prosisz o pomoc z Unbound?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Tutaj na #chat",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "Na forum pomocy",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "Pisząc do członka ekipy",
+	"UNBOUND_SUPPORT_GATE_WRONG": "To nie to. Przeczytaj ostrzeżenie jeszcze raz; licznik zaczął od nowa.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Czytaj dalej ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "Rozumiem, #chat nie służy do pomocy",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Najpierw odpowiedz na pytanie powyżej",
+	"UNBOUND_SUPPORT_GATE_LATER": "Nie teraz",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "Zaakceptuj ostrzeżenie, zanim napiszesz na #chat",
+	"UNBOUND_SUPPORT_BANNER": "Potrzebujesz pomocy? #chat nie służy do pomocy.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Forum pomocy"
 }

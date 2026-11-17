@@ -111,6 +111,7 @@
 							"packages/client/src/toasts/builtin.tsx",
 							"packages/client/src/updates/builtin.ts",
 							"packages/client/src/builtins/error-boundary.tsx",
+							"packages/client/src/builtins/support-gate.tsx",
 							"packages/client/src/core/api.ts"
 						],
 						"because": "only a domain's `builtin.ts(x)`, and the public barrel for the `ui` namespace, may import `ui/`; `ui/` imports domains, never the reverse (D14)"

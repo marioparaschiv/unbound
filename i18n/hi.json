@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "{name} को आपके ऐप आइकन में जोड़ा गया।",
 	"UNBOUND_APP_ICON_REMOVED": "{name} हटा दिया गया।",
 	"UNBOUND_APP_ICON_PENDING": "{name} में सामान्य से ज़्यादा समय लग रहा है; थोड़ी देर में ऐप आइकन पिकर फिर से खोलें।",
-	"UNBOUND_PATCH_REMOVED": "{name} पर एक पैच बार-बार क्रैश हो रहा था, इसलिए उसे बंद कर दिया गया।"
+	"UNBOUND_PATCH_REMOVED": "{name} पर एक पैच बार-बार क्रैश हो रहा था, इसलिए उसे बंद कर दिया गया।",
+	"UNBOUND_SUPPORT_GATE_TITLE": "#chat में पोस्ट करने से पहले",
+	"UNBOUND_SUPPORT_GATE_HEADING": "यह सपोर्ट चैनल नहीं है",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat सर्वर का सामान्य चैट है, लेकिन यह सपोर्ट चैनल नहीं है। यहाँ कोई भी Unbound को इंस्टॉल करने, सेट अप करने या ठीक करने में मदद नहीं करेगा, और यहाँ पूछे गए सपोर्ट सवालों का जवाब नहीं मिलेगा।\n\nमदद के लिए, सपोर्ट फ़ोरम में एक पोस्ट बनाएँ, जहाँ टीम और मददगार जवाब देते हैं।",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "सपोर्ट फ़ोरम पर जाएँ",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Unbound के लिए मदद आप कहाँ माँगते हैं?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "यहीं #chat में",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "सपोर्ट फ़ोरम में",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "टीम के किसी सदस्य को मैसेज करके",
+	"UNBOUND_SUPPORT_GATE_WRONG": "यह सही नहीं है। सूचना फिर से पढ़ें; टाइमर फिर से शुरू हो गया है।",
+	"UNBOUND_SUPPORT_GATE_WAIT": "पढ़ते रहें ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "समझ गया, #chat सपोर्ट के लिए नहीं है",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "पहले ऊपर दिए सवाल का जवाब दें",
+	"UNBOUND_SUPPORT_GATE_LATER": "अभी नहीं",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "#chat में पोस्ट करने से पहले सूचना स्वीकार करें",
+	"UNBOUND_SUPPORT_BANNER": "मदद चाहिए? #chat सपोर्ट के लिए नहीं है।",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "सपोर्ट फ़ोरम"
 }

@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "已将 {name} 添加到您的应用图标。",
 	"UNBOUND_APP_ICON_REMOVED": "已移除 {name}。",
 	"UNBOUND_APP_ICON_PENDING": "{name} 耗时比平常更久，请稍后重新打开应用图标选择器。",
-	"UNBOUND_PATCH_REMOVED": "{name} 上的某个补丁反复崩溃，因此已被关闭。"
+	"UNBOUND_PATCH_REMOVED": "{name} 上的某个补丁反复崩溃，因此已被关闭。",
+	"UNBOUND_SUPPORT_GATE_TITLE": "在 #chat 发言之前",
+	"UNBOUND_SUPPORT_GATE_HEADING": "这里不是支持频道",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat 是服务器的综合聊天频道，但不是支持频道。这里没有人会帮你安装、设置或修复 Unbound，在这里提出的支持问题不会得到回复。\n\n如需帮助，请在支持论坛发帖，工作人员和帮助者会在那里回答。",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "前往支持论坛",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "你应该在哪里寻求 Unbound 的帮助？",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "就在 #chat 这里",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "在支持论坛",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "私信工作人员",
+	"UNBOUND_SUPPORT_GATE_WRONG": "不对。请重新阅读提示；计时已重新开始。",
+	"UNBOUND_SUPPORT_GATE_WAIT": "请继续阅读（{seconds}）",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "我明白了，#chat 不用于支持",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "请先回答上面的问题",
+	"UNBOUND_SUPPORT_GATE_LATER": "以后再说",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "在 #chat 发言前请先接受提示",
+	"UNBOUND_SUPPORT_BANNER": "需要帮助？#chat 不用于支持。",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "支持论坛"
 }

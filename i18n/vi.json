@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "Đã thêm {name} vào biểu tượng ứng dụng của bạn.",
 	"UNBOUND_APP_ICON_REMOVED": "Đã xóa {name}.",
 	"UNBOUND_APP_ICON_PENDING": "{name} mất nhiều thời gian hơn bình thường; hãy mở lại trình chọn biểu tượng ứng dụng sau giây lát.",
-	"UNBOUND_PATCH_REMOVED": "Một bản vá trên {name} liên tục gây sự cố nên đã bị tắt."
+	"UNBOUND_PATCH_REMOVED": "Một bản vá trên {name} liên tục gây sự cố nên đã bị tắt.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "Trước khi đăng trong #chat",
+	"UNBOUND_SUPPORT_GATE_HEADING": "Đây không phải kênh hỗ trợ",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat là kênh trò chuyện chung của máy chủ, nhưng không phải kênh hỗ trợ. Ở đây không ai giúp cài đặt, thiết lập hay sửa lỗi Unbound, và câu hỏi hỗ trợ đăng ở đây sẽ không được trả lời.\n\nĐể được giúp, hãy tạo bài đăng trong diễn đàn hỗ trợ, nơi đội ngũ và người hỗ trợ trả lời.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Đến diễn đàn hỗ trợ",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Bạn hỏi trợ giúp về Unbound ở đâu?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Ngay tại #chat",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "Trong diễn đàn hỗ trợ",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "Nhắn tin cho thành viên đội ngũ",
+	"UNBOUND_SUPPORT_GATE_WRONG": "Chưa đúng. Hãy đọc lại thông báo; bộ đếm đã bắt đầu lại.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Tiếp tục đọc ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "Tôi hiểu, #chat không dành cho hỗ trợ",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Hãy trả lời câu hỏi ở trên trước",
+	"UNBOUND_SUPPORT_GATE_LATER": "Để sau",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "Hãy chấp nhận thông báo trước khi đăng trong #chat",
+	"UNBOUND_SUPPORT_BANNER": "Cần trợ giúp? #chat không dành cho hỗ trợ.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Diễn đàn hỗ trợ"
 }

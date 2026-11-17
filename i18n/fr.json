@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "{name} ajoutée à vos icônes d’app.",
 	"UNBOUND_APP_ICON_REMOVED": "{name} retirée.",
 	"UNBOUND_APP_ICON_PENDING": "{name} prend plus de temps que d’habitude ; rouvrez le sélecteur d’icône d’app dans un instant.",
-	"UNBOUND_PATCH_REMOVED": "Un patch sur {name} provoquait des plantages à répétition, il a donc été désactivé."
+	"UNBOUND_PATCH_REMOVED": "Un patch sur {name} provoquait des plantages à répétition, il a donc été désactivé.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "Avant de publier dans #chat",
+	"UNBOUND_SUPPORT_GATE_HEADING": "Ce n'est pas le salon d'assistance",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat est le salon de discussion générale du serveur, mais ce n'est pas un salon d'assistance. Personne ici n'aidera à installer, configurer ou réparer Unbound, et les questions d'assistance posées ici restent sans réponse.\n\nPour obtenir de l'aide, crée un post dans le forum d'assistance, où l'équipe et les bénévoles répondent.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Aller au forum d'assistance",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Où demander de l'aide pour Unbound ?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Ici dans #chat",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "Dans le forum d'assistance",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "En écrivant à un membre de l'équipe",
+	"UNBOUND_SUPPORT_GATE_WRONG": "Ce n'est pas ça. Relis l'avertissement ; le minuteur a redémarré.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Continue à lire ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "J'ai compris, #chat n'est pas pour l'assistance",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Réponds d'abord à la question ci-dessus",
+	"UNBOUND_SUPPORT_GATE_LATER": "Pas maintenant",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "Accepte l'avertissement avant de publier dans #chat",
+	"UNBOUND_SUPPORT_BANNER": "Besoin d'aide ? #chat n'est pas pour l'assistance.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Forum d'assistance"
 }

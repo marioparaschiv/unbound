@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "{name} pridėta prie programėlės piktogramų.",
 	"UNBOUND_APP_ICON_REMOVED": "Pašalinta: {name}.",
 	"UNBOUND_APP_ICON_PENDING": "{name} užtrunka ilgiau nei įprastai; po akimirkos vėl atidarykite programėlės piktogramų pasirinkimą.",
-	"UNBOUND_PATCH_REMOVED": "{name} pataisa vis nulauždavo programėlę, todėl ji buvo išjungta."
+	"UNBOUND_PATCH_REMOVED": "{name} pataisa vis nulauždavo programėlę, todėl ji buvo išjungta.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "Prieš rašydamas į #chat",
+	"UNBOUND_SUPPORT_GATE_HEADING": "Tai ne pagalbos kanalas",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat yra bendras serverio pokalbis, bet ne pagalbos kanalas. Čia niekas nepadės įdiegti, nustatyti ar pataisyti Unbound, o čia užduoti pagalbos klausimai liks neatsakyti.\n\nPagalbos ieškok sukūręs įrašą pagalbos forume, kur atsako komanda ir pagalbininkai.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Eiti į pagalbos forumą",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Kur prašai pagalbos dėl Unbound?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Čia, #chat",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "Pagalbos forume",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "Parašęs komandos nariui",
+	"UNBOUND_SUPPORT_GATE_WRONG": "Ne tai. Perskaityk įspėjimą dar kartą; laikmatis prasidėjo iš naujo.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Skaityk toliau ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "Supratau, #chat ne pagalbai",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Pirmiausia atsakyk į klausimą viršuje",
+	"UNBOUND_SUPPORT_GATE_LATER": "Ne dabar",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "Prieš rašydamas į #chat, priimk įspėjimą",
+	"UNBOUND_SUPPORT_BANNER": "Reikia pagalbos? #chat ne pagalbai.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Pagalbos forumas"
 }

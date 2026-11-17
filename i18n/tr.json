@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "{name} uygulama simgelerine eklendi.",
 	"UNBOUND_APP_ICON_REMOVED": "{name} kaldırıldı.",
 	"UNBOUND_APP_ICON_PENDING": "{name} her zamankinden uzun sürüyor; birazdan uygulama simgesi seçicisini yeniden aç.",
-	"UNBOUND_PATCH_REMOVED": "{name} üzerindeki bir yama sürekli çöktüğü için kapatıldı."
+	"UNBOUND_PATCH_REMOVED": "{name} üzerindeki bir yama sürekli çöktüğü için kapatıldı.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "#chat'e yazmadan önce",
+	"UNBOUND_SUPPORT_GATE_HEADING": "Burası destek kanalı değil",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat sunucunun genel sohbet kanalı, ama bir destek kanalı değil. Burada kimse Unbound'u kurmana, ayarlamana ya da düzeltmene yardım etmez ve buraya yazılan destek soruları yanıtsız kalır.\n\nYardım için, ekibin ve yardımcıların yanıt verdiği destek forumunda bir gönderi oluştur.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Destek forumuna git",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Unbound ile ilgili yardımı nerede istersin?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Burada, #chat'te",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "Destek forumunda",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "Bir ekip üyesine mesaj atarak",
+	"UNBOUND_SUPPORT_GATE_WRONG": "Doğru değil. Uyarıyı tekrar oku; sayaç yeniden başladı.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Okumaya devam et ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "Anladım, #chat destek için değil",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Önce yukarıdaki soruyu yanıtla",
+	"UNBOUND_SUPPORT_GATE_LATER": "Şimdi değil",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "#chat'e yazmadan önce uyarıyı kabul et",
+	"UNBOUND_SUPPORT_BANNER": "Yardım mı lazım? #chat destek için değil.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Destek forumu"
 }

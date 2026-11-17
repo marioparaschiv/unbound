@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "{name}をアプリアイコンに追加しました。",
 	"UNBOUND_APP_ICON_REMOVED": "{name}を削除しました。",
 	"UNBOUND_APP_ICON_PENDING": "{name}の処理に時間がかかっています。しばらくしてからアプリアイコンの選択画面を開き直してください。",
-	"UNBOUND_PATCH_REMOVED": "{name}のパッチがクラッシュを繰り返したため、無効にしました。"
+	"UNBOUND_PATCH_REMOVED": "{name}のパッチがクラッシュを繰り返したため、無効にしました。",
+	"UNBOUND_SUPPORT_GATE_TITLE": "#chat に投稿する前に",
+	"UNBOUND_SUPPORT_GATE_HEADING": "ここはサポートチャンネルではありません",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat はサーバーの雑談チャンネルですが、サポートチャンネルではありません。ここでは誰も Unbound のインストール、設定、修正を手伝わず、ここに投稿されたサポートの質問には返信がありません。\n\nサポートが必要なら、スタッフやヘルパーが回答するサポートフォーラムに投稿してください。",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "サポートフォーラムへ",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Unbound のサポートはどこで聞きますか？",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "ここ #chat で",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "サポートフォーラムで",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "スタッフに DM して",
+	"UNBOUND_SUPPORT_GATE_WRONG": "違います。注意事項をもう一度読んでください。タイマーはリセットされました。",
+	"UNBOUND_SUPPORT_GATE_WAIT": "読み続けてください（{seconds}）",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "了解しました。#chat はサポート用ではありません",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "先に上の質問に答えてください",
+	"UNBOUND_SUPPORT_GATE_LATER": "後で",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "#chat に投稿する前に注意事項に同意してください",
+	"UNBOUND_SUPPORT_BANNER": "お困りですか？#chat はサポート用ではありません。",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "サポートフォーラム"
 }

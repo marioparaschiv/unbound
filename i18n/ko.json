@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "앱 아이콘에 {name}을(를) 추가했어요.",
 	"UNBOUND_APP_ICON_REMOVED": "{name}을(를) 제거했어요.",
 	"UNBOUND_APP_ICON_PENDING": "{name}이(가) 평소보다 오래 걸리고 있어요. 잠시 후 앱 아이콘 선택 화면을 다시 여세요.",
-	"UNBOUND_PATCH_REMOVED": "{name}의 패치가 계속 충돌을 일으켜서 꺼졌어요."
+	"UNBOUND_PATCH_REMOVED": "{name}의 패치가 계속 충돌을 일으켜서 꺼졌어요.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "#chat에 글을 쓰기 전에",
+	"UNBOUND_SUPPORT_GATE_HEADING": "여기는 지원 채널이 아닙니다",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat은 서버의 일반 채팅이지만 지원 채널이 아닙니다. 여기서는 아무도 Unbound 설치, 설정, 문제 해결을 도와주지 않으며, 여기에 올린 지원 질문에는 답변이 없습니다.\n\n도움이 필요하면 스태프와 도우미가 답변하는 지원 포럼에 글을 올려 주세요.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "지원 포럼으로 이동",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Unbound 관련 도움은 어디서 요청하나요?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "여기 #chat에서",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "지원 포럼에서",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "스태프에게 메시지를 보내서",
+	"UNBOUND_SUPPORT_GATE_WRONG": "틀렸습니다. 안내를 다시 읽어 주세요. 타이머가 다시 시작되었습니다.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "계속 읽어 주세요 ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "이해했습니다. #chat은 지원용이 아닙니다",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "먼저 위의 질문에 답해 주세요",
+	"UNBOUND_SUPPORT_GATE_LATER": "나중에",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "#chat에 글을 쓰기 전에 안내에 동의해 주세요",
+	"UNBOUND_SUPPORT_BANNER": "도움이 필요하신가요? #chat은 지원용이 아닙니다.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "지원 포럼"
 }

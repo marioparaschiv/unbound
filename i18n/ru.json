@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "Иконка {name} добавлена в иконки приложения.",
 	"UNBOUND_APP_ICON_REMOVED": "{name} удалена.",
 	"UNBOUND_APP_ICON_PENDING": "{name} устанавливается дольше обычного; откройте выбор иконки приложения ещё раз чуть позже.",
-	"UNBOUND_PATCH_REMOVED": "Патч для {name} постоянно вызывал сбои, поэтому он отключён."
+	"UNBOUND_PATCH_REMOVED": "Патч для {name} постоянно вызывал сбои, поэтому он отключён.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "Прежде чем писать в #chat",
+	"UNBOUND_SUPPORT_GATE_HEADING": "Это не канал поддержки",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat — общий чат сервера, но не канал поддержки. Здесь никто не поможет с установкой, настройкой или исправлением Unbound, а вопросы о поддержке здесь останутся без ответа.\n\nЗа помощью создайте пост на форуме поддержки — там отвечают команда и помощники.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Перейти на форум поддержки",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Где спрашивать помощь с Unbound?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Здесь, в #chat",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "На форуме поддержки",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "Написать участнику команды",
+	"UNBOUND_SUPPORT_GATE_WRONG": "Неверно. Прочитайте предупреждение ещё раз; таймер начался заново.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Читайте дальше ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "Понятно, #chat не для поддержки",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Сначала ответьте на вопрос выше",
+	"UNBOUND_SUPPORT_GATE_LATER": "Не сейчас",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "Примите предупреждение, прежде чем писать в #chat",
+	"UNBOUND_SUPPORT_BANNER": "Нужна помощь? #chat не для поддержки.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Форум поддержки"
 }

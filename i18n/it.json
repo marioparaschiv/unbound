@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "{name} aggiunta alle icone dell’app.",
 	"UNBOUND_APP_ICON_REMOVED": "{name} rimossa.",
 	"UNBOUND_APP_ICON_PENDING": "{name} sta impiegando più del solito; riapri tra poco il selettore delle icone dell’app.",
-	"UNBOUND_PATCH_REMOVED": "Una patch su {name} continuava a causare crash, quindi è stata disattivata."
+	"UNBOUND_PATCH_REMOVED": "Una patch su {name} continuava a causare crash, quindi è stata disattivata.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "Prima di scrivere in #chat",
+	"UNBOUND_SUPPORT_GATE_HEADING": "Questo non è il canale di supporto",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat è la chat generale del server, ma non è un canale di supporto. Qui nessuno aiuterà a installare, configurare o sistemare Unbound, e le domande di supporto scritte qui restano senza risposta.\n\nPer ricevere aiuto, crea un post nel forum di supporto, dove rispondono lo staff e gli helper.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Vai al forum di supporto",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Dove chiedi aiuto per Unbound?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Qui in #chat",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "Nel forum di supporto",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "Scrivendo a un membro dello staff",
+	"UNBOUND_SUPPORT_GATE_WRONG": "Non è così. Rileggi l'avviso; il timer è ripartito.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Continua a leggere ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "Ho capito, #chat non è per il supporto",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Rispondi prima alla domanda qui sopra",
+	"UNBOUND_SUPPORT_GATE_LATER": "Non ora",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "Accetta l'avviso prima di scrivere in #chat",
+	"UNBOUND_SUPPORT_BANNER": "Serve aiuto? #chat non è per il supporto.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Forum di supporto"
 }
