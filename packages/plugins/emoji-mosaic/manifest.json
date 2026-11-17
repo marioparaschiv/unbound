@@ -1,0 +1,17 @@
+{
+	"id": "unbound.emoji-mosaic",
+	"name": "Emoji Mosaic",
+	"description": "Cuts an image into a grid of matching emoji, uploads them to a server you manage, and writes the mosaic for you.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ReactionIcon",
+	"main": "index.tsx"
+}
