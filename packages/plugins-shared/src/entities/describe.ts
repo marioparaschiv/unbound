@@ -16,6 +16,8 @@ type GuildChannels = FluxStore & {
 
 type ChannelWithParent = FluxChannel & { parent_id?: string | null };
 
+type GroupChannel = FluxChannel & { recipients?: string[] };
+
 declare module '@unbound-app/api/flux' {
 	// oxlint-disable-next-line typescript/consistent-type-definitions -- merging needs an interface.
 	interface FluxStores {
@@ -29,6 +31,8 @@ declare module '@unbound-app/api/flux' {
 }
 
 const AVATAR_SIZE = 64;
+const GROUP_DM = 3;
+const NAMED_MEMBERS = 3;
 
 // The icon each channel type shows in Discord's channel list.
 const CHANNEL_ICONS: Partial<Record<number, string>> = {
@@ -97,6 +101,44 @@ export function describeChannel(channel: ChannelWithParent): Entity {
 	};
 }
 
+function memberNames(group: GroupChannel): string {
+	const names = (group.recipients ?? []).flatMap((id) => {
+		const user = Users.getUser(id);
+
+		return user ? [Relationships.getNickname(id) || user.globalName || user.username] : [];
+	});
+	const more = names.length - NAMED_MEMBERS;
+	const shown = names.slice(0, NAMED_MEMBERS).join(', ');
+
+	return more > 0 ? `${shown} +${more}` : shown;
+}
+
+/**
+ * @description Draws a group DM as a row: its name, or its members when it has none.
+ * @param group The group DM.
+ * @returns The entity.
+ */
+export function describeGroup(group: GroupChannel): Entity {
+	const members = memberNames(group);
+
+	return {
+		kind: 'group',
+		id: group.id,
+		name: group.name || members || group.id,
+		detail: group.name ? members || undefined : undefined,
+		icon: 'GroupIcon',
+	};
+}
+
+/**
+ * @description Tells a group DM from other channels.
+ * @param channel The channel.
+ * @returns Whether it is a group DM.
+ */
+export function isGroupDm(channel: FluxChannel | undefined): channel is GroupChannel {
+	return channel?.type === GROUP_DM;
+}
+
 /**
  * @description Reads what Discord's stores hold for an id.
  * @param kind What the id names.
@@ -120,7 +162,19 @@ export function describeEntity(kind: EntityKind, id: string): Entity | undefined
 
 			return channel ? describeChannel(channel) : undefined;
 		}
+		case 'group': {
+			const channel = Channels.getChannel(id);
+
+			return isGroupDm(channel) ? describeGroup(channel) : undefined;
+		}
 	}
 }
 
-export default { describeChannel, describeEntity, describeGuild, describeUser };
+export default {
+	describeChannel,
+	describeEntity,
+	describeGroup,
+	describeGuild,
+	describeUser,
+	isGroupDm,
+};

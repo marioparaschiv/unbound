@@ -2,10 +2,13 @@ import type { Entity, EntityKind } from './entity';
 
 import {
 	describeChannel,
+	describeGroup,
 	describeGuild,
 	describeUser,
+	Channels,
 	GuildChannels,
 	Guilds,
+	isGroupDm,
 	Relationships,
 	SortedGuilds,
 	Users,
@@ -45,6 +48,14 @@ function guildChannels(): Entity[] {
 	);
 }
 
+type PrivateChannels = { getSortedPrivateChannels?: () => Parameters<typeof isGroupDm>[0][] };
+
+function groupDms(): Entity[] {
+	const sorted = (Channels as PrivateChannels).getSortedPrivateChannels?.() ?? [];
+
+	return sorted.filter(isGroupDm).map(describeGroup);
+}
+
 function candidates(kind: EntityKind): Entity[] {
 	switch (kind) {
 		case 'user':
@@ -53,11 +64,13 @@ function candidates(kind: EntityKind): Entity[] {
 			return sortedGuilds();
 		case 'channel':
 			return guildChannels();
+		case 'group':
+			return groupDms();
 	}
 }
 
 /**
- * @description Searches the users, servers or channels Discord has loaded, by name, `@username` or id.
+ * @description Searches the users, servers, channels or group DMs Discord has loaded, by name, `@username` or id.
  * @param kind What to search.
  * @param query The search text; empty lists the first ones.
  * @param exclude Ids to leave out, such as those already picked.

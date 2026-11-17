@@ -1,0 +1,17 @@
+{
+	"id": "unbound.selective-call-blocking",
+	"name": "Selective Call Blocking",
+	"description": "Stops calls from users and group DMs you pick from ringing, while their messages keep arriving.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "BellIcon",
+	"main": "index.tsx"
+}
