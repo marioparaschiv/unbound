@@ -1,0 +1,17 @@
+{
+	"id": "unbound.controller-navigation",
+	"name": "Controller Navigation",
+	"description": "Moves between channels and servers with a game controller's D-pad and buttons. Android only.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "KeyboardIcon",
+	"main": "index.tsx"
+}
