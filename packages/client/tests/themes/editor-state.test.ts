@@ -32,15 +32,21 @@ describe('a session', () => {
 		expect(ThemeEditorStore.getState()).toMatchObject({ route: null, offsets: {}, past: [] });
 	});
 
-	test('ending drops the draft and its history', () => {
+	test('ending drops the draft, its history and a colour pick in progress', () => {
 		const store = ThemeEditorStore.getState();
 
 		store.begin(SESSION, draft('#000001'));
 		store.edit(draft('#000002'));
+		store.setPicker('picking');
 		store.end();
 
 		expect(ThemeStore.getState().preview).toBeNull();
-		expect(ThemeEditorStore.getState()).toMatchObject({ session: null, past: [], future: [] });
+		expect(ThemeEditorStore.getState()).toMatchObject({
+			session: null,
+			past: [],
+			future: [],
+			picker: 'idle',
+		});
 	});
 
 	test('details change only while a session is open', () => {

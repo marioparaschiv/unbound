@@ -1,42 +1,27 @@
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform } from 'react-native';
 
-import { Discord, SafeArea } from '~/metro/components';
+import ThemeEditorStore from '~/themes/editor-state';
 import { Screens } from '~/metro/common';
-import { messages } from '~/i18n/api';
-import { icons } from '~/assets/api';
 
-import useStyles, { BUTTON_OFFSET } from './theme-editor-button.style';
-import { resumeThemeEditor } from './open-theme-editor';
+import ColorPickOverlay from './color-pick-overlay';
+import EditorButtons from './editor-buttons';
 
 /**
- * @description The floating button shown while a theme edit is open and no editor screen is: it reopens settings on the
- * editor screen the user left, at the same scroll offset.
+ * @description Drawn while a theme edit is open and no editor screen is: the floating buttons, or the picker's overlay
+ * while it waits for a tap. Nothing is drawn while the picker reads the screen, so it finds what is underneath.
  */
 function ThemeEditorButton() {
-	const styles = useStyles();
+	const picker = ThemeEditorStore((state) => state.picker);
 
-	const button = (
-		<SafeArea.SafeAreaPaddingView
-			bottom
-			style={StyleSheet.absoluteFill}
-			pointerEvents='box-none'
-		>
-			<View style={styles.anchor} pointerEvents='box-none'>
-				<Discord.FloatingActionButton
-					icon={icons['PaintbrushThinIcon'] ?? 0}
-					positionBottom={BUTTON_OFFSET}
-					accessibilityLabel={messages.UNBOUND_THEME_EDITOR_RESUME}
-					onPress={() => void resumeThemeEditor()}
-				/>
-			</View>
-		</SafeArea.SafeAreaPaddingView>
-	);
+	if (picker === 'reading') return null;
+
+	const content = picker === 'picking' ? <ColorPickOverlay /> : <EditorButtons />;
 
 	// iOS opens settings in a native sheet, which only a full-window overlay draws above; Android has neither.
 	return Platform.OS === 'ios' ? (
-		<Screens.FullWindowOverlay>{button}</Screens.FullWindowOverlay>
+		<Screens.FullWindowOverlay>{content}</Screens.FullWindowOverlay>
 	) : (
-		button
+		content
 	);
 }
 

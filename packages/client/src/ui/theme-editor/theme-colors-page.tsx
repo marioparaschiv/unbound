@@ -14,6 +14,8 @@ import { tokenNames } from './token-colors';
 type ThemeColorsParams = {
 	/** The group to list the colours of; the groups themselves are listed without one. */
 	group?: string;
+	/** A token of the group to pin first, such as one picked on screen. */
+	token?: string;
 };
 
 type ThemeColorsPageProps = {
@@ -25,11 +27,11 @@ type ThemeColorsPageProps = {
  */
 function ThemeColorsPage({ route }: ThemeColorsPageProps) {
 	const navigation = Discord.useNavigation();
-	const group = route.params?.group;
+	const { group, token } = route.params ?? {};
 	const draft = ThemeStore((state) => state.preview);
 	const scroll = useEditorScreen({
 		screen: Screens.ThemeColors,
-		params: group ? { group } : undefined,
+		params: group ? (token ? { group, token } : { group }) : undefined,
 	});
 	const groups = useMemo(() => groupTokens(tokenNames()), []);
 	const title = COLOR_GROUPS.find(({ key }) => key === group)?.title;
@@ -43,6 +45,14 @@ function ThemeColorsPage({ route }: ThemeColorsPageProps) {
 	if (group) {
 		return (
 			<Page {...scroll}>
+				{token ? (
+					<Discord.TableRowGroup
+						title={messages.UNBOUND_THEME_PICKED_COLOR}
+						helperText={format('UNBOUND_THEME_TOKEN_KEY', { token })}
+					>
+						<ThemeColorRow label={tokenLabel(token)} tokens={[token]} />
+					</Discord.TableRowGroup>
+				) : null}
 				<Discord.TableRowGroup>
 					{(groups.get(group) ?? []).map((name) => (
 						<ThemeColorRow key={name} label={tokenLabel(name)} tokens={[name]} />

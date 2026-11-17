@@ -178,6 +178,15 @@ const PREFIXES = COLOR_GROUPS.flatMap(({ key, prefixes }) =>
 ).sort((a, b) => b.prefix.length - a.prefix.length);
 
 /**
+ * @description Finds the {@link COLOR_GROUPS} group a token belongs to, by its longest matching prefix.
+ * @param name The token name.
+ * @returns The group's key.
+ */
+export function tokenGroup(name: string): string {
+	return PREFIXES.find(({ prefix }) => name.startsWith(prefix))?.key ?? OTHER_GROUP;
+}
+
+/**
  * @description Sorts token names into {@link COLOR_GROUPS} by their longest matching prefix.
  * @param names The token names.
  * @returns Each group's sorted token names, by group key.
@@ -186,9 +195,7 @@ export function groupTokens(names: readonly string[]): Map<string, string[]> {
 	const groups = new Map<string, string[]>(COLOR_GROUPS.map(({ key }) => [key, []]));
 
 	for (const name of [...names].sort()) {
-		const key = PREFIXES.find(({ prefix }) => name.startsWith(prefix))?.key ?? OTHER_GROUP;
-
-		groups.get(key)?.push(name);
+		groups.get(tokenGroup(name))?.push(name);
 	}
 
 	return groups;
