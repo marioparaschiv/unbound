@@ -12,41 +12,181 @@ body:
           label: Plugin
           options:
               - New plugin
+              - Add Attachments
+              - Always Animate
+              - Always Trust
+              - Anonymise File Names
+              - Attachment Details
+              - Aussie Mode
+              - Aussie Speech
               - Avatar Radius
+              - Background Remover
+              - Background Voice Messages
+              - Badges In Chat
+              - Better Folders
+              - Better GIF Alt Text
+              - Better GIF Picker
+              - Better Invites
+              - Better Plus Reacts
+              - Better Search
+              - Better Sessions
+              - Better Status Indicators
+              - Better You Bar
+              - Blur NSFW
+              - Calculator
+              - Channel Badges
               - Channel Typing Indicators
               - Character Counter
               - Chat Bubbles
+              - Chat Gestures
+              - Clean Channel Names
               - Clear URLs
+              - Client Side Block
+              - Compact Mode
+              - Copy Image
+              - Cron Explainer
+              - Currency Conversions
               - Custom Commands
+              - Custom RPC
+              - Custom Sounds
+              - Custom Status Timeouts
+              - Custom Timestamps
+              - Custom Upload Hosts
+              - Dearrow
+              - Declutter
+              - Decor
+              - Dice Roller
+              - Dictionary
+              - DOOM
+              - Edit Diff Preview
+              - Edit Messages Locally
               - Expression Tools
+              - Fake Nitro
+              - Fake Profile Themes
+              - Favourite Emoji First
               - File Size On Picker
+              - Find Reply
               - Fix GIF Downloads
+              - Fix Youtube Embeds
+              - Follow Up Inbox
+              - Follow Voice User
               - Force Owner Crown
+              - Friend Invites
+              - Friends Since
+              - GIF Collections
+              - GIF Maker
               - GIF Paste
-              - Hide Gift Button
+              - GIF Provider Switcher
+              - Greentext
+              - Greet Sticker Picker
+              - Hide Servers
+              - Hide Unusable Expressions
+              - Highlight Replies
+              - I Love Spam
+              - Image Alt Text
+              - Image Link
+              - IRC Colors
+              - Jump To Top
+              - Kaomoji
+              - Keep Current Channel
+              - Keyword Notify
+              - Last Message Date
+              - Link Unshortener
+              - Live Markdown
+              - Live Photo Sender
+              - Live Text
+              - Local Notifications
+              - Masked Link Paste
+              - Math Notation
+              - Media Favorites
+              - Member Count
               - Mention Avatars
+              - Mention Guard
+              - Mention Haptics
+              - Message Burst
+              - Message Colors
+              - Message Delivery Receipts
               - Message Latency
               - Message Link Embeds
+              - Message Logger
+              - Message Menu Editor
+              - Message Screenshot
+              - Message Text Size
               - More User Tags
               - Moyai
               - Multi Account
-              - No Blocked Messages
+              - Music Previews
+              - Music Rich Presence
+              - Mutual Group DMs
+              - New Guild Settings
+              - New Member Sprout
+              - No Pending Count
               - No Reply Mention
+              - No Typing Animation
+              - No Unblock To Jump
+              - Normalize Names
+              - One Ping Per DM
+              - Override Forum Defaults
+              - PDF Viewer
+              - Permissions Viewer
+              - Petpet
+              - Photo Metadata
+              - Picture In Picture
+              - Platform Indicators
+              - Plugin Shortcut Panel
               - Preview Message
+              - Privacy Screen
               - PronounDB
+              - QR Codes
+              - Quick Delete
               - Reaction Avatars
+              - Read All Notifications
+              - Relationship Notifier
+              - Reverse Image Search
               - ReviewDB
               - Role Color Everywhere
+              - Role Tools
+              - Round Corners
+              - Send Timestamps
+              - Sensitive Paste Guard
+              - Settings Demo
+              - Settings Theme
               - Shiki Codeblocks
               - Show Hidden Things
               - Show Me Your Name
+              - Show Roles In Chat
               - Show Timeout Duration
+              - Silent Message Toggle
+              - Silent Typing
+              - Slowmode Queue
+              - Smart Paste
+              - Split Large Messages
+              - Spotify Listen Along
+              - Status Presets
               - Sticker Preview
+              - Sticker Sizes
+              - Super Reaction Tweaks
+              - SVG Embeds
               - Text Replace
+              - Text Styles
+              - Timezones
+              - Tone Indicators
               - Translate
               - Typing Avatars
+              - Undo Send
+              - Unit Converter
+              - Unsuppress Embeds
+              - UserPFP
+              - USRBG
+              - VC Narrator
               - View Icons
               - View Raw
+              - Voice Chat Utils
+              - Voice Message Tools
+              - Voice Transcripts
+              - Wait For Slot
+              - Youtube Adblock
+              - Zip Preview
       validations:
           required: true
     - type: dropdown
