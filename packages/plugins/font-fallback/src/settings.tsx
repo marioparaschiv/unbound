@@ -18,7 +18,7 @@ const SCRIPT_NAMES: Record<ScriptId, string> = {
 	thai: 'ไทย',
 	han: '漢字',
 	kana: 'かな',
-	hangul: '한글',
+	hangeul: '한글',
 };
 
 type PickerProps = { script: ScriptId; onClose: () => void };

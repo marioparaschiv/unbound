@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { scriptRuns, type ScriptId } from '~/lib/scripts';
 
-const all = new Set<ScriptId>(['latin', 'cyrillic', 'han', 'kana', 'hangul', 'arabic']);
+const all = new Set<ScriptId>(['latin', 'cyrillic', 'han', 'kana', 'hangeul', 'arabic']);
 
 describe('scriptRuns', () => {
 	test('splits mixed text into one run per script', () => {
@@ -19,11 +19,11 @@ describe('scriptRuns', () => {
 		]);
 	});
 
-	test('tells kana from han and hangul', () => {
+	test('tells kana from han and hangeul', () => {
 		expect(scriptRuns('日本語ですか안녕', all).map(({ script }) => script)).toEqual([
 			'han',
 			'kana',
-			'hangul',
+			'hangeul',
 		]);
 	});
 
