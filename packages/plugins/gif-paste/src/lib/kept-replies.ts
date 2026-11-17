@@ -1,24 +1,39 @@
 export type KeptReplies = ReturnType<typeof createKeptReplies>;
 
+const KEEP_MS = 2000;
+
 /**
- * @description Tracks channels whose pending reply must survive the GIF picker clearing it right after a selection.
- * @returns `keep` marks a channel until the current task ends, `release` consumes the mark.
+ * @description Tracks channels whose pending reply must survive the GIF picker clearing it after a selection. The
+ * picker clears it as its keyboard closes, a moment later, through `ReplyActions` or a `DELETE_PENDING_REPLY` action.
+ * @param now The clock, in milliseconds.
+ * @returns `keep` marks a channel for two seconds, `isKept` reads the mark, `forget` ends it once a message is sent.
  */
-export function createKeptReplies() {
-	const channels = new Set<string>();
+export function createKeptReplies(now: () => number = Date.now) {
+	const channels = new Map<string, number>();
 
 	function keep(channelId: string) {
-		channels.add(channelId);
-
-		// The picker clears the reply synchronously after selecting, so the mark only needs to outlive this task.
-		void Promise.resolve().then(() => channels.delete(channelId));
+		channels.set(channelId, now() + KEEP_MS);
 	}
 
-	function release(channelId: string): boolean {
-		return channels.delete(channelId);
+	function isKept(channelId: string | undefined): boolean {
+		const until = channelId === undefined ? undefined : channels.get(channelId);
+
+		if (until === undefined) return false;
+
+		if (until < now()) {
+			channels.delete(channelId!);
+
+			return false;
+		}
+
+		return true;
 	}
 
-	return { keep, release };
+	function forget(channelId: string) {
+		channels.delete(channelId);
+	}
+
+	return { keep, isKept, forget };
 }
 
 /** The channels whose pending reply survives the picker's clear, shared by both patches. */

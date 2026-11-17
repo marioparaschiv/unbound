@@ -83,6 +83,7 @@ describe('the send button', () => {
 		flux.seed({
 			SelectedChannel: { getChannelId: () => '1' },
 			Draft: { getDraft: () => '' },
+			EditMessage: { isEditingAny: () => false, getEditingTextValue: () => undefined },
 			UploadAttachment: { getUploadCount: () => 0 },
 		});
 
@@ -96,6 +97,7 @@ describe('the send button', () => {
 		flux.seed({
 			SelectedChannel: { getChannelId: () => '1' },
 			Draft: { getDraft: () => 'hi' },
+			EditMessage: { isEditingAny: () => false, getEditingTextValue: () => undefined },
 			UploadAttachment: { getUploadCount: () => 0 },
 		});
 

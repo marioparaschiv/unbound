@@ -47,6 +47,7 @@ function register({ brokenMessages = false } = {}) {
 	flux.seed({
 		SelectedChannel: { getChannelId: () => channelId },
 		Draft: { getDraft: () => draft },
+		EditMessage: { isEditingAny: () => false, getEditingTextValue: () => undefined },
 		UploadAttachment: { getUploadCount: () => 0 },
 	});
 }

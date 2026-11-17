@@ -1,9 +1,10 @@
 import { patcher } from '@unbound-app/api';
 
-import { patchMessageActions, patchReplyActions } from '~/patches';
+import { keepRepliesFromDirectClears, patchMessageActions, patchReplyActions } from '~/patches';
 
 export function start() {
 	patchReplyActions();
+	keepRepliesFromDirectClears();
 	patchMessageActions();
 }
 
