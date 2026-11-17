@@ -38,5 +38,12 @@
 	},
 	"icon": "MusicIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"bytecode": {
+		"98": "f739865c98beae946edc27a6fe39bc97d12bb9f74d17bbfc78c67f73852ebdd50aa6752b03342e02f755b710876b5994346aa410b90192e089b1bc4e63b17376"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "Oq+jaFDJMpZlsE0JnTWVmcaYFDoZAWcZaYhRGhAuikjxvf5XtPObUSYHjAKmbxEH8+x+EIEKcKAeMjduqHEGDw=="
+	}
 }
