@@ -1,0 +1,17 @@
+{
+	"id": "unbound.selectable-bios",
+	"name": "Selectable Bios",
+	"description": "Lets you select and copy any part of someone's profile bio.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "TextIcon",
+	"main": "index.tsx"
+}
