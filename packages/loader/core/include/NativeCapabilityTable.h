@@ -149,13 +149,14 @@ inline constexpr std::array<std::string_view, 2> kJavaInvokeAsyncMethods = {
     "invokeAsync",
     "invokePreparedAsync",
 };
-inline constexpr std::array<std::string_view, 6> kJavaHooksMethods = {
+inline constexpr std::array<std::string_view, 7> kJavaHooksMethods = {
     "hook",
     "setReturnValue",
     "removeReturnValue",
     "clearReturnValues",
     "remove",
     "proxy",
+    "deoptimize",
 };
 inline constexpr std::array<std::string_view, 2> kJavaBatchMethods = {
     "batch",
