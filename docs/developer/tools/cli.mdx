@@ -240,6 +240,7 @@ Keys built at run time, such as `messages[name]`, are not found. The report coun
 | `ubd debug start`, `restart` | Starts the bridge in the background, or restarts it on the current code. Its log goes to the system temporary directory. |
 | `ubd debug status` | Shows the device, its Discord, loader and client versions, started plugins and native resources. `--watch` reports which resources keep growing. |
 | `ubd debug open <screen>` | Opens an Unbound or Discord settings screen from anywhere. `--params` takes route parameters as JSON. |
+| `ubd debug crash <kind>` | Crashes or freezes Discord on purpose to test crash reporting: `js`, `abort`, `segv`, `hang` (`--seconds`) or `objc-exception` on iOS. Development builds only. |
 | `ubd debug route` | Prints the focused navigation route, its params and navigator path. |
 | `ubd debug eval <code>` | Evaluates JavaScript in the client and prints the result and console output. `--timeout` in milliseconds. `--native` gives the code a `native` variable, a native bridge with every capability that lasts for the debugger session (development builds only). |
 | `ubd debug reload` | Reloads the bundle and waits for it to reconnect to the bridge. `--timeout` defaults to `60000`. |
