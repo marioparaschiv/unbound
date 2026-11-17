@@ -1,0 +1,17 @@
+{
+	"id": "unbound.airplay",
+	"name": "Airplay Button",
+	"description": "Adds an AirPlay button to videos in the media viewer, so they play on an Apple TV or other AirPlay screen.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "VideoIcon",
+	"main": "index.tsx"
+}

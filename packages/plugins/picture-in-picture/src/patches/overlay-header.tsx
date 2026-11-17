@@ -2,7 +2,11 @@ import { getElementName } from '@unbound-plugins/shared/react/find-element';
 import { metro, patcher } from '@unbound-app/api';
 import { cloneElement, type ComponentType, type ReactElement, type ReactNode } from 'react';
 
-import { insertBeforeLastButton, type CloneElement, type TreeElement } from '~/lib/tree-edit';
+import {
+	insertBeforeLastButton,
+	type CloneElement,
+	type TreeElement,
+} from '@unbound-plugins/shared/media-viewer/tree-edit';
 import PipButton from '~/components/pip-button';
 import { sessions, windowController } from '~/native/window';
 import {

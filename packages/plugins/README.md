@@ -1,10 +1,11 @@
 # Plugins
 
-205 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+206 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Add Attachments](https://unbound.rip/addons/unbound.add-attachments): Adds attachments to messages you already sent, while you edit them or from the message menu.
+- <img src="../../assets/plugins/readme-icons/video-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Airplay Button](https://unbound.rip/addons/unbound.airplay): Adds an AirPlay button to videos in the media viewer, so they play on an Apple TV or other AirPlay screen.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Always Animate](https://unbound.rip/addons/unbound.always-animate): Animates anything that can be animated: avatars, decorations, nameplates, profile effects, server icons, emojis, stickers and GIFs.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Always Trust](https://unbound.rip/addons/unbound.always-trust): Opens links and downloads without asking whether you trust the site or the file first.
 - <img src="../../assets/plugins/readme-icons/voice-normal-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Animalese](https://unbound.rip/addons/unbound.animalese): Reads new messages aloud in a babbling animal voice, like the villagers of a certain island game.
