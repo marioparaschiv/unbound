@@ -1,5 +1,39 @@
 # Changelog
 
+## [3.9.0](https://github.com/marioparaschiv/unbound/compare/client-v3.8.0...client-v3.9.0) (2026-11-17)
+
+
+### Features
+
+* **client:** ask before dropping a crash report ([#1738](https://github.com/marioparaschiv/unbound/issues/1738)) ([a752398](https://github.com/marioparaschiv/unbound/commit/a7523984622cfae82e676a0a6f71a3b849cd525a))
+* file crash reports as GitHub issues and catch exceptions ([#1715](https://github.com/marioparaschiv/unbound/issues/1715)) ([0852994](https://github.com/marioparaschiv/unbound/commit/08529945ebc4c5dec222b7fa80dc7c8e7adf086a))
+* file only Unbound's crashes as issues ([#1741](https://github.com/marioparaschiv/unbound/issues/1741)) ([8453317](https://github.com/marioparaschiv/unbound/commit/8453317e06445e4eff41a5b9d2bdcd792e40af0b))
+* send what else was running with crash reports ([#1740](https://github.com/marioparaschiv/unbound/issues/1740)) ([9a65241](https://github.com/marioparaschiv/unbound/commit/9a65241a088fa84bb0d85f0aa8cea05fd1f686e7))
+* withdraw addon versions that crash on many installs ([#1742](https://github.com/marioparaschiv/unbound/issues/1742)) ([2664d5b](https://github.com/marioparaschiv/unbound/commit/2664d5b512e21760301ec1c8fc750ca30c8c03d8))
+
+
+### Bug Fixes
+
+* **ci:** get the minimum loader check green again ([#1737](https://github.com/marioparaschiv/unbound/issues/1737)) ([7213d23](https://github.com/marioparaschiv/unbound/commit/7213d23bae0d4584e9745221a2fde2d4e3049533))
+* **client:** restart a gateway attempt left over from the background ([#1705](https://github.com/marioparaschiv/unbound/issues/1705)) ([9e11612](https://github.com/marioparaschiv/unbound/commit/9e11612eb33183e6c5878317c9a8183bab0c795d))
+* **client:** sort the object factory import ([c3ea1b1](https://github.com/marioparaschiv/unbound/commit/c3ea1b1fb27b701306835d2c97d08d9be28482c7))
+* **declutter:** keep send while editing; fold crowded composer buttons ([#1717](https://github.com/marioparaschiv/unbound/issues/1717)) ([5f3f1c5](https://github.com/marioparaschiv/unbound/commit/5f3f1c5dc1efa8a2b6236cb9821fbe28f132f3de))
+* **loader:** run view calls on main; quiet stopped plugin worklets ([#1713](https://github.com/marioparaschiv/unbound/issues/1713)) ([23fd749](https://github.com/marioparaschiv/unbound/commit/23fd7493622a24e3e9cbdb16047b604ca8da6684))
+* **loader:** scope plain module paths and the ObjC factory to iOS ([#1716](https://github.com/marioparaschiv/unbound/issues/1716)) ([bf8d9ca](https://github.com/marioparaschiv/unbound/commit/bf8d9cabbd6975d8f05f0bd511b441a8414491d8))
+
+
+### Tests
+
+* **client:** type the crash consent test's mocks ([#1739](https://github.com/marioparaschiv/unbound/issues/1739)) ([cdab68c](https://github.com/marioparaschiv/unbound/commit/cdab68ca49fcb7363cefc4575592098aa81ce0ca))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.8.0
+    * @unbound-app/web bumped to 2.8.0
+
 ## [3.8.0](https://github.com/marioparaschiv/unbound/compare/client-v3.7.0...client-v3.8.0) (2026-11-17)
 
 

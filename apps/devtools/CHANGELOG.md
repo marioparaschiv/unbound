@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.5.0...devtools-v1.6.0) (2026-11-17)
+
+
+### Features
+
+* **devtools:** upgrade the console editor and fix motion polish ([#1710](https://github.com/marioparaschiv/unbound/issues/1710)) ([a05ad12](https://github.com/marioparaschiv/unbound/commit/a05ad128fa63da53526d37f99235434a0d9a136d))
+
 ## [1.5.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.4.0...devtools-v1.5.0) (2026-11-16)
 
 

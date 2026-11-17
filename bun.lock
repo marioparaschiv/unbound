@@ -71,7 +71,7 @@
     },
     "apps/sdk-generator": {
       "name": "@unbound-app/sdk-generator",
-      "version": "1.0.7",
+      "version": "1.0.8",
       "dependencies": {
         "@unbound-app/contracts": "workspace:*",
         "@unbound-app/logger": "workspace:*",
@@ -86,7 +86,7 @@
     },
     "apps/web": {
       "name": "@unbound-app/web",
-      "version": "2.7.0",
+      "version": "2.8.0",
       "dependencies": {
         "@base-ui/react": "^1.9.0",
         "@better-auth/api-key": "1.7.22",
@@ -157,7 +157,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "3.8.0",
+      "version": "3.9.0",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -171,7 +171,7 @@
     },
     "packages/cli": {
       "name": "@unbound-app/cli",
-      "version": "3.3.1",
+      "version": "3.3.2",
       "bin": {
         "ubd": "src/index.ts",
       },
@@ -228,7 +228,7 @@
     },
     "packages/client": {
       "name": "@unbound-app/client",
-      "version": "3.8.0",
+      "version": "3.9.0",
       "dependencies": {
         "@unbound-app/contracts": "workspace:*",
         "@unbound-app/debugger-protocol": "workspace:*",
@@ -303,7 +303,7 @@
     },
     "packages/contracts": {
       "name": "@unbound-app/contracts",
-      "version": "2.7.0",
+      "version": "2.8.0",
       "dependencies": {
         "@unbound-app/types": "workspace:*",
         "marked": "^18.2.0",
