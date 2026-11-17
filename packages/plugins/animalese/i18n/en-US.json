@@ -1,0 +1,19 @@
+{
+	"VOICE": "Voice",
+	"VOICE_SUBTITLE": "One voice for everyone, or a voice each person keeps.",
+	"PERSON": "One per person",
+	"LOW": "Low",
+	"MID": "Middle",
+	"HIGH": "High",
+	"SQUEAKY": "Squeaky",
+	"SPEED": "Letter length",
+	"SPEED_SUBTITLE": "Milliseconds per letter; lower talks faster.",
+	"VOLUME": "Volume",
+	"MAX_LETTERS": "Letters per message",
+	"MAX_LETTERS_SUBTITLE": "Longer messages are cut off after this many letters.",
+	"COOLDOWN": "Quiet time",
+	"COOLDOWN_SUBTITLE": "The least time between two messages read aloud, so a busy chat doesn't babble nonstop.",
+	"OWN": "Your messages",
+	"OWN_SUBTITLE": "Read your own messages aloud too.",
+	"BOTS": "Bot messages"
+}

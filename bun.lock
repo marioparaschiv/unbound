@@ -458,6 +458,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/animalese": {
+      "name": "animalese",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/anonymise-filenames": {
       "name": "anonymise-filenames",
       "dependencies": {
@@ -4395,6 +4409,8 @@
     "always-animate": ["always-animate@workspace:packages/plugins/always-animate"],
 
     "always-trust": ["always-trust@workspace:packages/plugins/always-trust"],
+
+    "animalese": ["animalese@workspace:packages/plugins/animalese"],
 
     "anonymise-filenames": ["anonymise-filenames@workspace:packages/plugins/anonymise-filenames"],
 
