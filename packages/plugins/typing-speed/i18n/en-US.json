@@ -1,0 +1,10 @@
+{
+	"LIVE": "Show while typing",
+	"LIVE_SUBTITLE": "A words-per-minute pill above the message box while you write.",
+	"RESET": "Reset statistics",
+	"RESET_CONFIRM": "Forget your average and best typing speed?",
+	"WPM": "{wpm} WPM",
+	"STATS_DESC": "Show your average and best typing speed.",
+	"STATS": "Average {average} WPM over {messages} messages. Best {best} WPM.",
+	"NO_STATS": "Send a few messages first; each one longer than 15 characters counts."
+}

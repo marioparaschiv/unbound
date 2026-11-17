@@ -2789,6 +2789,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/typing-speed": {
+      "name": "typing-speed",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/undo-send": {
       "name": "undo-send",
       "dependencies": {
@@ -6117,6 +6131,8 @@
     "typescript-api": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "typing-avatars": ["typing-avatars@workspace:packages/plugins/typing-avatars"],
+
+    "typing-speed": ["typing-speed@workspace:packages/plugins/typing-speed"],
 
     "uc.micro": ["uc.micro@2.1.0", "", {}, "sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A=="],
 
