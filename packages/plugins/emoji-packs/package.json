@@ -1,0 +1,21 @@
+{
+	"name": "emoji-packs",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "rollup -c",
+		"generate:coverage": "bun scripts/generate-coverage.ts",
+		"test": "bun test"
+	},
+	"dependencies": {
+		"@unbound-plugins/shared": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@types/react": "^19.2.7",
+		"@unbound-app/api": "workspace:*",
+		"@unbound-app/cli": "workspace:*",
+		"react-native": "^0.86.0",
+		"rollup": "^4.68.2"
+	}
+}
