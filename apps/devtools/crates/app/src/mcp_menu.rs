@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use gpui::{
 	Anchor, AnyElement, ClipboardItem, Context, Entity, FontWeight, MouseButton, SharedString,
-	Task, Window, anchored, deferred, div, point, prelude::*, px, relative,
+	Task, Window, anchored, deferred, div, point, prelude::*, px,
 };
 use unbound_devtools_core::Devtools;
 
@@ -30,7 +30,7 @@ const ROW_HEIGHT: f32 = 44.;
 const GLYPH: f32 = 14.;
 /// The arrow's strokes fill less of its box than the other glyphs, so it draws larger to match.
 const ARROW_GLYPH: f32 = 17.;
-/// A row's hover reaches its face, which is drawn inside the pressable's unscaled box.
+/// A row's hover reaches its plate, which a press shrinks inside the row's box.
 const ROW_GROUP: &str = "mcp-agent";
 
 pub struct McpButton {
@@ -313,66 +313,62 @@ fn render_agent(
 	let mono = !matches!(agent.install, Install::Link(_));
 	let name = agent.name;
 	let glyph_id = id.clone();
-	// The pressable keeps the row's unscaled box in the layout; its face scales inside it.
-	let face = move |press: f32| {
-		let inset = relative((1. - press) / 2.);
-		let k = press * s;
-		div()
-			.absolute()
-			.top(inset)
-			.bottom(inset)
-			.left(inset)
-			.right(inset)
-			.flex()
-			.items_center()
-			.gap(px(8. * k))
-			.px(px(theme::INSET * k))
-			.rounded(theme::RADIUS_CONTROL * k)
-			.group_hover(ROW_GROUP, |face| face.bg(theme::color(theme::HOVER)))
-			.child(
-				div()
-					.flex()
-					.flex_col()
-					.flex_1()
-					.min_w_0()
-					.child(
-						div()
-							.font_weight(FontWeight::MEDIUM)
-							.text_size(theme::TEXT_UI * k)
-							.text_color(theme::color(theme::TEXT))
-							.child(name),
-					)
-					.child(
-						div()
-							.truncate()
-							.when(mono, |text| text.font_family(theme::mono_font()))
-							.text_size(theme::TEXT_EYEBROW * k)
-							.text_color(theme::color(theme::TEXT_MUTED))
-							.child(subtitle),
-					),
-			)
-			// One column width for every glyph, so their centres line up down the menu.
-			.child(
-				div()
-					.flex_none()
-					.flex()
-					.justify_center()
-					.w(px(ARROW_GLYPH * k))
-					.child(tick_glyphs(
-						&glyph_id,
-						glyph,
-						glyph_size * k,
-						theme::TEXT_MUTED,
-						showing,
-					)),
-			)
-			.into_any_element()
+	// `s` is the popout's growth; a press shrinks only the plate, under still text.
+	let plate = move |plate: gpui::Div, press: f32| {
+		plate
+			.rounded(theme::RADIUS_CONTROL * (press * s))
+			.group_hover(ROW_GROUP, |plate| plate.bg(theme::color(theme::HOVER)))
 	};
+	let content = div()
+		.relative()
+		.size_full()
+		.flex()
+		.items_center()
+		.gap(px(8. * s))
+		.px(px(theme::INSET * s))
+		.child(
+			div()
+				.flex()
+				.flex_col()
+				.flex_1()
+				.min_w_0()
+				.child(
+					div()
+						.font_weight(FontWeight::MEDIUM)
+						.text_size(theme::TEXT_UI * s)
+						.text_color(theme::color(theme::TEXT))
+						.child(name),
+				)
+				.child(
+					div()
+						.truncate()
+						.when(mono, |text| text.font_family(theme::mono_font()))
+						.text_size(theme::TEXT_EYEBROW * s)
+						.text_color(theme::color(theme::TEXT_MUTED))
+						.child(subtitle),
+				),
+		)
+		// One column width for every glyph, so their centres line up down the menu.
+		.child(
+			div()
+				.flex_none()
+				.flex()
+				.justify_center()
+				.w(px(ARROW_GLYPH * s))
+				.child(tick_glyphs(
+					&glyph_id,
+					glyph,
+					glyph_size * s,
+					theme::TEXT_MUTED,
+					showing,
+				)),
+		);
 	let body = div()
 		.h(px(ROW_HEIGHT * s))
 		.group(ROW_GROUP)
 		.cursor_pointer();
-	Pressable::flat(element_id(&id, "press"), body, face)
+	Pressable::flat(element_id(&id, "press"), body, plate)
+		.child(content)
 		.on_click(cx.listener(move |this, _, _, cx| {
 			this.add_to_agent(agent.clone(), tick.clone(), cx);
 		}))

@@ -30,7 +30,7 @@ use load_all::LoadAll;
 use reveal::{Flash, Reveal};
 use search::KeySearch;
 use tree::{Fetch, Node, Path, Row as TreeRow};
-use unfold::{Fold, Turn};
+use unfold::{Fold, Turn, refold};
 
 const CHANGE_COALESCING_FRAME: Duration = Duration::from_millis(16);
 const FILTER_DEBOUNCE: Duration = Duration::from_millis(150);
@@ -520,17 +520,11 @@ impl MetroBrowser {
 			rows.iter().map(|row| row.key().cloned()).collect()
 		};
 		let (old, new) = (keys(&picked.rows), keys(&next));
-		let turn = picked.turn.take();
-		if let Some(fold) = Fold::between(old.iter().cloned(), new.iter().cloned(), true) {
+		let (fold, take) = refold(&old, &new, picked.fold.take());
+		if take {
 			picked.rows = Rc::new(next);
-			picked.fold = Some(fold);
-		} else if let Some(fold) = Fold::between(new, old, false) {
-			picked.fold = Some(fold);
-		} else {
-			picked.rows = Rc::new(next);
-			picked.fold = None;
 		}
-		picked.turn = turn;
+		picked.fold = fold;
 	}
 
 	/// Moves the folds on a frame, or ends those that finished, dropping the rows a close folded away.
@@ -576,7 +570,7 @@ impl MetroBrowser {
 			cx.notify();
 		}
 		if let Some(picked) = self.picked.as_mut().filter(|_| !cx.reduce_motion()) {
-			picked.turn = Some(Turn::new(turn, open));
+			picked.turn = Some(Turn::new(turn, open, picked.turn.as_ref()));
 		}
 	}
 

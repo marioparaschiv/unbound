@@ -10,6 +10,7 @@ use gpui::{
 };
 use unbound_devtools_core::{Devtools, ElementId, Row, Status};
 
+use crate::indent_follow::IndentFollow;
 use crate::inspection::Inspection;
 use crate::mcp_menu::McpButton;
 use crate::search::Search;
@@ -69,6 +70,8 @@ pub struct Workspace {
 	pub collapsed: HashSet<ElementId>,
 	pub rows: Rc<Vec<Row>>,
 	pub scroll: UniformListScrollHandle,
+	/// How far the tree's rows shift left to keep the deep ones on screen.
+	pub indent: IndentFollow,
 	pub synced_selection: Option<ElementId>,
 	pub search: Search,
 	pub search_input: Entity<InputState>,
@@ -132,6 +135,7 @@ impl Workspace {
 			collapsed: HashSet::new(),
 			rows: Rc::default(),
 			scroll: UniformListScrollHandle::new(),
+			indent: IndentFollow::default(),
 			synced_selection: None,
 			search: Search::default(),
 			search_input,

@@ -9,6 +9,7 @@ mod easing;
 mod empty;
 mod empty_state;
 mod explorer;
+mod indent_follow;
 mod inspection;
 mod inspector;
 mod link;
@@ -32,6 +33,7 @@ mod status;
 mod theme;
 mod title_bar;
 mod toolbar;
+mod transition;
 mod tree;
 mod update;
 mod value_editor;
@@ -183,6 +185,7 @@ fn run_gui(settings: Settings, config: Config, mcp_port: Option<u16>) {
 			appearance::apply(None, cx);
 			app::bind_keys(cx);
 			shell::bind_keys(cx);
+			console::init(cx);
 			let bounds = Bounds::centered(None, size(px(1360.), px(860.)), cx);
 			// The shell draws its own title bar (`title_bar.rs`), so the system's is hidden: macOS keeps
 			// its traffic lights over the bar, and Linux and Windows get client-side decorations.

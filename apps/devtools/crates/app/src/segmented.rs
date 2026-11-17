@@ -1,7 +1,7 @@
 //! The web's Segmented control (`apps/web/src/components/ui/segmented.tsx`): items as wide as their
 //! labels plus even padding on a ringed track, and one raised pill under the hovered item, or the
 //! chosen one at rest. The pill slides and resizes between items, labels fade their colour, and a
-//! pressed item shrinks like `.press-flat`.
+//! pressed item's pill shrinks like `.press-flat` under its still label.
 
 use std::rc::Rc;
 use std::time::{Duration, Instant};
@@ -377,12 +377,9 @@ impl RenderOnce for Segmented {
 					.justify_center()
 					.cursor_pointer()
 					.font_weight(FontWeight::SEMIBOLD)
+					.text_size(theme::TEXT_UI)
 					.text_color(colour)
-					.child(div().child(label).with_spring(
-						("segmented-label", ix),
-						press_spring(pressed == Some(ix)),
-						|label, scale: f32| label.text_size(theme::TEXT_UI * scale),
-					))
+					.child(label)
 					.on_hover(move |hovered, _, cx| {
 						if *hovered {
 							hover(cx);

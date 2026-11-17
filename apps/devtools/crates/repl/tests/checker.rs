@@ -75,6 +75,40 @@ fn allows_top_level_await() {
 }
 
 #[test]
+fn shows_the_signature_of_the_call_being_typed() {
+	let checker = checker::shared().expect("the checker starts");
+
+	let buffer = "unbound.flux.getStore()";
+	let open = Position {
+		line: 0,
+		character: 22,
+	};
+	let help = checker
+		.signature_help(buffer, open, false)
+		.unwrap()
+		.expect("signature help");
+	let signature = &help.signatures[help.active_signature.unwrap_or(0) as usize];
+	assert!(signature.label.starts_with("getStore("), "{help:?}");
+	assert_eq!(help.active_parameter, Some(0), "{help:?}");
+
+	let buffer = "'text'.slice(1, )";
+	let second = Position {
+		line: 0,
+		character: 16,
+	};
+	let help = checker
+		.signature_help(buffer, second, true)
+		.unwrap()
+		.expect("signature help");
+	assert_eq!(help.active_parameter, Some(1), "{help:?}");
+
+	let outside = checker
+		.signature_help("'text'.slice(1)", end_of("'text'.slice(1)"), true)
+		.unwrap();
+	assert!(outside.is_none(), "{outside:?}");
+}
+
+#[test]
 fn counts_columns_in_characters_past_an_emoji() {
 	let checker = checker::shared().expect("the checker starts");
 

@@ -1,18 +1,24 @@
-//! The Console editor's completion menu and hover card. tsrs answers through [`super::types`];
-//! these draw the answers in Unbound's popover style instead of gpui-component's, and only while
-//! the editor still holds the text they were asked about.
+//! The Console editor's completion menu, signature card and hover card. tsrs answers through
+//! [`super::types`] and [`Assist::refresh_signature`]; these draw the answers in Unbound's popover
+//! style instead of gpui-component's, and only while the editor still holds the text they were
+//! asked about.
 
 use std::ops::Range;
 use std::time::Duration;
 
+use anyhow::anyhow;
 use gpui::{Context, Entity, ScrollHandle, SharedString, Subscription, Task, Window};
 use gpui_component::input::{EditorState, RopeExt};
 use lsp_types::{CompletionItem, Hover, HoverContents, MarkedString};
+use unbound_devtools_repl::checker;
 
 use super::highlight::Highlighted;
+use super::signature::{self, SignatureCard};
 
 /// How long the hover card outlives the pointer leaving the editor, so it can reach the card.
 const HOVER_GRACE: Duration = Duration::from_millis(200);
+/// Keystrokes this close together ask tsrs for the signature once.
+const SIGNATURE_DEBOUNCE: Duration = Duration::from_millis(30);
 
 pub struct Completions {
 	/// The editor text and cursor they answer.
@@ -36,6 +42,12 @@ pub struct Assist {
 	pub selected: usize,
 	pub menu_scroll: ScrollHandle,
 	pub hover: Option<HoverCard>,
+	/// The parameters of the call the caret is in. Kept while a newer answer is on its way, so
+	/// typing through the call doesn't flicker it.
+	pub signature: Option<SignatureCard>,
+	/// The text and caret the signature was last asked about.
+	signature_asked: (String, usize),
+	signature_task: Option<Task<()>>,
 	/// Whether the pointer is on the editor or on the card.
 	pointer_on_editor: bool,
 	pointer_on_card: bool,
@@ -82,13 +94,19 @@ fn hover_markdown(contents: HoverContents) -> String {
 impl Assist {
 	pub fn new(editor: Entity<EditorState>, cx: &mut Context<Self>) -> Self {
 		// Typing and caret moves can make an answer stale; a repaint drops it.
-		let observe = cx.observe(&editor, |_, _, cx| cx.notify());
+		let observe = cx.observe(&editor, |this, _, cx| {
+			this.refresh_signature(false, cx);
+			cx.notify();
+		});
 		Self {
 			editor,
 			completions: None,
 			selected: 0,
 			menu_scroll: ScrollHandle::new(),
 			hover: None,
+			signature: None,
+			signature_asked: (String::new(), 0),
+			signature_task: None,
 			pointer_on_editor: false,
 			pointer_on_card: false,
 			hide_hover: None,
@@ -171,6 +189,62 @@ impl Assist {
 			docs: (!docs.is_empty()).then(|| docs.into()),
 		});
 		cx.notify();
+	}
+
+	/// Asks tsrs for the call's signature when the caret moved or the text changed and the card
+	/// shows, or typing just opened a call or an argument. `force` asks regardless, as a key does.
+	pub fn refresh_signature(&mut self, force: bool, cx: &mut Context<Self>) {
+		let editor = self.editor.read(cx);
+		let offset = editor.cursor();
+		let showing = self.signature.is_some();
+		if !force
+			&& self.signature_asked.1 == offset
+			&& self.signature_asked.0 == editor.value().as_ref()
+		{
+			return;
+		}
+		let buffer = editor.value().to_string();
+		let position = editor.text().offset_to_position(offset);
+		let wanted = force || showing || signature::opens_arguments(&buffer, offset);
+		self.signature_asked = (buffer.clone(), offset);
+		if !wanted || !editor.selected_range().is_empty() {
+			self.signature_task = None;
+			return;
+		}
+		self.signature_task = Some(cx.spawn(async move |this, cx| {
+			cx.background_executor().timer(SIGNATURE_DEBOUNCE).await;
+			let asked = buffer.clone();
+			let help = cx
+				.background_executor()
+				.spawn(async move {
+					checker::shared()
+						.map_err(|error| anyhow!(error))?
+						.signature_help(&asked, position, showing && !force)
+				})
+				.await;
+			this.update(cx, |this, cx| {
+				if !this.is_current(&buffer, Some(offset), cx) {
+					return;
+				}
+				this.signature = match help {
+					Ok(help) => help.and_then(signature::card),
+					Err(error) => {
+						tracing::debug!("Failed to get the signature at {offset}: {error:#}");
+						None
+					}
+				};
+				cx.notify();
+			})
+			.ok();
+		}));
+	}
+
+	/// Closes the signature card until typing opens another call; false when none was showing.
+	pub fn dismiss_signature(&mut self, cx: &mut Context<Self>) -> bool {
+		self.signature_task = None;
+		let open = self.signature.take().is_some();
+		cx.notify();
+		open
 	}
 
 	/// Closes the menu; false when none was showing.

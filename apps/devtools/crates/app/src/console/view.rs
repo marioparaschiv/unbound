@@ -5,7 +5,7 @@ use gpui::{AnyElement, App, Context, FontWeight, IntoElement, Window, div, prelu
 use gpui_component::input::{Editor, Enter, Escape, IndentInline, MoveDown, MoveUp};
 
 use super::assist::Assist;
-use super::{Console, Entry, Outcome, TypesState};
+use super::{Console, Entry, Outcome, TypesState, brackets, keys};
 use crate::nav;
 use crate::theme;
 use crate::widgets::{Raised, footer_bar, page_header, page_header_end, raised_button, tooltip};
@@ -121,12 +121,37 @@ fn render_intro() -> AnyElement {
 				.text_color(theme::color(theme::TEXT))
 				.child("Run TypeScript on the device"),
 		)
-		.child("Enter runs the editor, Shift+Enter adds a line. Completions and errors come from Unbound's API types, earlier entries and earlier results.")
+		.child("Enter runs the editor, or adds a line inside a block or while a bracket is open; Shift+Enter adds one and Cmd/Ctrl+Enter runs anyway. Completions, signatures and errors come from Unbound's API types, earlier entries and earlier results.")
 		.child("Each result stays on the device as $1, $2, …; only a short preview and its shape come back.")
 		.into_any_element()
 }
 
 impl Console {
+	/// Enter accepts the completion, else adds a line while the input goes on, else runs.
+	fn enter(&mut self, action: &Enter, window: &mut Window, cx: &mut Context<Self>) {
+		if action.shift || action.secondary {
+			return;
+		}
+		if self
+			.assist
+			.update(cx, |assist, cx| assist.accept(window, cx))
+		{
+			cx.stop_propagation();
+		} else if brackets::continues_input(
+			&self.editor.read(cx).value(),
+			self.editor.read(cx).cursor(),
+		) {
+			cx.stop_propagation();
+			window.dispatch_action(
+				Box::new(Enter {
+					shift: true,
+					secondary: false,
+				}),
+				cx,
+			);
+		}
+	}
+
 	/// The editor, with the completion menu's and recall's keys taken before the editor sees them.
 	fn render_editor(&self, cx: &mut Context<Self>) -> impl IntoElement {
 		let assist = self.assist.clone();
@@ -138,22 +163,19 @@ impl Console {
 				}
 			}
 		};
-		let accept = keys(|assist, window, cx| assist.accept(window, cx));
-		let tab = accept.clone();
-		let escape = keys(|assist, _, cx| assist.dismiss_completions(cx));
+		let tab = keys(|assist, window, cx| assist.accept(window, cx));
+		let escape =
+			keys(|assist, _, cx| assist.dismiss_completions(cx) || assist.dismiss_signature(cx));
 		let hover = assist.clone();
 		div()
 			.id("console-editor")
+			.key_context(keys::CONTEXT)
 			.flex_none()
 			.h(px(EDITOR_HEIGHT))
 			.border_t_1()
 			.border_color(theme::color(theme::BORDER))
 			.bg(theme::color(theme::PANEL))
-			.capture_action(move |action: &Enter, window, cx| {
-				if !action.shift && !action.secondary {
-					accept(window, cx);
-				}
-			})
+			.capture_action(cx.listener(Self::enter))
 			.capture_action(move |_: &IndentInline, window, cx| tab(window, cx))
 			.capture_action(cx.listener(|this, _: &MoveUp, window, cx| {
 				if this.step(true, window, cx) {
@@ -166,6 +188,13 @@ impl Console {
 				}
 			}))
 			.capture_action(move |_: &Escape, window, cx| escape(window, cx))
+			.on_action(cx.listener(Self::toggle_comment))
+			.on_action(cx.listener(Self::move_lines_up))
+			.on_action(cx.listener(Self::move_lines_down))
+			.on_action(cx.listener(Self::duplicate_lines))
+			.on_action(cx.listener(Self::delete_lines))
+			.on_action(cx.listener(Self::select_lines))
+			.on_action(cx.listener(Self::show_signature))
 			.on_hover(move |hovered, _, cx| {
 				hover.update(cx, |assist, cx| assist.set_pointer_on_editor(*hovered, cx));
 			})

@@ -1,7 +1,7 @@
 //! The sidebar's page list. gpui-component's `Sidebar` scrolls it; the rows are drawn here on the
 //! app's own metrics (14px text, 16px icons, the 20px icon line) instead of its rem-sized menu.
 
-use gpui::{App, FontWeight, SharedString, WeakEntity, Window, div, prelude::*, px, relative};
+use gpui::{App, FontWeight, SharedString, WeakEntity, Window, div, prelude::*, px};
 use gpui_component::Collapsible;
 use gpui_component::sidebar::SidebarItem;
 
@@ -19,7 +19,7 @@ const TEXT: f32 = 14.;
 const ICON: f32 = 16.;
 /// The sidebar insets its list by 12px; 8 more puts icons and labels on the window's 20px line.
 const ROW_INSET: f32 = 8.;
-/// Lets a row's scaled face answer hover over the row's whole, unscaled box.
+/// Lets a row's pressed plate answer hover over the row's whole, unpressed box.
 const ROW_GROUP: &str = "nav-row";
 
 /// One page in the list.
@@ -127,38 +127,36 @@ fn row_body(
 	text: theme::Token,
 	glyph: theme::Token,
 ) -> Pressable {
-	// The row keeps its box in the list; the face inside is drawn at `scale`, every length
-	// multiplied, so a press shrinks text and icon about the centre like the web's `scale`.
-	let face = move |scale: f32| {
-		let inset = relative((1. - scale) / 2.);
-		div()
-			.absolute()
-			.top(inset)
-			.bottom(inset)
-			.left(inset)
-			.right(inset)
-			.flex()
-			.items_center()
-			.gap(px(10. * scale))
-			.px(px(ROW_INSET * scale))
-			.rounded(theme::RADIUS_ITEM * scale)
-			.text_size(px(TEXT * scale))
-			.text_color(theme::color(text))
-			.map(|item| {
-				if active {
-					item.bg(theme::color(theme::HOVER))
-						.font_weight(FontWeight::MEDIUM)
-				} else {
-					item.group_hover(ROW_GROUP, |item| {
-						item.bg(theme::alpha(theme::HOVER, 0.6))
-							.text_color(theme::color(theme::TEXT))
-					})
-				}
-			})
-			.child(icon(path, px(ICON * scale), glyph))
-			.child(div().flex_1().min_w_0().truncate().child(label))
-			.into_any_element()
+	// A press shrinks the plate about its centre like the web's `scale`; text and icon hold still.
+	let plate = move |plate: gpui::Div, scale: f32| {
+		plate.rounded(theme::RADIUS_ITEM * scale).map(|plate| {
+			if active {
+				plate.bg(theme::color(theme::HOVER))
+			} else {
+				plate.group_hover(ROW_GROUP, |plate| plate.bg(theme::alpha(theme::HOVER, 0.6)))
+			}
+		})
 	};
+	let content = div()
+		.relative()
+		.size_full()
+		.flex()
+		.items_center()
+		.gap(px(10.))
+		.px(px(ROW_INSET))
+		.text_size(px(TEXT))
+		.text_color(theme::color(text))
+		.map(|content| {
+			if active {
+				content.font_weight(FontWeight::MEDIUM)
+			} else {
+				content.group_hover(ROW_GROUP, |content| {
+					content.text_color(theme::color(theme::TEXT))
+				})
+			}
+		})
+		.child(icon(path, px(ICON), glyph))
+		.child(div().flex_1().min_w_0().truncate().child(label));
 	let body = div().h(px(ROW_HEIGHT)).group(ROW_GROUP).cursor_pointer();
-	Pressable::flat(id, body, face)
+	Pressable::flat(id, body, plate).child(content)
 }

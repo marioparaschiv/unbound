@@ -4,11 +4,11 @@
 
 mod sections;
 
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use gpui::{
 	App, Context, Entity, EventEmitter, FocusHandle, Focusable, FontWeight, KeyBinding,
-	MouseButton, ScrollHandle, Subscription, Task, Window, actions, div, prelude::*, px, relative,
+	MouseButton, ScrollHandle, Subscription, Task, Window, actions, div, prelude::*, px,
 };
 use gpui_component::input::{Input, InputEvent, InputState};
 
@@ -17,15 +17,19 @@ use crate::press::Pressable;
 use crate::scaled::rem_scaled;
 use crate::settings::{self, Settings};
 use crate::smooth_scroll::SmoothScroll;
+use crate::transition::{Timing, Transition};
 use crate::widgets::{field, float_shadow, icon};
 use crate::{assets, theme, update};
 
 const CONTEXT: &str = "SettingsDialog";
-const OPEN: Duration = Duration::from_millis(150);
-const CLOSE: Duration = Duration::from_millis(150);
+const TIMING: Timing = Timing {
+	open: Duration::from_millis(150),
+	close: Duration::from_millis(150),
+	ease,
+};
 /// Where the surface's scale starts and ends; Telecord's `zoom-in-95`, half Base UI's travel.
 const FROM_SCALE: f32 = 0.95;
-/// Lets a sidebar row's scaled face answer hover over the row's whole box.
+/// Lets a sidebar row's pressed plate answer hover over the row's whole box.
 const ROW_GROUP: &str = "settings-row";
 
 actions!(settings_dialog, [Close]);
@@ -37,13 +41,6 @@ pub fn bind_keys(cx: &mut App) {
 /// The exit motion finished; the owner drops the dialog.
 pub struct Closed;
 
-enum Phase {
-	/// Timed from the first frame drawn, not from construction: building the dialog's fields can
-	/// take longer than the whole entrance, which would then skip straight to its end.
-	Opening(Option<Instant>),
-	Closing(Instant),
-}
-
 pub struct SettingsDialog {
 	section: Section,
 	search: Entity<InputState>,
@@ -51,7 +48,9 @@ pub struct SettingsDialog {
 	focus: FocusHandle,
 	sidebar_scroll: ScrollHandle,
 	body_scroll: ScrollHandle,
-	phase: Phase,
+	/// `None` until the first frame: the entrance is timed from then, not from construction, as
+	/// building the dialog's fields can take longer than the whole entrance.
+	motion: Option<Transition>,
 	_close: Option<Task<()>>,
 	_subscriptions: Vec<Subscription>,
 }
@@ -134,7 +133,7 @@ impl SettingsDialog {
 			focus: cx.focus_handle(),
 			sidebar_scroll: ScrollHandle::new(),
 			body_scroll: ScrollHandle::new(),
-			phase: Phase::Opening(None),
+			motion: None,
 			_close: None,
 			_subscriptions: subscriptions,
 		}
@@ -157,31 +156,45 @@ impl SettingsDialog {
 	}
 
 	pub fn is_closing(&self) -> bool {
-		matches!(self.phase, Phase::Closing(_))
+		self.motion.is_some_and(|motion| !motion.is_open())
 	}
 
-	/// Plays the exit motion, then emits [`Closed`].
+	/// Plays the exit motion from wherever the entrance is, then emits [`Closed`].
 	pub fn close(&mut self, cx: &mut Context<Self>) {
 		if self.is_closing() {
 			return;
 		}
-		self.phase = Phase::Closing(Instant::now());
+		let motion = self.motion.get_or_insert_with(Transition::opening);
+		motion.set(false, TIMING);
+		let left = if cx.reduce_motion() {
+			Duration::ZERO
+		} else {
+			motion.remaining(TIMING)
+		};
 		self._close = Some(cx.spawn(async move |this, cx| {
-			cx.background_executor().timer(CLOSE).await;
+			cx.background_executor().timer(left).await;
 			this.update(cx, |_, cx| cx.emit(Closed)).ok();
 		}));
 		cx.notify();
 	}
 
+	/// Turns a closing dialog back open from where its exit has got to, keeping its section and
+	/// search.
+	pub fn reopen(&mut self, cx: &mut Context<Self>) {
+		if let Some(motion) = &mut self.motion {
+			motion.set(true, TIMING);
+		}
+		self._close = None;
+		cx.notify();
+	}
+
 	/// How far open the dialog is, eased, and whether it is still moving.
-	fn progress(&mut self) -> (f32, bool) {
-		let (start, duration, opening) = match &mut self.phase {
-			Phase::Opening(start) => (*start.get_or_insert_with(Instant::now), OPEN, true),
-			Phase::Closing(start) => (*start, CLOSE, false),
-		};
-		let t = (start.elapsed().as_secs_f32() / duration.as_secs_f32()).min(1.);
-		let open = if opening { ease(t) } else { 1. - ease(t) };
-		(open, t < 1.)
+	fn progress(&mut self, reduce_motion: bool) -> (f32, bool) {
+		let motion = self.motion.get_or_insert_with(Transition::opening);
+		if reduce_motion {
+			return (f32::from(u8::from(motion.is_open())), false);
+		}
+		(motion.value(TIMING), motion.is_moving(TIMING))
 	}
 
 	fn visible_categories(&self, cx: &App) -> Vec<(&'static str, Vec<Section>)> {
@@ -250,7 +263,7 @@ impl SettingsDialog {
 		SmoothScroll::new("settings-sidebar-glide", &self.sidebar_scroll, sidebar)
 	}
 
-	/// A section's row; pressing shrinks its face like the app's sidebar rows.
+	/// A section's row; pressing shrinks its plate like the app's sidebar rows.
 	fn render_row(&self, section: Section, s: Scale, cx: &mut Context<Self>) -> impl IntoElement {
 		let active = section == self.section;
 		let (text, glyph) = if active {
@@ -258,42 +271,42 @@ impl SettingsDialog {
 		} else {
 			(theme::TEXT_SECONDARY, theme::TEXT_MUTED)
 		};
-		let face = move |press: f32| {
-			let k = Scale(s.0 * press);
-			let inset = relative((1. - press) / 2.);
-			div()
-				.absolute()
-				.top(inset)
-				.bottom(inset)
-				.left(inset)
-				.right(inset)
-				.flex()
-				.items_center()
-				.gap(k.px(10.))
-				.px(k.px(12.))
-				.rounded(k.px(8.))
-				.text_size(k.px(13.))
-				.text_color(theme::color(text))
-				.map(|face| {
-					if active {
-						face.bg(theme::color(theme::HOVER))
-							.font_weight(FontWeight::MEDIUM)
-					} else {
-						face.group_hover(ROW_GROUP, |face| {
-							face.bg(theme::alpha(theme::HOVER, 0.6))
-								.text_color(theme::color(theme::TEXT))
-						})
-					}
-				})
-				.child(icon(section.icon(), k.px(16.), glyph))
-				.child(div().min_w_0().truncate().child(section.label()))
-				.into_any_element()
+		let plate = move |plate: gpui::Div, press: f32| {
+			plate.rounded(Scale(s.0 * press).px(8.)).map(|plate| {
+				if active {
+					plate.bg(theme::color(theme::HOVER))
+				} else {
+					plate.group_hover(ROW_GROUP, |plate| plate.bg(theme::alpha(theme::HOVER, 0.6)))
+				}
+			})
 		};
+		let content = div()
+			.relative()
+			.size_full()
+			.flex()
+			.items_center()
+			.gap(s.px(10.))
+			.px(s.px(12.))
+			.text_size(s.px(13.))
+			.text_color(theme::color(text))
+			.map(|content| {
+				if active {
+					content.font_weight(FontWeight::MEDIUM)
+				} else {
+					content.group_hover(ROW_GROUP, |content| {
+						content.text_color(theme::color(theme::TEXT))
+					})
+				}
+			})
+			.child(icon(section.icon(), s.px(16.), glyph))
+			.child(div().min_w_0().truncate().child(section.label()));
 		let body = div().h(s.px(34.)).group(ROW_GROUP).cursor_pointer();
-		Pressable::flat(section.label(), body, face).on_click(cx.listener(move |this, _, _, cx| {
-			this.section = section;
-			cx.notify();
-		}))
+		Pressable::flat(section.label(), body, plate)
+			.child(content)
+			.on_click(cx.listener(move |this, _, _, cx| {
+				this.section = section;
+				cx.notify();
+			}))
 	}
 
 	fn render_main(&self, s: Scale, cx: &mut Context<Self>) -> impl IntoElement {
@@ -377,7 +390,7 @@ fn bind(
 
 impl Render for SettingsDialog {
 	fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-		let (open, moving) = self.progress();
+		let (open, moving) = self.progress(cx.reduce_motion());
 		if moving {
 			window.request_animation_frame();
 		}
