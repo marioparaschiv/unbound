@@ -1,6 +1,6 @@
 # Plugins
 
-190 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+191 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -41,6 +41,7 @@
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Copy Command Mentions](https://unbound.rip/addons/unbound.copy-command-mentions): Copies the clickable mention of the slash command a bot reply came from, like </ping:123>, from the message's long-press menu.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Copy Image](https://unbound.rip/addons/unbound.copy-image): Adds Copy Image to the media viewer's share menu, which copies the picture itself as a PNG that any app can paste.
 - <img src="../../assets/plugins/readme-icons/calendar-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Cron Explainer](https://unbound.rip/addons/unbound.cron-explainer): Explains cron expressions with /cron and lists their next runs in the timezone you pick.
+- <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Cross Mod Badges](https://unbound.rip/addons/unbound.cross-mod-badges): Shows the badges people have from other client mods, such as Vencord, Aliucord and BetterDiscord, on their profile.
 - <img src="../../assets/plugins/readme-icons/shop-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Currency Conversions](https://unbound.rip/addons/unbound.currency-conversions): Adds approximate conversions to your currency next to prices in messages, like $25 (≈ €22.62).
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom Commands](https://unbound.rip/addons/unbound.custom-commands): Create slash commands that send saved text, images, and videos.
 - <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Custom RPC](https://unbound.rip/addons/unbound.custom-rpc): Shows a Rich Presence of your own on your profile: any name, text, images, timer and buttons.
