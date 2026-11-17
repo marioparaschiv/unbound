@@ -1,0 +1,17 @@
+{
+	"id": "unbound.animalese",
+	"name": "Animalese",
+	"description": "Reads new messages aloud in a babbling animal voice, like the villagers of a certain island game.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "VoiceNormalIcon",
+	"main": "index.tsx"
+}
