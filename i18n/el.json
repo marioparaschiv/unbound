@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "Το {name} προστέθηκε στα εικονίδια εφαρμογής σου.",
 	"UNBOUND_APP_ICON_REMOVED": "Το {name} αφαιρέθηκε.",
 	"UNBOUND_APP_ICON_PENDING": "Το {name} αργεί περισσότερο από το συνηθισμένο· άνοιξε ξανά την επιλογή εικονιδίου εφαρμογής σε λίγο.",
-	"UNBOUND_PATCH_REMOVED": "Ένα patch στο {name} προκαλούσε συνεχώς κατάρρευση, οπότε απενεργοποιήθηκε."
+	"UNBOUND_PATCH_REMOVED": "Ένα patch στο {name} προκαλούσε συνεχώς κατάρρευση, οπότε απενεργοποιήθηκε.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "Πριν γράψεις στο #chat",
+	"UNBOUND_SUPPORT_GATE_HEADING": "Αυτό δεν είναι το κανάλι υποστήριξης",
+	"UNBOUND_SUPPORT_GATE_BODY": "Το #chat είναι η γενική συζήτηση του server, αλλά δεν είναι κανάλι υποστήριξης. Κανείς εδώ δεν θα βοηθήσει με την εγκατάσταση, τη ρύθμιση ή τη διόρθωση του Unbound, και οι ερωτήσεις υποστήριξης εδώ μένουν αναπάντητες.\n\nΓια βοήθεια, κάνε μια ανάρτηση στο φόρουμ υποστήριξης, όπου απαντούν η ομάδα και οι βοηθοί.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Μετάβαση στο φόρουμ υποστήριξης",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Πού ζητάς βοήθεια για το Unbound;",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Εδώ στο #chat",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "Στο φόρουμ υποστήριξης",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "Με μήνυμα σε μέλος της ομάδας",
+	"UNBOUND_SUPPORT_GATE_WRONG": "Δεν είναι αυτό. Διάβασε ξανά την ειδοποίηση· ο χρονομετρητής ξεκίνησε από την αρχή.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Συνέχισε να διαβάζεις ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "Κατάλαβα, το #chat δεν είναι για υποστήριξη",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Απάντησε πρώτα στην παραπάνω ερώτηση",
+	"UNBOUND_SUPPORT_GATE_LATER": "Όχι τώρα",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "Αποδέξου την ειδοποίηση πριν γράψεις στο #chat",
+	"UNBOUND_SUPPORT_BANNER": "Χρειάζεσαι βοήθεια; Το #chat δεν είναι για υποστήριξη.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Φόρουμ υποστήριξης"
 }

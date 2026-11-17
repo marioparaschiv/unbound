@@ -50,6 +50,8 @@ const DEFAULTS = {
 	'loader.devtools': false,
 	'discord-support.warned': '',
 	'profile-expiry.warned': '',
+	/** The user id that accepted the support gate in Unbound's server chat. */
+	'support-gate.accepted': '',
 };
 
 /** The value type of every core setting. */

@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "已將 {name} 加入你的應用程式圖示。",
 	"UNBOUND_APP_ICON_REMOVED": "已移除 {name}。",
 	"UNBOUND_APP_ICON_PENDING": "{name} 花費的時間比平常久；請稍後重新開啟應用程式圖示選擇器。",
-	"UNBOUND_PATCH_REMOVED": "{name} 上的某個修補持續導致當機，因此已將其停用。"
+	"UNBOUND_PATCH_REMOVED": "{name} 上的某個修補持續導致當機，因此已將其停用。",
+	"UNBOUND_SUPPORT_GATE_TITLE": "在 #chat 發言之前",
+	"UNBOUND_SUPPORT_GATE_HEADING": "這裡不是支援頻道",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat 是伺服器的綜合聊天頻道，但不是支援頻道。這裡沒有人會幫你安裝、設定或修復 Unbound，在這裡提出的支援問題不會得到回覆。\n\n如需協助，請在支援論壇發文，工作人員和協助者會在那裡回答。",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "前往支援論壇",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "你應該在哪裡尋求 Unbound 的協助？",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "就在 #chat 這裡",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "在支援論壇",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "私訊工作人員",
+	"UNBOUND_SUPPORT_GATE_WRONG": "不對。請重新閱讀提示；計時已重新開始。",
+	"UNBOUND_SUPPORT_GATE_WAIT": "請繼續閱讀（{seconds}）",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "我明白了，#chat 不用於支援",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "請先回答上面的問題",
+	"UNBOUND_SUPPORT_GATE_LATER": "之後再說",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "在 #chat 發言前請先接受提示",
+	"UNBOUND_SUPPORT_BANNER": "需要協助？#chat 不用於支援。",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "支援論壇"
 }

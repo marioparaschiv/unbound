@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "{name} har lagts till bland dina appikoner.",
 	"UNBOUND_APP_ICON_REMOVED": "{name} har tagits bort.",
 	"UNBOUND_APP_ICON_PENDING": "{name} tar längre tid än vanligt. Öppna appikonväljaren igen om en stund.",
-	"UNBOUND_PATCH_REMOVED": "En patch för {name} kraschade upprepade gånger och har därför stängts av."
+	"UNBOUND_PATCH_REMOVED": "En patch för {name} kraschade upprepade gånger och har därför stängts av.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "Innan du skriver i #chat",
+	"UNBOUND_SUPPORT_GATE_HEADING": "Det här är inte supportkanalen",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat är serverns allmänna chatt, men det är ingen supportkanal. Ingen här hjälper till med att installera, ställa in eller laga Unbound, och supportfrågor här förblir obesvarade.\n\nFör hjälp, skapa ett inlägg i supportforumet, där teamet och hjälpare svarar.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Gå till supportforumet",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Var ber du om hjälp med Unbound?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Här i #chat",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "I supportforumet",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "Genom att skriva till någon i teamet",
+	"UNBOUND_SUPPORT_GATE_WRONG": "Det stämmer inte. Läs meddelandet igen; timern har startat om.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Fortsätt läsa ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "Jag förstår, #chat är inte för support",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Svara först på frågan ovan",
+	"UNBOUND_SUPPORT_GATE_LATER": "Inte nu",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "Godkänn meddelandet innan du skriver i #chat",
+	"UNBOUND_SUPPORT_BANNER": "Behöver du hjälp? #chat är inte för support.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Supportforum"
 }

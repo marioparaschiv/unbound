@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "Ikona {name} přidána do ikon aplikace.",
 	"UNBOUND_APP_ICON_REMOVED": "Ikona {name} odebrána.",
 	"UNBOUND_APP_ICON_PENDING": "{name} trvá déle než obvykle; za chvíli znovu otevři výběr ikony aplikace.",
-	"UNBOUND_PATCH_REMOVED": "Patch pro {name} opakovaně padal, proto byl vypnut."
+	"UNBOUND_PATCH_REMOVED": "Patch pro {name} opakovaně padal, proto byl vypnut.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "Než napíšeš do #chat",
+	"UNBOUND_SUPPORT_GATE_HEADING": "Tohle není kanál podpory",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat je obecný chat serveru, ale není to kanál podpory. Nikdo tu nepomůže s instalací, nastavením ani opravou Unbound a dotazy na podporu tu zůstanou bez odpovědi.\n\nPro pomoc vytvoř příspěvek na fóru podpory, kde odpovídá tým a pomocníci.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Přejít na fórum podpory",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Kde žádáš o pomoc s Unbound?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Tady v #chat",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "Na fóru podpory",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "Napsáním členovi týmu",
+	"UNBOUND_SUPPORT_GATE_WRONG": "To není ono. Přečti si upozornění znovu; časovač se restartoval.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Čti dál ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "Rozumím, #chat není pro podporu",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Nejdřív odpověz na otázku výše",
+	"UNBOUND_SUPPORT_GATE_LATER": "Teď ne",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "Před psaním do #chat přijmi upozornění",
+	"UNBOUND_SUPPORT_BANNER": "Potřebuješ pomoc? #chat není pro podporu.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Fórum podpory"
 }

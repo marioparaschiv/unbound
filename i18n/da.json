@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "Føjede {name} til dine appikoner.",
 	"UNBOUND_APP_ICON_REMOVED": "Fjernede {name}.",
 	"UNBOUND_APP_ICON_PENDING": "{name} tager længere tid end normalt. Åbn vælgeren af appikoner igen om et øjeblik.",
-	"UNBOUND_PATCH_REMOVED": "Et patch på {name} blev ved med at gå ned, så det blev slået fra."
+	"UNBOUND_PATCH_REMOVED": "Et patch på {name} blev ved med at gå ned, så det blev slået fra.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "Før du skriver i #chat",
+	"UNBOUND_SUPPORT_GATE_HEADING": "Dette er ikke supportkanalen",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat er serverens generelle chat, men det er ikke en supportkanal. Ingen her hjælper med at installere, sætte op eller rette Unbound, og supportspørgsmål her bliver ikke besvaret.\n\nFor hjælp skal du oprette et opslag i supportforummet, hvor teamet og hjælpere svarer.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Gå til supportforummet",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Hvor beder du om hjælp med Unbound?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Her i #chat",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "I supportforummet",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "Ved at skrive til et teammedlem",
+	"UNBOUND_SUPPORT_GATE_WRONG": "Det er ikke rigtigt. Læs meddelelsen igen; timeren er startet forfra.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Bliv ved med at læse ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "Forstået, #chat er ikke til support",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Besvar først spørgsmålet ovenfor",
+	"UNBOUND_SUPPORT_GATE_LATER": "Ikke nu",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "Accepter meddelelsen, før du skriver i #chat",
+	"UNBOUND_SUPPORT_BANNER": "Brug for hjælp? #chat er ikke til support.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Supportforum"
 }

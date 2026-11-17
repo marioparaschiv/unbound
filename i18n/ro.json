@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "{name} a fost adăugată la pictogramele aplicației.",
 	"UNBOUND_APP_ICON_REMOVED": "{name} a fost eliminată.",
 	"UNBOUND_APP_ICON_PENDING": "{name} durează mai mult decât de obicei; redeschide selectorul de pictograme ale aplicației peste câteva momente.",
-	"UNBOUND_PATCH_REMOVED": "Un patch pentru {name} se tot bloca, așa că a fost dezactivat."
+	"UNBOUND_PATCH_REMOVED": "Un patch pentru {name} se tot bloca, așa că a fost dezactivat.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "Înainte să scrii în #chat",
+	"UNBOUND_SUPPORT_GATE_HEADING": "Acesta nu este canalul de suport",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat este chatul general al serverului, dar nu este un canal de suport. Nimeni de aici nu va ajuta la instalarea, configurarea sau repararea Unbound, iar întrebările de suport scrise aici rămân fără răspuns.\n\nPentru ajutor, creează o postare în forumul de suport, unde răspund echipa și ajutoarele.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Mergi la forumul de suport",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Unde ceri ajutor pentru Unbound?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Aici în #chat",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "În forumul de suport",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "Trimițând mesaj unui membru al echipei",
+	"UNBOUND_SUPPORT_GATE_WRONG": "Nu e corect. Citește din nou avertismentul; cronometrul a repornit.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Continuă să citești ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "Am înțeles, #chat nu este pentru suport",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Răspunde mai întâi la întrebarea de mai sus",
+	"UNBOUND_SUPPORT_GATE_LATER": "Nu acum",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "Acceptă avertismentul înainte să scrii în #chat",
+	"UNBOUND_SUPPORT_BANNER": "Ai nevoie de ajutor? #chat nu este pentru suport.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Forum de suport"
 }

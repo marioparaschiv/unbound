@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "{name} toegevoegd aan je app-pictogrammen.",
 	"UNBOUND_APP_ICON_REMOVED": "{name} verwijderd.",
 	"UNBOUND_APP_ICON_PENDING": "{name} duurt langer dan normaal. Open de app-pictogramkiezer zo meteen opnieuw.",
-	"UNBOUND_PATCH_REMOVED": "Een patch op {name} bleef crashen en is daarom uitgeschakeld."
+	"UNBOUND_PATCH_REMOVED": "Een patch op {name} bleef crashen en is daarom uitgeschakeld.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "Voordat je in #chat post",
+	"UNBOUND_SUPPORT_GATE_HEADING": "Dit is niet het supportkanaal",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat is de algemene chat van de server, maar het is geen supportkanaal. Niemand hier helpt met installeren, instellen of repareren van Unbound, en supportvragen hier blijven onbeantwoord.\n\nMaak voor hulp een bericht in het supportforum, waar het team en helpers antwoorden.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Naar het supportforum",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Waar vraag je om hulp met Unbound?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Hier in #chat",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "In het supportforum",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "Door een teamlid een bericht te sturen",
+	"UNBOUND_SUPPORT_GATE_WRONG": "Dat klopt niet. Lees de melding opnieuw; de timer is opnieuw gestart.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Blijf lezen ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "Begrepen, #chat is niet voor support",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Beantwoord eerst de vraag hierboven",
+	"UNBOUND_SUPPORT_GATE_LATER": "Niet nu",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "Accepteer de melding voordat je in #chat post",
+	"UNBOUND_SUPPORT_BANNER": "Hulp nodig? #chat is niet voor support.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Supportforum"
 }

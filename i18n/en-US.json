@@ -623,5 +623,21 @@
 	"UNBOUND_CRASH_REPORT_ALWAYS": "Always Send",
 	"UNBOUND_CRASH_REPORT_NOT_NOW": "Not Now",
 	"UNBOUND_CRASH_REPORT_OUTSIDE": "Report sent, thanks. This crash happened in Discord itself, not in Unbound, so no issue was opened.",
-	"UNBOUND_CRASH_REPORT_THIRD_PARTY": "Report sent, thanks. {name} isn't made by Unbound, so tell its author about the crash too."
+	"UNBOUND_CRASH_REPORT_THIRD_PARTY": "Report sent, thanks. {name} isn't made by Unbound, so tell its author about the crash too.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "Before you post in #chat",
+	"UNBOUND_SUPPORT_GATE_HEADING": "This is not the support channel",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat is the server's general chat, but it is not a support channel. Nobody here will help with installing, setting up or fixing Unbound, and support questions posted here go unanswered.\n\nFor help, make a post in the support forum, where staff and helpers answer.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Go to the support forum",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Where do you ask for help with Unbound?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Here in #chat",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "In the support forum",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "By messaging a staff member",
+	"UNBOUND_SUPPORT_GATE_WRONG": "That's not it. Read the notice again; the timer has restarted.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Keep reading ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "I understand, #chat is not for support",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Answer the question above",
+	"UNBOUND_SUPPORT_GATE_LATER": "Not now",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "Accept the notice before posting in #chat",
+	"UNBOUND_SUPPORT_BANNER": "Need help? #chat isn't for support.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Support forum"
 }

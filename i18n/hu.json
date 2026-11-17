@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "{name} hozzáadva az alkalmazásikonokhoz.",
 	"UNBOUND_APP_ICON_REMOVED": "{name} eltávolítva.",
 	"UNBOUND_APP_ICON_PENDING": "{name} a szokásosnál tovább tart; kicsit később nyisd meg újra az alkalmazásikon-választót.",
-	"UNBOUND_PATCH_REMOVED": "{name} egyik patch-e ismételten összeomlást okozott, ezért kikapcsoltuk."
+	"UNBOUND_PATCH_REMOVED": "{name} egyik patch-e ismételten összeomlást okozott, ezért kikapcsoltuk.",
+	"UNBOUND_SUPPORT_GATE_TITLE": "Mielőtt írsz a #chat csatornába",
+	"UNBOUND_SUPPORT_GATE_HEADING": "Ez nem a támogatási csatorna",
+	"UNBOUND_SUPPORT_GATE_BODY": "A #chat a szerver általános csevegője, de nem támogatási csatorna. Itt senki sem segít az Unbound telepítésében, beállításában vagy javításában, és az ide írt támogatási kérdések megválaszolatlanok maradnak.\n\nSegítségért írj bejegyzést a támogatási fórumba, ahol a csapat és a segítők válaszolnak.",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "Ugrás a támogatási fórumra",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "Hol kérsz segítséget az Unboundhoz?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "Itt a #chat csatornában",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "A támogatási fórumban",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "Üzenetben egy csapattagnak",
+	"UNBOUND_SUPPORT_GATE_WRONG": "Nem ez a helyes. Olvasd el újra a figyelmeztetést; az időzítő újraindult.",
+	"UNBOUND_SUPPORT_GATE_WAIT": "Olvass tovább ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "Értem, a #chat nem támogatásra való",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "Előbb válaszolj a fenti kérdésre",
+	"UNBOUND_SUPPORT_GATE_LATER": "Most nem",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "Fogadd el a figyelmeztetést, mielőtt a #chat csatornába írsz",
+	"UNBOUND_SUPPORT_BANNER": "Segítség kell? A #chat nem támogatásra való.",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Támogatási fórum"
 }

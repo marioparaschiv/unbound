@@ -417,5 +417,21 @@
 	"UNBOUND_APP_ICON_ADDED": "เพิ่ม {name} ไปยังไอคอนแอปของคุณแล้ว",
 	"UNBOUND_APP_ICON_REMOVED": "ลบ {name} แล้ว",
 	"UNBOUND_APP_ICON_PENDING": "{name} ใช้เวลานานกว่าปกติ โปรดเปิดตัวเลือกไอคอนแอปอีกครั้งในอีกสักครู่",
-	"UNBOUND_PATCH_REMOVED": "แพตช์บน {name} แครชซ้ำๆ จึงถูกปิดไว้"
+	"UNBOUND_PATCH_REMOVED": "แพตช์บน {name} แครชซ้ำๆ จึงถูกปิดไว้",
+	"UNBOUND_SUPPORT_GATE_TITLE": "ก่อนโพสต์ใน #chat",
+	"UNBOUND_SUPPORT_GATE_HEADING": "นี่ไม่ใช่ช่องสำหรับขอความช่วยเหลือ",
+	"UNBOUND_SUPPORT_GATE_BODY": "#chat เป็นช่องแชททั่วไปของเซิร์ฟเวอร์ แต่ไม่ใช่ช่องสำหรับขอความช่วยเหลือ ที่นี่จะไม่มีใครช่วยติดตั้ง ตั้งค่า หรือแก้ปัญหา Unbound และคำถามเรื่องความช่วยเหลือที่โพสต์ที่นี่จะไม่ได้รับคำตอบ\n\nหากต้องการความช่วยเหลือ ให้สร้างโพสต์ในฟอรัมช่วยเหลือ ซึ่งทีมงานและผู้ช่วยจะตอบ",
+	"UNBOUND_SUPPORT_GATE_OPEN_FORUM": "ไปที่ฟอรัมช่วยเหลือ",
+	"UNBOUND_SUPPORT_GATE_QUESTION": "คุณขอความช่วยเหลือเรื่อง Unbound ที่ไหน?",
+	"UNBOUND_SUPPORT_GATE_ANSWER_CHAT": "ที่นี่ใน #chat",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FORUM": "ในฟอรัมช่วยเหลือ",
+	"UNBOUND_SUPPORT_GATE_ANSWER_DM": "ส่งข้อความหาทีมงาน",
+	"UNBOUND_SUPPORT_GATE_WRONG": "ไม่ถูกต้อง อ่านคำเตือนอีกครั้ง ตัวจับเวลาเริ่มใหม่แล้ว",
+	"UNBOUND_SUPPORT_GATE_WAIT": "อ่านต่อ ({seconds})",
+	"UNBOUND_SUPPORT_GATE_ACCEPT": "เข้าใจแล้ว #chat ไม่ใช่ที่ขอความช่วยเหลือ",
+	"UNBOUND_SUPPORT_GATE_ANSWER_FIRST": "ตอบคำถามด้านบนก่อน",
+	"UNBOUND_SUPPORT_GATE_LATER": "ไว้ทีหลัง",
+	"UNBOUND_SUPPORT_GATE_BLOCKED": "ยอมรับคำเตือนก่อนโพสต์ใน #chat",
+	"UNBOUND_SUPPORT_BANNER": "ต้องการความช่วยเหลือ? #chat ไม่ใช่ที่ขอความช่วยเหลือ",
+	"UNBOUND_SUPPORT_BANNER_ACTION": "ฟอรัมช่วยเหลือ"
 }
