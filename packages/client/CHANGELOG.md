@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.0](https://github.com/marioparaschiv/unbound/compare/client-v3.7.0...client-v3.8.0) (2026-11-17)
+
+
+### Features
+
+* **client:** identify a tapped element's theme colours ([#1703](https://github.com/marioparaschiv/unbound/issues/1703)) ([a894922](https://github.com/marioparaschiv/unbound/commit/a894922e044e7d32c04d018efd2f14bf10c2e56b))
+
 ## [3.7.0](https://github.com/marioparaschiv/unbound/compare/client-v3.6.0...client-v3.7.0) (2026-11-16)
 
 

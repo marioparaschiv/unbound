@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.3.1](https://github.com/marioparaschiv/unbound/compare/cli-v3.3.0...cli-v3.3.1) (2026-11-17)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/api bumped to 3.8.0
+
 ## [3.3.0](https://github.com/marioparaschiv/unbound/compare/cli-v3.2.3...cli-v3.3.0) (2026-11-16)
 
 
