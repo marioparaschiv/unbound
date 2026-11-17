@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 
+import { expandCoverage } from '../src/lib/coverage-sets';
 import { FLUENT_COMMIT, FLUENT_REPOSITORY } from '../src/lib/sources';
 
 const NOTO_ANIMATED_INDEX = 'https://googlefonts.github.io/noto-emoji-animation/data/api.json';
@@ -37,6 +38,22 @@ function folded(keys: Set<string>): string {
 	return listed.sort().join(' ');
 }
 
+function bitmap(keys: string[], marked: Set<string>): string {
+	let hex = '';
+
+	for (let index = 0; index < keys.length; index += 4) {
+		let digit = 0;
+
+		for (let bit = 0; bit < 4; bit++) {
+			if (marked.has(keys[index + bit] ?? '')) digit |= 8 >> bit;
+		}
+
+		hex += digit.toString(16);
+	}
+
+	return hex;
+}
+
 async function fluentFolder(folder: string): Promise<Set<string>> {
 	const response = await fetch(
 		`https://api.github.com/repos/${FLUENT_REPOSITORY}/git/trees/${FLUENT_COMMIT}:${folder}`,
@@ -59,16 +76,16 @@ async function notoAnimated(): Promise<Set<string>> {
 	return new Set(icons.map(({ codepoint }) => shortKey(codepoint.split('_'))));
 }
 
-const animated = await fluentFolder('animated-static');
-const still = await fluentFolder('static');
+const fluent = folded(await fluentFolder('static'));
+const moving = await fluentFolder('animated');
 
 await Bun.write(
 	output,
 	`${JSON.stringify(
 		{
-			fluentAnimated: folded(animated),
-			fluentStill: folded(new Set([...still].filter((key) => !animated.has(key)))),
-			notoAnimated: folded(await notoAnimated()),
+			fluent,
+			fluentMoving: bitmap(expandCoverage(fluent), moving),
+			notoMoving: folded(await notoAnimated()),
 		},
 		null,
 		'\t',

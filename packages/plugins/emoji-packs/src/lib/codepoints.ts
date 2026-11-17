@@ -1,6 +1,5 @@
 const VARIATION_SELECTOR = 'fe0f';
 const ZERO_WIDTH_JOINER = '200d';
-const SKIN_TONES = ['1f3fb', '1f3fc', '1f3fd', '1f3fe', '1f3ff'];
 
 /**
  * @description Splits an emoji into its code points, as lowercase hex.
@@ -41,20 +40,6 @@ export function coverageKey(points: string[]): string {
 	}
 
 	return key;
-}
-
-/**
- * @description The coverage key with every skin tone replaced by `T`, which a pack lists when it has all five tones.
- * @param key A key from `coverageKey`.
- * @returns The key covering every tone.
- */
-export function toneTemplate(key: string): string {
-	'worklet';
-	let template = key;
-
-	for (const tone of SKIN_TONES) template = template.split(tone).join('T');
-
-	return template;
 }
 
 /**

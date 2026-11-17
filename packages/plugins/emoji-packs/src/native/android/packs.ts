@@ -4,6 +4,9 @@ import coverage from '~/lib/coverage.json';
 import type { PackId } from '~/lib/packs';
 import { installEmojiPack, setEmojiPack } from '~/native/android/worklets';
 
+const SEARCH_ATTEMPTS = 4;
+const SEARCH_RETRY_MS = 2000;
+
 const EMOJI_MODEL_SHAPE = {
 	methods: [
 		{ name: 'a', parameters: [], returns: 'java.lang.String' },
@@ -22,21 +25,36 @@ const EMOJI_MODEL_SHAPE = {
 export function packsAndroid(native: NativeBridge, pack: () => PackId) {
 	const scope = native.ui.createScope();
 	let disposed = false;
+	let retry: ReturnType<typeof setTimeout> | undefined;
 
-	native.java
-		.findClasses(EMOJI_MODEL_SHAPE)
-		.then((classes) => {
-			if (disposed) return;
+	function install(attempt: number) {
+		native.java
+			.findClasses(EMOJI_MODEL_SHAPE)
+			.then((classes) => {
+				if (disposed) return;
 
-			if (classes.length === 0) {
-				logger.warn('Failed to find the emoji models: no class matched');
+				if (classes.length === 0) {
+					logger.warn('Failed to find the emoji models: no class matched');
 
-				return;
-			}
+					return;
+				}
 
-			native.ui.run(installEmojiPack, scope, classes, pack(), coverage);
-		})
-		.catch((error: unknown) => logger.error('Failed to find the emoji models:', error));
+				native.ui.run(installEmojiPack, scope, classes, pack(), coverage);
+			})
+			.catch((error: unknown) => {
+				if (disposed) return;
+
+				if (attempt >= SEARCH_ATTEMPTS) {
+					logger.error('Failed to find the emoji models:', error);
+
+					return;
+				}
+
+				retry = setTimeout(() => install(attempt + 1), SEARCH_RETRY_MS * attempt);
+			});
+	}
+
+	install(1);
 
 	return {
 		refresh() {
@@ -44,6 +62,7 @@ export function packsAndroid(native: NativeBridge, pack: () => PackId) {
 		},
 		dispose() {
 			disposed = true;
+			clearTimeout(retry);
 			scope.dispose();
 		},
 	};

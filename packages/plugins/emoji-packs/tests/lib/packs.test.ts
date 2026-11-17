@@ -1,31 +1,33 @@
 import { describe, expect, test } from 'bun:test';
 
 import coverage from '~/lib/coverage.json';
-import { coverageSets, packUrl } from '~/lib/packs';
-import { FLUENT_BASE, NOTO_ANIMATED_BASE, NOTO_BASE } from '~/lib/sources';
+import { coverageSets } from '~/lib/coverage-sets';
+import { packUrl } from '~/lib/packs';
+import { FLUENT_BASE, FLUENT_MOVING_BASE, NOTO_ANIMATED_BASE, NOTO_BASE } from '~/lib/sources';
 
 const sets = coverageSets(coverage);
 
 describe('packUrl', () => {
-	test('draws Fluent emoji animated, still ones from the still set', () => {
+	test('draws Fluent emoji animated where Microsoft animated them, else still', () => {
 		expect(packUrl('fluent-animated', '\u{1F600}', sets)).toBe(
-			`${FLUENT_BASE}/animated-static/1f600.png`,
+			`${FLUENT_MOVING_BASE}/1f600.webp`,
 		);
-		expect(packUrl('fluent-animated', '❤️', sets)).toBe(
-			`${FLUENT_BASE}/animated-static/2764-fe0f.png`,
-		);
+		expect(packUrl('fluent-animated', '❤️', sets)).toBe(`${FLUENT_MOVING_BASE}/2764-fe0f.webp`);
 		expect(packUrl('fluent-animated', '#️⃣', sets)).toBe(
-			`${FLUENT_BASE}/animated-static/23-fe0f-20e3.png`,
+			`${FLUENT_BASE}/static/23-fe0f-20e3.png`,
 		);
-		expect(packUrl('fluent', '\u{1F600}', sets)).toBe(`${FLUENT_BASE}/static/1f600.png`);
 		expect(packUrl('fluent-animated', '\u{1FAE8}', sets)).toBe(
 			`${FLUENT_BASE}/static/1fae8.png`,
 		);
+		expect(packUrl('fluent', '\u{1F600}', sets)).toBe(`${FLUENT_BASE}/static/1f600.png`);
 	});
 
 	test('finds skin tones through folded entries', () => {
 		expect(packUrl('fluent-animated', '\u{1F44D}\u{1F3FD}', sets)).toBe(
-			`${FLUENT_BASE}/animated-static/1f44d-1f3fd.png`,
+			`${FLUENT_MOVING_BASE}/1f44d-1f3fd.webp`,
+		);
+		expect(packUrl('fluent', '\u{1F44D}\u{1F3FD}', sets)).toBe(
+			`${FLUENT_BASE}/static/1f44d-1f3fd.png`,
 		);
 	});
 
