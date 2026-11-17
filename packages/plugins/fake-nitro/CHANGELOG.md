@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1] - 2026-11-17
+
+### Fixed
+
+- Stickers picked into the message box send as links when you can't use them; before, only stickers sent on their own were caught.
+
 ## [1.2.0] - 2026-11-14
 
 ### Added
