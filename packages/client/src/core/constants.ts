@@ -47,6 +47,7 @@ export const Screens = {
 	Developer: 'UNBOUND_DEVELOPER',
 	Assets: 'UNBOUND_ASSETS',
 	Toasts: 'UNBOUND_TOASTS',
+	Crashes: 'UNBOUND_CRASHES',
 	Sync: 'UNBOUND_CLOUD_SYNC',
 	Marketplace: 'UNBOUND_MARKETPLACE',
 	AddonPage: 'UNBOUND_STORE_PAGE',
