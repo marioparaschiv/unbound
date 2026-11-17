@@ -1,0 +1,7 @@
+{
+	"SELECT": "Select Messages",
+	"TITLE": "Select Messages",
+	"HELP": "The message you pressed starts the selection. Tap another message to end it there.",
+	"COPY": "Copy {count, plural, one {# message} other {# messages}}",
+	"COPIED": "Copied {count, plural, one {# message} other {# messages}} as a transcript."
+}
