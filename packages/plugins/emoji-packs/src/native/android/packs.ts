@@ -2,7 +2,8 @@ import type { NativeBridge } from '@unbound-app/api/native';
 
 import coverage from '~/lib/coverage.json';
 import type { PackId } from '~/lib/packs';
-import { installEmojiPack, setEmojiPack } from '~/native/android/worklets';
+import { installEmojiPack, installPickerEmojiPack, setEmojiPack } from '~/native/android/worklets';
+import { findAssetMethod } from '~/native/android/asset-method';
 
 const SEARCH_ATTEMPTS = 4;
 const SEARCH_RETRY_MS = 2000;
@@ -17,7 +18,8 @@ const EMOJI_MODEL_SHAPE = {
 };
 
 /**
- * @description Draws unicode emoji from a pack on Android, through the URL method of Discord's emoji models.
+ * @description Draws unicode emoji from a pack on Android: in chat through the URL method of Discord's emoji models, in
+ * the emoji picker through the method that builds their bundled image URL.
  * @param native The plugin's native bridge.
  * @param pack Reads the chosen pack.
  * @returns `refresh`, which applies a changed pack, and `dispose`, which removes the hooks.
@@ -55,6 +57,20 @@ export function packsAndroid(native: NativeBridge, pack: () => PackId) {
 	}
 
 	install(1);
+
+	findAssetMethod(native.java)
+		.then((found) => {
+			if (disposed) return;
+
+			if (!found) {
+				logger.warn('Emoji picker keeps Discord’s emoji: found no emoji asset method.');
+
+				return;
+			}
+
+			native.ui.run(installPickerEmojiPack, scope, found.className, found.method);
+		})
+		.catch((error: unknown) => logger.error('Failed to find the emoji asset method:', error));
 
 	return {
 		refresh() {

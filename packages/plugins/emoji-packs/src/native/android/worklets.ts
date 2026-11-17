@@ -85,3 +85,31 @@ export function setEmojiPack(pack: PackId) {
 	'worklet';
 	state().pack = pack;
 }
+
+type AssetEvent = { args: NativeJavaValue[] };
+
+/**
+ * @description Draws unicode emoji in Discord's emoji picker from the pack, by answering the static method that builds
+ * their bundled image URL with the pack's image instead.
+ * @param scope The plugin's UI scope, which removes the hook on dispose.
+ * @param className The method's obfuscated class.
+ * @param method The method's obfuscated name.
+ */
+export function installPickerEmojiPack(scope: NativeUIScope, className: string, method: string) {
+	'worklet';
+	const hooks = scope.hooks as NativeJavaHooksBridge;
+
+	hooks.hook(
+		className,
+		method,
+		['java.lang.String'],
+		{ rewriteResult: true, payload: { receiver: false } },
+		(event: AssetEvent) => {
+			const { pack, sets } = state();
+			const surrogates = javaText(event.args[0]);
+			const url = sets && surrogates && packUrl(pack, surrogates, sets);
+
+			return url ? { result: javaString(url) } : undefined;
+		},
+	);
+}
