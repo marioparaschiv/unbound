@@ -46,6 +46,8 @@ invokeInvocationWithThreadPolicy(facebook::jsi::Runtime &runtime, NSInvocation *
 facebook::jsi::Value invokeWithThreadPolicy(facebook::jsi::Runtime &runtime, id target,
                                             SEL selector, NSArray *arguments,
                                             const facebook::jsi::Value *options);
+bool belongsOnMainThread(id object, SEL selector);
+facebook::jsi::Value invokeOnMainThread(facebook::jsi::Runtime &runtime, NSInvocation *invocation);
 facebook::jsi::Value instantiateWithThreadPolicy(facebook::jsi::Runtime &runtime, Class cls,
                                                  SEL selector, NSArray *arguments,
                                                  const facebook::jsi::Value *options);

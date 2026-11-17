@@ -712,13 +712,24 @@ Value invokeAsync(Runtime &runtime, id target, SEL selector, NSArray *arguments)
     return invokeInvocationAsync(runtime, prepareInvocation(target, selector, arguments));
 }
 
+bool belongsOnMainThread(id object, SEL selector)
+{
+    if ([NSThread isMainThread] || !object || object_isClass(object) ||
+        [NSObject instancesRespondToSelector:selector])
+    {
+        return false;
+    }
+
+    return [object isKindOfClass:[UIView class]] || [object isKindOfClass:[UIViewController class]]
+           || [object isKindOfClass:[CALayer class]];
+}
+
 static void warnOffMainViewCall(id object, NSString *selectorName)
 {
     static loader::threading::OffMainViewWarnings warnings([] {
         return loader::preferences::developerMode(UnboundSettingsStore());
     });
-    if ([NSThread isMainThread] || !warnings.enabled() || ![object isKindOfClass:[UIView class]] ||
-        [NSObject instancesRespondToSelector:NSSelectorFromString(selectorName)])
+    if (!warnings.enabled() || !belongsOnMainThread(object, NSSelectorFromString(selectorName)))
     {
         return;
     }
@@ -729,6 +740,14 @@ static void warnOffMainViewCall(id object, NSString *selectorName)
     {
         [Logger warning:LOG_CATEGORY_PLUGINS format:@"%s", warning->c_str()];
     }
+}
+
+Value invokeOnMainThread(Runtime &runtime, NSInvocation *invocation)
+{
+    Object options(runtime);
+    options.setProperty(runtime, "thread", String::createFromAscii(runtime, "main"));
+    Value value(runtime, options);
+    return invokeInvocationWithThreadPolicy(runtime, invocation, &value);
 }
 
 Value objcFunction(Runtime &runtime, const Value &target, const Value &selectorValue,
@@ -743,7 +762,13 @@ Value objcFunction(Runtime &runtime, const Value &target, const Value &selectorV
 
     warnOffMainViewCall(object, selectorName);
 
-    return invokeObject(runtime, object, NSSelectorFromString(selectorName),
-                        argumentArray(runtime, args, count, start));
+    SEL selector       = NSSelectorFromString(selectorName);
+    NSArray *arguments = argumentArray(runtime, args, count, start);
+    if (belongsOnMainThread(object, selector))
+    {
+        return invokeOnMainThread(runtime, prepareInvocation(object, selector, arguments));
+    }
+
+    return invokeObject(runtime, object, selector, arguments);
 }
 }

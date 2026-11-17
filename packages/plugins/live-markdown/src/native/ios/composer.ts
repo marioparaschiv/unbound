@@ -1,6 +1,7 @@
 import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
 
 import { markdownRuns, type MarkdownRun, type MarkdownStyle } from '~/lib/markdown';
+import { reportWorkletError } from '@unbound-plugins/shared/native/report-worklet-error';
 
 const STATE_KEY = '__unboundLiveMarkdown';
 const COMPOSER_CLASS = 'DCDChatInputComponentView';
@@ -231,7 +232,7 @@ export function installComposerMarkdown(scope: NativeUIScope) {
 				try {
 					paint(current, self);
 				} catch (error) {
-					console.error(`[Live Markdown] ${String(error)}`);
+					reportWorkletError('Live Markdown', error);
 				}
 			},
 		});
@@ -264,7 +265,7 @@ export function restoreComposerMarkdown() {
 				objc.call(storage, 'endEditing');
 			}
 		} catch (error) {
-			console.error(`[Live Markdown] ${String(error)}`);
+			reportWorkletError('Live Markdown', error);
 		}
 	}
 

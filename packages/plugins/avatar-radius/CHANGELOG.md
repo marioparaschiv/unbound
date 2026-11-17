@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.13] - 2026-11-17
+
+### Fixed
+
+- No longer logs an error for each avatar laid out while the plugin is stopping.
+
 ## [1.1.12] - 2026-11-14
 
 ### Changed

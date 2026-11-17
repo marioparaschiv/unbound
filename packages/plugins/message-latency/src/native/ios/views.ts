@@ -145,18 +145,14 @@ export function createMessageCells(
 		await safeInvokeAsync(objc, match.header, 'layoutIfNeeded');
 	}
 
-	function isAttached(handle: NativeObjectHandle): boolean {
-		try {
-			return Boolean(objc.call(handle, 'window'));
-		} catch {
-			return false;
-		}
+	async function isAttached(handle: NativeObjectHandle): Promise<boolean> {
+		return Boolean(await safeInvokeAsync(objc, handle, 'window'));
 	}
 
 	async function render(handle: NativeObjectHandle, key: string, revision: number) {
 		const isFresh = () => !disposed && cells.get(key)?.revision === revision;
 
-		if (!isAttached(handle)) {
+		if (!(await isAttached(handle))) {
 			disposeCell(handle);
 
 			return;

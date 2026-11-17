@@ -11,6 +11,7 @@ import {
 	javaNumber,
 	javaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
+import { reportWorkletError } from '@unbound-plugins/shared/native/report-worklet-error';
 
 const STATE_KEY = '__unboundChatBubblesBlur';
 /** How many ancestors of the chat list are searched for the chat background's image. */
@@ -393,7 +394,7 @@ export function installBlurScroll(hooks: NativeJavaHooksBridge, java: NativeJava
 			try {
 				for (const blurred of state.rows.values()) place(state, blurred);
 			} catch (error) {
-				console.error(`[Chat Bubbles] ${String(error)}`);
+				reportWorkletError('Chat Bubbles', error);
 			}
 		},
 	);

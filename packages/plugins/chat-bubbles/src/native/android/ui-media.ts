@@ -12,6 +12,7 @@ import {
 } from '@unbound-plugins/shared/native/android/java-values';
 
 import { roundMosaicOf } from '~/native/android/worklets';
+import { reportWorkletError } from '@unbound-plugins/shared/native/report-worklet-error';
 
 const STATE_KEY = '__unboundChatBubblesMosaics';
 const MOSAIC_LAYOUT =
@@ -138,7 +139,7 @@ export function installMosaicHook(scope: NativeUIScope, shape: MosaicShape) {
 
 				if (list) roundMosaicOf(list);
 			} catch (error) {
-				console.error(`[Chat Bubbles] ${String(error)}`);
+				reportWorkletError('Chat Bubbles', error);
 			}
 		},
 	);
@@ -166,7 +167,7 @@ export function restoreMosaics() {
 
 			if (list) java.invoke(list, 'requestLayout', []);
 		} catch (error) {
-			console.error(`[Chat Bubbles] ${String(error)}`);
+			reportWorkletError('Chat Bubbles', error);
 		}
 	}
 }

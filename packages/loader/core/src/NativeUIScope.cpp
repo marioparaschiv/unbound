@@ -45,7 +45,7 @@ jsi::Value UIScope::hook(jsi::Runtime &runtime, const Install &install)
 {
     if (!active())
     {
-        throw jsi::JSError(runtime, "The UI scope has been disposed");
+        throwCoded(runtime, "NATIVE_PLUGIN_SCOPE_DISPOSED", "The UI scope has been disposed");
     }
 
     AddonScope addonScope(addon_);

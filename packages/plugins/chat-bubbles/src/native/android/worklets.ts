@@ -40,6 +40,7 @@ import {
 	type RowConfig,
 	type RowKind,
 } from '~/native/android/ui-row';
+import { reportWorkletError } from '@unbound-plugins/shared/native/report-worklet-error';
 
 const STATE_KEY = '__unboundChatBubblesAndroid';
 const MAX_CACHED = 400;
@@ -196,7 +197,7 @@ export function relayoutList() {
 		java.invoke(list, 'measure', [exactly(right - left), exactly(bottom - top)]);
 		java.invoke(list, 'layout', [javaInt(left), javaInt(top), javaInt(right), javaInt(bottom)]);
 	} catch (error) {
-		console.error(`[Chat Bubbles] ${String(error)}`);
+		reportWorkletError('Chat Bubbles', error);
 	}
 }
 
@@ -408,7 +409,7 @@ export function installRowHooks(
 
 				if (!paintRow(current, row, id, kind) && event.self) needsBubble(event.self);
 			} catch (error) {
-				console.error(`[Chat Bubbles] ${String(error)}`);
+				reportWorkletError('Chat Bubbles', error);
 			}
 		},
 	);
@@ -441,7 +442,7 @@ export function installRowHooks(
 					needsBubble(row as unknown as NativeJavaValue);
 				}
 			} catch (error) {
-				console.error(`[Chat Bubbles] ${String(error)}`);
+				reportWorkletError('Chat Bubbles', error);
 			}
 		},
 	);
@@ -518,7 +519,7 @@ export function installHighlightHook(
 					onBar(id, bar);
 				}
 			} catch (error) {
-				console.error(`[Chat Bubbles] ${String(error)}`);
+				reportWorkletError('Chat Bubbles', error);
 			}
 		},
 	);
@@ -552,7 +553,7 @@ export function paintMessage(id: string, paint: RowPaint, measured: string | nul
 		remember(current.rows, id, row);
 		paintRow(current, row, id, rowKind(current.java, current.config, row));
 	} catch (error) {
-		console.error(`[Chat Bubbles] ${String(error)}`);
+		reportWorkletError('Chat Bubbles', error);
 	}
 }
 
@@ -577,7 +578,7 @@ export function setRowConfig(config: Pick<RowConfig, 'rooms' | 'inset' | 'fallba
 				paintRow(current, row, id, rowKind(current.java, current.config, row));
 			}
 		} catch (error) {
-			console.error(`[Chat Bubbles] ${String(error)}`);
+			reportWorkletError('Chat Bubbles', error);
 		}
 	}
 }
@@ -595,7 +596,7 @@ export function restoreRows() {
 		try {
 			restoreRow(current.java, current.config, row);
 		} catch (error) {
-			console.error(`[Chat Bubbles] ${String(error)}`);
+			reportWorkletError('Chat Bubbles', error);
 		}
 	}
 

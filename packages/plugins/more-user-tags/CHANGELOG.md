@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.10] - 2026-11-17
+
+### Fixed
+
+- No longer logs an error for work cut short while the plugin is stopping.
+
 ## [1.3.9] - 2026-11-16
 
 ### Fixed

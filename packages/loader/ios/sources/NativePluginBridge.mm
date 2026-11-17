@@ -34,6 +34,7 @@
 #import "NativePluginUITraversal.h"
 #import "NativeResourceBudget.h"
 #import "NativeRuntimeResources.h"
+#import "NativeThreadPolicy.h"
 #import "NativeUIScope.h"
 
 using namespace facebook;
@@ -266,10 +267,17 @@ static void installObjC(Runtime &runtime, Object &objc)
                                              ?: [NSNull null]];
                 }
 
-                id object              = objcValue(rt, args[0]);
-                NSString *selectorName = jsiString(rt, args[1]);
-                return invokeWithThreadPolicy(rt, object, NSSelectorFromString(selectorName),
-                                              arguments, count > 3 ? &args[3] : nullptr);
+                id object            = objcValue(rt, args[0]);
+                SEL selector         = NSSelectorFromString(jsiString(rt, args[1]));
+                const Value *options = count > 3 ? &args[3] : nullptr;
+                if (loader::native::threadPolicy(rt, options)
+                        == loader::native::kCurrentThreadPolicy
+                    && belongsOnMainThread(object, selector))
+                {
+                    return invokeOnMainThread(rt, prepareInvocation(object, selector, arguments));
+                }
+
+                return invokeWithThreadPolicy(rt, object, selector, arguments, options);
             }));
 
     objc.setProperty(

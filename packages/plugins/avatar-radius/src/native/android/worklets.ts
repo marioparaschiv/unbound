@@ -15,6 +15,7 @@ import {
 	javaReference,
 	javaText,
 } from '@unbound-plugins/shared/native/android/java-values';
+import { reportWorkletError } from '@unbound-plugins/shared/native/report-worklet-error';
 
 const PROBE_SIZE = 100;
 const MAX_TRACKED = 512;
@@ -165,7 +166,7 @@ function guarded(action: () => void) {
 	try {
 		action();
 	} catch (error) {
-		console.error(`[Avatar Radius] ${String(error)}`);
+		reportWorkletError('Avatar Radius', error);
 	}
 }
 
