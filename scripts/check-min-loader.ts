@@ -2,6 +2,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
 const CLIENT = `${ROOT}packages/client`;
 const EXCEPTIONS_FILE = `${CLIENT}/min-loader-exceptions.json`;
 const NATIVE_TYPINGS = /^packages\/types\/typings\/(native[^/]*|unbound-native)\.ts$/;
+const DEVELOPER_ONLY = /^tests\/|\.dev\.tsx?$/;
 const TSC_ERROR = /^(?<file>[^(]+)\(\d+,\d+\): error (?<code>TS\d+): (?<message>.+)$/;
 
 export type MinLoaderFinding = { file: string; error: string };
@@ -33,6 +34,15 @@ export function parseFindings(output: string): MinLoaderFinding[] {
 	}
 
 	return [...seen.values()];
+}
+
+/**
+ * @description Whether a finding is in code that reaches users' loaders: tests and `*.dev.ts(x)` files never do.
+ * @param finding The finding.
+ * @returns Whether it ships in the release bundle.
+ */
+export function shipsToUsers({ file }: MinLoaderFinding): boolean {
+	return !DEVELOPER_ONLY.test(file);
 }
 
 /**
@@ -177,7 +187,10 @@ if (import.meta.main) {
 
 	ensureTag(tag);
 
-	const { unreviewed, stale } = compareFindings(await findingsAgainst(tag), exceptions);
+	const { unreviewed, stale } = compareFindings(
+		(await findingsAgainst(tag)).filter(shipsToUsers),
+		exceptions,
+	);
 
 	for (const exception of stale) {
 		console.warn(`Stale exception, nothing matches it any more:\n${describe(exception)}`);

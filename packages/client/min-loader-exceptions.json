@@ -28,11 +28,6 @@
 		},
 		{
 			"file": "src/native/scope.ts",
-			"error": "TS2353: Object literal may only specify known properties, and 'findClasses' does not exist in type 'NativeObjCBridge'.",
-			"reason": "The scoped bridge exposes findClasses through scopeBridgeMethod, which throws an unavailable error on older loaders."
-		},
-		{
-			"file": "src/native/scope.ts",
 			"error": "TS2345: Argument of type '\"findClasses\"' is not assignable to parameter of type '\"alloc\" | \"array\" | \"batch\" | \"call\" | \"callSuper\" | \"className\" | \"createAssociationKey\" | \"data\" | \"disposePlan\" | \"findViews\" | \"getAssociatedObject\" | \"getClass\" | \"getIvar\" | ... 12 more ... | \"struct\"'.",
 			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders."
 		},
@@ -82,9 +77,239 @@
 			"reason": "Java subclass hooks check java.findClasses exists and fall back to the class alone."
 		},
 		{
-			"file": "tests/native/java.test.ts",
-			"error": "TS2353: Object literal may only specify known properties, and 'overloads' does not exist in type 'NativeJavaHookOptions<true>'.",
-			"reason": "The client expands overloads from java.describe itself and strips the option before calling the loader."
+			"file": "src/diagnostics/crash-reports.ts",
+			"error": "TS2339: Property 'crashStack' does not exist on type 'UnboundLaunchReport'.",
+			"reason": "Older launch reports leave crashStack out, so the report goes without a native stack."
+		},
+		{
+			"file": "src/diagnostics/push-state.ts",
+			"error": "TS2305: Module '\"@unbound-app/types\"' has no exported member 'NativePushState'.",
+			"reason": "Type-only import that loader’s typings lack; nothing runs differently."
+		},
+		{
+			"file": "src/diagnostics/read-debug-info.ts",
+			"error": "TS2339: Property 'system' does not exist on type 'UnboundLaunchReport'.",
+			"reason": "Older loaders leave these fields out and getEnvironment is called with ?., so the debug card skips those rows."
+		},
+		{
+			"file": "src/diagnostics/read-debug-info.ts",
+			"error": "TS2339: Property 'discordMB' does not exist on type 'NativeDeviceState'.",
+			"reason": "Older loaders leave these fields out and getEnvironment is called with ?., so the debug card skips those rows."
+		},
+		{
+			"file": "src/diagnostics/read-debug-info.ts",
+			"error": "TS2339: Property 'cacheMB' does not exist on type 'NativeDeviceState'.",
+			"reason": "Older loaders leave these fields out and getEnvironment is called with ?., so the debug card skips those rows."
+		},
+		{
+			"file": "src/diagnostics/read-debug-info.ts",
+			"error": "TS2339: Property 'power' does not exist on type 'NativeDeviceState'.",
+			"reason": "Older loaders leave these fields out and getEnvironment is called with ?., so the debug card skips those rows."
+		},
+		{
+			"file": "src/diagnostics/read-debug-info.ts",
+			"error": "TS2339: Property 'dns' does not exist on type 'NativeDeviceState'.",
+			"reason": "Older loaders leave these fields out and getEnvironment is called with ?., so the debug card skips those rows."
+		},
+		{
+			"file": "src/diagnostics/read-debug-info.ts",
+			"error": "TS2339: Property 'push' does not exist on type 'NativeDeviceState'.",
+			"reason": "Older loaders leave these fields out and getEnvironment is called with ?., so the debug card skips those rows."
+		},
+		{
+			"file": "src/diagnostics/read-debug-info.ts",
+			"error": "TS2339: Property 'extensions' does not exist on type 'NativeDeviceState'.",
+			"reason": "Older loaders leave these fields out and getEnvironment is called with ?., so the debug card skips those rows."
+		},
+		{
+			"file": "src/diagnostics/read-debug-info.ts",
+			"error": "TS2339: Property 'getEnvironment' does not exist on type 'NativePlatformApp'.",
+			"reason": "Older loaders leave these fields out and getEnvironment is called with ?., so the debug card skips those rows."
+		},
+		{
+			"file": "src/diagnostics/read-debug-info.ts",
+			"error": "TS2339: Property 'ffiClosures' does not exist on type 'NativeDeviceState'.",
+			"reason": "Older loaders leave these fields out and getEnvironment is called with ?., so the debug card skips those rows."
+		},
+		{
+			"file": "src/diagnostics/read-debug-info.ts",
+			"error": "TS2339: Property 'ffiClosureProbe' does not exist on type 'NativeDeviceState'.",
+			"reason": "Older loaders leave these fields out and getEnvironment is called with ?., so the debug card skips those rows."
+		},
+		{
+			"file": "src/logs/entry.ts",
+			"error": "TS2305: Module '\"@unbound-app/types\"' has no exported member 'UnboundLogEntry'.",
+			"reason": "Type-only import that loader’s typings lack; nothing runs differently."
+		},
+		{
+			"file": "src/logs/entry.ts",
+			"error": "TS2305: Module '\"@unbound-app/types\"' has no exported member 'UnboundLogLevel'.",
+			"reason": "Type-only import that loader’s typings lack; nothing runs differently."
+		},
+		{
+			"file": "src/logs/entry.ts",
+			"error": "TS2724: '\"@unbound-app/types\"' has no exported member named 'UnboundLogSource'. Did you mean 'UnboundFontSource'?",
+			"reason": "Type-only import that loader’s typings lack; nothing runs differently."
+		},
+		{
+			"file": "src/native/consent.ts",
+			"error": "TS2322: Type '\"native.ffi.memory\"' is not assignable to type 'NativeBridgeCapability'.",
+			"reason": "Capabilities older loaders never grant; consent is only asked for capabilities an addon gets."
+		},
+		{
+			"file": "src/native/consent.ts",
+			"error": "TS2820: Type '\"native.ffi.callbacks\"' is not assignable to type 'NativeBridgeCapability'. Did you mean '\"native.ffi.call\"'?",
+			"reason": "Capabilities older loaders never grant; consent is only asked for capabilities an addon gets."
+		},
+		{
+			"file": "src/native/consent.ts",
+			"error": "TS2322: Type '\"native.ffi.rebind\"' is not assignable to type 'NativeBridgeCapability'.",
+			"reason": "Capabilities older loaders never grant; consent is only asked for capabilities an addon gets."
+		},
+		{
+			"file": "src/native/native.ts",
+			"error": "TS2305: Module '\"@unbound-app/types/native\"' has no exported member 'NativeJavaBytes'.",
+			"reason": "Type-only import that loader’s typings lack; nothing runs differently."
+		},
+		{
+			"file": "src/native/native.ts",
+			"error": "TS2724: '\"@unbound-app/types/native\"' has no exported member named 'NativeJavaCallArgument'. Did you mean 'NativeJavaArgument'?",
+			"reason": "Type-only import that loader’s typings lack; nothing runs differently."
+		},
+		{
+			"file": "src/native/object-factory-ios.ts",
+			"error": "TS2344: Type '\"alloc\" | \"call\" | \"className\" | \"create\" | \"getClass\" | \"invoke\"' does not satisfy the constraint '\"alloc\" | \"array\" | \"batch\" | \"call\" | \"callSuper\" | \"className\" | \"createAssociationKey\" | \"createUIScope\" | \"data\" | \"disposePlan\" | \"findViews\" | \"getAssociatedObject\" | ... 15 more ... | keyof NativeObjCInspector'.",
+			"reason": "create is called only when the loader has it; older loaders allocate with alloc and invoke."
+		},
+		{
+			"file": "src/native/object-factory-ios.ts",
+			"error": "TS2349: This expression is not callable.",
+			"reason": "create is called only when the loader has it; older loaders allocate with alloc and invoke."
+		},
+		{
+			"file": "src/native/scope-ffi.ts",
+			"error": "TS2353: Object literal may only specify known properties, and 'alloc' does not exist in type 'NativeFFIBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-ffi.ts",
+			"error": "TS2555: Expected at least 2 arguments, but got 1.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-ffi.ts",
+			"error": "TS2345: Argument of type '\"alloc\"' is not assignable to parameter of type 'keyof NativeFFIBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-ffi.ts",
+			"error": "TS2345: Argument of type 'unknown' is not assignable to parameter of type 'NativeHandle'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-ffi.ts",
+			"error": "TS2345: Argument of type '\"free\"' is not assignable to parameter of type 'keyof NativeFFIBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-ffi.ts",
+			"error": "TS2345: Argument of type '\"read\"' is not assignable to parameter of type 'keyof NativeFFIBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-ffi.ts",
+			"error": "TS2345: Argument of type '\"write\"' is not assignable to parameter of type 'keyof NativeFFIBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-ffi.ts",
+			"error": "TS2345: Argument of type '\"readBytes\"' is not assignable to parameter of type 'keyof NativeFFIBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-ffi.ts",
+			"error": "TS2345: Argument of type '\"writeBytes\"' is not assignable to parameter of type 'keyof NativeFFIBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-ffi.ts",
+			"error": "TS2345: Argument of type '\"callback\"' is not assignable to parameter of type 'keyof NativeFFIBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-ffi.ts",
+			"error": "TS2345: Argument of type '(...args: any[]) => any' is not assignable to parameter of type 'NativeFFISignature & string'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-ffi.ts",
+			"error": "TS2345: Argument of type '\"releaseCallback\"' is not assignable to parameter of type 'keyof NativeFFIBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-ffi.ts",
+			"error": "TS2345: Argument of type '\"rebind\"' is not assignable to parameter of type 'keyof NativeFFIBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-ffi.ts",
+			"error": "TS2345: Argument of type '\"restore\"' is not assignable to parameter of type 'keyof NativeFFIBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-ffi.ts",
+			"error": "TS2339: Property 'restore' does not exist on type 'NativeFFIBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-ffi.ts",
+			"error": "TS2339: Property 'releaseCallback' does not exist on type 'NativeFFIBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-ffi.ts",
+			"error": "TS2339: Property 'free' does not exist on type 'NativeFFIBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-java.ts",
+			"error": "TS2353: Object literal may only specify known properties, and 'bytes' does not exist in type 'NativeJavaBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-java.ts",
+			"error": "TS2345: Argument of type '\"bytes\"' is not assignable to parameter of type 'keyof NativeJavaBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope-java.ts",
+			"error": "TS2345: Argument of type '\"findClasses\"' is not assignable to parameter of type 'keyof NativeJavaBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope.ts",
+			"error": "TS2345: Argument of type 'NativeObjCBridge | LoaderObjCBridge' is not assignable to parameter of type 'AllocBridge'.",
+			"reason": "createObjectFactory calls create only when the loader has it and otherwise allocates with alloc and invoke."
+		},
+		{
+			"file": "src/native/scope.ts",
+			"error": "TS2353: Object literal may only specify known properties, and 'bytes' does not exist in type 'NativeObjCBridge'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/scope.ts",
+			"error": "TS2345: Argument of type '\"bytes\"' is not assignable to parameter of type '\"alloc\" | \"array\" | \"batch\" | \"call\" | \"callSuper\" | \"className\" | \"createAssociationKey\" | \"data\" | \"disposePlan\" | \"findViews\" | \"getAssociatedObject\" | \"getClass\" | \"getIvar\" | ... 12 more ... | \"struct\"'.",
+			"reason": "scopeBridgeMethod checks the method exists and throws an unavailable error on older loaders; cleanup calls the optional methods with ?."
+		},
+		{
+			"file": "src/native/unbound-native.ts",
+			"error": "TS2339: Property 'checkForBundleUpdate' does not exist on type 'UnboundNativeBridge'.",
+			"reason": "The call is checked with ?. and resolves false on older loaders, which update the bundle themselves."
+		},
+		{
+			"file": "src/native/unbound-native.ts",
+			"error": "TS2339: Property 'updateBundle' does not exist on type 'UnboundNativeBridge'.",
+			"reason": "The call is checked with ?. and resolves false on older loaders, which update the bundle themselves."
 		}
 	]
 }
