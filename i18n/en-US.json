@@ -611,5 +611,7 @@
 	"UNBOUND_CRASH_REPORT_ASK_ADDON": "{name} crashed. A report sends the crash, the Unbound and Discord versions, your device model and the last lines of Unbound's log, with tokens, passwords and email addresses removed. It never includes your account or messages.",
 	"UNBOUND_CRASH_REPORT_SEND": "Send",
 	"UNBOUND_CRASH_REPORT_ALWAYS": "Always Send",
-	"UNBOUND_CRASH_REPORT_NOT_NOW": "Not Now"
+	"UNBOUND_CRASH_REPORT_NOT_NOW": "Not Now",
+	"UNBOUND_CRASH_REPORT_OUTSIDE": "Report sent, thanks. This crash happened in Discord itself, not in Unbound, so no issue was opened.",
+	"UNBOUND_CRASH_REPORT_THIRD_PARTY": "Report sent, thanks. {name} isn't made by Unbound, so tell its author about the crash too."
 }

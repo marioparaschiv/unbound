@@ -8,6 +8,8 @@ export const CRASH_REPORT_KINDS = ['crash', 'freeze', 'start-failure', 'native-c
 
 export const CRASH_REPORT_PLATFORMS = ['ios', 'android'] as const;
 
+export const CRASH_ORIGINS = ['unbound', 'addon', 'discord', 'system'] as const;
+
 /** What the client sends when crash reporting is on: no account, message content or addon settings. */
 export const crashReportSchema = Type.Object({
 	kind: Type.Enum(CRASH_REPORT_KINDS),
@@ -55,6 +57,7 @@ export const crashReportSchema = Type.Object({
 
 export const crashReportResponseSchema = Type.Object({
 	id: Type.String(),
+	origin: Type.Optional(Type.Enum(CRASH_ORIGINS)),
 	/** The GitHub issue that tracks this crash, when the server files crash reports there. */
 	issue: Type.Optional(
 		Type.Object({
@@ -70,9 +73,12 @@ export type CrashReport = StaticDecode<typeof crashReportSchema>;
 
 export type CrashContext = NonNullable<CrashReport['context']>;
 
+export type CrashOrigin = (typeof CRASH_ORIGINS)[number];
+
 export default {
 	CRASH_REPORT_KINDS,
 	CRASH_REPORT_PLATFORMS,
+	CRASH_ORIGINS,
 	CRASH_REPORT_LOG_LIMIT,
 	crashReportSchema,
 	crashReportResponseSchema,

@@ -32,6 +32,7 @@ export const crashReport = pgTable(
 		stack: text('stack'),
 		log: text('log'),
 		context: jsonb('context').$type<CrashContext>(),
+		origin: text('origin'),
 		fingerprint: text('fingerprint'),
 		receivedAt: timestampMs('received_at').notNull(),
 	},

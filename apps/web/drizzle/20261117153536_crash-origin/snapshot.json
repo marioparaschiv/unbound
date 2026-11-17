@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "2c3b56c0-009d-40b4-8887-969a14079ac4",
+  "prevIds": [
+    "0b737c55-e574-4b4c-a475-28e8f16a3c94"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "crash_report",
+        "origin"
+      ],
+      "writes": [
+        "s|col|public.crash_report.origin",
+        "n|col|public.crash_report.origin",
+        "e|col|public.crash_report.origin"
+      ],
+      "reads": [
+        "n|tbl|public.crash_report",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "crash_report",
+        "name": "origin",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}
