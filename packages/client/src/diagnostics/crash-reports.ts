@@ -36,16 +36,17 @@ async function announceIssue({ number, created }: CrashReportIssue) {
 	info(created ? 'UNBOUND_CRASH_REPORT_FILED' : 'UNBOUND_CRASH_REPORT_JOINED', { number });
 }
 
-/**
- * @description Sends a crash report when the user turned reporting on. Failures are logged and never thrown.
- * @param event The failure the manager saw.
- * @returns The report's id, or `undefined` when reporting is off or the report was not sent.
- */
-export async function reportCrash(event: CrashEvent): Promise<string | undefined> {
-	if (!crashReportsEnabled()) {
-		return undefined;
+async function consentToReport(event: CrashEvent): Promise<boolean> {
+	if (crashReportsEnabled()) {
+		return true;
 	}
 
+	const { askToReportCrash } = await import('~/diagnostics/crash-consent');
+
+	return (await askToReportCrash(event.addon?.id)) !== 'declined';
+}
+
+async function sendCrashReport(event: CrashEvent): Promise<string | undefined> {
 	try {
 		const { CLIENT_VERSION } = await import('~/core/constants');
 		const { createUnboundClient } = await import('~/account/client');
@@ -74,24 +75,37 @@ export async function reportCrash(event: CrashEvent): Promise<string | undefined
 }
 
 /**
- * @description Sends the previous launch's native crash once, when the user turned reporting on, and remembers the
- * report's id for `/debug`.
+ * @description Sends a crash report when the user turned reporting on, and otherwise asks once per launch whether
+ * to send it. Failures are logged and never thrown.
+ * @param event The failure the manager saw.
+ * @returns The report's id, or `undefined` when the user declined or the report was not sent.
+ */
+export async function reportCrash(event: CrashEvent): Promise<string | undefined> {
+	return (await consentToReport(event)) ? sendCrashReport(event) : undefined;
+}
+
+/**
+ * @description Sends the previous launch's native crash once, asking first while reporting is off, and remembers the
+ * report's id for `/debug`. A declined crash is not asked about again.
  * @param launch The loader's launch report.
  */
 export async function reportNativeCrash(launch = getLoader()?.launch): Promise<void> {
 	const stack = launch?.crashStack;
 	const newest = launch?.crashes?.at(-1);
 
-	if (
-		!stack ||
-		!newest ||
-		!crashReportsEnabled() ||
-		getSetting('crash-reports.nativeAt') >= newest.at
-	) {
+	if (!stack || !newest || getSetting('crash-reports.nativeAt') >= newest.at) {
 		return;
 	}
 
-	const id = await reportCrash({ kind: 'native-crash', message: launch.lastCrash, stack });
+	const event: CrashEvent = { kind: 'native-crash', message: launch.lastCrash, stack };
+
+	if (!(await consentToReport(event))) {
+		setSetting('crash-reports.nativeAt', newest.at);
+
+		return;
+	}
+
+	const id = await sendCrashReport(event);
 
 	if (!id) {
 		return;

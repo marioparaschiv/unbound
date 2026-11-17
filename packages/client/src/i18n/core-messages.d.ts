@@ -121,5 +121,6 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_NATIVE_USE_PREVIOUS_BUNDLE_REVISION: { revision: string | number };
 		UNBOUND_CRASH_REPORT_FILED: { number: string | number };
 		UNBOUND_CRASH_REPORT_JOINED: { number: string | number };
+		UNBOUND_CRASH_REPORT_ASK_ADDON: { name: string | number };
 	};
 }

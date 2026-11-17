@@ -4,6 +4,8 @@ const settings = new Map<string, string | number | boolean>();
 const sent: unknown[] = [];
 const toasts: unknown[][] = [];
 let answer: (count: number) => object = (count) => ({ id: `report-${count}` });
+let consent: 'once' | 'always' | 'declined' = 'declined';
+const asked: (string | undefined)[] = [];
 
 mock.module('@unbound-app/logger', () => ({
 	createLogger: () => ({ warn: () => undefined, error: () => undefined }),
@@ -34,6 +36,13 @@ mock.module('~/account/client', () => ({
 		},
 }));
 
+mock.module('~/diagnostics/crash-consent', () => ({
+	askToReportCrash: async (subject?: string) => {
+		asked.push(subject);
+
+		return consent;
+	},
+}));
 mock.module('~/toasts/api', () => ({ info: (...args: unknown[]) => toasts.push(args) }));
 
 const { reportNativeCrash } = await import('~/diagnostics/crash-reports');
@@ -54,12 +63,34 @@ describe('reportNativeCrash', () => {
 		sent.length = 0;
 		toasts.length = 0;
 		answer = (count) => ({ id: `report-${count}` });
+		consent = 'declined';
+		asked.length = 0;
 	});
 
-	test('sends nothing unless crash reporting is on', async () => {
+	test('asks while crash reporting is off, and never again about a declined crash', async () => {
+		await reportNativeCrash(launch);
 		await reportNativeCrash(launch);
 
+		expect(asked).toEqual([undefined]);
 		expect(sent).toHaveLength(0);
+	});
+
+	test('sends once the user agrees', async () => {
+		consent = 'once';
+
+		await reportNativeCrash(launch);
+
+		expect(sent).toHaveLength(1);
+		expect(settings.get('crash-reports.lastId')).toBe('report-1');
+	});
+
+	test('does not ask when crash reporting is on', async () => {
+		settings.set('crash-reports', true);
+
+		await reportNativeCrash(launch);
+
+		expect(asked).toEqual([]);
+		expect(sent).toHaveLength(1);
 	});
 
 	test('sends the stack once and keeps the report id for /debug', async () => {

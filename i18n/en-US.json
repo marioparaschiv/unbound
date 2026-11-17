@@ -605,5 +605,11 @@
 	"UNBOUND_NATIVE_WIPE_PLUGINS": "Wipe Plugins",
 	"UNBOUND_NATIVE_WIPE_THEMES": "Wipe Themes",
 	"UNBOUND_CRASH_REPORT_FILED": "Crash reported as issue #{number}. Thanks!",
-	"UNBOUND_CRASH_REPORT_JOINED": "This crash is already tracked in issue #{number}; your report was added to it."
+	"UNBOUND_CRASH_REPORT_JOINED": "This crash is already tracked in issue #{number}; your report was added to it.",
+	"UNBOUND_CRASH_REPORT_ASK_TITLE": "Send a crash report?",
+	"UNBOUND_CRASH_REPORT_ASK_BODY": "Discord crashed. A report sends the crash, the Unbound and Discord versions, your device model and the last lines of Unbound's log, with tokens, passwords and email addresses removed. It never includes your account or messages.",
+	"UNBOUND_CRASH_REPORT_ASK_ADDON": "{name} crashed. A report sends the crash, the Unbound and Discord versions, your device model and the last lines of Unbound's log, with tokens, passwords and email addresses removed. It never includes your account or messages.",
+	"UNBOUND_CRASH_REPORT_SEND": "Send",
+	"UNBOUND_CRASH_REPORT_ALWAYS": "Always Send",
+	"UNBOUND_CRASH_REPORT_NOT_NOW": "Not Now"
 }
