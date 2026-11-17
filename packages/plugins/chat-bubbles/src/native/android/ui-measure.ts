@@ -78,6 +78,22 @@ function joinExtents(first: Extent | undefined, second: Extent): Extent {
 		: second;
 }
 
+const CARD_DRAWABLES = ['GradientDrawable', 'ShapeDrawable', 'MaterialShapeDrawable'];
+
+function paintsCard(java: NativeJavaBridge, view: NativeJavaReference): boolean {
+	'worklet';
+	const background = javaReference(java.invoke(view, 'getBackground', []));
+	const name = background ? javaText(java.className(background)) : undefined;
+
+	if (!background || !name) return false;
+
+	if (name === 'android.graphics.drawable.ColorDrawable') {
+		return (javaNumber(java.invoke(background, 'getColor', [])) ?? 0) >>> 24 > 0;
+	}
+
+	return CARD_DRAWABLES.some((kind) => name.endsWith(kind));
+}
+
 function extentOf(
 	java: NativeJavaBridge,
 	row: NativeJavaReference,
@@ -104,6 +120,8 @@ function extentOf(
 
 	if (!count || depth >= REACH.depth) return own;
 
+	const card = paintsCard(java, view) ? own : undefined;
+
 	let extent: Extent | undefined;
 
 	for (let index = 0; index < count && budget.views > 0; index++) {
@@ -117,6 +135,8 @@ function extentOf(
 	}
 
 	if (budget.views <= 0) return own;
+
+	if (card) extent = joinExtents(extent, card);
 
 	// A group that draws nothing visible adds nothing; at the top it collapses to its corner.
 	return (
