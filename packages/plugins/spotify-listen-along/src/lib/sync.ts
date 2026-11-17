@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import type { SpotifyActivity } from '~/lib/types';
 import { LOADING_MS } from '~/lib/constants';
-import { toggleListening } from '~/lib/session';
+import { spotifyActivityOf, toggleListening } from '~/lib/session';
 
 const SpotifyStore = flux.getStore('Spotify');
 const UserStore = flux.getStore('User');
@@ -88,4 +88,41 @@ export function listenAlong(state: ListenState, activity: SpotifyActivity): bool
 	}
 
 	return toggleListening(state.userId, activity);
+}
+
+/**
+ * @description Starts listening along with the host of a `spotify:<user id>` party, as a chat invite's Join does.
+ * @param partyId The invite's party id.
+ * @returns Whether the party is a Spotify one this plugin handled; `false` leaves the tap to Discord.
+ */
+export function joinSpotifyParty(partyId: string | undefined): boolean {
+	const userId = partyId?.startsWith('spotify:') ? partyId.slice('spotify:'.length) : undefined;
+
+	if (!userId) return false;
+
+	if (userId === UserStore.getCurrentUser?.()?.id) {
+		toasts.show({ title: addon.name, content: reasonText('YOURSELF') });
+
+		return true;
+	}
+
+	const activity = spotifyActivityOf(userId);
+
+	if (!activity) {
+		toasts.show({ title: addon.name, content: messages.PARTY_OVER });
+
+		return true;
+	}
+
+	const reason = disabledReason(activity as SpotifyActivity, userId);
+
+	if (reason) {
+		toasts.show({ title: addon.name, content: reasonText(reason) });
+
+		return true;
+	}
+
+	toggleListening(userId, activity);
+
+	return true;
 }

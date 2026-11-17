@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-17
+
+### Fixed
+
+- Join on a Spotify listen-along invite in chat starts listening along with the person who sent it, instead of only opening Spotify. Tap it again to stop.
+
 ## [1.1.0] - 2026-11-13
 
 ### Fixed
