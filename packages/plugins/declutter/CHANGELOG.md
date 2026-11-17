@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4] - 2026-11-17
+
+### Fixed
+
+- Keeps the send button whenever Discord can send, such as while editing a message or sending only a sticker.
+
 ## [1.0.3] - 2026-11-15
 
 ### Fixed

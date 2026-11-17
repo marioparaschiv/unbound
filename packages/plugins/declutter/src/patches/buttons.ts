@@ -10,6 +10,7 @@ import { BOOST_GOAL_ROW, SERVER_BOOSTS_ROW, iconName, withoutRows } from '~/lib/
 type GiftOrThreadProps = { hideGiftButton?: boolean };
 type RightActionsProps = { shouldShowGiftButton?: boolean };
 type YouIconProps = { IconComponent?: unknown };
+type SendButtonProps = { sendEnabled?: boolean };
 
 const folder = 'modules/chat_input/native/action_buttons/';
 
@@ -62,7 +63,7 @@ export function patchChatInputRightActions(): void {
 
 /**
  * @description Hides the send button while the chat input holds no text or attachments, by patching the render of
- * Discord's `ChatInputSendButton`.
+ * Discord's `ChatInputSendButton`. It stays whenever Discord can send, such as while editing a message or with a sticker.
  */
 export function patchEmptySendButton(): void {
 	const SendButton = metro.findByFilePath(
@@ -76,7 +77,9 @@ export function patchEmptySendButton(): void {
 	}
 
 	patcher.react.after(SendButton, 'default', ({ props, result }) => {
-		if (!settings.emptySend || !result) return;
+		const { sendEnabled }: SendButtonProps = props ?? {};
+
+		if (!settings.emptySend || !result || sendEnabled) return;
 
 		const channelId = channelOf(props ?? {});
 

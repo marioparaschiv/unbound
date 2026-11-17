@@ -18,7 +18,7 @@ import {
 import { assets } from '@unbound-app/api';
 
 import useButtonStyles from './input-button.style';
-import { useComposerState } from './composer-state';
+import { buttonsFit, useComposerState } from './composer-state';
 
 type ParentProps = { children?: ReactNode };
 
@@ -127,7 +127,7 @@ export function ComposerStack({
 	const [open, setOpen] = useState(false);
 	const shown = hideTargetWhenEmpty && state === 'empty' ? null : target;
 
-	if (state !== 'crowded') {
+	if (state !== 'crowded' && buttonsFit(draws.length)) {
 		if (open) setOpen(false);
 
 		return inlineGroup(inline, shown, buttons(draws, rowGap));

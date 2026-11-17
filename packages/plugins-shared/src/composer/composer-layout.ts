@@ -2,7 +2,8 @@
 export type ComposerState = 'empty' | 'short' | 'crowded';
 
 const SETTLE_CHARACTERS = 8;
-const MIN_LINE_CHARACTERS = 12;
+/** The fewest characters a line must fit beside the input's buttons before they fold. */
+export const MIN_LINE_CHARACTERS = 12;
 
 /**
  * @description Classifies a draft: `empty` without text or attachments, `crowded` once it spans lines or the buttons leave too little room, else `short`.
