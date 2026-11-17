@@ -1,0 +1,14 @@
+{
+	"MAKE": "Make Emoji Mosaic",
+	"TITLE": "Emoji Mosaic",
+	"GRID": "{columns} × {rows} grid · {count} emoji",
+	"PREFIX_HELP": "Name prefix. Each emoji gets a row and column after it, such as cat_r1c2.",
+	"SERVER": "Upload to",
+	"FREE": "{free} emoji slots free",
+	"NO_SERVERS": "You can't add emoji to any of your servers.",
+	"TOO_MANY": "{count} emoji won't fit: {free} slots are free. Use fewer columns.",
+	"UPLOAD": "Upload {count} emoji",
+	"PROGRESS": "Uploaded {done} of {count}",
+	"UPLOADED": "Added {count} emoji to {server}. The mosaic is in your message box.",
+	"FAILED": "Couldn't build the mosaic"
+}
