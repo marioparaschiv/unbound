@@ -57,6 +57,20 @@ function codeRuns(text: string, runs: MarkdownRun[]): boolean[] {
 	return covered;
 }
 
+function coverEmoji(text: string, covered: boolean[]) {
+	'worklet';
+	const pattern = /<a?:\w+:\d+>|:[\w~+-]+:/g;
+
+	for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
+		for (let at = match.index; at < match.index + match[0].length; at++) covered[at] = true;
+	}
+}
+
+function isWordCharacter(character: string | undefined): boolean {
+	'worklet';
+	return character !== undefined && /[\p{L}\p{N}_]/u.test(character);
+}
+
 function blockRuns(text: string, runs: MarkdownRun[], covered: boolean[]) {
 	'worklet';
 	let lineStart = 0;
@@ -99,7 +113,10 @@ function inlineRuns(text: string, runs: MarkdownRun[], covered: boolean[]) {
 				text.slice(start + open.length, close).includes('\n') ||
 				taken.slice(start, close + open.length).some(Boolean) ||
 				/\s/.test(text[start + open.length] ?? '') ||
-				/\s/.test(text[close - 1] ?? '');
+				/\s/.test(text[close - 1] ?? '') ||
+				(open.startsWith('_') &&
+					(isWordCharacter(text[start - 1]) ||
+						isWordCharacter(text[close + open.length])));
 
 			if (blocked) {
 				from = start + open.length;
@@ -122,7 +139,8 @@ function inlineRuns(text: string, runs: MarkdownRun[], covered: boolean[]) {
 
 /**
  * @description Finds the markdown Discord renders in a message as it is typed: code, headings, subtext, quotes, spoilers,
- * bold, underline, strikethrough and italics, with their markers as separate runs. Nothing inside code is styled.
+ * bold, underline, strikethrough and italics, with their markers as separate runs. Nothing inside code or an emoji's
+ * name is styled, and underscores inside a word stay plain, as Discord renders them.
  * @param text The composer's text.
  * @returns The styled runs, in no particular order.
  */
@@ -132,6 +150,7 @@ export function markdownRuns(text: string): MarkdownRun[] {
 	const covered = codeRuns(text, runs);
 
 	blockRuns(text, runs, covered);
+	coverEmoji(text, covered);
 	inlineRuns(text, runs, covered);
 
 	return runs.filter((run) => run.length > 0);
