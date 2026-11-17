@@ -1,8 +1,9 @@
-import { flux, metro, patcher } from '@unbound-app/api';
+import { flux, metro, patcher, utils } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
 import { currentListenableActivity, sendListenAlongInvite, type InviteActions } from '~/lib/send';
+import { joinSpotifyParty } from '~/lib/sync';
 import type { OverflowButton, SpotifyActivity } from '~/lib/types';
 import { ListenAlongRow } from '~/components/listen-along-row';
 
@@ -78,5 +79,55 @@ export function patchMediaKeyboardActions(): void {
 		};
 
 		return { ...props, overflowButtons: [...props.overflowButtons, spotifyButton] };
+	});
+}
+
+type JoinEvent = { nativeEvent?: { messageId?: string } };
+
+type ChatProps = { onTapJoinRichPresence?: (event: JoinEvent) => void };
+
+type InviteMessage = { activity?: { party_id?: string } };
+
+type MessageStore = { getMessage(channelId: string, messageId: string): InviteMessage | undefined };
+
+function wrapJoin(chat: ChatProps) {
+	const original = chat.onTapJoinRichPresence;
+
+	chat.onTapJoinRichPresence = (event) => {
+		const channelId = flux.getStore('SelectedChannel').getChannelId?.();
+		const messageId = event?.nativeEvent?.messageId;
+		const message =
+			channelId && messageId
+				? (flux.getStore('Message') as unknown as MessageStore).getMessage(
+						channelId,
+						messageId,
+					)
+				: undefined;
+
+		if (!joinSpotifyParty(message?.activity?.party_id)) original?.(event);
+	};
+}
+
+/**
+ * @description Makes Join on a Spotify listen-along invite in chat start listening along here, where Discord mobile only opens Spotify.
+ * Patches the render of `MessagesRenderer` to wrap the chat's `onTapJoinRichPresence`; other invites keep Discord's handler.
+ */
+export function patchInviteJoin(): void {
+	const MessagesRenderer = metro.findByFilePath('modules/messages/native/MessagesRenderer.tsx');
+
+	if (!MessagesRenderer?.default) {
+		logger.warn('Invite joins skipped: Discord moved MessagesRenderer.');
+
+		return;
+	}
+
+	patcher.react.after(MessagesRenderer, 'default', ({ result }) => {
+		const chat = utils.react.findInTree(
+			result as ReactNode,
+			(node: unknown) =>
+				typeof (node as ChatProps | null)?.onTapJoinRichPresence === 'function',
+		) as ChatProps | undefined;
+
+		if (chat) wrapJoin(chat);
 	});
 }

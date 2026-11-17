@@ -8,5 +8,6 @@
 	"NO_DEVICE": "Open Spotify on a device, then try again.",
 	"SYNC_FAILED": "Spotify didn't take the request. Try again.",
 	"STOPPED_LISTENING": "Stopped listening along.",
-	"STOP_LISTENING": "Stop listening along"
+	"STOP_LISTENING": "Stop listening along",
+	"PARTY_OVER": "They stopped playing, so there's nothing to listen along to."
 }

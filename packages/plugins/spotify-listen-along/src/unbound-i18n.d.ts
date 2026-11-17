@@ -23,6 +23,8 @@ declare module '@unbound-app/i18n' {
 		readonly STOPPED_LISTENING: string;
 		/** Stop listening along */
 		readonly STOP_LISTENING: string;
+		/** They stopped playing, so there's nothing to listen along to. */
+		readonly PARTY_OVER: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
