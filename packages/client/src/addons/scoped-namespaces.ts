@@ -16,6 +16,7 @@ import type {
 	MetroModuleLoadListener,
 } from '~/metro/types';
 import { findOwnedId, registerOwnedAsset, type AssetRegistration } from '~/assets/plugin-assets';
+import { guardedHandler, type FluxHandler } from '~/flux/guarded-handler';
 import type { SettingsPayload, SettingsPredicate } from '~/storage/api';
 import type { AddonLocales, LocaleSource } from '~/i18n/addon-locales';
 import type { MessageResolver } from '~/i18n/message-resolver';
@@ -174,20 +175,39 @@ export function scopeStorage(subscriptions: Subscriptions, owner: string): Api['
 }
 
 /**
- * @description Creates a plugin's `flux` namespace, whose store listeners, action listeners and interceptors are removed on dispose.
+ * @description Creates a plugin's `flux` namespace, whose store listeners, action listeners and interceptors are removed on
+ * dispose. Action listeners and interceptors that keep throwing or stalling are removed early, naming the plugin.
  * @param subscriptions The plugin's subscription tracker.
+ * @param owner The plugin's name.
  * @returns The namespace.
  */
-export function scopeFlux(subscriptions: Subscriptions): Api['flux'] {
+export function scopeFlux(subscriptions: Subscriptions, owner: string): Api['flux'] {
+	function guarded<F extends FluxHandler>(
+		type: string,
+		handler: F,
+		subscribe: (wrapped: F) => () => void,
+	): () => void {
+		let unsubscribe = noop;
+		const wrapped = guardedHandler(handler, owner, type, () => unsubscribe());
+
+		unsubscribe = subscriptions.add(subscribe(wrapped));
+
+		return unsubscribe;
+	}
+
 	return overlay('flux', {
 		onStoreChange(store: FluxStore, listener: FluxChangeListener) {
 			return subscriptions.add(liveNamespace('flux').onStoreChange(store, listener));
 		},
 		onAction<K extends FluxActionType>(type: K, listener: FluxActionListener<K>) {
-			return subscriptions.add(liveNamespace('flux').onAction(type, listener));
+			return guarded(type, listener, (wrapped) =>
+				liveNamespace('flux').onAction(type, wrapped),
+			);
 		},
 		interceptAction<K extends FluxActionType>(type: K, interceptor: FluxActionInterceptor<K>) {
-			return subscriptions.add(liveNamespace('flux').interceptAction(type, interceptor));
+			return guarded(type, interceptor, (wrapped) =>
+				liveNamespace('flux').interceptAction(type, wrapped),
+			);
 		},
 	});
 }

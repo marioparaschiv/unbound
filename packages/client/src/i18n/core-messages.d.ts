@@ -112,6 +112,8 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_APP_ICON_REMOVED: { name: string | number };
 		UNBOUND_APP_ICON_PENDING: { name: string | number };
 		UNBOUND_PATCH_REMOVED: { name: string | number };
+		UNBOUND_PATCH_LOOPING: { name: string | number };
+		UNBOUND_HANDLER_REMOVED: { name: string | number; action: string | number };
 		UNBOUND_ADDON_RENAMED_TOAST: { from: string | number; to: string | number };
 		UNBOUND_NATIVE_DISABLED_FROZEN: { name: string | number };
 		UNBOUND_NATIVE_DISABLED_RUNNING: { name: string | number };

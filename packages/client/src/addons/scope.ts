@@ -131,7 +131,7 @@ export function createAddonScope(addon: Addon<Plugin>, directory: string): Addon
 				commands: commands.namespace,
 				metro: scopeMetro(subscriptions),
 				storage: scopeStorage(subscriptions, addon.id),
-				flux: scopeFlux(subscriptions),
+				flux: scopeFlux(subscriptions, addon.name),
 				settings: scopeSettings(subscriptions),
 				assets,
 				i18n: i18n.namespace,
