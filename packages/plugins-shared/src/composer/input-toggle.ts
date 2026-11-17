@@ -38,7 +38,7 @@ export type InputToggleOptions = {
 	usePersist: () => boolean;
 	/** Reads the labels when the button renders, so they follow the language. */
 	labels: () => ToggleLabels;
-	/** Hides the toggle while the input holds no text or attachments, for toggles that only matter once there is a draft. */
+	/** Hides the toggle while the input holds no text or attachments, on or off, for toggles that only matter once there is a draft. */
 	hideWhenEmpty?: boolean;
 };
 
@@ -77,7 +77,7 @@ function ToggleButton({
 	const styles = useStyles();
 	const text = labels();
 
-	if (hideWhenEmpty && empty && !active) return null;
+	if (hideWhenEmpty && empty) return null;
 
 	function press() {
 		const enabled = toggle.toggle(channelId, persist);
