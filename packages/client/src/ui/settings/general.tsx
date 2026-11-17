@@ -159,6 +159,12 @@ function GeneralPage() {
 					value={settings.get('crash-reports')}
 					onValueChange={setCrashReports}
 				/>
+				<Discord.TableRow
+					label={messages.UNBOUND_RECENT_CRASHES}
+					icon={<Discord.TableRowIcon source={icons.HistoryIcon ?? icons.ClockIcon} />}
+					arrow
+					onPress={() => navigation.push(Screens.Crashes)}
+				/>
 			</Discord.TableRowGroup>
 
 			<Discord.TableRowGroup title={messages.UNBOUND_HELP}>

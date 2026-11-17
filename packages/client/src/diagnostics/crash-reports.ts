@@ -8,6 +8,7 @@ import {
 	repeatsOf,
 	wasJustReported,
 } from '~/diagnostics/crash-repeats';
+import { markCrashReported, recordCrash } from '~/diagnostics/crash-history';
 import { buildCrashReport } from '~/diagnostics/crash-report';
 import type { CrashEvent } from '~/diagnostics/crash-report';
 import { getSetting, setSetting } from '~/settings/unbound';
@@ -83,7 +84,11 @@ function installId(): string {
 async function sendCrashReport(
 	event: CrashEvent,
 	breadcrumbs: string[],
-	{ signature = crashSignature(event), repeats }: { signature?: string; repeats?: number } = {},
+	{
+		signature = crashSignature(event),
+		repeats,
+		recordedAt,
+	}: { signature?: string; repeats?: number; recordedAt?: number } = {},
 ): Promise<string | undefined> {
 	try {
 		const { CLIENT_VERSION } = await import('~/core/constants');
@@ -110,6 +115,11 @@ async function sendCrashReport(
 		});
 
 		rememberReported(signature);
+
+		if (recordedAt !== undefined) {
+			await markCrashReported(recordedAt, { reportId: id, ...(origin ? { origin } : {}) });
+		}
+
 		await announceReport(issue, origin, event.addon?.id);
 
 		return id;
@@ -127,13 +137,22 @@ async function sendCrashReport(
  * @returns The report's id, or `undefined` when the user declined or the report was not sent.
  */
 export async function reportCrash(event: CrashEvent): Promise<string | undefined> {
+	const recordedAt = Date.now();
+
+	await recordCrash({
+		at: recordedAt,
+		kind: event.kind,
+		message: event.message ?? event.kind,
+		...(event.addon ? { addon: event.addon.id } : {}),
+	});
+
 	if (wasJustReported(crashSignature(event)) || !(await consentToReport(event))) {
 		return undefined;
 	}
 
 	const { recentBreadcrumbs } = await import('~/diagnostics/breadcrumbs');
 
-	return sendCrashReport(event, recentBreadcrumbs());
+	return sendCrashReport(event, recentBreadcrumbs(), { recordedAt });
 }
 
 /**
@@ -150,6 +169,9 @@ export async function reportNativeCrash(launch = getLoader()?.launch): Promise<v
 	}
 
 	const event: CrashEvent = { kind: 'native-crash', message: launch.lastCrash, stack };
+
+	await recordCrash({ at: newest.at, kind: event.kind, message: newest.crash });
+
 	const signature = crashSignature({ kind: event.kind, message: newest.crash });
 
 	if (wasJustReported(signature) || !(await consentToReport(event))) {
@@ -162,6 +184,7 @@ export async function reportNativeCrash(launch = getLoader()?.launch): Promise<v
 	const id = await sendCrashReport(event, await previousBreadcrumbs(), {
 		signature,
 		repeats: repeatsOf(newest.crash, launch.crashes),
+		recordedAt: newest.at,
 	});
 
 	if (!id) {

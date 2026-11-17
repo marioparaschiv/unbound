@@ -14,6 +14,7 @@ import themes, {
 } from '~/themes/builtin';
 import { createSettings, generalSection, panelHostSection } from '~/settings/builtin';
 import { marketplaceSection, addonPageSection } from '~/marketplace/builtin';
+import promiseRejections, { crashesSection } from '~/diagnostics/builtin';
 import gatewayReconnect from '~/builtins/gateway-reconnect';
 import updater, { updatesSection } from '~/updates/builtin';
 import { developerSection } from '~/settings/builtin.dev';
@@ -26,7 +27,6 @@ import type { SectionEntry } from '~/settings/section';
 import errorBoundary from '~/builtins/error-boundary';
 import profileExpiry from '~/builtins/profile-expiry';
 import sponsorBadges from '~/builtins/sponsor-badges';
-import promiseRejections from '~/diagnostics/builtin';
 import { assetsSection } from '~/assets/builtin.dev';
 import coreCommands from '~/commands/core-commands';
 import hotRefresh from '~/hot-refresh/builtin.dev';
@@ -72,6 +72,7 @@ const SECTIONS_IN_OVERVIEW_ORDER: SectionEntry[] = [
 	updatesSection,
 	...(import.meta.env.DEV_TOOLS ? [developerSection] : []),
 	toastsSection,
+	crashesSection,
 	syncSection,
 	...(import.meta.env.DEV_TOOLS ? [assetsSection] : []),
 	panelHostSection,

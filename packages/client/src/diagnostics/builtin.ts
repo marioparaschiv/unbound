@@ -1,5 +1,8 @@
 import noop from '@unbound-app/utils/noop';
 
+import type { SectionEntry } from '~/settings/section';
+import { Screens } from '~/core/constants';
+
 import { startAppSession, stopAppSession } from './app-session';
 import { setRejectionTracker } from './promise-rejections';
 import { recordError } from './recent-errors';
@@ -45,5 +48,17 @@ export function stop() {
 	ErrorUtils.setGlobalHandler(previousHandler);
 	previousHandler = undefined;
 }
+
+/** The hidden Recent Crashes page, opened from the General page. */
+export const crashesSection: SectionEntry = {
+	key: Screens.Crashes,
+	titleKey: 'UNBOUND_RECENT_CRASHES',
+	/**
+	 * @description Loads the page when it first opens.
+	 * @returns The page.
+	 */
+	getComponent: () => require('~/ui/settings/crashes').default,
+	hidden: true,
+};
 
 export default { start, stop };
