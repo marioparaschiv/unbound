@@ -150,6 +150,11 @@ export type NativeJavaHooksBridge = {
 	/** Removes a hook or a proxy. */
 	remove(token: NativeJavaHookToken): void;
 	/**
+	 * Stops ART running a caller with a hooked method compiled into it, so the hook fires from there too. Pass the
+	 * caller, not the hooked method. Returns whether the framework deoptimized it; loaders before 1.10 lack it.
+	 */
+	deoptimize(className: string, methodName: string, parameterTypes?: string[]): boolean;
+	/**
 	 * Creates a Java object implementing `interfaces`, from a UI scope only. Calls on the main thread run `handler`
 	 * inline and return its value; calls on other threads reach it later and return the type's default.
 	 */

@@ -401,6 +401,10 @@ object NativeBridge {
     fun hooksRemove(tokenJSON: String) = NativeHooks.remove(tokenJSON)
 
     @JvmStatic
+    fun hooksDeoptimize(className: String, methodName: String, parametersJSON: String): String =
+        NativeHooks.deoptimize(className, methodName, parametersJSON).toString()
+
+    @JvmStatic
     fun hooksProxy(interfacesJSON: String): String = NativeHooks.proxy(interfacesJSON)
 
     @JvmStatic

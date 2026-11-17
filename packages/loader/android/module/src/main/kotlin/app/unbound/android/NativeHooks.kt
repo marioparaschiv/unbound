@@ -15,6 +15,7 @@ object NativeHooks {
 
     interface Installer {
         fun install(method: Executable, hook: Hook): Removable
+        fun deoptimize(method: Executable): Boolean
     }
 
     interface Removable {
@@ -149,6 +150,12 @@ object NativeHooks {
         synchronized(this) { registration.removable = removable }
 
         return JSONObject().put("id", token).toString()
+    }
+
+    fun deoptimize(className: String, methodName: String, parametersJSON: String): Boolean {
+        val installer = synchronized(this) { installer }
+            ?: throw IllegalStateException("The Android hook installer is unavailable")
+        return installer.deoptimize(resolveMethod(className, methodName, parametersJSON))
     }
 
     fun remove(tokenJSON: String) {

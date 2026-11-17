@@ -46,6 +46,8 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
       "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING UNBOUND_JNI_STRING UNBOUND_JNI_STRING              \
       ")" UNBOUND_JNI_STRING)                                                                      \
     X(hooksRemove, "hooksRemove", "(" UNBOUND_JNI_STRING ")V")                                     \
+    X(hooksDeoptimize, "hooksDeoptimize",                                                          \
+      "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING)         \
     X(hooksProxy, "hooksProxy", "(" UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING)                     \
     X(runtimeReplaced, "runtimeReplaced", "()V")                                                   \
     X(javaBatch, "javaBatch", "(" UNBOUND_JNI_STRING ")" UNBOUND_JNI_STRING)                       \

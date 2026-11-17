@@ -451,6 +451,15 @@ static jsi::Object makeHooksNamespace(jsi::Runtime &runtime, const JavaCallbacks
                proxy.setProperty(rt, "object", adoptJavaValue(rt, parsed["object"]));
                return jsi::Value(rt, proxy);
            });
+    define(runtime, hooks, "deoptimize", 3,
+           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               requireArguments(count, 2, "Deoptimizing a method requires its class and name");
+               std::string parameters = serializeJavaArguments(rt, args, count, 2);
+               std::string result =
+                   callJavaString(callbacks, callbacks.hooksDeoptimize,
+                                  {javaName(rt, args[0]), javaName(rt, args[1]), parameters});
+               return jsi::Value(result == "true");
+           });
     define(runtime, hooks, "remove", 1,
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                requireArguments(count, 1, "Removing a hook requires its token");

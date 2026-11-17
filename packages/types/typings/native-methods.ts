@@ -114,6 +114,7 @@ export const NATIVE_BRIDGE_METHOD_CAPABILITIES = {
 	'hooks.clearReturnValues': 'native.java.hooks',
 	'hooks.remove': 'native.java.hooks',
 	'hooks.proxy': 'native.java.hooks',
+	'hooks.deoptimize': 'native.java.hooks',
 } as const satisfies Record<NativeBridgeMethod, `native.${string}.${string}`>;
 
 /** A named permission to use one part of the native bridge, declared in an addon's manifest. */

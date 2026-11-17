@@ -32,6 +32,9 @@ class NativeHooksTest {
 
     private class FakeInstaller : NativeHooks.Installer {
         val installed = ArrayList<RecordedHook>()
+        val deoptimized = ArrayList<java.lang.reflect.Executable>()
+
+        override fun deoptimize(method: java.lang.reflect.Executable): Boolean = deoptimized.add(method)
 
         override fun install(
             method: java.lang.reflect.Executable,
@@ -106,6 +109,16 @@ class NativeHooksTest {
         assertEquals(1, installer.installed.size)
         assertEquals("toString", installer.installed[0].method.name)
         assertEquals(1, NativeHooks.installedCount())
+    }
+
+    @Test
+    fun deoptimizeResolvesTheOverloadAndAsksTheInstaller() {
+        assertTrue(NativeHooks.deoptimize("java.lang.String", "indexOf", """["int"]"""))
+
+        val method = installer.deoptimized.single() as java.lang.reflect.Method
+
+        assertEquals("indexOf", method.name)
+        assertEquals(Integer.TYPE, method.parameterTypes[0])
     }
 
     @Test
