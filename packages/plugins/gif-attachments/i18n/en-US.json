@@ -1,0 +1,5 @@
+{
+	"DOWNLOADING": "Adding the GIF…",
+	"TOO_LARGE": "That GIF is over 10 MB, so it went as a link.",
+	"FAILED": "Couldn't download the GIF, so it went as a link."
+}

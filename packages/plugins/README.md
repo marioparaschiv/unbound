@@ -1,6 +1,6 @@
 # Plugins
 
-188 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+189 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -71,6 +71,7 @@
 - <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Friend Invites](https://unbound.rip/addons/unbound.friend-invites): Creates, lists and revokes your friend invite links with the /friend-invites command.
 - <img src="../../assets/plugins/readme-icons/heart-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Friend Markers](https://unbound.rip/addons/unbound.friend-markers): Marks messages from your friends with a small Friend label beside their name.
 - <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Friends Since](https://unbound.rip/addons/unbound.friends-since): Shows the date you became friends with someone on their profile.
+- <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Attachments](https://unbound.rip/addons/unbound.gif-attachments): Adds GIFs you pick in the GIF picker to your message as files, instead of sending a link.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Collections](https://unbound.rip/addons/unbound.gif-collections): Sort GIFs into your own collections and open them from the GIF picker.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Maker](https://unbound.rip/addons/unbound.gif-maker): Turns part of a video in chat into a GIF, cropped and captioned as you like, and attaches it to your message.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Paste](https://unbound.rip/addons/unbound.gif-paste): Makes GIF picker selections paste a link into the chat box instead of sending immediately.
