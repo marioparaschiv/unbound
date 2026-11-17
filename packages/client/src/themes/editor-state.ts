@@ -19,6 +19,9 @@ export type ThemeEditorRoute = {
 	params?: Record<string, string>;
 };
 
+/** The colour picker's step: off, waiting for a tap, or reading the screen with Unbound's buttons hidden. */
+export type ThemeEditorPicker = 'idle' | 'picking' | 'reading';
+
 type ThemeEditorStore = {
 	session: ThemeEditorSession | null;
 	past: Theme[];
@@ -28,6 +31,7 @@ type ThemeEditorStore = {
 	offsets: Record<string, number>;
 	/** How many editor screens are mounted; the floating button shows only at zero. */
 	mounted: number;
+	picker: ThemeEditorPicker;
 	begin: (session: ThemeEditorSession, draft: Theme) => void;
 	end: () => void;
 	setDetails: (details: Partial<Omit<ThemeEditorSession, 'id'>>) => void;
@@ -38,6 +42,7 @@ type ThemeEditorStore = {
 	setOffset: (key: string, offset: number) => void;
 	mount: () => void;
 	unmount: () => void;
+	setPicker: (picker: ThemeEditorPicker) => void;
 };
 
 const ThemeEditorStore = create<ThemeEditorStore>((set, get) => ({
@@ -47,12 +52,13 @@ const ThemeEditorStore = create<ThemeEditorStore>((set, get) => ({
 	route: null,
 	offsets: {},
 	mounted: 0,
+	picker: 'idle',
 	begin(session, draft) {
-		set({ session, past: [], future: [], route: null, offsets: {} });
+		set({ session, past: [], future: [], route: null, offsets: {}, picker: 'idle' });
 		ThemeStore.getState().setPreview(draft);
 	},
 	end() {
-		set({ session: null, past: [], future: [], route: null, offsets: {} });
+		set({ session: null, past: [], future: [], route: null, offsets: {}, picker: 'idle' });
 		ThemeStore.getState().setPreview(null);
 	},
 	setDetails: (details) =>
@@ -89,6 +95,7 @@ const ThemeEditorStore = create<ThemeEditorStore>((set, get) => ({
 	setOffset: (key, offset) => set((prev) => ({ offsets: { ...prev.offsets, [key]: offset } })),
 	mount: () => set((prev) => ({ mounted: prev.mounted + 1 })),
 	unmount: () => set((prev) => ({ mounted: Math.max(0, prev.mounted - 1) })),
+	setPicker: (picker) => set({ picker }),
 }));
 
 export default ThemeEditorStore;

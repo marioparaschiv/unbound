@@ -14,21 +14,30 @@ function colorTokens(): Record<string, SemanticColorToken> {
 }
 
 /**
- * @description Reads the colour Discord draws a token with now, the editor's draft included.
+ * @description Resolves the colour Discord draws a token with now, the editor's draft included, as Discord spells it.
  * @param name The token's name.
- * @returns The colour, or `undefined` for a token this build lacks or a colour in another form.
+ * @returns The colour, or `undefined` for a token this build lacks or cannot resolve.
  */
-export function readTokenColor(name: string): ParsedColor | undefined {
+export function resolveTokenColor(name: string): string | undefined {
 	const token = colorTokens()[name];
 
 	if (!token) return;
 
 	try {
-		return parseColor(Theme.internal.resolveSemanticColor(DiscordTheme.theme, token));
+		return Theme.internal.resolveSemanticColor(DiscordTheme.theme, token);
 	} catch {
 		// A token this build cannot resolve shows no colour.
 		return undefined;
 	}
+}
+
+/**
+ * @description Reads the colour Discord draws a token with now, the editor's draft included.
+ * @param name The token's name.
+ * @returns The colour, or `undefined` for a token this build lacks or a colour in another form.
+ */
+export function readTokenColor(name: string): ParsedColor | undefined {
+	return parseColor(resolveTokenColor(name));
 }
 
 /**

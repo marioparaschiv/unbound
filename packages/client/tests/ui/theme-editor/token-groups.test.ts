@@ -5,6 +5,7 @@ import {
 	COLOR_GROUPS,
 	availableColors,
 	groupTokens,
+	tokenGroup,
 	tokenLabel,
 } from '~/ui/theme-editor/token-groups';
 
@@ -28,6 +29,14 @@ describe('groupTokens', () => {
 
 		expect(groups.get('other')).toEqual(['SOMETHING_NEW']);
 		expect([...groups.keys()]).toEqual(COLOR_GROUPS.map(({ key }) => key));
+	});
+});
+
+describe('tokenGroup', () => {
+	test('names the group of the longest matching prefix, or Other', () => {
+		expect(tokenGroup('MOBILE_TEXT_HEADING')).toBe('text');
+		expect(tokenGroup('MOBILE_NAV')).toBe('mobile');
+		expect(tokenGroup('SOMETHING_NEW')).toBe('other');
 	});
 });
 

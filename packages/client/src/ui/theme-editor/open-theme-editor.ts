@@ -8,8 +8,18 @@ import { confirm } from '~/dialogs/api';
 import ThemeStore from '~/themes/state';
 
 import { currentBase } from './token-colors';
+import { tokenGroup } from './token-groups';
 
 type Navigation = { push: (screen: string) => void };
+
+type EditorRoute = { name: string; params?: Record<string, string> };
+
+// Rebuilds the stack beneath the screen, so going back walks through the editor rather than closing settings.
+async function showEditor(routes: EditorRoute[]) {
+	const ref = await navigationReady();
+
+	ref.navigate('settings', { state: { routes, index: routes.length - 1 } });
+}
 
 function begin(id: string | undefined) {
 	const addon = id ? themes.getAddon(id) : undefined;
@@ -61,11 +71,7 @@ export async function openThemeEditor(navigation: Navigation, id?: string): Prom
  */
 export async function resumeThemeEditor(): Promise<void> {
 	const { route } = ThemeEditorStore.getState();
-	const ref = await navigationReady();
-	// Rebuilds the stack beneath the screen, so going back walks through the editor rather than closing settings.
-	const routes: { name: string; params?: Record<string, string> }[] = [
-		{ name: Screens.ThemeEditor },
-	];
+	const routes: EditorRoute[] = [{ name: Screens.ThemeEditor }];
 
 	if (route?.screen === Screens.ThemeColors) {
 		routes.push({ name: Screens.ThemeColors });
@@ -75,5 +81,17 @@ export async function resumeThemeEditor(): Promise<void> {
 		}
 	}
 
-	ref.navigate('settings', { state: { routes, index: routes.length - 1 } });
+	await showEditor(routes);
+}
+
+/**
+ * @description Opens the open theme edit on one token: its All Colors group, with the token pinned first.
+ * @param token The token's name.
+ */
+export async function openThemeColor(token: string): Promise<void> {
+	await showEditor([
+		{ name: Screens.ThemeEditor },
+		{ name: Screens.ThemeColors },
+		{ name: Screens.ThemeColors, params: { group: tokenGroup(token), token } },
+	]);
 }
