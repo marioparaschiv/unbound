@@ -34,6 +34,15 @@ export const crashReportSchema = Type.Object({
 
 export const crashReportResponseSchema = Type.Object({
 	id: Type.String(),
+	/** The GitHub issue that tracks this crash, when the server files crash reports there. */
+	issue: Type.Optional(
+		Type.Object({
+			number: Type.Integer(),
+			url: Type.String(),
+			/** Whether this report opened the issue, rather than joining one opened before. */
+			created: Type.Boolean(),
+		}),
+	),
 });
 
 export type CrashReport = StaticDecode<typeof crashReportSchema>;

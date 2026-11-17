@@ -142,6 +142,8 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
     X("nativePrepareAddons", "()V", nativePrepareAddons)                                           \
     X("nativeLog", "(I" UNBOUND_JNI_STRING UNBOUND_JNI_STRING ")V", nativeLog)                     \
     X("nativeAppendLogFile", "(I" UNBOUND_JNI_STRING UNBOUND_JNI_STRING ")V", nativeAppendLogFile) \
+    X("nativeRecordUncaughtException", "(" UNBOUND_JNI_STRING UNBOUND_JNI_STRING ")Z",             \
+      nativeRecordUncaughtException)                                                               \
     X("nativeDevOverlayButtonSide", "()D", nativeDevOverlayButtonSide)                             \
     X("nativeAttestation", "()" UNBOUND_JNI_STRING, nativeAttestation)                             \
     X("nativeWarnOffMainViewCall", "(" UNBOUND_JNI_STRING ")V", nativeWarnOffMainViewCall)         \

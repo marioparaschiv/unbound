@@ -251,17 +251,31 @@ static std::optional<std::string> addonName(const std::string &line)
     return std::nullopt;
 }
 
+static std::string exceptionName(const std::string &line)
+{
+    std::string text = line.substr(std::string("Exception ").size());
+    size_t colon     = text.find(':');
+    return colon == std::string::npos ? text : text.substr(0, colon);
+}
+
 std::string nativeCrashHeadline(const std::string &stack)
 {
     std::vector<std::string> lines = linesOf(stack);
     bool anr                       = !lines.empty() && lines.front().starts_with("ANR ");
-    if (!anr && (lines.empty() || !lines.front().starts_with("Signal ")))
+    bool exception                 = !lines.empty() && lines.front().starts_with("Exception ");
+    if (!anr && !exception && (lines.empty() || !lines.front().starts_with("Signal ")))
     {
         return "";
     }
 
-    std::string headline =
-        anr ? "ANR (not responding)" : signalName(std::atoi(lines.front().c_str() + 7));
+    std::string headline = anr         ? "ANR (not responding)"
+                           : exception ? exceptionName(lines.front())
+                                       : signalName(std::atoi(lines.front().c_str() + 7));
+    if (!anr && !exception && lines.size() > 1 && lines[1].starts_with("Exception "))
+    {
+        headline += " (" + exceptionName(lines[1]) + ")";
+    }
+
     for (size_t index = 1; index < lines.size(); index++)
     {
         if (std::optional<std::string> name = addonName(lines[index]))

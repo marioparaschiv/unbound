@@ -1,5 +1,6 @@
 #include "LoaderCrashHandler.h"
 
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <cerrno>
@@ -41,6 +42,8 @@ static std::atomic_bool gInstalled{false};
 static std::atomic<int> gStackDescriptor{-1};
 static std::string gPreviousNativeCrash;
 static constexpr size_t kMaxNativeFrames = 32;
+static char gException[512];
+static std::atomic<size_t> gExceptionLength{0};
 
 static void writeText(int descriptor, const char *text)
 {
@@ -168,6 +171,14 @@ static void writeNativeStack(int signal, void *context)
     writeText(descriptor, "Signal ");
     writeDecimal(descriptor, static_cast<unsigned>(signal));
     writeText(descriptor, "\n");
+    if (size_t length = gExceptionLength.load(std::memory_order_acquire))
+    {
+        writeText(descriptor, "Exception ");
+        ssize_t written = write(descriptor, gException, length);
+        (void) written;
+        writeText(descriptor, "\n");
+    }
+
     if (gImageLineLength > 0)
     {
         ssize_t written = write(descriptor, gImageLine, gImageLineLength);
@@ -305,6 +316,45 @@ static std::string describeHandler(const struct sigaction &action)
     }
 
     return "an unnamed handler";
+}
+
+static std::string singleLine(const std::string &text, size_t limit)
+{
+    std::string line = text.substr(0, limit);
+    std::replace(line.begin(), line.end(), '\n', ' ');
+    std::replace(line.begin(), line.end(), '\r', ' ');
+    return line;
+}
+
+void noteUncaughtException(const std::string &description)
+{
+    std::string line = singleLine(description, sizeof(gException));
+    gExceptionLength.store(0, std::memory_order_release);
+    std::memcpy(gException, line.data(), line.size());
+    gExceptionLength.store(line.size(), std::memory_order_release);
+}
+
+bool recordUncaughtException(const std::string &description, const std::string &frames)
+{
+    int descriptor = gStackDescriptor.exchange(-1);
+    if (descriptor < 0)
+    {
+        return false;
+    }
+
+    writeText(descriptor,
+              ("Exception " + singleLine(description, sizeof(gException)) + "\n").c_str());
+    if (gImageLineLength > 0)
+    {
+        ssize_t written = write(descriptor, gImageLine, gImageLineLength);
+        (void) written;
+    }
+
+    writeCrashingAddonLine(descriptor);
+    writeText(descriptor, frames.c_str());
+    fsync(descriptor);
+    close(descriptor);
+    return true;
 }
 
 bool installAddonCrashHandler(const std::string &markerPath)

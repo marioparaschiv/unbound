@@ -4,6 +4,8 @@
 
 namespace loader {
 bool installAddonCrashHandler(const std::string &markerPath);
+void noteUncaughtException(const std::string &description);
+bool recordUncaughtException(const std::string &description, const std::string &frames);
 
 // The file the crash handler writes the crashing thread's stack to, beside `markerPath`.
 constexpr const char *kPendingNativeCrashFile = "native-crash.pending";

@@ -78,6 +78,7 @@ class Unbound : XposedModule() {
             bytecodeVersion,
             platformInfo.toString(),
         )
+        UncaughtExceptions.install()
 
         Logger.info(LogCategory.DEFAULT, "Hermes bytecode version $bytecodeVersion, documents at $documents")
         DevOverlay.debugBuild = moduleInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0

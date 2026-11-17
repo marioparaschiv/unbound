@@ -316,6 +316,9 @@ object NativeBridge {
     external fun nativeAppendLogFile(level: Int, category: String, message: String)
 
     @JvmStatic
+    external fun nativeRecordUncaughtException(description: String, frames: String): Boolean
+
+    @JvmStatic
     external fun nativeDevOverlayButtonSide(): Double
 
     @JvmStatic

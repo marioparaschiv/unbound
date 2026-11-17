@@ -84,6 +84,11 @@ export const envSchema = Type.Object({
 	SPONSOR_RECONCILE_INTERVAL_SECONDS: positiveInt(3600),
 	SPONSOR_PERK_GRACE_DAYS: nonNegativeInt(DEFAULT_PERK_GRACE_DAYS),
 
+	/** A token that can open and comment on issues in `CRASH_ISSUES_REPOSITORY`; unset keeps crash reports private. */
+	GITHUB_ISSUES_TOKEN: Type.Optional(Type.String({ minLength: 1 })),
+	/** The `owner/name` that gets one issue per kind of crash. */
+	CRASH_ISSUES_REPOSITORY: Type.String({ minLength: 1, default: 'marioparaschiv/unbound' }),
+
 	/** The `owner/name` whose build tags CI publishes without review; unset turns first-party publishing off. */
 	FIRST_PARTY_REPOSITORY: Type.Optional(Type.String({ minLength: 1 })),
 

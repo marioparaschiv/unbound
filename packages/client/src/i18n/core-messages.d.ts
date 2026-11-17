@@ -90,6 +90,7 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_FONTS_AXES_HINT: { family: string | number };
 		UNBOUND_FONTS_WEIGHT_ITALIC: { weight: string | number };
 		UNBOUND_THEME_EDITED_COUNT: { edited: string | number };
+		UNBOUND_THEME_TOKEN_KEY: { token: string | number };
 		UNBOUND_FFI_CONSENT_BODY: { name: string | number };
 		UNBOUND_REINSTALLED: { name: string | number };
 		UNBOUND_REINSTALL_UNCHANGED: { name: string | number };
@@ -118,5 +119,7 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_NATIVE_LAUNCH_RECOVERY: { count: string | number };
 		UNBOUND_NATIVE_LAUNCH_ROLLED_BACK: { count: string | number };
 		UNBOUND_NATIVE_USE_PREVIOUS_BUNDLE_REVISION: { revision: string | number };
+		UNBOUND_CRASH_REPORT_FILED: { number: string | number };
+		UNBOUND_CRASH_REPORT_JOINED: { number: string | number };
 	};
 }
