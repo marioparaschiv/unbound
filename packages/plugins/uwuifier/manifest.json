@@ -1,0 +1,18 @@
+{
+	"id": "unbound.uwuifier",
+	"name": "Uwuifier",
+	"description": "Turns your messages into uwu speak before you send them, from a chat input toggle or the /uwu command.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ReactionIcon",
+	"main": "index.tsx",
+	"startAfterFirstFrame": true
+}

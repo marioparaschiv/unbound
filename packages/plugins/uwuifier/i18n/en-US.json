@@ -1,0 +1,18 @@
+{
+	"AUTO_DISABLE": "Auto Disable",
+	"AUTO_DISABLE_SUBTITLE": "Turn the toggle off again after sending one uwu message",
+	"COMMAND_DESC": "Send a message in uwu speak",
+	"COMMAND_TEXT_DESC": "What to say",
+	"DISABLE_UWU": "Disable Uwuifier",
+	"ENABLE_UWU": "Enable Uwuifier",
+	"FACES": "Faces",
+	"FACES_SUBTITLE": "End some sentences with a face such as owo or >w<",
+	"PERSIST_STATE": "Persist State",
+	"PERSIST_STATE_SUBTITLE": "Keep the toggle on when you open another channel",
+	"STUTTER": "Stutter",
+	"STUTTER_SUBTITLE": "Stutter the first letter of some words, like h-hewwo",
+	"TOGGLE": "Toggle",
+	"TOGGLED_OFF": "Your messages are sent as you write them again.",
+	"TOGGLED_ON": "Your messages are sent in uwu speak.",
+	"UWUIFIER": "Uwuifier"
+}
