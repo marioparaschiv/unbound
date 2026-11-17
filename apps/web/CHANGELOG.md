@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.8.0](https://github.com/marioparaschiv/unbound/compare/web-v2.7.0...web-v2.8.0) (2026-11-17)
+
+
+### Features
+
+* file crash reports as GitHub issues and catch exceptions ([#1715](https://github.com/marioparaschiv/unbound/issues/1715)) ([0852994](https://github.com/marioparaschiv/unbound/commit/08529945ebc4c5dec222b7fa80dc7c8e7adf086a))
+* file only Unbound's crashes as issues ([#1741](https://github.com/marioparaschiv/unbound/issues/1741)) ([8453317](https://github.com/marioparaschiv/unbound/commit/8453317e06445e4eff41a5b9d2bdcd792e40af0b))
+* send what else was running with crash reports ([#1740](https://github.com/marioparaschiv/unbound/issues/1740)) ([9a65241](https://github.com/marioparaschiv/unbound/commit/9a65241a088fa84bb0d85f0aa8cea05fd1f686e7))
+* withdraw addon versions that crash on many installs ([#1742](https://github.com/marioparaschiv/unbound/issues/1742)) ([2664d5b](https://github.com/marioparaschiv/unbound/commit/2664d5b512e21760301ec1c8fc750ca30c8c03d8))
+
+
+### Bug Fixes
+
+* **web:** shorten /debug's push line; skip working UnboundActivities ([#1722](https://github.com/marioparaschiv/unbound/issues/1722)) ([00c4cee](https://github.com/marioparaschiv/unbound/commit/00c4cee97e8384fa7f05cda2a4451b6353079f68))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.8.0
+
 ## [2.7.0](https://github.com/marioparaschiv/unbound/compare/web-v2.6.0...web-v2.7.0) (2026-11-16)
 
 
