@@ -1,6 +1,6 @@
 # Plugins
 
-202 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+203 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -60,6 +60,7 @@
 - <img src="../../assets/plugins/readme-icons/pencil-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Edit Diff Preview](https://unbound.rip/addons/unbound.edit-diff-preview): Shows what an edit adds and removes before it is saved, for long messages and code.
 - <img src="../../assets/plugins/readme-icons/pencil-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Edit Messages Locally](https://unbound.rip/addons/unbound.edit-messages-locally): Changes what any message says on your device only, from its long-press menu, without editing it on Discord.
 - <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Emoji Packs](https://unbound.rip/addons/unbound.emoji-packs): Swaps Discord's emoji for another set, such as Microsoft's animated Fluent emoji.
+- <img src="../../assets/plugins/readme-icons/shield-user-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Encrypted Files](https://unbound.rip/addons/unbound.encrypted-files): Encrypts attachments so only the people you pick can open them, with keys kept on your device.
 - <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Expression Tools](https://unbound.rip/addons/unbound.expression-tools): Useful tools for custom emojis and stickers.
 - <img src="../../assets/plugins/readme-icons/sticker-icon.svg" width="20" height="20" align="absmiddle" alt=""> [External Sticker Packs](https://unbound.rip/addons/unbound.external-sticker-packs): Adds LINE sticker packs to a picker in the chat input and sends their stickers as images.
 - <img src="../../assets/plugins/readme-icons/gift-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Fake Nitro](https://unbound.rip/addons/unbound.fake-nitro): Sends locked emojis and stickers as image links, shows the ones others send as the real thing, and unlocks Nitro stream quality.
