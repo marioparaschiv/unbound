@@ -151,6 +151,8 @@ class Unbound : XposedModule() {
                     override fun remove() = unhook.unhook()
                 }
             }
+
+            override fun deoptimize(method: java.lang.reflect.Executable): Boolean = this@Unbound.deoptimize(method)
         })
 
         NativeHooks.useDispatcher(object : NativeHooks.Dispatcher {

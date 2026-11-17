@@ -652,6 +652,12 @@ export function createScopedNativeBridge(
 			javaHookTokens.delete(installed);
 			removeJavaHook(installed);
 		},
+		deoptimize: scopeBridgeMethod(
+			hooksSource,
+			'deoptimize',
+			'hooks.deoptimize',
+			'Deoptimizing Java methods needs a newer loader.',
+		),
 		proxy: (interfaces, handler) => {
 			if (lifecycle.disposed) {
 				throw new NativeBridgeDisposedError();

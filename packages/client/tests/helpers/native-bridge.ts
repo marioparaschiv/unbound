@@ -325,6 +325,7 @@ const fakeBridge: LoaderBridge = {
 		setReturnValue: () => undefined,
 		removeReturnValue: () => undefined,
 		clearReturnValues: () => undefined,
+		deoptimize: () => true,
 		remove: (token: NativeJavaHookToken) => {
 			hooksRemoved.push(token);
 		},
