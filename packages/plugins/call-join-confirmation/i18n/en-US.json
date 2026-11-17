@@ -1,0 +1,11 @@
+{
+	"VOICE_CHANNELS": "Voice channels",
+	"VOICE_CHANNELS_SUBTITLE": "Ask before joining a voice or stage channel.",
+	"CALLS": "Calls",
+	"CALLS_SUBTITLE": "Ask before starting a call in a DM or group.",
+	"JOIN_TITLE": "Join {name}?",
+	"JOIN": "Join",
+	"CALL_TITLE": "Call {name}?",
+	"CALL_VIDEO_TITLE": "Video call {name}?",
+	"CALL": "Call"
+}
