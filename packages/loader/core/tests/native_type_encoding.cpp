@@ -12,6 +12,8 @@ int main()
     assert(nativeFFITypeName("r@") == "object");
     assert(nativeFFITypeName("@\"NSString\"") == "object");
     assert(nativeFFITypeName("r@\"<NSCopying>\"") == "object");
+    assert(nativeFFITypeName("@?") == "object");
+    assert(nativeFFITypeName("@?<v@?@\"NSError\">") == "object");
     assert(nativeFFITypeName("#") == "class");
     assert(nativeFFITypeName(":") == "selector");
     assert(nativeFFITypeName("^v") == "pointer");
