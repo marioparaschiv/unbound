@@ -1,7 +1,7 @@
 import { toBase64 } from '@unbound-plugins/shared/media/gif/base64';
 import { fs } from '@unbound-app/api';
 
-import type { FontHost } from '~/native/fonts';
+import type { FontHost } from '@unbound-plugins/shared/native/fonts/font-host';
 import { familyName, type FontAttachment } from '~/lib/font-file';
 import { fontFormat, woffToSfnt } from '~/lib/woff';
 

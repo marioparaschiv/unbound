@@ -5,7 +5,7 @@ import { messages } from '@unbound-app/i18n';
 import { useEffect, useState } from 'react';
 
 import type { FontAttachment } from '~/lib/font-file';
-import type { FontHost } from '~/native/fonts';
+import type { FontHost } from '@unbound-plugins/shared/native/fonts/font-host';
 import { loadFont, type LoadedFont } from '~/lib/load-font';
 
 const SIZES = [16, 28, 44];

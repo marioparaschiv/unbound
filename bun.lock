@@ -1365,6 +1365,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/font-fallback": {
+      "name": "font-fallback",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/force-owner-crown": {
       "name": "force-owner-crown",
       "dependencies": {
@@ -5083,6 +5097,8 @@
     "follow-voice-user": ["follow-voice-user@workspace:packages/plugins/follow-voice-user"],
 
     "font-attachment-preview": ["font-attachment-preview@workspace:packages/plugins/font-attachment-preview"],
+
+    "font-fallback": ["font-fallback@workspace:packages/plugins/font-fallback"],
 
     "force-owner-crown": ["force-owner-crown@workspace:packages/plugins/force-owner-crown"],
 

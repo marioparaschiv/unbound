@@ -1,6 +1,6 @@
 # Plugins
 
-201 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+202 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -72,6 +72,7 @@
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Follow Up Inbox](https://unbound.rip/addons/unbound.follow-up-inbox): Marks messages you still need to answer, lists them in one place apart from unreads, and clears each once you reply.
 - <img src="../../assets/plugins/readme-icons/headphones-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Follow Voice User](https://unbound.rip/addons/unbound.follow-voice-user): Follows a friend from voice channel to voice channel: /follow them, and you join wherever they go.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Font Attachment Preview](https://unbound.rip/addons/unbound.font-attachment-preview): Previews .ttf, .otf and .woff attachments with sample text before you download or install them.
+- <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Font Fallback](https://unbound.rip/addons/unbound.font-fallback): Draws each writing system in messages with its own font, so mixed-language messages stay readable.
 - <img src="../../assets/plugins/readme-icons/crown-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Force Owner Crown](https://unbound.rip/addons/unbound.force-owner-crown): Always show the owner crown on the server owner's messages.
 - <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Friend Invites](https://unbound.rip/addons/unbound.friend-invites): Creates, lists and revokes your friend invite links with the /friend-invites command.
 - <img src="../../assets/plugins/readme-icons/heart-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Friend Markers](https://unbound.rip/addons/unbound.friend-markers): Marks messages from your friends with a small Friend label beside their name.
