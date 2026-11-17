@@ -1,0 +1,17 @@
+{
+	"id": "unbound.external-sticker-packs",
+	"name": "External Sticker Packs",
+	"description": "Adds LINE sticker packs to a picker in the chat input and sends their stickers as images.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "StickerIcon",
+	"main": "index.tsx"
+}
