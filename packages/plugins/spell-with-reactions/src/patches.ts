@@ -5,6 +5,8 @@ import { messages } from '@unbound-app/i18n';
 
 import { openSpellSheet } from '~/components/spell-sheet';
 
+const SHEET_SWAP_MS = 350;
+
 type Reaction = { emoji?: { id?: string | null; name?: string }; me?: boolean };
 type SheetProps = { message?: { id?: string; channel_id?: string; reactions?: Reaction[] } };
 
@@ -37,11 +39,15 @@ export function patchActionSheets(): void {
 					icon: 'ReactionIcon',
 					onPress: () => {
 						ActionSheets.hideActionSheet(key);
-						openSpellSheet({
-							channelId,
-							messageId,
-							taken: unicodeReactions(reactions),
-						});
+						setTimeout(
+							() =>
+								openSpellSheet({
+									channelId,
+									messageId,
+									taken: unicodeReactions(reactions),
+								}),
+							SHEET_SWAP_MS,
+						);
 					},
 				},
 			]);
