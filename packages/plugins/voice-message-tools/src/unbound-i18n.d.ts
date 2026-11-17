@@ -31,6 +31,10 @@ declare module '@unbound-app/i18n' {
 		readonly PER_CHAT: string;
 		/** The speed button sets the speed for the chat you are in; other chats keep their own or the speed above. */
 		readonly PER_CHAT_SUBTITLE: string;
+		/** Play the next one */
+		readonly AUTOPLAY: string;
+		/** When a voice message finishes, the next voice message in the chat starts. */
+		readonly AUTOPLAY_SUBTITLE: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

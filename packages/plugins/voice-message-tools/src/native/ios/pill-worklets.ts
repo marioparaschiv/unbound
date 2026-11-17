@@ -37,13 +37,30 @@ type BoxedRect = {
 
 type PillAction = 'speed' | 'download';
 
-type PillState = { speed: number; widening: boolean; buttons: NativeObjectHandle[] };
+type PillState = {
+	speed: number;
+	widening: boolean;
+	buttons: NativeObjectHandle[];
+	/** The voice message players laid out so far, for autoplay to find the next one in. */
+	players: NativeObjectHandle[];
+};
+
+const MAX_PLAYERS = 64;
 
 function state(): PillState {
 	'worklet';
 	const holder = globalThis as unknown as Record<typeof STATE_KEY, PillState | undefined>;
 
-	return (holder[STATE_KEY] ??= { speed: 1, widening: false, buttons: [] });
+	const current = (holder[STATE_KEY] ??= {
+		speed: 1,
+		widening: false,
+		buttons: [],
+		players: [],
+	});
+
+	if (!Array.isArray(current.players)) current.players = [];
+
+	return current;
 }
 
 function rectOf(raw: unknown): Rect {
@@ -309,6 +326,47 @@ function fitContainers(objc: NativeObjCBridge, player: NativeObjectHandle, frame
  * @param speed The speed the speed button shows.
  * @param onAction Runs with the tapped button's action and its message.
  */
+function rememberPlayer(objc: NativeObjCBridge, player: NativeObjectHandle) {
+	'worklet';
+	const { players } = state();
+
+	if (players.some((known) => objc.invoke(known, 'isEqual:', [player]) === true)) return;
+
+	players.push(player);
+
+	if (players.length > MAX_PLAYERS) players.shift();
+}
+
+/**
+ * @description Starts a voice message the way a tap on its play button does, when its player is on screen.
+ * @param scope The plugin's UI scope.
+ * @param messageId The voice message.
+ * @returns Whether its player was found and pressed.
+ */
+export function playVoiceMessage(scope: NativeUIScope, messageId: string): boolean {
+	'worklet';
+	const objc = scope.objc as NativeObjCBridge;
+	const player = state().players.find(
+		(candidate) =>
+			Boolean(objc.invoke(candidate, 'window', [])) &&
+			messageIdOf(objc, candidate) === messageId,
+	);
+
+	if (!player) return false;
+
+	const subviews = objc.invoke(player, 'subviews', []) as NativeObjectHandle[] | null;
+	const UIButton = objc.getClass('UIButton');
+	const play = (subviews ?? []).find(
+		(view) => objc.invoke(view, 'isKindOfClass:', [UIButton]) === true,
+	);
+
+	if (!play) return false;
+
+	objc.invoke(play, 'sendActionsForControlEvents:', [TOUCH_UP_INSIDE]);
+
+	return true;
+}
+
 export function installPillControls(
 	scope: NativeUIScope,
 	speed: number,
@@ -345,6 +403,8 @@ export function installPillControls(
 	objc.hook(PLAYER, 'layoutSubviews', {
 		after: ({ self }) => {
 			const frame = rectOf(objc.invoke(self, 'frame', []));
+
+			rememberPlayer(objc, self);
 
 			if (frame.width <= CONTROLS_WIDTH || inEmbed(objc, self)) return;
 
@@ -410,4 +470,5 @@ export function removePillControls(scope: NativeUIScope) {
 	}
 
 	current.buttons = [];
+	current.players = [];
 }

@@ -9,6 +9,7 @@ import { nextSpeed } from '~/lib/speeds';
 import { voicePillControls } from '~/native/pill';
 import { voiceMessageSpeed } from '~/native/speed';
 import { interceptAudioMessages, patchAudioSending } from '~/send';
+import { patchAutoplay } from '~/autoplay';
 
 let speed: ReturnType<typeof voiceMessageSpeed> | undefined;
 let pill: ReturnType<typeof voicePillControls> | undefined;
@@ -58,6 +59,7 @@ export function start(context: PluginContext) {
 		if (action === 'speed') stepSpeed();
 		else void downloadVoiceMessage(context.native, messageId);
 	});
+	patchAutoplay((messageId) => pill?.play(messageId) ?? Promise.resolve(false));
 	stopWatching = storage.onChange(
 		({ store }) => store === addon.id,
 		() => {

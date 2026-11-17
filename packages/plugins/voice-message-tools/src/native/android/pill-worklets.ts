@@ -1,4 +1,5 @@
 import {
+	javaFlag,
 	javaFloat,
 	javaInt,
 	javaNumber,
@@ -34,6 +35,10 @@ const DOWNLOAD_SIZE_DP = 24;
 const END_PADDING_DP = 10;
 const BOLD = 1;
 const ROW_DEPTH = 16;
+const MAX_PLAYERS = 64;
+const PLAY_DEPTH = 4;
+const MOTION_DOWN = 0;
+const MOTION_UP = 1;
 
 type PillAction = 'speed' | 'download';
 
@@ -41,6 +46,8 @@ type PillState = {
 	speed: number;
 	speedViews: NativeJavaReference[];
 	icon?: number;
+	/** The voice message players bound so far, for autoplay to find the next one in. */
+	players: NativeJavaReference[];
 };
 
 type BindEvent = { self: unknown };
@@ -49,7 +56,11 @@ function state(): PillState {
 	'worklet';
 	const holder = globalThis as unknown as Record<typeof STATE_KEY, PillState | undefined>;
 
-	return (holder[STATE_KEY] ??= { speed: 1, speedViews: [] });
+	const current = (holder[STATE_KEY] ??= { speed: 1, speedViews: [], players: [] });
+
+	if (!Array.isArray(current.players)) current.players = [];
+
+	return current;
 }
 
 function dp(java: NativeJavaBridge, view: NativeJavaReference, value: number): number {
@@ -186,6 +197,101 @@ function addControls(
 	]);
 }
 
+function rememberPlayer(java: NativeJavaBridge, player: NativeJavaReference) {
+	'worklet';
+	const { players } = state();
+
+	if (players.some((known) => javaFlag(java.invoke(known, 'equals', [player])))) return;
+
+	players.push(player);
+
+	if (players.length > MAX_PLAYERS) players.shift();
+}
+
+function tap(java: NativeJavaBridge, view: NativeJavaReference): boolean {
+	'worklet';
+	const MotionEvent = java.getClass('android.view.MotionEvent');
+	const now =
+		javaNumber(java.invoke(java.getClass('android.os.SystemClock'), 'uptimeMillis', [])) ?? 0;
+	const x = (javaNumber(java.invoke(view, 'getWidth', [])) ?? 0) / 2;
+	const y = (javaNumber(java.invoke(view, 'getHeight', [])) ?? 0) / 2;
+	const touch = (action: number) =>
+		javaReference(
+			java.invoke(MotionEvent, 'obtain', [
+				{ type: 'long', value: now },
+				{ type: 'long', value: now },
+				javaInt(action),
+				javaFloat(x),
+				javaFloat(y),
+				javaInt(0),
+			]),
+		);
+	const down = touch(MOTION_DOWN);
+	const up = touch(MOTION_UP);
+
+	if (!down || !up) return false;
+
+	java.invoke(view, 'dispatchTouchEvent', [down]);
+	java.invoke(view, 'dispatchTouchEvent', [up]);
+	java.invoke(down, 'recycle', []);
+	java.invoke(up, 'recycle', []);
+
+	return true;
+}
+
+function firstClickable(
+	java: NativeJavaBridge,
+	view: NativeJavaReference,
+	depth: number,
+): NativeJavaReference | null {
+	'worklet';
+	if (javaFlag(java.invoke(view, 'hasOnClickListeners', []))) return view;
+
+	const group = java.getClass('android.view.ViewGroup');
+
+	if (depth <= 0 || !javaFlag(java.invoke(group, 'isInstance', [view]))) return null;
+
+	const count = javaNumber(java.invoke(view, 'getChildCount', [])) ?? 0;
+
+	for (let index = 0; index < count; index++) {
+		const child = javaReference(java.invoke(view, 'getChildAt', [javaInt(index)]));
+		const found = child ? firstClickable(java, child, depth - 1) : null;
+
+		if (found) return found;
+	}
+
+	return null;
+}
+
+/**
+ * @description Starts a voice message the way a tap on its play button does, when its player is on screen.
+ * @param scope The plugin's UI scope.
+ * @param messageId The voice message.
+ * @param idField The name of `MessageView`'s message id field.
+ * @returns Whether its player was found and pressed.
+ */
+export function playVoiceMessage(
+	scope: NativeUIScope,
+	messageId: string,
+	idField: string,
+): boolean {
+	'worklet';
+	const java = scope.java as NativeJavaBridge;
+	const player = state().players.find(
+		(candidate) =>
+			javaFlag(java.invoke(candidate, 'isAttachedToWindow', [])) &&
+			messageIdOf(java, candidate, idField) === messageId,
+	);
+	const pill = player ? javaReference(java.invoke(player, 'getChildAt', [javaInt(0)])) : null;
+	const holder = pill ? javaReference(java.invoke(pill, 'getChildAt', [javaInt(0)])) : null;
+
+	if (!holder) return false;
+
+	const button = firstClickable(java, holder, PLAY_DEPTH) ?? holder;
+
+	return tap(java, button);
+}
+
 /**
  * @description Puts a speed button and a download button at the end of Discord's voice message pill. Hooks
  * `AudioPlayerView.setDurationMs`, which Discord calls when it binds a voice message, and appends the buttons to the
@@ -225,6 +331,7 @@ export function installPillControls(
 
 		try {
 			addControls(java, player, listeners);
+			rememberPlayer(java, player);
 		} catch (error) {
 			console.error(
 				`[Voice Message Tools] Failed to add voice message controls: ${String(error)}`,
@@ -273,4 +380,5 @@ export function removePillControls(scope: NativeUIScope) {
 	}
 
 	current.speedViews = [];
+	current.players = [];
 }

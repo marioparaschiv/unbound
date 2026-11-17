@@ -23,6 +23,11 @@ export default defineSettings({
 		title: 'PER_CHAT',
 		subtitle: 'PER_CHAT_SUBTITLE',
 	}),
+	autoplay: setting.boolean({
+		default: true,
+		title: 'AUTOPLAY',
+		subtitle: 'AUTOPLAY_SUBTITLE',
+	}),
 	showAudio: setting.boolean({
 		default: false,
 		title: 'SHOW_AUDIO',
