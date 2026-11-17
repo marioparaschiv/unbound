@@ -1,0 +1,9 @@
+{
+	"WALLPAPERS": "Wallpapers",
+	"WALLPAPERS_SUBTITLE": "Links to the pictures to rotate through, one per row.",
+	"INTERVAL": "Change every",
+	"INTERVAL_SUBTITLE": "How long each wallpaper stays.",
+	"SHUFFLE": "Shuffle",
+	"SHUFFLE_SUBTITLE": "Pick the next wallpaper at random instead of in order.",
+	"NEXT": "Next wallpaper"
+}
