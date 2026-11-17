@@ -5,6 +5,7 @@ import { PatchType } from 'possess';
 
 import { recordFailure, recordSuccess, type PatchFailures } from '~/patcher/patch-failures';
 import { fallbackOf, isPatchBoundary, withPatchBoundary } from '~/patcher/patch-boundary';
+import { countRender, createRenderRate, removeLoopingPatch } from '~/patcher/render-rate';
 import { isolateAdded, markDiscordTree } from '~/patcher/isolate-added';
 import type { PatchBoundaryProps } from '~/patcher/patch-boundary';
 import { snapshotTree } from '~/patcher/snapshot-tree';
@@ -225,8 +226,15 @@ function adapt(
 	const failures: PatchFailures = { name, count: 0, unstable: false, unpatch };
 	const own = [failures];
 	const none: PatchFailures[] = [];
+	const rate = createRenderRate();
+	let looping = false;
 
 	function adapted(ctx: PatchContext) {
+		if (!looping && countRender(rate)) {
+			looping = true;
+			removeLoopingPatch(name, unpatch);
+		}
+
 		const props = render.isClass ? ctx.this?.props : ctx.args[0];
 		const inner = isPatchBoundary(ctx.result) ? ctx.result.props : undefined;
 		const result = inner ? inner.children : ctx.result;
