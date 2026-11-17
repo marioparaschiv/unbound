@@ -1,0 +1,16 @@
+{
+	"SILENCED_USERS": "Silenced users",
+	"SILENCED_USERS_SUBTITLE": "Their DM calls don't ring. Their messages still arrive.",
+	"SILENCED_GROUPS": "Silenced group DMs",
+	"SILENCED_GROUPS_SUBTITLE": "Calls in these groups don't ring. Messages still arrive.",
+	"ADD_USER": "Add user",
+	"SEARCH_USERS": "Search or paste a user ID",
+	"NO_USERS_FOUND": "No users found",
+	"UNKNOWN_USER": "Unknown user",
+	"REMOVE_USER": "Remove user",
+	"ADD_GROUP": "Add group DM",
+	"SEARCH_GROUPS": "Search group DMs",
+	"NO_GROUPS_FOUND": "No group DMs found",
+	"UNKNOWN_GROUP": "Unknown group DM",
+	"REMOVE_GROUP": "Remove group DM"
+}

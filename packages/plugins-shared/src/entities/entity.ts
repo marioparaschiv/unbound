@@ -1,7 +1,7 @@
 /** What a picked id names. */
-export type EntityKind = 'user' | 'channel' | 'guild';
+export type EntityKind = 'user' | 'channel' | 'guild' | 'group';
 
-/** A user, channel or server as a row draws it. */
+/** A user, channel, server or group DM as a row draws it. */
 export type Entity = {
 	kind: EntityKind;
 	id: string;
