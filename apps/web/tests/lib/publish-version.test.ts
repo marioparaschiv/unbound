@@ -14,7 +14,7 @@ import { serveMemoryS3 } from '../helpers/memory-s3';
 import { rejection } from '../helpers/server';
 import { manifest } from '../helpers/addons';
 
-const REPOSITORY = 'unbound-app/unbound';
+const REPOSITORY = 'marioparaschiv/unbound';
 
 const s3 = serveMemoryS3();
 const github = serveGitHub({ repositories: { [REPOSITORY]: {} }, tokens: {} });

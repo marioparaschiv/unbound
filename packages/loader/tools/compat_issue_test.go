@@ -63,7 +63,7 @@ func TestApplyCompatIssuePlan(t *testing.T) {
 	fake := &fakeGitHub{created: 21}
 	plan := planCompatIssue([]compatIssue{{Number: 15, Title: "Discord compatibility (beta): iOS 1, Android 1"}}, "beta", "iOS 2, Android 2", true)
 
-	number, err := applyCompatIssuePlan(fake, "unbound-app/unbound", compatIssueLabel, "report.md", plan)
+	number, err := applyCompatIssuePlan(fake, "marioparaschiv/unbound", compatIssueLabel, "report.md", plan)
 	if err != nil || number != 21 {
 		t.Fatalf("got #%d, %v", number, err)
 	}

@@ -27,12 +27,12 @@ func TestRemovableLegacyNames(t *testing.T) {
 		t.Fatalf("got %+v, want %+v", got, want)
 	}
 
-	body := renderCompatLegacyIssue(want, "350.8", "350.8", "https://github.com/unbound-app/unbound/blob/abc")
+	body := renderCompatLegacyIssue(want, "350.8", "350.8", "https://github.com/marioparaschiv/unbound/blob/abc")
 	for _, line := range []string{
 		"Unbound supports Discord Android 350.8 and newer",
 		"The stable scan checked Android 350.8",
 		"the list stays as it is until the minimum is raised",
-		"- class `com.discord.reactions.ReactionView` · [packages/plugins/reaction-avatars/src/android/reactions.ts:47](https://github.com/unbound-app/unbound/blob/abc/packages/plugins/reaction-avatars/src/android/reactions.ts#L47)",
+		"- class `com.discord.reactions.ReactionView` · [packages/plugins/reaction-avatars/src/android/reactions.ts:47](https://github.com/marioparaschiv/unbound/blob/abc/packages/plugins/reaction-avatars/src/android/reactions.ts#L47)",
 		"- class `com.discord.theme.ThemeManager` · [" + themes.File + ":4]",
 	} {
 		if !strings.Contains(body, line) {
@@ -84,7 +84,7 @@ func TestPlanCompatLegacyIssue(t *testing.T) {
 	}
 
 	fake := &fakeGitHub{}
-	if _, err := applyCompatIssuePlan(fake, "unbound-app/unbound", compatLegacyLabel, "body.md", fresh); err != nil {
+	if _, err := applyCompatIssuePlan(fake, "marioparaschiv/unbound", compatLegacyLabel, "body.md", fresh); err != nil {
 		t.Fatal(err)
 	}
 

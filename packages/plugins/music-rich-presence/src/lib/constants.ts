@@ -14,7 +14,7 @@ export const POLL_INTERVAL_MS = 16_000;
 
 export const LOOKUP_CACHE_TTL_MS = 15 * 60 * 1000;
 
-export const MUSICBRAINZ_USER_AGENT = 'Unbound/1.0 (https://github.com/unbound-app)';
+export const MUSICBRAINZ_USER_AGENT = 'Unbound/1.0 (https://github.com/marioparaschiv/unbound)';
 
 export const ActivityType = {
 	PLAYING: 0,

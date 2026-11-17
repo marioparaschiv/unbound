@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3] - 2026-11-17
+
+### Changed
+
+- Names Unbound's current GitHub repository when looking up album art on MusicBrainz.
+
 ## [1.0.2] - 2026-11-11
 
 ### Changed

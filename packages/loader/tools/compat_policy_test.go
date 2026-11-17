@@ -136,12 +136,12 @@ func TestRenderCompatSupportIssue(t *testing.T) {
 	ios := compatSupportRaise{Platform: "ios", Minimum: "350.0", Stable: "351.0", NewerSince: since}
 	names := []compatLegacyName{{Name: "com.discord.theme.ThemeManager", Locations: []compatLocation{{File: "Themes.kt", Line: 4}}}}
 
-	body := renderCompatSupportIssue([]compatSupportRaise{android}, names, 30, "https://github.com/unbound-app/unbound/blob/abc")
+	body := renderCompatSupportIssue([]compatSupportRaise{android}, names, 30, "https://github.com/marioparaschiv/unbound/blob/abc")
 	for _, line := range []string{
-		"[`packages/loader/compat-policy.json`](https://github.com/unbound-app/unbound/blob/abc/packages/loader/compat-policy.json)",
+		"[`packages/loader/compat-policy.json`](https://github.com/marioparaschiv/unbound/blob/abc/packages/loader/compat-policy.json)",
 		"newer than that minimum for more than 30 days",
 		"| Android | 350.8 | 351.2 | 2026-10-31 |",
-		"- class `com.discord.theme.ThemeManager` · [Themes.kt:4](https://github.com/unbound-app/unbound/blob/abc/Themes.kt#L4)",
+		"- class `com.discord.theme.ThemeManager` · [Themes.kt:4](https://github.com/marioparaschiv/unbound/blob/abc/Themes.kt#L4)",
 	} {
 		if !strings.Contains(body, line) {
 			t.Fatalf("issue body is missing %q:\n%s", line, body)
@@ -180,7 +180,7 @@ func TestPlanCompatSupportIssue(t *testing.T) {
 	}
 
 	fake := &fakeGitHub{created: 50}
-	if _, err := applyCompatIssuePlan(fake, "unbound-app/unbound", compatSupportLabel, "body.md", fresh); err != nil {
+	if _, err := applyCompatIssuePlan(fake, "marioparaschiv/unbound", compatSupportLabel, "body.md", fresh); err != nil {
 		t.Fatal(err)
 	}
 
