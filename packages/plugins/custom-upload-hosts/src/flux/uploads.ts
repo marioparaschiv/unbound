@@ -3,6 +3,7 @@ import { flux, metro, toasts } from '@unbound-app/api';
 
 import { hostFor, readLink, type Host, type HostSettings } from '~/lib/hosts';
 import { mimeTypeOf } from '~/lib/mime-types';
+import { hostThreshold, splitBySize } from '~/lib/threshold';
 
 type UploadFile = { uri: string; filename?: string; mimeType?: string };
 
@@ -18,6 +19,36 @@ type ChatInput = { insertText?: (text: string) => void };
 type ChatInputRegistry = {
 	getBestActiveInputForChannelId?: (channelId: string) => ChatInput | null | undefined;
 };
+
+type FileSizes = { getFileSize?: (uri: string) => Promise<number> };
+type UploadLimits = { maxFileSize?: (guildId: string | null) => number };
+type ThresholdSettings = { uploadWhen: string; minSizeMB: number };
+
+const FileInfo: FileSizes | undefined = metro.findByProps('getFileSize', { lazy: true });
+const Limits: UploadLimits | undefined = metro.findByProps('maxFileSize', 'sizeString', {
+	lazy: true,
+});
+
+async function sizeOf(file: UploadFile): Promise<number | undefined> {
+	try {
+		const size = await FileInfo?.getFileSize?.(file.uri);
+
+		return typeof size === 'number' && size >= 0 ? size : undefined;
+	} catch (error) {
+		logger.warn(`Failed to read the size of ${file.uri}:`, error);
+
+		return undefined;
+	}
+}
+
+function channelLimit(channelId: string): number | undefined {
+	const channel = flux.getStore('Channel').getChannel(channelId) as
+		| { guild_id?: string }
+		| undefined;
+	const limit = Limits?.maxFileSize?.(channel?.guild_id ?? null);
+
+	return typeof limit === 'number' && limit > 0 ? limit : undefined;
+}
 
 async function upload(host: Host, file: UploadFile): Promise<string> {
 	const form = new FormData();
@@ -52,8 +83,7 @@ function insertLinks(channelId: string, links: string[]) {
 	registry?.getBestActiveInputForChannelId?.(channelId)?.insertText?.(`${links.join('\n')} `);
 }
 
-async function uploadAll(host: Host, action: AddFilesAction) {
-	const files = action.files ?? [];
+async function uploadAll(host: Host, action: AddFilesAction, files: UploadFile[]) {
 	const progress = toasts.info('UPLOADING', { count: files.length }, { duration: 0 });
 
 	try {
@@ -66,15 +96,32 @@ async function uploadAll(host: Host, action: AddFilesAction) {
 	} catch (error) {
 		logger.error(`Failed to upload ${files.length} files to ${host.url}:`, error);
 		toasts.warning('UPLOAD_FAILED');
-		void flux.dispatch({ ...action, customUploadHostsHandled: true });
+		attachToDiscord(action, files);
 	} finally {
 		progress.close();
 	}
 }
 
+function attachToDiscord(action: AddFilesAction, files: UploadFile[]) {
+	if (files.length) void flux.dispatch({ ...action, files, customUploadHostsHandled: true });
+}
+
+async function route(host: Host, action: AddFilesAction, threshold: number) {
+	const files = action.files ?? [];
+	const sized = await Promise.all(
+		files.map(async (file) => ({ file, size: await sizeOf(file) })),
+	);
+	const { hosted, attached } = splitBySize(sized, threshold);
+
+	attachToDiscord(action, attached);
+
+	if (hosted.length) await uploadAll(host, action, hosted);
+}
+
 /**
- * @description Sends the files you attach to the chosen upload host instead of Discord, and puts their links in the
- * chat input. If an upload fails the files are attached to Discord as usual.
+ * @description Sends the files you attach to the chosen upload host instead of Discord, all of them or only those over a
+ * size or the channel's upload limit, and puts their links in the chat input. Smaller files, and any whose upload fails,
+ * are attached to Discord as usual.
  */
 export function interceptUploads(): void {
 	flux.interceptAction('UPLOAD_ATTACHMENT_ADD_FILES', (raw) => {
@@ -90,7 +137,18 @@ export function interceptUploads(): void {
 			return false;
 		}
 
-		void uploadAll(host, action);
+		const { uploadWhen, minSizeMB } = settings as unknown as ThresholdSettings;
+		const threshold = hostThreshold(uploadWhen, minSizeMB, channelLimit(action.channelId));
+
+		if (threshold === undefined) return false;
+
+		if (threshold === 0) {
+			void uploadAll(host, action, action.files);
+
+			return true;
+		}
+
+		void route(host, action, threshold);
 
 		return true;
 	});

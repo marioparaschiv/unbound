@@ -7,6 +7,20 @@ declare module '@unbound-app/i18n' {
 		readonly HOST: string;
 		/** Where the files you attach go. Their links are put in your message instead. */
 		readonly HOST_SUBTITLE: string;
+		/** Send to the host */
+		readonly UPLOAD_WHEN: string;
+		/** Every file */
+		readonly UPLOAD_WHEN_ALWAYS: string;
+		/** Over my upload limit */
+		readonly UPLOAD_WHEN_AUTO: string;
+		/** Files bigger than Discord lets you send in that channel; the rest attach to Discord */
+		readonly UPLOAD_WHEN_AUTO_SUBTITLE: string;
+		/** Over a size */
+		readonly UPLOAD_WHEN_SIZE: string;
+		/** Files bigger than the size below; the rest attach to Discord */
+		readonly UPLOAD_WHEN_SIZE_SUBTITLE: string;
+		/** Size in MB */
+		readonly MIN_SIZE: string;
 		/** Catbox */
 		readonly CATBOX: string;
 		/** catbox.moe, kept until removed, up to 200 MB */
