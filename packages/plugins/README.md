@@ -1,6 +1,6 @@
 # Plugins
 
-185 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+186 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -174,6 +174,7 @@
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Tone Indicators](https://unbound.rip/addons/unbound.tone-indicators): Turns tone tags such as /j and /srs into pills that spell out what they mean.
 - <img src="../../assets/plugins/readme-icons/language-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Translate](https://unbound.rip/addons/unbound.translate): Translate messages.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Typing Avatars](https://unbound.rip/addons/unbound.typing-avatars): Shows the avatars of people typing in the channel.
+- <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Typing Speed](https://unbound.rip/addons/unbound.typing-speed): Shows how fast you type, in words per minute, above the message box, and keeps your average and best.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Undo Send](https://unbound.rip/addons/unbound.undo-send): Holds each message you send for a few seconds, with an Undo button that puts it back in the chat input before it goes out.
 - <img src="../../assets/plugins/readme-icons/arrows-left-right-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Unit Converter](https://unbound.rip/addons/unbound.unit-converter): Adds metric or imperial conversions next to measurements in messages, like 5 ft (≈ 1.52 m).
 - <img src="../../assets/plugins/readme-icons/embed-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Unsuppress Embeds](https://unbound.rip/addons/unbound.unsuppress-embeds): Adds a message long-press row that brings back suppressed link embeds, or suppresses them.

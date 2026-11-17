@@ -1,0 +1,17 @@
+{
+	"id": "unbound.typing-speed",
+	"name": "Typing Speed",
+	"description": "Shows how fast you type, in words per minute, above the message box, and keeps your average and best.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "KeyboardIcon",
+	"main": "index.tsx"
+}
