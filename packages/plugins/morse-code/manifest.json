@@ -1,0 +1,17 @@
+{
+	"id": "unbound.morse-code",
+	"name": "Morse Code",
+	"description": "Sends text as Morse code with /morse, and decodes or plays Morse messages as sound or vibration from their long-press menu.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "MicrophoneIcon",
+	"main": "index.tsx"
+}

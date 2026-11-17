@@ -1,0 +1,16 @@
+{
+	"PLAYBACK": "Play as",
+	"PLAYBACK_SUBTITLE": "How Play Morse sends a message out. iOS vibrates in fixed pulses, so sound is clearer there.",
+	"SOUND": "Sound",
+	"VIBRATION": "Vibration",
+	"BOTH": "Both",
+	"SPEED": "Speed",
+	"SPEED_SUBTITLE": "Words per minute when playing Morse.",
+	"MORSE_DESC": "Send text as Morse code.",
+	"TEXT_DESC": "The text to write in Morse code.",
+	"DECODE": "Decode Morse",
+	"PLAY": "Play Morse",
+	"DECODED_TITLE": "Morse Code",
+	"NOTHING_TO_SEND": "None of that text has a Morse code.",
+	"CLOSE": "Close"
+}

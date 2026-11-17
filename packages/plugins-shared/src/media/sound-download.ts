@@ -39,6 +39,15 @@ export async function downloadSound(url: string): Promise<Uint8Array | undefined
 }
 
 /**
+ * @description Keeps generated sound bytes under a key, so the link players play them as they would a downloaded link.
+ * @param key A key no real link uses, like `my-plugin:1`.
+ * @param bytes The sound file's bytes.
+ */
+export function rememberSound(key: string, bytes: Uint8Array): void {
+	cache.set(key, bytes);
+}
+
+/**
  * @description Writes bytes as base64, the form `fs.writeFile` takes binary data in.
  * @param bytes The bytes.
  * @returns The base64 text.
@@ -53,4 +62,4 @@ export function toBase64(bytes: Uint8Array): string {
 	return btoa(binary);
 }
 
-export default { downloadSound, toBase64 };
+export default { downloadSound, rememberSound, toBase64 };
