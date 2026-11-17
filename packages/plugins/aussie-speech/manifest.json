@@ -14,5 +14,12 @@
 	},
 	"icon": "MicrophoneIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"bytecode": {
+		"98": "1404bbc8abc73968a96d4d73726b4d8da82277059ee2e6e33f2293313f1eefb0a95095a5d7fd58a9d3e3f24f8c55374b98173b478f0885ea9ee66608419b4dc2"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "NERUdRLyvbK2pS/9bkylz41XYqk+rDKt73gfyejrFQhLaDXc2Fy0ggJQp9XcG7z2/79je2i7qnRAvpkyly0xAQ=="
+	}
 }
