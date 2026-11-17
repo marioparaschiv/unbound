@@ -39,6 +39,8 @@ std::shared_ptr<PendingJavaPayload> pendingJavaPayload(const JavaCallbacks &call
                                                        std::string payload = {});
 jsi::Value javaAsynchronously(jsi::Runtime &runtime, const JavaCallbacks &callbacks,
                               std::function<std::string()> work);
+jsi::Value javaInBackground(jsi::Runtime &runtime, const JavaCallbacks &callbacks,
+                            std::function<std::string()> work);
 jsi::Value javaSynchronously(jsi::Runtime &runtime, const JavaCallbacks &callbacks,
                              jmethodID method, const std::vector<std::string> &arguments);
 }

@@ -353,6 +353,20 @@ std::shared_ptr<PendingJavaPayload> pendingJavaPayload(const JavaCallbacks &call
         javaHandleReleaser(callbacks), loader::native::runtimeGeneration, std::move(payload));
 }
 
+static std::function<jsi::Value(jsi::Runtime &)>
+settleJavaPayload(std::shared_ptr<PendingJavaPayload> response)
+{
+    return [response](jsi::Runtime &completion) -> jsi::Value {
+        std::string payload = response->take();
+        if (payload.empty())
+        {
+            return jsi::Value::undefined();
+        }
+
+        return parseJavaResult(completion, payload);
+    };
+}
+
 jsi::Value javaAsynchronously(jsi::Runtime &runtime, const JavaCallbacks &callbacks,
                               std::function<std::string()> work)
 {
@@ -362,15 +376,19 @@ jsi::Value javaAsynchronously(jsi::Runtime &runtime, const JavaCallbacks &callba
         [work = std::move(work), response]() {
             response->receive(work());
         },
-        [response](jsi::Runtime &completion) -> jsi::Value {
-            std::string payload = response->take();
-            if (payload.empty())
-            {
-                return jsi::Value::undefined();
-            }
+        settleJavaPayload(response));
+}
 
-            return parseJavaResult(completion, payload);
-        });
+jsi::Value javaInBackground(jsi::Runtime &runtime, const JavaCallbacks &callbacks,
+                            std::function<std::string()> work)
+{
+    auto response = pendingJavaPayload(callbacks);
+    return loader::native::executeBackgroundAsynchronously(
+        runtime,
+        [work = std::move(work), response]() {
+            response->receive(work());
+        },
+        settleJavaPayload(response));
 }
 
 jsi::Value javaSynchronously(jsi::Runtime &runtime, const JavaCallbacks &callbacks,
