@@ -83,6 +83,11 @@ std::vector<std::string> appleMarkers(const AppleDeviceFacts &facts)
         markers.emplace_back("iPhone app on Mac");
     }
 
+    if (facts.managedApp)
+    {
+        markers.emplace_back("MDM-managed");
+    }
+
     return markers;
 }
 

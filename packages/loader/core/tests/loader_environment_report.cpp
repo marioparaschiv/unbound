@@ -21,8 +21,9 @@ void listsDeviceMarkers()
     report::AppleDeviceFacts apple;
     apple.lockdownMode    = true;
     apple.iPhoneAppOnIPad = true;
+    apple.managedApp      = true;
     assert((report::appleMarkers(apple)
-            == std::vector<std::string>{"Lockdown Mode", "iPhone app on iPad"}));
+            == std::vector<std::string>{"Lockdown Mode", "iPhone app on iPad", "MDM-managed"}));
 
     report::AndroidDeviceFacts android;
     android.selinuxEnforcing  = false;

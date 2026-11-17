@@ -11,6 +11,7 @@ struct AppleDeviceFacts {
     bool lockdownMode    = false;
     bool iPhoneAppOnIPad = false;
     bool iOSAppOnMac     = false;
+    bool managedApp      = false;
 };
 
 struct AndroidDeviceFacts {
