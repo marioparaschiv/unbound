@@ -13,6 +13,7 @@ body:
           options:
               - New plugin
               - Add Attachments
+              - Airplay Button
               - Always Animate
               - Always Trust
               - Animalese

@@ -49,6 +49,7 @@ body:
           options:
               - Not a plugin
               - Add Attachments
+              - Airplay Button
               - Always Animate
               - Always Trust
               - Animalese
