@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { compareFindings, parseFindings, readExceptions } from '../check-min-loader';
+import { compareFindings, parseFindings, readExceptions, shipsToUsers } from '../check-min-loader';
 
 const OUTPUT = [
 	"src/a.ts(3,1): error TS2339: Property 'x' does not exist on type 'NativePlatformBridge'.",
@@ -32,6 +32,17 @@ describe('compareFindings', () => {
 		);
 
 		expect(result).toEqual({ unreviewed: [unreviewed], stale: [stale] });
+	});
+});
+
+describe('shipsToUsers', () => {
+	test('leaves out tests and developer-only files', () => {
+		const error = 'TS2339: Property';
+
+		expect(shipsToUsers({ file: 'src/native/scope.ts', error })).toBe(true);
+		expect(shipsToUsers({ file: 'tests/native/scopes.test.ts', error })).toBe(false);
+		expect(shipsToUsers({ file: 'src/debugger/builtin.dev.ts', error })).toBe(false);
+		expect(shipsToUsers({ file: 'src/devtools/panel.dev.tsx', error })).toBe(false);
 	});
 });
 
