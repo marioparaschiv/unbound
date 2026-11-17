@@ -85,4 +85,11 @@ std::vector<RewritingHook> recordedRewritingHooks()
 
     return hooks;
 }
+
+std::string rewritingHookOwner(const std::string &token)
+{
+    std::lock_guard<std::mutex> lock(gMutex);
+    auto found = gHooks.find(token);
+    return found == gHooks.end() ? std::string() : found->second.addon;
+}
 }

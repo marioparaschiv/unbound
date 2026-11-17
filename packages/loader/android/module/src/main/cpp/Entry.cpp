@@ -6,6 +6,7 @@
 #include "AndroidAttestation.h"
 #include "AndroidFileWatcher.h"
 #include "AndroidHermesSampler.h"
+#include "AndroidHookListeners.h"
 #include "AndroidHotReload.h"
 #include "AndroidLoader.h"
 #include "AndroidLogcat.h"
@@ -183,6 +184,18 @@ static jstring nativeSampleJavaScriptStack(JNIEnv *env, jclass)
     std::vector<std::string> frames = loader::native::sampleJavaScriptStack(kSampling);
     std::string stack               = loader::native::formatSampledStack(frames);
     return stack.empty() ? nullptr : env->NewStringUTF(stack.c_str());
+}
+
+static jstring nativeHookOwner(JNIEnv *env, jclass, jstring token)
+{
+    const char *chars = token ? env->GetStringUTFChars(token, nullptr) : nullptr;
+    std::string owner = chars ? unbound::android::hookOwnerName(chars) : std::string();
+    if (chars)
+    {
+        env->ReleaseStringUTFChars(token, chars);
+    }
+
+    return owner.empty() ? nullptr : env->NewStringUTF(owner.c_str());
 }
 
 static void nativeRecordMainThreadStall(JNIEnv *, jclass, jlong at)

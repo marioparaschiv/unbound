@@ -81,6 +81,9 @@ object NativeBridge {
     external fun nativeSampleJavaScriptStack(): String?
 
     @JvmStatic
+    external fun nativeHookOwner(token: String): String?
+
+    @JvmStatic
     external fun nativeRecordMainThreadStall(at: Long)
 
     @JvmStatic

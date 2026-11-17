@@ -7,7 +7,9 @@ object UncaughtExceptions {
     fun install() {
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            runCatching { NativeBridge.nativeRecordUncaughtException(describe(throwable), frames(throwable)) }
+            runCatching {
+                NativeBridge.nativeRecordUncaughtException(describe(throwable) + hookBlame(throwable), frames(throwable))
+            }
             if (previous != null) {
                 previous.uncaughtException(thread, throwable)
             } else {
@@ -15,6 +17,20 @@ object UncaughtExceptions {
             }
         }
     }
+
+    private fun allFrames(throwable: Throwable): List<StackTraceElement> =
+        generateSequence(throwable) { it.cause?.takeIf { cause -> cause !== it } }
+            .take(MAX_CAUSES + 1)
+            .flatMap { it.stackTrace.asSequence() }
+            .toList()
+
+    private fun hookBlame(throwable: Throwable): String {
+        val (token, target) = NativeHooks.hookedFrames(allFrames(throwable)).firstOrNull() ?: return ""
+        val owner = runCatching { NativeBridge.nativeHookOwner(token) }.getOrNull() ?: return ""
+        return blameText(owner, target)
+    }
+
+    internal fun blameText(owner: String, target: String): String = " (through $owner's hook on $target)"
 
     fun describe(throwable: Throwable): String {
         val message = throwable.message?.takeIf(String::isNotBlank)
