@@ -7,6 +7,8 @@
 #include <jsi/jsi.h>
 #include <memory>
 
+#import "NativeObjectLifetime.h"
+
 namespace loader::ios {
 std::atomic<size_t> &liveObjCHandles();
 std::atomic<size_t> &liveObjCRetains();
@@ -14,8 +16,9 @@ std::atomic<size_t> &liveObjCRetains();
 class ObjCHandleHost final : public facebook::jsi::HostObject
 {
 public:
-    explicit ObjCHandleHost(id value, std::atomic<size_t> &live = liveObjCHandles())
-        : value_(value), live_(live)
+    explicit ObjCHandleHost(__unsafe_unretained id value,
+                            std::atomic<size_t> &live = liveObjCHandles())
+        : value_(ownableObject(value)), live_(live)
     {
         live_.fetch_add(1, std::memory_order_relaxed);
     }

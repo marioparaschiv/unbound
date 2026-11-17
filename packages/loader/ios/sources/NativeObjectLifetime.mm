@@ -19,4 +19,20 @@ bool isDeallocating(__unsafe_unretained id object)
 
     return ((BOOL (*)(id, SEL)) objc_msgSend)(object, selector);
 }
+
+id ownableObject(__unsafe_unretained id object)
+{
+    static Class stackBlock = objc_getClass("__NSStackBlock__");
+    if (!object || object_isClass(object))
+    {
+        return object;
+    }
+
+    if (stackBlock && object_getClass(object) == stackBlock)
+    {
+        return [object copy];
+    }
+
+    return isDeallocating(object) ? nil : object;
+}
 }
