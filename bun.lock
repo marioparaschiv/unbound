@@ -157,7 +157,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "3.7.0",
+      "version": "3.8.0",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -171,7 +171,7 @@
     },
     "packages/cli": {
       "name": "@unbound-app/cli",
-      "version": "3.3.0",
+      "version": "3.3.1",
       "bin": {
         "ubd": "src/index.ts",
       },
@@ -228,7 +228,7 @@
     },
     "packages/client": {
       "name": "@unbound-app/client",
-      "version": "3.7.0",
+      "version": "3.8.0",
       "dependencies": {
         "@unbound-app/contracts": "workspace:*",
         "@unbound-app/debugger-protocol": "workspace:*",
@@ -1074,6 +1074,20 @@
     },
     "packages/plugins/edit-messages-locally": {
       "name": "edit-messages-locally",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
+    "packages/plugins/emoji-packs": {
+      "name": "emoji-packs",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -4525,6 +4539,8 @@
     "ee-first": ["ee-first@1.1.1", "", {}, "sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow=="],
 
     "electron-to-chromium": ["electron-to-chromium@1.5.486", "", {}, "sha512-rpybw4Ac4ak/An6G1Me2+61xzwobowDGyuJe71QHHOVpkZv4fPVobsLl7WH6zHSKusAMpaHxGKTpOvpy7+r3dQ=="],
+
+    "emoji-packs": ["emoji-packs@workspace:packages/plugins/emoji-packs"],
 
     "emoji-regex": ["emoji-regex@8.0.0", "", {}, "sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A=="],
 

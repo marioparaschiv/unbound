@@ -1,0 +1,12 @@
+{
+	"PACK": "Emoji pack",
+	"PACK_SUBTITLE": "Emoji the pack lacks, such as flags, keep Discord's look.",
+	"FLUENT_ANIMATED": "Fluent, animated",
+	"FLUENT_ANIMATED_SUBTITLE": "Microsoft's 3D emoji, moving where Microsoft animated them.",
+	"FLUENT": "Fluent",
+	"FLUENT_SUBTITLE": "Microsoft's 3D emoji, still. Lighter on data.",
+	"NOTO_ANIMATED": "Noto, animated",
+	"NOTO_ANIMATED_SUBTITLE": "Google's emoji, moving where Google animated them.",
+	"NOTO": "Noto",
+	"NOTO_SUBTITLE": "Google's emoji, still."
+}
