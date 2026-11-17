@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/marioparaschiv/unbound/compare/loader-v1.8.0...loader-v1.8.1) (2026-11-17)
+
+
+### Bug Fixes
+
+* **loader:** release Objective-C handles on the main thread ([#1707](https://github.com/marioparaschiv/unbound/issues/1707)) ([1892a6d](https://github.com/marioparaschiv/unbound/commit/1892a6de225cc9254d9aab5e5175a00fea77bc1e))
+
 ## [1.8.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.7.1...loader-v1.8.0) (2026-11-16)
 
 
