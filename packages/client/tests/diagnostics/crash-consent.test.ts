@@ -7,16 +7,18 @@ type Dialog = {
 	onCancel?: () => void;
 };
 
+type NameVars = { name: string };
+
 const dialogs: Dialog[] = [];
-const settings = new Map<string, unknown>();
+const settings = new Map<string, boolean>();
 
 mock.module('~/dialogs/api', () => ({ showDialog: (options: Dialog) => dialogs.push(options) }));
 mock.module('~/settings/unbound', () => ({
-	setSetting: (key: string, value: unknown) => settings.set(key, value),
+	setSetting: (key: string, value: boolean) => settings.set(key, value),
 }));
 mock.module('~/i18n/api', () => ({
 	messages: new Proxy({}, { get: (_, key) => String(key) }),
-	format: (key: string, vars: { name: string }) => `${key}:${vars.name}`,
+	format: (key: string, vars: NameVars) => `${key}:${vars.name}`,
 }));
 
 const { askToReportCrash } = await import('~/diagnostics/crash-consent');
