@@ -15,6 +15,7 @@ import { createDatabase, POOLED_OPTIONS } from '~/db/database';
 import { createMessageGateway } from '~/lib/discord-messages';
 import { createAuditTelemetry } from '~/lib/audit-telemetry';
 import { hasMembersIntent } from '~/lib/privileged-intents';
+import { startStatusRotation } from '~/lib/status-rotation';
 import { loadConfig, type BotConfig } from '~/lib/config';
 import { PREFIX, PREFIXES } from '~/lib/constants';
 import { syncIconEmojis } from '~/lib/icon-emojis';
@@ -186,10 +187,17 @@ function startRuntime(ready: Client<true>) {
 	);
 
 	async function shutdown() {
+		stopStatus();
 		moderation.stop();
 		await stopDispatchers();
 		await exit(0);
 	}
+
+	const stopStatus = startStatusRotation({
+		client: ready,
+		guildId: config.guildId,
+		addons: () => web.addons(),
+	});
 
 	process.once('SIGINT', () => void shutdown());
 	process.once('SIGTERM', () => void shutdown());
