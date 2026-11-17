@@ -6,7 +6,7 @@ import { messages } from '@unbound-app/i18n';
 
 import { fontAttachments, type FontAttachment } from '~/lib/font-file';
 import { openFontSheet } from '~/components/font-sheet';
-import { createFontHost } from '~/native/fonts';
+import { createFontHost } from '@unbound-plugins/shared/native/fonts/font-host';
 
 const SHEET_SWAP_MS = 350;
 

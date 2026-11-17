@@ -1,7 +1,7 @@
 import { javaReference, javaString } from '@unbound-plugins/shared/native/android/java-values';
 import type { NativeBridge, NativeJavaBridge, NativeJavaReference } from '@unbound-app/api/native';
 
-import type { FontHost } from '~/native/fonts';
+import type { FontHost } from '../font-host';
 
 const TYPEFACE = 'android.graphics.Typeface';
 const ASSETS = 'android.content.res.AssetManager';

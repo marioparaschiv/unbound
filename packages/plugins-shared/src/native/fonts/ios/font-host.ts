@@ -1,6 +1,6 @@
 import type { NativeBridge, NativeFFIType, NativePointer } from '@unbound-app/api/native';
 
-import type { FontHost } from '~/native/fonts';
+import type { FontHost } from '../font-host';
 
 const UTF8 = 0x08000100;
 const NAME_BYTES = 256;

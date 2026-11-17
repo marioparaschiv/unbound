@@ -1,8 +1,8 @@
 import type { NativeBridge } from '@unbound-app/api/native';
 import { native } from '@unbound-app/api';
 
-import { createFontHost as android } from '~/native/android/fonts';
-import { createFontHost as ios } from '~/native/ios/fonts';
+import { createFontHost as android } from './android/font-host';
+import { createFontHost as ios } from './ios/font-host';
 
 export type FontHost = {
 	inflate: (compressed: Uint8Array, length: number) => Uint8Array;
