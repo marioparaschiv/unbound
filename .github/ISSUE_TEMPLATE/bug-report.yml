@@ -127,6 +127,7 @@ body:
               - Highlight Replies
               - I Love Spam
               - Image Alt Text
+              - Image Embeds
               - Image Link
               - IRC Colors
               - Jump To Top
@@ -213,7 +214,6 @@ body:
               - Sticker Preview
               - Sticker Sizes
               - Super Reaction Tweaks
-              - SVG Embeds
               - Tap To Copy Code
               - Text Replace
               - Text Styles
