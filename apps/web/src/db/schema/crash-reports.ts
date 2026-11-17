@@ -23,6 +23,7 @@ export const crashReport = pgTable(
 		osVersion: text('os_version').notNull(),
 		deviceModel: text('device_model').notNull(),
 		verifiedBuild: boolean('verified_build'),
+		installId: text('install_id'),
 		addonId: text('addon_id'),
 		addonVersion: text('addon_version'),
 		addonTrust: text('addon_trust'),
@@ -39,6 +40,11 @@ export const crashReport = pgTable(
 	(table) => [
 		index('crash_report_addonId_receivedAt_idx').on(table.addonId, table.receivedAt),
 		index('crash_report_receivedAt_idx').on(table.receivedAt),
+		index('crash_report_addon_version_idx').on(
+			table.addonId,
+			table.addonVersion,
+			table.receivedAt,
+		),
 	],
 );
 

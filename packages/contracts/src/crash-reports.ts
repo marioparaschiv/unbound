@@ -20,6 +20,7 @@ export const crashReportSchema = Type.Object({
 	osVersion: Type.String({ maxLength: 64 }),
 	deviceModel: Type.String({ maxLength: 64 }),
 	verifiedBuild: Type.Optional(Type.Boolean()),
+	installId: Type.Optional(Type.String({ pattern: '^[0-9a-f]{16,64}$' })),
 	addon: Type.Optional(
 		Type.Object({
 			id: addonIdSchema,

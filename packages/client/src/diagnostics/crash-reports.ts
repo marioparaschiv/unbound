@@ -1,5 +1,6 @@
 import type { CrashOrigin } from '@unbound-app/contracts/crash-reports';
 import { createLogger } from '@unbound-app/logger';
+import uuid from '@unbound-app/utils/uuid';
 
 import { buildCrashReport } from '~/diagnostics/crash-report';
 import type { CrashEvent } from '~/diagnostics/crash-report';
@@ -59,6 +60,20 @@ async function consentToReport(event: CrashEvent): Promise<boolean> {
 	return (await askToReportCrash(event.addon?.id)) !== 'declined';
 }
 
+function installId(): string {
+	const existing = getSetting('crash-reports.installId');
+
+	if (existing) {
+		return existing;
+	}
+
+	const created = uuid(32);
+
+	setSetting('crash-reports.installId', created);
+
+	return created;
+}
+
 async function sendCrashReport(
 	event: CrashEvent,
 	breadcrumbs: string[],
@@ -75,6 +90,7 @@ async function sendCrashReport(
 				environment,
 				await readLoaderLog(),
 				await crashContext(breadcrumbs),
+				installId(),
 			);
 
 		if (!report) {
