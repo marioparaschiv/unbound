@@ -53,12 +53,20 @@ func (reference compatReference) key() string {
 	return strings.Join(parts, "|")
 }
 
+func onlyOn(kindPlatform, filePlatform string) []string {
+	if filePlatform != "" && filePlatform != kindPlatform {
+		return nil
+	}
+
+	return []string{kindPlatform}
+}
+
 func (reference compatReference) platforms() []string {
 	switch reference.Kind {
 	case referenceObjCClass, referenceObjCMethod, referenceObjCIvar:
-		return []string{"ios"}
+		return onlyOn("ios", reference.Platform)
 	case referenceJavaClass, referenceJavaMethod, referenceJavaField, referenceJavaShape, referenceResource:
-		return []string{"android"}
+		return onlyOn("android", reference.Platform)
 	}
 
 	if reference.Platform != "" {
