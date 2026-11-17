@@ -13,5 +13,21 @@
 		"min": "3.0.0"
 	},
 	"icon": "KeyboardIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {},
+		"android": {
+			"capabilities": [
+				"native.java.hooks",
+				"native.java.invoke"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "8e3dbe6aa891d39e342d720bb7a7748ba6b8f2f5c9d126a383d1eedea358b9c740e4465fadefea70b948371b96bae1d78643a09b6962407fa3740d61ea9c0d90"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "9JWVZ2Nulvnbe6xZ65kfgiXzGCoOBsFNCyWacSutvWewvCIEmZEpovAwp0VJ/cdvvuzidRSDdWPcIjlqvaX7Dw=="
+	}
 }
