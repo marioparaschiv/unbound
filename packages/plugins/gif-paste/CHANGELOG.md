@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.6] - 2026-11-17
+
+### Fixed
+
+- Keeps the reply you were writing when you paste a GIF, also when Discord clears it a moment later.
+
 ## [1.0.5] - 2026-11-11
 
 ### Changed

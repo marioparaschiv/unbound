@@ -3,29 +3,31 @@ import { describe, expect, test } from 'bun:test';
 import { createKeptReplies } from '~/lib/kept-replies';
 
 describe('createKeptReplies', () => {
-	test('keeps a reply for the clear that follows a GIF selection, once', () => {
-		const replies = createKeptReplies();
+	test('keeps a reply through every clear the picker makes right after a selection', () => {
+		const replies = createKeptReplies(() => 1000);
 
 		replies.keep('channel');
 
-		expect(replies.release('channel')).toBe(true);
-		expect(replies.release('channel')).toBe(false);
+		expect(replies.isKept('channel')).toBe(true);
+		expect(replies.isKept('channel')).toBe(true);
 	});
 
-	test('does not keep a reply for a later, unrelated clear', async () => {
-		const replies = createKeptReplies();
+	test('lets a later, unrelated clear through', () => {
+		let time = 1000;
+		const replies = createKeptReplies(() => time);
 
 		replies.keep('channel');
-		await Promise.resolve();
+		time += 2500;
 
-		expect(replies.release('channel')).toBe(false);
+		expect(replies.isKept('channel')).toBe(false);
 	});
 
 	test('only keeps replies in the selected channel', () => {
-		const replies = createKeptReplies();
+		const replies = createKeptReplies(() => 1000);
 
 		replies.keep('channel');
 
-		expect(replies.release('other')).toBe(false);
+		expect(replies.isKept('other')).toBe(false);
+		expect(replies.isKept(undefined)).toBe(false);
 	});
 });

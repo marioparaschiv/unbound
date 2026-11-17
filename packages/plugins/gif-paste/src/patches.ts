@@ -1,4 +1,4 @@
-import { metro, patcher } from '@unbound-app/api';
+import { flux, metro, patcher } from '@unbound-app/api';
 
 import { keptReplies } from '~/lib/kept-replies';
 
@@ -35,10 +35,21 @@ export function patchReplyActions(): void {
 	}
 
 	patcher.instead(ReplyActions, 'deletePendingReply', ({ args, original, this: self }) => {
-		if (keptReplies.release(args[0])) return;
+		if (keptReplies.isKept(args[0])) return;
 
 		return original.apply(self, args);
 	});
+}
+
+/**
+ * @description Drops a `DELETE_PENDING_REPLY` for a channel whose reply a GIF paste just kept, for clears that skip
+ * `ReplyActions`.
+ * @returns A function that lets them through again.
+ */
+export function keepRepliesFromDirectClears(): () => void {
+	return flux.interceptAction('DELETE_PENDING_REPLY', (action) =>
+		keptReplies.isKept((action as { channelId?: string }).channelId),
+	);
 }
 
 /**
@@ -57,7 +68,11 @@ export function patchMessageActions(): void {
 	}
 
 	patcher.instead(MessageActions, 'sendMessage', ({ args, original, this: self }) => {
-		if (!isGifSelection(args)) return original.apply(self, args);
+		if (!isGifSelection(args)) {
+			if (typeof args[0] === 'string') keptReplies.forget(args[0]);
+
+			return original.apply(self, args);
+		}
 
 		const [channelId, message] = args;
 		const input: ChatInput | null | undefined =
@@ -65,9 +80,9 @@ export function patchMessageActions(): void {
 
 		if (typeof input?.insertText !== 'function') return original.apply(self, args);
 
+		if (PendingReplyStore.getPendingReply(channelId)) keptReplies.keep(channelId);
+
 		input.insertText(`${message.content} `);
 		input.closeCustomKeyboard?.();
-
-		if (PendingReplyStore.getPendingReply(channelId)) keptReplies.keep(channelId);
 	});
 }
