@@ -1,4 +1,5 @@
 import type { PickedColor } from './token-matches';
+import type { ColorGroup } from './token-groups';
 
 import { COLOR_GROUPS, tokenGroup } from './token-groups';
 
@@ -14,15 +15,18 @@ export type PickedSection = {
 	tokens: PickedToken[];
 };
 
+/** The sections of picked tokens, and the colours no token draws. */
+type PickedSections = {
+	sections: PickedSection[];
+	unmatched: string[];
+};
+
 /**
  * @description Sorts the tokens of picked colours into All Colors groups by name prefix, so ten `BACKGROUND_` tokens share one section.
  * @param colors The picked colours, each with its matching tokens.
  * @returns The sections in the order their first token was picked, and the colours no token draws.
  */
-export function sectionPicked(colors: readonly PickedColor[]): {
-	sections: PickedSection[];
-	unmatched: string[];
-} {
+export function sectionPicked(colors: readonly PickedColor[]): PickedSections {
 	const sections = new Map<string, PickedSection>();
 	const seen = new Set<string>();
 	const unmatched: string[] = [];
@@ -33,7 +37,9 @@ export function sectionPicked(colors: readonly PickedColor[]): {
 		}
 
 		for (const token of tokens) {
-			if (seen.has(token)) continue;
+			if (seen.has(token)) {
+				continue;
+			}
 
 			seen.add(token);
 
@@ -53,6 +59,6 @@ export function sectionPicked(colors: readonly PickedColor[]): {
  * @param key The section's group key.
  * @returns The group's message key, if the group exists.
  */
-export function sectionTitle(key: string): (typeof COLOR_GROUPS)[number]['title'] | undefined {
+export function sectionTitle(key: string): ColorGroup['title'] | undefined {
 	return COLOR_GROUPS.find((group) => group.key === key)?.title;
 }
