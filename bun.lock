@@ -2203,6 +2203,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/poll-results": {
+      "name": "poll-results",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/preview-message": {
       "name": "preview-message",
       "dependencies": {
@@ -5633,6 +5647,8 @@
     "pluralize": ["pluralize@8.0.0", "", {}, "sha512-Nc3IT5yHzflTfbjgqWcCPpo7DaKy4FnpB0l/zCAW0Tc7jxAiuqSxHasntB3D7887LSrA93kDJ9IXovxJYxyLCA=="],
 
     "pngjs": ["pngjs@6.0.0", "", {}, "sha512-TRzzuFRRmEoSW/p1KVAmiOgPco2Irlah+bGFCeNfJXxxYGwSw7YwAOAcd7X28K/m5bjBWKsC29KyoMfHbypayg=="],
+
+    "poll-results": ["poll-results@workspace:packages/plugins/poll-results"],
 
     "possess": ["possess@1.1.0", "", { "peerDependencies": { "typescript": "^5" } }, "sha512-2POr/6HA7JvETMq9wQVfxoOcdWOtFHd9dTTGyXWyqxraZo2EJAhv5PEOgz3X79rPZ23k+wmATi5FHF8i60zABA=="],
 
