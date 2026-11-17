@@ -149,4 +149,13 @@ describe('reportNativeCrash', () => {
 
 		expect(toasts).toEqual([['UNBOUND_CRASH_REPORT_JOINED', { number: 77 }]]);
 	});
+
+	test("says when the crash was Discord's own and opened no issue", async () => {
+		settings.set('crash-reports', true);
+		answer = (count) => ({ id: `report-${count}`, origin: 'discord' });
+
+		await reportNativeCrash(launch);
+
+		expect(toasts).toEqual([['UNBOUND_CRASH_REPORT_OUTSIDE']]);
+	});
 });

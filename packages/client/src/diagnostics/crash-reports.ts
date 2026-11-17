@@ -1,3 +1,4 @@
+import type { CrashOrigin } from '@unbound-app/contracts/crash-reports';
 import { createLogger } from '@unbound-app/logger';
 
 import { buildCrashReport } from '~/diagnostics/crash-report';
@@ -30,10 +31,22 @@ async function readLoaderLog(): Promise<string | undefined> {
 	}
 }
 
-async function announceIssue({ number, created }: CrashReportIssue) {
+async function announceReport(
+	issue: CrashReportIssue | undefined,
+	origin: CrashOrigin | undefined,
+	addon: string | undefined,
+) {
 	const { info } = await import('~/toasts/api');
 
-	info(created ? 'UNBOUND_CRASH_REPORT_FILED' : 'UNBOUND_CRASH_REPORT_JOINED', { number });
+	if (issue) {
+		info(issue.created ? 'UNBOUND_CRASH_REPORT_FILED' : 'UNBOUND_CRASH_REPORT_JOINED', {
+			number: issue.number,
+		});
+	} else if (origin === 'discord' || origin === 'system') {
+		info('UNBOUND_CRASH_REPORT_OUTSIDE');
+	} else if (origin === 'addon' && addon) {
+		info('UNBOUND_CRASH_REPORT_THIRD_PARTY', { name: addon });
+	}
 }
 
 async function consentToReport(event: CrashEvent): Promise<boolean> {
@@ -69,13 +82,11 @@ async function sendCrashReport(
 		}
 
 		const request = createUnboundClient();
-		const { id, issue } = await request('POST /api/v1/crash-reports', {
+		const { id, issue, origin } = await request('POST /api/v1/crash-reports', {
 			body: report,
 		});
 
-		if (issue) {
-			await announceIssue(issue);
-		}
+		await announceReport(issue, origin, event.addon?.id);
 
 		return id;
 	} catch (error) {
