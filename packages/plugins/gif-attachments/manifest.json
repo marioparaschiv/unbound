@@ -1,0 +1,17 @@
+{
+	"id": "unbound.gif-attachments",
+	"name": "GIF Attachments",
+	"description": "Adds GIFs you pick in the GIF picker to your message as files, instead of sending a link.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "GifIcon",
+	"main": "index.tsx"
+}
