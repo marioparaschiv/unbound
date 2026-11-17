@@ -32,7 +32,7 @@ std::string nativeFFITypeName(const char *encoding)
         case 'v':
             return value == "v" ? "void" : "";
         case '@':
-            if (value == "@")
+            if (value == "@" || value.rfind("@?", 0) == 0)
             {
                 return "object";
             }
