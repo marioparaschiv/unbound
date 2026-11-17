@@ -1,0 +1,9 @@
+{
+	"PREVIEW": "Preview Font",
+	"TITLE": "Font Preview",
+	"SAMPLE": "The quick brown fox jumps over the lazy dog 0123456789",
+	"SAMPLE_HELP": "Type your own sample text.",
+	"WOFF2_UNSUPPORTED": "WOFF2 fonts can't be previewed. TTF, OTF and WOFF work.",
+	"NOT_A_FONT": "This file isn't a font this device can read.",
+	"LOAD_FAILED": "The font couldn't be loaded."
+}
