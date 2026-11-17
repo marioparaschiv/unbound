@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1] - 2026-11-17
+
+### Changed
+
+- Badges use Discord's theme colours, so custom and Nitro themes recolour them.
+
 ## [1.1.0] - 2026-11-15
 
 ### Changed
