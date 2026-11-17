@@ -150,6 +150,12 @@ declare module '@unbound-app/settings' {
 		 */
 		perChat: boolean;
 		/**
+		 * Play the next one
+		 *
+		 * When a voice message finishes, the next voice message in the chat starts.
+		 */
+		autoplay: boolean;
+		/**
 		 * Show audio files as voice messages
 		 *
 		 * Audio files others send play in the voice message player.
@@ -178,6 +184,12 @@ declare module '@unbound-app/settings' {
 		 */
 		"perChat": boolean;
 		/**
+		 * Play the next one
+		 *
+		 * When a voice message finishes, the next voice message in the chat starts.
+		 */
+		"autoplay": boolean;
+		/**
 		 * Show audio files as voice messages
 		 *
 		 * Audio files others send play in the voice message player.
@@ -194,7 +206,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "sendAudio" | "perChat" | "showAudio";
+	export type BooleanSettingKey = "sendAudio" | "perChat" | "autoplay" | "showAudio";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

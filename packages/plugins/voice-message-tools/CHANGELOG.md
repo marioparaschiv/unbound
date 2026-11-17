@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.0] - 2026-11-18
+
+### Added
+
+- Autoplay: when a voice message finishes, the next voice message in the chat starts. On by default; turn it off in the settings.
+
 ## [1.5.0] - 2026-11-15
 
 ### Added
