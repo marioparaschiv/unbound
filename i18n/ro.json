@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• Se conecta la {hosts}",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Schimba felul în care funcționează codul nativ al Discord",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• Apela direct funcții native",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• Citi tokenul contului tău",
 	"UNBOUND_INSTALL_URL_HINT": "Introdu URL-ul manifestului suplimentului pe care vrei să-l instalezi.",
 	"UNBOUND_INSTALL_FROM_URL": "Instalează din URL",
 	"UNBOUND_BROWSE_MARKETPLACE": "Explorează Marketplace",

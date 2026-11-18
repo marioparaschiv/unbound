@@ -634,6 +634,8 @@ export type AuthoredAddonManifest = {
 	locales?: Record<string, string>;
 	/** The images `ubd build` emits beside the bundle, by asset name, such as `icons/star`. */
 	assets?: Record<string, AddonAsset>;
+	/** What the addon may do beyond the usual: `account-token` lets it read the account token. */
+	permissions?: 'account-token'[];
 	/** The hosts the addon's `fetch` may reach, such as `api.example.com` or `*.example.com`; absent means any host. */
 	network?: string[];
 	/** Requirements on the Unbound client running the addon. */

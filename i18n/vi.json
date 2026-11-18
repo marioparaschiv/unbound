@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• Kết nối tới {hosts}",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Thay đổi cách mã gốc của Discord hoạt động",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• Gọi trực tiếp các hàm gốc",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• Đọc mã thông báo tài khoản của bạn",
 	"UNBOUND_INSTALL_URL_HINT": "Nhập URL manifest của tiện ích bạn muốn cài đặt.",
 	"UNBOUND_INSTALL_FROM_URL": "Cài đặt từ URL",
 	"UNBOUND_BROWSE_MARKETPLACE": "Duyệt Cửa hàng",

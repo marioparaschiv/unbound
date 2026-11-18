@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• Spajati se na {hosts}",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Mijenjati ponašanje Discordova izvornog koda",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• Izravno pozivati izvorne funkcije",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• Čitati token tvog računa",
 	"UNBOUND_INSTALL_URL_HINT": "Unesi URL manifesta dodatka koji želiš instalirati.",
 	"UNBOUND_INSTALL_FROM_URL": "Instaliraj s URL-a",
 	"UNBOUND_BROWSE_MARKETPLACE": "Pregledaj Trgovinu",

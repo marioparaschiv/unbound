@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• เชื่อมต่อกับ {hosts}",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• เปลี่ยนการทำงานของโค้ดเนทีฟของ Discord",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• เรียกฟังก์ชันเนทีฟโดยตรง",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• อ่านโทเค็นบัญชีของคุณ",
 	"UNBOUND_INSTALL_URL_HINT": "ใส่ URL ของไฟล์ manifest ส่วนเสริมที่คุณต้องการติดตั้ง",
 	"UNBOUND_INSTALL_FROM_URL": "ติดตั้งจาก URL",
 	"UNBOUND_BROWSE_MARKETPLACE": "เรียกดูมาร์เก็ตเพลส",

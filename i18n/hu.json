@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• Csatlakozik ide: {hosts}",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Megváltoztatja a Discord natív kódjának működését",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• Közvetlenül hív natív függvényeket",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• Kiolvassa a fiókod tokenjét",
 	"UNBOUND_INSTALL_URL_HINT": "Add meg a telepíteni kívánt kiegészítő manifestjének URL-jét.",
 	"UNBOUND_INSTALL_FROM_URL": "Telepítés URL-ről",
 	"UNBOUND_BROWSE_MARKETPLACE": "Piactér böngészése",

@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• Koble til {hosts}",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Endre hvordan Discords native kode oppfører seg",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• Kalle native funksjoner direkte",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• Lese kontotokenet ditt",
 	"UNBOUND_INSTALL_URL_HINT": "Skriv inn URL-en til manifestet for tillegget du vil installere.",
 	"UNBOUND_INSTALL_FROM_URL": "Installer fra URL",
 	"UNBOUND_BROWSE_MARKETPLACE": "Utforsk Markedsplassen",

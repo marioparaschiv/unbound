@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• Conectar-se a {hosts}",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Mudar como o código nativo do Discord funciona",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• Chamar funções nativas diretamente",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• Ler o token da sua conta",
 	"UNBOUND_INSTALL_URL_HINT": "Digite a URL do manifesto do complemento que você quer instalar.",
 	"UNBOUND_INSTALL_FROM_URL": "Instalar por URL",
 	"UNBOUND_BROWSE_MARKETPLACE": "Explorar a Loja",

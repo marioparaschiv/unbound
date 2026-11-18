@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• {hosts} से कनेक्ट करेगा",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Discord के नेटिव कोड का व्यवहार बदलेगा",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• नेटिव फ़ंक्शन सीधे कॉल करेगा",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• आपके खाते का टोकन पढ़ेगा",
 	"UNBOUND_INSTALL_URL_HINT": "जिस ऐडऑन को इंस्टॉल करना है, उसके मैनिफ़ेस्ट का URL डालें।",
 	"UNBOUND_INSTALL_FROM_URL": "URL से इंस्टॉल करें",
 	"UNBOUND_BROWSE_MARKETPLACE": "मार्केटप्लेस देखें",

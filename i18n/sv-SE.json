@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• Ansluta till {hosts}",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Ändra hur Discords inbyggda kod beter sig",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• Anropa inbyggda funktioner direkt",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• Läsa ditt kontos token",
 	"UNBOUND_INSTALL_URL_HINT": "Ange URL:en till tilläggsmanifestet du vill installera.",
 	"UNBOUND_INSTALL_FROM_URL": "Installera från URL",
 	"UNBOUND_BROWSE_MARKETPLACE": "Bläddra på marknadsplatsen",
