@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.5] - 2026-11-18
+
+### Changed
+
+- Shows as a switch in the Plugin Shortcut Panel, and can stay beside the chat input from the panel's Edit list.
+
 ## [1.1.4] - 2026-11-17
 
 ### Changed

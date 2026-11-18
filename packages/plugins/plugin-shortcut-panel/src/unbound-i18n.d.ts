@@ -19,6 +19,10 @@ declare module '@unbound-app/i18n' {
 		readonly EMPTY: string;
 		/** Chat input buttons */
 		readonly INPUT_BUTTONS: string;
+		/** Keep beside the chat input */
+		readonly KEEP_IN_INPUT: string;
+		/** Buttons you turn on here stay in the chat input instead of moving into the panel. */
+		readonly KEEP_IN_INPUT_HINT: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

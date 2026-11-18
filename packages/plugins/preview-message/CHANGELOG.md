@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0] - 2026-11-18
+
+### Added
+
+- A Preview message row in the Plugin Shortcut Panel that closes the panel before the preview opens, so the preview no longer shows behind it.
+- Can stay beside the chat input from the panel's Edit list.
+
 ## [1.1.3] - 2026-11-17
 
 ### Changed

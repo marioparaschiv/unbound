@@ -1,6 +1,6 @@
 import { sharedStagedStickers } from '@unbound-plugins/shared/stickers/staged-stickers';
 import { Animated, Pressable, type PressableStateCallbackType } from 'react-native';
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Portal } from '@unbound-app/api/metro/components';
 import { messages } from '@unbound-app/i18n';
 import { flux } from '@unbound-app/api';
@@ -11,6 +11,7 @@ import { Button, CHANNEL_MESSAGE_DRAFT_TYPE, Timing } from '~/lib/constants';
 import useStyles from '~/components/preview-button.style';
 import PreviewOverlay from '~/components/preview-overlay';
 import { dismissKeyboard } from '~/lib/keyboard';
+import { usePreviewRequests } from '~/lib/preview-requests';
 
 type PreviewButtonProps = {
 	channelId: string;
@@ -32,6 +33,18 @@ function useStickers(channelId: string): Sticker[] {
 		(onChange) => sharedStagedStickers().subscribe(channelId, onChange),
 		() => sharedStagedStickers().get(channelId),
 	);
+}
+
+/**
+ * @description Whether a channel's chat input holds text or staged stickers to preview.
+ * @param channelId The channel.
+ * @returns Whether there is something to preview.
+ */
+export function usePreviewable(channelId: string): boolean {
+	const draft = useDraft(channelId);
+	const stickers = useStickers(channelId);
+
+	return Boolean(draft.trim() || stickers.length);
 }
 
 // Collapses the button's slot while the draft is empty, and fades and scales it in once there is something to preview.
@@ -92,9 +105,12 @@ function PreviewButton({ channelId, icon, modules, trailingGap = 0 }: PreviewBut
 
 	useEffect(() => () => cancelOpen.current?.(), []);
 
-	function openPreview() {
+	const openPreview = useCallback(() => {
+		cancelOpen.current?.();
 		cancelOpen.current = dismissKeyboard(channelId, () => setOpen(true));
-	}
+	}, [channelId]);
+
+	usePreviewRequests(channelId, openPreview);
 
 	return (
 		<>

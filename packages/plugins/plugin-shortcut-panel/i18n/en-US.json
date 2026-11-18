@@ -6,5 +6,7 @@
 	"PLUGINS": "Turn plugins on or off",
 	"COMMANDS": "Run commands",
 	"EMPTY": "Nothing pinned yet. Tap Edit to pick plugins to turn on or off and commands to run from here. Buttons other plugins add to the chat input show here too.",
-	"INPUT_BUTTONS": "Chat input buttons"
+	"INPUT_BUTTONS": "Chat input buttons",
+	"KEEP_IN_INPUT": "Keep beside the chat input",
+	"KEEP_IN_INPUT_HINT": "Buttons you turn on here stay in the chat input instead of moving into the panel."
 }

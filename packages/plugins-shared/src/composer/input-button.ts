@@ -6,13 +6,14 @@ import {
 	type ViewStyle,
 } from 'react-native';
 import { definePlatform } from '@unbound-app/api/native';
-import { assets } from '@unbound-app/api';
+import { assets, ui } from '@unbound-app/api';
 import { createElement } from 'react';
 
 import { patchSendButton as android } from './android/input-toggle';
 import { patchRightActions as ios } from './ios/input-toggle';
 import useStyles from './input-button.style';
 import { useComposerState, useDraft } from './composer-state';
+import type { ClosePanel } from './composer-stack';
 
 export type InputButtonOptions = {
 	key: string;
@@ -30,6 +31,31 @@ type ButtonProps = InputButtonOptions & {
 	trailingGap: number;
 };
 
+type RowProps = InputButtonOptions & { channelId: string; assetId: number; closePanel: ClosePanel };
+
+function useShown(
+	channelId: string,
+	{ showWhenEmpty, showForDraft }: Pick<InputButtonOptions, 'showWhenEmpty' | 'showForDraft'>,
+) {
+	const state = useComposerState(channelId);
+	const draft = useDraft(channelId);
+
+	if (state === 'empty' && !showWhenEmpty) return false;
+
+	return !showForDraft || showForDraft(draft);
+}
+
+function ActionRow({ channelId, label, onPress, assetId, closePanel, ...shown }: RowProps) {
+	if (!useShown(channelId, shown)) return null;
+
+	return createElement(ui.Row, {
+		label: label(),
+		icon: assetId,
+		arrow: true,
+		onPress: () => closePanel(() => onPress(channelId)),
+	});
+}
+
 function ActionButton({
 	channelId,
 	label,
@@ -40,11 +66,8 @@ function ActionButton({
 	showForDraft,
 }: ButtonProps) {
 	const styles = useStyles();
-	const state = useComposerState(channelId);
-	const draft = useDraft(channelId);
 
-	if (state === 'empty' && !showWhenEmpty) return null;
-	if (showForDraft && !showForDraft(draft)) return null;
+	if (!useShown(channelId, { showWhenEmpty, showForDraft })) return null;
 
 	return createElement(
 		View,
@@ -95,7 +118,17 @@ export function patchChatInputButton(options: InputButtonOptions): void {
 			trailingGap,
 		});
 
-	drawButton(button, options.name, options.key);
+	drawButton(button, options.name, options.key, {
+		label: options.label,
+		row: (channelId: string, closePanel: ClosePanel) =>
+			createElement(ActionRow, {
+				...options,
+				key: options.key,
+				channelId,
+				assetId,
+				closePanel,
+			}),
+	});
 }
 
 export default { patchChatInputButton };

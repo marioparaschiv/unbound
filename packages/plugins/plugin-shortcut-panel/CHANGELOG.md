@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.0] - 2026-11-18
+
+### Added
+
+- A Keep beside the chat input list in Edit mode, to choose which chat input buttons stay in the input instead of moving into the panel.
+
+### Changed
+
+- Chat input buttons show as rows with their names; pressing one closes the panel before it runs, so what it opens is no longer hidden behind the panel. Toggles show as switches.
+
 ## [1.1.0] - 2026-11-17
 
 ### Added

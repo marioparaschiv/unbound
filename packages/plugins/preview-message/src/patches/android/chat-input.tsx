@@ -1,8 +1,10 @@
 import { withComposerButton } from '@unbound-plugins/shared/composer/composer-stack';
 import { metro, patcher } from '@unbound-app/api';
+import { messages } from '@unbound-app/i18n';
 
 import { SelectedChannelStore, type PreviewModules } from '~/lib/modules';
 import PreviewButton from '~/components/preview-button';
+import PreviewRow from '~/components/preview-row';
 import { Button } from '~/lib/constants';
 
 type SendButtonProps = {
@@ -37,6 +39,17 @@ export function patchChatInputSendButton(icon: number, modules: PreviewModules):
 		return withComposerButton(result, {
 			channelId,
 			key: 'preview-message',
+			details: {
+				label: () => messages.PREVIEW_MESSAGE,
+				row: (rowChannelId, closePanel) => (
+					<PreviewRow
+						key='unbound-preview-message-row'
+						channelId={rowChannelId}
+						icon={icon}
+						closePanel={closePanel}
+					/>
+				),
+			},
 			draw: (gap) => (
 				<PreviewButton
 					key='unbound-preview-message'
