@@ -420,7 +420,8 @@ static nlohmann::json deviceStateJSON()
         {"injected", loader::injectedIOSLibraries(loadedImagePaths())},
         {"ffiClosures", loader::ffi::closuresExecutable()},
         {"ffiClosureProbe", loader::ffi::closureProbe()},
-        {"hookConflicts", loader::ios::replacingHookConflicts()}};
+        {"hookConflicts", loader::ios::replacingHookConflicts()},
+        {"foreignHooks", loader::ios::foreignHookOwners()}};
     if (nlohmann::json network = networkJSON(); !network.is_null())
     {
         state["network"] = network;

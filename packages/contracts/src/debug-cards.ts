@@ -215,6 +215,7 @@ export const debugCardRequestSchema = Type.Object({
 		),
 	),
 	hookConflicts: Type.Optional(Type.Array(text(240), { maxItems: 8 })),
+	foreignHooks: Type.Optional(Type.Array(text(240), { maxItems: 8 })),
 	patches: Type.Optional(
 		Type.Array(
 			Type.Object({ caller: text(), count: Type.Integer({ minimum: 0, maximum: 100_000 }) }),

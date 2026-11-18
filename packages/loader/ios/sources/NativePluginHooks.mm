@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <dispatch/dispatch.h>
+#include <dlfcn.h>
 #include <functional>
 #include <substrate.h>
 #include <unordered_map>
@@ -487,5 +488,41 @@ std::vector<std::string> replacingHookConflicts()
     }
 
     return loader::native::conflictsAmong(hooks);
+}
+}
+
+namespace loader::ios {
+std::vector<std::string> foreignHookOwners()
+{
+    static constexpr size_t kMaximumForeignHooks = 8;
+    std::vector<std::string> owners;
+    std::lock_guard<std::mutex> lock(gHookMutex);
+    for (const auto &entry : gDispatchers)
+    {
+        const std::shared_ptr<HookDispatcher> &dispatcher = entry.second;
+        Method method = dispatcher->retired.load()
+                            ? nullptr
+                            : class_getInstanceMethod(dispatcher->cls, dispatcher->selector);
+        IMP current   = method ? method_getImplementation(method) : nullptr;
+        if (!current || current == (IMP) dispatcher->code)
+        {
+            continue;
+        }
+
+        Dl_info info      = {};
+        std::string image = dladdr((void *) current, &info) && info.dli_fname
+                                ? std::string(info.dli_fname)
+                                : std::string("an unknown image");
+        image             = image.substr(image.find_last_of('/') + 1);
+        owners.push_back(image + " · " + class_getName(dispatcher->cls) + " "
+                         + (class_isMetaClass(dispatcher->cls) ? "+" : "-")
+                         + sel_getName(dispatcher->selector));
+        if (owners.size() == kMaximumForeignHooks)
+        {
+            break;
+        }
+    }
+
+    return owners;
 }
 }
