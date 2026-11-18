@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1] - 2026-11-18
+
+### Fixed
+
+- Custom emoji show in the message box after Discord starts, instead of only after you switch channels: the plugin now picks up your servers' emoji once Discord has loaded them.
+- A draft's custom emoji show without tapping into the message box, and turning the plugin off shows their text again.
+
 ## [1.1.0] - 2026-11-18
 
 ### Added

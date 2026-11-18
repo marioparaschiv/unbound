@@ -12,12 +12,36 @@ import { installComposerMarkdown, restoreComposerMarkdown } from '~/native/ios/c
 import { channelEmoji } from '~/lib/channel-emoji';
 
 const IMAGE_FOLDER = 'Unbound/Temp/unbound.live-markdown/emoji';
+const EMOJI_REFRESH_MS = 300;
+
+type ChangeStore = {
+	addChangeListener?(listener: () => void): void;
+	removeChangeListener?(listener: () => void): void;
+};
 
 function currentGuild(): string | undefined {
 	const channelId = flux.getStore('SelectedChannel')?.getChannelId?.();
 	const channel = channelId ? flux.getStore('Channel').getChannel(channelId) : undefined;
 
 	return channel?.guild_id ?? undefined;
+}
+
+function followEmojiStore(onChange: () => void): () => void {
+	const store = flux.getStore('Emoji') as unknown as ChangeStore;
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const schedule = () => {
+		clearTimeout(timer);
+		timer = setTimeout(onChange, EMOJI_REFRESH_MS);
+	};
+
+	if (!store.addChangeListener) return () => {};
+
+	store.addChangeListener(schedule);
+
+	return () => {
+		clearTimeout(timer);
+		store.removeChangeListener?.(schedule);
+	};
 }
 
 /**
@@ -27,7 +51,17 @@ function currentGuild(): string | undefined {
  */
 export function liveMarkdownIOS(native: NativeBridge) {
 	const scope = native.ui.createScope();
-	const pushEmoji = () => native.ui.run(setComposerEmoji, channelEmoji(currentGuild()));
+	let pushed = '';
+	const pushEmoji = () => {
+		const guildId = currentGuild();
+		const known = channelEmoji(guildId);
+		const signature = `${guildId ?? ''}:${Object.keys(known).length}`;
+
+		if (signature === pushed) return;
+
+		pushed = signature;
+		native.ui.run(setComposerEmoji, known);
+	};
 
 	native.ui.run(installComposerMarkdown, scope);
 	native.ui.run(installComposerEmoji, scope);
@@ -38,10 +72,12 @@ export function liveMarkdownIOS(native: NativeBridge) {
 		IMAGE_FOLDER,
 	);
 	const stopFollowing = flux.onAction('CHANNEL_SELECT', () => setTimeout(pushEmoji, 0));
+	const stopWatchingEmoji = followEmojiStore(pushEmoji);
 
 	return {
 		dispose() {
 			stopFollowing();
+			stopWatchingEmoji();
 			stopFeeding();
 			native.ui.run(restoreComposerMarkdown);
 			void native.ui

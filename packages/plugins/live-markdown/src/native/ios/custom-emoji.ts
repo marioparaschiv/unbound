@@ -2,8 +2,10 @@ import {
 	hideRun,
 	loadOverlayImage,
 	placeOverlay,
-	positionOverlay,
 	removeTaggedOverlays,
+	repositionTaggedOverlays,
+	showRun,
+	visibleTextViews,
 } from '@unbound-plugins/shared/composer/ios/glyph-overlays';
 import { reportWorkletError } from '@unbound-plugins/shared/native/report-worklet-error';
 import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
@@ -22,11 +24,9 @@ type EmojiState = {
 	files: Map<string, string>;
 	wanted: Set<string>;
 	images: Map<string, NativeObjectHandle>;
-	/** The text views painted, by hash, so stopping can remove their overlays. */
-	views: Map<string, NativeObjectHandle>;
 	painted: Map<string, string>;
 	/** Each text view's overlays and the runs they cover, by the view's hash, to move after a layout pass. */
-	placed: Map<string, { start: number; view: NativeObjectHandle }[]>;
+	placed: Map<string, number[]>;
 	side: number;
 	updating: boolean;
 };
@@ -73,42 +73,39 @@ function paint(current: EmojiState, textView: NativeObjectHandle) {
 	if (!storage || !font || typeof text !== 'string') return;
 
 	const key = String(objc.call(textView, 'hash'));
-	const signature = `${text}\u0000${current.files.size}`;
+	const signature = `${text}\u0000${current.files.size}\u0000${Object.keys(current.known).length}`;
 
 	if (current.painted.get(key) === signature) {
-		const known = current.placed.get(key);
+		const starts = current.placed.get(key);
 
-		if (known) {
-			for (const overlay of known) {
-				positionOverlay(objc, textView, overlay.start, current.side, overlay.view);
-			}
-		}
+		if (starts) repositionTaggedOverlays(objc, textView, OVERLAY_TAG, starts, current.side);
 
 		return;
 	}
 
 	const side = Math.round(Number(objc.call(font, 'lineHeight')) || 20);
-	const tokens = emojiTokens(text, current.known)
-		.slice(0, MAX_EMOJI)
-		.flatMap((token) => {
-			const image = imageFor(current, emojiUrl(token));
+	const found = emojiTokens(text, current.known).slice(0, MAX_EMOJI);
+	const tokens = found.flatMap((token) => {
+		const image = imageFor(current, emojiUrl(token));
 
-			return image ? [{ ...token, image }] : [];
-		});
+		return image ? [{ ...token, image }] : [];
+	});
 
 	current.updating = true;
 
 	try {
 		removeTaggedOverlays(objc, textView, OVERLAY_TAG);
 
+		for (const token of found) showRun(objc, textView, storage, token.start, token.length);
+
 		for (const token of tokens) hideRun(objc, storage, token.start, token.length, side);
 
-		const placed: { start: number; view: NativeObjectHandle }[] = [];
+		const placed: number[] = [];
 
 		for (const token of tokens) {
 			const view = placeOverlay(objc, textView, token.start, side, token.image, OVERLAY_TAG);
 
-			if (view) placed.push({ start: token.start, view });
+			if (view) placed.push(token.start);
 		}
 
 		current.placed.set(key, placed);
@@ -118,7 +115,30 @@ function paint(current: EmojiState, textView: NativeObjectHandle) {
 	}
 
 	current.painted.set(key, signature);
-	current.views.set(key, textView);
+}
+
+function clearComposer(objc: NativeObjCBridge, textView: NativeObjectHandle, current: EmojiState) {
+	'worklet';
+	const storage = objc.call(textView, 'textStorage') as NativeObjectHandle | null;
+	const text = storage ? objc.call(storage, 'string') : null;
+
+	removeTaggedOverlays(objc, textView, OVERLAY_TAG);
+
+	if (!storage || typeof text !== 'string') return;
+
+	for (const token of emojiTokens(text, current.known))
+		showRun(objc, textView, storage, token.start, token.length);
+}
+
+function repaintAll(current: EmojiState) {
+	'worklet';
+
+	try {
+		for (const composer of visibleTextViews(current.objc, COMPOSER_CLASS))
+			paint(current, composer);
+	} catch (error) {
+		reportWorkletError('Live Markdown', error);
+	}
 }
 
 /**
@@ -136,7 +156,6 @@ export function installComposerEmoji(scope: NativeUIScope) {
 		files: new Map(),
 		wanted: new Set(),
 		images: new Map(),
-		views: new Map(),
 		painted: new Map(),
 		placed: new Map(),
 		side: 20,
@@ -156,6 +175,8 @@ export function installComposerEmoji(scope: NativeUIScope) {
 			},
 		});
 	}
+
+	repaintAll(current);
 }
 
 /**
@@ -166,7 +187,10 @@ export function setComposerEmoji(known: Record<string, CustomEmoji>) {
 	'worklet';
 	const current = holder()[STATE_KEY];
 
-	if (current) current.known = known;
+	if (!current) return;
+
+	current.known = known;
+	repaintAll(current);
 }
 
 /**
@@ -180,16 +204,20 @@ export function takeEmojiImages(files: Record<string, string>): string[] {
 
 	if (!current) return [];
 
+	const arrived = Object.keys(files).some((url) => !current.files.has(url));
+
 	for (const [url, path] of Object.entries(files)) {
 		current.files.set(url, path);
 		current.wanted.delete(url);
 	}
 
+	if (arrived) repaintAll(current);
+
 	return [...current.wanted];
 }
 
 /**
- * @description Removes the emoji images it placed.
+ * @description Removes the emoji images it placed from the composers on screen and shows their text again.
  */
 export function restoreComposerEmoji() {
 	'worklet';
@@ -197,8 +225,12 @@ export function restoreComposerEmoji() {
 
 	if (!current) return;
 
-	for (const view of current.views.values())
-		removeTaggedOverlays(current.objc, view, OVERLAY_TAG);
-
 	holder()[STATE_KEY] = undefined;
+
+	try {
+		for (const composer of visibleTextViews(current.objc, COMPOSER_CLASS))
+			clearComposer(current.objc, composer, current);
+	} catch (error) {
+		reportWorkletError('Live Markdown', error);
+	}
 }

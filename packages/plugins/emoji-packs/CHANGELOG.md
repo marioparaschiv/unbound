@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.3] - 2026-11-18
+
+### Fixed
+
+- The pack's emoji in the message box move back over their place after the text around them re-lays out.
+
 ## [1.2.2] - 2026-11-18
 
 ### Fixed
