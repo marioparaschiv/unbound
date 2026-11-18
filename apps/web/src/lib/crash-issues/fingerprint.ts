@@ -4,6 +4,8 @@ const TOP_FRAMES = 6;
 const NATIVE_FRAME = /^#\d+\s+(?:0x[0-9a-f]+\s+)?(\S+)\s+\+\s+0x[0-9a-f]+(?:\s+(\S+))?/i;
 const JAVA_FRAME = /^#\d+\s+at\s+([^(]+)/;
 const JS_FRAME = /^\s*at\s+([^\s(]+)/;
+const OTHER_SECTIONS = /^(Registers|Thread) /;
+const MEMORY_FAULTS = new Set(['Signal 10', 'Signal 11']);
 
 function nativeFrame(line: string): string | undefined {
 	const match = NATIVE_FRAME.exec(line);
@@ -55,22 +57,28 @@ export function crashHeadline(report: CrashReport): string {
 }
 
 /**
- * @description Names the frames that identify a crash: the top frames of its stack by image and symbol, without the
- * addresses and offsets that change between builds.
+ * @description Names the frames that identify a crash: the top frames of its crashing thread by image and symbol,
+ * without the addresses and offsets that change between builds.
  * @param stack The stack.
  * @returns Up to six frame names.
  */
 export function crashFrames(stack: string | undefined): string[] {
-	return (stack ?? '')
-		.split('\n')
+	const lines = (stack ?? '').split('\n');
+	const end = lines.findIndex((line) => OTHER_SECTIONS.test(line));
+
+	return (end === -1 ? lines : lines.slice(0, end))
 		.map(frameName)
 		.filter((frame): frame is string => Boolean(frame))
 		.slice(0, TOP_FRAMES);
 }
 
+function groupedHeadline(headline: string): string {
+	return MEMORY_FAULTS.has(headline) ? 'memory fault' : headline;
+}
+
 /**
  * @description Fingerprints a crash so reports of the same crash share one issue: its kind, platform, addon,
- * headline and top frames.
+ * headline and top frames. SIGSEGV and SIGBUS count as one memory fault, since the same bad pointer raises either.
  * @param report The crash report.
  * @returns A 16-character hex fingerprint.
  */
@@ -79,7 +87,7 @@ export function crashFingerprint(report: CrashReport): string {
 		report.kind,
 		report.platform,
 		report.addon?.id ?? '',
-		crashHeadline(report),
+		groupedHeadline(crashHeadline(report)),
 		...crashFrames(report.stack),
 	];
 
