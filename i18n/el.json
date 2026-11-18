@@ -440,5 +440,7 @@
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "Αποδέξου την ειδοποίηση πριν γράψεις στο #chat",
 	"UNBOUND_SUPPORT_BANNER": "Χρειάζεσαι βοήθεια; Το #chat δεν είναι για υποστήριξη.",
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Φόρουμ υποστήριξης",
-	"UNBOUND_CRASH_KNOWN_ISSUE": "Γνωστό πρόβλημα #{number}"
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Γνωστό πρόβλημα #{number}",
+	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Μην ενημερώσεις ακόμα το Discord",
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Το Discord {version} χαλάει μέρη του Unbound. Περίμενε μια ενημέρωση του Unbound πριν το εγκαταστήσεις."
 }

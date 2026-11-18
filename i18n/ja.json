@@ -440,5 +440,7 @@
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "#chat に投稿する前に注意事項に同意してください",
 	"UNBOUND_SUPPORT_BANNER": "お困りですか？#chat はサポート用ではありません。",
 	"UNBOUND_SUPPORT_BANNER_ACTION": "サポートフォーラム",
-	"UNBOUND_CRASH_KNOWN_ISSUE": "既知の問題 #{number}"
+	"UNBOUND_CRASH_KNOWN_ISSUE": "既知の問題 #{number}",
+	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "まだ Discord を更新しないでください",
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} では Unbound の一部が動作しません。インストールする前に Unbound の更新を待ってください。"
 }

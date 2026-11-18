@@ -1,8 +1,9 @@
 import type {
 	DiscordCompatPlatform,
+	ListDiscordCompatResponse,
 	PublishDiscordCompatRequest,
 } from '@unbound-app/contracts/discord-compat';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 
 import { requirePermission } from '~/lib/api/caller';
 import type { AppContext } from '~/lib/context';
@@ -70,4 +71,29 @@ export async function findDiscordCompat(
 	return row;
 }
 
-export default { publishDiscordCompat, findDiscordCompat };
+const LISTED_VERSIONS = 20;
+
+/**
+ * @description Lists the newest scanned Discord versions on a platform with how many lookups each breaks, for clients
+ * that warn before a Discord update breaks Unbound.
+ * @param ctx The request context.
+ * @param platform The platform.
+ * @returns Up to 20 versions, newest scan first.
+ */
+export async function listDiscordCompat(
+	ctx: AppContext,
+	platform: DiscordCompatPlatform,
+): Promise<ListDiscordCompatResponse['versions']> {
+	return ctx.db
+		.select({
+			version: discordCompat.version,
+			channel: discordCompat.channel,
+			broken: discordCompat.broken,
+		})
+		.from(discordCompat)
+		.where(eq(discordCompat.platform, platform))
+		.orderBy(desc(discordCompat.scannedAt))
+		.limit(LISTED_VERSIONS);
+}
+
+export default { publishDiscordCompat, findDiscordCompat, listDiscordCompat };

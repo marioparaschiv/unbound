@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+	breakingDiscordUpdate,
 	isOlderThanSupported,
 	parseDiscordVersion,
 	shouldWarnAboutDiscordVersion,
@@ -62,5 +63,25 @@ describe('discordChannel', () => {
 			version: '352.0',
 		});
 		expect(discordChannel('352.0', 'Sideloaded (TestFlight build)').channel).toBe('Beta');
+	});
+});
+
+describe('breakingDiscordUpdate', () => {
+	const scanned = [
+		{ version: '356.0', channel: 'stable', broken: 3 },
+		{ version: '355.4', channel: 'stable', broken: 1 },
+		{ version: '354.2', channel: 'stable', broken: 0 },
+		{ version: '357.0', channel: 'alpha', broken: 9 },
+		{ version: '351.0', channel: 'stable', broken: 4 },
+	];
+
+	test('names the newest broken version on the running channel', () => {
+		expect(breakingDiscordUpdate('352.10', 'Stable', scanned)).toBe('356.0');
+	});
+
+	test('ignores older, working and alpha versions', () => {
+		expect(breakingDiscordUpdate('356.0', 'Stable', scanned)).toBeUndefined();
+		expect(breakingDiscordUpdate('352.10', 'Alpha', scanned)).toBeUndefined();
+		expect(breakingDiscordUpdate('352.10', 'Beta', scanned)).toBeUndefined();
 	});
 });

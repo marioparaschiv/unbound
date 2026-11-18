@@ -440,5 +440,7 @@
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "Fogadd el a figyelmeztetést, mielőtt a #chat csatornába írsz",
 	"UNBOUND_SUPPORT_BANNER": "Segítség kell? A #chat nem támogatásra való.",
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Támogatási fórum",
-	"UNBOUND_CRASH_KNOWN_ISSUE": "Ismert hiba #{number}"
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Ismert hiba #{number}",
+	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Még ne frissítsd a Discordot",
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "A Discord {version} elrontja az Unbound egyes részeit. Telepítés előtt várd meg az Unbound frissítését."
 }

@@ -440,5 +440,7 @@
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "Hyväksy ilmoitus ennen kuin kirjoitat kanavalle #chat",
 	"UNBOUND_SUPPORT_BANNER": "Tarvitsetko apua? #chat ei ole tukea varten.",
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Tukifoorumi",
-	"UNBOUND_CRASH_KNOWN_ISSUE": "Tunnettu ongelma #{number}"
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Tunnettu ongelma #{number}",
+	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Älä päivitä Discordia vielä",
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} rikkoo osia Unboundista. Odota Unboundin päivitystä ennen asentamista."
 }

@@ -646,5 +646,7 @@
 	"UNBOUND_SUPPORT_GATE_LATER": "Not now",
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "Accept the notice before posting in #chat",
 	"UNBOUND_SUPPORT_BANNER": "Need help? #chat isn't for support.",
-	"UNBOUND_SUPPORT_BANNER_ACTION": "Support forum"
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Support forum",
+	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Don't update Discord yet",
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} breaks parts of Unbound. Wait for an Unbound update before installing it."
 }

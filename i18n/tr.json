@@ -440,5 +440,7 @@
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "#chat'e yazmadan önce uyarıyı kabul et",
 	"UNBOUND_SUPPORT_BANNER": "Yardım mı lazım? #chat destek için değil.",
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Destek forumu",
-	"UNBOUND_CRASH_KNOWN_ISSUE": "Bilinen sorun #{number}"
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Bilinen sorun #{number}",
+	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Discord'u henüz güncelleme",
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version}, Unbound'un bazı kısımlarını bozuyor. Yüklemeden önce bir Unbound güncellemesi bekle."
 }

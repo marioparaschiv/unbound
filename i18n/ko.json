@@ -440,5 +440,7 @@
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "#chat에 글을 쓰기 전에 안내에 동의해 주세요",
 	"UNBOUND_SUPPORT_BANNER": "도움이 필요하신가요? #chat은 지원용이 아닙니다.",
 	"UNBOUND_SUPPORT_BANNER_ACTION": "지원 포럼",
-	"UNBOUND_CRASH_KNOWN_ISSUE": "알려진 문제 #{number}"
+	"UNBOUND_CRASH_KNOWN_ISSUE": "알려진 문제 #{number}",
+	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "아직 Discord를 업데이트하지 마세요",
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version}에서는 Unbound 일부가 작동하지 않습니다. 설치하기 전에 Unbound 업데이트를 기다리세요."
 }
