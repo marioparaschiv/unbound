@@ -13,5 +13,30 @@
 		"min": "3.0.0"
 	},
 	"icon": "ReactionIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.objc.classes",
+				"native.objc.hooks",
+				"native.objc.invoke"
+			]
+		},
+		"android": {
+			"capabilities": [
+				"native.java.classSearch",
+				"native.java.classes",
+				"native.java.construct",
+				"native.java.hooks",
+				"native.java.invoke"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "f7352453b0e8f955945c900a20eba4ccd15d83c99e6df0f709e17bf11a8adf452293154c4046cfd29e3df20312430db764d76bdd79e255a09c8c436105e95629"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "DoJYfqiUHn4iGjKLE54kFRYczqw2ZFhmYPxHkdrpntxqlOWNVZc1yuj1WTxXG5CYGJ8O93W3MIDmCE/5GL/9AA=="
+	}
 }
