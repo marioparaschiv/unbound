@@ -102,8 +102,8 @@ export const BLANK_TARGETS: readonly BlankTarget[] = [
 	},
 	{
 		setting: 'serverThemes',
-		module: { path: 'modules/premium/powerups/experiments/ServerThemeUserExperiment.tsx' },
-		methods: ['getServerThemeUserEnabled', 'useServerThemeUserEnabled'],
+		module: { path: 'modules/premium/powerups/experiments/ServerThemeExperiment.tsx' },
+		methods: ['getServerThemeEnabled', 'useServerThemeEnabled'],
 		value: false,
 	},
 	{
