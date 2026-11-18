@@ -450,5 +450,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{place} içinde {signal}",
 	"UNBOUND_CRASH_TITLE_FROZE": "{call} içinde {seconds} sn takıldı",
 	"UNBOUND_CRASH_TITLE_HANG": "Discord {duration} yanıt vermedi",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "{place} içinde {duration} yanıt yok"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "{place} içinde {duration} yanıt yok",
+	"UNBOUND_CRASH_ISSUE_FIXED": "Düzeltildi · sorun #{number}",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "Sorun #{number} kapatıldı",
+	"UNBOUND_CRASH_FIXED": "Yaşadığın bir çökme düzeltildi (sorun #{number}); düzeltme güncellemelerle gelir."
 }

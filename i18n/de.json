@@ -450,5 +450,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} in {place}",
 	"UNBOUND_CRASH_TITLE_FROZE": "{seconds} s in {call} hängen geblieben",
 	"UNBOUND_CRASH_TITLE_HANG": "Discord hat {duration} nicht reagiert",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "{duration} keine Reaktion in {place}"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "{duration} keine Reaktion in {place}",
+	"UNBOUND_CRASH_ISSUE_FIXED": "Behoben · Issue #{number}",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} geschlossen",
+	"UNBOUND_CRASH_FIXED": "Ein Absturz von dir ist behoben (Issue #{number}); Updates bringen die Korrektur."
 }

@@ -450,5 +450,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{place} 中的 {signal}",
 	"UNBOUND_CRASH_TITLE_FROZE": "在 {call} 中卡住 {seconds} 秒",
 	"UNBOUND_CRASH_TITLE_HANG": "Discord 无响应 {duration}",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "在 {place} 中无响应 {duration}"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "在 {place} 中无响应 {duration}",
+	"UNBOUND_CRASH_ISSUE_FIXED": "已修复 · Issue #{number}",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} 已关闭",
+	"UNBOUND_CRASH_FIXED": "你遇到的一个崩溃已修复（Issue #{number}），更新后即可获得修复。"
 }

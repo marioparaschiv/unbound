@@ -16,13 +16,19 @@ const ORIGIN_LABELS: Record<CrashOrigin, () => string> = {
 	system: () => messages.UNBOUND_CRASH_ORIGIN_SYSTEM,
 };
 
+const ISSUE_LABELS = {
+	open: 'UNBOUND_CRASH_KNOWN_ISSUE',
+	fixed: 'UNBOUND_CRASH_ISSUE_FIXED',
+	closed: 'UNBOUND_CRASH_ISSUE_CLOSED',
+} as const;
+
 function crashDetails(record: CrashRecord, pluginName: string | undefined): string {
 	return [
 		new Date(record.at).toLocaleString(),
 		pluginName,
 		record.origin && ORIGIN_LABELS[record.origin](),
 		record.issue
-			? format('UNBOUND_CRASH_KNOWN_ISSUE', { number: record.issue.number })
+			? format(ISSUE_LABELS[record.issueState ?? 'open'], { number: record.issue.number })
 			: record.reportId && `#${record.reportId.slice(0, 8)}`,
 	]
 		.filter(Boolean)

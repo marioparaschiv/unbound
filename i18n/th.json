@@ -450,5 +450,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} ใน {place}",
 	"UNBOUND_CRASH_TITLE_FROZE": "ค้างใน {call} นาน {seconds} วินาที",
 	"UNBOUND_CRASH_TITLE_HANG": "Discord ไม่ตอบสนองนาน {duration}",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "ไม่ตอบสนองนาน {duration} ใน {place}"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "ไม่ตอบสนองนาน {duration} ใน {place}",
+	"UNBOUND_CRASH_ISSUE_FIXED": "แก้แล้ว · อิชชู #{number}",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "อิชชู #{number} ปิดแล้ว",
+	"UNBOUND_CRASH_FIXED": "การแครชที่คุณเจอแก้แล้ว (อิชชู #{number}) การอัปเดตจะนำการแก้ไขมา"
 }

@@ -450,5 +450,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} u {place}",
 	"UNBOUND_CRASH_TITLE_FROZE": "Zapelo u {call} na {seconds} s",
 	"UNBOUND_CRASH_TITLE_HANG": "Discord nije reagirao {duration}",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "Bez odgovora {duration} u {place}"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Bez odgovora {duration} u {place}",
+	"UNBOUND_CRASH_ISSUE_FIXED": "Popravljeno · issue #{number}",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} zatvoren",
+	"UNBOUND_CRASH_FIXED": "Pad koji si imao je popravljen (issue #{number}); ažuriranja donose popravak."
 }

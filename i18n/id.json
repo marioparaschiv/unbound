@@ -450,5 +450,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} di {place}",
 	"UNBOUND_CRASH_TITLE_FROZE": "Macet di {call} selama {seconds} dtk",
 	"UNBOUND_CRASH_TITLE_HANG": "Discord tidak merespons selama {duration}",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "Tidak merespons selama {duration} di {place}"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Tidak merespons selama {duration} di {place}",
+	"UNBOUND_CRASH_ISSUE_FIXED": "Diperbaiki · issue #{number}",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} ditutup",
+	"UNBOUND_CRASH_FIXED": "Crash yang kamu alami sudah diperbaiki (issue #{number}); pembaruan membawa perbaikannya."
 }

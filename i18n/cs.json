@@ -450,5 +450,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} v {place}",
 	"UNBOUND_CRASH_TITLE_FROZE": "Zaseknuto v {call} na {seconds} s",
 	"UNBOUND_CRASH_TITLE_HANG": "Discord nereagoval {duration}",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "Bez odezvy {duration} v {place}"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Bez odezvy {duration} v {place}",
+	"UNBOUND_CRASH_ISSUE_FIXED": "Opraveno · issue #{number}",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} uzavřeno",
+	"UNBOUND_CRASH_FIXED": "Pád, který jsi měl, je opravený (issue #{number}); oprava přijde s aktualizací."
 }

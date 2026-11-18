@@ -450,5 +450,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} kohdassa {place}",
 	"UNBOUND_CRASH_TITLE_FROZE": "Jumissa kohdassa {call} {seconds} s",
 	"UNBOUND_CRASH_TITLE_HANG": "Discord ei vastannut {duration}",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "Ei vastausta {duration} kohdassa {place}"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Ei vastausta {duration} kohdassa {place}",
+	"UNBOUND_CRASH_ISSUE_FIXED": "Korjattu · issue #{number}",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} suljettu",
+	"UNBOUND_CRASH_FIXED": "Kohtaamasi kaatuminen on korjattu (issue #{number}); päivitykset tuovat korjauksen."
 }
