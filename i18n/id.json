@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "Tidak merespons selama {duration} di {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Diperbaiki · issue #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} ditutup",
-	"UNBOUND_CRASH_FIXED": "Crash yang kamu alami sudah diperbaiki (issue #{number}); pembaruan membawa perbaikannya."
+	"UNBOUND_CRASH_FIXED": "Crash yang kamu alami sudah diperbaiki (issue #{number}); pembaruan membawa perbaikannya.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Issue #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Apa yang kamu lakukan saat crash?",
+	"UNBOUND_CRASH_NOTE_SEND": "Tambah catatan",
+	"UNBOUND_CRASH_NOTE_SENT": "Catatan ditambahkan ke issue #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Tidak dapat menambahkan catatan",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Buka issue"
 }

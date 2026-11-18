@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "Немає відповіді {duration} у {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Виправлено · задача #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Задачу #{number} закрито",
-	"UNBOUND_CRASH_FIXED": "Збій, який у вас був, виправлено (задача #{number}); виправлення прийде з оновленням."
+	"UNBOUND_CRASH_FIXED": "Збій, який у вас був, виправлено (задача #{number}); виправлення прийде з оновленням.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Задача #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Що ви робили, коли стався збій?",
+	"UNBOUND_CRASH_NOTE_SEND": "Додати нотатку",
+	"UNBOUND_CRASH_NOTE_SENT": "Нотатку додано до задачі #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Не вдалося додати нотатку",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Відкрити задачу"
 }

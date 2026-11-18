@@ -391,3 +391,26 @@ export async function retryPendingIssues(): Promise<void> {
 		}
 	}
 }
+
+/**
+ * @description Adds what the user wrote to the GitHub issue a sent crash report went to, through Unbound's server.
+ * @param reportId The crash report's id.
+ * @param note The note.
+ * @returns Whether the server posted it on the issue.
+ */
+export async function addCrashNote(reportId: string, note: string): Promise<boolean> {
+	try {
+		const { createUnboundClient } = await import('~/account/client');
+		const request = createUnboundClient();
+		const { commented } = await request('POST /api/v1/crash-reports/$id/note', {
+			params: { id: reportId },
+			body: { note },
+		});
+
+		return commented;
+	} catch (error) {
+		logger.warn(`Failed to add a note to crash report ${reportId}:`, error);
+
+		return false;
+	}
+}

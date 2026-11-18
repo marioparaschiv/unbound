@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "Нет ответа {duration} в {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Исправлено · задача #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Задача #{number} закрыта",
-	"UNBOUND_CRASH_FIXED": "Сбой, который у вас был, исправлен (задача #{number}); исправление придёт с обновлением."
+	"UNBOUND_CRASH_FIXED": "Сбой, который у вас был, исправлен (задача #{number}); исправление придёт с обновлением.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Задача #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Что вы делали, когда произошёл сбой?",
+	"UNBOUND_CRASH_NOTE_SEND": "Добавить заметку",
+	"UNBOUND_CRASH_NOTE_SENT": "Заметка добавлена к задаче #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Не удалось добавить заметку",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Открыть задачу"
 }

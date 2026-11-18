@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "{duration} nem reagált itt: {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Javítva · #{number} hibajegy",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "A #{number} hibajegy lezárva",
-	"UNBOUND_CRASH_FIXED": "Egy összeomlásod javítva lett (#{number} hibajegy); a frissítések hozzák a javítást."
+	"UNBOUND_CRASH_FIXED": "Egy összeomlásod javítva lett (#{number} hibajegy); a frissítések hozzák a javítást.",
+	"UNBOUND_CRASH_NOTE_TITLE": "#{number} hibajegy",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Mit csináltál, amikor összeomlott?",
+	"UNBOUND_CRASH_NOTE_SEND": "Megjegyzés hozzáadása",
+	"UNBOUND_CRASH_NOTE_SENT": "Megjegyzés hozzáadva a #{number} hibajegyhez",
+	"UNBOUND_CRASH_NOTE_FAILED": "Nem sikerült hozzáadni a megjegyzést",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Hibajegy megnyitása"
 }

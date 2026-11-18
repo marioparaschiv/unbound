@@ -1,13 +1,39 @@
+import { createElement } from 'react';
+
 import { recordCrash, type CrashIssueLink, type CrashRecord } from '~/diagnostics/crash-history';
 import type { CrashReportAddon } from '~/diagnostics/crash-report';
 import { fileRecordedCrash } from '~/diagnostics/crash-reports';
 import type { CaughtError } from '~/ui/error-fallback';
+import { confirm, showDialog } from '~/dialogs/api';
+import { format, messages } from '~/i18n/api';
 import { error, info } from '~/toasts/api';
-import { confirm } from '~/dialogs/api';
 import { Linking } from '~/metro/api';
 
+import CrashNoteDialog from './crash-note-dialog';
+
+function openIssueDialog(issue: CrashIssueLink, reportId: string | undefined) {
+	const openIssue = {
+		label: messages.UNBOUND_CRASH_OPEN_ISSUE,
+		onPress: () => void Linking.openURL(issue.url),
+	};
+
+	if (!reportId) {
+		void Linking.openURL(issue.url);
+
+		return;
+	}
+
+	showDialog({
+		title: format('UNBOUND_CRASH_NOTE_TITLE', { number: issue.number }),
+		content: (props) =>
+			createElement(CrashNoteDialog, { ...props, reportId, issue: issue.number }),
+		buttons: [openIssue],
+		cancel: true,
+	});
+}
+
 /**
- * @description Takes a tapped crash to GitHub: opens its known issue, or once the user agrees, has Unbound's server file
+ * @description Takes a tapped crash to GitHub: offers to add a note to its known issue or open it, or once the user agrees, has Unbound's server file
  * it, joining the issue that already tracks it, and opens that issue.
  * @param record The crash.
  * @param plugin The installed plugin the crash blamed and its name, if any.
@@ -21,7 +47,7 @@ export async function reportCrashOnGitHub(
 	stack?: string,
 ): Promise<void> {
 	if (record.issue) {
-		await Linking.openURL(record.issue.url);
+		openIssueDialog(record.issue, record.reportId);
 
 		return;
 	}

@@ -79,6 +79,12 @@ export const crashIssueResponseSchema = Type.Object({
 	),
 });
 
+export const crashNoteSchema = Type.Object({
+	note: Type.String({ minLength: 1, maxLength: 2_000 }),
+});
+
+export const crashNoteResponseSchema = Type.Object({ commented: Type.Boolean() });
+
 export type CrashReport = StaticDecode<typeof crashReportSchema>;
 
 export type CrashContext = NonNullable<CrashReport['context']>;
@@ -93,4 +99,6 @@ export default {
 	crashReportSchema,
 	crashReportResponseSchema,
 	crashIssueResponseSchema,
+	crashNoteSchema,
+	crashNoteResponseSchema,
 };

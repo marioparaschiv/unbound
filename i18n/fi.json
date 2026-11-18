@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "Ei vastausta {duration} kohdassa {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Korjattu · issue #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} suljettu",
-	"UNBOUND_CRASH_FIXED": "Kohtaamasi kaatuminen on korjattu (issue #{number}); päivitykset tuovat korjauksen."
+	"UNBOUND_CRASH_FIXED": "Kohtaamasi kaatuminen on korjattu (issue #{number}); päivitykset tuovat korjauksen.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Issue #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Mitä teit, kun se kaatui?",
+	"UNBOUND_CRASH_NOTE_SEND": "Lisää muistiinpano",
+	"UNBOUND_CRASH_NOTE_SENT": "Muistiinpano lisätty issueen #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Muistiinpanoa ei voitu lisätä",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Avaa issue"
 }

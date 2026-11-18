@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "Bez odezvy {duration} v {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Opraveno · issue #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} uzavřeno",
-	"UNBOUND_CRASH_FIXED": "Pád, který jsi měl, je opravený (issue #{number}); oprava přijde s aktualizací."
+	"UNBOUND_CRASH_FIXED": "Pád, který jsi měl, je opravený (issue #{number}); oprava přijde s aktualizací.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Issue #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Co jsi dělal, když to spadlo?",
+	"UNBOUND_CRASH_NOTE_SEND": "Přidat poznámku",
+	"UNBOUND_CRASH_NOTE_SENT": "Poznámka přidána k issue #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Poznámku se nepodařilo přidat",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Otevřít issue"
 }

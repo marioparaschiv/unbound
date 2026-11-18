@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "Không phản hồi trong {duration} tại {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Đã sửa · issue #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} đã đóng",
-	"UNBOUND_CRASH_FIXED": "Sự cố bạn gặp đã được sửa (issue #{number}); bản cập nhật sẽ mang bản sửa."
+	"UNBOUND_CRASH_FIXED": "Sự cố bạn gặp đã được sửa (issue #{number}); bản cập nhật sẽ mang bản sửa.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Issue #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Bạn đang làm gì khi bị lỗi?",
+	"UNBOUND_CRASH_NOTE_SEND": "Thêm ghi chú",
+	"UNBOUND_CRASH_NOTE_SENT": "Đã thêm ghi chú vào issue #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Không thể thêm ghi chú",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Mở issue"
 }

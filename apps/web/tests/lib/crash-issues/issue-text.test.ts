@@ -42,3 +42,15 @@ describe('crashIssueBody', () => {
 		expect(body).not.toContain('Discord build');
 	});
 });
+
+describe('crashNoteComment', () => {
+	test('quotes the note, cuts it and breaks mentions', async () => {
+		const { crashNoteComment } = await import('~/lib/crash-issues/issue-text');
+
+		expect(crashNoteComment('Opened a thread\n@everyone saw it', 'r-1')).toBe(
+			'A reporter added a note to report `r-1`:\n\n> Opened a thread\n> @​everyone saw it',
+		);
+		expect(crashNoteComment('   ', 'r-1')).toBeUndefined();
+		expect(crashNoteComment('x'.repeat(900), 'r-1')?.length).toBeLessThan(600);
+	});
+});

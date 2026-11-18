@@ -91,4 +91,28 @@ export function crashIssueComment(report: CrashReport, reportId: string, reports
 	return `Seen again on Unbound ${report.clientVersion}, loader ${report.loaderVersion}, Discord ${report.discordVersion} (${PLATFORM_NAMES[report.platform]} ${report.osVersion}); ${reports} reports so far. Report \`${reportId}\`.`;
 }
 
-export default { crashIssueTitle, crashIssueBody, crashIssueComment };
+const NOTE_LIMIT = 500;
+
+/**
+ * @description Writes the comment a reporter's note becomes: quoted, cut to 500 characters, and with mentions broken so
+ * it pings nobody.
+ * @param note What the reporter wrote.
+ * @param reportId The stored report's id.
+ * @returns The Markdown comment, or `undefined` when the note is empty.
+ */
+export function crashNoteComment(note: string, reportId: string): string | undefined {
+	const text = note.trim().slice(0, NOTE_LIMIT).replaceAll('@', '@\u200b');
+
+	if (!text) {
+		return undefined;
+	}
+
+	const quoted = text
+		.split('\n')
+		.map((line) => `> ${line}`)
+		.join('\n');
+
+	return `A reporter added a note to report \`${reportId}\`:\n\n${quoted}`;
+}
+
+export default { crashIssueTitle, crashIssueBody, crashIssueComment, crashNoteComment };

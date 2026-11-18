@@ -659,5 +659,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "Stopped responding for {duration} in {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Fixed · issue #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} closed",
-	"UNBOUND_CRASH_FIXED": "A crash you hit is fixed (issue #{number}); updates bring the fix."
+	"UNBOUND_CRASH_FIXED": "A crash you hit is fixed (issue #{number}); updates bring the fix.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Issue #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "What were you doing when it crashed?",
+	"UNBOUND_CRASH_NOTE_SEND": "Add note",
+	"UNBOUND_CRASH_NOTE_SENT": "Note added to issue #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Couldn't add the note",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Open issue"
 }

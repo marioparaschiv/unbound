@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "{duration} geen reactie in {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Opgelost · issue #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} gesloten",
-	"UNBOUND_CRASH_FIXED": "Een crash die je had is opgelost (issue #{number}); updates brengen de oplossing."
+	"UNBOUND_CRASH_FIXED": "Een crash die je had is opgelost (issue #{number}); updates brengen de oplossing.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Issue #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Wat deed je toen het crashte?",
+	"UNBOUND_CRASH_NOTE_SEND": "Notitie toevoegen",
+	"UNBOUND_CRASH_NOTE_SENT": "Notitie toegevoegd aan issue #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Kon de notitie niet toevoegen",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Issue openen"
 }

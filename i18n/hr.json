@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "Bez odgovora {duration} u {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Popravljeno · issue #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} zatvoren",
-	"UNBOUND_CRASH_FIXED": "Pad koji si imao je popravljen (issue #{number}); ažuriranja donose popravak."
+	"UNBOUND_CRASH_FIXED": "Pad koji si imao je popravljen (issue #{number}); ažuriranja donose popravak.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Issue #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Što si radio kad se srušilo?",
+	"UNBOUND_CRASH_NOTE_SEND": "Dodaj bilješku",
+	"UNBOUND_CRASH_NOTE_SENT": "Bilješka dodana u issue #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Bilješku nije moguće dodati",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Otvori issue"
 }

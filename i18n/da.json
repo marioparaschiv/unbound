@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "Intet svar i {duration} i {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Rettet · issue #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} lukket",
-	"UNBOUND_CRASH_FIXED": "Et nedbrud, du ramte, er rettet (issue #{number}); opdateringer bringer rettelsen."
+	"UNBOUND_CRASH_FIXED": "Et nedbrud, du ramte, er rettet (issue #{number}); opdateringer bringer rettelsen.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Issue #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Hvad lavede du, da det gik ned?",
+	"UNBOUND_CRASH_NOTE_SEND": "Tilføj note",
+	"UNBOUND_CRASH_NOTE_SENT": "Note tilføjet til issue #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Kunne ikke tilføje noten",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Åbn issue"
 }

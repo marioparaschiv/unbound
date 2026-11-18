@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "{duration} keine Reaktion in {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Behoben · Issue #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} geschlossen",
-	"UNBOUND_CRASH_FIXED": "Ein Absturz von dir ist behoben (Issue #{number}); Updates bringen die Korrektur."
+	"UNBOUND_CRASH_FIXED": "Ein Absturz von dir ist behoben (Issue #{number}); Updates bringen die Korrektur.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Issue #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Was hast du gemacht, als es abstürzte?",
+	"UNBOUND_CRASH_NOTE_SEND": "Notiz hinzufügen",
+	"UNBOUND_CRASH_NOTE_SENT": "Notiz zu Issue #{number} hinzugefügt",
+	"UNBOUND_CRASH_NOTE_FAILED": "Notiz konnte nicht hinzugefügt werden",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Issue öffnen"
 }

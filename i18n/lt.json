@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "Nereagavo {duration} vietoje {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Pataisyta · problema #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Problema #{number} uždaryta",
-	"UNBOUND_CRASH_FIXED": "Tavo strigimas pataisytas (problema #{number}); pataisymą atneš atnaujinimai."
+	"UNBOUND_CRASH_FIXED": "Tavo strigimas pataisytas (problema #{number}); pataisymą atneš atnaujinimai.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Problema #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Ką darei, kai strigo?",
+	"UNBOUND_CRASH_NOTE_SEND": "Pridėti pastabą",
+	"UNBOUND_CRASH_NOTE_SENT": "Pastaba pridėta prie problemos #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Nepavyko pridėti pastabos",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Atidaryti problemą"
 }
