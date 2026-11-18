@@ -139,6 +139,16 @@ export const addonManifestSchema = superRefine(
 			locales: Type.Optional(localeDigestsSchema),
 			/** The images `ubd build` emits beside the bundle, by asset name. */
 			assets: Type.Optional(addonAssetsSchema),
+			/** The hosts the addon's `fetch` may reach; a leading `*.` also allows subdomains. Absent means any host. */
+			network: Type.Optional(
+				Type.Array(
+					Type.String({
+						pattern: '^(\\*\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)+$',
+						maxLength: 253,
+					}),
+					{ maxItems: 32 },
+				),
+			),
 			/** Marks a plugin other plugins build on, which the plugin list hides by default. */
 			library: Type.Optional(Type.Boolean()),
 			/** The ids this addon was published under before; clients that still have one move to this addon. */
