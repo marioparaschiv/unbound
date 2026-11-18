@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :shield: Turn on encryption in a DM or group with the shield button, and every file you add is encrypted so only the people there, and you, can open it. In a server channel it's encrypted for everyone whose key you saved.

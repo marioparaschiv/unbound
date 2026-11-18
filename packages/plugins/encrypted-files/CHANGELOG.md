@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2] - 2026-11-18
+
+### Fixed
+
+- A failed save of a decrypted file shows the save toast with the error, which also fixes the plugin build that held back publishing.
+
 ## [1.0.1] - 2026-11-18
 
 ### Changed
