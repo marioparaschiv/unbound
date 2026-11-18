@@ -12,6 +12,7 @@
 #include "LoaderJSIJSON.h"
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
+#include "LoaderLogRateLimit.h"
 #include "LoaderLogStream.h"
 #include "NativePluginRuntime.h"
 
@@ -122,6 +123,20 @@ static jsi::Function logFunction(jsi::Runtime &runtime)
 
             std::vector<std::string> scope = scopeArgument(rt, args[1]);
             std::string message            = args[2].getString(rt).utf8(rt);
+            LogAdmission admission =
+                jsLogRateLimiter().admit(scope.empty() ? "" : scope.front(), logNow());
+            if (admission.summary)
+            {
+                writeSystemLog(LogLevel::Warning, scopedLogLine(scope, *admission.summary));
+                appendLogEntry(
+                    {logNow(), LogSource::Unbound, LogLevel::Warning, scope, *admission.summary});
+            }
+
+            if (!admission.write)
+            {
+                return jsi::Value::undefined();
+            }
+
             writeSystemLog(*level, scopedLogLine(scope, message));
             appendLogEntry(
                 {logNow(), LogSource::Unbound, *level, std::move(scope), std::move(message)});
