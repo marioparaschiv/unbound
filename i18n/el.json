@@ -450,5 +450,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} σε {place}",
 	"UNBOUND_CRASH_TITLE_FROZE": "Κόλλησε σε {call} για {seconds} δ",
 	"UNBOUND_CRASH_TITLE_HANG": "Το Discord δεν απαντούσε για {duration}",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "Χωρίς απόκριση για {duration} σε {place}"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Χωρίς απόκριση για {duration} σε {place}",
+	"UNBOUND_CRASH_ISSUE_FIXED": "Διορθώθηκε · issue #{number}",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "Το issue #{number} έκλεισε",
+	"UNBOUND_CRASH_FIXED": "Ένα σφάλμα που είχες διορθώθηκε (issue #{number}). Οι ενημερώσεις φέρνουν τη διόρθωση."
 }

@@ -450,5 +450,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} itt: {place}",
 	"UNBOUND_CRASH_TITLE_FROZE": "{seconds} mp-ig elakadt itt: {call}",
 	"UNBOUND_CRASH_TITLE_HANG": "A Discord {duration} nem reagált",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "{duration} nem reagált itt: {place}"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "{duration} nem reagált itt: {place}",
+	"UNBOUND_CRASH_ISSUE_FIXED": "Javítva · #{number} hibajegy",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "A #{number} hibajegy lezárva",
+	"UNBOUND_CRASH_FIXED": "Egy összeomlásod javítva lett (#{number} hibajegy); a frissítések hozzák a javítást."
 }

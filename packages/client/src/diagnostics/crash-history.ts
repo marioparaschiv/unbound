@@ -3,6 +3,7 @@ import { createLogger } from '@unbound-app/logger';
 
 const CRASH_HISTORY_FILE = 'Unbound/Data/crash-history.json';
 const LIMIT = 30;
+const ISSUE_STATES: readonly IssueState[] = ['open', 'fixed', 'closed'];
 
 const logger = createLogger('Crash History');
 
@@ -18,7 +19,11 @@ export type CrashRecord = {
 	/** The GitHub issue that tracks this crash, when the server filed it there. */
 	issue?: CrashIssueLink;
 	issuePending?: boolean;
+	issueState?: IssueState;
 };
+
+/** Whether a crash's GitHub issue is open, closed as fixed, or closed for another reason. */
+export type IssueState = 'open' | 'fixed' | 'closed';
 
 /** A GitHub issue that tracks a crash. */
 export type CrashIssueLink = { number: number; url: string };
@@ -45,6 +50,7 @@ function isCrashRecord(value: unknown): value is CrashRecord {
 		(record.addon === undefined || typeof record.addon === 'string') &&
 		(record.where === undefined || typeof record.where === 'string') &&
 		(record.issuePending === undefined || typeof record.issuePending === 'boolean') &&
+		(record.issueState === undefined || ISSUE_STATES.includes(record.issueState)) &&
 		(record.issue === undefined || isIssueLink(record.issue))
 	);
 }
@@ -102,7 +108,7 @@ export async function recordCrash(record: CrashRecord): Promise<void> {
  */
 export async function markCrashReported(
 	at: number,
-	sent: Pick<CrashRecord, 'origin' | 'reportId' | 'issue' | 'issuePending'>,
+	sent: Pick<CrashRecord, 'origin' | 'reportId' | 'issue' | 'issuePending' | 'issueState'>,
 ): Promise<void> {
 	const records = await readCrashHistory();
 

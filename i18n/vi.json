@@ -450,5 +450,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} trong {place}",
 	"UNBOUND_CRASH_TITLE_FROZE": "Kẹt trong {call} {seconds} giây",
 	"UNBOUND_CRASH_TITLE_HANG": "Discord không phản hồi trong {duration}",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "Không phản hồi trong {duration} tại {place}"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Không phản hồi trong {duration} tại {place}",
+	"UNBOUND_CRASH_ISSUE_FIXED": "Đã sửa · issue #{number}",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} đã đóng",
+	"UNBOUND_CRASH_FIXED": "Sự cố bạn gặp đã được sửa (issue #{number}); bản cập nhật sẽ mang bản sửa."
 }

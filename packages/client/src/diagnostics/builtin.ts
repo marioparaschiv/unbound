@@ -11,6 +11,15 @@ type ErrorHandler = ReturnType<typeof ErrorUtils.getGlobalHandler>;
 
 let previousHandler: ErrorHandler | undefined;
 
+async function announceFixedCrashes() {
+	const { refreshIssueStates } = await import('./crash-issue-state');
+	const { info } = await import('~/toasts/api');
+
+	for (const fixed of await refreshIssueStates()) {
+		info('UNBOUND_CRASH_FIXED', { number: fixed.number });
+	}
+}
+
 /**
  * Takes Hermes' rejection tracker back once Discord's main module has run, and records uncaught errors for
  * `/debug` before React Native's handler sees them. Discord replaces the tracker installed before its bundle.
@@ -24,6 +33,7 @@ export function start() {
 			await reportNativeCrash();
 			await reportSystemHang();
 			await retryPendingIssues();
+			await announceFixedCrashes();
 		},
 	);
 

@@ -450,5 +450,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} i {place}",
 	"UNBOUND_CRASH_TITLE_FROZE": "Hang i {call} i {seconds} s",
 	"UNBOUND_CRASH_TITLE_HANG": "Discord svarede ikke i {duration}",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "Intet svar i {duration} i {place}"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Intet svar i {duration} i {place}",
+	"UNBOUND_CRASH_ISSUE_FIXED": "Rettet · issue #{number}",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} lukket",
+	"UNBOUND_CRASH_FIXED": "Et nedbrud, du ramte, er rettet (issue #{number}); opdateringer bringer rettelsen."
 }

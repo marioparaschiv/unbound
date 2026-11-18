@@ -450,5 +450,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} vietoje {place}",
 	"UNBOUND_CRASH_TITLE_FROZE": "Užstrigo {call} {seconds} s",
 	"UNBOUND_CRASH_TITLE_HANG": "Discord nereagavo {duration}",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "Nereagavo {duration} vietoje {place}"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Nereagavo {duration} vietoje {place}",
+	"UNBOUND_CRASH_ISSUE_FIXED": "Pataisyta · problema #{number}",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "Problema #{number} uždaryta",
+	"UNBOUND_CRASH_FIXED": "Tavo strigimas pataisytas (problema #{number}); pataisymą atneš atnaujinimai."
 }

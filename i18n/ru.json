@@ -450,5 +450,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} в {place}",
 	"UNBOUND_CRASH_TITLE_FROZE": "Завис в {call} на {seconds} с",
 	"UNBOUND_CRASH_TITLE_HANG": "Discord не отвечал {duration}",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "Нет ответа {duration} в {place}"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Нет ответа {duration} в {place}",
+	"UNBOUND_CRASH_ISSUE_FIXED": "Исправлено · задача #{number}",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "Задача #{number} закрыта",
+	"UNBOUND_CRASH_FIXED": "Сбой, который у вас был, исправлен (задача #{number}); исправление придёт с обновлением."
 }

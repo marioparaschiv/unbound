@@ -450,5 +450,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{place} में {signal}",
 	"UNBOUND_CRASH_TITLE_FROZE": "{call} में {seconds} s तक अटका",
 	"UNBOUND_CRASH_TITLE_HANG": "Discord ने {duration} तक जवाब नहीं दिया",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "{place} में {duration} तक कोई जवाब नहीं"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "{place} में {duration} तक कोई जवाब नहीं",
+	"UNBOUND_CRASH_ISSUE_FIXED": "ठीक हुआ · इश्यू #{number}",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "इश्यू #{number} बंद",
+	"UNBOUND_CRASH_FIXED": "आपको हुआ एक क्रैश ठीक हो गया (इश्यू #{number}); अपडेट में सुधार आएगा।"
 }

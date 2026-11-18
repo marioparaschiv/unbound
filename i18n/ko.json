@@ -450,5 +450,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{place}에서 {signal}",
 	"UNBOUND_CRASH_TITLE_FROZE": "{call}에서 {seconds}초 동안 멈춤",
 	"UNBOUND_CRASH_TITLE_HANG": "Discord가 {duration} 동안 응답하지 않았어요",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "{place}에서 {duration} 동안 응답 없음"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "{place}에서 {duration} 동안 응답 없음",
+	"UNBOUND_CRASH_ISSUE_FIXED": "수정됨 · 이슈 #{number}",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "이슈 #{number} 닫힘",
+	"UNBOUND_CRASH_FIXED": "겪은 크래시가 수정됐어요 (이슈 #{number}). 업데이트로 수정이 적용돼요."
 }

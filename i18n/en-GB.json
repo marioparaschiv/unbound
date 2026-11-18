@@ -480,5 +480,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} in {place}",
 	"UNBOUND_CRASH_TITLE_FROZE": "Stuck in {call} for {seconds} s",
 	"UNBOUND_CRASH_TITLE_HANG": "Discord stopped responding for {duration}",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "Stopped responding for {duration} in {place}"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Stopped responding for {duration} in {place}",
+	"UNBOUND_CRASH_ISSUE_FIXED": "Fixed · issue #{number}",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} closed",
+	"UNBOUND_CRASH_FIXED": "A crash you hit is fixed (issue #{number}); updates bring the fix."
 }

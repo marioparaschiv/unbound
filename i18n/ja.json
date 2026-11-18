@@ -450,5 +450,8 @@
 	"UNBOUND_CRASH_TITLE_NATIVE": "{place} で {signal}",
 	"UNBOUND_CRASH_TITLE_FROZE": "{call} で {seconds} 秒停止",
 	"UNBOUND_CRASH_TITLE_HANG": "Discord が {duration} 応答しませんでした",
-	"UNBOUND_CRASH_TITLE_HANG_IN": "{place} で {duration} 応答なし"
+	"UNBOUND_CRASH_TITLE_HANG_IN": "{place} で {duration} 応答なし",
+	"UNBOUND_CRASH_ISSUE_FIXED": "修正済み · Issue #{number}",
+	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} はクローズ済み",
+	"UNBOUND_CRASH_FIXED": "発生したクラッシュは修正されました (Issue #{number})。アップデートで修正が届きます。"
 }
