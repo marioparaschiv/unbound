@@ -1,9 +1,10 @@
 import type { CrashOrigin } from '@unbound-app/contracts/crash-reports';
 
 import type { CrashRecord } from '~/diagnostics/crash-history';
+import { format, messages } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
-import { messages } from '~/i18n/api';
+import { Linking } from '~/metro/api';
 import { icons } from '~/assets/api';
 
 const ORIGIN_LABELS: Record<CrashOrigin, () => string> = {
@@ -18,7 +19,9 @@ function crashDetails(record: CrashRecord, pluginName: string | undefined): stri
 		new Date(record.at).toLocaleString(),
 		pluginName,
 		record.origin && ORIGIN_LABELS[record.origin](),
-		record.reportId && `#${record.reportId.slice(0, 8)}`,
+		record.issue
+			? format('UNBOUND_CRASH_KNOWN_ISSUE', { number: record.issue.number })
+			: record.reportId && `#${record.reportId.slice(0, 8)}`,
 	]
 		.filter(Boolean)
 		.join(' · ');
@@ -34,12 +37,15 @@ function CrashRow({ record, onDisable }: CrashRowProps) {
 	const plugins = Manager.for('plugin');
 	const plugin = record.addon ? plugins.getAddon(record.addon) : undefined;
 	const enabled = plugin ? plugins.isEnabled(plugin.id) : false;
+	const { issue } = record;
 
 	return (
 		<Discord.TableRow
 			label={record.message}
 			subLabel={crashDetails(record, plugin?.name)}
 			icon={<Discord.TableRowIcon source={icons.BugIcon ?? icons.WarningIcon} />}
+			arrow={Boolean(issue)}
+			onPress={issue ? () => void Linking.openURL(issue.url) : undefined}
 			trailing={
 				plugin && enabled ? (
 					<Discord.Button

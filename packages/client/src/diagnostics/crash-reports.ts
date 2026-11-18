@@ -19,7 +19,7 @@ import fs from '~/native/fs';
 
 export type { CrashEvent, CrashReportAddon } from '~/diagnostics/crash-report';
 
-type CrashReportIssue = { number: number; created: boolean };
+type CrashReportIssue = { number: number; url: string; created: boolean };
 
 const logger = createLogger('Crash Reports');
 
@@ -117,7 +117,11 @@ async function sendCrashReport(
 		rememberReported(signature);
 
 		if (recordedAt !== undefined) {
-			await markCrashReported(recordedAt, { reportId: id, ...(origin ? { origin } : {}) });
+			await markCrashReported(recordedAt, {
+				reportId: id,
+				...(origin ? { origin } : {}),
+				...(issue ? { issue: { number: issue.number, url: issue.url } } : {}),
+			});
 		}
 
 		await announceReport(issue, origin, event.addon?.id);

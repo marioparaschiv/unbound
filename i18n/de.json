@@ -433,5 +433,6 @@
 	"UNBOUND_SUPPORT_GATE_LATER": "Nicht jetzt",
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "Bestätige den Hinweis, bevor du in #chat schreibst",
 	"UNBOUND_SUPPORT_BANNER": "Hilfe nötig? #chat ist nicht für Support.",
-	"UNBOUND_SUPPORT_BANNER_ACTION": "Support-Forum"
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Support-Forum",
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Bekanntes Problem #{number}"
 }

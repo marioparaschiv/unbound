@@ -433,5 +433,6 @@
 	"UNBOUND_SUPPORT_GATE_LATER": "Şimdi değil",
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "#chat'e yazmadan önce uyarıyı kabul et",
 	"UNBOUND_SUPPORT_BANNER": "Yardım mı lazım? #chat destek için değil.",
-	"UNBOUND_SUPPORT_BANNER_ACTION": "Destek forumu"
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Destek forumu",
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Bilinen sorun #{number}"
 }

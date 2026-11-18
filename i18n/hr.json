@@ -433,5 +433,6 @@
 	"UNBOUND_SUPPORT_GATE_LATER": "Ne sada",
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "Prihvati upozorenje prije nego što pišeš u #chat",
 	"UNBOUND_SUPPORT_BANNER": "Trebaš pomoć? #chat nije za podršku.",
-	"UNBOUND_SUPPORT_BANNER_ACTION": "Forum za podršku"
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Forum za podršku",
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Poznati problem #{number}"
 }

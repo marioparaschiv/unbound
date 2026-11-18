@@ -433,5 +433,6 @@
 	"UNBOUND_SUPPORT_GATE_LATER": "之後再說",
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "在 #chat 發言前請先接受提示",
 	"UNBOUND_SUPPORT_BANNER": "需要協助？#chat 不用於支援。",
-	"UNBOUND_SUPPORT_BANNER_ACTION": "支援論壇"
+	"UNBOUND_SUPPORT_BANNER_ACTION": "支援論壇",
+	"UNBOUND_CRASH_KNOWN_ISSUE": "已知問題 #{number}"
 }

@@ -453,6 +453,7 @@
 	"UNBOUND_CRASH_ORIGIN_ADDON": "Plugin",
 	"UNBOUND_CRASH_ORIGIN_DISCORD": "Discord",
 	"UNBOUND_CRASH_ORIGIN_SYSTEM": "System",
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Known issue #{number}",
 	"UNBOUND_CRASH_REPORTS_DESCRIPTION": "When a plugin crashes, freezes or fails to start, send its id and version, the Unbound and Discord versions, your device model and the last lines of Unbound's log to the Unbound team. Tokens, passwords and email addresses are removed from the log first, but anything a plugin logged can be in it. Your account is never included.",
 	"UNBOUND_CRASH_TITLE": "Something Crashed",
 	"UNBOUND_CRASH_DESCRIPTION": "Discord or one of your plugins hit an error.",
