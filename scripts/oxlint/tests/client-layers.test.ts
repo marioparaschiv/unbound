@@ -44,6 +44,7 @@ test('only the domain builtin files on disk and the public barrel may import ui/
 		[
 			...builtins.map((file) => `${CLIENT}/${file}`),
 			`${CLIENT}/builtins/error-boundary.tsx`,
+			`${CLIENT}/builtins/support-gate.tsx`,
 			`${CLIENT}/core/api.ts`,
 		].sort(),
 	);

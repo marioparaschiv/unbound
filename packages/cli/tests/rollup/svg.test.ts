@@ -92,7 +92,9 @@ async function build(entry: string): Promise<Built> {
 
 	await bundle.close();
 
-	const assets = output.filter((out): out is OutputAsset => out.type === 'asset');
+	const assets = output.filter(
+		(out): out is OutputAsset => out.type === 'asset' && !out.fileName.endsWith('.map'),
+	);
 	const manifest = assets.find((out) => out.fileName === 'manifest.json');
 
 	return {

@@ -44,6 +44,7 @@ const minifyOptions = {
 	mangle: false,
 	keep_classnames: true,
 	keep_fnames: true,
+	sourceMap: true,
 };
 
 function manifestToDist(pluginRoot: string): Plugin {
@@ -98,6 +99,7 @@ export function pluginConfig(
 		worklets(),
 		swc({
 			tsconfig: false,
+			sourceMaps: true,
 			// swc applies `refresh` only in development mode.
 			jsc: {
 				transform: {
@@ -138,6 +140,7 @@ export function pluginConfig(
 		output: {
 			dir: resolve(pluginRoot, 'dist'),
 			entryFileNames: 'index.js',
+			sourcemap: 'hidden',
 			format: 'es',
 			compact: true,
 			exports: 'named',

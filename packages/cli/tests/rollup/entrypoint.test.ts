@@ -1,7 +1,8 @@
+import { decode } from '@jridgewell/sourcemap-codec';
 import { afterEach, expect, test } from 'bun:test';
 import { runInThisContext } from 'node:vm';
 
-import { hermesExpressionEntrypoint } from '~/rollup/entrypoint';
+import { hermesExpressionEntrypoint, shiftMappings } from '~/rollup/entrypoint';
 
 type Chunk = { code: string; type: 'chunk' };
 
@@ -61,4 +62,12 @@ test('adds no lifecycle methods of its own', () => {
 	generate({ entry });
 
 	expect(Object.keys(evaluate(entry.code))).toEqual(['__plugin', '__load']);
+});
+
+test('moves the source map past the removed var and the added wrapper', () => {
+	const removed = 'var plugin=';
+	const added = '({__load(){';
+	const shifted = decode(shiftMappings('AAAA,WAAW,UAAU', removed, added));
+
+	expect(shifted[0]?.map(([column]) => column)).toEqual([11, 21]);
 });
