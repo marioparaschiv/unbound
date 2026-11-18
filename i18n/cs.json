@@ -443,10 +443,10 @@
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Známý problém #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Discord zatím neaktualizuj",
 	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} rozbíjí části Unbound. Před instalací počkej na aktualizaci Unbound.",
-	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Už nahlášeno",
-	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "Issue #{number} na GitHubu se týká tohoto pádu. Otevřít?",
-	"UNBOUND_CRASH_ISSUE_OPEN": "Otevřít issue",
 	"UNBOUND_CRASH_REPORT_TITLE": "Nahlásit tento pád?",
-	"UNBOUND_CRASH_REPORT_BODY": "Žádné otevřené issue na GitHubu tento pád zatím nezmiňuje. Otevřít hlášení chyby s vyplněnými podrobnostmi?",
-	"UNBOUND_CRASH_REPORT_CONFIRM": "Nahlásit"
+	"UNBOUND_CRASH_REPORT_BODY": "Unbound ho nahlásí na GitHubu, nebo ho přidá k issue, které ho už sleduje, a issue otevře.",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Nahlásit",
+	"UNBOUND_CRASH_ISSUE_FAILED": "Pád se nepodařilo nahlásit",
+	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} v {place}",
+	"UNBOUND_CRASH_TITLE_FROZE": "Zaseknuto v {call} na {seconds} s"
 }

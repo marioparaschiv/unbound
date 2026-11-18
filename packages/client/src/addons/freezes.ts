@@ -3,6 +3,7 @@ import type { createLogger } from '@unbound-app/logger';
 import { crashReportAddon } from '~/diagnostics/crash-report';
 import { reportCrash } from '~/diagnostics/crash-reports';
 import type { AddonFreeze } from '~/addons/crash-guard';
+import { freezeCause } from '~/diagnostics/crash-title';
 import type { Addon } from '~/addons/addon';
 import { show } from '~/toasts/api';
 
@@ -21,6 +22,16 @@ export function freezeDisables(count: number, freeze: AddonFreeze): boolean {
 	return count >= 2 || freeze.seconds >= LONG_FREEZE_SECONDS;
 }
 
+function freezeDetail(detail: string | undefined): string {
+	const cause = detail ? freezeCause(detail) : undefined;
+
+	if (cause) {
+		return ` It was stuck in ${cause.call}.`;
+	}
+
+	return detail ? ` ${detail}` : '';
+}
+
 /**
  * @description Reports a freeze, logs it and tells the user, saying whether the addon was disabled for it.
  * @param addon The addon that froze Discord.
@@ -37,7 +48,7 @@ export function announceFreeze(
 	logger: ReturnType<typeof createLogger>,
 ): void {
 	const seconds = Math.round(freeze.seconds);
-	const detail = freeze.detail ? ` ${freeze.detail}` : '';
+	const detail = freezeDetail(freeze.detail);
 	const stack = freeze.stack ? `\n${freeze.stack}` : '';
 
 	void reportCrash({

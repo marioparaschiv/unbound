@@ -1,7 +1,9 @@
 import type { CrashOrigin } from '@unbound-app/contracts/crash-reports';
 
 import type { CrashIssueLink, CrashRecord } from '~/diagnostics/crash-history';
+import { crashReportAddon } from '~/diagnostics/crash-report';
 import reportCrashOnGitHub from '~/ui/settings/report-crash';
+import { freezeCause } from '~/diagnostics/crash-title';
 import { format, messages } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
@@ -27,6 +29,23 @@ function crashDetails(record: CrashRecord, pluginName: string | undefined): stri
 		.join(' · ');
 }
 
+function crashTitle(record: CrashRecord): string {
+	const cause = record.kind === 'freeze' ? freezeCause(record.message) : undefined;
+
+	if (cause) {
+		return format('UNBOUND_CRASH_TITLE_FROZE', cause);
+	}
+
+	if (record.kind === 'native-crash' && record.where && !record.message.includes(' in ')) {
+		return format('UNBOUND_CRASH_TITLE_NATIVE', {
+			signal: record.message,
+			place: record.where,
+		});
+	}
+
+	return record.message;
+}
+
 type CrashRowProps = {
 	record: CrashRecord;
 	onDisable: (id: string) => void;
@@ -35,7 +54,7 @@ type CrashRowProps = {
 
 /**
  * @description One recorded crash: its message, when it happened, the plugin it blamed and where it came from, with a
- * button to disable that plugin while it is on. Tapping it opens its GitHub issue, or offers to report it.
+ * button to disable that plugin while it is on. Tapping it opens its GitHub issue, or offers to have Unbound file one.
  */
 function CrashRow({ record, onDisable, onLinked }: CrashRowProps) {
 	const plugins = Manager.for('plugin');
@@ -44,13 +63,15 @@ function CrashRow({ record, onDisable, onLinked }: CrashRowProps) {
 
 	return (
 		<Discord.TableRow
-			label={record.message}
+			label={crashTitle(record)}
 			subLabel={crashDetails(record, plugin?.name)}
 			icon={<Discord.TableRowIcon source={icons.BugIcon ?? icons.WarningIcon} />}
 			arrow
 			onPress={() =>
-				void reportCrashOnGitHub(record, plugin?.name, (found) =>
-					onLinked(record.at, found),
+				void reportCrashOnGitHub(
+					record,
+					plugin && { name: plugin.name, addon: crashReportAddon(plugin) },
+					(found) => onLinked(record.at, found),
 				)
 			}
 			trailing={

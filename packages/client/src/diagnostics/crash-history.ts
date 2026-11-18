@@ -12,6 +12,7 @@ export type CrashRecord = {
 	kind: string;
 	message: string;
 	addon?: string;
+	where?: string;
 	origin?: CrashOrigin;
 	reportId?: string;
 	/** The GitHub issue that tracks this crash, when the server filed it there. */
@@ -41,6 +42,7 @@ function isCrashRecord(value: unknown): value is CrashRecord {
 		typeof record.kind === 'string' &&
 		typeof record.message === 'string' &&
 		(record.addon === undefined || typeof record.addon === 'string') &&
+		(record.where === undefined || typeof record.where === 'string') &&
 		(record.issue === undefined || isIssueLink(record.issue))
 	);
 }

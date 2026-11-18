@@ -443,10 +443,10 @@
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Problemă cunoscută #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Nu actualiza încă Discord",
 	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} strică părți din Unbound. Așteaptă o actualizare Unbound înainte să-l instalezi.",
-	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Deja raportat",
-	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "Issue-ul #{number} de pe GitHub tratează această blocare. Îl deschizi?",
-	"UNBOUND_CRASH_ISSUE_OPEN": "Deschide issue",
 	"UNBOUND_CRASH_REPORT_TITLE": "Raportezi această blocare?",
-	"UNBOUND_CRASH_REPORT_BODY": "Niciun issue deschis pe GitHub nu menționează încă această blocare. Deschizi un raport de eroare cu detaliile completate?",
-	"UNBOUND_CRASH_REPORT_CONFIRM": "Raportează"
+	"UNBOUND_CRASH_REPORT_BODY": "Unbound îl raportează pe GitHub sau îl adaugă la issue-ul care îl urmărește deja și deschide issue-ul.",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Raportează",
+	"UNBOUND_CRASH_ISSUE_FAILED": "Blocarea nu a putut fi raportată",
+	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} în {place}",
+	"UNBOUND_CRASH_TITLE_FROZE": "Blocat în {call} timp de {seconds} s"
 }

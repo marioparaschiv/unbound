@@ -443,10 +443,10 @@
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Kendt problem #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Opdater ikke Discord endnu",
 	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} ødelægger dele af Unbound. Vent på en Unbound-opdatering, før du installerer den.",
-	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Allerede rapporteret",
-	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "Issue #{number} på GitHub dækker dette nedbrud. Åbn det?",
-	"UNBOUND_CRASH_ISSUE_OPEN": "Åbn issue",
 	"UNBOUND_CRASH_REPORT_TITLE": "Rapportér dette nedbrud?",
-	"UNBOUND_CRASH_REPORT_BODY": "Intet åbent GitHub-issue nævner dette nedbrud endnu. Åbn en fejlrapport med detaljerne udfyldt?",
-	"UNBOUND_CRASH_REPORT_CONFIRM": "Rapportér"
+	"UNBOUND_CRASH_REPORT_BODY": "Unbound opretter det på GitHub eller føjer det til det issue, der allerede følger det, og åbner issuet.",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Rapportér",
+	"UNBOUND_CRASH_ISSUE_FAILED": "Kunne ikke rapportere nedbruddet",
+	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} i {place}",
+	"UNBOUND_CRASH_TITLE_FROZE": "Hang i {call} i {seconds} s"
 }

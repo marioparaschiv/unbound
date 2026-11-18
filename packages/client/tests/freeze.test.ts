@@ -78,7 +78,7 @@ describe('freeze handling', () => {
 			'It has been inside the native call invoke(sleep) for 6686 ms.',
 		);
 		expect(toasts.at(-1)?.content).toBe(
-			'freeze.detail froze Discord for 7 seconds. It has been inside the native call invoke(sleep) for 6686 ms.',
+			'freeze.detail froze Discord for 7 seconds. It was stuck in sleep.',
 		);
 	});
 

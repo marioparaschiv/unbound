@@ -443,10 +443,10 @@
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Problema conhecido #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Não atualize o Discord ainda",
 	"UNBOUND_DISCORD_UPDATE_BREAKS": "O Discord {version} quebra partes do Unbound. Espere uma atualização do Unbound antes de instalá-lo.",
-	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Já relatado",
-	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "A issue #{number} no GitHub trata deste travamento. Abrir?",
-	"UNBOUND_CRASH_ISSUE_OPEN": "Abrir issue",
 	"UNBOUND_CRASH_REPORT_TITLE": "Relatar este travamento?",
-	"UNBOUND_CRASH_REPORT_BODY": "Nenhuma issue aberta no GitHub menciona este travamento ainda. Abrir um relatório de bug com os detalhes preenchidos?",
-	"UNBOUND_CRASH_REPORT_CONFIRM": "Relatar"
+	"UNBOUND_CRASH_REPORT_BODY": "O Unbound registra no GitHub, ou adiciona à issue que já o acompanha, e abre a issue.",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Relatar",
+	"UNBOUND_CRASH_ISSUE_FAILED": "Não foi possível relatar este travamento",
+	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} em {place}",
+	"UNBOUND_CRASH_TITLE_FROZE": "Travado em {call} por {seconds} s"
 }

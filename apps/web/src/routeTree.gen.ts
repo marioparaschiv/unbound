@@ -89,6 +89,7 @@ import { Route as ApiV1AddonsIdMaintainersRouteImport } from './routes/api/v1/ad
 import { Route as ApiV1AddonsIdRelistRouteImport } from './routes/api/v1/addons/$id/relist'
 import { Route as ApiV1AddonsIdTransferRouteImport } from './routes/api/v1/addons/$id/transfer'
 import { Route as ApiV1AddonsIdVersionsRouteImport } from './routes/api/v1/addons/$id/versions'
+import { Route as ApiV1CrashReportsIdIssueRouteImport } from './routes/api/v1/crash-reports/$id/issue'
 import { Route as ApiV1MeBadgesUploadsRouteImport } from './routes/api/v1/me/badges/uploads'
 import { Route as ApiV1SubmissionsIdReviewRouteImport } from './routes/api/v1/submissions/$id/review'
 import { Route as ApiV1UsersIdBadgesRouteImport } from './routes/api/v1/users/$id/badges'
@@ -502,6 +503,12 @@ const ApiV1AddonsIdVersionsRoute = ApiV1AddonsIdVersionsRouteImport.update({
   path: '/$id/versions',
   getParentRoute: () => ApiV1AddonsRoute,
 } as any)
+const ApiV1CrashReportsIdIssueRoute =
+  ApiV1CrashReportsIdIssueRouteImport.update({
+    id: '/$id/issue',
+    path: '/$id/issue',
+    getParentRoute: () => ApiV1CrashReportsRoute,
+  } as any)
 const ApiV1MeBadgesUploadsRoute = ApiV1MeBadgesUploadsRouteImport.update({
   id: '/uploads',
   path: '/uploads',
@@ -569,7 +576,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
-  '/api/v1/crash-reports': typeof ApiV1CrashReportsRoute
+  '/api/v1/crash-reports': typeof ApiV1CrashReportsRouteWithChildren
   '/api/v1/debug-cards': typeof ApiV1DebugCardsRoute
   '/api/v1/me': typeof ApiV1MeRouteWithChildren
   '/api/v1/openapi.json': typeof ApiV1OpenapiDotjsonRoute
@@ -618,6 +625,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
   '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
+  '/api/v1/crash-reports/$id/issue': typeof ApiV1CrashReportsIdIssueRoute
   '/api/v1/me/badges/uploads': typeof ApiV1MeBadgesUploadsRouteWithChildren
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
@@ -655,7 +663,7 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
-  '/api/v1/crash-reports': typeof ApiV1CrashReportsRoute
+  '/api/v1/crash-reports': typeof ApiV1CrashReportsRouteWithChildren
   '/api/v1/debug-cards': typeof ApiV1DebugCardsRoute
   '/api/v1/me': typeof ApiV1MeRouteWithChildren
   '/api/v1/openapi.json': typeof ApiV1OpenapiDotjsonRoute
@@ -702,6 +710,7 @@ export interface FileRoutesByTo {
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
   '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
+  '/api/v1/crash-reports/$id/issue': typeof ApiV1CrashReportsIdIssueRoute
   '/api/v1/me/badges/uploads': typeof ApiV1MeBadgesUploadsRouteWithChildren
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
@@ -743,7 +752,7 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
-  '/api/v1/crash-reports': typeof ApiV1CrashReportsRoute
+  '/api/v1/crash-reports': typeof ApiV1CrashReportsRouteWithChildren
   '/api/v1/debug-cards': typeof ApiV1DebugCardsRoute
   '/api/v1/me': typeof ApiV1MeRouteWithChildren
   '/api/v1/openapi.json': typeof ApiV1OpenapiDotjsonRoute
@@ -792,6 +801,7 @@ export interface FileRoutesById {
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
   '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
+  '/api/v1/crash-reports/$id/issue': typeof ApiV1CrashReportsIdIssueRoute
   '/api/v1/me/badges/uploads': typeof ApiV1MeBadgesUploadsRouteWithChildren
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
@@ -881,6 +891,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
     | '/api/v1/addons/$id/versions'
+    | '/api/v1/crash-reports/$id/issue'
     | '/api/v1/me/badges/uploads'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
@@ -965,6 +976,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
     | '/api/v1/addons/$id/versions'
+    | '/api/v1/crash-reports/$id/issue'
     | '/api/v1/me/badges/uploads'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
@@ -1054,6 +1066,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
     | '/api/v1/addons/$id/versions'
+    | '/api/v1/crash-reports/$id/issue'
     | '/api/v1/me/badges/uploads'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
@@ -1076,7 +1089,7 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiV1AddonsRoute: typeof ApiV1AddonsRouteWithChildren
   ApiV1CatalogRoute: typeof ApiV1CatalogRoute
-  ApiV1CrashReportsRoute: typeof ApiV1CrashReportsRoute
+  ApiV1CrashReportsRoute: typeof ApiV1CrashReportsRouteWithChildren
   ApiV1DebugCardsRoute: typeof ApiV1DebugCardsRoute
   ApiV1MeRoute: typeof ApiV1MeRouteWithChildren
   ApiV1OpenapiDotjsonRoute: typeof ApiV1OpenapiDotjsonRoute
@@ -1664,6 +1677,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1AddonsIdVersionsRouteImport
       parentRoute: typeof ApiV1AddonsRoute
     }
+    '/api/v1/crash-reports/$id/issue': {
+      id: '/api/v1/crash-reports/$id/issue'
+      path: '/$id/issue'
+      fullPath: '/api/v1/crash-reports/$id/issue'
+      preLoaderRoute: typeof ApiV1CrashReportsIdIssueRouteImport
+      parentRoute: typeof ApiV1CrashReportsRoute
+    }
     '/api/v1/me/badges/uploads': {
       id: '/api/v1/me/badges/uploads'
       path: '/uploads'
@@ -1886,6 +1906,17 @@ const ApiV1AddonsRouteWithChildren = ApiV1AddonsRoute._addFileChildren(
   ApiV1AddonsRouteChildren,
 )
 
+interface ApiV1CrashReportsRouteChildren {
+  ApiV1CrashReportsIdIssueRoute: typeof ApiV1CrashReportsIdIssueRoute
+}
+
+const ApiV1CrashReportsRouteChildren: ApiV1CrashReportsRouteChildren = {
+  ApiV1CrashReportsIdIssueRoute: ApiV1CrashReportsIdIssueRoute,
+}
+
+const ApiV1CrashReportsRouteWithChildren =
+  ApiV1CrashReportsRoute._addFileChildren(ApiV1CrashReportsRouteChildren)
+
 interface ApiV1MeBadgesUploadsRouteChildren {
   ApiV1MeBadgesUploadsUploadIdCompleteRoute: typeof ApiV1MeBadgesUploadsUploadIdCompleteRoute
 }
@@ -1958,7 +1989,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiV1AddonsRoute: ApiV1AddonsRouteWithChildren,
   ApiV1CatalogRoute: ApiV1CatalogRoute,
-  ApiV1CrashReportsRoute: ApiV1CrashReportsRoute,
+  ApiV1CrashReportsRoute: ApiV1CrashReportsRouteWithChildren,
   ApiV1DebugCardsRoute: ApiV1DebugCardsRoute,
   ApiV1MeRoute: ApiV1MeRouteWithChildren,
   ApiV1OpenapiDotjsonRoute: ApiV1OpenapiDotjsonRoute,

@@ -443,10 +443,10 @@
 	"UNBOUND_CRASH_KNOWN_ISSUE": "ปัญหาที่ทราบแล้ว #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "อย่าเพิ่งอัปเดต Discord",
 	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} ทำให้บางส่วนของ Unbound ใช้งานไม่ได้ รออัปเดต Unbound ก่อนติดตั้ง",
-	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "รายงานแล้ว",
-	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "อิชชู #{number} บน GitHub ครอบคลุมการแครชนี้ เปิดดูไหม",
-	"UNBOUND_CRASH_ISSUE_OPEN": "เปิดอิชชู",
 	"UNBOUND_CRASH_REPORT_TITLE": "รายงานการแครชนี้ไหม",
-	"UNBOUND_CRASH_REPORT_BODY": "ยังไม่มีอิชชูที่เปิดอยู่บน GitHub กล่าวถึงการแครชนี้ เปิดรายงานบั๊กที่กรอกรายละเอียดไว้แล้วไหม",
-	"UNBOUND_CRASH_REPORT_CONFIRM": "รายงาน"
+	"UNBOUND_CRASH_REPORT_BODY": "Unbound จะสร้างอิชชูบน GitHub หรือเพิ่มลงในอิชชูที่ติดตามอยู่แล้ว แล้วเปิดอิชชูนั้น",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "รายงาน",
+	"UNBOUND_CRASH_ISSUE_FAILED": "รายงานการแครชนี้ไม่ได้",
+	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} ใน {place}",
+	"UNBOUND_CRASH_TITLE_FROZE": "ค้างใน {call} นาน {seconds} วินาที"
 }

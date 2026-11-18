@@ -179,4 +179,47 @@ export async function fileCrashIssue(
 	}
 }
 
+/**
+ * @description Files a stored crash report on GitHub because its user asked to: joins the crash's issue when one is
+ * open, and otherwise opens it, without counting the report again. Never throws.
+ * @param ctx The application context.
+ * @param report The crash report.
+ * @param reportId The stored report's id.
+ * @param fingerprint The crash's fingerprint.
+ * @returns The issue, or `undefined` without `GITHUB_ISSUES_TOKEN` or when GitHub failed.
+ */
+export async function fileRequestedCrashIssue(
+	ctx: AppContext,
+	report: CrashReport,
+	reportId: string,
+	fingerprint: string,
+): Promise<FiledCrashIssue | undefined> {
+	const token = ctx.env.GITHUB_ISSUES_TOKEN;
+
+	if (!token) {
+		return undefined;
+	}
+
+	try {
+		const [row] = await ctx.db
+			.select()
+			.from(crashIssue)
+			.where(eq(crashIssue.fingerprint, fingerprint));
+
+		if (row && row.issueNumber !== null && row.issueUrl !== null) {
+			return { number: row.issueNumber, url: row.issueUrl, created: false };
+		}
+
+		if (!row) {
+			await claim(ctx, fingerprint, `${report.clientVersion}/${report.loaderVersion}`);
+		}
+
+		return await openIssue(ctx, token, report, reportId, fingerprint);
+	} catch (error) {
+		logger.warn(`Failed to file requested crash ${reportId} on GitHub:`, error);
+
+		return undefined;
+	}
+}
+
 export default fileCrashIssue;

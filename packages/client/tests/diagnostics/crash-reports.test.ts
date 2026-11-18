@@ -2,8 +2,13 @@ import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
 const settings = new Map<string, string | number | boolean>();
 const sent: unknown[] = [];
+const routes: { route: string; params?: Record<string, string> }[] = [];
 const toasts: unknown[][] = [];
 let answer: (count: number) => object = (count) => ({ id: `report-${count}` });
+let issueAnswer: () => object = () => ({
+	origin: 'system',
+	issue: { number: 9, url: 'https://github.com/o/r/issues/9', created: true },
+});
 let consent: 'once' | 'always' | 'declined' = 'declined';
 const asked: (string | undefined)[] = [];
 
@@ -29,7 +34,16 @@ mock.module('~/core/environment', () => ({
 mock.module('~/account/client', () => ({
 	createUnboundClient:
 		() =>
-		async (_route: string, { body }: { body: unknown }) => {
+		async (
+			route: string,
+			{ body, params }: { body?: unknown; params?: Record<string, string> },
+		) => {
+			routes.push({ route, ...(params ? { params } : {}) });
+
+			if (route.endsWith('/issue')) {
+				return issueAnswer();
+			}
+
 			sent.push(body);
 
 			return answer(sent.length);
@@ -52,7 +66,7 @@ mock.module('~/diagnostics/crash-consent', () => ({
 }));
 mock.module('~/toasts/api', () => ({ info: (...args: unknown[]) => toasts.push(args) }));
 
-const { reportNativeCrash } = await import('~/diagnostics/crash-reports');
+const { fileRecordedCrash, reportNativeCrash } = await import('~/diagnostics/crash-reports');
 
 const launch = {
 	bundle: 'active' as const,
@@ -161,5 +175,62 @@ describe('reportNativeCrash', () => {
 		await reportNativeCrash(launch);
 
 		expect(toasts).toEqual([['UNBOUND_CRASH_REPORT_OUTSIDE']]);
+	});
+});
+
+describe('fileRecordedCrash', () => {
+	beforeEach(() => {
+		sent.length = 0;
+		routes.length = 0;
+		answer = (count) => ({ id: `report-${count}` });
+	});
+
+	test('sends a crash that was never reported, then asks the server for its issue', async () => {
+		const filed = await fileRecordedCrash({ at: 5, kind: 'native-crash', message: 'SIGSEGV' });
+
+		expect(sent).toHaveLength(1);
+		expect(routes.at(-1)).toEqual({
+			route: 'POST /api/v1/crash-reports/$id/issue',
+			params: { id: 'report-1' },
+		});
+		expect(filed).toEqual({
+			origin: 'system',
+			issue: { number: 9, url: 'https://github.com/o/r/issues/9' },
+		});
+	});
+
+	test('uses the issue the report itself was filed under', async () => {
+		answer = () => ({
+			id: 'report-x',
+			origin: 'unbound',
+			issue: { number: 4, url: 'https://github.com/o/r/issues/4', created: false },
+		});
+
+		const filed = await fileRecordedCrash({ at: 6, kind: 'crash', message: 'TypeError' });
+
+		expect(routes).toHaveLength(1);
+		expect(filed?.issue?.number).toBe(4);
+	});
+
+	test('files an already sent report without sending it again', async () => {
+		await fileRecordedCrash({ at: 7, kind: 'freeze', message: 'x', reportId: 'stored' });
+
+		expect(sent).toHaveLength(0);
+		expect(routes).toEqual([
+			{ route: 'POST /api/v1/crash-reports/$id/issue', params: { id: 'stored' } },
+		]);
+	});
+
+	test('reports a third-party crash without an issue', async () => {
+		issueAnswer = () => ({ origin: 'addon' });
+
+		const filed = await fileRecordedCrash({
+			at: 8,
+			kind: 'crash',
+			message: 'x',
+			reportId: 'r',
+		});
+
+		expect(filed).toEqual({ origin: 'addon' });
 	});
 });
