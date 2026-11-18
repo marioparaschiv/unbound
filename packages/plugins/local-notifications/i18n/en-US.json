@@ -8,5 +8,9 @@
 	"PREVIEW": "Show message text",
 	"PREVIEW_SUBTITLE": "Shows what the message says in the notification.",
 	"ATTACHMENT": "Sent an attachment",
-	"NEW_MESSAGE": "New message"
+	"NEW_MESSAGE": "New message",
+	"REPLY": "Reply",
+	"REPLY_SEND": "Send",
+	"REPLY_PLACEHOLDER": "Message",
+	"MARK_READ": "Mark as read"
 }

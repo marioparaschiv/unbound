@@ -23,6 +23,14 @@ declare module '@unbound-app/i18n' {
 		readonly ATTACHMENT: string;
 		/** New message */
 		readonly NEW_MESSAGE: string;
+		/** Reply */
+		readonly REPLY: string;
+		/** Send */
+		readonly REPLY_SEND: string;
+		/** Message */
+		readonly REPLY_PLACEHOLDER: string;
+		/** Mark as read */
+		readonly MARK_READ: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

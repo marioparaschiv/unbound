@@ -4,11 +4,15 @@ import { messages } from '@unbound-app/i18n';
 import { flux, metro } from '@unbound-app/api';
 
 import {
+	ACTIONS,
+	actions,
 	delivered,
 	keepAlive,
 	notificationId,
+	onActions,
 	permission,
 	post,
+	type NotificationAction,
 	type NotificationTarget,
 } from '~/native/local';
 import { tappedTarget, type Posted } from '~/lib/opened';
@@ -32,6 +36,8 @@ type GuildSettings = {
 
 const DIRECT_TYPES = new Set([1, 3]);
 const Mentions = metro.findByProps('isRawMessageMentioned', { lazy: true });
+const Messages = metro.findByProps('sendMessage', 'receiveMessage', { lazy: true });
+const ReadState = metro.findByProps('ack', 'ackChannel', { lazy: true });
 
 let running: { stop(): void } | undefined;
 let posted: Posted<NotificationTarget>[] = [];
@@ -126,6 +132,27 @@ function open({ channelId, guildId, messageId }: NotificationTarget) {
 		?.transitionTo(`/channels/${guildId ?? '@me'}/${channelId}/${messageId}`);
 }
 
+function onNotificationAction({ action, target, text }: NotificationAction) {
+	try {
+		if (action === ACTIONS.reply && text?.trim()) {
+			void Messages?.sendMessage(
+				target.channelId,
+				{ content: text, tts: false, invalidEmojis: [], validNonShortcutEmojis: [] },
+				undefined,
+				{},
+			);
+		}
+
+		if (action === ACTIONS.read || action === ACTIONS.reply) {
+			ReadState?.ack(target.channelId);
+		}
+
+		posted = posted.filter((item) => item.target.messageId !== target.messageId);
+	} catch (error) {
+		logger.error(`Failed to run the ${action} action for message ${target.messageId}:`, error);
+	}
+}
+
 function onAppState(context: PluginContext, status: string) {
 	if (status === 'active') {
 		running?.stop();
@@ -159,6 +186,16 @@ function onAppState(context: PluginContext, status: string) {
 
 export function start(context: PluginContext) {
 	permission(context.native);
+	actions(context.native, {
+		reply: messages.REPLY,
+		send: messages.REPLY_SEND,
+		placeholder: messages.REPLY_PLACEHOLDER,
+		read: messages.MARK_READ,
+	});
+
+	if (!onActions(context.native, onNotificationAction)) {
+		logger.warn('Notification actions skipped: no notification center delegate to hook.');
+	}
 
 	stopListening = flux.onAction('MESSAGE_CREATE', (action) =>
 		onMessage(context, action as Parameters<typeof onMessage>[1]),
