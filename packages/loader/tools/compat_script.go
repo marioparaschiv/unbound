@@ -1087,6 +1087,10 @@ func (program *scriptProgram) emitSink(site scriptSite, sink, method string, arg
 				reference := base
 
 				reference.Kind, reference.Class, reference.Name = memberKind, class, name
+				if memberKind == referenceObjCMethod {
+					reference.Name = strings.TrimPrefix(name, "+")
+				}
+
 				if memberKind == referenceJavaMethod {
 					if parameters, ok := javaHookParameters(argumentAt(args, 2)); ok {
 						reference.Parameters = parameters
