@@ -137,7 +137,7 @@ export function drawAndroidEmbeds(native: NativeBridge, renderers: Renderers): E
 			return;
 		}
 
-		const fitted = Math.max(Surface.minHeight, height - Surface.bottomTrim);
+		const fitted = Math.max(Surface.minHeight, height);
 		const key = targetKey(embed.target);
 
 		if (Math.abs(fitted - (heights.get(key) ?? Surface.minHeight)) < 2) return;

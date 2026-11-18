@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.7] - 2026-11-18
+
+### Fixed
+
+- Previews keep their rounded bottom corners, which were cut square, most visibly inside Chat Bubbles.
+
 ## [1.1.6] - 2026-11-14
 
 ### Changed
