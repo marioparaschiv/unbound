@@ -1,6 +1,6 @@
 # Plugins
 
-211 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+212 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -109,6 +109,7 @@
 - <img src="../../assets/plugins/readme-icons/camera-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Live Photo Sender](https://unbound.rip/addons/unbound.live-photo-sender): Lets you send a Live Photo as a still image, its video, or a GIF. iOS only.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Live Text](https://unbound.rip/addons/unbound.live-text): Reads the text in pictures from the image viewer's menu, so you can select and copy it. iOS only.
 - <img src="../../assets/plugins/readme-icons/bell-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Local Notifications](https://unbound.rip/addons/unbound.local-notifications): Notifies you of mentions and DMs on installs where Discord's push notifications do not arrive, by keeping Discord connected in the background. iOS only.
+- <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Map Previews](https://unbound.rip/addons/unbound.map-previews): Shows a small map under messages with coordinates or a Google Maps, Apple Maps or OpenStreetMap link to a spot.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Masked Link Paste](https://unbound.rip/addons/unbound.masked-link-paste): Pasting a link over selected text in the message box turns it into a masked link, like [text](link).
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Math Notation](https://unbound.rip/addons/unbound.math-notation): Shows TeX math in messages, written between dollar signs or \( and \), as readable symbols such as x² + √y ≤ π.
 - <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Media Favorites](https://unbound.rip/addons/unbound.media-favorites): Lets you favorite any image or video from the media viewer, so it shows up with your favorite GIFs.

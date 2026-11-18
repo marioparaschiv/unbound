@@ -1,4 +1,6 @@
-export type Board = { url: string; width: number; height: number };
+import type { EmbedImage } from '@unbound-plugins/shared/messages/image-embed';
+
+type Board = EmbedImage;
 
 const RANK = '[pnbrqkPNBRQK1-8]{1,8}';
 const FEN = new RegExp(

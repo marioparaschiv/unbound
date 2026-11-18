@@ -1,0 +1,17 @@
+{
+	"id": "unbound.map-previews",
+	"name": "Map Previews",
+	"description": "Shows a small map under messages with coordinates or a Google Maps, Apple Maps or OpenStreetMap link to a spot.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "GlobeEarthIcon",
+	"main": "index.ts"
+}
