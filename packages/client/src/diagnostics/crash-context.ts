@@ -1,6 +1,7 @@
 import { CRASH_CONTEXT_LIMITS } from '@unbound-app/contracts/crash-report-limits';
 import type { CrashContext } from '@unbound-app/contracts/crash-reports';
 
+import { currentRoutePath } from '~/diagnostics/current-route';
 import { scrubLogLine } from '~/diagnostics/crash-report';
 
 const SNOWFLAKE = /\b\d{15,21}\b/g;
@@ -22,7 +23,7 @@ export function scrubBreadcrumbs(breadcrumbs: string[]): string[] {
 
 /**
  * @description Describes what else was running for a crash report: Discord's build, how it was installed, injected
- * libraries, enabled plugins and Discord's last breadcrumbs.
+ * libraries, enabled plugins, Discord's last breadcrumbs and the screen it showed.
  * @param breadcrumbs The breadcrumbs to attach: this launch's, or the previous launch's for a native crash.
  * @returns The context; fields that cannot be read are left out.
  */
@@ -41,6 +42,7 @@ export async function crashContext(breadcrumbs: string[]): Promise<CrashContext>
 	const injected = info?.injected?.slice(0, CRASH_CONTEXT_LIMITS.injected);
 	const addons = info?.enabledPlugins?.slice(0, CRASH_CONTEXT_LIMITS.addons);
 	const scrubbed = scrubBreadcrumbs(breadcrumbs);
+	const route = (await currentRoutePath())?.slice(0, 120);
 
 	return {
 		...(discordBuild ? { discordBuild } : {}),
@@ -48,5 +50,6 @@ export async function crashContext(breadcrumbs: string[]): Promise<CrashContext>
 		...(injected?.length ? { injected } : {}),
 		...(addons?.length ? { addons } : {}),
 		...(scrubbed.length ? { breadcrumbs: scrubbed } : {}),
+		...(route ? { route } : {}),
 	};
 }

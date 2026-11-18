@@ -18,6 +18,7 @@ const report: CrashReport = {
 		injected: ['libfrida.so'],
 		addons: ['unbound.chat-bubbles@1.4.0', 'unbound.emoji-packs@1.0.0'],
 		breadcrumbs: ['12:00:01 navigation: <id>'],
+		route: 'settings > UNBOUND_CRASHES',
 	},
 };
 
@@ -28,6 +29,7 @@ describe('crashIssueBody', () => {
 		expect(body).toContain('| Discord build | 352010 |');
 		expect(body).toContain('| Installed from | Google Play |');
 		expect(body).toContain('| Injected | libfrida.so |');
+		expect(body).toContain('| Screen | settings > UNBOUND_CRASHES |');
 		expect(body).toContain('<summary>Enabled addons (2)</summary>');
 		expect(body).toContain('- `unbound.emoji-packs@1.0.0`');
 		expect(body).not.toContain('navigation');

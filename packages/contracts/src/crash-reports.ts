@@ -53,6 +53,7 @@ export const crashReportSchema = Type.Object({
 				}),
 			),
 			repeats: Type.Optional(Type.Integer({ minimum: 2, maximum: 1_000 })),
+			route: Type.Optional(Type.String({ maxLength: 120 })),
 		}),
 	),
 });
