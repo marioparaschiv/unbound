@@ -1,0 +1,8 @@
+{
+	"RUN": "Изпълни {language} код",
+	"RUNNING": "Изпълнява се {language}…",
+	"OUTPUT_TITLE": "{language} · изход {code}",
+	"OUTPUT_BODY": "{output}",
+	"NO_OUTPUT": "(няма изход)",
+	"RUN_FAILED": "Кодът не можа да бъде изпълнен"
+}

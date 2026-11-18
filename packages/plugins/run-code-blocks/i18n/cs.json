@@ -1,0 +1,8 @@
+{
+	"RUN": "Spustit kód {language}",
+	"RUNNING": "Spouštím {language}…",
+	"OUTPUT_TITLE": "{language} · návratový kód {code}",
+	"OUTPUT_BODY": "{output}",
+	"NO_OUTPUT": "(žádný výstup)",
+	"RUN_FAILED": "Kód se nepodařilo spustit"
+}

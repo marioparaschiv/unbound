@@ -1,0 +1,8 @@
+{
+	"RUN": "Vykdyti {language} kodą",
+	"RUNNING": "Vykdoma {language}…",
+	"OUTPUT_TITLE": "{language} · išėjimo kodas {code}",
+	"OUTPUT_BODY": "{output}",
+	"NO_OUTPUT": "(nėra išvesties)",
+	"RUN_FAILED": "Nepavyko įvykdyti kodo"
+}

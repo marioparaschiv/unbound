@@ -1,0 +1,8 @@
+{
+	"RUN": "{language} kód futtatása",
+	"RUNNING": "{language} futtatása…",
+	"OUTPUT_TITLE": "{language} · kilépési kód {code}",
+	"OUTPUT_BODY": "{output}",
+	"NO_OUTPUT": "(nincs kimenet)",
+	"RUN_FAILED": "A kódot nem sikerült futtatni"
+}

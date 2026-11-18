@@ -1,0 +1,8 @@
+{
+	"RUN": "Kör {language}-kod",
+	"RUNNING": "Kör {language}…",
+	"OUTPUT_TITLE": "{language} · exit {code}",
+	"OUTPUT_BODY": "{output}",
+	"NO_OUTPUT": "(ingen utdata)",
+	"RUN_FAILED": "Kunde inte köra koden"
+}

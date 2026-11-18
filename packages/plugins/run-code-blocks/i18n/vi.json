@@ -1,0 +1,8 @@
+{
+	"RUN": "Chạy mã {language}",
+	"RUNNING": "Đang chạy {language}…",
+	"OUTPUT_TITLE": "{language} · thoát {code}",
+	"OUTPUT_BODY": "{output}",
+	"NO_OUTPUT": "(không có đầu ra)",
+	"RUN_FAILED": "Không thể chạy mã"
+}

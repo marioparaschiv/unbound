@@ -1,0 +1,8 @@
+{
+	"RUN": "รันโค้ด {language}",
+	"RUNNING": "กำลังรัน {language}…",
+	"OUTPUT_TITLE": "{language} · exit {code}",
+	"OUTPUT_BODY": "{output}",
+	"NO_OUTPUT": "(ไม่มีผลลัพธ์)",
+	"RUN_FAILED": "รันโค้ดไม่ได้"
+}
