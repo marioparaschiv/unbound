@@ -3,14 +3,23 @@ import { createLogger } from '@unbound-app/logger';
 import uuid from '@unbound-app/utils/uuid';
 
 import {
+	markCrashReported,
+	recordCrash,
+	type CrashIssueLink,
+	type CrashRecord,
+} from '~/diagnostics/crash-history';
+import {
 	crashSignature,
 	rememberReported,
 	repeatsOf,
 	wasJustReported,
 } from '~/diagnostics/crash-repeats';
-import { markCrashReported, recordCrash } from '~/diagnostics/crash-history';
-import { buildCrashReport } from '~/diagnostics/crash-report';
-import type { CrashEvent } from '~/diagnostics/crash-report';
+import {
+	buildCrashReport,
+	type CrashEvent,
+	type CrashReportAddon,
+} from '~/diagnostics/crash-report';
+import { nativeCrashAddon, nativeCrashFrame } from '~/diagnostics/crash-title';
 import { getSetting, setSetting } from '~/settings/unbound';
 import { currentEnvironment } from '~/core/environment';
 import { getLoader } from '~/native/unbound-native';
@@ -20,6 +29,11 @@ import fs from '~/native/fs';
 export type { CrashEvent, CrashReportAddon } from '~/diagnostics/crash-report';
 
 type CrashReportIssue = { number: number; url: string; created: boolean };
+
+type SentCrashReport = { id: string; origin?: CrashOrigin; issue?: CrashReportIssue };
+
+/** What filing a recorded crash on GitHub came to. */
+export type FiledCrash = { origin?: CrashOrigin; issue?: CrashIssueLink };
 
 const logger = createLogger('Crash Reports');
 
@@ -88,8 +102,9 @@ async function sendCrashReport(
 		signature = crashSignature(event),
 		repeats,
 		recordedAt,
-	}: { signature?: string; repeats?: number; recordedAt?: number } = {},
-): Promise<string | undefined> {
+		announce = true,
+	}: { signature?: string; repeats?: number; recordedAt?: number; announce?: boolean } = {},
+): Promise<SentCrashReport | undefined> {
 	try {
 		const { CLIENT_VERSION } = await import('~/core/constants');
 		const { createUnboundClient } = await import('~/account/client');
@@ -124,9 +139,11 @@ async function sendCrashReport(
 			});
 		}
 
-		await announceReport(issue, origin, event.addon?.id);
+		if (announce) {
+			await announceReport(issue, origin, event.addon?.id);
+		}
 
-		return id;
+		return { id, ...(origin ? { origin } : {}), ...(issue ? { issue } : {}) };
 	} catch (error) {
 		logger.warn(`Failed to send a ${event.kind} crash report:`, error);
 
@@ -156,7 +173,7 @@ export async function reportCrash(event: CrashEvent): Promise<string | undefined
 
 	const { recentBreadcrumbs } = await import('~/diagnostics/breadcrumbs');
 
-	return sendCrashReport(event, recentBreadcrumbs(), { recordedAt });
+	return (await sendCrashReport(event, recentBreadcrumbs(), { recordedAt }))?.id;
 }
 
 /**
@@ -174,7 +191,16 @@ export async function reportNativeCrash(launch = getLoader()?.launch): Promise<v
 
 	const event: CrashEvent = { kind: 'native-crash', message: launch.lastCrash, stack };
 
-	await recordCrash({ at: newest.at, kind: event.kind, message: newest.crash });
+	const where = nativeCrashFrame(stack);
+	const addon = nativeCrashAddon(stack);
+
+	await recordCrash({
+		at: newest.at,
+		kind: event.kind,
+		message: newest.crash,
+		...(where ? { where } : {}),
+		...(addon ? { addon } : {}),
+	});
 
 	const signature = crashSignature({ kind: event.kind, message: newest.crash });
 
@@ -185,11 +211,13 @@ export async function reportNativeCrash(launch = getLoader()?.launch): Promise<v
 	}
 
 	const { previousBreadcrumbs } = await import('~/diagnostics/breadcrumbs');
-	const id = await sendCrashReport(event, await previousBreadcrumbs(), {
-		signature,
-		repeats: repeatsOf(newest.crash, launch.crashes),
-		recordedAt: newest.at,
-	});
+	const id = (
+		await sendCrashReport(event, await previousBreadcrumbs(), {
+			signature,
+			repeats: repeatsOf(newest.crash, launch.crashes),
+			recordedAt: newest.at,
+		})
+	)?.id;
 
 	if (!id) {
 		return;
@@ -197,4 +225,97 @@ export async function reportNativeCrash(launch = getLoader()?.launch): Promise<v
 
 	setSetting('crash-reports.nativeAt', newest.at);
 	setSetting('crash-reports.lastId', id);
+}
+
+const CRASH_KINDS: Record<CrashEvent['kind'], true> = {
+	crash: true,
+	freeze: true,
+	'start-failure': true,
+	'native-crash': true,
+};
+
+function isCrashKind(kind: string): kind is CrashEvent['kind'] {
+	return Object.hasOwn(CRASH_KINDS, kind);
+}
+
+function recordedEvent(
+	record: CrashRecord,
+	addon: CrashReportAddon | undefined,
+): CrashEvent | undefined {
+	if (!isCrashKind(record.kind)) {
+		return undefined;
+	}
+
+	const launch = getLoader()?.launch;
+	const stack =
+		record.kind === 'native-crash' && launch?.crashes?.at(-1)?.at === record.at
+			? launch.crashStack
+			: undefined;
+
+	return {
+		kind: record.kind,
+		message: record.message,
+		...(addon ? { addon } : {}),
+		...(stack ? { stack } : {}),
+	};
+}
+
+async function sendRecordedCrash(
+	record: CrashRecord,
+	addon: CrashReportAddon | undefined,
+): Promise<SentCrashReport | undefined> {
+	if (record.reportId) {
+		return { id: record.reportId, ...(record.origin ? { origin: record.origin } : {}) };
+	}
+
+	const event = recordedEvent(record, addon);
+
+	return event
+		? sendCrashReport(event, [], { recordedAt: record.at, announce: false })
+		: undefined;
+}
+
+async function requestIssue(reportId: string): Promise<FiledCrash | undefined> {
+	try {
+		const { createUnboundClient } = await import('~/account/client');
+		const request = createUnboundClient();
+
+		return await request('POST /api/v1/crash-reports/$id/issue', { params: { id: reportId } });
+	} catch (error) {
+		logger.warn(`Failed to file crash report ${reportId} on GitHub:`, error);
+
+		return undefined;
+	}
+}
+
+/**
+ * @description Files a recorded crash on GitHub because the user asked to: sends its report when it was never sent,
+ * then has the server open its issue or add it to the one that already tracks it.
+ * @param record The crash.
+ * @param addon The installed plugin the crash blamed, if any.
+ * @returns The issue and where the crash came from, or `undefined` when the report could not be sent.
+ */
+export async function fileRecordedCrash(
+	record: CrashRecord,
+	addon?: CrashReportAddon,
+): Promise<FiledCrash | undefined> {
+	const sent = await sendRecordedCrash(record, addon);
+
+	if (!sent) {
+		return undefined;
+	}
+
+	const filed = sent.issue ? sent : await requestIssue(sent.id);
+	const origin = filed?.origin ?? sent.origin;
+	const issue = filed?.issue && { number: filed.issue.number, url: filed.issue.url };
+
+	if (issue) {
+		await markCrashReported(record.at, {
+			reportId: sent.id,
+			...(origin ? { origin } : {}),
+			issue,
+		});
+	}
+
+	return { ...(origin ? { origin } : {}), ...(issue ? { issue } : {}) };
 }

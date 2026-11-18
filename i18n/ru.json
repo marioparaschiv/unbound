@@ -443,10 +443,10 @@
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Известная проблема #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Пока не обновляйте Discord",
 	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} ломает части Unbound. Дождитесь обновления Unbound, прежде чем устанавливать его.",
-	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Уже сообщено",
-	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "Задача #{number} на GitHub описывает этот сбой. Открыть?",
-	"UNBOUND_CRASH_ISSUE_OPEN": "Открыть задачу",
 	"UNBOUND_CRASH_REPORT_TITLE": "Сообщить об этом сбое?",
-	"UNBOUND_CRASH_REPORT_BODY": "Ни одна открытая задача на GitHub пока не упоминает этот сбой. Открыть отчёт об ошибке с уже заполненными данными?",
-	"UNBOUND_CRASH_REPORT_CONFIRM": "Сообщить"
+	"UNBOUND_CRASH_REPORT_BODY": "Unbound создаст задачу на GitHub или добавит сбой к уже существующей и откроет её.",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Сообщить",
+	"UNBOUND_CRASH_ISSUE_FAILED": "Не удалось сообщить о сбое",
+	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} в {place}",
+	"UNBOUND_CRASH_TITLE_FROZE": "Завис в {call} на {seconds} с"
 }

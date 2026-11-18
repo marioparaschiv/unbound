@@ -443,10 +443,10 @@
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Masalah yang diketahui #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Jangan perbarui Discord dulu",
 	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} merusak sebagian Unbound. Tunggu pembaruan Unbound sebelum memasangnya.",
-	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Sudah dilaporkan",
-	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "Issue #{number} di GitHub membahas crash ini. Buka?",
-	"UNBOUND_CRASH_ISSUE_OPEN": "Buka issue",
 	"UNBOUND_CRASH_REPORT_TITLE": "Laporkan crash ini?",
-	"UNBOUND_CRASH_REPORT_BODY": "Belum ada issue terbuka di GitHub yang menyebut crash ini. Buka laporan bug dengan detail yang sudah terisi?",
-	"UNBOUND_CRASH_REPORT_CONFIRM": "Laporkan"
+	"UNBOUND_CRASH_REPORT_BODY": "Unbound melaporkannya di GitHub, atau menambahkannya ke issue yang sudah melacaknya, lalu membuka issue itu.",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Laporkan",
+	"UNBOUND_CRASH_ISSUE_FAILED": "Tidak dapat melaporkan crash ini",
+	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} di {place}",
+	"UNBOUND_CRASH_TITLE_FROZE": "Macet di {call} selama {seconds} dtk"
 }

@@ -443,10 +443,10 @@
 	"UNBOUND_CRASH_KNOWN_ISSUE": "ज्ञात समस्या #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "अभी Discord अपडेट न करें",
 	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} Unbound के कुछ हिस्से तोड़ देता है। इसे इंस्टॉल करने से पहले Unbound अपडेट का इंतज़ार करें।",
-	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "पहले ही रिपोर्ट किया गया",
-	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "GitHub पर इश्यू #{number} इस क्रैश के बारे में है। खोलें?",
-	"UNBOUND_CRASH_ISSUE_OPEN": "इश्यू खोलें",
 	"UNBOUND_CRASH_REPORT_TITLE": "इस क्रैश की रिपोर्ट करें?",
-	"UNBOUND_CRASH_REPORT_BODY": "GitHub पर अभी कोई खुला इश्यू इस क्रैश का ज़िक्र नहीं करता। विवरण भरी हुई बग रिपोर्ट खोलें?",
-	"UNBOUND_CRASH_REPORT_CONFIRM": "रिपोर्ट करें"
+	"UNBOUND_CRASH_REPORT_BODY": "Unbound इसे GitHub पर दर्ज करता है, या पहले से इसे ट्रैक करने वाले इश्यू में जोड़ता है, और इश्यू खोलता है।",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "रिपोर्ट करें",
+	"UNBOUND_CRASH_ISSUE_FAILED": "इस क्रैश की रिपोर्ट नहीं हो सकी",
+	"UNBOUND_CRASH_TITLE_NATIVE": "{place} में {signal}",
+	"UNBOUND_CRASH_TITLE_FROZE": "{call} में {seconds} s तक अटका"
 }

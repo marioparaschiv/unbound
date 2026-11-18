@@ -443,10 +443,10 @@
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Problème connu #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Ne mets pas encore Discord à jour",
 	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} casse une partie d'Unbound. Attends une mise à jour d'Unbound avant de l'installer.",
-	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Déjà signalé",
-	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "L'issue #{number} sur GitHub concerne ce plantage. L'ouvrir ?",
-	"UNBOUND_CRASH_ISSUE_OPEN": "Ouvrir l'issue",
 	"UNBOUND_CRASH_REPORT_TITLE": "Signaler ce plantage ?",
-	"UNBOUND_CRASH_REPORT_BODY": "Aucune issue GitHub ouverte ne mentionne encore ce plantage. Ouvrir un rapport de bug avec ses détails déjà remplis ?",
-	"UNBOUND_CRASH_REPORT_CONFIRM": "Signaler"
+	"UNBOUND_CRASH_REPORT_BODY": "Unbound le signale sur GitHub, ou l'ajoute à l'issue qui le suit déjà, puis ouvre l'issue.",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Signaler",
+	"UNBOUND_CRASH_ISSUE_FAILED": "Impossible de signaler ce plantage",
+	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} dans {place}",
+	"UNBOUND_CRASH_TITLE_FROZE": "Bloqué dans {call} pendant {seconds} s"
 }

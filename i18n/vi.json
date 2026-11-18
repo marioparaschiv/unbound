@@ -443,10 +443,10 @@
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Sự cố đã biết #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Đừng cập nhật Discord vội",
 	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} làm hỏng một phần Unbound. Hãy chờ bản cập nhật Unbound trước khi cài đặt.",
-	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Đã được báo cáo",
-	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "Issue #{number} trên GitHub đề cập sự cố này. Mở không?",
-	"UNBOUND_CRASH_ISSUE_OPEN": "Mở issue",
 	"UNBOUND_CRASH_REPORT_TITLE": "Báo cáo sự cố này?",
-	"UNBOUND_CRASH_REPORT_BODY": "Chưa có issue mở nào trên GitHub nhắc đến sự cố này. Mở báo cáo lỗi với chi tiết đã điền sẵn?",
-	"UNBOUND_CRASH_REPORT_CONFIRM": "Báo cáo"
+	"UNBOUND_CRASH_REPORT_BODY": "Unbound tạo issue trên GitHub, hoặc thêm vào issue đang theo dõi sự cố này, rồi mở issue.",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Báo cáo",
+	"UNBOUND_CRASH_ISSUE_FAILED": "Không thể báo cáo sự cố này",
+	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} trong {place}",
+	"UNBOUND_CRASH_TITLE_FROZE": "Kẹt trong {call} {seconds} giây"
 }

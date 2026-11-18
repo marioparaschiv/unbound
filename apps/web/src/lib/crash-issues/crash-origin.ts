@@ -101,3 +101,14 @@ export function filesIssue(report: CrashReport, origin: CrashOrigin): boolean {
 
 	return origin === 'addon' && Boolean(addon?.startsWith('unbound.'));
 }
+
+/**
+ * @description Decides whether a crash its user asked to report goes on GitHub: every crash except one a third-party
+ * addon caused, which belongs to that addon's author.
+ * @param report The crash report.
+ * @param origin Where the crash came from.
+ * @returns Whether to file it.
+ */
+export function filesRequestedIssue(report: CrashReport, origin: CrashOrigin): boolean {
+	return origin !== 'addon' || filesIssue(report, origin);
+}

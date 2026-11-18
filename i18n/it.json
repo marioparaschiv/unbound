@@ -443,10 +443,10 @@
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Problema noto #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Non aggiornare ancora Discord",
 	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} rompe parti di Unbound. Aspetta un aggiornamento di Unbound prima di installarlo.",
-	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Già segnalato",
-	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "L'issue #{number} su GitHub riguarda questo crash. Aprirla?",
-	"UNBOUND_CRASH_ISSUE_OPEN": "Apri issue",
 	"UNBOUND_CRASH_REPORT_TITLE": "Segnalare questo crash?",
-	"UNBOUND_CRASH_REPORT_BODY": "Nessuna issue aperta su GitHub menziona ancora questo crash. Aprire una segnalazione con i dettagli già compilati?",
-	"UNBOUND_CRASH_REPORT_CONFIRM": "Segnala"
+	"UNBOUND_CRASH_REPORT_BODY": "Unbound lo segnala su GitHub, o lo aggiunge all'issue che lo segue già, e apre l'issue.",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Segnala",
+	"UNBOUND_CRASH_ISSUE_FAILED": "Impossibile segnalare questo crash",
+	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} in {place}",
+	"UNBOUND_CRASH_TITLE_FROZE": "Bloccato in {call} per {seconds} s"
 }

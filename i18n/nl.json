@@ -443,10 +443,10 @@
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Bekend probleem #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Werk Discord nog niet bij",
 	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} maakt delen van Unbound kapot. Wacht op een Unbound-update voordat je het installeert.",
-	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Al gemeld",
-	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "Issue #{number} op GitHub gaat over deze crash. Openen?",
-	"UNBOUND_CRASH_ISSUE_OPEN": "Issue openen",
 	"UNBOUND_CRASH_REPORT_TITLE": "Deze crash melden?",
-	"UNBOUND_CRASH_REPORT_BODY": "Nog geen open GitHub-issue noemt deze crash. Een bugrapport openen met de details al ingevuld?",
-	"UNBOUND_CRASH_REPORT_CONFIRM": "Melden"
+	"UNBOUND_CRASH_REPORT_BODY": "Unbound meldt hem op GitHub, of voegt hem toe aan het issue dat hem al volgt, en opent het issue.",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Melden",
+	"UNBOUND_CRASH_ISSUE_FAILED": "Kon deze crash niet melden",
+	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} in {place}",
+	"UNBOUND_CRASH_TITLE_FROZE": "{seconds} s vastgelopen in {call}"
 }

@@ -443,10 +443,10 @@
 	"UNBOUND_CRASH_KNOWN_ISSUE": "已知问题 #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "先别更新 Discord",
 	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} 会导致 Unbound 部分功能失效。请等 Unbound 更新后再安装。",
-	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "已有报告",
-	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "GitHub 上的 Issue #{number} 涉及此崩溃。要打开吗？",
-	"UNBOUND_CRASH_ISSUE_OPEN": "打开 Issue",
 	"UNBOUND_CRASH_REPORT_TITLE": "报告此崩溃？",
-	"UNBOUND_CRASH_REPORT_BODY": "目前还没有打开的 GitHub Issue 提到此崩溃。要打开一份已填好详情的错误报告吗？",
-	"UNBOUND_CRASH_REPORT_CONFIRM": "报告"
+	"UNBOUND_CRASH_REPORT_BODY": "Unbound 会在 GitHub 上提交 Issue，或加入已跟踪此崩溃的 Issue，然后打开它。",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "报告",
+	"UNBOUND_CRASH_ISSUE_FAILED": "无法报告此崩溃",
+	"UNBOUND_CRASH_TITLE_NATIVE": "{place} 中的 {signal}",
+	"UNBOUND_CRASH_TITLE_FROZE": "在 {call} 中卡住 {seconds} 秒"
 }

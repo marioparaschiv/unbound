@@ -71,6 +71,13 @@ export const crashReportResponseSchema = Type.Object({
 	),
 });
 
+export const crashIssueResponseSchema = Type.Object({
+	origin: Type.Enum(CRASH_ORIGINS),
+	issue: Type.Optional(
+		Type.Object({ number: Type.Integer(), url: Type.String(), created: Type.Boolean() }),
+	),
+});
+
 export type CrashReport = StaticDecode<typeof crashReportSchema>;
 
 export type CrashContext = NonNullable<CrashReport['context']>;
@@ -84,4 +91,5 @@ export default {
 	CRASH_REPORT_LOG_LIMIT,
 	crashReportSchema,
 	crashReportResponseSchema,
+	crashIssueResponseSchema,
 };

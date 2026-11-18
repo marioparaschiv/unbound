@@ -443,10 +443,10 @@
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Žinoma problema #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Kol kas neatnaujinkite Discord",
 	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} sugadina dalį Unbound. Prieš diegdami palaukite Unbound atnaujinimo.",
-	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Jau pranešta",
-	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "GitHub problema #{number} apima šį strigimą. Atidaryti?",
-	"UNBOUND_CRASH_ISSUE_OPEN": "Atidaryti problemą",
 	"UNBOUND_CRASH_REPORT_TITLE": "Pranešti apie šį strigimą?",
-	"UNBOUND_CRASH_REPORT_BODY": "Joks atviras GitHub įrašas dar nemini šio strigimo. Atidaryti klaidos pranešimą su užpildytomis detalėmis?",
-	"UNBOUND_CRASH_REPORT_CONFIRM": "Pranešti"
+	"UNBOUND_CRASH_REPORT_BODY": "Unbound praneša apie jį GitHub arba prideda prie jau sekančio įrašo ir jį atidaro.",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Pranešti",
+	"UNBOUND_CRASH_ISSUE_FAILED": "Nepavyko pranešti apie strigimą",
+	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} vietoje {place}",
+	"UNBOUND_CRASH_TITLE_FROZE": "Užstrigo {call} {seconds} s"
 }

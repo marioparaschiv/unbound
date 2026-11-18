@@ -443,10 +443,10 @@
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Känt problem #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Uppdatera inte Discord än",
 	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} förstör delar av Unbound. Vänta på en Unbound-uppdatering innan du installerar den.",
-	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Redan rapporterad",
-	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "Issue #{number} på GitHub gäller den här kraschen. Öppna den?",
-	"UNBOUND_CRASH_ISSUE_OPEN": "Öppna issue",
 	"UNBOUND_CRASH_REPORT_TITLE": "Rapportera den här kraschen?",
-	"UNBOUND_CRASH_REPORT_BODY": "Ingen öppen GitHub-issue nämner den här kraschen än. Öppna en felrapport med detaljerna ifyllda?",
-	"UNBOUND_CRASH_REPORT_CONFIRM": "Rapportera"
+	"UNBOUND_CRASH_REPORT_BODY": "Unbound rapporterar den på GitHub, eller lägger till den i issuen som redan följer den, och öppnar issuen.",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Rapportera",
+	"UNBOUND_CRASH_ISSUE_FAILED": "Kunde inte rapportera kraschen",
+	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} i {place}",
+	"UNBOUND_CRASH_TITLE_FROZE": "Fastnade i {call} i {seconds} s"
 }
