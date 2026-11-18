@@ -5,6 +5,13 @@ import coverage from '~/lib/coverage.json';
 import { swapMarkupEmoji, type Markup } from '~/lib/markup';
 import { coverageSets } from '~/lib/coverage-sets';
 import { packUrl, type PackId } from '~/lib/packs';
+import { feedComposerImages } from '~/lib/composer-images';
+import {
+	installComposerPack,
+	restoreComposerPack,
+	setComposerPack,
+	takeComposerImages,
+} from '~/native/ios/composer';
 
 const MARKUP_PARSERS = 'modules/messages/native/renderer/MarkupParsers.tsx';
 const PARSERS = [
@@ -21,12 +28,12 @@ type MarkupParsers = Record<(typeof PARSERS)[number], (...args: unknown[]) => Ma
 /**
  * @description Draws unicode emoji from a pack on iOS. Discord's native chat draws custom emoji from their `src`, so
  * the patched markup parsers hand it each covered emoji as a custom emoji with the pack's image; the emoji picker
- * reads each emoji's image from `getEmojiItemUrl`, which answers with the pack's image.
- * @param _native The plugin's native bridge, unused: the swap happens in the parsed markup.
+ * reads each emoji's image from `getEmojiItemUrl`, which answers with the pack's image; the composer gets image overlays.
+ * @param native The plugin's native bridge, which draws the composer's emoji.
  * @param pack Reads the chosen pack.
- * @returns `refresh`, which does nothing since each parse reads the pack, and `dispose`, which removes the patches.
+ * @returns `refresh`, which tells the composer the new pack, and `dispose`, which removes the patches and overlays.
  */
-export function packsIOS(_native: NativeBridge, pack: () => PackId) {
+export function packsIOS(native: NativeBridge, pack: () => PackId) {
 	const sets = coverageSets(coverage);
 	const imageFor = (surrogates: string) => packUrl(pack(), surrogates, sets);
 	const Parsers = metro.findByFilePath(MARKUP_PARSERS) as MarkupParsers | undefined;
@@ -50,10 +57,22 @@ export function packsIOS(_native: NativeBridge, pack: () => PackId) {
 		logger.warn('Emoji picker keeps Discord’s emoji: Discord moved getEmojiItemUrl.');
 	}
 
+	const scope = native.ui.createScope();
+
+	native.ui.run(installComposerPack, scope, pack(), coverage);
+
+	const stopFeeding = feedComposerImages((files) => native.ui.call(takeComposerImages, files));
+
 	return {
-		refresh() {},
+		refresh() {
+			native.ui.run(setComposerPack, pack());
+		},
 		dispose() {
 			for (const unpatch of unpatches) unpatch();
+
+			stopFeeding();
+			native.ui.run(restoreComposerPack);
+			scope.dispose();
 		},
 	};
 }

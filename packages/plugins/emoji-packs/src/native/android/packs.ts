@@ -4,6 +4,13 @@ import coverage from '~/lib/coverage.json';
 import type { PackId } from '~/lib/packs';
 import { installEmojiPack, installPickerEmojiPack, setEmojiPack } from '~/native/android/worklets';
 import { findAssetMethod } from '~/native/android/asset-method';
+import {
+	installComposerPack,
+	restoreComposerPack,
+	setComposerPack,
+	takeComposerImages,
+} from '~/native/android/composer';
+import { feedComposerImages } from '~/lib/composer-images';
 
 const SEARCH_ATTEMPTS = 4;
 const SEARCH_RETRY_MS = 2000;
@@ -19,7 +26,7 @@ const EMOJI_MODEL_SHAPE = {
 
 /**
  * @description Draws unicode emoji from a pack on Android: in chat through the URL method of Discord's emoji models, in
- * the emoji picker through the method that builds their bundled image URL.
+ * the emoji picker through the method that builds their bundled image URL, and in the chat input with image spans.
  * @param native The plugin's native bridge.
  * @param pack Reads the chosen pack.
  * @returns `refresh`, which applies a changed pack, and `dispose`, which removes the hooks.
@@ -72,13 +79,20 @@ export function packsAndroid(native: NativeBridge, pack: () => PackId) {
 		})
 		.catch((error: unknown) => logger.error('Failed to find the emoji asset method:', error));
 
+	native.ui.run(installComposerPack, scope, pack(), coverage);
+
+	const stopFeeding = feedComposerImages((files) => native.ui.call(takeComposerImages, files));
+
 	return {
 		refresh() {
 			native.ui.run(setEmojiPack, pack());
+			native.ui.run(setComposerPack, pack());
 		},
 		dispose() {
 			disposed = true;
 			clearTimeout(retry);
+			stopFeeding();
+			native.ui.run(restoreComposerPack);
 			scope.dispose();
 		},
 	};
