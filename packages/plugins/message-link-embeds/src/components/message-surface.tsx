@@ -102,7 +102,7 @@ export function registerMessageSurface(source: SurfaceSource): string | undefine
 						width: surface.width,
 					}}
 				>
-					<View onLayout={onItemLayout}>
+					<View onLayout={onItemLayout} style={{ marginBottom: -Surface.bottomTrim }}>
 						<ChatItem
 							key={`${surfaceId}-${mountAttempt}`}
 							message={surface.record}

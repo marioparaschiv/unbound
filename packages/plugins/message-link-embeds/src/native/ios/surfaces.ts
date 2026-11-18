@@ -437,10 +437,7 @@ export function reportSurfaceLayout(session: Session, surfaceId: string, height:
 
 	if (!surface || !Number.isFinite(height) || height <= 0) return;
 
-	const fittedHeight = Math.max(
-		Surface.minHeight,
-		Math.min(height, Surface.maxHeight) - Surface.bottomTrim,
-	);
+	const fittedHeight = Math.max(Surface.minHeight, Math.min(height, Surface.maxHeight));
 
 	if (Math.abs((surface.pendingHeight ?? surface.height) - fittedHeight) < 2) return;
 
