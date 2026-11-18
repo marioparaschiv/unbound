@@ -25,6 +25,7 @@
 #include <android/set_abort_message.h>
 #endif
 
+#include "LoaderAbortDetails.h"
 #include "LoaderAddonActivity.h"
 #include "LoaderFiles.h"
 #include "LoaderImageIdentity.h"
@@ -357,6 +358,7 @@ static void writeNativeStack(int signal, void *context)
         (void) written;
     }
 
+    writeAbortMessages(descriptor);
     writeCrashingAddonLine(descriptor);
     writeCrashingNativeCallLine(descriptor);
 
@@ -492,6 +494,11 @@ void noteUncaughtException(const std::string &description)
     gExceptionLength.store(line.size(), std::memory_order_release);
 }
 
+bool uncaughtExceptionNoted()
+{
+    return gExceptionLength.load(std::memory_order_acquire) > 0;
+}
+
 bool recordUncaughtException(const std::string &description, const std::string &frames)
 {
     int descriptor = gStackDescriptor.exchange(-1);
@@ -561,6 +568,7 @@ bool installAddonCrashHandler(const std::string &markerPath)
 
     ensureAlternateSignalStack();
     ensureAlternateSignalStacksOnNewThreads();
+    installTerminateHandler();
 
     struct sigaction action = {};
     action.sa_sigaction     = recordCrashingAddon;

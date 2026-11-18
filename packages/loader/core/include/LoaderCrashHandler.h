@@ -7,6 +7,7 @@ namespace loader {
 bool installAddonCrashHandler(const std::string &markerPath);
 size_t reclaimCrashHandlers();
 void noteUncaughtException(const std::string &description);
+bool uncaughtExceptionNoted();
 bool recordUncaughtException(const std::string &description, const std::string &frames);
 
 // The file the crash handler writes the crashing thread's stack to, beside `markerPath`.
