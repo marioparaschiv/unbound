@@ -85,6 +85,7 @@ class Unbound : XposedModule() {
         SettingsWatcher.start(documents)
         SettingsWatcher.onChange(::onSettingsChanged)
         MainThreadWatchdog.start()
+        if (DevOverlay.debugBuild) DiskOnMainDetector.start()
         hookActivityLifecycle()
         if (BuildConfig.ATTESTATION_ENABLED && !attestationVerified()) return
         val hooked = runCatching { hookBundleLoading(param.classLoader) }
