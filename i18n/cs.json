@@ -442,5 +442,11 @@
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Fórum podpory",
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Známý problém #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Discord zatím neaktualizuj",
-	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} rozbíjí části Unbound. Před instalací počkej na aktualizaci Unbound."
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} rozbíjí části Unbound. Před instalací počkej na aktualizaci Unbound.",
+	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Už nahlášeno",
+	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "Issue #{number} na GitHubu se týká tohoto pádu. Otevřít?",
+	"UNBOUND_CRASH_ISSUE_OPEN": "Otevřít issue",
+	"UNBOUND_CRASH_REPORT_TITLE": "Nahlásit tento pád?",
+	"UNBOUND_CRASH_REPORT_BODY": "Žádné otevřené issue na GitHubu tento pád zatím nezmiňuje. Otevřít hlášení chyby s vyplněnými podrobnostmi?",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Nahlásit"
 }

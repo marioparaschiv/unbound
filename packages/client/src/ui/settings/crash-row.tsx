@@ -1,10 +1,10 @@
 import type { CrashOrigin } from '@unbound-app/contracts/crash-reports';
 
-import type { CrashRecord } from '~/diagnostics/crash-history';
+import type { CrashIssueLink, CrashRecord } from '~/diagnostics/crash-history';
+import reportCrashOnGitHub from '~/ui/settings/report-crash';
 import { format, messages } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
-import { Linking } from '~/metro/api';
 import { icons } from '~/assets/api';
 
 const ORIGIN_LABELS: Record<CrashOrigin, () => string> = {
@@ -27,25 +27,32 @@ function crashDetails(record: CrashRecord, pluginName: string | undefined): stri
 		.join(' · ');
 }
 
-type CrashRowProps = { record: CrashRecord; onDisable: (id: string) => void };
+type CrashRowProps = {
+	record: CrashRecord;
+	onDisable: (id: string) => void;
+	onLinked: (at: number, issue: CrashIssueLink) => void;
+};
 
 /**
  * @description One recorded crash: its message, when it happened, the plugin it blamed and where it came from, with a
- * button to disable that plugin while it is on.
+ * button to disable that plugin while it is on. Tapping it opens its GitHub issue, or offers to report it.
  */
-function CrashRow({ record, onDisable }: CrashRowProps) {
+function CrashRow({ record, onDisable, onLinked }: CrashRowProps) {
 	const plugins = Manager.for('plugin');
 	const plugin = record.addon ? plugins.getAddon(record.addon) : undefined;
 	const enabled = plugin ? plugins.isEnabled(plugin.id) : false;
-	const { issue } = record;
 
 	return (
 		<Discord.TableRow
 			label={record.message}
 			subLabel={crashDetails(record, plugin?.name)}
 			icon={<Discord.TableRowIcon source={icons.BugIcon ?? icons.WarningIcon} />}
-			arrow={Boolean(issue)}
-			onPress={issue ? () => void Linking.openURL(issue.url) : undefined}
+			arrow
+			onPress={() =>
+				void reportCrashOnGitHub(record, plugin?.name, (found) =>
+					onLinked(record.at, found),
+				)
+			}
 			trailing={
 				plugin && enabled ? (
 					<Discord.Button

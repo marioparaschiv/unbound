@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 
-import { clearCrashHistory, readCrashHistory, type CrashRecord } from '~/diagnostics/crash-history';
+import {
+	clearCrashHistory,
+	readCrashHistory,
+	type CrashIssueLink,
+	type CrashRecord,
+} from '~/diagnostics/crash-history';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
 import Page from '~/ui/components/page';
@@ -25,6 +30,12 @@ function CrashesPage() {
 		setRevision((revision) => revision + 1);
 	}
 
+	function linked(at: number, issue: CrashIssueLink) {
+		setRecords((current) =>
+			current.map((record) => (record.at === at ? { ...record, issue } : record)),
+		);
+	}
+
 	async function clear() {
 		await clearCrashHistory();
 		setRecords([]);
@@ -39,6 +50,7 @@ function CrashesPage() {
 							key={`${record.at}:${record.message}`}
 							record={record}
 							onDisable={disable}
+							onLinked={linked}
 						/>
 					))
 				) : (

@@ -472,5 +472,11 @@
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Support forum",
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Known issue #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Don't update Discord yet",
-	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} breaks parts of Unbound. Wait for an Unbound update before installing it."
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} breaks parts of Unbound. Wait for an Unbound update before installing it.",
+	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Already reported",
+	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "Issue #{number} on GitHub covers this crash. Open it?",
+	"UNBOUND_CRASH_ISSUE_OPEN": "Open issue",
+	"UNBOUND_CRASH_REPORT_TITLE": "Report this crash?",
+	"UNBOUND_CRASH_REPORT_BODY": "No open GitHub issue mentions this crash yet. Open a bug report with its details filled in?",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Report"
 }

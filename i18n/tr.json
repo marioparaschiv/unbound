@@ -442,5 +442,11 @@
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Destek forumu",
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Bilinen sorun #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Discord'u henüz güncelleme",
-	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version}, Unbound'un bazı kısımlarını bozuyor. Yüklemeden önce bir Unbound güncellemesi bekle."
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version}, Unbound'un bazı kısımlarını bozuyor. Yüklemeden önce bir Unbound güncellemesi bekle.",
+	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Zaten bildirildi",
+	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "GitHub'daki #{number} numaralı sorun bu çökmeyi kapsıyor. Açılsın mı?",
+	"UNBOUND_CRASH_ISSUE_OPEN": "Sorunu aç",
+	"UNBOUND_CRASH_REPORT_TITLE": "Bu çökme bildirilsin mi?",
+	"UNBOUND_CRASH_REPORT_BODY": "Henüz bu çökmeden bahseden açık bir GitHub sorunu yok. Ayrıntıları doldurulmuş bir hata raporu açılsın mı?",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Bildir"
 }

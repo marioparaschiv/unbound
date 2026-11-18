@@ -442,5 +442,11 @@
 	"UNBOUND_SUPPORT_BANNER_ACTION": "지원 포럼",
 	"UNBOUND_CRASH_KNOWN_ISSUE": "알려진 문제 #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "아직 Discord를 업데이트하지 마세요",
-	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version}에서는 Unbound 일부가 작동하지 않습니다. 설치하기 전에 Unbound 업데이트를 기다리세요."
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version}에서는 Unbound 일부가 작동하지 않습니다. 설치하기 전에 Unbound 업데이트를 기다리세요.",
+	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "이미 보고됨",
+	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "GitHub 이슈 #{number}에서 이 크래시를 다루고 있어요. 열까요?",
+	"UNBOUND_CRASH_ISSUE_OPEN": "이슈 열기",
+	"UNBOUND_CRASH_REPORT_TITLE": "이 크래시를 보고할까요?",
+	"UNBOUND_CRASH_REPORT_BODY": "아직 이 크래시를 언급한 열린 GitHub 이슈가 없어요. 세부 정보가 채워진 버그 보고서를 열까요?",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "보고"
 }

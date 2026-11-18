@@ -442,5 +442,11 @@
 	"UNBOUND_SUPPORT_BANNER_ACTION": "サポートフォーラム",
 	"UNBOUND_CRASH_KNOWN_ISSUE": "既知の問題 #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "まだ Discord を更新しないでください",
-	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} では Unbound の一部が動作しません。インストールする前に Unbound の更新を待ってください。"
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} では Unbound の一部が動作しません。インストールする前に Unbound の更新を待ってください。",
+	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "報告済み",
+	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "GitHub の Issue #{number} がこのクラッシュを扱っています。開きますか？",
+	"UNBOUND_CRASH_ISSUE_OPEN": "Issue を開く",
+	"UNBOUND_CRASH_REPORT_TITLE": "このクラッシュを報告しますか？",
+	"UNBOUND_CRASH_REPORT_BODY": "このクラッシュに触れている未解決の GitHub Issue はまだありません。詳細を記入済みのバグ報告を開きますか？",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "報告"
 }

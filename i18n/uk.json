@@ -442,5 +442,11 @@
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Форум підтримки",
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Відома проблема #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Поки не оновлюйте Discord",
-	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} ламає частини Unbound. Дочекайтеся оновлення Unbound, перш ніж встановлювати його."
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} ламає частини Unbound. Дочекайтеся оновлення Unbound, перш ніж встановлювати його.",
+	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Уже повідомлено",
+	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "Задача #{number} на GitHub описує цей збій. Відкрити?",
+	"UNBOUND_CRASH_ISSUE_OPEN": "Відкрити задачу",
+	"UNBOUND_CRASH_REPORT_TITLE": "Повідомити про цей збій?",
+	"UNBOUND_CRASH_REPORT_BODY": "Жодна відкрита задача на GitHub ще не згадує цей збій. Відкрити звіт про помилку із заповненими даними?",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Повідомити"
 }

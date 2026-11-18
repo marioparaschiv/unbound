@@ -131,5 +131,6 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_CRASH_REPORT_THIRD_PARTY: { name: string | number };
 		UNBOUND_SUPPORT_GATE_WAIT: { seconds: string | number };
 		UNBOUND_DISCORD_UPDATE_BREAKS: { version: string | number };
+		UNBOUND_CRASH_ISSUE_FOUND_BODY: { number: string | number };
 	};
 }
