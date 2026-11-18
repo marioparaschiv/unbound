@@ -433,5 +433,6 @@
 	"UNBOUND_SUPPORT_GATE_LATER": "나중에",
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "#chat에 글을 쓰기 전에 안내에 동의해 주세요",
 	"UNBOUND_SUPPORT_BANNER": "도움이 필요하신가요? #chat은 지원용이 아닙니다.",
-	"UNBOUND_SUPPORT_BANNER_ACTION": "지원 포럼"
+	"UNBOUND_SUPPORT_BANNER_ACTION": "지원 포럼",
+	"UNBOUND_CRASH_KNOWN_ISSUE": "알려진 문제 #{number}"
 }

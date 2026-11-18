@@ -433,5 +433,6 @@
 	"UNBOUND_SUPPORT_GATE_LATER": "Не зараз",
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "Прийміть попередження, перш ніж писати в #chat",
 	"UNBOUND_SUPPORT_BANNER": "Потрібна допомога? #chat не для підтримки.",
-	"UNBOUND_SUPPORT_BANNER_ACTION": "Форум підтримки"
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Форум підтримки",
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Відома проблема #{number}"
 }

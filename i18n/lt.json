@@ -433,5 +433,6 @@
 	"UNBOUND_SUPPORT_GATE_LATER": "Ne dabar",
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "Prieš rašydamas į #chat, priimk įspėjimą",
 	"UNBOUND_SUPPORT_BANNER": "Reikia pagalbos? #chat ne pagalbai.",
-	"UNBOUND_SUPPORT_BANNER_ACTION": "Pagalbos forumas"
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Pagalbos forumas",
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Žinoma problema #{number}"
 }

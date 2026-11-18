@@ -433,5 +433,6 @@
 	"UNBOUND_SUPPORT_GATE_LATER": "अभी नहीं",
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "#chat में पोस्ट करने से पहले सूचना स्वीकार करें",
 	"UNBOUND_SUPPORT_BANNER": "मदद चाहिए? #chat सपोर्ट के लिए नहीं है।",
-	"UNBOUND_SUPPORT_BANNER_ACTION": "सपोर्ट फ़ोरम"
+	"UNBOUND_SUPPORT_BANNER_ACTION": "सपोर्ट फ़ोरम",
+	"UNBOUND_CRASH_KNOWN_ISSUE": "ज्ञात समस्या #{number}"
 }

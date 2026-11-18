@@ -433,5 +433,6 @@
 	"UNBOUND_SUPPORT_GATE_LATER": "Ei nyt",
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "Hyväksy ilmoitus ennen kuin kirjoitat kanavalle #chat",
 	"UNBOUND_SUPPORT_BANNER": "Tarvitsetko apua? #chat ei ole tukea varten.",
-	"UNBOUND_SUPPORT_BANNER_ACTION": "Tukifoorumi"
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Tukifoorumi",
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Tunnettu ongelma #{number}"
 }

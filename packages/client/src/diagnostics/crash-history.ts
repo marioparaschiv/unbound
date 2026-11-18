@@ -14,7 +14,20 @@ export type CrashRecord = {
 	addon?: string;
 	origin?: CrashOrigin;
 	reportId?: string;
+	/** The GitHub issue that tracks this crash, when the server filed it there. */
+	issue?: CrashIssueLink;
 };
+
+/** A GitHub issue that tracks a crash. */
+export type CrashIssueLink = { number: number; url: string };
+
+function isIssueLink(value: CrashIssueLink): boolean {
+	return (
+		typeof value === 'object' &&
+		typeof value.number === 'number' &&
+		typeof value.url === 'string'
+	);
+}
 
 function isCrashRecord(value: unknown): value is CrashRecord {
 	if (!value || typeof value !== 'object') {
@@ -27,7 +40,8 @@ function isCrashRecord(value: unknown): value is CrashRecord {
 		typeof record.at === 'number' &&
 		typeof record.kind === 'string' &&
 		typeof record.message === 'string' &&
-		(record.addon === undefined || typeof record.addon === 'string')
+		(record.addon === undefined || typeof record.addon === 'string') &&
+		(record.issue === undefined || isIssueLink(record.issue))
 	);
 }
 
@@ -84,7 +98,7 @@ export async function recordCrash(record: CrashRecord): Promise<void> {
  */
 export async function markCrashReported(
 	at: number,
-	sent: Pick<CrashRecord, 'origin' | 'reportId'>,
+	sent: Pick<CrashRecord, 'origin' | 'reportId' | 'issue'>,
 ): Promise<void> {
 	const records = await readCrashHistory();
 

@@ -433,5 +433,6 @@
 	"UNBOUND_SUPPORT_GATE_LATER": "ไว้ทีหลัง",
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "ยอมรับคำเตือนก่อนโพสต์ใน #chat",
 	"UNBOUND_SUPPORT_BANNER": "ต้องการความช่วยเหลือ? #chat ไม่ใช่ที่ขอความช่วยเหลือ",
-	"UNBOUND_SUPPORT_BANNER_ACTION": "ฟอรัมช่วยเหลือ"
+	"UNBOUND_SUPPORT_BANNER_ACTION": "ฟอรัมช่วยเหลือ",
+	"UNBOUND_CRASH_KNOWN_ISSUE": "ปัญหาที่ทราบแล้ว #{number}"
 }

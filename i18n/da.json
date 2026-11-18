@@ -433,5 +433,6 @@
 	"UNBOUND_SUPPORT_GATE_LATER": "Ikke nu",
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "Accepter meddelelsen, før du skriver i #chat",
 	"UNBOUND_SUPPORT_BANNER": "Brug for hjælp? #chat er ikke til support.",
-	"UNBOUND_SUPPORT_BANNER_ACTION": "Supportforum"
+	"UNBOUND_SUPPORT_BANNER_ACTION": "Supportforum",
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Kendt problem #{number}"
 }
