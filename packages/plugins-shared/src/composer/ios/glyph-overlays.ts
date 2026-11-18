@@ -11,6 +11,17 @@ type BoxedRect = {
 
 type BoxedInset = { value?: BoxedInset; top?: number; left?: number };
 
+const MAX_SEARCH_DEPTH = 60;
+
+function subviewsOf(objc: NativeObjCBridge, view: NativeObjectHandle): NativeObjectHandle[] {
+	'worklet';
+	const subviews = objc.invoke(view, 'subviews', []);
+
+	if (Array.isArray(subviews)) return subviews as NativeObjectHandle[];
+
+	return subviews ? (objc.array(subviews as NativeObjectHandle) as NativeObjectHandle[]) : [];
+}
+
 function insetOf(raw: unknown) {
 	'worklet';
 	const boxed = raw as BoxedInset | null;
@@ -209,6 +220,34 @@ export function positionOverlay(
 }
 
 /**
+ * @description Moves a plugin's overlays back over their runs after the text re-laid out, finding them again by tag in
+ * the order they were placed, since view handles from an earlier UI call can't be reused.
+ * @param objc The Objective-C bridge.
+ * @param textView The composer's text view.
+ * @param tag The plugin's overlay tag.
+ * @param starts Each overlay's run offset, in the order the overlays were added.
+ * @param side The square's side.
+ */
+export function repositionTaggedOverlays(
+	objc: NativeObjCBridge,
+	textView: NativeObjectHandle,
+	tag: number,
+	starts: number[],
+	side: number,
+) {
+	'worklet';
+	const overlays = subviewsOf(objc, textView).filter(
+		(view) => Number(objc.invoke(view, 'tag', [])) === tag,
+	);
+
+	overlays.forEach((view, index) => {
+		const start = starts[index];
+
+		if (start !== undefined) positionOverlay(objc, textView, start, side, view);
+	});
+}
+
+/**
  * @description Loads an image file, animated when it is a GIF and the app ships SDWebImage's animated image.
  * @param objc The Objective-C bridge.
  * @param path The file's absolute path.
@@ -222,4 +261,39 @@ export function loadOverlayImage(objc: NativeObjCBridge, path: string): NativeOb
 		: objc.call(objc.getClass('UIImage')!, 'imageWithContentsOfFile:', path);
 
 	return (image as NativeObjectHandle | null) ?? null;
+}
+
+function viewsOfClass(
+	objc: NativeObjCBridge,
+	view: NativeObjectHandle,
+	className: string,
+	depth: number,
+): NativeObjectHandle[] {
+	'worklet';
+
+	if (objc.className(view) === className) return [view];
+
+	if (depth >= MAX_SEARCH_DEPTH) return [];
+
+	return subviewsOf(objc, view).flatMap((child) =>
+		viewsOfClass(objc, child, className, depth + 1),
+	);
+}
+
+/**
+ * @description Finds the text views of a class in every window, such as the composers on screen, so they can be drawn
+ * again without keeping handles from an earlier UI call.
+ * @param objc The Objective-C bridge.
+ * @param className The text view's class.
+ * @returns The views.
+ */
+export function visibleTextViews(objc: NativeObjCBridge, className: string): NativeObjectHandle[] {
+	'worklet';
+	const application = objc.call(objc.getClass('UIApplication')!, 'sharedApplication');
+	const windows = objc.invoke(application as NativeObjectHandle, 'windows', []);
+	const list = (
+		Array.isArray(windows) ? windows : objc.array(windows as NativeObjectHandle)
+	) as NativeObjectHandle[];
+
+	return list.flatMap((window) => viewsOfClass(objc, window, className, 0));
 }
