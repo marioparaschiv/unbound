@@ -4,6 +4,7 @@ import {
 	placeOverlay,
 	positionOverlay,
 	removeTaggedOverlays,
+	showRun,
 } from '@unbound-plugins/shared/composer/ios/glyph-overlays';
 import { reportWorkletError } from '@unbound-plugins/shared/native/report-worklet-error';
 import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
@@ -17,6 +18,7 @@ const COMPOSER_CLASS = 'DCDChatInputComponentView';
 const SELECTORS = ['textViewDidChange:', 'setText:', 'setAttributedText:', 'layoutSubviews'];
 const OVERLAY_TAG = 0x55454d4a;
 const MAX_EMOJI = 64;
+const MAX_SEARCH_DEPTH = 60;
 
 type ComposerState = {
 	objc: NativeObjCBridge;
@@ -26,8 +28,6 @@ type ComposerState = {
 	/** Each text view's overlays and the runs they cover, by the view's hash, to move after a layout pass. */
 	placed: Map<string, { start: number; view: NativeObjectHandle }[]>;
 	side: number;
-	/** The text views painted, by hash, so stopping can remove their overlays. */
-	views: Map<string, NativeObjectHandle>;
 	images: Map<string, NativeObjectHandle>;
 	/** Downloaded pack images, by URL, as absolute file paths. */
 	files: Map<string, string>;
@@ -93,19 +93,20 @@ function paint(current: ComposerState, textView: NativeObjectHandle) {
 	}
 
 	const side = Math.round(Number(objc.call(font, 'lineHeight')) || 20);
-	const runs = emojiRuns(text)
-		.slice(0, MAX_EMOJI)
-		.flatMap((run) => {
-			const url = packUrl(current.pack, run.surrogates, current.sets);
-			const image = url ? imageFor(current, url) : null;
+	const emoji = emojiRuns(text).slice(0, MAX_EMOJI);
+	const runs = emoji.flatMap((run) => {
+		const url = packUrl(current.pack, run.surrogates, current.sets);
+		const image = url ? imageFor(current, url) : null;
 
-			return image ? [{ ...run, image }] : [];
-		});
+		return image ? [{ ...run, image }] : [];
+	});
 
 	current.updating = true;
 
 	try {
 		removeTaggedOverlays(objc, textView, OVERLAY_TAG);
+
+		for (const run of emoji) showRun(objc, textView, storage, run.start, run.length);
 
 		for (const run of runs) hideRun(objc, storage, run.start, run.length, side, run.length);
 
@@ -124,7 +125,62 @@ function paint(current: ComposerState, textView: NativeObjectHandle) {
 	}
 
 	current.painted.set(key, signature);
-	current.views.set(key, textView);
+}
+
+function subviewsOf(objc: NativeObjCBridge, view: NativeObjectHandle): NativeObjectHandle[] {
+	'worklet';
+	const subviews = objc.invoke(view, 'subviews', []);
+
+	if (Array.isArray(subviews)) return subviews as NativeObjectHandle[];
+
+	return subviews ? (objc.array(subviews as NativeObjectHandle) as NativeObjectHandle[]) : [];
+}
+
+function composersIn(
+	objc: NativeObjCBridge,
+	view: NativeObjectHandle,
+	depth: number,
+): NativeObjectHandle[] {
+	'worklet';
+
+	if (objc.className(view) === COMPOSER_CLASS) return [view];
+
+	if (depth >= MAX_SEARCH_DEPTH) return [];
+
+	return subviewsOf(objc, view).flatMap((child) => composersIn(objc, child, depth + 1));
+}
+
+function visibleComposers(objc: NativeObjCBridge): NativeObjectHandle[] {
+	'worklet';
+	const application = objc.call(objc.getClass('UIApplication')!, 'sharedApplication');
+	const windows = objc.invoke(application as NativeObjectHandle, 'windows', []);
+	const list = (
+		Array.isArray(windows) ? windows : objc.array(windows as NativeObjectHandle)
+	) as NativeObjectHandle[];
+
+	return list.flatMap((window) => composersIn(objc, window, 0));
+}
+
+function clearComposer(objc: NativeObjCBridge, textView: NativeObjectHandle) {
+	'worklet';
+	const storage = objc.call(textView, 'textStorage') as NativeObjectHandle | null;
+	const text = storage ? objc.call(storage, 'string') : null;
+
+	removeTaggedOverlays(objc, textView, OVERLAY_TAG);
+
+	if (!storage || typeof text !== 'string') return;
+
+	for (const run of emojiRuns(text)) showRun(objc, textView, storage, run.start, run.length);
+}
+
+function repaintAll(current: ComposerState) {
+	'worklet';
+
+	try {
+		for (const composer of visibleComposers(current.objc)) paint(current, composer);
+	} catch (error) {
+		reportWorkletError('Emoji Packs', error);
+	}
 }
 
 /**
@@ -144,7 +200,6 @@ export function installComposerPack(scope: NativeUIScope, pack: PackId, coverage
 		painted: new Map(),
 		placed: new Map(),
 		side: 20,
-		views: new Map(),
 		images: new Map(),
 		files: new Map(),
 		wanted: new Set(),
@@ -164,6 +219,12 @@ export function installComposerPack(scope: NativeUIScope, pack: PackId, coverage
 			},
 		});
 	}
+
+	try {
+		for (const composer of visibleComposers(objc)) paint(current, composer);
+	} catch (error) {
+		reportWorkletError('Emoji Packs', error);
+	}
 }
 
 /**
@@ -177,10 +238,14 @@ export function takeComposerImages(files: Record<string, string>): string[] {
 
 	if (!current) return [];
 
+	const arrived = Object.keys(files).some((url) => !current.files.has(url));
+
 	for (const [url, path] of Object.entries(files)) {
 		current.files.set(url, path);
 		current.wanted.delete(url);
 	}
+
+	if (arrived) repaintAll(current);
 
 	return [...current.wanted];
 }
@@ -193,11 +258,14 @@ export function setComposerPack(pack: PackId) {
 	'worklet';
 	const current = holder()[STATE_KEY];
 
-	if (current) current.pack = pack;
+	if (!current) return;
+
+	current.pack = pack;
+	repaintAll(current);
 }
 
 /**
- * @description Stops drawing and removes the overlays from every text view it painted.
+ * @description Stops drawing, removes the overlays from the composers on screen and shows their emoji again.
  */
 export function restoreComposerPack() {
 	'worklet';
@@ -205,8 +273,12 @@ export function restoreComposerPack() {
 
 	if (!current) return;
 
-	for (const view of current.views.values())
-		removeTaggedOverlays(current.objc, view, OVERLAY_TAG);
-
 	holder()[STATE_KEY] = undefined;
+
+	try {
+		for (const composer of visibleComposers(current.objc))
+			clearComposer(current.objc, composer);
+	} catch (error) {
+		reportWorkletError('Emoji Packs', error);
+	}
 }
