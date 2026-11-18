@@ -20,7 +20,15 @@ mock.module('~/settings/unbound', () => ({
 	setSetting: (key: string, value: string | number | boolean) => settings.set(key, value),
 }));
 mock.module('~/native/unbound-native', () => ({ getLoader: () => undefined }));
-mock.module('~/native/fs', () => ({ default: { exists: async () => false } }));
+const files = new Map<string, string>();
+
+mock.module('~/native/fs', () => ({
+	default: {
+		exists: async (path: string) => files.has(path),
+		readFile: async (path: string) => files.get(path) ?? '',
+		writeFile: async (path: string, contents: string) => void files.set(path, contents),
+	},
+}));
 mock.module('~/core/environment', () => ({
 	currentEnvironment: () => ({
 		platform: 'ios',
@@ -66,7 +74,7 @@ mock.module('~/diagnostics/crash-consent', () => ({
 }));
 mock.module('~/toasts/api', () => ({ info: (...args: unknown[]) => toasts.push(args) }));
 
-const { fileRecordedCrash, reportNativeCrash, reportSystemHang } =
+const { fileRecordedCrash, reportCrash, reportNativeCrash, reportSystemHang, retryPendingIssues } =
 	await import('~/diagnostics/crash-reports');
 
 const launch = {
@@ -274,5 +282,43 @@ describe('reportSystemHang', () => {
 		await reportSystemHang(launch);
 
 		expect(sent).toHaveLength(0);
+	});
+});
+
+describe('retryPendingIssues', () => {
+	beforeEach(() => {
+		files.clear();
+		sent.length = 0;
+		routes.length = 0;
+		settings.clear();
+		settings.set('crash-reports', true);
+	});
+
+	test('files a report again on a later launch when GitHub could not open its issue', async () => {
+		answer = () => ({ id: 'stored', origin: 'unbound' });
+
+		await reportCrash({ kind: 'crash', message: 'TypeError: boom' });
+
+		const { readCrashHistory } = await import('~/diagnostics/crash-history');
+
+		expect((await readCrashHistory()).at(-1)).toMatchObject({
+			reportId: 'stored',
+			issuePending: true,
+		});
+
+		issueAnswer = () => ({
+			origin: 'unbound',
+			issue: { number: 12, url: 'https://github.com/o/r/issues/12', created: true },
+		});
+		await retryPendingIssues();
+
+		expect(routes.at(-1)).toEqual({
+			route: 'POST /api/v1/crash-reports/$id/issue',
+			params: { id: 'stored' },
+		});
+		expect((await readCrashHistory()).at(-1)).toMatchObject({
+			issue: { number: 12 },
+			issuePending: false,
+		});
 	});
 });

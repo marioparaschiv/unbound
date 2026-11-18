@@ -19,10 +19,13 @@ export function start() {
 	setRejectionTracker();
 	startAppSession();
 	void import('./breadcrumbs').then(({ startBreadcrumbs }) => startBreadcrumbs());
-	void import('./crash-reports').then(async ({ reportNativeCrash, reportSystemHang }) => {
-		await reportNativeCrash();
-		await reportSystemHang();
-	});
+	void import('./crash-reports').then(
+		async ({ reportNativeCrash, reportSystemHang, retryPendingIssues }) => {
+			await reportNativeCrash();
+			await reportSystemHang();
+			await retryPendingIssues();
+		},
+	);
 
 	if (typeof ErrorUtils === 'undefined') {
 		return;

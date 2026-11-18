@@ -17,6 +17,7 @@ export type CrashRecord = {
 	reportId?: string;
 	/** The GitHub issue that tracks this crash, when the server filed it there. */
 	issue?: CrashIssueLink;
+	issuePending?: boolean;
 };
 
 /** A GitHub issue that tracks a crash. */
@@ -43,6 +44,7 @@ function isCrashRecord(value: unknown): value is CrashRecord {
 		typeof record.message === 'string' &&
 		(record.addon === undefined || typeof record.addon === 'string') &&
 		(record.where === undefined || typeof record.where === 'string') &&
+		(record.issuePending === undefined || typeof record.issuePending === 'boolean') &&
 		(record.issue === undefined || isIssueLink(record.issue))
 	);
 }
@@ -100,7 +102,7 @@ export async function recordCrash(record: CrashRecord): Promise<void> {
  */
 export async function markCrashReported(
 	at: number,
-	sent: Pick<CrashRecord, 'origin' | 'reportId' | 'issue'>,
+	sent: Pick<CrashRecord, 'origin' | 'reportId' | 'issue' | 'issuePending'>,
 ): Promise<void> {
 	const records = await readCrashHistory();
 
