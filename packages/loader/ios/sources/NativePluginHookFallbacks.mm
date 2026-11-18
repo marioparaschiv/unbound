@@ -150,6 +150,18 @@ static const std::vector<FallbackHook> &fallbackHooks()
         fallbackHook<void, CGRect, id>("void", {"struct:CGRect", "object"}),
         fallbackHook<CGPoint, CGPoint, id>("struct:CGPoint", {"struct:CGPoint", "object"}),
         fallbackHook<CGRect, CGRect, id>("struct:CGRect", {"struct:CGRect", "object"}),
+        fallbackHook<void, id, id, double, id, id, id, int64_t>(
+            "void", {"object", "object", "double", "object", "object", "object", "i64"}),
+        fallbackHook<void, id, id, double>("void", {"object", "object", "double"}),
+        fallbackHook<void, id, double, int64_t>("void", {"object", "double", "i64"}),
+        fallbackHook<void, id, double, int8_t>("void", {"object", "double", "i8"}),
+        fallbackHook<void, double, double>("void", {"double", "double"}),
+        fallbackHook<void, double, int8_t>("void", {"double", "i8"}),
+        fallbackHook<void, int64_t, double>("void", {"i64", "double"}),
+        fallbackHook<void, int64_t, int8_t>("void", {"i64", "i8"}),
+        fallbackHook<id, id, double>("object", {"object", "double"}),
+        fallbackHook<double, int64_t>("double", {"i64"}),
+        fallbackHook<int8_t, id, int64_t, id>("i8", {"object", "i64", "object"}),
     };
     return hooks;
 }
