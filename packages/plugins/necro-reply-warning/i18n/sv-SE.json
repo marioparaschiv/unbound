@@ -1,0 +1,8 @@
+{
+	"DAYS": "Varna från så många dagar",
+	"DAYS_SUBTITLE": "Hur gammalt meddelandet måste vara innan du tillfrågas.",
+	"CONFIRM_TITLE": "Svara på ett gammalt meddelande?",
+	"CONFIRM_BODY": "Meddelandet är {days} dagar gammalt. Ett svar pingar avsändaren och lyfter samtalet igen.",
+	"CONFIRM_SEND": "Svara",
+	"CONFIRM_EDIT": "Fortsätt redigera"
+}

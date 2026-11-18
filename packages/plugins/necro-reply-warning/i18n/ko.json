@@ -1,0 +1,8 @@
+{
+	"DAYS": "이 일수부터 경고",
+	"DAYS_SUBTITLE": "물어보기 전 메시지가 얼마나 오래되어야 하는지.",
+	"CONFIRM_TITLE": "오래된 메시지에 답장할까요?",
+	"CONFIRM_BODY": "이 메시지는 {days}일 전 메시지예요. 답장하면 작성자가 멘션되고 대화가 다시 떠올라요.",
+	"CONFIRM_SEND": "답장",
+	"CONFIRM_EDIT": "계속 편집"
+}

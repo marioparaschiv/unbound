@@ -1,0 +1,8 @@
+{
+	"DAYS": "Waarschuwen vanaf zoveel dagen",
+	"DAYS_SUBTITLE": "Hoe oud het bericht moet zijn voordat je het wordt gevraagd.",
+	"CONFIRM_TITLE": "Reageren op een oud bericht?",
+	"CONFIRM_BODY": "Dit bericht is {days} dagen oud. Reageren pingt de afzender en haalt het gesprek weer op.",
+	"CONFIRM_SEND": "Reageren",
+	"CONFIRM_EDIT": "Verder bewerken"
+}

@@ -1,0 +1,8 @@
+{
+	"DAYS": "Varovat od tolika dní",
+	"DAYS_SUBTITLE": "Jak stará musí zpráva být, než se zeptáme.",
+	"CONFIRM_TITLE": "Odpovědět na starou zprávu?",
+	"CONFIRM_BODY": "Tahle zpráva je {days} dní stará. Odpověď označí autora a oživí konverzaci.",
+	"CONFIRM_SEND": "Odpovědět",
+	"CONFIRM_EDIT": "Upravovat dál"
+}

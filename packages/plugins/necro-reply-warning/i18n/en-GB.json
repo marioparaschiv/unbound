@@ -1,0 +1,8 @@
+{
+	"DAYS": "Warn from this many days old",
+	"DAYS_SUBTITLE": "How old the message you reply to must be before you're asked.",
+	"CONFIRM_TITLE": "Reply to an old message?",
+	"CONFIRM_BODY": "This message is {days} days old. Replying pings its author and brings the conversation back up.",
+	"CONFIRM_SEND": "Reply",
+	"CONFIRM_EDIT": "Keep editing"
+}

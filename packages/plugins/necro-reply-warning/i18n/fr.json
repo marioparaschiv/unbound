@@ -1,0 +1,8 @@
+{
+	"DAYS": "Avertir à partir de ce nombre de jours",
+	"DAYS_SUBTITLE": "L'âge du message auquel tu réponds avant qu'on te demande.",
+	"CONFIRM_TITLE": "Répondre à un vieux message ?",
+	"CONFIRM_BODY": "Ce message date de {days} jours. Y répondre mentionne son auteur et relance la conversation.",
+	"CONFIRM_SEND": "Répondre",
+	"CONFIRM_EDIT": "Continuer à modifier"
+}

@@ -1,0 +1,8 @@
+{
+	"DAYS": "Peringatkan mulai sekian hari",
+	"DAYS_SUBTITLE": "Seberapa lama pesan sebelum kamu ditanya.",
+	"CONFIRM_TITLE": "Balas pesan lama?",
+	"CONFIRM_BODY": "Pesan ini berumur {days} hari. Membalas akan mengetag penulisnya dan memunculkan percakapan lagi.",
+	"CONFIRM_SEND": "Balas",
+	"CONFIRM_EDIT": "Lanjut edit"
+}

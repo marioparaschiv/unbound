@@ -1,0 +1,8 @@
+{
+	"DAYS": "Cảnh báo từ số ngày này",
+	"DAYS_SUBTITLE": "Tin nhắn phải cũ bao lâu thì mới hỏi.",
+	"CONFIRM_TITLE": "Trả lời tin nhắn cũ?",
+	"CONFIRM_BODY": "Tin nhắn này đã {days} ngày. Trả lời sẽ nhắc người viết và khơi lại cuộc trò chuyện.",
+	"CONFIRM_SEND": "Trả lời",
+	"CONFIRM_EDIT": "Tiếp tục sửa"
+}

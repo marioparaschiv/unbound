@@ -1,0 +1,8 @@
+{
+	"DAYS": "Avertizează de la atâtea zile",
+	"DAYS_SUBTITLE": "Cât de veche trebuie să fie mesajul înainte de a fi întrebat.",
+	"CONFIRM_TITLE": "Răspunzi la un mesaj vechi?",
+	"CONFIRM_BODY": "Mesajul are {days} zile. Răspunsul îl menționează pe autor și readuce conversația.",
+	"CONFIRM_SEND": "Răspunde",
+	"CONFIRM_EDIT": "Continuă editarea"
+}

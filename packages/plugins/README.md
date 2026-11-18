@@ -1,6 +1,6 @@
 # Plugins
 
-207 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+208 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -131,6 +131,7 @@
 - <img src="../../assets/plugins/readme-icons/play-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Music Previews](https://unbound.rip/addons/unbound.music-previews): Plays 30-second previews of Spotify, Apple Music, Deezer and Tidal links right in their embeds, like desktop.
 - <img src="../../assets/plugins/readme-icons/music-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Music Rich Presence](https://unbound.rip/addons/unbound.music-rich-presence): Shows what you are scrobbling on Last.fm or ListenBrainz as your Discord activity.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Mutual Group DMs](https://unbound.rip/addons/unbound.mutual-group-dms): Shows the group DMs you share with someone on their profile, and opens them from there.
+- <img src="../../assets/plugins/readme-icons/hourglass-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Necro Reply Warning](https://unbound.rip/addons/unbound.necro-reply-warning): Asks before you reply to a message older than a month, so you don't revive a long-dead conversation by accident.
 - <img src="../../assets/plugins/readme-icons/bell-icon.svg" width="20" height="20" align="absmiddle" alt=""> [New Guild Settings](https://unbound.rip/addons/unbound.new-guild-settings): Mutes new servers and applies your notification and channel defaults as soon as you join them.
 - <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [New Member Sprout](https://unbound.rip/addons/unbound.new-member-sprout): Shows desktop's new member sprout beside people who joined the server in the last week, with its tooltip.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [No Image Mosaic](https://unbound.rip/addons/unbound.no-image-mosaic): Shows each image of a message on its own row at full size, instead of cropped into a grid.

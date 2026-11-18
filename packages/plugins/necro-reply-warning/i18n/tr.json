@@ -1,0 +1,8 @@
+{
+	"DAYS": "Bu kadar günden itibaren uyar",
+	"DAYS_SUBTITLE": "Sormadan önce mesajın ne kadar eski olması gerektiği.",
+	"CONFIRM_TITLE": "Eski bir mesaja yanıt verilsin mi?",
+	"CONFIRM_BODY": "Bu mesaj {days} günlük. Yanıt vermek yazarını etiketler ve sohbeti yeniden canlandırır.",
+	"CONFIRM_SEND": "Yanıtla",
+	"CONFIRM_EDIT": "Düzenlemeye devam et"
+}

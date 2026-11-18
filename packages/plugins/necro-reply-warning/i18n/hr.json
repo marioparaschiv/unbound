@@ -1,0 +1,8 @@
+{
+	"DAYS": "Upozori od toliko dana",
+	"DAYS_SUBTITLE": "Koliko poruka mora biti stara prije pitanja.",
+	"CONFIRM_TITLE": "Odgovoriti na staru poruku?",
+	"CONFIRM_BODY": "Ova poruka je stara {days} dana. Odgovor spominje autora i vraća razgovor.",
+	"CONFIRM_SEND": "Odgovori",
+	"CONFIRM_EDIT": "Nastavi uređivati"
+}
