@@ -17,6 +17,9 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_NO_ADDONS_BODY: { type: string | number };
 		UNBOUND_NO_ENABLED_ADDONS: { type: string | number };
 		UNBOUND_NO_DISABLED_ADDONS: { type: string | number };
+		UNBOUND_INSTALL_REVIEW_TITLE: { name: string | number };
+		UNBOUND_INSTALL_REVIEW_BODY: { name: string | number; uses: string | number };
+		UNBOUND_INSTALL_REVIEW_HOSTS: { hosts: string | number };
 		UNBOUND_ONLY_ON_PLATFORM: { platform: string | number };
 		UNBOUND_ONLY_ON_PLATFORM_DESC: { name: string | number; platform: string | number };
 		UNBOUND_UPDATES_CHECKED: { date: string | number };

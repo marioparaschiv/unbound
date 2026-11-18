@@ -2,6 +2,7 @@ import type { ListedAddon } from '@unbound-app/contracts/addons';
 import { createLogger } from '@unbound-app/logger';
 
 import type { CatalogQuery, MarketplaceListing } from '~/marketplace/catalog';
+import { reviewInstall } from '~/marketplace/install-review';
 import { pickInstallVersion } from '~/addons/versions';
 import { queryCatalog } from '~/marketplace/catalog';
 import MarketplaceStore from '~/marketplace/state';
@@ -82,6 +83,12 @@ export async function install(id: string): Promise<boolean> {
 	});
 
 	if (!picked || picked.type === 'incompatible') {
+		return false;
+	}
+
+	if (
+		!(await reviewInstall(listed.name ?? picked.version.manifest.name, picked.version.manifest))
+	) {
 		return false;
 	}
 
