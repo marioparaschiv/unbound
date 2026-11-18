@@ -1,0 +1,7 @@
+{
+	"MINOR": "รวมเหตุขัดข้องเล็กน้อย",
+	"MINOR_SUBTITLE": "แสดงเหตุขัดข้องเล็กน้อยด้วย ไม่ใช่แค่ล่มใหญ่",
+	"OUTAGE_TITLE": "Discord กำลังมีปัญหา",
+	"OUTAGE_BODY": "{name} ({status})",
+	"OUTAGE_DETAILS": "รายละเอียด"
+}

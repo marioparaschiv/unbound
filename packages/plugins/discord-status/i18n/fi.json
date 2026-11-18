@@ -1,0 +1,7 @@
+{
+	"MINOR": "Myös pienet häiriöt",
+	"MINOR_SUBTITLE": "Näytä myös pienet häiriöt, ei vain suuria katkoja.",
+	"OUTAGE_TITLE": "Discordissa on ongelmia",
+	"OUTAGE_BODY": "{name} ({status})",
+	"OUTAGE_DETAILS": "Lisätiedot"
+}

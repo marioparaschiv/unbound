@@ -1,0 +1,7 @@
+{
+	"MINOR": "Kisebb incidensek is",
+	"MINOR_SUBTITLE": "A kisebb incidenseket is mutassa, ne csak a nagy leállásokat.",
+	"OUTAGE_TITLE": "A Discordnál problémák vannak",
+	"OUTAGE_BODY": "{name} ({status})",
+	"OUTAGE_DETAILS": "Részletek"
+}

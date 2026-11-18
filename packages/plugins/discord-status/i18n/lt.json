@@ -1,0 +1,7 @@
+{
+	"MINOR": "Ir smulkūs incidentai",
+	"MINOR_SUBTITLE": "Rodyti ir smulkius incidentus, ne tik didelius sutrikimus.",
+	"OUTAGE_TITLE": "Discord turi problemų",
+	"OUTAGE_BODY": "{name} ({status})",
+	"OUTAGE_DETAILS": "Išsamiau"
+}

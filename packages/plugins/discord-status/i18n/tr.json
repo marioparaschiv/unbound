@@ -1,0 +1,7 @@
+{
+	"MINOR": "Küçük olaylar da",
+	"MINOR_SUBTITLE": "Yalnızca büyük kesintileri değil, küçük olayları da göster.",
+	"OUTAGE_TITLE": "Discord'da sorun var",
+	"OUTAGE_BODY": "{name} ({status})",
+	"OUTAGE_DETAILS": "Ayrıntılar"
+}

@@ -1,0 +1,7 @@
+{
+	"MINOR": "También incidentes menores",
+	"MINOR_SUBTITLE": "Mostrar también incidentes pequeños, no solo caídas graves.",
+	"OUTAGE_TITLE": "Discord tiene problemas",
+	"OUTAGE_BODY": "{name} ({status})",
+	"OUTAGE_DETAILS": "Detalles"
+}

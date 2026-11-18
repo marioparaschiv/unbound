@@ -1,0 +1,7 @@
+{
+	"MINOR": "사소한 장애도",
+	"MINOR_SUBTITLE": "큰 장애뿐 아니라 사소한 장애도 표시해요.",
+	"OUTAGE_TITLE": "Discord에 문제가 있어요",
+	"OUTAGE_BODY": "{name} ({status})",
+	"OUTAGE_DETAILS": "자세히"
+}

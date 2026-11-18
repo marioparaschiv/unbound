@@ -1,0 +1,7 @@
+{
+	"MINOR": "軽微な障害も",
+	"MINOR_SUBTITLE": "大規模な障害だけでなく、軽微な障害も表示します。",
+	"OUTAGE_TITLE": "Discord で障害が発生しています",
+	"OUTAGE_BODY": "{name} ({status})",
+	"OUTAGE_DETAILS": "詳細"
+}
