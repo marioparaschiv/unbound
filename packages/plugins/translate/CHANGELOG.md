@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0] - 2026-11-18
+
+### Added
+
+- Translate without connecting Discord: pick Google Translate or MyMemory under Translation Service. Automatic, the default, uses Unbound's service once you're signed in and Google until then, falling back to MyMemory when Google fails.
+
 ## [1.2.2] - 2026-11-14
 
 ### Changed

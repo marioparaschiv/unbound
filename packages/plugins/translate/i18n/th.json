@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "การรีเฟรชการยืนยันตัวตนส่งข้อมูลที่ไม่ถูกต้องกลับมา",
 	"TRANSLATE_FAILED": "แปลไม่สำเร็จ ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "การแปลล้มเหลว",
-	"TRANSLATE_INVALID_PAYLOAD": "API การแปลส่งข้อมูลที่ไม่คาดคิดกลับมา"
+	"TRANSLATE_INVALID_PAYLOAD": "API การแปลส่งข้อมูลที่ไม่คาดคิดกลับมา",
+	"SERVICE": "บริการแปลภาษา",
+	"SERVICE_AUTO": "อัตโนมัติ",
+	"SERVICE_AUTO_SUBTITLE": "บริการของ Unbound เมื่อเชื่อมต่อ Discord แล้ว ก่อนหน้านั้นใช้ Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "ต้องใช้บัญชี Discord ของคุณ",
+	"SERVICE_NO_ACCOUNT": "ใช้ได้โดยไม่ต้องมีบัญชี",
+	"SERVICE_FAILED": "บริการแปลภาษาล้มเหลว (HTTP {status})",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "驗證重新整理傳回了無效的資料。",
 	"TRANSLATE_FAILED": "翻譯失敗（{status}）：{reason}",
 	"TRANSLATE_FAILED_REASON": "翻譯失敗",
-	"TRANSLATE_INVALID_PAYLOAD": "翻譯 API 傳回了非預期的資料。"
+	"TRANSLATE_INVALID_PAYLOAD": "翻譯 API 傳回了非預期的資料。",
+	"SERVICE": "翻譯服務",
+	"SERVICE_AUTO": "自動",
+	"SERVICE_AUTO_SUBTITLE": "連結 Discord 後使用 Unbound 的服務，在此之前使用 Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "需要你的 Discord 帳號",
+	"SERVICE_NO_ACCOUNT": "不需帳號即可使用",
+	"SERVICE_FAILED": "翻譯服務失敗（HTTP {status}）。",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

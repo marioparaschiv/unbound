@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "Penyegaran autentikasi mengembalikan data yang tidak valid.",
 	"TRANSLATE_FAILED": "Terjemahan gagal ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "terjemahan gagal",
-	"TRANSLATE_INVALID_PAYLOAD": "API terjemahan mengembalikan data yang tidak terduga."
+	"TRANSLATE_INVALID_PAYLOAD": "API terjemahan mengembalikan data yang tidak terduga.",
+	"SERVICE": "Layanan terjemahan",
+	"SERVICE_AUTO": "Otomatis",
+	"SERVICE_AUTO_SUBTITLE": "Layanan Unbound setelah kamu menghubungkan Discord, Google sampai saat itu",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Butuh akun Discord kamu",
+	"SERVICE_NO_ACCOUNT": "Bisa tanpa akun",
+	"SERVICE_FAILED": "Layanan terjemahan gagal (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "Oturum yenileme geçersiz bir veri döndürdü.",
 	"TRANSLATE_FAILED": "Çeviri başarısız oldu ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "çeviri başarısız oldu",
-	"TRANSLATE_INVALID_PAYLOAD": "Çeviri API’si beklenmedik bir veri döndürdü."
+	"TRANSLATE_INVALID_PAYLOAD": "Çeviri API’si beklenmedik bir veri döndürdü.",
+	"SERVICE": "Çeviri hizmeti",
+	"SERVICE_AUTO": "Otomatik",
+	"SERVICE_AUTO_SUBTITLE": "Discord'u bağlayınca Unbound'un hizmeti, o zamana kadar Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Discord hesabın gerekir",
+	"SERVICE_NO_ACCOUNT": "Hesap olmadan çalışır",
+	"SERVICE_FAILED": "Çeviri hizmeti başarısız oldu (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

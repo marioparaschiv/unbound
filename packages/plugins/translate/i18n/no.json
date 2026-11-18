@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "Fornying av autentisering returnerte ugyldige data.",
 	"TRANSLATE_FAILED": "Oversettelse mislyktes ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "oversettelse mislyktes",
-	"TRANSLATE_INVALID_PAYLOAD": "Oversettelses-API-et returnerte uventede data."
+	"TRANSLATE_INVALID_PAYLOAD": "Oversettelses-API-et returnerte uventede data.",
+	"SERVICE": "Oversettelsestjeneste",
+	"SERVICE_AUTO": "Automatisk",
+	"SERVICE_AUTO_SUBTITLE": "Unbounds tjeneste når du kobler til Discord, Google til da",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Trenger Discord-kontoen din",
+	"SERVICE_NO_ACCOUNT": "Virker uten konto",
+	"SERVICE_FAILED": "Oversettelsestjenesten mislyktes (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

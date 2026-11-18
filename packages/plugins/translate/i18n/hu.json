@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "A hitelesítés frissítése érvénytelen adatokat adott vissza.",
 	"TRANSLATE_FAILED": "A fordítás sikertelen ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "sikertelen fordítás",
-	"TRANSLATE_INVALID_PAYLOAD": "A fordító API váratlan adatokat adott vissza."
+	"TRANSLATE_INVALID_PAYLOAD": "A fordító API váratlan adatokat adott vissza.",
+	"SERVICE": "Fordítószolgáltatás",
+	"SERVICE_AUTO": "Automatikus",
+	"SERVICE_AUTO_SUBTITLE": "Az Unbound szolgáltatása a Discord összekapcsolása után, addig a Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Kell hozzá a Discord-fiókod",
+	"SERVICE_NO_ACCOUNT": "Fiók nélkül is működik",
+	"SERVICE_FAILED": "A fordítószolgáltatás hibát adott (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

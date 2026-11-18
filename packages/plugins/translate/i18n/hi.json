@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "ऑथ रिफ़्रेश से अमान्य डेटा मिला।",
 	"TRANSLATE_FAILED": "अनुवाद नहीं हो सका ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "अनुवाद नहीं हो सका",
-	"TRANSLATE_INVALID_PAYLOAD": "अनुवाद API से अनपेक्षित डेटा मिला।"
+	"TRANSLATE_INVALID_PAYLOAD": "अनुवाद API से अनपेक्षित डेटा मिला।",
+	"SERVICE": "अनुवाद सेवा",
+	"SERVICE_AUTO": "स्वचालित",
+	"SERVICE_AUTO_SUBTITLE": "Discord जोड़ने के बाद Unbound की सेवा, तब तक Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "आपके Discord खाते की ज़रूरत है",
+	"SERVICE_NO_ACCOUNT": "बिना खाते के काम करती है",
+	"SERVICE_FAILED": "अनुवाद सेवा विफल रही (HTTP {status})।",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

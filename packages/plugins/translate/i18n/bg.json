@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "Опресняването на удостоверяването върна невалидни данни.",
 	"TRANSLATE_FAILED": "Неуспешен превод ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "преводът е неуспешен",
-	"TRANSLATE_INVALID_PAYLOAD": "API за превод върна неочаквани данни."
+	"TRANSLATE_INVALID_PAYLOAD": "API за превод върна неочаквани данни.",
+	"SERVICE": "Услуга за превод",
+	"SERVICE_AUTO": "Автоматично",
+	"SERVICE_AUTO_SUBTITLE": "Услугата на Unbound след свързване на Discord, дотогава Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Нужен е профилът ти в Discord",
+	"SERVICE_NO_ACCOUNT": "Работи без профил",
+	"SERVICE_FAILED": "Услугата за превод се провали (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

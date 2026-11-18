@@ -2,6 +2,16 @@ import { defineSettings, setting } from '@unbound-app/settings/schema';
 
 // The panel is custom, since the language pickers search a list; every setting is stored and typed only.
 export default defineSettings({
+	service: setting.choice({
+		default: 'auto',
+		hidden: true,
+		options: {
+			auto: 'SERVICE_AUTO',
+			unbound: 'SERVICE_UNBOUND',
+			google: 'SERVICE_GOOGLE',
+			mymemory: 'SERVICE_MYMEMORY',
+		},
+	}),
 	sourceLanguage: setting.string({ default: 'auto', hidden: true }),
 	targetLanguage: setting.string({ default: 'en', hidden: true }),
 	display: setting.choice({

@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "Vernieuwen van autorisatie gaf een ongeldige payload terug.",
 	"TRANSLATE_FAILED": "Vertalen mislukt ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "vertaling mislukt",
-	"TRANSLATE_INVALID_PAYLOAD": "De vertaal-API gaf een onverwachte payload terug."
+	"TRANSLATE_INVALID_PAYLOAD": "De vertaal-API gaf een onverwachte payload terug.",
+	"SERVICE": "Vertaaldienst",
+	"SERVICE_AUTO": "Automatisch",
+	"SERVICE_AUTO_SUBTITLE": "De dienst van Unbound zodra je Discord koppelt, tot dan Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Heeft je Discord-account nodig",
+	"SERVICE_NO_ACCOUNT": "Werkt zonder account",
+	"SERVICE_FAILED": "De vertaaldienst is mislukt (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }
