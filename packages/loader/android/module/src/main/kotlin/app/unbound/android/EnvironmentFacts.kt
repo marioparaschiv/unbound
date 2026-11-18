@@ -8,12 +8,18 @@ import android.os.Build
 import android.os.PowerManager
 import android.os.Process
 import android.os.UserManager
+import android.provider.Settings
+import android.text.TextUtils
+import android.view.View
+import android.view.WindowManager
 import android.system.Os
 import android.system.OsConstants
 import android.webkit.WebView
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 import java.security.MessageDigest
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
@@ -69,6 +75,11 @@ object EnvironmentFacts {
     private const val WAYDROID_PROPERTY = "waydroid.tools_version"
     private const val ONE_UI_MAJOR = 10_000
     private const val ONE_UI_MINOR = 100
+    private const val NATIVE_BRIDGE_PROPERTY = "ro.dalvik.vm.native.bridge"
+    private const val ADOPTABLE_STORAGE = "/mnt/expand/"
+    private const val FONT_WEIGHT_ADJUSTMENT = "font_weight_adjustment"
+    private const val HARMONY_BUILD_CLASS = "com.huawei.system.BuildEx"
+    private const val HARMONY_BRAND = "harmony"
 
     @JvmStatic
     fun collect(): String = runCatching {
@@ -99,6 +110,34 @@ object EnvironmentFacts {
         .put("host", hostPlatform(context))
         .put("skin", vendorSkin())
         .put("background", background(context))
+        .put("abiBridge", property(NATIVE_BRIDGE_PROPERTY) ?: "")
+        .put("lowRam", context.getSystemService(ActivityManager::class.java)?.isLowRamDevice == true)
+        .put("harmony", isHarmonyOS())
+        .put("adoptable", context.applicationInfo.sourceDir?.startsWith(ADOPTABLE_STORAGE) == true)
+        .put("refreshRate", refreshRate(context))
+        .put("boldText", isBoldText(context))
+        .put("locale", localeFacts())
+
+    private fun isHarmonyOS(): Boolean = runCatching {
+        Class.forName(HARMONY_BUILD_CLASS).getMethod("getOsBrand").invoke(null) == HARMONY_BRAND
+    }.getOrDefault(false)
+
+    @Suppress("DEPRECATION")
+    private fun refreshRate(context: Context): Int = runCatching {
+        context.getSystemService(WindowManager::class.java)?.defaultDisplay?.refreshRate?.toInt() ?: 0
+    }.getOrDefault(0)
+
+    private fun isBoldText(context: Context): Boolean = runCatching {
+        Build.VERSION.SDK_INT >= 31 && Settings.Secure.getInt(context.contentResolver, FONT_WEIGHT_ADJUSTMENT, 0) > 0
+    }.getOrDefault(false)
+
+    private fun localeFacts(): JSONObject = runCatching {
+        val locale = Locale.getDefault()
+        JSONObject()
+            .put("calendar", android.icu.util.Calendar.getInstance(locale).type)
+            .put("nonLatinDigits", DecimalFormatSymbols.getInstance(locale).zeroDigit != '0')
+            .put("rtl", TextUtils.getLayoutDirectionFromLocale(locale) == View.LAYOUT_DIRECTION_RTL)
+    }.getOrDefault(JSONObject())
 
     private fun signingCertificate(context: Context): X509Certificate? = runCatching {
         val info = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_SIGNING_CERTIFICATES)

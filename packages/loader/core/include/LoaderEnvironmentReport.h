@@ -7,7 +7,21 @@
 
 namespace loader::environment_report {
 
+struct LocaleFacts {
+    std::string calendar;
+    bool nonLatinDigits = false;
+    bool rightToLeft    = false;
+};
+
 struct AppleDeviceFacts {
+    std::string modelEdit;
+    std::string jailbreakVersion;
+    bool iOSAppOnVision         = false;
+    bool sideStoreVPN           = false;
+    bool liveContainerMultitask = false;
+    int refreshRate             = 0;
+    bool boldText               = false;
+    LocaleFacts locale;
     bool lockdownMode     = false;
     bool iPhoneAppOnIPad  = false;
     bool iOSAppOnMac      = false;
@@ -30,6 +44,13 @@ struct AndroidDeviceFacts {
     bool batteryOptimized     = false;
     bool backgroundRestricted = false;
     int standbyBucket         = 0;
+    std::string abiBridge;
+    bool lowRam           = false;
+    bool harmonyOS        = false;
+    bool adoptableStorage = false;
+    int refreshRate       = 0;
+    bool boldText         = false;
+    LocaleFacts locale;
 };
 
 struct HttpsCheck {
@@ -39,6 +60,8 @@ struct HttpsCheck {
 };
 
 bool isBetaBuild(const std::string &build);
+std::vector<std::string> localeMarkers(const LocaleFacts &facts);
+std::vector<std::string> displayMarkers(int refreshRate, bool boldText);
 std::vector<std::string> appleMarkers(const AppleDeviceFacts &facts);
 std::vector<std::string> androidMarkers(const AndroidDeviceFacts &facts);
 nlohmann::json httpsVerdict(const HttpsCheck &check);

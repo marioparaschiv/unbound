@@ -65,9 +65,77 @@ bool isBetaBuild(const std::string &build)
            && std::islower(static_cast<unsigned char>(rest.back()));
 }
 
+std::vector<std::string> localeMarkers(const LocaleFacts &facts)
+{
+    std::vector<std::string> markers;
+    if (!facts.calendar.empty() && facts.calendar != "gregorian")
+    {
+        markers.push_back(facts.calendar + " calendar");
+    }
+
+    if (facts.nonLatinDigits)
+    {
+        markers.emplace_back("non-Latin digits");
+    }
+
+    if (facts.rightToLeft)
+    {
+        markers.emplace_back("right-to-left language");
+    }
+
+    return markers;
+}
+
+std::vector<std::string> displayMarkers(int refreshRate, bool boldText)
+{
+    constexpr int kUsualRefreshRate = 60;
+    std::vector<std::string> markers;
+    if (refreshRate > kUsualRefreshRate)
+    {
+        markers.push_back(std::to_string(refreshRate) + " Hz");
+    }
+
+    if (boldText)
+    {
+        markers.emplace_back("bold text");
+    }
+
+    return markers;
+}
+
+static void append(std::vector<std::string> &markers, const std::vector<std::string> &more)
+{
+    markers.insert(markers.end(), more.begin(), more.end());
+}
+
 std::vector<std::string> appleMarkers(const AppleDeviceFacts &facts)
 {
     std::vector<std::string> markers;
+    if (!facts.modelEdit.empty())
+    {
+        markers.push_back(facts.modelEdit);
+    }
+
+    if (!facts.jailbreakVersion.empty())
+    {
+        markers.push_back(facts.jailbreakVersion);
+    }
+
+    if (facts.iOSAppOnVision)
+    {
+        markers.emplace_back("iPhone app on Vision Pro");
+    }
+
+    if (facts.sideStoreVPN)
+    {
+        markers.emplace_back("SideStore pairing VPN");
+    }
+
+    if (facts.liveContainerMultitask)
+    {
+        markers.emplace_back("LiveContainer multitasking");
+    }
+
     if (facts.lockdownMode)
     {
         markers.emplace_back("Lockdown Mode");
@@ -107,6 +175,8 @@ std::vector<std::string> appleMarkers(const AppleDeviceFacts &facts)
         markers.emplace_back("AppSync Unified");
     }
 
+    append(markers, displayMarkers(facts.refreshRate, facts.boldText));
+    append(markers, localeMarkers(facts.locale));
     return markers;
 }
 
@@ -197,6 +267,28 @@ std::vector<std::string> androidMarkers(const AndroidDeviceFacts &facts)
     }
 
     markers.insert(markers.end(), background.begin(), background.end());
+    if (!facts.abiBridge.empty() && facts.abiBridge != "0")
+    {
+        markers.push_back("ABI translation (" + facts.abiBridge + ")");
+    }
+
+    if (facts.lowRam)
+    {
+        markers.emplace_back("low-RAM device");
+    }
+
+    if (facts.harmonyOS)
+    {
+        markers.emplace_back("HarmonyOS");
+    }
+
+    if (facts.adoptableStorage)
+    {
+        markers.emplace_back("installed on adoptable storage");
+    }
+
+    append(markers, displayMarkers(facts.refreshRate, facts.boldText));
+    append(markers, localeMarkers(facts.locale));
     return markers;
 }
 
