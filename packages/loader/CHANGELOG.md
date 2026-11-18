@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.10.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.9.0...loader-v1.10.0) (2026-11-18)
+
+
+### Features
+
+* **loader:** add the JS stack to Android main thread stalls ([#1781](https://github.com/marioparaschiv/unbound/issues/1781)) ([b503b49](https://github.com/marioparaschiv/unbound/commit/b503b49913e9c434ab020d7bec9501f1824d248c))
+* **loader:** flag JIT, attached debuggers, TrollFools and AppSync ([#1812](https://github.com/marioparaschiv/unbound/issues/1812)) ([3eb94f1](https://github.com/marioparaschiv/unbound/commit/3eb94f19fe4dbbeeb373b7415452716d31cb207b))
+* **loader:** keep crash attribution in front of later handlers ([#1780](https://github.com/marioparaschiv/unbound/issues/1780)) ([576db95](https://github.com/marioparaschiv/unbound/commit/576db954ed7c0c0460b640dc3a116e39d2661400))
+* **loader:** let Java hooks fire from inlined callers ([#1784](https://github.com/marioparaschiv/unbound/issues/1784)) ([ba642f0](https://github.com/marioparaschiv/unbound/commit/ba642f0ead47deef5914904364d1a40f86ec04fe))
+* **loader:** name AltStore, SideStore and stolen certificates ([#1769](https://github.com/marioparaschiv/unbound/issues/1769)) ([8efa291](https://github.com/marioparaschiv/unbound/commit/8efa291c609ee8117804a1180666b4cd26689a6f))
+* **loader:** name NPatch, PC hosts and background limits ([#1773](https://github.com/marioparaschiv/unbound/issues/1773)) ([16f89bd](https://github.com/marioparaschiv/unbound/commit/16f89bd3b1d25175213117a4c13fdc29fa3093fb))
+* **loader:** name the plugin whose hook a Java crash went through ([#1782](https://github.com/marioparaschiv/unbound/issues/1782)) ([95aaccb](https://github.com/marioparaschiv/unbound/commit/95aaccbad55ab829ddbd6436241c27482bdb0451))
+* **loader:** name virtual app hosts, more emulators and ROMs ([#1811](https://github.com/marioparaschiv/unbound/issues/1811)) ([4504b1d](https://github.com/marioparaschiv/unbound/commit/4504b1d5278c5595310df519f23843b62ad69ac7))
+* **loader:** record the plugin's native call a crash happened in ([#1814](https://github.com/marioparaschiv/unbound/issues/1814)) ([2da91d2](https://github.com/marioparaschiv/unbound/commit/2da91d290fda2a058ed18fea357c9ee4efaa816c))
+* **loader:** report methods two plugins rewrite ([#1778](https://github.com/marioparaschiv/unbound/issues/1778)) ([e480eb7](https://github.com/marioparaschiv/unbound/commit/e480eb75fe76f550641c69a485d9596205f4b542))
+
+
+### Bug Fixes
+
+* **loader:** bind hooks.deoptimize to the Java hooks capability ([#1785](https://github.com/marioparaschiv/unbound/issues/1785)) ([51837b1](https://github.com/marioparaschiv/unbound/commit/51837b1bf36a0f1d9256ae1a1b2b4ad3bac96032))
+* **loader:** stop the compat scan flagging names that aren't classes ([#1786](https://github.com/marioparaschiv/unbound/issues/1786)) ([ec4b09d](https://github.com/marioparaschiv/unbound/commit/ec4b09d7bff94952657dbafe870c702c34cff3a2))
+
 ## [1.9.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.8.1...loader-v1.9.0) (2026-11-17)
 
 
