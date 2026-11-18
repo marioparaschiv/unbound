@@ -8,10 +8,14 @@
 namespace loader::environment_report {
 
 struct AppleDeviceFacts {
-    bool lockdownMode    = false;
-    bool iPhoneAppOnIPad = false;
-    bool iOSAppOnMac     = false;
-    bool managedApp      = false;
+    bool lockdownMode     = false;
+    bool iPhoneAppOnIPad  = false;
+    bool iOSAppOnMac      = false;
+    bool managedApp       = false;
+    bool jitEnabled       = false;
+    bool debuggerAttached = false;
+    bool trollFools       = false;
+    bool appSync          = false;
 };
 
 struct AndroidDeviceFacts {

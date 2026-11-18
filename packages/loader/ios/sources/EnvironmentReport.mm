@@ -4,8 +4,10 @@
 #import <Security/Security.h>
 #import <UIKit/UIKit.h>
 #include <sys/sysctl.h>
+#include <unistd.h>
 
 #import "CoreConversions.h"
+#include "JailbreakDetection.h"
 #include "LoaderBinaryAnatomy.h"
 #include "LoaderEnvironmentReport.h"
 #import "Utilities.h"
@@ -77,14 +79,65 @@ static bool isManagedApp()
     return [configuration isKindOfClass:NSDictionary.class] && [configuration count] > 0;
 }
 
+static bool isJITEnabled()
+{
+    uint32_t flags = 0;
+    return csops(getpid(), 0, &flags, sizeof(flags)) == 0 && (flags & CS_DEBUGGED) != 0;
+}
+
+static bool isDebuggerAttached()
+{
+    struct kinfo_proc info = {};
+    size_t size            = sizeof(info);
+    int name[]             = {CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()};
+    return sysctl(name, 4, &info, &size, nullptr, 0) == 0 && (info.kp_proc.p_flag & P_TRACED) != 0;
+}
+
+static bool hasTrollFoolsBackup()
+{
+    NSString *bundle           = NSBundle.mainBundle.bundlePath;
+    NSArray<NSString *> *names = [NSFileManager.defaultManager contentsOfDirectoryAtPath:bundle
+                                                                                   error:nil];
+    for (NSString *name in names)
+    {
+        if ([name hasSuffix:@".troll-fools.bak"])
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool hasAppSyncUnified()
+{
+    NSArray<NSString *> *roots = @[ @"", @"/var/jb" ];
+    for (NSString *root in roots)
+    {
+        NSString *path =
+            [root stringByAppendingString:
+                      @"/Library/MobileSubstrate/DynamicLibraries/AppSyncUnified-installd.dylib"];
+        if ([NSFileManager.defaultManager fileExistsAtPath:path])
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static report::AppleDeviceFacts deviceFacts()
 {
     report::AppleDeviceFacts facts;
     facts.lockdownMode = [NSUserDefaults.standardUserDefaults boolForKey:@"LDMGlobalEnabled"];
     facts.iPhoneAppOnIPad =
         UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad && !supportsIPad();
-    facts.iOSAppOnMac = NSProcessInfo.processInfo.isiOSAppOnMac;
-    facts.managedApp  = isManagedApp();
+    facts.iOSAppOnMac      = NSProcessInfo.processInfo.isiOSAppOnMac;
+    facts.managedApp       = isManagedApp();
+    facts.jitEnabled       = detectedJailbreak().empty() && isJITEnabled();
+    facts.debuggerAttached = isDebuggerAttached();
+    facts.trollFools       = hasTrollFoolsBackup();
+    facts.appSync          = hasAppSyncUnified();
     return facts;
 }
 

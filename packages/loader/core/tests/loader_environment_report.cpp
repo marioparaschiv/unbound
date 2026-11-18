@@ -24,6 +24,14 @@ void listsDeviceMarkers()
     apple.managedApp      = true;
     assert((report::appleMarkers(apple)
             == std::vector<std::string>{"Lockdown Mode", "iPhone app on iPad", "MDM-managed"}));
+    apple.jitEnabled = true;
+    apple.trollFools = true;
+    apple.appSync    = true;
+    assert((report::appleMarkers(apple)
+            == std::vector<std::string>{"Lockdown Mode", "iPhone app on iPad", "MDM-managed",
+                                        "JIT enabled", "TrollFools injection", "AppSync Unified"}));
+    apple.debuggerAttached = true;
+    assert(report::appleMarkers(apple)[3] == "debugger attached");
 
     report::AndroidDeviceFacts android;
     android.selinuxEnforcing  = false;

@@ -88,6 +88,25 @@ std::vector<std::string> appleMarkers(const AppleDeviceFacts &facts)
         markers.emplace_back("MDM-managed");
     }
 
+    if (facts.debuggerAttached)
+    {
+        markers.emplace_back("debugger attached");
+    }
+    else if (facts.jitEnabled)
+    {
+        markers.emplace_back("JIT enabled");
+    }
+
+    if (facts.trollFools)
+    {
+        markers.emplace_back("TrollFools injection");
+    }
+
+    if (facts.appSync)
+    {
+        markers.emplace_back("AppSync Unified");
+    }
+
     return markers;
 }
 
