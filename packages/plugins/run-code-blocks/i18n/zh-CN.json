@@ -1,0 +1,8 @@
+{
+	"RUN": "运行 {language} 代码",
+	"RUNNING": "正在运行 {language}…",
+	"OUTPUT_TITLE": "{language} · 退出码 {code}",
+	"OUTPUT_BODY": "{output}",
+	"NO_OUTPUT": "（无输出）",
+	"RUN_FAILED": "无法运行代码"
+}

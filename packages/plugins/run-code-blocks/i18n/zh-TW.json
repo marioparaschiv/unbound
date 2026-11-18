@@ -1,0 +1,8 @@
+{
+	"RUN": "執行 {language} 程式碼",
+	"RUNNING": "正在執行 {language}…",
+	"OUTPUT_TITLE": "{language} · 結束碼 {code}",
+	"OUTPUT_BODY": "{output}",
+	"NO_OUTPUT": "（無輸出）",
+	"RUN_FAILED": "無法執行程式碼"
+}

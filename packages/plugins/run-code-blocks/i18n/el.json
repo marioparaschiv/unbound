@@ -1,0 +1,8 @@
+{
+	"RUN": "Εκτέλεση κώδικα {language}",
+	"RUNNING": "Εκτέλεση {language}…",
+	"OUTPUT_TITLE": "{language} · έξοδος {code}",
+	"OUTPUT_BODY": "{output}",
+	"NO_OUTPUT": "(χωρίς έξοδο)",
+	"RUN_FAILED": "Δεν ήταν δυνατή η εκτέλεση του κώδικα"
+}

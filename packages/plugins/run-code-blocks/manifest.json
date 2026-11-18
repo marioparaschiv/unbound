@@ -1,0 +1,17 @@
+{
+	"id": "unbound.run-code-blocks",
+	"name": "Run Code Blocks",
+	"description": "Runs a message's code block from its long-press menu on Compiler Explorer and shows what it printed: Python, JavaScript, C, C++, Rust, Go and more.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "PlayIcon",
+	"main": "index.tsx"
+}

@@ -1,0 +1,8 @@
+{
+	"RUN": "{language} のコードを実行",
+	"RUNNING": "{language} を実行中…",
+	"OUTPUT_TITLE": "{language} · 終了コード {code}",
+	"OUTPUT_BODY": "{output}",
+	"NO_OUTPUT": "(出力なし)",
+	"RUN_FAILED": "コードを実行できませんでした"
+}

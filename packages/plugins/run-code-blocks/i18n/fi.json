@@ -1,0 +1,8 @@
+{
+	"RUN": "Suorita {language}-koodi",
+	"RUNNING": "Suoritetaan {language}…",
+	"OUTPUT_TITLE": "{language} · paluukoodi {code}",
+	"OUTPUT_BODY": "{output}",
+	"NO_OUTPUT": "(ei tulostetta)",
+	"RUN_FAILED": "Koodia ei voitu suorittaa"
+}

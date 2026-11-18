@@ -1,0 +1,8 @@
+{
+	"RUN": "Запустити код {language}",
+	"RUNNING": "Запуск {language}…",
+	"OUTPUT_TITLE": "{language} · код виходу {code}",
+	"OUTPUT_BODY": "{output}",
+	"NO_OUTPUT": "(немає виводу)",
+	"RUN_FAILED": "Не вдалося запустити код"
+}

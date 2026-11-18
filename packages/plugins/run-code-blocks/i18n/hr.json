@@ -1,0 +1,8 @@
+{
+	"RUN": "Pokreni {language} kod",
+	"RUNNING": "Pokrećem {language}…",
+	"OUTPUT_TITLE": "{language} · izlaz {code}",
+	"OUTPUT_BODY": "{output}",
+	"NO_OUTPUT": "(nema izlaza)",
+	"RUN_FAILED": "Kod nije moguće pokrenuti"
+}

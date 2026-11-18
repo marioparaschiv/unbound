@@ -1,0 +1,8 @@
+{
+	"RUN": "Esegui codice {language}",
+	"RUNNING": "Esecuzione di {language}…",
+	"OUTPUT_TITLE": "{language} · uscita {code}",
+	"OUTPUT_BODY": "{output}",
+	"NO_OUTPUT": "(nessun output)",
+	"RUN_FAILED": "Impossibile eseguire il codice"
+}

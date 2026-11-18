@@ -1,0 +1,8 @@
+{
+	"RUN": "{language} kodunu çalıştır",
+	"RUNNING": "{language} çalıştırılıyor…",
+	"OUTPUT_TITLE": "{language} · çıkış {code}",
+	"OUTPUT_BODY": "{output}",
+	"NO_OUTPUT": "(çıktı yok)",
+	"RUN_FAILED": "Kod çalıştırılamadı"
+}
