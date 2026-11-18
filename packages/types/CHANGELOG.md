@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.8.0](https://github.com/marioparaschiv/unbound/compare/types-v1.7.0...types-v1.8.0) (2026-11-18)
+
+
+### Features
+
+* **client:** let plugins list the hosts their fetch may reach ([#1817](https://github.com/marioparaschiv/unbound/issues/1817)) ([8970734](https://github.com/marioparaschiv/unbound/commit/8970734bc716eafd4f78363c1ddb9e9dd7b9e55f))
+* **client:** let plugins read the account token only when they ask ([#1819](https://github.com/marioparaschiv/unbound/issues/1819)) ([68f8ad3](https://github.com/marioparaschiv/unbound/commit/68f8ad384497b34e002ca58a206debd8963fb430))
+* **loader:** let Java hooks fire from inlined callers ([#1784](https://github.com/marioparaschiv/unbound/issues/1784)) ([ba642f0](https://github.com/marioparaschiv/unbound/commit/ba642f0ead47deef5914904364d1a40f86ec04fe))
+* **loader:** report methods two plugins rewrite ([#1778](https://github.com/marioparaschiv/unbound/issues/1778)) ([e480eb7](https://github.com/marioparaschiv/unbound/commit/e480eb75fe76f550641c69a485d9596205f4b542))
+
 ## [1.7.0](https://github.com/marioparaschiv/unbound/compare/types-v1.6.0...types-v1.7.0) (2026-11-16)
 
 

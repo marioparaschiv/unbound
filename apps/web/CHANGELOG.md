@@ -1,5 +1,28 @@
 # Changelog
 
+## [2.9.0](https://github.com/marioparaschiv/unbound/compare/web-v2.8.0...web-v2.9.0) (2026-11-18)
+
+
+### Features
+
+* **client:** report a crash loop once with its repeat count ([#1772](https://github.com/marioparaschiv/unbound/issues/1772)) ([2342865](https://github.com/marioparaschiv/unbound/commit/2342865221ad33b28bdb2d21652eaf0f69e99a91))
+* **loader:** name AltStore, SideStore and stolen certificates ([#1769](https://github.com/marioparaschiv/unbound/issues/1769)) ([8efa291](https://github.com/marioparaschiv/unbound/commit/8efa291c609ee8117804a1180666b4cd26689a6f))
+* **loader:** report methods two plugins rewrite ([#1778](https://github.com/marioparaschiv/unbound/issues/1778)) ([e480eb7](https://github.com/marioparaschiv/unbound/commit/e480eb75fe76f550641c69a485d9596205f4b542))
+* warn Android users before a Discord update that breaks Unbound ([#1820](https://github.com/marioparaschiv/unbound/issues/1820)) ([9fc8168](https://github.com/marioparaschiv/unbound/commit/9fc81683943117fd1cd7a8ba437eb201d8029cdf))
+
+
+### Bug Fixes
+
+* **web:** show every debug card entry in full ([#1767](https://github.com/marioparaschiv/unbound/issues/1767)) ([e52f285](https://github.com/marioparaschiv/unbound/commit/e52f285e833489ea2055915b1e9559d07fb7e9b6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.9.0
+    * @unbound-app/utils bumped to 1.0.8
+
 ## [2.8.0](https://github.com/marioparaschiv/unbound/compare/web-v2.7.0...web-v2.8.0) (2026-11-17)
 
 

@@ -1,5 +1,37 @@
 # Changelog
 
+## [3.10.0](https://github.com/marioparaschiv/unbound/compare/client-v3.9.0...client-v3.10.0) (2026-11-18)
+
+
+### Features
+
+* **client:** gate new members' first post in Unbound's #chat ([#1805](https://github.com/marioparaschiv/unbound/issues/1805)) ([4d5d6ff](https://github.com/marioparaschiv/unbound/commit/4d5d6ffdfbd2b0314603a1702b9d59cb88b6108e))
+* **client:** let plugins list the hosts their fetch may reach ([#1817](https://github.com/marioparaschiv/unbound/issues/1817)) ([8970734](https://github.com/marioparaschiv/unbound/commit/8970734bc716eafd4f78363c1ddb9e9dd7b9e55f))
+* **client:** let plugins read the account token only when they ask ([#1819](https://github.com/marioparaschiv/unbound/issues/1819)) ([68f8ad3](https://github.com/marioparaschiv/unbound/commit/68f8ad384497b34e002ca58a206debd8963fb430))
+* **client:** list recent crashes in Unbound settings ([#1777](https://github.com/marioparaschiv/unbound/issues/1777)) ([9211655](https://github.com/marioparaschiv/unbound/commit/9211655b0957fd6d1ff32c90ae5b64ce01debfb0))
+* **client:** remove function patches that keep throwing ([#1771](https://github.com/marioparaschiv/unbound/issues/1771)) ([fd156a0](https://github.com/marioparaschiv/unbound/commit/fd156a085453c084389997216ed20a9768fd51ab))
+* **client:** remove plugin flux handlers that keep failing ([#1774](https://github.com/marioparaschiv/unbound/issues/1774)) ([3e03fc9](https://github.com/marioparaschiv/unbound/commit/3e03fc9c1bd619413a824a575b837acd1be8062a))
+* **client:** remove React patches stuck in a render loop ([#1775](https://github.com/marioparaschiv/unbound/issues/1775)) ([59c9127](https://github.com/marioparaschiv/unbound/commit/59c9127c027e63b77453209ab8fdfc015958dc7c))
+* **client:** report a crash loop once with its repeat count ([#1772](https://github.com/marioparaschiv/unbound/issues/1772)) ([2342865](https://github.com/marioparaschiv/unbound/commit/2342865221ad33b28bdb2d21652eaf0f69e99a91))
+* **client:** show each plugin's used native capabilities ([#1779](https://github.com/marioparaschiv/unbound/issues/1779)) ([b56e917](https://github.com/marioparaschiv/unbound/commit/b56e9175dfe6eee2225b26c086d695bac2b53fc6))
+* **client:** show the issue tracking a crash in Recent Crashes ([#1815](https://github.com/marioparaschiv/unbound/issues/1815)) ([47d4728](https://github.com/marioparaschiv/unbound/commit/47d47285de74273539caf7563eaf5617028073f0))
+* **client:** show what a third-party plugin does before installing ([#1818](https://github.com/marioparaschiv/unbound/issues/1818)) ([f3cf84a](https://github.com/marioparaschiv/unbound/commit/f3cf84adb7a53431b0ddb3b5fd68709cda48fddc))
+* **cli:** map first-party plugin frames in crash issues ([#1816](https://github.com/marioparaschiv/unbound/issues/1816)) ([256e0c1](https://github.com/marioparaschiv/unbound/commit/256e0c1f3e60d2c613687007feaa5fa4413d6b5a))
+* **loader:** let Java hooks fire from inlined callers ([#1784](https://github.com/marioparaschiv/unbound/issues/1784)) ([ba642f0](https://github.com/marioparaschiv/unbound/commit/ba642f0ead47deef5914904364d1a40f86ec04fe))
+* **loader:** report methods two plugins rewrite ([#1778](https://github.com/marioparaschiv/unbound/issues/1778)) ([e480eb7](https://github.com/marioparaschiv/unbound/commit/e480eb75fe76f550641c69a485d9596205f4b542))
+* warn Android users before a Discord update that breaks Unbound ([#1820](https://github.com/marioparaschiv/unbound/issues/1820)) ([9fc8168](https://github.com/marioparaschiv/unbound/commit/9fc81683943117fd1cd7a8ba437eb201d8029cdf))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.9.0
+    * @unbound-app/debugger-protocol bumped to 2.2.4
+    * @unbound-app/types bumped to 1.8.0
+    * @unbound-app/utils bumped to 1.0.8
+    * @unbound-app/web bumped to 2.9.0
+
 ## [3.9.0](https://github.com/marioparaschiv/unbound/compare/client-v3.8.0...client-v3.9.0) (2026-11-17)
 
 
