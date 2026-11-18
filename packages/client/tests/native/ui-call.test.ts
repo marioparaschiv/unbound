@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, jest, spyOn, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, jest, mock, spyOn, test } from 'bun:test';
 
 import { mockLookups } from '../helpers/lookups';
 
@@ -35,6 +35,18 @@ mockLookups({
 		},
 	}),
 });
+
+const warnings: unknown[][] = [];
+
+mock.module('@unbound-app/logger', () => ({
+	createLogger: () => ({
+		warn: (...args: unknown[]) => warnings.push(args),
+		error: () => undefined,
+		info: () => undefined,
+		debug: () => undefined,
+		log: () => undefined,
+	}),
+}));
 
 const { createScopedUIBridge } = await import('~/native/ui');
 
@@ -233,6 +245,29 @@ describe('UI calls', () => {
 
 		completions[0]?.({ ok: false, error: 'Worklet failed' });
 		expect(await rejected).toMatchObject({ message: 'Worklet failed' });
+		dispose();
+	});
+
+	test('logs a failing worklet once per name, even when the caller catches it', async () => {
+		warnings.length = 0;
+
+		const { bridge, dispose } = createScopedUIBridge([], 'android', 'unbound.example');
+
+		function repaint() {
+			return 1;
+		}
+
+		for (let attempt = 0; attempt < 2; attempt++) {
+			const pending = bridge.call(repaint).catch(() => undefined);
+
+			completions.at(-1)?.({ ok: false, error: 'repaintAll is not a function' });
+			await pending;
+		}
+
+		expect(warnings).toHaveLength(1);
+		expect(String(warnings[0]?.[0])).toBe(
+			'Failed to run UI worklet repaint for unbound.example:',
+		);
 		dispose();
 	});
 

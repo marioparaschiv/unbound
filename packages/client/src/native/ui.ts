@@ -261,7 +261,17 @@ export function createScopedUIBridge(
 	attribute?: AddonAttribution,
 ): ScopedUIBridge {
 	const scopes = new Set<NativeUIScope>();
+	const reportedFailures = new Set<string>();
 	let disposed = false;
+
+	function reportFailure(worklet: CallableFunction, message: string) {
+		const name = worklet.name || 'an anonymous worklet';
+
+		if (reportedFailures.has(name)) return;
+
+		reportedFailures.add(name);
+		logger.warn(`Failed to run UI worklet ${name} for ${owner}:`, new Error(message));
+	}
 
 	function requireActive() {
 		if (disposed) {
@@ -318,6 +328,7 @@ export function createScopedUIBridge(
 						if (result.ok) {
 							complete(() => resolve(result.value as ReturnType<typeof worklet>));
 						} else {
+							reportFailure(worklet, result.error);
 							rejectCall(new Error(result.error));
 						}
 					};
