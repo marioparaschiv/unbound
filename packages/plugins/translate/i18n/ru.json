@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "При обновлении авторизации получены некорректные данные.",
 	"TRANSLATE_FAILED": "Не удалось перевести ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "ошибка перевода",
-	"TRANSLATE_INVALID_PAYLOAD": "API перевода вернул неожиданные данные."
+	"TRANSLATE_INVALID_PAYLOAD": "API перевода вернул неожиданные данные.",
+	"SERVICE": "Сервис перевода",
+	"SERVICE_AUTO": "Автоматически",
+	"SERVICE_AUTO_SUBTITLE": "Сервис Unbound после подключения Discord, до тех пор Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Нужен ваш аккаунт Discord",
+	"SERVICE_NO_ACCOUNT": "Работает без аккаунта",
+	"SERVICE_FAILED": "Сервис перевода не сработал (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

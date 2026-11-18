@@ -4,6 +4,7 @@ import { metro, toasts } from '@unbound-app/api';
 
 import { endpoint, getAccessToken, refreshSession } from '~/lib/session';
 import { isInlineAvailable, showInline } from '~/lib/inline';
+import { servicesToTry, translateWithFallback, type AnonymousService } from '~/lib/providers';
 
 type Translation = {
 	text?: unknown;
@@ -40,13 +41,30 @@ function readDetectedLanguage({ detectedLanguage, translations }: TranslationRes
 }
 
 /**
- * @description Translates text between the user's chosen languages, retrying once with fresh tokens on a 401.
+ * @description Translates text between the user's chosen languages through the chosen service, retrying Unbound's once
+ * with fresh tokens on a 401.
  * @param text The text to translate.
  * @returns The translated text, with the source language the service detected when it was set to auto detect, and the target language.
  */
 async function requestTranslation(text: string): Promise<TranslationResult> {
 	const source = settings.sourceLanguage;
 	const target = settings.targetLanguage;
+	const services = servicesToTry(settings.service, Boolean(settings.refreshToken));
+
+	if (services[0] !== 'unbound') {
+		const translation = await translateWithFallback(services as AnonymousService[], {
+			text,
+			source,
+			target,
+		});
+
+		return {
+			text: translation.text,
+			source: source === 'auto' ? (translation.detected ?? source) : source,
+			target,
+		};
+	}
+
 	const body = JSON.stringify({ q: text, source, target });
 
 	function request(token: string) {

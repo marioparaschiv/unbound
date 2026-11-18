@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "Odświeżenie uwierzytelnienia zwróciło nieprawidłowe dane.",
 	"TRANSLATE_FAILED": "Tłumaczenie nie powiodło się ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "tłumaczenie nie powiodło się",
-	"TRANSLATE_INVALID_PAYLOAD": "API tłumaczenia zwróciło nieoczekiwane dane."
+	"TRANSLATE_INVALID_PAYLOAD": "API tłumaczenia zwróciło nieoczekiwane dane.",
+	"SERVICE": "Usługa tłumaczenia",
+	"SERVICE_AUTO": "Automatycznie",
+	"SERVICE_AUTO_SUBTITLE": "Usługa Unbound po połączeniu Discorda, do tego czasu Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Wymaga konta Discord",
+	"SERVICE_NO_ACCOUNT": "Działa bez konta",
+	"SERVICE_FAILED": "Usługa tłumaczenia zawiodła (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

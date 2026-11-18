@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "Auth refresh returned an invalid payload.",
 	"TRANSLATE_FAILED": "Translate failed ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "translation failed",
-	"TRANSLATE_INVALID_PAYLOAD": "Translation API returned an unexpected payload."
+	"TRANSLATE_INVALID_PAYLOAD": "Translation API returned an unexpected payload.",
+	"SERVICE": "Translation Service",
+	"SERVICE_AUTO": "Automatic",
+	"SERVICE_AUTO_SUBTITLE": "Unbound's service once you connect Discord, Google until then",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Needs your Discord account",
+	"SERVICE_NO_ACCOUNT": "Works without an account",
+	"SERVICE_FAILED": "The translation service failed (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "認証の更新で無効なデータが返されました。",
 	"TRANSLATE_FAILED": "翻訳に失敗しました({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "翻訳に失敗しました",
-	"TRANSLATE_INVALID_PAYLOAD": "翻訳APIから予期しないデータが返されました。"
+	"TRANSLATE_INVALID_PAYLOAD": "翻訳APIから予期しないデータが返されました。",
+	"SERVICE": "翻訳サービス",
+	"SERVICE_AUTO": "自動",
+	"SERVICE_AUTO_SUBTITLE": "Discord を連携すると Unbound のサービス、それまでは Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Discord アカウントが必要です",
+	"SERVICE_NO_ACCOUNT": "アカウントなしで使えます",
+	"SERVICE_FAILED": "翻訳サービスが失敗しました (HTTP {status})。",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

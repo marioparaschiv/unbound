@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "Obnovení ověření vrátilo neplatná data.",
 	"TRANSLATE_FAILED": "Překlad selhal ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "překlad selhal",
-	"TRANSLATE_INVALID_PAYLOAD": "API překladu vrátilo neočekávaná data."
+	"TRANSLATE_INVALID_PAYLOAD": "API překladu vrátilo neočekávaná data.",
+	"SERVICE": "Překladová služba",
+	"SERVICE_AUTO": "Automaticky",
+	"SERVICE_AUTO_SUBTITLE": "Služba Unbound po připojení Discordu, do té doby Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Potřebuje tvůj účet Discord",
+	"SERVICE_NO_ACCOUNT": "Funguje bez účtu",
+	"SERVICE_FAILED": "Překladová služba selhala (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

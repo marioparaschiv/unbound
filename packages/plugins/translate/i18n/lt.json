@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "Atnaujinant autorizaciją gauti netinkami duomenys.",
 	"TRANSLATE_FAILED": "Vertimas nepavyko ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "išversti nepavyko",
-	"TRANSLATE_INVALID_PAYLOAD": "Vertimo API grąžino netikėtus duomenis."
+	"TRANSLATE_INVALID_PAYLOAD": "Vertimo API grąžino netikėtus duomenis.",
+	"SERVICE": "Vertimo paslauga",
+	"SERVICE_AUTO": "Automatiškai",
+	"SERVICE_AUTO_SUBTITLE": "Unbound paslauga prijungus Discord, iki tol Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Reikia tavo Discord paskyros",
+	"SERVICE_NO_ACCOUNT": "Veikia be paskyros",
+	"SERVICE_FAILED": "Vertimo paslauga nepavyko (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

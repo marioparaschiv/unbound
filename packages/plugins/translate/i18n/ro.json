@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "Reîmprospătarea autentificării a returnat date nevalide.",
 	"TRANSLATE_FAILED": "Traducerea a eșuat ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "traducerea a eșuat",
-	"TRANSLATE_INVALID_PAYLOAD": "API-ul de traducere a returnat date neașteptate."
+	"TRANSLATE_INVALID_PAYLOAD": "API-ul de traducere a returnat date neașteptate.",
+	"SERVICE": "Serviciu de traducere",
+	"SERVICE_AUTO": "Automat",
+	"SERVICE_AUTO_SUBTITLE": "Serviciul Unbound după ce conectezi Discord, până atunci Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Are nevoie de contul tău Discord",
+	"SERVICE_NO_ACCOUNT": "Funcționează fără cont",
+	"SERVICE_FAILED": "Serviciul de traducere a eșuat (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

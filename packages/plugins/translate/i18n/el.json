@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "Η ανανέωση ταυτοποίησης επέστρεψε μη έγκυρα δεδομένα.",
 	"TRANSLATE_FAILED": "Η μετάφραση απέτυχε ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "η μετάφραση απέτυχε",
-	"TRANSLATE_INVALID_PAYLOAD": "Το API μετάφρασης επέστρεψε μη αναμενόμενα δεδομένα."
+	"TRANSLATE_INVALID_PAYLOAD": "Το API μετάφρασης επέστρεψε μη αναμενόμενα δεδομένα.",
+	"SERVICE": "Υπηρεσία μετάφρασης",
+	"SERVICE_AUTO": "Αυτόματα",
+	"SERVICE_AUTO_SUBTITLE": "Η υπηρεσία του Unbound μόλις συνδέσεις το Discord, ως τότε Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Χρειάζεται τον λογαριασμό σου στο Discord",
+	"SERVICE_NO_ACCOUNT": "Λειτουργεί χωρίς λογαριασμό",
+	"SERVICE_FAILED": "Η υπηρεσία μετάφρασης απέτυχε (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

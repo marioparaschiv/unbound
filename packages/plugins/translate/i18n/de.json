@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "Die Auth-Aktualisierung hat ungültige Daten zurückgegeben.",
 	"TRANSLATE_FAILED": "Übersetzung fehlgeschlagen ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "Übersetzung fehlgeschlagen",
-	"TRANSLATE_INVALID_PAYLOAD": "Die Übersetzungs-API hat unerwartete Daten zurückgegeben."
+	"TRANSLATE_INVALID_PAYLOAD": "Die Übersetzungs-API hat unerwartete Daten zurückgegeben.",
+	"SERVICE": "Übersetzungsdienst",
+	"SERVICE_AUTO": "Automatisch",
+	"SERVICE_AUTO_SUBTITLE": "Unbounds Dienst, sobald du Discord verbindest, bis dahin Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Braucht dein Discord-Konto",
+	"SERVICE_NO_ACCOUNT": "Funktioniert ohne Konto",
+	"SERVICE_FAILED": "Der Übersetzungsdienst ist fehlgeschlagen (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

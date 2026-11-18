@@ -85,6 +85,24 @@ declare module '@unbound-app/i18n' {
 		readonly TRANSLATE_FAILED_REASON: string;
 		/** Translation API returned an unexpected payload. */
 		readonly TRANSLATE_INVALID_PAYLOAD: string;
+		/** Translation Service */
+		readonly SERVICE: string;
+		/** Automatic */
+		readonly SERVICE_AUTO: string;
+		/** Unbound's service once you connect Discord, Google until then */
+		readonly SERVICE_AUTO_SUBTITLE: string;
+		/** Unbound */
+		readonly SERVICE_UNBOUND: string;
+		/** Needs your Discord account */
+		readonly SERVICE_UNBOUND_SUBTITLE: string;
+		/** Works without an account */
+		readonly SERVICE_NO_ACCOUNT: string;
+		/** The translation service failed (HTTP {status}). */
+		readonly SERVICE_FAILED: string;
+		/** Google Translate */
+		readonly SERVICE_GOOGLE: string;
+		/** MyMemory */
+		readonly SERVICE_MYMEMORY: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
@@ -92,6 +110,7 @@ declare module '@unbound-app/i18n' {
 		SERVICE_UNAVAILABLE: { status: string | number };
 		REFRESH_FAILED: { status: string | number; reason: string | number };
 		TRANSLATE_FAILED: { status: string | number; reason: string | number };
+		SERVICE_FAILED: { status: string | number };
 	};
 
 	/** Each message in the user's locale, falling back to en-US. */

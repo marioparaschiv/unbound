@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "La renovación de la autenticación devolvió datos no válidos.",
 	"TRANSLATE_FAILED": "No se pudo traducir ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "la traducción falló",
-	"TRANSLATE_INVALID_PAYLOAD": "La API de traducción devolvió datos inesperados."
+	"TRANSLATE_INVALID_PAYLOAD": "La API de traducción devolvió datos inesperados.",
+	"SERVICE": "Servicio de traducción",
+	"SERVICE_AUTO": "Automático",
+	"SERVICE_AUTO_SUBTITLE": "El servicio de Unbound al conectar Discord, Google mientras tanto",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Necesita tu cuenta de Discord",
+	"SERVICE_NO_ACCOUNT": "Funciona sin cuenta",
+	"SERVICE_FAILED": "El servicio de traducción falló (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

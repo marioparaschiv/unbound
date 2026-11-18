@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "身份验证刷新返回了无效数据。",
 	"TRANSLATE_FAILED": "翻译失败（{status}）：{reason}",
 	"TRANSLATE_FAILED_REASON": "翻译失败",
-	"TRANSLATE_INVALID_PAYLOAD": "翻译 API 返回了意外的数据。"
+	"TRANSLATE_INVALID_PAYLOAD": "翻译 API 返回了意外的数据。",
+	"SERVICE": "翻译服务",
+	"SERVICE_AUTO": "自动",
+	"SERVICE_AUTO_SUBTITLE": "连接 Discord 后使用 Unbound 的服务，在此之前使用 Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "需要你的 Discord 账号",
+	"SERVICE_NO_ACCOUNT": "无需账号即可使用",
+	"SERVICE_FAILED": "翻译服务失败（HTTP {status}）。",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

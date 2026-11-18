@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "Osvježavanje autentifikacije vratilo je nevaljane podatke.",
 	"TRANSLATE_FAILED": "Prijevod nije uspio ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "prijevod nije uspio",
-	"TRANSLATE_INVALID_PAYLOAD": "API za prijevod vratio je neočekivane podatke."
+	"TRANSLATE_INVALID_PAYLOAD": "API za prijevod vratio je neočekivane podatke.",
+	"SERVICE": "Usluga prijevoda",
+	"SERVICE_AUTO": "Automatski",
+	"SERVICE_AUTO_SUBTITLE": "Unboundova usluga kad povežeš Discord, do tada Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Treba tvoj Discord račun",
+	"SERVICE_NO_ACCOUNT": "Radi bez računa",
+	"SERVICE_FAILED": "Usluga prijevoda nije uspjela (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

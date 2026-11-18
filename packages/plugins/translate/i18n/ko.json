@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "인증 갱신에서 잘못된 데이터가 돌아왔어요.",
 	"TRANSLATE_FAILED": "번역 실패 ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "번역 실패",
-	"TRANSLATE_INVALID_PAYLOAD": "번역 API에서 예상치 못한 데이터가 돌아왔어요."
+	"TRANSLATE_INVALID_PAYLOAD": "번역 API에서 예상치 못한 데이터가 돌아왔어요.",
+	"SERVICE": "번역 서비스",
+	"SERVICE_AUTO": "자동",
+	"SERVICE_AUTO_SUBTITLE": "Discord를 연결하면 Unbound 서비스, 그전까지는 Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Discord 계정이 필요해요",
+	"SERVICE_NO_ACCOUNT": "계정 없이 사용할 수 있어요",
+	"SERVICE_FAILED": "번역 서비스가 실패했어요 (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

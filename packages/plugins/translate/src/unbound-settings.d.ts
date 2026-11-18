@@ -131,6 +131,7 @@ declare module '@unbound-app/settings' {
 
 	/** The plugin's settings: reads apply defaults, and writes are validated and saved to its Bucket. */
 	export type Settings = {
+		service: "auto" | "unbound" | "google" | "mymemory";
 		sourceLanguage: string;
 		targetLanguage: string;
 		display: "toast" | "inline";
@@ -144,6 +145,7 @@ declare module '@unbound-app/settings' {
 
 	/** Each setting and section by its dot-separated key. */
 	type SettingValues = {
+		"service": "auto" | "unbound" | "google" | "mymemory";
 		"sourceLanguage": string;
 		"targetLanguage": string;
 		"display": "toast" | "inline";

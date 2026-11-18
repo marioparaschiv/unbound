@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "Fornyelse af godkendelse returnerede ugyldige data.",
 	"TRANSLATE_FAILED": "Oversættelse mislykkedes ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "oversættelse mislykkedes",
-	"TRANSLATE_INVALID_PAYLOAD": "Oversættelses-API’et returnerede uventede data."
+	"TRANSLATE_INVALID_PAYLOAD": "Oversættelses-API’et returnerede uventede data.",
+	"SERVICE": "Oversættelsestjeneste",
+	"SERVICE_AUTO": "Automatisk",
+	"SERVICE_AUTO_SUBTITLE": "Unbounds tjeneste, når du forbinder Discord, Google indtil da",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Kræver din Discord-konto",
+	"SERVICE_NO_ACCOUNT": "Virker uden konto",
+	"SERVICE_FAILED": "Oversættelsestjenesten fejlede (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

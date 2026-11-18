@@ -52,7 +52,8 @@ describe('translating a message', () => {
 		]);
 	});
 
-	test('asks the user to log in when there is no session', async () => {
+	test('asks the user to log in when Unbound is chosen without a session', async () => {
+		settings.service = 'unbound';
 		settings.refreshToken = '';
 		settings.accessToken = '';
 
@@ -64,5 +65,41 @@ describe('translating a message', () => {
 				content: 'No refresh token configured. Open plugin settings and complete login.',
 			},
 		]);
+	});
+
+	test('translates through Google without an account on Automatic', async () => {
+		settings.service = 'auto';
+		settings.refreshToken = '';
+		respond(200, [[['Hallo', 'Hello', null]], null, 'en']);
+
+		await copyTranslation('Hello');
+
+		expect(clipboard.text).toBe('Hallo');
+	});
+
+	test('falls back to MyMemory when Google fails', async () => {
+		settings.service = 'auto';
+		settings.refreshToken = '';
+
+		let calls = 0;
+
+		globalThis.fetch = (() => {
+			calls += 1;
+
+			return Promise.resolve(
+				calls === 1
+					? new Response('busy', { status: 429 })
+					: new Response(
+							JSON.stringify({
+								responseStatus: 200,
+								responseData: { translatedText: 'Hallo' },
+							}),
+						),
+			);
+		}) as unknown as typeof fetch;
+
+		await copyTranslation('Hello');
+
+		expect(clipboard.text).toBe('Hallo');
 	});
 });

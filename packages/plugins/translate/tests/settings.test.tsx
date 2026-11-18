@@ -25,11 +25,31 @@ function rows() {
 
 describe('the settings panel', () => {
 	test('offers to connect an account and keeps the languages locked until then', () => {
+		settings.service = 'unbound';
+
 		const [connect, source, target] = rows();
 
 		expect(connect?.props.label).toBe('Connect Discord account');
 		expect(connect?.props.subLabel).toBe('Sign in to enable translation');
 		expect([source?.props.disabled, target?.props.disabled]).toEqual([true, true]);
+	});
+
+	test('works without an account on Automatic, falling back to Google', () => {
+		settings.service = 'auto';
+		settings.refreshToken = '';
+
+		const [connect, source, target] = rows();
+
+		expect(connect?.props.label).toBe('Connect Discord account');
+		expect([source?.props.disabled, target?.props.disabled]).toEqual([false, false]);
+	});
+
+	test('hides the account row for services that need none', () => {
+		settings.service = 'mymemory';
+
+		const labels = rows().map((row) => row.props.label);
+
+		expect(labels).not.toContain('Connect Discord account');
 	});
 
 	test('offers to reconnect once signed in, and shows the chosen languages', () => {

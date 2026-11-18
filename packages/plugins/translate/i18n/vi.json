@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "Làm mới xác thực trả về dữ liệu không hợp lệ.",
 	"TRANSLATE_FAILED": "Dịch thất bại ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "dịch thất bại",
-	"TRANSLATE_INVALID_PAYLOAD": "API dịch trả về dữ liệu không mong đợi."
+	"TRANSLATE_INVALID_PAYLOAD": "API dịch trả về dữ liệu không mong đợi.",
+	"SERVICE": "Dịch vụ dịch",
+	"SERVICE_AUTO": "Tự động",
+	"SERVICE_AUTO_SUBTITLE": "Dịch vụ của Unbound khi bạn kết nối Discord, trước đó dùng Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Cần tài khoản Discord của bạn",
+	"SERVICE_NO_ACCOUNT": "Dùng được khi không có tài khoản",
+	"SERVICE_FAILED": "Dịch vụ dịch đã lỗi (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }

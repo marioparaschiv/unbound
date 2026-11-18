@@ -29,5 +29,14 @@
 	"REFRESH_INVALID_PAYLOAD": "Todennuksen päivitys palautti virheellisen vastauksen.",
 	"TRANSLATE_FAILED": "Kääntäminen epäonnistui ({status}): {reason}",
 	"TRANSLATE_FAILED_REASON": "kääntäminen epäonnistui",
-	"TRANSLATE_INVALID_PAYLOAD": "Käännös-API palautti odottamattoman vastauksen."
+	"TRANSLATE_INVALID_PAYLOAD": "Käännös-API palautti odottamattoman vastauksen.",
+	"SERVICE": "Käännöspalvelu",
+	"SERVICE_AUTO": "Automaattinen",
+	"SERVICE_AUTO_SUBTITLE": "Unboundin palvelu, kun yhdistät Discordin, siihen asti Google",
+	"SERVICE_UNBOUND": "Unbound",
+	"SERVICE_UNBOUND_SUBTITLE": "Tarvitsee Discord-tilisi",
+	"SERVICE_NO_ACCOUNT": "Toimii ilman tiliä",
+	"SERVICE_FAILED": "Käännöspalvelu epäonnistui (HTTP {status}).",
+	"SERVICE_GOOGLE": "Google Translate",
+	"SERVICE_MYMEMORY": "MyMemory"
 }
