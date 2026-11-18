@@ -1,5 +1,33 @@
 # Changelog
 
+## [3.4.0](https://github.com/marioparaschiv/unbound/compare/cli-v3.3.2...cli-v3.4.0) (2026-11-18)
+
+
+### Features
+
+* **cli:** add ubd debug crash to test crash reporting ([#1783](https://github.com/marioparaschiv/unbound/issues/1783)) ([39c6708](https://github.com/marioparaschiv/unbound/commit/39c67083b1ed5771660c1d114a587466908bbd36))
+* **client:** let plugins list the hosts their fetch may reach ([#1817](https://github.com/marioparaschiv/unbound/issues/1817)) ([8970734](https://github.com/marioparaschiv/unbound/commit/8970734bc716eafd4f78363c1ddb9e9dd7b9e55f))
+* **cli:** map first-party plugin frames in crash issues ([#1816](https://github.com/marioparaschiv/unbound/issues/1816)) ([256e0c1](https://github.com/marioparaschiv/unbound/commit/256e0c1f3e60d2c613687007feaa5fa4413d6b5a))
+
+
+### Tests
+
+* **cli:** fuzz every plugin's settings schema with corrupt values ([#1813](https://github.com/marioparaschiv/unbound/issues/1813)) ([eaad6d7](https://github.com/marioparaschiv/unbound/commit/eaad6d787a1e94ab2146a183885226f5196b4227))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger bumped to 1.2.4
+    * @unbound-app/debugger-protocol bumped to 2.2.4
+  * devDependencies
+    * @unbound-app/api bumped to 3.10.0
+    * @unbound-app/contracts bumped to 2.9.0
+    * @unbound-app/types bumped to 1.8.0
+    * @unbound-app/utils bumped to 1.0.8
+    * @unbound-app/web bumped to 2.9.0
+
 ## [3.3.2](https://github.com/marioparaschiv/unbound/compare/cli-v3.3.1...cli-v3.3.2) (2026-11-17)
 
 

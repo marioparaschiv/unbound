@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.10.0](https://github.com/marioparaschiv/unbound/compare/api-v3.9.0...api-v3.10.0) (2026-11-18)
+
+
+### Features
+
+* **client:** let plugins list the hosts their fetch may reach ([#1817](https://github.com/marioparaschiv/unbound/issues/1817)) ([8970734](https://github.com/marioparaschiv/unbound/commit/8970734bc716eafd4f78363c1ddb9e9dd7b9e55f))
+* **client:** let plugins read the account token only when they ask ([#1819](https://github.com/marioparaschiv/unbound/issues/1819)) ([68f8ad3](https://github.com/marioparaschiv/unbound/commit/68f8ad384497b34e002ca58a206debd8963fb430))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 3.10.0
+    * @unbound-app/sdk-generator bumped to 1.0.9
+
 ## [3.9.0](https://github.com/marioparaschiv/unbound/compare/api-v3.8.0...api-v3.9.0) (2026-11-17)
 
 
