@@ -1,0 +1,17 @@
+{
+	"id": "unbound.chess-boards",
+	"name": "Chess Boards",
+	"description": "Shows a board under messages with a chess position in FEN, and the replay of linked lichess games.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "CrownIcon",
+	"main": "index.ts"
+}
