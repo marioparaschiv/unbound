@@ -7,7 +7,7 @@ export const CHAT_CHANNEL_ID = '950850316318933004';
 /** The support forum the gate points to. */
 export const SUPPORT_FORUM_ID = '1524151333039505470';
 
-/** Roles that show the member knows the server: staff, contributors, sponsors and boosters, bots. */
+/** The roles that let a member past the gate when the server's roles can't be read: its hoisted roles. */
 export const TRUSTED_ROLE_IDS: ReadonlySet<string> = new Set([
 	'950850582984392704',
 	'952688684107456612',
@@ -25,47 +25,28 @@ export const TRUSTED_ROLE_IDS: ReadonlySet<string> = new Set([
 	'1568273357043138723',
 ]);
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-const DISCORD_EPOCH = 1420070400000n;
-
-/** An account younger than this is new. */
-export const NEW_ACCOUNT_DAYS = 90;
-
-/** A member who joined more recently than this is new to the server. */
-export const NEW_MEMBER_DAYS = 30;
-
-export type GateMember = {
-	userId: string;
-	roles: readonly string[];
-	joinedAt?: string | number | Date;
-};
+export type ServerRole = { id: string; hoist?: boolean };
 
 /**
- * @description Reads when a Discord account was made from its id.
- * @param userId The user's id.
- * @returns The creation time in milliseconds.
+ * @description Lists the server's hoisted roles, the ones shown apart in the member list: staff, helpers, contributors,
+ * sponsors and bots.
+ * @param roles The server's roles.
+ * @returns Their ids, or the known trusted roles when the server's roles can't be read.
  */
-export function accountCreatedAt(userId: string): number {
-	return Number((BigInt(userId) >> 22n) + DISCORD_EPOCH);
+export function hoistedRoleIds(roles: readonly ServerRole[] | undefined): ReadonlySet<string> {
+	const hoisted = (roles ?? []).filter((role) => role.hoist).map((role) => role.id);
+
+	return hoisted.length ? new Set(hoisted) : TRUSTED_ROLE_IDS;
 }
 
 /**
- * @description Decides whether a member sees the support gate: new to Discord or new to the server, and without a
- * role that shows they know their way around.
- * @param member The member's id, roles and join time.
- * @param now The current time in milliseconds.
+ * @description Decides whether a member sees the support gate: everyone without a hoisted role.
+ * @param roles The member's role ids.
+ * @param hoisted The server's hoisted role ids.
  * @returns Whether the gate applies.
  */
-export function needsSupportGate(member: GateMember, now: number): boolean {
-	if (member.roles.some((role) => TRUSTED_ROLE_IDS.has(role))) {
-		return false;
-	}
-
-	const joinedAt = member.joinedAt === undefined ? now : new Date(member.joinedAt).getTime();
-	const newAccount = now - accountCreatedAt(member.userId) < NEW_ACCOUNT_DAYS * DAY_MS;
-	const newMember = Number.isFinite(joinedAt) && now - joinedAt < NEW_MEMBER_DAYS * DAY_MS;
-
-	return newAccount || newMember;
+export function needsSupportGate(roles: readonly string[], hoisted: ReadonlySet<string>): boolean {
+	return !roles.some((role) => hoisted.has(role));
 }
 
 /** The answers the gate's question offers; only `forum` is right. */
