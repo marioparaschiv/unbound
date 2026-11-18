@@ -34,6 +34,7 @@ export declare const ADDON_SCOPE_GLOBALS: readonly [
 	'clearTimeout',
 	'clearInterval',
 	'commands',
+	'fetch',
 ];
 /** The core Bucket; each addon's Bucket is named after the addon id. */
 export declare const CORE_BUCKET = 'unbound';
@@ -633,6 +634,8 @@ export type AuthoredAddonManifest = {
 	locales?: Record<string, string>;
 	/** The images `ubd build` emits beside the bundle, by asset name, such as `icons/star`. */
 	assets?: Record<string, AddonAsset>;
+	/** The hosts the addon's `fetch` may reach, such as `api.example.com` or `*.example.com`; absent means any host. */
+	network?: string[];
 	/** Requirements on the Unbound client running the addon. */
 	unbound?: {
 		/** The minimum Unbound client version (semver) the addon supports. */

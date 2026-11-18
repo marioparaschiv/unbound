@@ -29,6 +29,7 @@ export const ADDON_SCOPE_GLOBALS = [
 	'clearTimeout',
 	'clearInterval',
 	'commands',
+	'fetch',
 ] as const;
 
 /** The `logger` global a plugin runs with: console levels prefixed with the plugin's name. */
@@ -105,6 +106,8 @@ export type AuthoredAddonManifest = {
 	locales?: Record<string, string>;
 	/** The images `ubd build` emits beside the bundle, by asset name, such as `icons/star`. */
 	assets?: Record<string, AddonAsset>;
+	/** The hosts the addon's `fetch` may reach, such as `api.example.com` or `*.example.com`; absent means any host. */
+	network?: string[];
 	/** Requirements on the Unbound client running the addon. */
 	unbound?: {
 		/** The minimum Unbound client version (semver) the addon supports. */

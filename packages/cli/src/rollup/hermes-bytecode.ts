@@ -22,6 +22,7 @@ const FALL_BACK_TO_GLOBAL = new Set([
 	'setInterval',
 	'clearTimeout',
 	'clearInterval',
+	'fetch',
 ]);
 
 const parameters = ADDON_SCOPE_GLOBALS.map((name) =>

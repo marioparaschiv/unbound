@@ -15,6 +15,7 @@ import {
 } from '~/addons/scoped-namespaces';
 import { createSubscriptions, disposeInReverse } from '~/addons/subscriptions';
 import type { ScopedCommands, ScopedI18n } from '~/addons/scoped-namespaces';
+import { createScopedFetch, type ScopedFetch } from '~/addons/network';
 import { createMessageResolver } from '~/i18n/message-resolver';
 import { manifestRegistrations } from '~/assets/plugin-assets';
 import { createScopedReact } from '~/hot-refresh/runtime';
@@ -44,6 +45,7 @@ export type AddonGlobals = {
 	setInterval: ScopedTimers['setInterval'];
 	clearTimeout: ScopedTimers['clearTimeout'];
 	clearInterval: ScopedTimers['clearInterval'];
+	fetch: ScopedFetch['fetch'];
 };
 
 /** A plugin's globals, the `dispose` that undoes everything they registered, and what its logger warned while starting. */
@@ -146,6 +148,7 @@ export function createAddonScope(addon: Addon<Plugin>, directory: string): Addon
 			setInterval: timers.setInterval,
 			clearTimeout: timers.clearTimeout,
 			clearInterval: timers.clearInterval,
+			fetch: createScopedFetch(addon.name, addon.manifest.network).fetch,
 		},
 		dispose() {
 			disposeInReverse(parts.map((part) => part.dispose));
