@@ -17,18 +17,23 @@ export function issueEnvironment(info: DebugInfo, entitlements = ''): string {
 	].join('\n');
 }
 
+/** What a bug report starts with besides the environment: its title and the log section. */
+export type IssueDraft = { title?: string; logs?: string };
+
 /**
  * @description Builds a link that opens the repository's bug report form with the platform and the device's details filled in.
  * @param info The versions and device details `/debug` reports.
  * @param entitlements The app's entitlements as a plist, or an empty string.
+ * @param draft A title and logs to start the report with.
  * @returns The `issues/new` URL.
  */
-export function issueURL(info: DebugInfo, entitlements = ''): string {
+export function issueURL(info: DebugInfo, entitlements = '', draft: IssueDraft = {}): string {
 	const query = new URLSearchParams({
 		template: BUG_REPORT_FORM,
-		title: 'bug: ',
+		title: draft.title ?? 'bug: ',
 		platform: info.platform,
 		environment: issueEnvironment(info, entitlements),
+		...(draft.logs ? { logs: draft.logs } : {}),
 	});
 
 	return `https://github.com/${REPOSITORY}/issues/new?${query.toString()}`;

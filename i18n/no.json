@@ -442,5 +442,11 @@
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Supportforum",
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Kjent problem #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Ikke oppdater Discord ennå",
-	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} ødelegger deler av Unbound. Vent på en Unbound-oppdatering før du installerer den."
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} ødelegger deler av Unbound. Vent på en Unbound-oppdatering før du installerer den.",
+	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Allerede rapportert",
+	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "Issue #{number} på GitHub dekker dette krasjet. Åpne den?",
+	"UNBOUND_CRASH_ISSUE_OPEN": "Åpne issue",
+	"UNBOUND_CRASH_REPORT_TITLE": "Rapportere dette krasjet?",
+	"UNBOUND_CRASH_REPORT_BODY": "Ingen åpen GitHub-issue nevner dette krasjet ennå. Åpne en feilrapport med detaljene fylt ut?",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Rapporter"
 }

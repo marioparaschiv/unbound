@@ -442,5 +442,11 @@
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Support-Forum",
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Bekanntes Problem #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Discord noch nicht aktualisieren",
-	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} macht Teile von Unbound kaputt. Warte auf ein Unbound-Update, bevor du es installierst."
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} macht Teile von Unbound kaputt. Warte auf ein Unbound-Update, bevor du es installierst.",
+	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Bereits gemeldet",
+	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "Issue #{number} auf GitHub behandelt diesen Absturz. Öffnen?",
+	"UNBOUND_CRASH_ISSUE_OPEN": "Issue öffnen",
+	"UNBOUND_CRASH_REPORT_TITLE": "Diesen Absturz melden?",
+	"UNBOUND_CRASH_REPORT_BODY": "Noch kein offenes GitHub-Issue erwähnt diesen Absturz. Einen Fehlerbericht mit den Details öffnen?",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Melden"
 }

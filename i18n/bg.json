@@ -442,5 +442,11 @@
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Форум за поддръжка",
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Известен проблем #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Не обновявайте Discord още",
-	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} поврежда части от Unbound. Изчакайте обновление на Unbound, преди да го инсталирате."
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} поврежда части от Unbound. Изчакайте обновление на Unbound, преди да го инсталирате.",
+	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Вече е докладвано",
+	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "Задача #{number} в GitHub описва този срив. Да се отвори ли?",
+	"UNBOUND_CRASH_ISSUE_OPEN": "Отвори задачата",
+	"UNBOUND_CRASH_REPORT_TITLE": "Да се докладва ли този срив?",
+	"UNBOUND_CRASH_REPORT_BODY": "Все още няма отворена задача в GitHub за този срив. Да се отвори ли доклад с попълнени данни?",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Докладвай"
 }

@@ -442,5 +442,11 @@
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Tukifoorumi",
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Tunnettu ongelma #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Älä päivitä Discordia vielä",
-	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} rikkoo osia Unboundista. Odota Unboundin päivitystä ennen asentamista."
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} rikkoo osia Unboundista. Odota Unboundin päivitystä ennen asentamista.",
+	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Jo raportoitu",
+	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "GitHubin issue #{number} koskee tätä kaatumista. Avataanko?",
+	"UNBOUND_CRASH_ISSUE_OPEN": "Avaa issue",
+	"UNBOUND_CRASH_REPORT_TITLE": "Raportoidaanko tämä kaatuminen?",
+	"UNBOUND_CRASH_REPORT_BODY": "Mikään avoin GitHub-issue ei vielä mainitse tätä kaatumista. Avataanko virheraportti tiedot valmiiksi täytettyinä?",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Raportoi"
 }

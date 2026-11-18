@@ -442,5 +442,11 @@
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Támogatási fórum",
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Ismert hiba #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Még ne frissítsd a Discordot",
-	"UNBOUND_DISCORD_UPDATE_BREAKS": "A Discord {version} elrontja az Unbound egyes részeit. Telepítés előtt várd meg az Unbound frissítését."
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "A Discord {version} elrontja az Unbound egyes részeit. Telepítés előtt várd meg az Unbound frissítését.",
+	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Már bejelentve",
+	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "A GitHub #{number} számú hibajegye erről az összeomlásról szól. Megnyitod?",
+	"UNBOUND_CRASH_ISSUE_OPEN": "Hibajegy megnyitása",
+	"UNBOUND_CRASH_REPORT_TITLE": "Bejelented ezt az összeomlást?",
+	"UNBOUND_CRASH_REPORT_BODY": "Még egy nyitott GitHub-hibajegy sem említi ezt az összeomlást. Megnyitsz egy kitöltött hibajelentést?",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Bejelentés"
 }

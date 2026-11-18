@@ -442,5 +442,11 @@
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Forum za podršku",
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Poznati problem #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Još ne ažuriraj Discord",
-	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} kvari dijelove Unbounda. Pričekaj ažuriranje Unbounda prije instalacije."
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} kvari dijelove Unbounda. Pričekaj ažuriranje Unbounda prije instalacije.",
+	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Već prijavljeno",
+	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "Issue #{number} na GitHubu odnosi se na ovaj pad. Otvoriti?",
+	"UNBOUND_CRASH_ISSUE_OPEN": "Otvori issue",
+	"UNBOUND_CRASH_REPORT_TITLE": "Prijaviti ovaj pad?",
+	"UNBOUND_CRASH_REPORT_BODY": "Nijedan otvoreni issue na GitHubu još ne spominje ovaj pad. Otvoriti prijavu greške s ispunjenim detaljima?",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Prijavi"
 }

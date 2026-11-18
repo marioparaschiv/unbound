@@ -442,5 +442,11 @@
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Φόρουμ υποστήριξης",
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Γνωστό πρόβλημα #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Μην ενημερώσεις ακόμα το Discord",
-	"UNBOUND_DISCORD_UPDATE_BREAKS": "Το Discord {version} χαλάει μέρη του Unbound. Περίμενε μια ενημέρωση του Unbound πριν το εγκαταστήσεις."
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Το Discord {version} χαλάει μέρη του Unbound. Περίμενε μια ενημέρωση του Unbound πριν το εγκαταστήσεις.",
+	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Έχει ήδη αναφερθεί",
+	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "Το issue #{number} στο GitHub αφορά αυτό το σφάλμα. Άνοιγμα;",
+	"UNBOUND_CRASH_ISSUE_OPEN": "Άνοιγμα issue",
+	"UNBOUND_CRASH_REPORT_TITLE": "Αναφορά αυτού του σφάλματος;",
+	"UNBOUND_CRASH_REPORT_BODY": "Κανένα ανοιχτό issue στο GitHub δεν αναφέρει ακόμα αυτό το σφάλμα. Άνοιγμα αναφοράς με συμπληρωμένα στοιχεία;",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Αναφορά"
 }

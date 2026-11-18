@@ -442,5 +442,11 @@
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Forum de suport",
 	"UNBOUND_CRASH_KNOWN_ISSUE": "Problemă cunoscută #{number}",
 	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Nu actualiza încă Discord",
-	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} strică părți din Unbound. Așteaptă o actualizare Unbound înainte să-l instalezi."
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} strică părți din Unbound. Așteaptă o actualizare Unbound înainte să-l instalezi.",
+	"UNBOUND_CRASH_ISSUE_FOUND_TITLE": "Deja raportat",
+	"UNBOUND_CRASH_ISSUE_FOUND_BODY": "Issue-ul #{number} de pe GitHub tratează această blocare. Îl deschizi?",
+	"UNBOUND_CRASH_ISSUE_OPEN": "Deschide issue",
+	"UNBOUND_CRASH_REPORT_TITLE": "Raportezi această blocare?",
+	"UNBOUND_CRASH_REPORT_BODY": "Niciun issue deschis pe GitHub nu menționează încă această blocare. Deschizi un raport de eroare cu detaliile completate?",
+	"UNBOUND_CRASH_REPORT_CONFIRM": "Raportează"
 }
