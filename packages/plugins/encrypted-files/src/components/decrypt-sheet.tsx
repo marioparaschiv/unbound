@@ -64,7 +64,7 @@ function DecryptSheet({ url, bridge, onClose }: DecryptSheetProps) {
 			onClose();
 		} catch (error) {
 			logger.error(`Failed to save decrypted ${opened.name}:`, error);
-			toasts.error('SAVE_FAILED');
+			toasts.error('SAVE_FAILED', error);
 		}
 	}
 
