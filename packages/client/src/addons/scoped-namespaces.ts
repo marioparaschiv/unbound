@@ -16,6 +16,7 @@ import type {
 	MetroModuleLoadListener,
 } from '~/metro/types';
 import { findOwnedId, registerOwnedAsset, type AssetRegistration } from '~/assets/plugin-assets';
+import { asksForToken, isTokenStore, type TokenGuard } from '~/addons/token-gate';
 import { guardedHandler, type FluxHandler } from '~/flux/guarded-handler';
 import type { SettingsPayload, SettingsPredicate } from '~/storage/api';
 import type { AddonLocales, LocaleSource } from '~/i18n/addon-locales';
@@ -76,9 +77,13 @@ function overlay<K extends keyof Api, O extends Partial<Api[K]>>(
 /**
  * @description Creates a plugin's `metro` namespace, whose module listeners and pending `findLazy` and `onModuleLoaded` waits end on dispose.
  * @param subscriptions The plugin's subscription tracker.
+ * @param guardToken Wraps the plugin's lookups of the token module.
  * @returns The namespace.
  */
-export function scopeMetro(subscriptions: Subscriptions): Api['metro'] {
+export function scopeMetro(
+	subscriptions: Subscriptions,
+	guardToken: TokenGuard = (value) => value,
+): Api['metro'] {
 	function onModuleLoad(listener: MetroModuleLoadListener) {
 		return subscriptions.add(liveNamespace('metro').onModuleLoad(listener));
 	}
@@ -144,10 +149,17 @@ export function scopeMetro(subscriptions: Subscriptions): Api['metro'] {
 		return release;
 	}
 
+	function findByProps(...args: Parameters<Api['metro']['findByProps']>) {
+		const found = liveNamespace('metro').findByProps(...args);
+
+		return asksForToken(args) ? guardToken(found) : found;
+	}
+
 	return overlay('metro', {
 		onModuleLoaded,
 		onModuleLoad,
 		findLazy,
+		findByProps: findByProps as Api['metro']['findByProps'],
 	});
 }
 
@@ -179,9 +191,14 @@ export function scopeStorage(subscriptions: Subscriptions, owner: string): Api['
  * dispose. Action listeners and interceptors that keep throwing or stalling are removed early, naming the plugin.
  * @param subscriptions The plugin's subscription tracker.
  * @param owner The plugin's name.
+ * @param guardToken Wraps the plugin's lookup of the authentication store.
  * @returns The namespace.
  */
-export function scopeFlux(subscriptions: Subscriptions, owner: string): Api['flux'] {
+export function scopeFlux(
+	subscriptions: Subscriptions,
+	owner: string,
+	guardToken: TokenGuard = (value) => value,
+): Api['flux'] {
 	function guarded<F extends FluxHandler>(
 		type: string,
 		handler: F,
@@ -196,6 +213,11 @@ export function scopeFlux(subscriptions: Subscriptions, owner: string): Api['flu
 	}
 
 	return overlay('flux', {
+		getStore: ((...args: Parameters<Api['flux']['getStore']>) => {
+			const store = liveNamespace('flux').getStore(...args);
+
+			return isTokenStore(args[0]) ? guardToken(store) : store;
+		}) as Api['flux']['getStore'],
 		onStoreChange(store: FluxStore, listener: FluxChangeListener) {
 			return subscriptions.add(liveNamespace('flux').onStoreChange(store, listener));
 		},

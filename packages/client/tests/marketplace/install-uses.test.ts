@@ -35,6 +35,9 @@ describe('installUses', () => {
 
 	test('lists nothing for a plain plugin or a first-party one', () => {
 		expect(installUses(manifest({ capabilities: ['native.objc.invoke'] }))).toEqual([]);
+		expect(installUses(manifest({ permissions: ['account-token'] }))).toEqual([
+			{ key: 'UNBOUND_INSTALL_REVIEW_TOKEN' },
+		]);
 		expect(
 			installUses(manifest({ id: 'unbound.example', capabilities: ['native.java.hooks'] })),
 		).toEqual([]);

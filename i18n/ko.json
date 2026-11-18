@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• {hosts}에 연결",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Discord 네이티브 코드의 동작 변경",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• 네이티브 함수 직접 호출",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• 계정 토큰 읽기",
 	"UNBOUND_INSTALL_URL_HINT": "설치할 애드온 매니페스트의 URL을 입력하세요.",
 	"UNBOUND_INSTALL_FROM_URL": "URL로 설치",
 	"UNBOUND_BROWSE_MARKETPLACE": "마켓플레이스 둘러보기",

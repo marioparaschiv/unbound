@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• Се свързва с {hosts}",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Променя поведението на нативния код на Discord",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• Извиква директно нативни функции",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• Чете токена на профила ви",
 	"UNBOUND_INSTALL_URL_HINT": "Въведи URL адреса на манифеста на добавката, която искаш да инсталираш.",
 	"UNBOUND_INSTALL_FROM_URL": "Инсталирай от URL",
 	"UNBOUND_BROWSE_MARKETPLACE": "Разгледай Магазина",

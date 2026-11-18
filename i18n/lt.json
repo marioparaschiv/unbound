@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• Jungsis prie {hosts}",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Keis Discord vietinio kodo veikimą",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• Tiesiogiai kvies vietines funkcijas",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• Skaitys jūsų paskyros prieigos raktą",
 	"UNBOUND_INSTALL_URL_HINT": "Įveskite norimo įdiegti priedo manifesto URL.",
 	"UNBOUND_INSTALL_FROM_URL": "Įdiegti iš URL",
 	"UNBOUND_BROWSE_MARKETPLACE": "Naršyti parduotuvę",

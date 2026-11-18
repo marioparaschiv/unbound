@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• Verbinding maken met {hosts}",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Het gedrag van Discords native code wijzigen",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• Native functies rechtstreeks aanroepen",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• Je accounttoken lezen",
 	"UNBOUND_INSTALL_URL_HINT": "Voer de URL in van het add-onmanifest dat je wilt installeren.",
 	"UNBOUND_INSTALL_FROM_URL": "Installeren via URL",
 	"UNBOUND_BROWSE_MARKETPLACE": "Marketplace verkennen",

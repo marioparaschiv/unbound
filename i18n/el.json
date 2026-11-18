@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• Συνδέεται με {hosts}",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Αλλάζει τη συμπεριφορά του εγγενούς κώδικα του Discord",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• Καλεί απευθείας εγγενείς συναρτήσεις",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• Διαβάζει το διακριτικό του λογαριασμού σου",
 	"UNBOUND_INSTALL_URL_HINT": "Εισήγαγε το URL του manifest του πρόσθετου που θέλεις να εγκαταστήσεις.",
 	"UNBOUND_INSTALL_FROM_URL": "Εγκατάσταση από URL",
 	"UNBOUND_BROWSE_MARKETPLACE": "Περιήγηση στο Marketplace",

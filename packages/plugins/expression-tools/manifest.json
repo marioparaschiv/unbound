@@ -24,7 +24,8 @@
 			"id": "263689920210534400"
 		}
 	],
-	"version": "1.0.8",
+	"version": "1.0.9",
+	"permissions": ["account-token"],
 	"unbound": {
 		"min": "3.0.0"
 	},

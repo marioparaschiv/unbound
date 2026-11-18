@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• 連線到 {hosts}",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• 改變 Discord 原生程式碼的行為",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• 直接呼叫原生函式",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• 讀取你的帳號權杖",
 	"UNBOUND_INSTALL_URL_HINT": "輸入你要安裝的附加元件資訊清單網址。",
 	"UNBOUND_INSTALL_FROM_URL": "從網址安裝",
 	"UNBOUND_BROWSE_MARKETPLACE": "瀏覽市集",

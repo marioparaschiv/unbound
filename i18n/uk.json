@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• Підключатися до {hosts}",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Змінювати роботу нативного коду Discord",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• Напряму викликати нативні функції",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• Читати токен вашого облікового запису",
 	"UNBOUND_INSTALL_URL_HINT": "Введи URL маніфесту доповнення, яке хочеш встановити.",
 	"UNBOUND_INSTALL_FROM_URL": "Встановити з URL",
 	"UNBOUND_BROWSE_MARKETPLACE": "Відкрити Маркетплейс",

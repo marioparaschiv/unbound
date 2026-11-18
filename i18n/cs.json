@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• Připojovat se k {hosts}",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Měnit chování nativního kódu Discordu",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• Přímo volat nativní funkce",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• Číst token tvého účtu",
 	"UNBOUND_INSTALL_URL_HINT": "Zadej URL manifestu doplňku, který chceš nainstalovat.",
 	"UNBOUND_INSTALL_FROM_URL": "Nainstalovat z URL",
 	"UNBOUND_BROWSE_MARKETPLACE": "Procházet Obchod",

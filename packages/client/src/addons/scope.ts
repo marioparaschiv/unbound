@@ -20,6 +20,7 @@ import { createMessageResolver } from '~/i18n/message-resolver';
 import { manifestRegistrations } from '~/assets/plugin-assets';
 import { createScopedReact } from '~/hot-refresh/runtime';
 import { createPatcher } from '~/patcher/create-patcher';
+import { createTokenGuard } from '~/addons/token-gate';
 import { createScopedTimers } from '~/addons/timers';
 import { createStartLog } from '~/addons/start-log';
 import type { Addon } from '~/addons/addon';
@@ -125,15 +126,17 @@ export function createAddonScope(addon: Addon<Plugin>, directory: string): Addon
 		}
 	}
 
+	const guardToken = createTokenGuard(addon.name, addon.manifest.permissions);
+
 	return {
 		globals: {
 			React: createScopedReact(),
 			unbound: liveUnboundView({
 				patcher,
 				commands: commands.namespace,
-				metro: scopeMetro(subscriptions),
+				metro: scopeMetro(subscriptions, guardToken),
 				storage: scopeStorage(subscriptions, addon.id),
-				flux: scopeFlux(subscriptions, addon.name),
+				flux: scopeFlux(subscriptions, addon.name, guardToken),
 				settings: scopeSettings(subscriptions),
 				assets,
 				i18n: i18n.namespace,

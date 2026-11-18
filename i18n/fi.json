@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• Muodostaa yhteyden kohteisiin {hosts}",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Muuttaa Discordin natiivikoodin toimintaa",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• Kutsuu natiivifunktioita suoraan",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• Lukee tilisi tunnuksen",
 	"UNBOUND_INSTALL_URL_HINT": "Anna asennettavan lisäosan manifestin URL-osoite.",
 	"UNBOUND_INSTALL_FROM_URL": "Asenna URL-osoitteesta",
 	"UNBOUND_BROWSE_MARKETPLACE": "Selaa Kauppapaikkaa",

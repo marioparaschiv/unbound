@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• {hosts} に接続する",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Discord のネイティブコードの動作を変更する",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• ネイティブ関数を直接呼び出す",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• アカウントのトークンを読み取る",
 	"UNBOUND_INSTALL_URL_HINT": "インストールしたいアドオンのマニフェストのURLを入力してください。",
 	"UNBOUND_INSTALL_FROM_URL": "URLからインストール",
 	"UNBOUND_BROWSE_MARKETPLACE": "マーケットプレイスを見る",

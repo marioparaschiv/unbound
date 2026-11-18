@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• {hosts} adresine bağlanacak",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Discord'un yerel kodunun davranışını değiştirecek",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• Yerel işlevleri doğrudan çağıracak",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• Hesap belirtecini okuyacak",
 	"UNBOUND_INSTALL_URL_HINT": "Yüklemek istediğin uzantının manifest URL’sini gir.",
 	"UNBOUND_INSTALL_FROM_URL": "URL’den Yükle",
 	"UNBOUND_BROWSE_MARKETPLACE": "Mağazaya Göz At",

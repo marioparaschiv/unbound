@@ -101,6 +101,7 @@
 	"UNBOUND_INSTALL_REVIEW_HOSTS": "• Terhubung ke {hosts}",
 	"UNBOUND_INSTALL_REVIEW_HOOKS": "• Mengubah perilaku kode native Discord",
 	"UNBOUND_INSTALL_REVIEW_FFI": "• Memanggil fungsi native secara langsung",
+	"UNBOUND_INSTALL_REVIEW_TOKEN": "• Membaca token akunmu",
 	"UNBOUND_INSTALL_URL_HINT": "Masukkan URL manifes add-on yang ingin kamu instal.",
 	"UNBOUND_INSTALL_FROM_URL": "Instal dari URL",
 	"UNBOUND_BROWSE_MARKETPLACE": "Jelajahi Marketplace",

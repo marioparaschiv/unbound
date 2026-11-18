@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.9] - 2026-11-18
+
+### Changed
+
+- Asks for the account-token permission, which cloning emojis and stickers into a server needs now that plugins only read the token when they ask for it.
+
 ## [1.0.8] - 2026-11-14
 
 ### Changed

@@ -139,6 +139,8 @@ export const addonManifestSchema = superRefine(
 			locales: Type.Optional(localeDigestsSchema),
 			/** The images `ubd build` emits beside the bundle, by asset name. */
 			assets: Type.Optional(addonAssetsSchema),
+			/** What the addon may do beyond the usual: `account-token` lets it read the account token. */
+			permissions: Type.Optional(Type.Array(Type.Enum(['account-token']), { maxItems: 4 })),
 			/** The hosts the addon's `fetch` may reach; a leading `*.` also allows subdomains. Absent means any host. */
 			network: Type.Optional(
 				Type.Array(
