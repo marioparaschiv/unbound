@@ -1,9 +1,7 @@
 import { createLogger } from '@unbound-app/logger';
-import { Platform } from 'react-native';
 
 import { getSetting, setSetting } from '~/settings/unbound';
 import { createPatcher } from '~/patcher/create-patcher';
-import { CLIENT_VERSION } from '~/core/constants';
 import { onModuleLoaded } from '~/metro/wait';
 import { byName } from '~/metro/filters';
 import { reload } from '~/native/native';
@@ -68,8 +66,6 @@ function patchBoundary(Boundary: MetroExport) {
 			<ErrorFallback
 				error={error}
 				componentStack={boundary.__unboundComponentStack}
-				clientVersion={CLIENT_VERSION}
-				platform={Platform.OS}
 				recovery={getSetting('recovery')}
 				onRetry={() => {
 					boundary.__unboundComponentStack = undefined;
