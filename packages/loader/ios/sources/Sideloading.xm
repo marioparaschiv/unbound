@@ -2,6 +2,7 @@
 
 #include <string>
 
+#import "AnimatedIcon.h"
 #import "CoreConversions.h"
 #include "LoaderBrowserLogin.h"
 #include "LoaderDiagnostics.h"
@@ -295,6 +296,11 @@ static NSError *iconError(NSInteger code, NSString *description)
                            userInfo:@{NSLocalizedDescriptionKey : description}];
 }
 
+static BOOL isIconChangeBusy(NSError *error)
+{
+    return [error.domain isEqualToString:NSPOSIXErrorDomain] && error.code == EAGAIN;
+}
+
 static void completeIconChange(void (^completion)(NSError *error), NSError *error)
 {
     if (completion)
@@ -500,14 +506,26 @@ static NSString *remappedAppGroup(NSString *identifier)
 
 - (void)setAlternateIconName:(NSString *)iconName completionHandler:(void (^)(NSError *))completion
 {
-    void (^wrappedCompletion)(NSError *) = ^(NSError *error) {
-        if (completion)
-        {
-            completion(error);
-        }
-    };
+    UBIconSetter system = ^(NSString *name, UBIconCompletion done) { %orig(name, done); };
+    UBSetAppIcon(iconName, completion, ^(NSString *name, UBIconCompletion done) {
+        SetAlternateIconName(name, ^(NSError *error) {
+            if (!isIconChangeBusy(error))
+            {
+                if (done)
+                {
+                    done(error);
+                }
 
-    SetAlternateIconName(iconName, wrappedCompletion);
+                return;
+            }
+
+            [Logger
+                  info:LOG_CATEGORY_DEFAULT
+                format:
+                    @"The private icon setters were busy (EAGAIN); asking UIKit's public setter."];
+            system(name, done);
+        });
+    });
 }
 
 %end
