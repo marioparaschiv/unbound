@@ -5,7 +5,7 @@ import coverage from '~/lib/coverage.json';
 import { swapMarkupEmoji, type Markup } from '~/lib/markup';
 import { coverageSets } from '~/lib/coverage-sets';
 import { packUrl, type PackId } from '~/lib/packs';
-import { feedComposerImages } from '~/lib/composer-images';
+import { feedComposerImages } from '@unbound-plugins/shared/composer/native-images';
 import {
 	installComposerPack,
 	restoreComposerPack,
@@ -61,7 +61,10 @@ export function packsIOS(native: NativeBridge, pack: () => PackId) {
 
 	native.ui.run(installComposerPack, scope, pack(), coverage);
 
-	const stopFeeding = feedComposerImages((files) => native.ui.call(takeComposerImages, files));
+	const stopFeeding = feedComposerImages(
+		(files) => native.ui.call(takeComposerImages, files),
+		'Unbound/Temp/unbound.emoji-packs/composer',
+	);
 
 	return {
 		refresh() {
@@ -71,8 +74,12 @@ export function packsIOS(native: NativeBridge, pack: () => PackId) {
 			for (const unpatch of unpatches) unpatch();
 
 			stopFeeding();
-			native.ui.run(restoreComposerPack);
-			scope.dispose();
+			void native.ui
+				.call(restoreComposerPack)
+				.catch((error: unknown) =>
+					logger.error('Failed to remove the composer emoji:', error),
+				)
+				.finally(() => scope.dispose());
 		},
 	};
 }

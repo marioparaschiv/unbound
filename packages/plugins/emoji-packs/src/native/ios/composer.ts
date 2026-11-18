@@ -1,3 +1,10 @@
+import {
+	hideRun,
+	loadOverlayImage,
+	placeOverlay,
+	positionOverlay,
+	removeTaggedOverlays,
+} from '@unbound-plugins/shared/composer/ios/glyph-overlays';
 import { reportWorkletError } from '@unbound-plugins/shared/native/report-worklet-error';
 import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
 
@@ -11,13 +18,16 @@ const SELECTORS = ['textViewDidChange:', 'setText:', 'setAttributedText:', 'layo
 const OVERLAY_TAG = 0x55454d4a;
 const MAX_EMOJI = 64;
 
-type Overlay = { view: NativeObjectHandle; url: string };
-
 type ComposerState = {
 	objc: NativeObjCBridge;
 	pack: PackId;
 	sets: CoverageSets;
-	overlays: Map<string, Overlay[]>;
+	painted: Map<string, string>;
+	/** Each text view's overlays and the runs they cover, by the view's hash, to move after a layout pass. */
+	placed: Map<string, { start: number; view: NativeObjectHandle }[]>;
+	side: number;
+	/** The text views painted, by hash, so stopping can remove their overlays. */
+	views: Map<string, NativeObjectHandle>;
 	images: Map<string, NativeObjectHandle>;
 	/** Downloaded pack images, by URL, as absolute file paths. */
 	files: Map<string, string>;
@@ -28,29 +38,10 @@ type ComposerState = {
 
 type Holder = Record<typeof STATE_KEY, ComposerState | undefined>;
 
-type BoxedRect = {
-	value?: BoxedRect;
-	origin?: { x?: number; y?: number };
-	size?: { width?: number; height?: number };
-};
-
 function holder(): Holder {
 	'worklet';
 
 	return globalThis as unknown as Holder;
-}
-
-function rectOf(raw: unknown) {
-	'worklet';
-	const boxed = raw as BoxedRect | null;
-	const rect = boxed?.value ?? boxed;
-
-	return {
-		x: Number(rect?.origin?.x ?? 0),
-		y: Number(rect?.origin?.y ?? 0),
-		width: Number(rect?.size?.width ?? 0),
-		height: Number(rect?.size?.height ?? 0),
-	};
 }
 
 function imageFor(current: ComposerState, url: string): NativeObjectHandle | null {
@@ -67,75 +58,11 @@ function imageFor(current: ComposerState, url: string): NativeObjectHandle | nul
 		return null;
 	}
 
-	const image = current.objc.call(
-		current.objc.getClass('UIImage')!,
-		'imageWithContentsOfFile:',
-		path,
-	) as NativeObjectHandle | null;
+	const image = loadOverlayImage(current.objc, path);
 
 	if (image) current.images.set(url, image);
 
 	return image;
-}
-
-function clearOverlays(current: ComposerState, key: string) {
-	'worklet';
-	const placed = current.overlays.get(key);
-
-	if (placed) {
-		for (const overlay of placed) current.objc.invoke(overlay.view, 'removeFromSuperview', []);
-	}
-
-	current.overlays.delete(key);
-}
-
-function overlayAt(
-	current: ComposerState,
-	textView: NativeObjectHandle,
-	index: number,
-	url: string,
-) {
-	'worklet';
-	const { objc } = current;
-	const layout = objc.call(textView, 'layoutManager') as NativeObjectHandle | null;
-	const container = objc.call(textView, 'textContainer') as NativeObjectHandle | null;
-	const image = imageFor(current, url);
-
-	if (!layout || !container || !image) return null;
-
-	const glyph = Number(objc.call(layout, 'glyphIndexForCharacterAtIndex:', index));
-	const rect = rectOf(
-		objc.call(
-			layout,
-			'boundingRectForGlyphRange:inTextContainer:',
-			objc.struct('NSRange', { location: glyph, length: 1 }),
-			container,
-		),
-	);
-	const inset = rectOf({ origin: objc.call(textView, 'textContainerInset') as never });
-
-	if (rect.width <= 0 || rect.height <= 0) return null;
-
-	const side = Math.min(rect.width, rect.height);
-	const view = objc.create('UIImageView', 'initWithImage:', [image]) as NativeObjectHandle | null;
-
-	if (!view) return null;
-
-	objc.invoke(view, 'setTag:', [OVERLAY_TAG]);
-	objc.invoke(view, 'setContentMode:', [1]);
-	objc.invoke(view, 'setUserInteractionEnabled:', [false]);
-	objc.invoke(view, 'setFrame:', [
-		objc.struct('CGRect', {
-			origin: {
-				x: rect.x + inset.x + (rect.width - side) / 2,
-				y: rect.y + inset.y + (rect.height - side) / 2,
-			},
-			size: { width: side, height: side },
-		}),
-	]);
-	objc.invoke(textView, 'addSubview:', [view]);
-
-	return { view, url };
 }
 
 function paint(current: ComposerState, textView: NativeObjectHandle) {
@@ -145,47 +72,64 @@ function paint(current: ComposerState, textView: NativeObjectHandle) {
 	if (current.updating || !objc.invoke(textView, 'window', [])) return;
 
 	const storage = objc.call(textView, 'textStorage') as NativeObjectHandle | null;
+	const font = objc.call(textView, 'font') as NativeObjectHandle | null;
 	const text = storage ? objc.call(storage, 'string') : null;
+
+	if (!storage || !font || typeof text !== 'string') return;
+
 	const key = String(objc.call(textView, 'hash'));
+	const signature = `${current.pack}\u0000${text}\u0000${current.files.size}`;
 
-	clearOverlays(current, key);
+	if (current.painted.get(key) === signature) {
+		const known = current.placed.get(key);
 
-	if (!storage || typeof text !== 'string') return;
+		if (known) {
+			for (const overlay of known) {
+				positionOverlay(objc, textView, overlay.start, current.side, overlay.view);
+			}
+		}
 
-	const runs = emojiRuns(text).slice(0, MAX_EMOJI);
-	const clear = objc.call(objc.getClass('UIColor')!, 'clearColor') as NativeObjectHandle;
-	const overlays: Overlay[] = [];
+		return;
+	}
+
+	const side = Math.round(Number(objc.call(font, 'lineHeight')) || 20);
+	const runs = emojiRuns(text)
+		.slice(0, MAX_EMOJI)
+		.flatMap((run) => {
+			const url = packUrl(current.pack, run.surrogates, current.sets);
+			const image = url ? imageFor(current, url) : null;
+
+			return image ? [{ ...run, image }] : [];
+		});
 
 	current.updating = true;
 
 	try {
+		removeTaggedOverlays(objc, textView, OVERLAY_TAG);
+
+		for (const run of runs) hideRun(objc, storage, run.start, run.length, side, run.length);
+
+		const placed: { start: number; view: NativeObjectHandle }[] = [];
+
 		for (const run of runs) {
-			const url = packUrl(current.pack, run.surrogates, current.sets);
+			const view = placeOverlay(objc, textView, run.start, side, run.image, OVERLAY_TAG);
 
-			if (!url) continue;
-
-			objc.call(
-				storage,
-				'addAttribute:value:range:',
-				'NSColor',
-				clear,
-				objc.struct('NSRange', { location: run.start, length: run.length }),
-			);
-
-			const overlay = overlayAt(current, textView, run.start, url);
-
-			if (overlay) overlays.push(overlay);
+			if (view) placed.push({ start: run.start, view });
 		}
+
+		current.placed.set(key, placed);
+		current.side = side;
 	} finally {
 		current.updating = false;
 	}
 
-	if (overlays.length) current.overlays.set(key, overlays);
+	current.painted.set(key, signature);
+	current.views.set(key, textView);
 }
 
 /**
- * @description Draws the pack's emoji in Discord's native composer as it is typed: each emoji's glyph is made
- * transparent and the pack's image is placed over it, so the text that gets sent stays the same.
+ * @description Draws the pack's emoji in Discord's native composer as it is typed: each emoji's glyph shrinks to
+ * nothing, keeping its width, and the pack's image is placed over it, so the text that gets sent stays the same.
  * @param scope The plugin's UI scope, which removes the hooks on dispose.
  * @param pack The pack to start with.
  * @param coverage Which emoji each pack has.
@@ -197,7 +141,10 @@ export function installComposerPack(scope: NativeUIScope, pack: PackId, coverage
 		objc,
 		pack,
 		sets: coverageSets(coverage),
-		overlays: new Map(),
+		painted: new Map(),
+		placed: new Map(),
+		side: 20,
+		views: new Map(),
 		images: new Map(),
 		files: new Map(),
 		wanted: new Set(),
@@ -250,7 +197,7 @@ export function setComposerPack(pack: PackId) {
 }
 
 /**
- * @description Removes every overlay it placed.
+ * @description Stops drawing and removes the overlays from every text view it painted.
  */
 export function restoreComposerPack() {
 	'worklet';
@@ -258,7 +205,8 @@ export function restoreComposerPack() {
 
 	if (!current) return;
 
-	for (const key of [...current.overlays.keys()]) clearOverlays(current, key);
+	for (const view of current.views.values())
+		removeTaggedOverlays(current.objc, view, OVERLAY_TAG);
 
 	holder()[STATE_KEY] = undefined;
 }
