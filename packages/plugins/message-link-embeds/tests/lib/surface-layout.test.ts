@@ -20,6 +20,15 @@ describe('embedded message width', () => {
 		expect(availableMessageWidthFromNative(label, cell)).toBe(295);
 	});
 
+	test('stops at the container a plugin narrowed', () => {
+		const label = { value: { origin: { x: 82, y: 0 }, size: { width: 120, height: 50 } } };
+		const cell = { value: { origin: { x: 0, y: 0 }, size: { width: 375, height: 143.5 } } };
+		const container = { value: { origin: { x: 82, y: 0 }, size: { width: 263, height: 50 } } };
+
+		expect(availableMessageWidthFromNative(label, cell, container)).toBe(263);
+		expect(availableMessageWidthFromNative(label, cell)).toBe(281);
+	});
+
 	test('keeps the label width when cell geometry is unusable', () => {
 		const label = { value: { origin: { x: 68, y: 0 }, size: { width: 291, height: 50 } } };
 

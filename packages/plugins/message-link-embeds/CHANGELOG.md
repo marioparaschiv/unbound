@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.8] - 2026-11-18
+
+### Fixed
+
+- Inside Chat Bubbles, previews fit inside the bubble, so their right-hand corners show rounded instead of running past the bubble's edge.
+
 ## [1.1.7] - 2026-11-18
 
 ### Fixed

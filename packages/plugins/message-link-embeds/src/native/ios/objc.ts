@@ -91,7 +91,21 @@ export async function availableMessageWidth(
 		{ target: label, selector: 'bounds', args: [] },
 		{ target: label, selector: 'convertRect:toView:', args: [{ $nativeBatchResult: 0 }, cell] },
 		{ target: cell, selector: 'bounds', args: [] },
+		{ target: label, selector: 'superview', args: [] },
 	]);
+	const container = values[3] as NativeObjectHandle | null;
+	const containerInCell = container
+		? (
+				await objc.batch([
+					{ target: container, selector: 'bounds', args: [] },
+					{
+						target: container,
+						selector: 'convertRect:toView:',
+						args: [{ $nativeBatchResult: 0 }, cell],
+					},
+				])
+			)[1]
+		: undefined;
 
-	return availableMessageWidthFromNative(values[1], values[2]);
+	return availableMessageWidthFromNative(values[1], values[2], containerInCell);
 }

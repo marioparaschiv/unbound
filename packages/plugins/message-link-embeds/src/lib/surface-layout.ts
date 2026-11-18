@@ -45,9 +45,15 @@ function bottomOffset(metrics: SurfaceLayoutMetrics): number {
  * @description Computes how wide an embed can be, from the message label's frame in its cell.
  * @param labelInCell The label's `CGRect` converted into the cell's coordinates.
  * @param cellBounds The cell's `bounds`.
- * @returns The width from the label's left edge to the cell's right padding, or the label's own width.
+ * @param containerInCell The label's container in the cell's coordinates, which plugins such as Chat Bubbles narrow.
+ * @returns The width from the label's left edge to the cell's right padding or the container's right edge, whichever
+ * comes first, and never less than the label's own width.
  */
-export function availableMessageWidthFromNative(labelInCell: unknown, cellBounds: unknown): number {
+export function availableMessageWidthFromNative(
+	labelInCell: unknown,
+	cellBounds: unknown,
+	containerInCell?: unknown,
+): number {
 	const label = structFields(labelInCell);
 	const labelWidth = Number(structFields(label.size).width);
 	const left = Number(structFields(label.origin).x);
@@ -56,11 +62,19 @@ export function availableMessageWidthFromNative(labelInCell: unknown, cellBounds
 	if (!Number.isFinite(labelWidth)) return 0;
 	if (!Number.isFinite(cellWidth) || !Number.isFinite(left)) return labelWidth;
 
-	const availableWidth = cellWidth - left - 12;
+	const availableWidth = Math.min(cellWidth - left - 12, containerRight(containerInCell) - left);
 
 	if (!Number.isFinite(availableWidth) || availableWidth < Surface.minWidth) return labelWidth;
 
 	return Math.max(labelWidth, Math.min(cellWidth, availableWidth));
+}
+
+function containerRight(containerInCell: unknown): number {
+	const container = structFields(containerInCell);
+	const right =
+		Number(structFields(container.origin).x) + Number(structFields(container.size).width);
+
+	return Number.isFinite(right) ? right : Infinity;
 }
 
 /**
