@@ -25,6 +25,7 @@ int64_t nativeCallClock();
 std::optional<NativeCallSnapshot> nativeCallOnThread(uintptr_t thread);
 CurrentNativeCall currentNativeCall();
 std::string describeNativeCall(const std::optional<NativeCallSnapshot> &call, int64_t now);
+bool writeCrashingNativeCallLine(int descriptor);
 
 class NativeCallScope
 {
