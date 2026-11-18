@@ -30,6 +30,8 @@ export type { CrashEvent, CrashReportAddon } from '~/diagnostics/crash-report';
 
 type CrashReportIssue = { number: number; url: string; created: boolean };
 
+const RETRIES_PER_LAUNCH = 3;
+
 type SentCrashReport = { id: string; origin?: CrashOrigin; issue?: CrashReportIssue };
 
 /** What filing a recorded crash on GitHub came to. */
@@ -136,6 +138,7 @@ async function sendCrashReport(
 				reportId: id,
 				...(origin ? { origin } : {}),
 				...(issue ? { issue: { number: issue.number, url: issue.url } } : {}),
+				...(!issue && filesIssue(origin, event.addon?.id) ? { issuePending: true } : {}),
 			});
 		}
 
@@ -308,6 +311,10 @@ async function sendRecordedCrash(
 		: undefined;
 }
 
+function filesIssue(origin: CrashOrigin | undefined, addon: string | undefined): boolean {
+	return origin === 'unbound' || (origin === 'addon' && Boolean(addon?.startsWith('unbound.')));
+}
+
 async function requestIssue(reportId: string): Promise<FiledCrash | undefined> {
 	try {
 		const { createUnboundClient } = await import('~/account/client');
@@ -342,13 +349,40 @@ export async function fileRecordedCrash(
 	const origin = filed?.origin ?? sent.origin;
 	const issue = filed?.issue && { number: filed.issue.number, url: filed.issue.url };
 
-	if (issue) {
-		await markCrashReported(record.at, {
-			reportId: sent.id,
-			...(origin ? { origin } : {}),
-			issue,
-		});
-	}
+	await markCrashReported(record.at, {
+		reportId: sent.id,
+		...(origin ? { origin } : {}),
+		...(issue
+			? { issue, issuePending: false }
+			: origin === 'addon'
+				? {}
+				: { issuePending: true }),
+	});
 
 	return { ...(origin ? { origin } : {}), ...(issue ? { issue } : {}) };
+}
+
+/**
+ * @description Asks the server again to file crashes whose issue GitHub could not open last time, three per launch.
+ */
+export async function retryPendingIssues(): Promise<void> {
+	const { readCrashHistory } = await import('~/diagnostics/crash-history');
+	const pending = (await readCrashHistory())
+		.flatMap((record) =>
+			record.issuePending && record.reportId && !record.issue
+				? [{ at: record.at, reportId: record.reportId }]
+				: [],
+		)
+		.slice(-RETRIES_PER_LAUNCH);
+
+	for (const record of pending) {
+		const filed = await requestIssue(record.reportId);
+
+		if (filed?.issue) {
+			await markCrashReported(record.at, {
+				issue: { number: filed.issue.number, url: filed.issue.url },
+				issuePending: false,
+			});
+		}
+	}
 }
