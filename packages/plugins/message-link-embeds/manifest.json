@@ -30,5 +30,38 @@
 	},
 	"minNativeBridgeApi": "1.1.0",
 	"icon": "LinkIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.fabric.mount",
+				"native.objc.batch",
+				"native.objc.classes",
+				"native.objc.hooks",
+				"native.objc.invoke",
+				"native.objc.invokeAsync",
+				"native.objc.ivars",
+				"native.objc.snapshot"
+			]
+		},
+		"android": {
+			"capabilities": [
+				"native.fabric.async",
+				"native.java.batch",
+				"native.java.classes",
+				"native.java.construct",
+				"native.java.fields",
+				"native.java.hooks",
+				"native.java.invoke",
+				"native.java.invokeAsync"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "b6281b1812331bf8dea411942ac59929771e948c5a946e55df6e18537b17096c1eed24b88e06c35f9f6a6cf8049bc160e306607ad62448351187a558ccb5370a"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "mFonAhZp5LUIx8z63978dWjs04xbOkITEqCKBD/PjqiAhh3kBaG4GRrvvxgqTQ/xJOKn6JIyJqO9bLDWBddyBg=="
+	}
 }
