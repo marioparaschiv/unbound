@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 #import "LoaderAddonActivity.h"
@@ -578,6 +579,54 @@ namespace {
     };
 }
 
+static constexpr int kMaxHookDepth = 8;
+
+namespace {
+    struct HookDepthGuard {
+        explicit HookDepthGuard(const HookDispatcher *dispatcher)
+            : dispatcher(dispatcher), depth(++depths()[dispatcher])
+        {
+        }
+
+        ~HookDepthGuard()
+        {
+            if (--depths()[dispatcher] <= 0)
+            {
+                depths().erase(dispatcher);
+            }
+        }
+
+        static std::unordered_map<const HookDispatcher *, int> &depths()
+        {
+            thread_local std::unordered_map<const HookDispatcher *, int> perThread;
+            return perThread;
+        }
+
+        const HookDispatcher *dispatcher;
+        int depth;
+    };
+}
+
+static void warnRecursiveHook(id object, SEL selector)
+{
+    static std::mutex mutex;
+    static std::set<std::string> warned;
+    std::string name =
+        std::string(object ? object_getClassName(object) : "?") + " " + sel_getName(selector);
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        if (!warned.insert(name).second)
+        {
+            return;
+        }
+    }
+
+    [Logger warning:LOG_CATEGORY_PLUGINS
+             format:@"Skipped the plugin hooks on -[%s] while it called itself more than %d deep, "
+                    @"so a hook that triggers its own method can't overflow the stack.",
+                    name.c_str(), kMaxHookDepth];
+}
+
 static void logHookFailure(const std::exception &exception)
 {
     std::optional<std::string> message =
@@ -622,6 +671,14 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
     }
 
     HookCallGuard guard(dispatcher);
+    HookDepthGuard depth(dispatcher.get());
+    if (depth.depth > kMaxHookDepth)
+    {
+        warnRecursiveHook(object, selector);
+        invokeHookOriginal(dispatcher, arguments, returnValue);
+        return;
+    }
+
     std::vector<std::shared_ptr<HookState>> hooks = activeHookStates(dispatcher, object);
     if (hooks.empty() || touchesDeallocatingObject(dispatcher, arguments))
     {
