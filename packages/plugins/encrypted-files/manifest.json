@@ -13,5 +13,29 @@
 		"min": "3.0.0"
 	},
 	"icon": "ShieldUserIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.ffi.call",
+				"native.ffi.memory",
+				"native.ffi.symbols"
+			]
+		},
+		"android": {
+			"capabilities": [
+				"native.java.classes",
+				"native.java.construct",
+				"native.java.fields",
+				"native.java.invoke"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "519e0d220bf57b0183608638da5cd90d47e238ea2404dc620ebc751df6a2616c531889fd7379079b16802ed1af5bfee1c7e3749cf625c8f012df57dd811dd97d"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "tCgcJXHr0PQ0BANdz2elk769n2wM6+6HSGJupXrO/3U55uSWFVDk/7b05Fj/7QYxZyAua7wiE6opnlSjXa1OBg=="
+	}
 }

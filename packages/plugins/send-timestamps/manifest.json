@@ -25,5 +25,12 @@
 		"min": "3.0.0"
 	},
 	"icon": "TimerIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "9082e90dd48ebd5a3f70a51ea4f4219c4bf15b22295dae5ab2b1a5ecbb6aed2e3f66626417a4fd7bfb765e63a1401389ccd1d82c116f51e33d12f8637a2d51bd"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "0J7s2dK5bejy3WnIgP2nb9eknIeFI8M7OT3gweiiccmkhfIirXemiJPOlGGbFPKtylb3N+aWeHJYI9lZv2CWAg=="
+	}
 }
