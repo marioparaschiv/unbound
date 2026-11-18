@@ -37,6 +37,34 @@ describe('crash fingerprints', () => {
 		]);
 	});
 
+	test('stay put when other threads, registers or the signal flavour change', () => {
+		const withThreads = (stack: string, thread: string) =>
+			`${stack}\nRegisters\nx0 0x1\nThread 1\n#0 0x2 ${thread} + 0x10`;
+
+		expect(
+			crashFingerprint({ ...report, stack: withThreads(report.stack!, 'libsystem') }),
+		).toBe(
+			crashFingerprint({ ...report, stack: withThreads(report.stack!, 'CoreFoundation') }),
+		);
+		expect(
+			crashFingerprint({ ...report, stack: report.stack!.replace('Signal 11', 'Signal 10') }),
+		).toBe(crashFingerprint(report));
+		expect(
+			crashFingerprint({ ...report, stack: report.stack!.replace('Signal 11', 'Signal 6') }),
+		).not.toBe(crashFingerprint(report));
+	});
+
+	test('share one fingerprint for hangs of different lengths', () => {
+		const hang = (seconds: number) => ({
+			...report,
+			kind: 'freeze' as const,
+			message: `Hang ${seconds} sec`,
+			stack: `Hang ${seconds} sec\n#0 0x1 Discord + 0x10`,
+		});
+
+		expect(crashFingerprint(hang(4))).toBe(crashFingerprint(hang(9)));
+	});
+
 	test('tell crashes apart by addon, platform and stack', () => {
 		const addon = { id: 'unbound.chat-bubbles', version: '1.0.0', trust: 'signed' as const };
 
