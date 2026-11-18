@@ -33,6 +33,7 @@ import { unpatchAllByCaller } from '~/patcher/api';
 import { isSafeAddonMain } from '~/addons/paths';
 import type { AddonScope } from '~/addons/scope';
 import { getSetting } from '~/settings/unbound';
+import { timedStop } from '~/addons/slow-stop';
 import { benchSpan } from '~/core/bench-span';
 import { Manager } from '~/addons/manager';
 import { Addon } from '~/addons/addon';
@@ -534,8 +535,8 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		try {
 			beginNativeStop(context);
 
-			const result = withAddonAttribution(this.attribution(resolved), () =>
-				instance?.stop?.(),
+			const result = timedStop(resolved.name, this.logger, () =>
+				withAddonAttribution(this.attribution(resolved), () => instance?.stop?.()),
 			);
 
 			if (result && typeof result.then === 'function') {
@@ -595,7 +596,6 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		const newestFirst = [context, scope];
 		const state = this.stateOf(resolved);
 
-		// Stopped, whatever the outcome: the panel is gone and nothing is in flight.
 		state.settling = void 0;
 		state.panel = void 0;
 
