@@ -850,6 +850,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/chess-boards": {
+      "name": "chess-boards",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/clean-channel-names": {
       "name": "clean-channel-names",
       "dependencies": {
@@ -4825,6 +4839,8 @@
     "chat-bubbles": ["chat-bubbles@workspace:packages/plugins/chat-bubbles"],
 
     "chat-gestures": ["chat-gestures@workspace:packages/plugins/chat-gestures"],
+
+    "chess-boards": ["chess-boards@workspace:packages/plugins/chess-boards"],
 
     "chokidar": ["chokidar@5.0.0", "", { "dependencies": { "readdirp": "^5.0.0" } }, "sha512-TQMmc3w+5AxjpL8iIiwebF73dRDF4fBIieAqGn9RGCWaEVwQ6Fb2cGe31Yns0RRIzii5goJ1Y7xbMwo1TxMplw=="],
 
