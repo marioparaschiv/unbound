@@ -448,5 +448,7 @@
 	"UNBOUND_CRASH_REPORT_CONFIRM": "Nahlásit",
 	"UNBOUND_CRASH_ISSUE_FAILED": "Pád se nepodařilo nahlásit",
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} v {place}",
-	"UNBOUND_CRASH_TITLE_FROZE": "Zaseknuto v {call} na {seconds} s"
+	"UNBOUND_CRASH_TITLE_FROZE": "Zaseknuto v {call} na {seconds} s",
+	"UNBOUND_CRASH_TITLE_HANG": "Discord nereagoval {duration}",
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Bez odezvy {duration} v {place}"
 }

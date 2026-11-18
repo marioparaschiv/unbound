@@ -66,7 +66,8 @@ mock.module('~/diagnostics/crash-consent', () => ({
 }));
 mock.module('~/toasts/api', () => ({ info: (...args: unknown[]) => toasts.push(args) }));
 
-const { fileRecordedCrash, reportNativeCrash } = await import('~/diagnostics/crash-reports');
+const { fileRecordedCrash, reportNativeCrash, reportSystemHang } =
+	await import('~/diagnostics/crash-reports');
 
 const launch = {
 	bundle: 'active' as const,
@@ -232,5 +233,46 @@ describe('fileRecordedCrash', () => {
 		});
 
 		expect(filed).toEqual({ origin: 'addon' });
+	});
+});
+
+describe('reportSystemHang', () => {
+	beforeEach(() => {
+		settings.clear();
+		sent.length = 0;
+		answer = (count) => ({ id: `report-${count}` });
+		consent = 'once';
+	});
+
+	const hangLaunch = {
+		...launch,
+		system: {
+			lastHang: {
+				at: 5_000,
+				ms: 4_000,
+				stack: 'Hang 4 sec\n#0 0x1000 Unbound.dylib + 0x10\n',
+			},
+		},
+	};
+
+	test('reports the newest hang once, as a freeze with its stack', async () => {
+		await reportSystemHang(hangLaunch);
+		await reportSystemHang(hangLaunch);
+
+		expect(sent).toHaveLength(1);
+		expect(sent[0]).toMatchObject({
+			kind: 'freeze',
+			phase: 'frozen',
+			seconds: 4,
+			message: 'Hang 4 sec',
+			stack: hangLaunch.system.lastHang.stack,
+		});
+		expect(settings.get('crash-reports.hangAt')).toBe(5_000);
+	});
+
+	test('does nothing without a hang', async () => {
+		await reportSystemHang(launch);
+
+		expect(sent).toHaveLength(0);
 	});
 });

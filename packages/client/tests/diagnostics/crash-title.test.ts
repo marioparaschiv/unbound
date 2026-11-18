@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
-import { freezeCause, nativeCrashAddon, nativeCrashFrame } from '~/diagnostics/crash-title';
+import {
+	freezeCause,
+	hangDuration,
+	nativeCrashAddon,
+	nativeCrashFrame,
+} from '~/diagnostics/crash-title';
 
 describe('crash titles', () => {
 	test('names the first frame outside the abort machinery', () => {
@@ -41,5 +46,10 @@ describe('crash titles', () => {
 			freezeCause('It has been inside the native call findViews(UIImageView) for 2500 ms.'),
 		).toEqual({ call: 'findViews(UIImageView)', seconds: 3 });
 		expect(freezeCause('Something else')).toBeUndefined();
+	});
+
+	test('reads a MetricKit hang duration', () => {
+		expect(hangDuration('Hang 4 sec')).toBe('4 sec');
+		expect(hangDuration('SIGSEGV')).toBeUndefined();
 	});
 });

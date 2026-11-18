@@ -13,6 +13,7 @@ const DEFAULTS = {
 	'staff-mode': false,
 	'crash-reports': false,
 	'crash-reports.nativeAt': 0,
+	'crash-reports.hangAt': 0,
 	'crash-reports.lastId': '',
 	'crash-reports.installId': '',
 	'crash-reports.lastSignature': '',

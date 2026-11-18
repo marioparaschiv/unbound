@@ -448,5 +448,7 @@
 	"UNBOUND_CRASH_REPORT_CONFIRM": "Relatar",
 	"UNBOUND_CRASH_ISSUE_FAILED": "Não foi possível relatar este travamento",
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} em {place}",
-	"UNBOUND_CRASH_TITLE_FROZE": "Travado em {call} por {seconds} s"
+	"UNBOUND_CRASH_TITLE_FROZE": "Travado em {call} por {seconds} s",
+	"UNBOUND_CRASH_TITLE_HANG": "O Discord parou de responder por {duration}",
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Sem resposta por {duration} em {place}"
 }

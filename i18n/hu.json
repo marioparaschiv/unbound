@@ -448,5 +448,7 @@
 	"UNBOUND_CRASH_REPORT_CONFIRM": "Bejelentés",
 	"UNBOUND_CRASH_ISSUE_FAILED": "Nem sikerült bejelenteni az összeomlást",
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} itt: {place}",
-	"UNBOUND_CRASH_TITLE_FROZE": "{seconds} mp-ig elakadt itt: {call}"
+	"UNBOUND_CRASH_TITLE_FROZE": "{seconds} mp-ig elakadt itt: {call}",
+	"UNBOUND_CRASH_TITLE_HANG": "A Discord {duration} nem reagált",
+	"UNBOUND_CRASH_TITLE_HANG_IN": "{duration} nem reagált itt: {place}"
 }

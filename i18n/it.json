@@ -448,5 +448,7 @@
 	"UNBOUND_CRASH_REPORT_CONFIRM": "Segnala",
 	"UNBOUND_CRASH_ISSUE_FAILED": "Impossibile segnalare questo crash",
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} in {place}",
-	"UNBOUND_CRASH_TITLE_FROZE": "Bloccato in {call} per {seconds} s"
+	"UNBOUND_CRASH_TITLE_FROZE": "Bloccato in {call} per {seconds} s",
+	"UNBOUND_CRASH_TITLE_HANG": "Discord non ha risposto per {duration}",
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Nessuna risposta per {duration} in {place}"
 }

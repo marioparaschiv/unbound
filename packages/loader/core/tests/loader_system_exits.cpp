@@ -34,6 +34,22 @@ const char *kDiagnostics = R"({
   ]
 })";
 
+const char *kHangWithStack = R"({
+  "timeStampEnd": "2026-11-12 23:00:00",
+  "hangDiagnostics": [
+    {
+      "diagnosticMetaData": {"hangDuration": "4 sec"},
+      "callStackTree": {"callStacks": [{
+        "threadAttributed": true,
+        "callStackRootFrames": [{
+          "address": 4096, "binaryName": "Unbound.dylib", "offsetIntoBinaryTextSegment": 16,
+          "subFrames": [{"address": 8192, "binaryName": "Discord", "offsetIntoBinaryTextSegment": 32}]
+        }]
+      }]}
+    }
+  ]
+})";
+
 std::string documents()
 {
     std::filesystem::path root = std::filesystem::temp_directory_path() / "unbound-system-exits";
@@ -79,6 +95,18 @@ void summarisesMetricsAndHangsOnce()
     assert(!summary.contains("cpu"));
 }
 
+void keepsTheLatestHangsStack()
+{
+    std::string directory = documents();
+    exits::recordMetricKitDiagnostics(directory, kDiagnostics);
+    exits::recordMetricKitDiagnostics(directory, kHangWithStack);
+
+    nlohmann::json last = exits::summary(directory, dayAfter())["lastHang"];
+    assert(last["ms"] == 4000);
+    assert(last["stack"]
+           == "Hang 4 sec\n#0 0x1000 Unbound.dylib + 0x10\n#1 0x2000 Discord + 0x20\n");
+}
+
 void forgetsOldExits()
 {
     std::string directory = documents();
@@ -119,6 +147,7 @@ int main()
 {
     parsesMetricKitValues();
     summarisesMetricsAndHangsOnce();
+    keepsTheLatestHangsStack();
     forgetsOldExits();
     recordsPlatformExitsByKey();
     namesThePluginsThatFroze();

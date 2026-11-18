@@ -448,5 +448,7 @@
 	"UNBOUND_CRASH_REPORT_CONFIRM": "Signaler",
 	"UNBOUND_CRASH_ISSUE_FAILED": "Impossible de signaler ce plantage",
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} dans {place}",
-	"UNBOUND_CRASH_TITLE_FROZE": "Bloqué dans {call} pendant {seconds} s"
+	"UNBOUND_CRASH_TITLE_FROZE": "Bloqué dans {call} pendant {seconds} s",
+	"UNBOUND_CRASH_TITLE_HANG": "Discord n'a pas répondu pendant {duration}",
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Aucune réponse pendant {duration} dans {place}"
 }

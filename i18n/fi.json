@@ -448,5 +448,7 @@
 	"UNBOUND_CRASH_REPORT_CONFIRM": "Raportoi",
 	"UNBOUND_CRASH_ISSUE_FAILED": "Kaatumista ei voitu raportoida",
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} kohdassa {place}",
-	"UNBOUND_CRASH_TITLE_FROZE": "Jumissa kohdassa {call} {seconds} s"
+	"UNBOUND_CRASH_TITLE_FROZE": "Jumissa kohdassa {call} {seconds} s",
+	"UNBOUND_CRASH_TITLE_HANG": "Discord ei vastannut {duration}",
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Ei vastausta {duration} kohdassa {place}"
 }

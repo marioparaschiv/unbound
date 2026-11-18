@@ -18,6 +18,8 @@ namespace {
     constexpr size_t kMaximumEvents       = 400;
     constexpr size_t kMaximumSeen         = 200;
     constexpr size_t kMaximumFrozenAddons = 5;
+    constexpr size_t kMaximumHangStack    = 4000;
+    constexpr size_t kMaximumHangStacks   = 3;
 
     std::mutex fileMutex;
 
@@ -231,6 +233,23 @@ void recordMetricKitMetrics(const std::string &documents, const std::string &pay
     writeStore(documents, store);
 }
 
+static void keepNewestHangStacks(nlohmann::json &events)
+{
+    size_t kept = 0;
+    for (auto event = events.rbegin(); event != events.rend(); ++event)
+    {
+        if (!event->is_object() || !event->contains("stack"))
+        {
+            continue;
+        }
+
+        if (++kept > kMaximumHangStacks)
+        {
+            event->erase("stack");
+        }
+    }
+}
+
 static void recordHangs(nlohmann::json &store, const nlohmann::json &payload, int64_t at)
 {
     auto hangs = payload.find("hangDiagnostics");
@@ -244,7 +263,13 @@ static void recordHangs(nlohmann::json &store, const nlohmann::json &payload, in
         nlohmann::json metadata = hang.value("diagnosticMetaData", nlohmann::json::object());
         addEvent(store, ExitKind::Hang, at,
                  parseMetricKitDuration(stringMember(metadata, "hangDuration")));
+        if (std::optional<std::string> stack = metricKitHangStack(hang))
+        {
+            store["events"].back()["stack"] = stack->substr(0, kMaximumHangStack);
+        }
     }
+
+    keepNewestHangStacks(store["events"]);
 }
 
 static std::optional<std::string> latestCrashStack(const nlohmann::json &payload)
@@ -377,6 +402,7 @@ nlohmann::json summary(const std::string &documents, int64_t now)
 
     nlohmann::json counts = nlohmann::json::object();
     int64_t longestHangMs = 0;
+    nlohmann::json lastHang;
     std::vector<FrozenAddon> frozen;
     for (const nlohmann::json &event : store["events"])
     {
@@ -392,6 +418,15 @@ nlohmann::json summary(const std::string &documents, int64_t now)
             continue;
         }
 
+        if (kind == "hang" && event.contains("stack")
+            && (lastHang.is_null()
+                || event.value("at", int64_t{0}) >= lastHang.value("at", int64_t{0})))
+        {
+            lastHang = {{"at", event.value("at", int64_t{0})},
+                        {"ms", event.value("ms", int64_t{0})},
+                        {"stack", event.value("stack", std::string())}};
+        }
+
         std::string name = kind == "hang" ? "hangs" : kind;
         counts[name]     = counts.value(name, 0) + 1;
         longestHangMs    = std::max(longestHangMs, event.value("ms", int64_t{0}));
@@ -405,6 +440,11 @@ nlohmann::json summary(const std::string &documents, int64_t now)
     if (!frozen.empty())
     {
         counts["freezes"] = frozenAddonsJSON(std::move(frozen));
+    }
+
+    if (!lastHang.is_null())
+    {
+        counts["lastHang"] = std::move(lastHang);
     }
 
     return counts;

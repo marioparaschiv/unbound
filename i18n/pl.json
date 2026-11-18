@@ -448,5 +448,7 @@
 	"UNBOUND_CRASH_REPORT_CONFIRM": "Zgłoś",
 	"UNBOUND_CRASH_ISSUE_FAILED": "Nie udało się zgłosić tej awarii",
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} w {place}",
-	"UNBOUND_CRASH_TITLE_FROZE": "Zawieszone w {call} przez {seconds} s"
+	"UNBOUND_CRASH_TITLE_FROZE": "Zawieszone w {call} przez {seconds} s",
+	"UNBOUND_CRASH_TITLE_HANG": "Discord nie odpowiadał przez {duration}",
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Brak odpowiedzi przez {duration} w {place}"
 }
