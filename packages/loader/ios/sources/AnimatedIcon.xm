@@ -299,9 +299,7 @@ static void observe(NSNotificationName name, void (^handler)(NSNotification *not
                                                 usingBlock:handler];
 }
 
-%hook UIApplication
-
-- (void)setAlternateIconName:(NSString *)iconName completionHandler:(void (^)(NSError *))completion
+void UBSetAppIcon(NSString *iconName, UBIconCompletion completion, UBIconSetter setIcon)
 {
     NSDictionary *info = UBAnimatedIconInfo();
     if (info && [iconName isEqualToString:UBAnimatedIconId])
@@ -321,8 +319,8 @@ static void observe(NSNotificationName name, void (^handler)(NSNotification *not
     {
         setAnimatedIconEnabled(NO);
         stopAnimation(NO, NO);
-        void (^original)(NSError *) = completion;
-        completion                  = ^(NSError *error) {
+        UBIconCompletion original = completion;
+        completion                = ^(NSError *error) {
             notify_post(kChangedNotification);
             if (original)
             {
@@ -331,7 +329,15 @@ static void observe(NSNotificationName name, void (^handler)(NSNotification *not
         };
     }
 
-    %orig(iconName, completion);
+    setIcon(iconName, completion);
+}
+
+%hook UIApplication
+
+- (void)setAlternateIconName:(NSString *)iconName completionHandler:(void (^)(NSError *))completion
+{
+    UBSetAppIcon(iconName, completion,
+                 ^(NSString *name, UBIconCompletion done) { %orig(name, done); });
 }
 
 - (NSString *)alternateIconName

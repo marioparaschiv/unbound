@@ -8,6 +8,9 @@ extern "C" {
 #endif
 extern NSString *const UBAnimatedIconId;
 NSDictionary *UBAnimatedIconInfo(void);
+typedef void (^UBIconCompletion)(NSError *error);
+typedef void (^UBIconSetter)(NSString *iconName, UBIconCompletion completion);
+void UBSetAppIcon(NSString *iconName, UBIconCompletion completion, UBIconSetter setIcon);
 #ifdef __cplusplus
 }
 #endif
