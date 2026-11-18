@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1] - 2026-11-18
+
+### Fixed
+
+- On iOS the message box no longer draws Apple's emoji behind the pack's, and the pack's emoji line up with the text, also next to Live Markdown's custom emoji.
+- Turning the plugin off removes its emoji from the message box.
+
 ## [1.2.0] - 2026-11-18
 
 ### Added

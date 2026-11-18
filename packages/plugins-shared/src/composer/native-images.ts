@@ -2,16 +2,15 @@ import { toBase64 } from '@unbound-plugins/shared/media/gif/base64';
 import { fs } from '@unbound-app/api';
 
 const IMAGE_POLL_MS = 400;
-const IMAGE_FOLDER = 'Unbound/Temp/unbound.emoji-packs/composer';
 
-async function download(url: string): Promise<string | undefined> {
+async function download(url: string, folder: string): Promise<string | undefined> {
 	try {
 		const response = await fetch(url);
 
 		if (!response.ok) return undefined;
 
 		const name = url.replace(/[^A-Za-z0-9.]/g, '_').slice(-120);
-		const path = `${IMAGE_FOLDER}/${name}`;
+		const path = `${folder}/${name}`;
 
 		await fs.writeFile(path, toBase64(new Uint8Array(await response.arrayBuffer())), 'base64');
 
@@ -27,10 +26,12 @@ async function download(url: string): Promise<string | undefined> {
  * @description Downloads the pack images the native composer asks for and hands them over as files, since the UI
  * thread must not wait on the network.
  * @param take Hands downloaded images to the composer and returns the URLs it still wants.
+ * @param folder Where to keep the files, relative to the documents directory.
  * @returns A function that stops downloading.
  */
 export function feedComposerImages(
 	take: (files: Record<string, string>) => Promise<string[]>,
+	folder: string,
 ): () => void {
 	const loading = new Set<string>();
 	let ready: Record<string, string> = {};
@@ -49,7 +50,7 @@ export function feedComposerImages(
 			if (loading.has(url)) continue;
 
 			loading.add(url);
-			void download(url).then((path) => {
+			void download(url, folder).then((path) => {
 				if (path) ready[url] = path;
 			});
 		}

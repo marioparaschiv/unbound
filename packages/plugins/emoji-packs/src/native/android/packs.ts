@@ -10,7 +10,7 @@ import {
 	setComposerPack,
 	takeComposerImages,
 } from '~/native/android/composer';
-import { feedComposerImages } from '~/lib/composer-images';
+import { feedComposerImages } from '@unbound-plugins/shared/composer/native-images';
 
 const SEARCH_ATTEMPTS = 4;
 const SEARCH_RETRY_MS = 2000;
@@ -81,7 +81,10 @@ export function packsAndroid(native: NativeBridge, pack: () => PackId) {
 
 	native.ui.run(installComposerPack, scope, pack(), coverage);
 
-	const stopFeeding = feedComposerImages((files) => native.ui.call(takeComposerImages, files));
+	const stopFeeding = feedComposerImages(
+		(files) => native.ui.call(takeComposerImages, files),
+		'Unbound/Temp/unbound.emoji-packs/composer',
+	);
 
 	return {
 		refresh() {
