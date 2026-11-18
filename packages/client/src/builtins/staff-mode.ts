@@ -16,6 +16,8 @@ let unsubscribe: (() => void) | null = null;
 let warnedMissingStaffHelper = false;
 let warnedMissingUpdateHandler = false;
 
+const RECOMPUTING_ACTIONS = ['CONNECTION_OPEN', 'OVERLAY_INITIALIZE', 'CURRENT_USER_UPDATE'];
+
 /** Makes the developer experiment store report staff status from the `staff-mode` setting. */
 export function start() {
 	warnedMissingStaffHelper = false;
@@ -37,6 +39,8 @@ function patchStore(Store: MetroExport) {
 			);
 		}
 	}
+
+	patchRecomputes(Store);
 
 	unsubscribe = onChange(
 		(payload) => isSettingChange(payload, 'staff-mode'),
@@ -75,11 +79,31 @@ function withStaffMode<T>(operation: () => T): T {
 	}
 }
 
-function currentUserHandler(Store: MetroExport) {
+function actionHandlers(Store: MetroExport): Record<string, MetroExport> | undefined {
 	const token = Store.getDispatchToken?.() ?? Store._dispatchToken;
 	const nodes = Store._dispatcher?._actionHandlers?._nodes ?? Store._dispatcher?._nodes;
 
-	return nodes?.get(token)?.actionHandler?.CURRENT_USER_UPDATE;
+	return nodes?.get(token)?.actionHandler;
+}
+
+function currentUserHandler(Store: MetroExport) {
+	return actionHandlers(Store)?.CURRENT_USER_UPDATE;
+}
+
+function patchRecomputes(Store: MetroExport) {
+	const handlers = actionHandlers(Store);
+
+	if (!handlers) {
+		return;
+	}
+
+	for (const action of RECOMPUTING_ACTIONS) {
+		if (typeof handlers[action] === 'function') {
+			Patcher.instead(handlers, action, ({ args, original }) =>
+				withStaffMode(() => original(...args)),
+			);
+		}
+	}
 }
 
 function refreshStore(Store: MetroExport) {
