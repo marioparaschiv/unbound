@@ -48,6 +48,7 @@ export type NativeDeviceState = {
 	injected?: string[];
 	/** Methods two or more plugins rewrite, as `<plugin> × <plugin> · <method>`; older loaders omit it. */
 	hookConflicts?: string[];
+	foreignHooks?: string[];
 	/** Low Power Mode (Battery Saver), the battery level and whether it charges; older loaders omit it. */
 	power?: NativePowerState;
 	/** The resolvers the active connection uses; older loaders omit it. */
