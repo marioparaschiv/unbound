@@ -9,6 +9,35 @@ function unbox(raw: unknown): Record<string, number> {
 	return (boxed?.value ?? boxed ?? {}) as Record<string, number>;
 }
 
+const SWIPE_ANIMATION_KEY = 'unbound.chat-bubbles.swipe';
+
+function animateLike(
+	objc: NativeObjCBridge,
+	content: NativeObjectHandle,
+	view: NativeObjectHandle,
+	from: number,
+	to: number,
+) {
+	'worklet';
+	const contentLayer = objc.invoke(content, 'layer', []) as NativeObjectHandle;
+	const running = objc.invoke(contentLayer, 'animationForKey:', [
+		'position',
+	]) as NativeObjectHandle | null;
+
+	if (!running) return;
+
+	const animation = objc.invoke(running, 'copy', []) as NativeObjectHandle;
+
+	objc.invoke(animation, 'setKeyPath:', ['transform.translation.x']);
+	objc.invoke(animation, 'setAdditive:', [false]);
+	objc.invoke(animation, 'setFromValue:', [from]);
+	objc.invoke(animation, 'setToValue:', [to]);
+	objc.invoke(objc.invoke(view, 'layer', []) as NativeObjectHandle, 'addAnimation:forKey:', [
+		animation,
+		SWIPE_ANIMATION_KEY,
+	]);
+}
+
 /**
  * @description Translates the plugin's views in a message cell by however far swipe to reply moved the cell's content
  * view sideways, so the bubble and the avatar slide with the message and settle back with it.
@@ -35,12 +64,14 @@ export function followSwipe(objc: NativeObjCBridge, content: NativeObjectHandle,
 		if (!view || !parent || !objc.call(parent, 'isEqual:', cell)) continue;
 
 		const transform = unbox(objc.invoke(view, 'transform', []));
+		const from = Number(transform.tx ?? 0);
 
-		if (Math.abs(Number(transform.tx ?? 0) - shift) < 0.01) continue;
+		if (Math.abs(from - shift) < 0.01) continue;
 
 		objc.invoke(view, 'setTransform:', [
 			objc.struct('CGAffineTransform', { a: 1, b: 0, c: 0, d: 1, tx: shift, ty: 0 }),
 		]);
+		animateLike(objc, content, view, from, shift);
 	}
 }
 

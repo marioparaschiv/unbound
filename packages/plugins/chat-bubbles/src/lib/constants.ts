@@ -113,7 +113,6 @@ export const MENTION_WIDTH_STEP = 0.25;
 export const IOSClass = {
 	messageCell: 'DCDMessageTableViewCell',
 	contentView: 'UITableViewCellContentView',
-	swipeToReplyView: 'DCDSwipeToReplyView',
 	separatorCell: 'DCDSeparatorTableViewCell',
 	avatar: 'DCDAvatarView',
 	label: 'DCDLabel',

@@ -62,6 +62,34 @@ function roomOf(objc: NativeObjCBridge, cell: NativeObjectHandle, rooms: RowRoom
 	return replies(objc, cell) ? rooms.reply : rooms.first;
 }
 
+function swipeOffset(objc: NativeObjCBridge, content: NativeObjectHandle): number {
+	'worklet';
+	const center = objc.invoke(content, 'center', []) as {
+		value?: { x?: number };
+		x?: number;
+	} | null;
+	const width = sizeOf(objc.invoke(content, 'bounds', [])).width;
+	const x = Number((center?.value ?? center)?.x ?? 0) - width / 2;
+
+	return Number.isFinite(x) ? x : 0;
+}
+
+function keepOffset(objc: NativeObjCBridge, content: NativeObjectHandle, offset: number) {
+	'worklet';
+	const center = objc.invoke(content, 'center', []) as {
+		value?: { y?: number };
+		y?: number;
+	} | null;
+	const width = sizeOf(objc.invoke(content, 'bounds', [])).width;
+
+	objc.invoke(content, 'setCenter:', [
+		objc.struct('CGPoint', {
+			x: offset + width / 2,
+			y: Number((center?.value ?? center)?.y ?? 0),
+		}),
+	]);
+}
+
 // The content sits between the row's rooms; `undefined` when the row has none.
 function originX(raw: unknown): number {
 	'worklet';
@@ -137,14 +165,12 @@ function insetContent(objc: NativeObjCBridge, cell: NativeObjectHandle, inset: P
  * @param scope The plugin's UI scope, which removes every hook on dispose.
  * @param messageCell The message cell's class name.
  * @param contentView The class of a table cell's content view.
- * @param swipeToReplyView The class of the reply arrow Discord lays out each time swipe to reply moves the content view.
  * @param followTags The tags of the plugin's views in the cell, which slide with swipe to reply.
  */
 export function installRowPadding(
 	scope: NativeUIScope,
 	messageCell: string,
 	contentView: string,
-	swipeToReplyView: string,
 	followTags: number[],
 ) {
 	'worklet';
@@ -181,23 +207,32 @@ export function installRowPadding(
 		},
 	});
 	// UIKit lays the content view over the whole cell; moving it down by the room above puts the content back between its rooms.
+	const swipeOffsets = new Map<string, number>();
+
 	objc.hook(messageCell, 'layoutSubviews', {
 		before: ({ self }) => {
-			if (!isStandaloneCell(objc, self)) insetRow(self);
+			if (isStandaloneCell(objc, self)) return;
+
+			insetRow(self);
+
+			const content = objc.invoke(self, 'contentView', []) as NativeObjectHandle | null;
+
+			if (content)
+				swipeOffsets.set(String(objc.call(self, 'hash')), swipeOffset(objc, content));
 		},
 		after: ({ self }) => {
 			try {
+				const key = String(objc.call(self, 'hash'));
+				const offset = swipeOffsets.get(key) ?? 0;
 				const content = objc.invoke(self, 'contentView', []) as NativeObjectHandle;
 				const frame = isStandaloneCell(objc, self)
 					? undefined
-					: paddedFrame(
-							objc,
-							self,
-							state.rooms,
-							originX(objc.invoke(content, 'frame', [])),
-						);
+					: paddedFrame(objc, self, state.rooms, offset);
+
+				swipeOffsets.delete(key);
 
 				if (frame) objc.invoke(content, 'setFrame:', [frame]);
+				else if (offset !== 0) keepOffset(objc, content, offset);
 			} catch (error) {
 				console.error(`[Chat Bubbles] Failed to centre a message row: ${String(error)}`);
 			}
@@ -229,9 +264,9 @@ export function installRowPadding(
 			return result;
 		},
 	});
-	objc.hook(swipeToReplyView, 'setFrame:', {
+	objc.hook(messageCell, 'handlePan:', {
 		after: ({ self }) => {
-			const content = objc.invoke(self, 'superview', []) as NativeObjectHandle | null;
+			const content = objc.invoke(self, 'contentView', []) as NativeObjectHandle | null;
 
 			if (content) follow(content);
 		},

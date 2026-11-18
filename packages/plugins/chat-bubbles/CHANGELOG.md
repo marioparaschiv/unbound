@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.23] - 2026-11-18
+
+### Fixed
+
+- On iOS, swipe to reply slides the message again, with its bubble and avatar, and they spring back together. The plugin's hook on Discord's reply arrow stopped the message moving at all.
+
 ## [1.6.22] - 2026-11-17
 
 ### Fixed
