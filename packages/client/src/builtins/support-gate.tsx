@@ -3,9 +3,11 @@ import { createLogger } from '@unbound-app/logger';
 
 import {
 	CHAT_CHANNEL_ID,
+	hoistedRoleIds,
 	needsSupportGate,
 	SUPPORT_FORUM_ID,
 	UNBOUND_GUILD_ID,
+	type ServerRole,
 } from '~/core/support-gate';
 import SupportGateContent from '~/ui/support-gate/support-gate-content';
 import SupportBanner from '~/ui/support-gate/support-banner';
@@ -24,10 +26,14 @@ const Patcher = createPatcher('unbound::support-gate');
 const Logger = createLogger('SupportGate');
 
 const GuildMembers = findStore('GuildMember');
+const GuildRoles = findStore('GuildRole');
+const Guilds = findStore('Guild');
 const Router = findByProps('transitionToChannel');
 const SelectedChannel = findStore('SelectedChannel');
 
-type Member = { roles?: string[]; joinedAt?: string };
+type Member = { roles?: string[] };
+
+type RoleList = Record<string, ServerRole> | ServerRole[];
 
 type ContainerProps = { channel?: { id?: string }; channelId?: string };
 
@@ -37,6 +43,18 @@ type ParentProps = { children?: ReactNode };
 
 const stops: (() => void)[] = [];
 let gateOpen = false;
+
+function serverRoles(): ServerRole[] | undefined {
+	const roles = (GuildRoles?.getUnsafeMutableRoles?.(UNBOUND_GUILD_ID) ??
+		Guilds?.getRoles?.(UNBOUND_GUILD_ID) ??
+		Guilds?.getGuild?.(UNBOUND_GUILD_ID)?.roles) as RoleList | undefined;
+
+	if (!roles) {
+		return undefined;
+	}
+
+	return Array.isArray(roles) ? roles : Object.values(roles);
+}
 
 function isGated(): boolean {
 	const userId = Users.getCurrentUser()?.id;
@@ -48,10 +66,7 @@ function isGated(): boolean {
 		return false;
 	}
 
-	return needsSupportGate(
-		{ userId, roles: member.roles ?? [], joinedAt: member.joinedAt },
-		Date.now(),
-	);
+	return needsSupportGate(member.roles ?? [], hoistedRoleIds(serverRoles()));
 }
 
 function accepted(): boolean {
