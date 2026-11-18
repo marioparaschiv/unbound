@@ -174,6 +174,8 @@ export function install(objc: NativeObjCBridge, label: Handle) {
 		objc.hook('DCDChatInputComponentView', selector, {});
 	}
 
+	objc.hook('YYTextLayout', '+layoutWithContainer:text:', {});
+
 	const [required, ...optional] = specs(objc);
 	objc.hook(...required);
 	for (const spec of optional) objc.hook(...spec);
@@ -192,12 +194,14 @@ export function install(objc: NativeObjCBridge, label: Handle) {
 		"objc-method DCDLabel setText:",
 		"objc-method DCDChatInputComponentView setAttributedText:",
 		"objc-method DCDChatInputComponentView layoutSubviews",
+		"objc-method YYTextLayout layoutWithContainer:text:",
 		"objc-method DCDAttributedTextView setAttributedText:",
 		"objc-method DCDReusableYYLabel setAttributedText:",
 		"objc-method DCDMessageTableViewCell prepareForReuse",
 		"objc-class  DCDThemeView",
 		"objc-class  DCDOtherView",
 		"objc-class  DCDReusableYYLabel",
+		"objc-class  YYTextLayout",
 	}, []string{
 		"objc-method DCDLabel endTrackingWithTouch:withEvent:",
 		"objc-method UIControl setText:",
