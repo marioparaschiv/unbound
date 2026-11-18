@@ -133,5 +133,7 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_DISCORD_UPDATE_BREAKS: { version: string | number };
 		UNBOUND_CRASH_TITLE_NATIVE: { signal: string | number; place: string | number };
 		UNBOUND_CRASH_TITLE_FROZE: { call: string | number; seconds: string | number };
+		UNBOUND_CRASH_TITLE_HANG: { duration: string | number };
+		UNBOUND_CRASH_TITLE_HANG_IN: { duration: string | number; place: string | number };
 	};
 }

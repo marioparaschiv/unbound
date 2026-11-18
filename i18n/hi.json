@@ -448,5 +448,7 @@
 	"UNBOUND_CRASH_REPORT_CONFIRM": "रिपोर्ट करें",
 	"UNBOUND_CRASH_ISSUE_FAILED": "इस क्रैश की रिपोर्ट नहीं हो सकी",
 	"UNBOUND_CRASH_TITLE_NATIVE": "{place} में {signal}",
-	"UNBOUND_CRASH_TITLE_FROZE": "{call} में {seconds} s तक अटका"
+	"UNBOUND_CRASH_TITLE_FROZE": "{call} में {seconds} s तक अटका",
+	"UNBOUND_CRASH_TITLE_HANG": "Discord ने {duration} तक जवाब नहीं दिया",
+	"UNBOUND_CRASH_TITLE_HANG_IN": "{place} में {duration} तक कोई जवाब नहीं"
 }

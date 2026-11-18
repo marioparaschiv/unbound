@@ -448,5 +448,7 @@
 	"UNBOUND_CRASH_REPORT_CONFIRM": "Αναφορά",
 	"UNBOUND_CRASH_ISSUE_FAILED": "Δεν ήταν δυνατή η αναφορά του σφάλματος",
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} σε {place}",
-	"UNBOUND_CRASH_TITLE_FROZE": "Κόλλησε σε {call} για {seconds} δ"
+	"UNBOUND_CRASH_TITLE_FROZE": "Κόλλησε σε {call} για {seconds} δ",
+	"UNBOUND_CRASH_TITLE_HANG": "Το Discord δεν απαντούσε για {duration}",
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Χωρίς απόκριση για {duration} σε {place}"
 }

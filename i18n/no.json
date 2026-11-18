@@ -448,5 +448,7 @@
 	"UNBOUND_CRASH_REPORT_CONFIRM": "Rapporter",
 	"UNBOUND_CRASH_ISSUE_FAILED": "Kunne ikke rapportere krasjet",
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} i {place}",
-	"UNBOUND_CRASH_TITLE_FROZE": "Hang i {call} i {seconds} s"
+	"UNBOUND_CRASH_TITLE_FROZE": "Hang i {call} i {seconds} s",
+	"UNBOUND_CRASH_TITLE_HANG": "Discord svarte ikke på {duration}",
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Ingen respons på {duration} i {place}"
 }

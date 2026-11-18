@@ -448,5 +448,7 @@
 	"UNBOUND_CRASH_REPORT_CONFIRM": "Laporkan",
 	"UNBOUND_CRASH_ISSUE_FAILED": "Tidak dapat melaporkan crash ini",
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} di {place}",
-	"UNBOUND_CRASH_TITLE_FROZE": "Macet di {call} selama {seconds} dtk"
+	"UNBOUND_CRASH_TITLE_FROZE": "Macet di {call} selama {seconds} dtk",
+	"UNBOUND_CRASH_TITLE_HANG": "Discord tidak merespons selama {duration}",
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Tidak merespons selama {duration} di {place}"
 }

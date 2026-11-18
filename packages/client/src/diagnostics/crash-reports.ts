@@ -234,6 +234,39 @@ const CRASH_KINDS: Record<CrashEvent['kind'], true> = {
 	'native-crash': true,
 };
 
+/**
+ * @description Reports the newest hang MetricKit caught with a main-thread stack once, asking first while reporting is
+ * off, and keeps it in the crash history.
+ * @param launch The loader's launch report.
+ */
+export async function reportSystemHang(launch = getLoader()?.launch): Promise<void> {
+	const hang = launch?.system?.lastHang;
+
+	if (!hang?.stack || getSetting('crash-reports.hangAt') >= hang.at) {
+		return;
+	}
+
+	setSetting('crash-reports.hangAt', hang.at);
+
+	const message = hang.stack.split('\n')[0] ?? 'Hang';
+	const where = nativeCrashFrame(hang.stack);
+	const event: CrashEvent = {
+		kind: 'freeze',
+		phase: 'frozen',
+		seconds: hang.ms / 1000,
+		message,
+		stack: hang.stack,
+	};
+
+	await recordCrash({ at: hang.at, kind: event.kind, message, ...(where ? { where } : {}) });
+
+	if (wasJustReported(crashSignature(event)) || !(await consentToReport(event))) {
+		return;
+	}
+
+	await sendCrashReport(event, [], { recordedAt: hang.at });
+}
+
 function isCrashKind(kind: string): kind is CrashEvent['kind'] {
 	return Object.hasOwn(CRASH_KINDS, kind);
 }

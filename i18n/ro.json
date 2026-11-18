@@ -448,5 +448,7 @@
 	"UNBOUND_CRASH_REPORT_CONFIRM": "Raportează",
 	"UNBOUND_CRASH_ISSUE_FAILED": "Blocarea nu a putut fi raportată",
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} în {place}",
-	"UNBOUND_CRASH_TITLE_FROZE": "Blocat în {call} timp de {seconds} s"
+	"UNBOUND_CRASH_TITLE_FROZE": "Blocat în {call} timp de {seconds} s",
+	"UNBOUND_CRASH_TITLE_HANG": "Discord nu a răspuns timp de {duration}",
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Niciun răspuns timp de {duration} în {place}"
 }

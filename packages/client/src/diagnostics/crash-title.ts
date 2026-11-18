@@ -3,6 +3,7 @@ const SYSTEM_ABORT_IMAGE =
 	/^(libsystem_kernel|libsystem_c|libsystem_pthread|libsystem_platform|libc\+\+abi|libdyld|libc\.so|libart\.so)/i;
 const NATIVE_CALL_FREEZE = /native call (?:invoke\((.+)\)|(.+?)) for (\d+) ms/;
 const ADDON_LINE = /^Addon (\{.*\})$/m;
+const HANG_LINE = /^Hang (.+)$/;
 
 /** What froze Discord, read from a freeze's detail. */
 export type FreezeCause = { call: string; seconds: number };
@@ -75,4 +76,13 @@ export function freezeCause(detail: string): FreezeCause | undefined {
 	return match
 		? { call: match[1] ?? match[2], seconds: Math.round(Number(match[3]) / 1000) }
 		: undefined;
+}
+
+/**
+ * @description Reads how long a MetricKit hang lasted from its first stack line, such as `Hang 4 sec`.
+ * @param message The hang's message.
+ * @returns The duration as MetricKit wrote it, or `undefined` for any other message.
+ */
+export function hangDuration(message: string): string | undefined {
+	return HANG_LINE.exec(message)?.[1];
 }

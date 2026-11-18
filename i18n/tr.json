@@ -448,5 +448,7 @@
 	"UNBOUND_CRASH_REPORT_CONFIRM": "Bildir",
 	"UNBOUND_CRASH_ISSUE_FAILED": "Bu çökme bildirilemedi",
 	"UNBOUND_CRASH_TITLE_NATIVE": "{place} içinde {signal}",
-	"UNBOUND_CRASH_TITLE_FROZE": "{call} içinde {seconds} sn takıldı"
+	"UNBOUND_CRASH_TITLE_FROZE": "{call} içinde {seconds} sn takıldı",
+	"UNBOUND_CRASH_TITLE_HANG": "Discord {duration} yanıt vermedi",
+	"UNBOUND_CRASH_TITLE_HANG_IN": "{place} içinde {duration} yanıt yok"
 }

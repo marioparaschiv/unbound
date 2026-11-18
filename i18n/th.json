@@ -448,5 +448,7 @@
 	"UNBOUND_CRASH_REPORT_CONFIRM": "รายงาน",
 	"UNBOUND_CRASH_ISSUE_FAILED": "รายงานการแครชนี้ไม่ได้",
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} ใน {place}",
-	"UNBOUND_CRASH_TITLE_FROZE": "ค้างใน {call} นาน {seconds} วินาที"
+	"UNBOUND_CRASH_TITLE_FROZE": "ค้างใน {call} นาน {seconds} วินาที",
+	"UNBOUND_CRASH_TITLE_HANG": "Discord ไม่ตอบสนองนาน {duration}",
+	"UNBOUND_CRASH_TITLE_HANG_IN": "ไม่ตอบสนองนาน {duration} ใน {place}"
 }

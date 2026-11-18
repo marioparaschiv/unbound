@@ -74,9 +74,9 @@ namespace {
     }
 }
 
-std::optional<std::string> metricKitCrashStack(const nlohmann::json &crash)
+static std::optional<std::string> attributedFrames(const nlohmann::json &diagnostic)
 {
-    const nlohmann::json *thread = crash.is_object() ? crashingThread(crash) : nullptr;
+    const nlohmann::json *thread = diagnostic.is_object() ? crashingThread(diagnostic) : nullptr;
     if (!thread)
     {
         return std::nullopt;
@@ -84,6 +84,28 @@ std::optional<std::string> metricKitCrashStack(const nlohmann::json &crash)
 
     auto roots = thread->find("callStackRootFrames");
     if (roots == thread->end() || !roots->is_array() || roots->empty())
+    {
+        return std::nullopt;
+    }
+
+    std::string text;
+    const nlohmann::json *frame = &roots->front();
+    for (size_t index = 0; frame && frame->is_object() && index < kMaxFrames; index++)
+    {
+        text += frameLine(index, *frame);
+        auto children = frame->find("subFrames");
+        frame         = children != frame->end() && children->is_array() && !children->empty()
+                            ? &children->front()
+                            : nullptr;
+    }
+
+    return text;
+}
+
+std::optional<std::string> metricKitCrashStack(const nlohmann::json &crash)
+{
+    std::optional<std::string> frames = attributedFrames(crash);
+    if (!frames)
     {
         return std::nullopt;
     }
@@ -102,16 +124,18 @@ std::optional<std::string> metricKitCrashStack(const nlohmann::json &crash)
         text += "Termination " + reason + "\n";
     }
 
-    const nlohmann::json *frame = &roots->front();
-    for (size_t index = 0; frame && frame->is_object() && index < kMaxFrames; index++)
+    return text + *frames;
+}
+
+std::optional<std::string> metricKitHangStack(const nlohmann::json &hang)
+{
+    std::optional<std::string> frames = attributedFrames(hang);
+    if (!frames)
     {
-        text += frameLine(index, *frame);
-        auto children = frame->find("subFrames");
-        frame         = children != frame->end() && children->is_array() && !children->empty()
-                            ? &children->front()
-                            : nullptr;
+        return std::nullopt;
     }
 
-    return text;
+    nlohmann::json metadata = hang.value("diagnosticMetaData", nlohmann::json::object());
+    return "Hang " + textMember(metadata, "hangDuration") + "\n" + *frames;
 }
 }

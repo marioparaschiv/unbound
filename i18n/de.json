@@ -448,5 +448,7 @@
 	"UNBOUND_CRASH_REPORT_CONFIRM": "Melden",
 	"UNBOUND_CRASH_ISSUE_FAILED": "Absturz konnte nicht gemeldet werden",
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} in {place}",
-	"UNBOUND_CRASH_TITLE_FROZE": "{seconds} s in {call} hängen geblieben"
+	"UNBOUND_CRASH_TITLE_FROZE": "{seconds} s in {call} hängen geblieben",
+	"UNBOUND_CRASH_TITLE_HANG": "Discord hat {duration} nicht reagiert",
+	"UNBOUND_CRASH_TITLE_HANG_IN": "{duration} keine Reaktion in {place}"
 }

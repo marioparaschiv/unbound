@@ -448,5 +448,7 @@
 	"UNBOUND_CRASH_REPORT_CONFIRM": "回報",
 	"UNBOUND_CRASH_ISSUE_FAILED": "無法回報此當機",
 	"UNBOUND_CRASH_TITLE_NATIVE": "{place} 中的 {signal}",
-	"UNBOUND_CRASH_TITLE_FROZE": "在 {call} 中卡住 {seconds} 秒"
+	"UNBOUND_CRASH_TITLE_FROZE": "在 {call} 中卡住 {seconds} 秒",
+	"UNBOUND_CRASH_TITLE_HANG": "Discord 無回應 {duration}",
+	"UNBOUND_CRASH_TITLE_HANG_IN": "在 {place} 中無回應 {duration}"
 }

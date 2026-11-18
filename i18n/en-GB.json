@@ -478,5 +478,7 @@
 	"UNBOUND_CRASH_REPORT_CONFIRM": "Report",
 	"UNBOUND_CRASH_ISSUE_FAILED": "Couldn't report this crash",
 	"UNBOUND_CRASH_TITLE_NATIVE": "{signal} in {place}",
-	"UNBOUND_CRASH_TITLE_FROZE": "Stuck in {call} for {seconds} s"
+	"UNBOUND_CRASH_TITLE_FROZE": "Stuck in {call} for {seconds} s",
+	"UNBOUND_CRASH_TITLE_HANG": "Discord stopped responding for {duration}",
+	"UNBOUND_CRASH_TITLE_HANG_IN": "Stopped responding for {duration} in {place}"
 }

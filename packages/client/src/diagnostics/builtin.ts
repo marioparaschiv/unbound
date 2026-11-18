@@ -19,7 +19,10 @@ export function start() {
 	setRejectionTracker();
 	startAppSession();
 	void import('./breadcrumbs').then(({ startBreadcrumbs }) => startBreadcrumbs());
-	void import('./crash-reports').then(({ reportNativeCrash }) => reportNativeCrash());
+	void import('./crash-reports').then(async ({ reportNativeCrash, reportSystemHang }) => {
+		await reportNativeCrash();
+		await reportSystemHang();
+	});
 
 	if (typeof ErrorUtils === 'undefined') {
 		return;

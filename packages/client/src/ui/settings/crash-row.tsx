@@ -1,9 +1,9 @@
 import type { CrashOrigin } from '@unbound-app/contracts/crash-reports';
 
 import type { CrashIssueLink, CrashRecord } from '~/diagnostics/crash-history';
+import { freezeCause, hangDuration } from '~/diagnostics/crash-title';
 import { crashReportAddon } from '~/diagnostics/crash-report';
 import reportCrashOnGitHub from '~/ui/settings/report-crash';
-import { freezeCause } from '~/diagnostics/crash-title';
 import { format, messages } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
@@ -34,6 +34,16 @@ function crashTitle(record: CrashRecord): string {
 
 	if (cause) {
 		return format('UNBOUND_CRASH_TITLE_FROZE', cause);
+	}
+
+	const hang = record.kind === 'freeze' ? hangDuration(record.message) : undefined;
+
+	if (hang && record.where) {
+		return format('UNBOUND_CRASH_TITLE_HANG_IN', { duration: hang, place: record.where });
+	}
+
+	if (hang) {
+		return format('UNBOUND_CRASH_TITLE_HANG', { duration: hang });
 	}
 
 	if (record.kind === 'native-crash' && record.where && !record.message.includes(' in ')) {
