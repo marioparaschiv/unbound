@@ -4,6 +4,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstring>
+#include <unistd.h>
 
 #include "LoaderAddonActivity.h"
 
@@ -124,6 +125,36 @@ CurrentNativeCall currentNativeCall()
     }
 
     return {std::string_view(slot->label), slot->sequence.load(std::memory_order_relaxed)};
+}
+
+bool writeCrashingNativeCallLine(int descriptor)
+{
+    uintptr_t thread = currentActivityThread();
+    if (descriptor < 0 || thread == 0)
+    {
+        return false;
+    }
+
+    for (const NativeCallSlot &slot : gSlots)
+    {
+        if (slot.owner.load(std::memory_order_acquire) != thread)
+        {
+            continue;
+        }
+
+        size_t length = strnlen(slot.label, kNativeCallLabelLimit);
+        if (slot.startedAt.load(std::memory_order_relaxed) == 0 || length == 0)
+        {
+            return false;
+        }
+
+        const char prefix[] = "Native call ";
+        const char newline  = '\n';
+        return write(descriptor, prefix, sizeof(prefix) - 1) > 0
+               && write(descriptor, slot.label, length) > 0 && write(descriptor, &newline, 1) > 0;
+    }
+
+    return false;
 }
 
 std::string describeNativeCall(const std::optional<NativeCallSnapshot> &call, int64_t now)

@@ -30,6 +30,7 @@
 #include "LoaderImageIdentity.h"
 #include "LoaderLaunchReport.h"
 #include "LoaderLog.h"
+#include "NativeCallActivity.h"
 
 namespace loader {
 static constexpr std::array<int, 6> kCrashSignals = {SIGSEGV, SIGBUS, SIGABRT,
@@ -357,6 +358,7 @@ static void writeNativeStack(int signal, void *context)
     }
 
     writeCrashingAddonLine(descriptor);
+    writeCrashingNativeCallLine(descriptor);
 
     uintptr_t pc = 0, lr = 0, fp = 0;
     if (crashRegisters(context, pc, lr, fp))
@@ -507,6 +509,7 @@ bool recordUncaughtException(const std::string &description, const std::string &
     }
 
     writeCrashingAddonLine(descriptor);
+    writeCrashingNativeCallLine(descriptor);
     writeText(descriptor, frames.c_str());
     fsync(descriptor);
     close(descriptor);
