@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2] - 2026-11-18
+
+### Fixed
+
+- The notifications bell scales with Display Zoom like the Favorites and Settings buttons, instead of staying at a fixed 18 points.
+
 ## [1.0.1] - 2026-11-15
 
 ### Fixed

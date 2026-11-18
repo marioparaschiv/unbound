@@ -4,7 +4,7 @@ import type { AnyProps } from '@unbound-app/api/metro';
 import { assets, metro, patcher } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
 import { messages } from '@unbound-app/i18n';
-import { isValidElement, type ComponentType, type ReactNode } from 'react';
+import { Children, cloneElement, isValidElement, type ComponentType, type ReactNode } from 'react';
 
 type NotificationsProps = { hasNameplate?: boolean };
 
@@ -41,6 +41,37 @@ export function buttonVariant(notification: ReactNode): string | undefined {
 	return isValidElement<{ variant?: unknown }>(button) && typeof button.props.variant === 'string'
 		? button.props.variant
 		: undefined;
+}
+
+type IconProps = { icon?: unknown };
+type ChildrenProps = { children?: ReactNode };
+
+function scaledBellIcon(node: ReactNode): ReactNode {
+	if (!isValidElement<IconProps>(node) || node.type !== YouBarButton?.YouBarButtonIcon)
+		return node;
+
+	return Icons?.BellIcon ? cloneElement(node, { icon: Icons.BellIcon }) : node;
+}
+
+/**
+ * @description Gives Discord's notifications button the same icon sizing as the added buttons: Discord passes a bell
+ * fixed at 18 points, which ignores Display Zoom, while the icon component it takes otherwise scales with it.
+ * @param notification The rendered notifications button.
+ * @returns The button with its bell icon swapped, or the button as it was when Discord changed its shape.
+ */
+export function scalingBell(notification: ReactNode): ReactNode {
+	if (!isValidElement<ChildrenProps>(notification)) return notification;
+
+	const button = notification.props.children;
+
+	if (!isValidElement<{ icon?: ReactNode }>(button)) return notification;
+
+	const { icon } = button.props;
+	const swapped = isValidElement<ChildrenProps>(icon)
+		? cloneElement(icon, {}, ...Children.toArray(icon.props.children).map(scaledBellIcon))
+		: scaledBellIcon(icon);
+
+	return cloneElement(notification, {}, cloneElement(button, { icon: swapped }));
 }
 
 function ShortcutButton({ iconName, label, variant, onPress }: ShortcutProps) {
@@ -80,7 +111,7 @@ function Shortcuts({
 					onPress={() => GuildActions?.transitionToGuild('@favorites')}
 				/>
 			) : null}
-			{notification}
+			{scalingBell(notification)}
 			{settings.showSettings ? (
 				<ShortcutButton
 					iconName='SettingsIcon'
