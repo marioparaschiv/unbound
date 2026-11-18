@@ -13,6 +13,7 @@ var compatEnvironmentClasses = map[string]string{
 	"com.google.android.play.feature.HPE_EXPERIENCE": "a system feature name that Google Play Games on PC reports, not a class; the loader only asks the package manager whether the device has it",
 	"io.github.muntashirakon.AppManager":             "App Manager's package name, not a class; the loader only compares it with the app that installed Discord",
 	"top.nkbe.npatch.loader.LSPApplication":          "NPatch's own class, present only when Discord was patched with NPatch, so its absence is expected",
+	"com.huawei.system.BuildEx":                      "a Huawei system class that only HarmonyOS and EMUI ship; the loader asks it for the OS brand and reads its absence as not HarmonyOS",
 	"sun.misc.Unsafe":                                "part of Android's core runtime (libcore) that the public SDK stubs leave out; it ships with every device, not Discord, so a Discord update cannot remove it",
 }
 
