@@ -1,4 +1,7 @@
-import { publishDiscordCompatResponseSchema } from '@unbound-app/contracts/discord-compat';
+import {
+	listDiscordCompatResponseSchema,
+	publishDiscordCompatResponseSchema,
+} from '@unbound-app/contracts/discord-compat';
 import type { PublishDiscordCompatRequest } from '@unbound-app/contracts/discord-compat';
 import { unpackDebugAltText } from '@unbound-app/contracts/debug-card-alt-text';
 import { debugCardResponseSchema } from '@unbound-app/contracts/debug-cards';
@@ -7,6 +10,7 @@ import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import publishDiscordCompatEndpoint from '~/endpoints/publish-discord-compat';
+import listDiscordCompatEndpoint from '~/endpoints/list-discord-compat';
 import renderDebugCardEndpoint from '~/endpoints/render-debug-card';
 import { findDiscordCompat } from '~/lib/discord-compat';
 import type { AppContext } from '~/lib/context';
@@ -127,5 +131,23 @@ describe('POST /api/v1/loader/compat', () => {
 		const card = parse(debugCardResponseSchema, await response.json());
 
 		expect(JSON.parse(unpackDebugAltText(card.altText) ?? '{}').support).toBe('broken');
+	});
+});
+
+describe('GET /api/v1/loader/compat', () => {
+	test('lists the scanned versions of one platform for anyone', async () => {
+		await publish(admin, scan);
+
+		const response = await listDiscordCompatEndpoint.handle(
+			ctx,
+			new Request(new URL('/api/v1/loader/compat?platform=ios', ctx.env.PUBLIC_URL)),
+		);
+		const body = parse(listDiscordCompatResponseSchema, await response.json());
+
+		expect(response.status).toBe(200);
+		expect(body.versions).toContainEqual({ version: '355.0', channel: 'alpha', broken: 2 });
+		expect(body.versions.every((entry) => entry.version !== '' && entry.broken >= 0)).toBe(
+			true,
+		);
 	});
 });

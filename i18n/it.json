@@ -440,5 +440,7 @@
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "Accetta l'avviso prima di scrivere in #chat",
 	"UNBOUND_SUPPORT_BANNER": "Serve aiuto? #chat non è per il supporto.",
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Forum di supporto",
-	"UNBOUND_CRASH_KNOWN_ISSUE": "Problema noto #{number}"
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Problema noto #{number}",
+	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Non aggiornare ancora Discord",
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} rompe parti di Unbound. Aspetta un aggiornamento di Unbound prima di installarlo."
 }

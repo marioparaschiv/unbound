@@ -440,5 +440,7 @@
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "Hãy chấp nhận thông báo trước khi đăng trong #chat",
 	"UNBOUND_SUPPORT_BANNER": "Cần trợ giúp? #chat không dành cho hỗ trợ.",
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Diễn đàn hỗ trợ",
-	"UNBOUND_CRASH_KNOWN_ISSUE": "Sự cố đã biết #{number}"
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Sự cố đã biết #{number}",
+	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Đừng cập nhật Discord vội",
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} làm hỏng một phần Unbound. Hãy chờ bản cập nhật Unbound trước khi cài đặt."
 }

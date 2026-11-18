@@ -58,6 +58,49 @@ export function isOlderThanSupported(version: string, minimum: string): boolean 
 	return current[0] < oldest[0] || (current[0] === oldest[0] && current[1] < oldest[1]);
 }
 
+/** One Discord version the compat scan checked. */
+export type ScannedDiscordVersion = { version: string; channel: string; broken: number };
+
+function isNewer(version: string, than: string): boolean {
+	const next = parseDiscordVersion(version);
+	const current = parseDiscordVersion(than);
+
+	if (!next || !current) {
+		return false;
+	}
+
+	return next[0] > current[0] || (next[0] === current[0] && next[1] > current[1]);
+}
+
+/**
+ * @description Finds the newest Discord version on the running channel that is newer than the running one and that
+ * the compat scan found breaking Unbound's lookups. Alpha builds are an early warning, so they never count.
+ * @param installed The running Discord version, without a channel suffix.
+ * @param channel The running channel, such as `Stable`.
+ * @param scanned The versions the compat scan checked.
+ * @returns The version to warn about, or `undefined`.
+ */
+export function breakingDiscordUpdate(
+	installed: string,
+	channel: string,
+	scanned: readonly ScannedDiscordVersion[],
+): string | undefined {
+	const wanted = channel.toLowerCase();
+
+	if (wanted === 'alpha') {
+		return undefined;
+	}
+
+	return scanned
+		.filter(
+			(entry) =>
+				entry.broken > 0 &&
+				entry.channel.toLowerCase() === wanted &&
+				isNewer(entry.version, installed),
+		)
+		.toSorted((a, b) => (isNewer(a.version, b.version) ? -1 : 1))[0]?.version;
+}
+
 /**
  * @description Tells whether to show the unsupported Discord toast, which appears once per Discord version.
  * @param version The running Discord version.

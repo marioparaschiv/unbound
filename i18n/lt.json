@@ -440,5 +440,7 @@
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "Prieš rašydamas į #chat, priimk įspėjimą",
 	"UNBOUND_SUPPORT_BANNER": "Reikia pagalbos? #chat ne pagalbai.",
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Pagalbos forumas",
-	"UNBOUND_CRASH_KNOWN_ISSUE": "Žinoma problema #{number}"
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Žinoma problema #{number}",
+	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Kol kas neatnaujinkite Discord",
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} sugadina dalį Unbound. Prieš diegdami palaukite Unbound atnaujinimo."
 }

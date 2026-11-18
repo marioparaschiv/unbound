@@ -440,5 +440,7 @@
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "Accepter meddelelsen, før du skriver i #chat",
 	"UNBOUND_SUPPORT_BANNER": "Brug for hjælp? #chat er ikke til support.",
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Supportforum",
-	"UNBOUND_CRASH_KNOWN_ISSUE": "Kendt problem #{number}"
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Kendt problem #{number}",
+	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Opdater ikke Discord endnu",
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} ødelægger dele af Unbound. Vent på en Unbound-opdatering, før du installerer den."
 }

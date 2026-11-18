@@ -440,5 +440,7 @@
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "#chat में पोस्ट करने से पहले सूचना स्वीकार करें",
 	"UNBOUND_SUPPORT_BANNER": "मदद चाहिए? #chat सपोर्ट के लिए नहीं है।",
 	"UNBOUND_SUPPORT_BANNER_ACTION": "सपोर्ट फ़ोरम",
-	"UNBOUND_CRASH_KNOWN_ISSUE": "ज्ञात समस्या #{number}"
+	"UNBOUND_CRASH_KNOWN_ISSUE": "ज्ञात समस्या #{number}",
+	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "अभी Discord अपडेट न करें",
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} Unbound के कुछ हिस्से तोड़ देता है। इसे इंस्टॉल करने से पहले Unbound अपडेट का इंतज़ार करें।"
 }

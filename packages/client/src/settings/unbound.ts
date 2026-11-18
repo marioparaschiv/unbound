@@ -49,6 +49,8 @@ const DEFAULTS = {
 	'loader.update.unsigned': false,
 	'loader.devtools': false,
 	'discord-support.warned': '',
+	/** The newer Discord version the user was last told breaks Unbound. */
+	'discord-support.breakingWarned': '',
 	'profile-expiry.warned': '',
 	/** The user id that accepted the support gate in Unbound's server chat. */
 	'support-gate.accepted': '',

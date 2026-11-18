@@ -440,5 +440,7 @@
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "Прийміть попередження, перш ніж писати в #chat",
 	"UNBOUND_SUPPORT_BANNER": "Потрібна допомога? #chat не для підтримки.",
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Форум підтримки",
-	"UNBOUND_CRASH_KNOWN_ISSUE": "Відома проблема #{number}"
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Відома проблема #{number}",
+	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Поки не оновлюйте Discord",
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} ламає частини Unbound. Дочекайтеся оновлення Unbound, перш ніж встановлювати його."
 }

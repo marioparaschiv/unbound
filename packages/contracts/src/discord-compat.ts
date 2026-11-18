@@ -19,6 +19,25 @@ export const publishDiscordCompatResponseSchema = Type.Object({
 	recorded: Type.Integer({ minimum: 0 }),
 });
 
+export const listDiscordCompatQuerySchema = Type.Object({
+	platform: Type.Enum(DISCORD_COMPAT_PLATFORMS),
+});
+
+export const listDiscordCompatResponseSchema = Type.Object({
+	/** The newest scanned Discord versions on the platform, newest scan first. */
+	versions: Type.Array(
+		Type.Object({
+			version: Type.String(),
+			channel: Type.String(),
+			/** How many of Unbound's lookups the scan found missing in this version. */
+			broken: Type.Integer({ minimum: 0 }),
+		}),
+		{ maxItems: 20 },
+	),
+});
+
+export type ListDiscordCompatResponse = StaticDecode<typeof listDiscordCompatResponseSchema>;
+
 export type DiscordCompatPlatform = (typeof DISCORD_COMPAT_PLATFORMS)[number];
 
 export type DiscordCompatScan = StaticDecode<typeof compatScanSchema>;
@@ -29,4 +48,6 @@ export default {
 	DISCORD_COMPAT_PLATFORMS,
 	publishDiscordCompatRequestSchema,
 	publishDiscordCompatResponseSchema,
+	listDiscordCompatQuerySchema,
+	listDiscordCompatResponseSchema,
 };

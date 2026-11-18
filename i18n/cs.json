@@ -440,5 +440,7 @@
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "Před psaním do #chat přijmi upozornění",
 	"UNBOUND_SUPPORT_BANNER": "Potřebuješ pomoc? #chat není pro podporu.",
 	"UNBOUND_SUPPORT_BANNER_ACTION": "Fórum podpory",
-	"UNBOUND_CRASH_KNOWN_ISSUE": "Známý problém #{number}"
+	"UNBOUND_CRASH_KNOWN_ISSUE": "Známý problém #{number}",
+	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "Discord zatím neaktualizuj",
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} rozbíjí části Unbound. Před instalací počkej na aktualizaci Unbound."
 }

@@ -440,5 +440,7 @@
 	"UNBOUND_SUPPORT_GATE_BLOCKED": "在 #chat 發言前請先接受提示",
 	"UNBOUND_SUPPORT_BANNER": "需要協助？#chat 不用於支援。",
 	"UNBOUND_SUPPORT_BANNER_ACTION": "支援論壇",
-	"UNBOUND_CRASH_KNOWN_ISSUE": "已知問題 #{number}"
+	"UNBOUND_CRASH_KNOWN_ISSUE": "已知問題 #{number}",
+	"UNBOUND_DISCORD_UPDATE_BREAKS_TITLE": "先別更新 Discord",
+	"UNBOUND_DISCORD_UPDATE_BREAKS": "Discord {version} 會讓 Unbound 部分功能失效。請等 Unbound 更新後再安裝。"
 }
