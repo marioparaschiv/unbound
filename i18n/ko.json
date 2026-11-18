@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "{place}에서 {duration} 동안 응답 없음",
 	"UNBOUND_CRASH_ISSUE_FIXED": "수정됨 · 이슈 #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "이슈 #{number} 닫힘",
-	"UNBOUND_CRASH_FIXED": "겪은 크래시가 수정됐어요 (이슈 #{number}). 업데이트로 수정이 적용돼요."
+	"UNBOUND_CRASH_FIXED": "겪은 크래시가 수정됐어요 (이슈 #{number}). 업데이트로 수정이 적용돼요.",
+	"UNBOUND_CRASH_NOTE_TITLE": "이슈 #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "크래시가 났을 때 무엇을 하고 있었나요?",
+	"UNBOUND_CRASH_NOTE_SEND": "메모 추가",
+	"UNBOUND_CRASH_NOTE_SENT": "이슈 #{number}에 메모를 추가했어요",
+	"UNBOUND_CRASH_NOTE_FAILED": "메모를 추가하지 못했어요",
+	"UNBOUND_CRASH_OPEN_ISSUE": "이슈 열기"
 }

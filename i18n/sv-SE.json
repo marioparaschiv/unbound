@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "Inget svar på {duration} i {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Åtgärdad · issue #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} stängd",
-	"UNBOUND_CRASH_FIXED": "En krasch du fick är åtgärdad (issue #{number}); uppdateringar ger rättningen."
+	"UNBOUND_CRASH_FIXED": "En krasch du fick är åtgärdad (issue #{number}); uppdateringar ger rättningen.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Issue #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Vad gjorde du när det kraschade?",
+	"UNBOUND_CRASH_NOTE_SEND": "Lägg till anteckning",
+	"UNBOUND_CRASH_NOTE_SENT": "Anteckning tillagd i issue #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Kunde inte lägga till anteckningen",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Öppna issue"
 }

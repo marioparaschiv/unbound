@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "Ingen respons på {duration} i {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Fikset · issue #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} lukket",
-	"UNBOUND_CRASH_FIXED": "Et krasj du fikk er fikset (issue #{number}); oppdateringer bringer rettelsen."
+	"UNBOUND_CRASH_FIXED": "Et krasj du fikk er fikset (issue #{number}); oppdateringer bringer rettelsen.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Issue #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Hva gjorde du da det krasjet?",
+	"UNBOUND_CRASH_NOTE_SEND": "Legg til notat",
+	"UNBOUND_CRASH_NOTE_SENT": "Notat lagt til issue #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Kunne ikke legge til notatet",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Åpne issue"
 }

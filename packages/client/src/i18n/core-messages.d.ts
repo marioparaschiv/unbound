@@ -138,5 +138,7 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_CRASH_ISSUE_FIXED: { number: string | number };
 		UNBOUND_CRASH_ISSUE_CLOSED: { number: string | number };
 		UNBOUND_CRASH_FIXED: { number: string | number };
+		UNBOUND_CRASH_NOTE_TITLE: { number: string | number };
+		UNBOUND_CRASH_NOTE_SENT: { number: string | number };
 	};
 }

@@ -90,6 +90,7 @@ import { Route as ApiV1AddonsIdRelistRouteImport } from './routes/api/v1/addons/
 import { Route as ApiV1AddonsIdTransferRouteImport } from './routes/api/v1/addons/$id/transfer'
 import { Route as ApiV1AddonsIdVersionsRouteImport } from './routes/api/v1/addons/$id/versions'
 import { Route as ApiV1CrashReportsIdIssueRouteImport } from './routes/api/v1/crash-reports/$id/issue'
+import { Route as ApiV1CrashReportsIdNoteRouteImport } from './routes/api/v1/crash-reports/$id/note'
 import { Route as ApiV1MeBadgesUploadsRouteImport } from './routes/api/v1/me/badges/uploads'
 import { Route as ApiV1SubmissionsIdReviewRouteImport } from './routes/api/v1/submissions/$id/review'
 import { Route as ApiV1UsersIdBadgesRouteImport } from './routes/api/v1/users/$id/badges'
@@ -509,6 +510,11 @@ const ApiV1CrashReportsIdIssueRoute =
     path: '/$id/issue',
     getParentRoute: () => ApiV1CrashReportsRoute,
   } as any)
+const ApiV1CrashReportsIdNoteRoute = ApiV1CrashReportsIdNoteRouteImport.update({
+  id: '/$id/note',
+  path: '/$id/note',
+  getParentRoute: () => ApiV1CrashReportsRoute,
+} as any)
 const ApiV1MeBadgesUploadsRoute = ApiV1MeBadgesUploadsRouteImport.update({
   id: '/uploads',
   path: '/uploads',
@@ -626,6 +632,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
   '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
   '/api/v1/crash-reports/$id/issue': typeof ApiV1CrashReportsIdIssueRoute
+  '/api/v1/crash-reports/$id/note': typeof ApiV1CrashReportsIdNoteRoute
   '/api/v1/me/badges/uploads': typeof ApiV1MeBadgesUploadsRouteWithChildren
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
@@ -711,6 +718,7 @@ export interface FileRoutesByTo {
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
   '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
   '/api/v1/crash-reports/$id/issue': typeof ApiV1CrashReportsIdIssueRoute
+  '/api/v1/crash-reports/$id/note': typeof ApiV1CrashReportsIdNoteRoute
   '/api/v1/me/badges/uploads': typeof ApiV1MeBadgesUploadsRouteWithChildren
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
@@ -802,6 +810,7 @@ export interface FileRoutesById {
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
   '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
   '/api/v1/crash-reports/$id/issue': typeof ApiV1CrashReportsIdIssueRoute
+  '/api/v1/crash-reports/$id/note': typeof ApiV1CrashReportsIdNoteRoute
   '/api/v1/me/badges/uploads': typeof ApiV1MeBadgesUploadsRouteWithChildren
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
@@ -892,6 +901,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/transfer'
     | '/api/v1/addons/$id/versions'
     | '/api/v1/crash-reports/$id/issue'
+    | '/api/v1/crash-reports/$id/note'
     | '/api/v1/me/badges/uploads'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
@@ -977,6 +987,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/transfer'
     | '/api/v1/addons/$id/versions'
     | '/api/v1/crash-reports/$id/issue'
+    | '/api/v1/crash-reports/$id/note'
     | '/api/v1/me/badges/uploads'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
@@ -1067,6 +1078,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/transfer'
     | '/api/v1/addons/$id/versions'
     | '/api/v1/crash-reports/$id/issue'
+    | '/api/v1/crash-reports/$id/note'
     | '/api/v1/me/badges/uploads'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
@@ -1684,6 +1696,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1CrashReportsIdIssueRouteImport
       parentRoute: typeof ApiV1CrashReportsRoute
     }
+    '/api/v1/crash-reports/$id/note': {
+      id: '/api/v1/crash-reports/$id/note'
+      path: '/$id/note'
+      fullPath: '/api/v1/crash-reports/$id/note'
+      preLoaderRoute: typeof ApiV1CrashReportsIdNoteRouteImport
+      parentRoute: typeof ApiV1CrashReportsRoute
+    }
     '/api/v1/me/badges/uploads': {
       id: '/api/v1/me/badges/uploads'
       path: '/uploads'
@@ -1908,10 +1927,12 @@ const ApiV1AddonsRouteWithChildren = ApiV1AddonsRoute._addFileChildren(
 
 interface ApiV1CrashReportsRouteChildren {
   ApiV1CrashReportsIdIssueRoute: typeof ApiV1CrashReportsIdIssueRoute
+  ApiV1CrashReportsIdNoteRoute: typeof ApiV1CrashReportsIdNoteRoute
 }
 
 const ApiV1CrashReportsRouteChildren: ApiV1CrashReportsRouteChildren = {
   ApiV1CrashReportsIdIssueRoute: ApiV1CrashReportsIdIssueRoute,
+  ApiV1CrashReportsIdNoteRoute: ApiV1CrashReportsIdNoteRoute,
 }
 
 const ApiV1CrashReportsRouteWithChildren =

@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "Χωρίς απόκριση για {duration} σε {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Διορθώθηκε · issue #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Το issue #{number} έκλεισε",
-	"UNBOUND_CRASH_FIXED": "Ένα σφάλμα που είχες διορθώθηκε (issue #{number}). Οι ενημερώσεις φέρνουν τη διόρθωση."
+	"UNBOUND_CRASH_FIXED": "Ένα σφάλμα που είχες διορθώθηκε (issue #{number}). Οι ενημερώσεις φέρνουν τη διόρθωση.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Issue #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Τι έκανες όταν συνέβη το σφάλμα;",
+	"UNBOUND_CRASH_NOTE_SEND": "Προσθήκη σημείωσης",
+	"UNBOUND_CRASH_NOTE_SENT": "Η σημείωση προστέθηκε στο issue #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Δεν ήταν δυνατή η προσθήκη σημείωσης",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Άνοιγμα issue"
 }

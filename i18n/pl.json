@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "Brak odpowiedzi przez {duration} w {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Naprawione · zgłoszenie #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Zgłoszenie #{number} zamknięte",
-	"UNBOUND_CRASH_FIXED": "Awaria, którą miałeś, jest naprawiona (zgłoszenie #{number}); poprawka przyjdzie z aktualizacją."
+	"UNBOUND_CRASH_FIXED": "Awaria, którą miałeś, jest naprawiona (zgłoszenie #{number}); poprawka przyjdzie z aktualizacją.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Zgłoszenie #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Co robiłeś, gdy wystąpiła awaria?",
+	"UNBOUND_CRASH_NOTE_SEND": "Dodaj notatkę",
+	"UNBOUND_CRASH_NOTE_SENT": "Dodano notatkę do zgłoszenia #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Nie udało się dodać notatki",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Otwórz zgłoszenie"
 }

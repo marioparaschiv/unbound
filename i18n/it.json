@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "Nessuna risposta per {duration} in {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Risolto · issue #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} chiusa",
-	"UNBOUND_CRASH_FIXED": "Un crash che hai avuto è risolto (issue #{number}); gli aggiornamenti portano la correzione."
+	"UNBOUND_CRASH_FIXED": "Un crash che hai avuto è risolto (issue #{number}); gli aggiornamenti portano la correzione.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Issue #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Cosa stavi facendo quando è crashato?",
+	"UNBOUND_CRASH_NOTE_SEND": "Aggiungi nota",
+	"UNBOUND_CRASH_NOTE_SENT": "Nota aggiunta all'issue #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Impossibile aggiungere la nota",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Apri issue"
 }

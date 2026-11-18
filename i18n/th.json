@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "ไม่ตอบสนองนาน {duration} ใน {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "แก้แล้ว · อิชชู #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "อิชชู #{number} ปิดแล้ว",
-	"UNBOUND_CRASH_FIXED": "การแครชที่คุณเจอแก้แล้ว (อิชชู #{number}) การอัปเดตจะนำการแก้ไขมา"
+	"UNBOUND_CRASH_FIXED": "การแครชที่คุณเจอแก้แล้ว (อิชชู #{number}) การอัปเดตจะนำการแก้ไขมา",
+	"UNBOUND_CRASH_NOTE_TITLE": "อิชชู #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "คุณทำอะไรอยู่ตอนที่แครช",
+	"UNBOUND_CRASH_NOTE_SEND": "เพิ่มโน้ต",
+	"UNBOUND_CRASH_NOTE_SENT": "เพิ่มโน้ตในอิชชู #{number} แล้ว",
+	"UNBOUND_CRASH_NOTE_FAILED": "เพิ่มโน้ตไม่ได้",
+	"UNBOUND_CRASH_OPEN_ISSUE": "เปิดอิชชู"
 }

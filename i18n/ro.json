@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "Niciun răspuns timp de {duration} în {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Rezolvat · issue #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue-ul #{number} închis",
-	"UNBOUND_CRASH_FIXED": "O blocare pe care ai avut-o e rezolvată (issue #{number}); actualizările aduc remedierea."
+	"UNBOUND_CRASH_FIXED": "O blocare pe care ai avut-o e rezolvată (issue #{number}); actualizările aduc remedierea.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Issue #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Ce făceai când s-a blocat?",
+	"UNBOUND_CRASH_NOTE_SEND": "Adaugă o notă",
+	"UNBOUND_CRASH_NOTE_SENT": "Notă adăugată la issue-ul #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Nota nu a putut fi adăugată",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Deschide issue"
 }

@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "在 {place} 中无响应 {duration}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "已修复 · Issue #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} 已关闭",
-	"UNBOUND_CRASH_FIXED": "你遇到的一个崩溃已修复（Issue #{number}），更新后即可获得修复。"
+	"UNBOUND_CRASH_FIXED": "你遇到的一个崩溃已修复（Issue #{number}），更新后即可获得修复。",
+	"UNBOUND_CRASH_NOTE_TITLE": "Issue #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "崩溃时你在做什么？",
+	"UNBOUND_CRASH_NOTE_SEND": "添加备注",
+	"UNBOUND_CRASH_NOTE_SENT": "已为 Issue #{number} 添加备注",
+	"UNBOUND_CRASH_NOTE_FAILED": "无法添加备注",
+	"UNBOUND_CRASH_OPEN_ISSUE": "打开 Issue"
 }

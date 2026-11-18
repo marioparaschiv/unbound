@@ -78,6 +78,8 @@ async function comment(ctx: AppContext, token: string, issue: number, body: stri
 			`Failed to comment on crash issue ${issue}: GitHub answered ${response.status}`,
 		);
 	}
+
+	return response.ok;
 }
 
 async function claim(ctx: AppContext, fingerprint: string, versions: string): Promise<boolean> {
@@ -219,6 +221,42 @@ export async function fileRequestedCrashIssue(
 		logger.warn(`Failed to file requested crash ${reportId} on GitHub:`, error);
 
 		return undefined;
+	}
+}
+
+/**
+ * @description Posts a reporter's note on the issue that tracks their crash. Never throws.
+ * @param ctx The application context.
+ * @param fingerprint The crash's fingerprint.
+ * @param body The comment.
+ * @returns Whether the comment was posted.
+ */
+export async function commentOnCrashIssue(
+	ctx: AppContext,
+	fingerprint: string,
+	body: string,
+): Promise<boolean> {
+	const token = ctx.env.GITHUB_ISSUES_TOKEN;
+
+	if (!token) {
+		return false;
+	}
+
+	try {
+		const [row] = await ctx.db
+			.select()
+			.from(crashIssue)
+			.where(eq(crashIssue.fingerprint, fingerprint));
+
+		if (!row || row.issueNumber === null) {
+			return false;
+		}
+
+		return await comment(ctx, token, row.issueNumber, body);
+	} catch (error) {
+		logger.warn(`Failed to add a note to crash ${fingerprint}:`, error);
+
+		return false;
 	}
 }
 

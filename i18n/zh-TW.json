@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "在 {place} 中無回應 {duration}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "已修正 · Issue #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Issue #{number} 已關閉",
-	"UNBOUND_CRASH_FIXED": "你遇到的一個當機已修正（Issue #{number}），更新後即可取得修正。"
+	"UNBOUND_CRASH_FIXED": "你遇到的一個當機已修正（Issue #{number}），更新後即可取得修正。",
+	"UNBOUND_CRASH_NOTE_TITLE": "Issue #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "當機時你在做什麼？",
+	"UNBOUND_CRASH_NOTE_SEND": "新增備註",
+	"UNBOUND_CRASH_NOTE_SENT": "已為 Issue #{number} 新增備註",
+	"UNBOUND_CRASH_NOTE_FAILED": "無法新增備註",
+	"UNBOUND_CRASH_OPEN_ISSUE": "開啟 Issue"
 }

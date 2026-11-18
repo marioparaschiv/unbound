@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "{place} में {duration} तक कोई जवाब नहीं",
 	"UNBOUND_CRASH_ISSUE_FIXED": "ठीक हुआ · इश्यू #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "इश्यू #{number} बंद",
-	"UNBOUND_CRASH_FIXED": "आपको हुआ एक क्रैश ठीक हो गया (इश्यू #{number}); अपडेट में सुधार आएगा।"
+	"UNBOUND_CRASH_FIXED": "आपको हुआ एक क्रैश ठीक हो गया (इश्यू #{number}); अपडेट में सुधार आएगा।",
+	"UNBOUND_CRASH_NOTE_TITLE": "इश्यू #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "क्रैश होने पर आप क्या कर रहे थे?",
+	"UNBOUND_CRASH_NOTE_SEND": "नोट जोड़ें",
+	"UNBOUND_CRASH_NOTE_SENT": "इश्यू #{number} में नोट जोड़ा गया",
+	"UNBOUND_CRASH_NOTE_FAILED": "नोट नहीं जुड़ सका",
+	"UNBOUND_CRASH_OPEN_ISSUE": "इश्यू खोलें"
 }

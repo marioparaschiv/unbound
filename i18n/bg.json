@@ -453,5 +453,11 @@
 	"UNBOUND_CRASH_TITLE_HANG_IN": "Без отговор {duration} в {place}",
 	"UNBOUND_CRASH_ISSUE_FIXED": "Поправено · задача #{number}",
 	"UNBOUND_CRASH_ISSUE_CLOSED": "Задача #{number} е затворена",
-	"UNBOUND_CRASH_FIXED": "Срив, който имахте, е поправен (задача #{number}); поправката идва с обновленията."
+	"UNBOUND_CRASH_FIXED": "Срив, който имахте, е поправен (задача #{number}); поправката идва с обновленията.",
+	"UNBOUND_CRASH_NOTE_TITLE": "Задача #{number}",
+	"UNBOUND_CRASH_NOTE_PLACEHOLDER": "Какво правехте при срива?",
+	"UNBOUND_CRASH_NOTE_SEND": "Добави бележка",
+	"UNBOUND_CRASH_NOTE_SENT": "Бележката е добавена към задача #{number}",
+	"UNBOUND_CRASH_NOTE_FAILED": "Бележката не можа да бъде добавена",
+	"UNBOUND_CRASH_OPEN_ISSUE": "Отвори задачата"
 }
