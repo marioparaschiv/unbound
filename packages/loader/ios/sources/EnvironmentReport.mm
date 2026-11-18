@@ -3,6 +3,13 @@
 #import <Foundation/Foundation.h>
 #import <Security/Security.h>
 #import <UIKit/UIKit.h>
+#include <arpa/inet.h>
+#include <atomic>
+#include <dlfcn.h>
+#include <ifaddrs.h>
+#include <net/if.h>
+#import <objc/message.h>
+#include <set>
 #include <sys/sysctl.h>
 #include <unistd.h>
 
@@ -126,6 +133,126 @@ static bool hasAppSyncUnified()
     return false;
 }
 
+static const std::set<long> kDynamicIslandSubtypes = {2556, 2622, 2796, 2868};
+static NSString *const kSideStoreVPNPrefix         = @"10.7.0.";
+
+static std::string machineName()
+{
+    char machine[64] = {};
+    size_t size      = sizeof(machine);
+    return sysctlbyname("hw.machine", machine, &size, nullptr, 0) == 0 ? machine : "";
+}
+
+static long artworkSubtype()
+{
+    using CopyAnswer = CFTypeRef (*)(CFStringRef);
+    void *library    = dlopen("/usr/lib/libMobileGestalt.dylib", RTLD_LAZY);
+    auto copyAnswer  = library ? (CopyAnswer) dlsym(library, "MGCopyAnswer") : nullptr;
+    CFTypeRef answer = copyAnswer ? copyAnswer(CFSTR("ArtworkDeviceSubType")) : nullptr;
+    long subtype     = 0;
+    if (answer && CFGetTypeID(answer) == CFNumberGetTypeID())
+    {
+        CFNumberGetValue((CFNumberRef) answer, kCFNumberLongType, &subtype);
+    }
+
+    if (answer)
+    {
+        CFRelease(answer);
+    }
+
+    return subtype;
+}
+
+static std::string modelEdit()
+{
+    std::string machine = machineName();
+    long subtype        = artworkSubtype();
+    if (!machine.starts_with("iPhone") || !kDynamicIslandSubtypes.contains(subtype))
+    {
+        return "";
+    }
+
+    int major      = std::atoi(machine.c_str() + 6);
+    bool hasIsland = major >= 15 && machine != "iPhone14,6";
+    return hasIsland ? "" : "Dynamic Island added by a MobileGestalt edit";
+}
+
+static std::string jailbreakVersion()
+{
+    NSString *version = [NSString stringWithContentsOfFile:@"/var/jb/basebin/.version"
+                                                  encoding:NSUTF8StringEncoding
+                                                     error:nil];
+    NSString *trimmed =
+        [version stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+    bool dopamine = [NSFileManager.defaultManager fileExistsAtPath:@"/var/jb/.installed_dopamine"];
+    return dopamine && trimmed.length ? "Dopamine " + toStdString(trimmed) : "";
+}
+
+static bool hasSideStoreVPN()
+{
+    struct ifaddrs *interfaces = nullptr;
+    if (getifaddrs(&interfaces) != 0)
+    {
+        return false;
+    }
+
+    bool found = false;
+    for (struct ifaddrs *entry = interfaces; entry && !found; entry = entry->ifa_next)
+    {
+        if (!entry->ifa_addr || entry->ifa_addr->sa_family != AF_INET
+            || strncmp(entry->ifa_name, "utun", 4) != 0 || !(entry->ifa_flags & IFF_UP))
+        {
+            continue;
+        }
+
+        char address[INET_ADDRSTRLEN] = {};
+        inet_ntop(AF_INET, &((struct sockaddr_in *) entry->ifa_addr)->sin_addr, address,
+                  sizeof(address));
+        found = [@(address) hasPrefix:kSideStoreVPNPrefix];
+    }
+
+    freeifaddrs(interfaces);
+    return found;
+}
+
+static report::LocaleFacts localeFacts()
+{
+    report::LocaleFacts facts;
+    facts.calendar = toStdString(NSLocale.currentLocale.calendarIdentifier ?: @"");
+    NSString *zero = [NSNumberFormatter localizedStringFromNumber:@0
+                                                      numberStyle:NSNumberFormatterDecimalStyle];
+    facts.nonLatinDigits = zero.length > 0 && ![zero isEqualToString:@"0"];
+    NSString *language   = NSLocale.preferredLanguages.firstObject;
+    facts.rightToLeft =
+        language &&
+        [NSLocale characterDirectionForLanguage:language] == NSLocaleLanguageDirectionRightToLeft;
+    return facts;
+}
+
+static int refreshRate()
+{
+    static std::atomic_int cached{0};
+    if (NSThread.isMainThread)
+    {
+        cached = (int) UIScreen.mainScreen.maximumFramesPerSecond;
+    }
+    else if (cached == 0)
+    {
+        dispatch_async(dispatch_get_main_queue(),
+                       ^{ cached = (int) UIScreen.mainScreen.maximumFramesPerSecond; });
+    }
+
+    return cached;
+}
+
+static bool isiOSAppOnVision()
+{
+    NSProcessInfo *process = NSProcessInfo.processInfo;
+    SEL selector           = NSSelectorFromString(@"isiOSAppOnVision");
+    return [process respondsToSelector:selector]
+           && ((BOOL (*)(id, SEL)) objc_msgSend)(process, selector);
+}
+
 static report::AppleDeviceFacts deviceFacts()
 {
     report::AppleDeviceFacts facts;
@@ -138,6 +265,15 @@ static report::AppleDeviceFacts deviceFacts()
     facts.debuggerAttached = isDebuggerAttached();
     facts.trollFools       = hasTrollFoolsBackup();
     facts.appSync          = hasAppSyncUnified();
+    facts.modelEdit        = modelEdit();
+    facts.jailbreakVersion = jailbreakVersion();
+    facts.iOSAppOnVision   = isiOSAppOnVision();
+    facts.sideStoreVPN     = hasSideStoreVPN();
+    facts.liveContainerMultitask =
+        [NSBundle.mainBundle.executablePath containsString:@"LiveProcess"];
+    facts.refreshRate = refreshRate();
+    facts.boldText    = UIAccessibilityIsBoldTextEnabled();
+    facts.locale      = localeFacts();
     return facts;
 }
 

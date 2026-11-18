@@ -198,6 +198,20 @@ std::shared_ptr<loader::NativePlatformProvider> AndroidLoader::platformProvider(
             markers.standbyBucket        = background.value("bucket", 0);
         }
 
+        markers.abiBridge        = device.value("abiBridge", std::string());
+        markers.lowRam           = device.value("lowRam", false);
+        markers.harmonyOS        = device.value("harmony", false);
+        markers.adoptableStorage = device.value("adoptable", false);
+        markers.refreshRate      = device.value("refreshRate", 0);
+        markers.boldText         = device.value("boldText", false);
+        nlohmann::json locale    = device.value("locale", nlohmann::json::object());
+        if (locale.is_object())
+        {
+            markers.locale.calendar       = locale.value("calendar", std::string());
+            markers.locale.nonLatinDigits = locale.value("nonLatinDigits", false);
+            markers.locale.rightToLeft    = locale.value("rtl", false);
+        }
+
         environment["markers"] = loader::environment_report::androidMarkers(markers);
         return environment;
     };

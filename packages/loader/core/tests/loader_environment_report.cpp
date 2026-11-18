@@ -94,8 +94,45 @@ void describesAndroidInstalls()
 }
 }
 
+void listsDisplayLocaleAndDeviceFacts()
+{
+    report::AppleDeviceFacts apple;
+    apple.modelEdit        = "Dynamic Island added by a MobileGestalt edit";
+    apple.jailbreakVersion = "Dopamine 2.4.1";
+    apple.iOSAppOnVision   = true;
+    apple.sideStoreVPN     = true;
+    apple.refreshRate      = 120;
+    apple.boldText         = true;
+    apple.locale           = {"buddhist", true, true};
+    assert((report::appleMarkers(apple)
+            == std::vector<std::string>{
+                "Dynamic Island added by a MobileGestalt edit", "Dopamine 2.4.1",
+                "iPhone app on Vision Pro", "SideStore pairing VPN", "120 Hz", "bold text",
+                "buddhist calendar", "non-Latin digits", "right-to-left language"}));
+
+    report::AppleDeviceFacts usual;
+    usual.refreshRate = 60;
+    usual.locale      = {"gregorian", false, false};
+    assert(report::appleMarkers(usual).empty());
+
+    report::AndroidDeviceFacts android;
+    android.abiBridge        = "libhoudini.so";
+    android.lowRam           = true;
+    android.harmonyOS        = true;
+    android.adoptableStorage = true;
+    android.refreshRate      = 90;
+    assert((report::androidMarkers(android)
+            == std::vector<std::string>{"ABI translation (libhoudini.so)", "low-RAM device",
+                                        "HarmonyOS", "installed on adoptable storage", "90 Hz"}));
+
+    report::AndroidDeviceFacts noBridge;
+    noBridge.abiBridge = "0";
+    assert(report::androidMarkers(noBridge).empty());
+}
+
 int main()
 {
+    listsDisplayLocaleAndDeviceFacts();
     recognisesBetaBuilds();
     listsDeviceMarkers();
     judgesInterceptedHttps();
