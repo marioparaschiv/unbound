@@ -1,5 +1,11 @@
 import type { SheetProps } from '@unbound-plugins/shared/action-sheets/open-sheet';
-import { composerButtonsFor } from '@unbound-plugins/shared/composer/composer-stack';
+import {
+	composerButtonsFor,
+	keptInComposer,
+	saveKeptInComposer,
+	type ClosePanel,
+	type ComposerButton,
+} from '@unbound-plugins/shared/composer/composer-stack';
 import { BottomSheets, Discord, GorhomSheet } from '@unbound-app/api/metro/components';
 import { plugins, ui } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
@@ -12,6 +18,7 @@ import { availableShortcuts } from '~/lib/available';
 import { runShortcut } from '~/lib/run';
 
 const BUTTON_GAP = 16;
+const SHEET_CLOSE_MS = 350;
 
 export type ShortcutSheetProps = SheetProps & { channelId: string };
 
@@ -50,22 +57,62 @@ function PluginToggles({
 	);
 }
 
-function InputButtons({ channelId }: { channelId: string }) {
-	const buttons = composerButtonsFor(channelId);
+function panelButtons(channelId: string): ComposerButton[] {
+	const kept = keptInComposer();
+
+	return composerButtonsFor(channelId).filter((button) => !kept.includes(button.key ?? ''));
+}
+
+function InputButtons({ channelId, closePanel }: { channelId: string; closePanel: ClosePanel }) {
+	const buttons = panelButtons(channelId);
+	const rows = buttons.filter((button) => button.row);
+	const legacy = buttons.filter((button) => !button.row);
 
 	if (!buttons.length) return null;
 
 	return (
-		<View style={{ gap: 8 }}>
-			<Discord.Text variant='text-sm/semibold' color='text-muted'>
-				{messages.INPUT_BUTTONS}
-			</Discord.Text>
-			<View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
-				{buttons.map(({ key, draw }, index) => (
-					<Fragment key={key ?? index}>{draw(BUTTON_GAP)}</Fragment>
-				))}
-			</View>
-		</View>
+		<>
+			{rows.length ? (
+				<ui.Section title={messages.INPUT_BUTTONS}>
+					{rows.map((button, index) => (
+						<Fragment key={button.key ?? index}>
+							{button.row?.(channelId, closePanel)}
+						</Fragment>
+					))}
+				</ui.Section>
+			) : null}
+			{legacy.length ? (
+				<View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
+					{legacy.map(({ key, draw }, index) => (
+						<Fragment key={key ?? index}>{draw(BUTTON_GAP)}</Fragment>
+					))}
+				</View>
+			) : null}
+		</>
+	);
+}
+
+function KeepList({ channelId }: { channelId: string }) {
+	const buttons = composerButtonsFor(channelId).filter((button) => button.key);
+	const kept = keptInComposer();
+
+	if (!buttons.length) return null;
+
+	function keep(key: string, value: boolean) {
+		saveKeptInComposer(value ? [...kept, key] : kept.filter((other) => other !== key));
+	}
+
+	return (
+		<ui.Section title={messages.KEEP_IN_INPUT} description={messages.KEEP_IN_INPUT_HINT}>
+			{buttons.map(({ key = '', label }) => (
+				<ui.SwitchRow
+					key={key}
+					label={label?.() ?? key}
+					value={kept.includes(key)}
+					onValueChange={(value: boolean) => keep(key, value)}
+				/>
+			))}
+		</ui.Section>
 	);
 }
 
@@ -97,8 +144,8 @@ function PinList({
 }
 
 /**
- * @description The shortcut panel: the chat input buttons other plugins add, pinned plugins as switches and pinned
- * commands as compact buttons, and an edit mode listing every plugin and option-free command to pin or unpin.
+ * @description The shortcut panel: the chat input buttons other plugins add as rows that close the panel before they
+ * run, pinned plugins as switches, pinned commands as buttons, and an edit mode to pin them and keep buttons in the input.
  * @param props The channel the panel was opened in, and a way to close it.
  * @returns The sheet.
  */
@@ -110,6 +157,11 @@ export default function ShortcutSheet({ channelId, onClose }: ShortcutSheetProps
 	const [, setToggles] = useState(0);
 	const available = availableShortcuts(addon.id);
 	const shown = pinnedShortcuts(pinned, available);
+
+	function closePanel(then: () => void) {
+		onClose();
+		setTimeout(then, SHEET_CLOSE_MS);
+	}
 
 	function press(shortcut: Shortcut) {
 		if (shortcut.kind === 'command') onClose();
@@ -138,6 +190,7 @@ export default function ShortcutSheet({ channelId, onClose }: ShortcutSheetProps
 				</View>
 				{editing ? (
 					<>
+						<KeepList channelId={channelId} />
 						<PinList
 							title={messages.PLUGINS}
 							shortcuts={available.filter((shortcut) => shortcut.kind === 'plugin')}
@@ -149,9 +202,9 @@ export default function ShortcutSheet({ channelId, onClose }: ShortcutSheetProps
 							pinned={pinned}
 						/>
 					</>
-				) : shown.length || composerButtonsFor(channelId).length ? (
+				) : shown.length || panelButtons(channelId).length ? (
 					<>
-						<InputButtons channelId={channelId} />
+						<InputButtons channelId={channelId} closePanel={closePanel} />
 						<PluginToggles
 							shortcuts={shown.filter((shortcut) => shortcut.kind === 'plugin')}
 							onToggle={press}

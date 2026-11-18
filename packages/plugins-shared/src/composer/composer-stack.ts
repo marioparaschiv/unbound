@@ -15,7 +15,7 @@ import {
 	type PressableStateCallbackType,
 	type ViewStyle,
 } from 'react-native';
-import { assets, plugins } from '@unbound-app/api';
+import { assets, plugins, storage } from '@unbound-app/api';
 
 import useButtonStyles from './input-button.style';
 import { buttonsFit, useComposerState } from './composer-state';
@@ -31,6 +31,8 @@ type StackProps = {
 	draws: ComposerButtonDraw[];
 	/** Each draw's button key, by index; bundles that predate keys leave theirs out. */
 	keys?: (string | undefined)[];
+	/** Each draw's label and panel row, by index; bundles that predate them leave theirs out. */
+	details?: (ComposerButtonDetails | undefined)[];
 	target: ReactNode;
 	inline: 'row' | 'prepend';
 	rowGap: number;
@@ -39,12 +41,25 @@ type StackProps = {
 
 type HiddenProps = { channelId: string; target: ReactNode };
 
-/** A plugin's chat input button: its key and how to draw it. */
-export type ComposerButton = { key?: string; draw: ComposerButtonDraw };
+/** Hides the Plugin Shortcut Panel, then runs what a row does once the panel is gone. */
+export type ClosePanel = (then: () => void) => void;
+
+/** What the Plugin Shortcut Panel shows for a button: its name and a row that runs it. */
+export type ComposerButtonDetails = {
+	label: () => string;
+	row: (channelId: string, closePanel: ClosePanel) => ReactNode;
+};
+
+/** A plugin's chat input button: its key, how to draw it, and its panel row when its bundle gives one. */
+export type ComposerButton = {
+	key?: string;
+	draw: ComposerButtonDraw;
+} & Partial<ComposerButtonDetails>;
 
 const PANEL_ID = 'unbound.plugin-shortcut-panel';
 const PANEL_KEY = 'plugin-shortcut-panel';
 const REGISTRY_KEY = '__unboundComposerButtons';
+const KEPT_KEY = 'inComposer';
 
 type ButtonRegistry = Map<string, ComposerButton[]>;
 
@@ -73,16 +88,48 @@ export function buttonsInPanel(): boolean {
 	return plugins.isEnabled(PANEL_ID);
 }
 
-function placedDraws(channelId: string, draws: ComposerButtonDraw[], keys: StackProps['keys']) {
-	const buttons = draws.map((draw, index) => ({ key: keys?.[index], draw }));
+/**
+ * @description Reads the keys of the buttons the user keeps beside the chat input while the Plugin Shortcut Panel is on.
+ * @returns The button keys.
+ */
+export function keptInComposer(): string[] {
+	const kept: unknown = storage.getBucket(PANEL_ID).get(KEPT_KEY, []);
+
+	return Array.isArray(kept) ? kept.filter((key): key is string => typeof key === 'string') : [];
+}
+
+/**
+ * @description Saves the keys of the buttons to keep beside the chat input while the Plugin Shortcut Panel is on.
+ * @param keys The button keys.
+ */
+export function saveKeptInComposer(keys: string[]): void {
+	storage.getBucket(PANEL_ID).set(KEPT_KEY, keys);
+}
+
+function placedDraws(stack: StackProps) {
+	const { channelId, draws } = stack;
+	const buttons: ComposerButton[] = draws.map((draw, index) => ({
+		key: stack.keys?.[index],
+		draw,
+		...stack.details?.[index],
+	}));
 	const others = buttons.filter((button) => button.key !== PANEL_KEY);
 
 	buttonRegistry().set(channelId, others);
 
-	return buttonsInPanel() && others.length < buttons.length
-		? buttons.filter((button) => button.key === PANEL_KEY).map((button) => button.draw)
-		: draws;
+	if (!buttonsInPanel() || others.length === buttons.length) return { draws, parked: [] };
+
+	const kept = keptInComposer();
+	const stays = (button: ComposerButton) =>
+		button.key === PANEL_KEY || kept.includes(button.key ?? '');
+
+	return {
+		draws: buttons.filter(stays).map((button) => button.draw),
+		parked: buttons.filter((button) => !stays(button)).map((button) => button.draw),
+	};
 }
+
+const PARKED = { display: 'none' } as const;
 
 const ROW = { flexDirection: 'row', alignItems: 'center' } as const;
 const COLUMN = { flexDirection: 'column', alignItems: 'flex-end' } as const;
@@ -115,6 +162,22 @@ function cell(button: ReactNode, index: number) {
 
 function buttons(draws: ComposerButtonDraw[], gap: number) {
 	return draws.map((draw, index) => createElement(Fragment, { key: index }, draw(gap)));
+}
+
+function holdParked(nodes: ReactNode[], parked: ComposerButtonDraw[]) {
+	const [first, ...rest] = nodes;
+
+	if (!parked.length || first === undefined) return nodes;
+
+	return [
+		createElement(
+			View,
+			{ key: 'holder' },
+			first,
+			createElement(View, { style: PARKED }, buttons(parked, 0)),
+		),
+		...rest,
+	];
 }
 
 function MoreButton({ open, onPress, gap }: { open: boolean; onPress: () => void; gap: number }) {
@@ -160,18 +223,15 @@ function inlineGroup(inline: StackProps['inline'], shown: ReactNode, children: R
 /**
  * @description Draws every plugin's chat input buttons as one group beside the target. Once the draft is crowded they fold
  * into one button, so the draft keeps its width, and that button opens them in a two-column grid above the target.
- * `row` wraps the target in a row with the buttons first; `prepend` adds them as the target's first children.
+ * `row` wraps the target in a row with the buttons first; `prepend` adds them as the target's first children. Buttons the
+ * Plugin Shortcut Panel holds stay mounted out of sight, so what they open from the panel, such as a preview, can show.
  */
-export function ComposerStack({
-	channelId,
-	draws: allDraws,
-	keys,
-	target,
-	inline,
-	rowGap,
-	hideTargetWhenEmpty = false,
-}: StackProps) {
-	const draws = placedDraws(channelId, allDraws, keys);
+export function ComposerStack(stack: StackProps) {
+	storage.useBucket(PANEL_ID);
+
+	const { channelId, target, inline, rowGap, hideTargetWhenEmpty = false } = stack;
+	const { draws, parked } = placedDraws(stack);
+	const withParked = (nodes: ReactNode[]) => holdParked(nodes, parked);
 	const state = useComposerState(channelId, draws.length);
 	const [open, setOpen] = useState(false);
 	const shown = hideTargetWhenEmpty && state === 'empty' ? null : target;
@@ -179,7 +239,7 @@ export function ComposerStack({
 	if (state !== 'crowded' && buttonsFit(draws.length)) {
 		if (open) setOpen(false);
 
-		return inlineGroup(inline, shown, buttons(draws, rowGap));
+		return inlineGroup(inline, shown, withParked(buttons(draws, rowGap)));
 	}
 
 	const more = createElement(MoreButton, {
@@ -190,19 +250,27 @@ export function ComposerStack({
 	});
 
 	if (!open || draws.length < 2) {
-		return inlineGroup(inline, shown, draws.length < 2 ? buttons(draws, rowGap) : [more]);
+		return inlineGroup(
+			inline,
+			shown,
+			withParked(draws.length < 2 ? buttons(draws, rowGap) : [more]),
+		);
 	}
 
 	return createElement(
 		View,
 		{ style: COLUMN },
 		createElement(View, { style: GRID }, buttons(draws, 0).map(cell)),
-		inlineGroup(inline, shown, [more]),
+		inlineGroup(inline, shown, withParked([more])),
 	);
 }
 
 function HiddenWhileEmpty({ channelId, target }: HiddenProps) {
 	return useComposerState(channelId, 0) === 'empty' ? null : target;
+}
+
+function padded<T>(list: (T | undefined)[] | undefined, length: number): (T | undefined)[] {
+	return Array.from({ length }, (_, index) => list?.[index]);
 }
 
 /**
@@ -217,20 +285,18 @@ export function withComposerButton(
 		channelId: string;
 		draw: ComposerButtonDraw;
 		key?: string;
+		details?: ComposerButtonDetails;
 		inline: 'row' | 'prepend';
 		rowGap: number;
 	},
 ): ReactElement {
 	if (isStack(target)) {
-		const keys = target.props.keys ?? [];
+		const count = target.props.draws.length;
 
 		return cloneElement(target, {
 			draws: [...target.props.draws, options.draw],
-			keys: [
-				...keys,
-				...Array.from({ length: target.props.draws.length - keys.length }, () => undefined),
-				options.key,
-			],
+			keys: [...padded(target.props.keys, count), options.key],
+			details: [...padded(target.props.details, count), options.details],
 		});
 	}
 
@@ -239,6 +305,7 @@ export function withComposerButton(
 		channelId: options.channelId,
 		draws: [options.draw],
 		keys: [options.key],
+		details: [options.details],
 		target,
 		inline: options.inline,
 		rowGap: options.rowGap,

@@ -5,7 +5,7 @@ import {
 	type PressableStateCallbackType,
 	type ViewStyle,
 } from 'react-native';
-import { assets, flux, metro, toasts } from '@unbound-app/api';
+import { assets, flux, metro, toasts, ui } from '@unbound-app/api';
 import { createElement, useSyncExternalStore } from 'react';
 import { definePlatform } from '@unbound-app/api/native';
 
@@ -59,6 +59,36 @@ type ButtonProps = InputToggleOptions & {
 	trailingGap: number;
 };
 
+function useToggle(channelId: string, toggle: ChannelToggle, usePersist: () => boolean) {
+	const persist = usePersist();
+	const active = useSyncExternalStore(toggle.subscribe, () =>
+		toggle.isActive(channelId, persist),
+	);
+
+	return { active, flip: () => toggle.toggle(channelId, persist) };
+}
+
+function ToggleRow({
+	channelId,
+	toggle,
+	usePersist,
+	labels,
+	assetIds,
+	hideWhenEmpty = false,
+}: Omit<ButtonProps, 'trailingGap' | 'haptics'>) {
+	const { active, flip } = useToggle(channelId, toggle, usePersist);
+	const empty = useComposerState(channelId) === 'empty';
+
+	if (hideWhenEmpty && empty) return null;
+
+	return createElement(ui.SwitchRow, {
+		label: labels().name,
+		icon: active ? assetIds.on : assetIds.off,
+		value: active,
+		onValueChange: flip,
+	});
+}
+
 function ToggleButton({
 	channelId,
 	toggle,
@@ -69,10 +99,7 @@ function ToggleButton({
 	trailingGap,
 	hideWhenEmpty = false,
 }: ButtonProps) {
-	const persist = usePersist();
-	const active = useSyncExternalStore(toggle.subscribe, () =>
-		toggle.isActive(channelId, persist),
-	);
+	const { active, flip } = useToggle(channelId, toggle, usePersist);
 	const empty = useComposerState(channelId) === 'empty';
 	const styles = useStyles();
 	const text = labels();
@@ -80,7 +107,7 @@ function ToggleButton({
 	if (hideWhenEmpty && empty) return null;
 
 	function press() {
-		const enabled = toggle.toggle(channelId, persist);
+		const enabled = flip();
 
 		toasts.show({ title: text.name, content: enabled ? text.toggledOn : text.toggledOff });
 	}
@@ -139,7 +166,16 @@ export function patchChatInputToggle(options: InputToggleOptions): void {
 			trailingGap,
 		});
 
-	drawToggle(button, options.name, options.key);
+	drawToggle(button, options.name, options.key, {
+		label: () => options.labels().name,
+		row: (channelId: string) =>
+			createElement(ToggleRow, {
+				...options,
+				key: options.key,
+				channelId,
+				assetIds: { on, off },
+			}),
+	});
 }
 
 /**
