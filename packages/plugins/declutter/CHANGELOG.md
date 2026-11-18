@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.6] - 2026-11-18
+
+### Fixed
+
+- Hide Server Themes works on Discord 356, which dropped the user-level server theme experiment; it now turns off the server theme experiment itself, which Discord 354 also has.
+
 ## [1.0.5] - 2026-11-17
 
 ### Changed
