@@ -1,6 +1,7 @@
-import type { CrashIssueLink, CrashRecord } from '~/diagnostics/crash-history';
+import { recordCrash, type CrashIssueLink, type CrashRecord } from '~/diagnostics/crash-history';
 import type { CrashReportAddon } from '~/diagnostics/crash-report';
 import { fileRecordedCrash } from '~/diagnostics/crash-reports';
+import type { CaughtError } from '~/ui/error-fallback';
 import { error, info } from '~/toasts/api';
 import { confirm } from '~/dialogs/api';
 import { Linking } from '~/metro/api';
@@ -11,11 +12,13 @@ import { Linking } from '~/metro/api';
  * @param record The crash.
  * @param plugin The installed plugin the crash blamed and its name, if any.
  * @param onLinked Receives the issue the crash was filed under, so the row can show it.
+ * @param stack The crash's stack, when the caller still has it.
  */
 export async function reportCrashOnGitHub(
 	record: CrashRecord,
 	plugin: { name: string; addon: CrashReportAddon } | undefined,
 	onLinked: (issue: CrashIssueLink) => void,
+	stack?: string,
 ): Promise<void> {
 	if (record.issue) {
 		await Linking.openURL(record.issue.url);
@@ -32,7 +35,7 @@ export async function reportCrashOnGitHub(
 		return;
 	}
 
-	const filed = await fileRecordedCrash(record, plugin?.addon);
+	const filed = await fileRecordedCrash(record, plugin?.addon, stack);
 
 	if (filed?.issue) {
 		onLinked(filed.issue);
@@ -42,6 +45,23 @@ export async function reportCrashOnGitHub(
 	} else {
 		error('UNBOUND_CRASH_ISSUE_FAILED', new Error(`No issue for crash ${record.at}`));
 	}
+}
+
+/**
+ * @description Files the error the crash screen shows: records it in Recent Crashes, then takes it to GitHub the same way
+ * a tapped row does, with the error's stack and component stack.
+ * @param caught The caught error and its component stack.
+ */
+export async function reportCaughtError({ error, componentStack }: CaughtError): Promise<void> {
+	const record: CrashRecord = {
+		at: Date.now(),
+		kind: 'crash',
+		message: error.message.split('\n')[0] || error.name,
+	};
+	const stack = [error.stack, componentStack].filter(Boolean).join('\n');
+
+	await recordCrash(record);
+	await reportCrashOnGitHub(record, undefined, () => undefined, stack || undefined);
 }
 
 export default reportCrashOnGitHub;

@@ -31,6 +31,7 @@ export type { CrashEvent, CrashReportAddon } from '~/diagnostics/crash-report';
 type CrashReportIssue = { number: number; url: string; created: boolean };
 
 const RETRIES_PER_LAUNCH = 3;
+const MAX_STACK = 16_000;
 
 type SentCrashReport = { id: string; origin?: CrashOrigin; issue?: CrashReportIssue };
 
@@ -277,6 +278,7 @@ function isCrashKind(kind: string): kind is CrashEvent['kind'] {
 function recordedEvent(
 	record: CrashRecord,
 	addon: CrashReportAddon | undefined,
+	caughtStack: string | undefined,
 ): CrashEvent | undefined {
 	if (!isCrashKind(record.kind)) {
 		return undefined;
@@ -286,7 +288,7 @@ function recordedEvent(
 	const stack =
 		record.kind === 'native-crash' && launch?.crashes?.at(-1)?.at === record.at
 			? launch.crashStack
-			: undefined;
+			: caughtStack?.slice(0, MAX_STACK);
 
 	return {
 		kind: record.kind,
@@ -299,12 +301,13 @@ function recordedEvent(
 async function sendRecordedCrash(
 	record: CrashRecord,
 	addon: CrashReportAddon | undefined,
+	stack: string | undefined,
 ): Promise<SentCrashReport | undefined> {
 	if (record.reportId) {
 		return { id: record.reportId, ...(record.origin ? { origin: record.origin } : {}) };
 	}
 
-	const event = recordedEvent(record, addon);
+	const event = recordedEvent(record, addon, stack);
 
 	return event
 		? sendCrashReport(event, [], { recordedAt: record.at, announce: false })
@@ -333,13 +336,15 @@ async function requestIssue(reportId: string): Promise<FiledCrash | undefined> {
  * then has the server open its issue or add it to the one that already tracks it.
  * @param record The crash.
  * @param addon The installed plugin the crash blamed, if any.
+ * @param stack The crash's stack, when the caller still has it, such as the crash screen's error.
  * @returns The issue and where the crash came from, or `undefined` when the report could not be sent.
  */
 export async function fileRecordedCrash(
 	record: CrashRecord,
 	addon?: CrashReportAddon,
+	stack?: string,
 ): Promise<FiledCrash | undefined> {
-	const sent = await sendRecordedCrash(record, addon);
+	const sent = await sendRecordedCrash(record, addon, stack);
 
 	if (!sent) {
 		return undefined;

@@ -2,14 +2,14 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { View } from 'react-native';
 import { useState } from 'react';
 
-import { bugReportURL, crashDiagnostics, pluginsLine } from '~/ui/error-fallback';
+import { crashDiagnostics, pluginsLine } from '~/ui/error-fallback';
+import { reportCaughtError } from '~/ui/settings/report-crash';
 import { readDebugInfo } from '~/diagnostics/read-debug-info';
 import { Discord, SafeArea } from '~/metro/components';
 import type { CaughtError } from '~/ui/error-fallback';
 import { getAll as getPlugins } from '~/plugins/api';
 import { Clipboard } from '~/metro/common';
 import { messages } from '~/i18n/api';
-import { Linking } from '~/metro/api';
 import { icons } from '~/assets/api';
 
 import useStyles from './error-boundary.style';
@@ -18,8 +18,6 @@ import ErrorAction from './error-action';
 import ErrorHeader from './error-header';
 
 export type ErrorFallbackProps = CaughtError & {
-	clientVersion: string;
-	platform: string;
 	/** Whether Discord already runs in recovery mode, which hides the action that enters it. */
 	recovery: boolean;
 	onRetry: () => void;
@@ -34,8 +32,6 @@ export type ErrorFallbackProps = CaughtError & {
 function ErrorFallback({
 	error,
 	componentStack,
-	clientVersion,
-	platform,
 	recovery,
 	onRetry,
 	onReload,
@@ -105,11 +101,7 @@ function ErrorFallback({
 								<ErrorAction
 									label={messages.UNBOUND_CRASH_REPORT}
 									icon='BugIcon'
-									onPress={() =>
-										Linking.openURL(
-											bugReportURL(caught, { clientVersion, platform }),
-										)
-									}
+									onPress={() => void reportCaughtError(caught)}
 								/>
 							</Discord.Stack>
 						</Discord.Stack>
