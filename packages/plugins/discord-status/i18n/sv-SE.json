@@ -1,0 +1,7 @@
+{
+	"MINOR": "Även mindre incidenter",
+	"MINOR_SUBTITLE": "Visa även små incidenter, inte bara stora avbrott.",
+	"OUTAGE_TITLE": "Discord har problem",
+	"OUTAGE_BODY": "{name} ({status})",
+	"OUTAGE_DETAILS": "Detaljer"
+}

@@ -1,0 +1,7 @@
+{
+	"MINOR": "Cả sự cố nhỏ",
+	"MINOR_SUBTITLE": "Hiện cả sự cố nhỏ, không chỉ sự cố lớn.",
+	"OUTAGE_TITLE": "Discord đang gặp sự cố",
+	"OUTAGE_BODY": "{name} ({status})",
+	"OUTAGE_DETAILS": "Chi tiết"
+}

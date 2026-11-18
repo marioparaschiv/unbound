@@ -1,0 +1,17 @@
+{
+	"id": "unbound.discord-status",
+	"name": "Discord Status",
+	"description": "Tells you when Discord itself is having an outage, from discordstatus.com, so you know it isn't your connection or Unbound.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "GlobeEarthIcon",
+	"main": "index.tsx"
+}
