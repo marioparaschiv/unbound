@@ -31,6 +31,13 @@ object EnvironmentFacts {
         "ro.evolution.version" to "Evolution X",
         "ro.pixelexperience.version" to "PixelExperience",
         "ro.grapheneos.version" to "GrapheneOS",
+        "ro.calyxos.version" to "CalyxOS",
+        "ro.aospa.version" to "Paranoid Android",
+        "ro.arrow.version" to "ArrowOS",
+        "ro.derp.version" to "DerpFest",
+        "ro.rising.version" to "RisingOS",
+        "ro.matrixx.version" to "Project Matrixx",
+        "ro.voltage.version" to "VoltageOS",
         "ro.modversion" to "",
     )
 
@@ -41,6 +48,11 @@ object EnvironmentFacts {
         "/system/bin/nox-prop" to "Nox",
         "/system/bin/ldinit" to "LDPlayer",
         "/dev/socket/genyd" to "Genymotion",
+        "/system/bin/microvirt-prop" to "MEmu",
+        "/system/lib/libmicrovirt.so" to "MEmu",
+        "/system/bin/nemuVM-prop" to "MuMu",
+        "/system/lib/libnemuVMprop.so" to "MuMu",
+        "/system/bin/androVM-prop" to "Genymotion",
     )
     private val SKIN_PROPERTIES = listOf<Pair<String, (String) -> String>>(
         "ro.mi.os.version.name" to { "HyperOS ${it.removePrefix("OS")}" },
@@ -116,9 +128,30 @@ object EnvironmentFacts {
             packages.hasSystemFeature(PLAY_GAMES_PC_FEATURE) -> "Play Games PC"
             packages.hasSystemFeature(CHROME_OS_FEATURE) -> "ChromeOS"
             property(WAYDROID_PROPERTY) != null -> "Waydroid"
-            else -> EMULATOR_FILES.firstOrNull { (path, _) -> File(path).exists() }?.second ?: ""
+            else -> EMULATOR_FILES.firstOrNull { (path, _) -> File(path).exists() }?.second
+                ?: virtualHost(context)
+                ?: ""
         }
     }
+
+    private fun virtualHost(context: Context): String? = runCatching {
+        val packages = context.packageManager
+        val owner = packages.getNameForUid(Process.myUid())?.substringBefore(':')
+        val dataDir = context.applicationInfo.dataDir.orEmpty()
+        when {
+            owner != null && owner != context.packageName -> "inside ${labelOf(packages, owner)}"
+            dataDir.isNotEmpty() && !isStandardDataDir(dataDir) -> "virtual storage"
+            else -> null
+        }
+    }.getOrNull()
+
+    private fun labelOf(packages: PackageManager, name: String): String = runCatching {
+        packages.getApplicationLabel(packages.getApplicationInfo(name, 0)).toString()
+    }.getOrNull()?.takeIf { it.isNotBlank() } ?: name
+
+    internal fun isStandardDataDir(path: String): Boolean =
+        path.startsWith("/data/user/") || path.startsWith("/data/data/") || path.startsWith("/data/user_de/") ||
+            path.startsWith("/mnt/expand/")
 
     private fun oneUI(version: String): String {
         val code = version.toIntOrNull() ?: return "One UI $version"
