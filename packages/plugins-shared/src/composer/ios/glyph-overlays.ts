@@ -88,6 +88,31 @@ export function hideRun(
 	objc.call(storage, 'addAttribute:value:range:', 'NSKern', side, last);
 }
 
+/**
+ * @description Undoes `hideRun`: gives a run the text view's own font and colour back and drops its kern.
+ * @param objc The Objective-C bridge.
+ * @param textView The text view.
+ * @param storage The text view's text storage.
+ * @param start The run's UTF-16 offset.
+ * @param length The run's UTF-16 length.
+ */
+export function showRun(
+	objc: NativeObjCBridge,
+	textView: NativeObjectHandle,
+	storage: NativeObjectHandle,
+	start: number,
+	length: number,
+) {
+	'worklet';
+	const font = objc.call(textView, 'font');
+	const color = objc.call(textView, 'textColor');
+	const whole = objc.struct('NSRange', { location: start, length });
+
+	if (font) objc.call(storage, 'addAttribute:value:range:', 'NSFont', font, whole);
+	if (color) objc.call(storage, 'addAttribute:value:range:', 'NSColor', color, whole);
+	objc.call(storage, 'removeAttribute:range:', 'NSKern', whole);
+}
+
 function overlayFrame(
 	objc: NativeObjCBridge,
 	textView: NativeObjectHandle,

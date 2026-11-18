@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2] - 2026-11-18
+
+### Fixed
+
+- On iOS a draft in the message box shows the pack's emoji as soon as the chat opens, instead of Apple's until you tap into it.
+- Turning the plugin off or switching packs brings back the emoji it covered, instead of leaving gaps.
+
 ## [1.2.1] - 2026-11-18
 
 ### Fixed
