@@ -1,0 +1,8 @@
+{
+	"DAYS": "超過此天數時提醒",
+	"DAYS_SUBTITLE": "回覆的訊息要多舊才會詢問。",
+	"CONFIRM_TITLE": "回覆一則舊訊息？",
+	"CONFIRM_BODY": "這則訊息已有 {days} 天。回覆會提及作者並重新挑起對話。",
+	"CONFIRM_SEND": "回覆",
+	"CONFIRM_EDIT": "繼續編輯"
+}

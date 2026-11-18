@@ -1,0 +1,8 @@
+{
+	"DAYS": "Įspėti nuo tiek dienų",
+	"DAYS_SUBTITLE": "Kokia sena turi būti žinutė, kad būtų klausiama.",
+	"CONFIRM_TITLE": "Atsakyti į seną žinutę?",
+	"CONFIRM_BODY": "Šiai žinutei {days} d. Atsakymas paminės autorių ir prikels pokalbį.",
+	"CONFIRM_SEND": "Atsakyti",
+	"CONFIRM_EDIT": "Toliau redaguoti"
+}

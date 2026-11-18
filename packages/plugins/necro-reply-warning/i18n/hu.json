@@ -1,0 +1,8 @@
+{
+	"DAYS": "Figyelmeztetés ennyi naptól",
+	"DAYS_SUBTITLE": "Milyen régi legyen az üzenet, mielőtt rákérdezünk.",
+	"CONFIRM_TITLE": "Válaszolsz egy régi üzenetre?",
+	"CONFIRM_BODY": "Ez az üzenet {days} napos. A válasz megemlíti a szerzőt és újra felhozza a beszélgetést.",
+	"CONFIRM_SEND": "Válasz",
+	"CONFIRM_EDIT": "Szerkesztés folytatása"
+}

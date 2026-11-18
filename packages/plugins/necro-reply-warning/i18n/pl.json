@@ -1,0 +1,8 @@
+{
+	"DAYS": "Ostrzegaj od tylu dni",
+	"DAYS_SUBTITLE": "Jak stara musi być wiadomość, zanim padnie pytanie.",
+	"CONFIRM_TITLE": "Odpowiedzieć na starą wiadomość?",
+	"CONFIRM_BODY": "Ta wiadomość ma {days} dni. Odpowiedź oznaczy autora i odświeży rozmowę.",
+	"CONFIRM_SEND": "Odpowiedz",
+	"CONFIRM_EDIT": "Edytuj dalej"
+}

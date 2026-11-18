@@ -1,0 +1,8 @@
+{
+	"DAYS": "Avisar a partir de tantos dias",
+	"DAYS_SUBTITLE": "Quão antiga a mensagem deve ser antes de perguntar.",
+	"CONFIRM_TITLE": "Responder a uma mensagem antiga?",
+	"CONFIRM_BODY": "Esta mensagem tem {days} dias. Responder menciona o autor e traz a conversa de volta.",
+	"CONFIRM_SEND": "Responder",
+	"CONFIRM_EDIT": "Continuar editando"
+}

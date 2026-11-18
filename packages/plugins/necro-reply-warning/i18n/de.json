@@ -1,0 +1,8 @@
+{
+	"DAYS": "Ab so vielen Tagen warnen",
+	"DAYS_SUBTITLE": "Wie alt die Nachricht sein muss, bevor nachgefragt wird.",
+	"CONFIRM_TITLE": "Auf eine alte Nachricht antworten?",
+	"CONFIRM_BODY": "Diese Nachricht ist {days} Tage alt. Eine Antwort pingt den Autor und holt das Gespräch wieder hoch.",
+	"CONFIRM_SEND": "Antworten",
+	"CONFIRM_EDIT": "Weiter bearbeiten"
+}

@@ -1,0 +1,8 @@
+{
+	"DAYS": "Varsle fra så mange dager",
+	"DAYS_SUBTITLE": "Hvor gammel meldingen må være før du blir spurt.",
+	"CONFIRM_TITLE": "Svare på en gammel melding?",
+	"CONFIRM_BODY": "Meldingen er {days} dager gammel. Et svar pinger forfatteren og henter frem samtalen igjen.",
+	"CONFIRM_SEND": "Svar",
+	"CONFIRM_EDIT": "Fortsett redigering"
+}

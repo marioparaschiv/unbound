@@ -1,0 +1,8 @@
+{
+	"DAYS": "Varoita näin monesta päivästä",
+	"DAYS_SUBTITLE": "Kuinka vanha viestin pitää olla ennen kysymistä.",
+	"CONFIRM_TITLE": "Vastataanko vanhaan viestiin?",
+	"CONFIRM_BODY": "Viesti on {days} päivää vanha. Vastaus mainitsee kirjoittajan ja nostaa keskustelun esiin.",
+	"CONFIRM_SEND": "Vastaa",
+	"CONFIRM_EDIT": "Jatka muokkausta"
+}

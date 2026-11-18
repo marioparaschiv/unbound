@@ -1,0 +1,17 @@
+{
+	"id": "unbound.necro-reply-warning",
+	"name": "Necro Reply Warning",
+	"description": "Asks before you reply to a message older than a month, so you don't revive a long-dead conversation by accident.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "HourglassIcon",
+	"main": "index.tsx"
+}
