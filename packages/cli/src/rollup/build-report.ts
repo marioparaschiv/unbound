@@ -148,6 +148,7 @@ function shippedEntries(
 			file === entry ||
 			listed.has(file.fileName) ||
 			file.fileName === 'manifest.json' ||
+			file.fileName === `${entry.fileName}.map` ||
 			readBytecodeVersion(file.fileName, entry.fileName)
 		) {
 			continue;

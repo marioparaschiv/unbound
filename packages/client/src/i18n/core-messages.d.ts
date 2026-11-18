@@ -92,6 +92,7 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_THEME_EDITED_COUNT: { edited: string | number };
 		UNBOUND_THEME_TOKEN_KEY: { token: string | number };
 		UNBOUND_FFI_CONSENT_BODY: { name: string | number };
+		UNBOUND_CRASH_KNOWN_ISSUE: { number: string | number };
 		UNBOUND_REINSTALLED: { name: string | number };
 		UNBOUND_REINSTALL_UNCHANGED: { name: string | number };
 		UNBOUND_SHOW_LIBRARIES: { count: number };

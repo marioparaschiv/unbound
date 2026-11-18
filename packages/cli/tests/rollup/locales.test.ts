@@ -76,7 +76,10 @@ async function build(root: string): Promise<Built> {
 
 	const assets = new Map(
 		output
-			.filter((file): file is OutputAsset => file.type === 'asset')
+			.filter(
+				(file): file is OutputAsset =>
+					file.type === 'asset' && !file.fileName.endsWith('.map'),
+			)
 			.map((file) => [file.fileName, String(file.source)]),
 	);
 

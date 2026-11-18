@@ -10,9 +10,9 @@ permissions:
 jobs:
     symbolicate:
         name: Name Unbound's native frames
-        if: github.event.issue.pull_request == null && (contains(github.event.issue.body, '### Native stack') || contains(github.event.issue.body, 'address at unbound:'))
+        if: github.event.issue.pull_request == null && (contains(github.event.issue.body, '### Native stack') || contains(github.event.issue.body, 'address at unbound:') || contains(github.event.issue.body, '| Addon |'))
         runs-on: ubuntu-26.04
-        timeout-minutes: 10
+        timeout-minutes: 20
         permissions:
             actions: read
             contents: read
@@ -25,7 +25,7 @@ jobs:
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
                   persist-credentials: false
-                  fetch-depth: 1
+                  fetch-depth: 0
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
@@ -57,6 +57,14 @@ jobs:
               run: bun install --frozen-lockfile
 
             - name: Comment the mapped JavaScript stack
+              if: contains(github.event.issue.body, 'address at unbound:')
               env:
                   GH_TOKEN: ${{ github.token }}
               run: bun scripts/symbolicate-client-issue.ts "$GITHUB_REPOSITORY" "${{ github.event.issue.number }}"
+
+            - name: Comment the mapped plugin stack
+              if: contains(github.event.issue.body, '| Addon |')
+              continue-on-error: true
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: bun scripts/symbolicate-plugin-issue.ts "$GITHUB_REPOSITORY" "${{ github.event.issue.number }}"
