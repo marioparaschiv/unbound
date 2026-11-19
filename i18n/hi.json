@@ -337,6 +337,8 @@
 	"UNBOUND_CRASH_STACK": "स्टैक ट्रेस",
 	"UNBOUND_CRASH_COMPONENT_STACK": "कंपोनेंट स्टैक",
 	"UNBOUND_CRASH_RETRY": "फिर से कोशिश करें",
+	"UNBOUND_CRASH_UPDATE": "Update Unbound, which may fix this",
+	"UNBOUND_CRASH_UPDATING": "Updating Unbound…",
 	"UNBOUND_CRASH_RELOAD": "रीलोड करें",
 	"UNBOUND_CRASH_RECOVERY": "रिकवरी",
 	"UNBOUND_CRASH_COPY": "डायग्नोस्टिक्स कॉपी करें",

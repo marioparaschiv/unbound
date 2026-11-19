@@ -337,6 +337,8 @@
 	"UNBOUND_CRASH_STACK": "堆栈跟踪",
 	"UNBOUND_CRASH_COMPONENT_STACK": "组件堆栈",
 	"UNBOUND_CRASH_RETRY": "重试",
+	"UNBOUND_CRASH_UPDATE": "Update Unbound, which may fix this",
+	"UNBOUND_CRASH_UPDATING": "Updating Unbound…",
 	"UNBOUND_CRASH_RELOAD": "重新加载",
 	"UNBOUND_CRASH_RECOVERY": "恢复模式",
 	"UNBOUND_CRASH_COPY": "复制诊断信息",

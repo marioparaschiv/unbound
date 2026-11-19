@@ -337,6 +337,8 @@
 	"UNBOUND_CRASH_STACK": "Stacktrace",
 	"UNBOUND_CRASH_COMPONENT_STACK": "Komponenten-Stack",
 	"UNBOUND_CRASH_RETRY": "Erneut versuchen",
+	"UNBOUND_CRASH_UPDATE": "Update Unbound, which may fix this",
+	"UNBOUND_CRASH_UPDATING": "Updating Unbound…",
 	"UNBOUND_CRASH_RELOAD": "Neu laden",
 	"UNBOUND_CRASH_RECOVERY": "Wiederherstellung",
 	"UNBOUND_CRASH_COPY": "Diagnosedaten kopieren",

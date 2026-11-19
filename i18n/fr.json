@@ -337,6 +337,8 @@
 	"UNBOUND_CRASH_STACK": "Trace d’appels",
 	"UNBOUND_CRASH_COMPONENT_STACK": "Pile des composants",
 	"UNBOUND_CRASH_RETRY": "Réessayer",
+	"UNBOUND_CRASH_UPDATE": "Update Unbound, which may fix this",
+	"UNBOUND_CRASH_UPDATING": "Updating Unbound…",
 	"UNBOUND_CRASH_RELOAD": "Recharger",
 	"UNBOUND_CRASH_RECOVERY": "Récupération",
 	"UNBOUND_CRASH_COPY": "Copier le diagnostic",

@@ -337,6 +337,8 @@
 	"UNBOUND_CRASH_STACK": "Dėklo pėdsakas",
 	"UNBOUND_CRASH_COMPONENT_STACK": "Komponentų dėklas",
 	"UNBOUND_CRASH_RETRY": "Bandyti dar kartą",
+	"UNBOUND_CRASH_UPDATE": "Update Unbound, which may fix this",
+	"UNBOUND_CRASH_UPDATING": "Updating Unbound…",
 	"UNBOUND_CRASH_RELOAD": "Įkelti iš naujo",
 	"UNBOUND_CRASH_RECOVERY": "Atkūrimas",
 	"UNBOUND_CRASH_COPY": "Kopijuoti diagnostiką",

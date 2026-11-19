@@ -337,6 +337,8 @@
 	"UNBOUND_CRASH_STACK": "Seguimiento de pila",
 	"UNBOUND_CRASH_COMPONENT_STACK": "Pila de componentes",
 	"UNBOUND_CRASH_RETRY": "Volver a intentar",
+	"UNBOUND_CRASH_UPDATE": "Update Unbound, which may fix this",
+	"UNBOUND_CRASH_UPDATING": "Updating Unbound…",
 	"UNBOUND_CRASH_RELOAD": "Recargar",
 	"UNBOUND_CRASH_RECOVERY": "Recuperación",
 	"UNBOUND_CRASH_COPY": "Copiar diagnóstico",

@@ -337,6 +337,8 @@
 	"UNBOUND_CRASH_STACK": "Pinojäljitys",
 	"UNBOUND_CRASH_COMPONENT_STACK": "Komponenttipino",
 	"UNBOUND_CRASH_RETRY": "Yritä uudelleen",
+	"UNBOUND_CRASH_UPDATE": "Update Unbound, which may fix this",
+	"UNBOUND_CRASH_UPDATING": "Updating Unbound…",
 	"UNBOUND_CRASH_RELOAD": "Lataa uudelleen",
 	"UNBOUND_CRASH_RECOVERY": "Palautus",
 	"UNBOUND_CRASH_COPY": "Kopioi diagnostiikka",

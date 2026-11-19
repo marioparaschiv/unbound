@@ -337,6 +337,8 @@
 	"UNBOUND_CRASH_STACK": "Stack Trace",
 	"UNBOUND_CRASH_COMPONENT_STACK": "Component Stack",
 	"UNBOUND_CRASH_RETRY": "Coba Lagi",
+	"UNBOUND_CRASH_UPDATE": "Update Unbound, which may fix this",
+	"UNBOUND_CRASH_UPDATING": "Updating Unbound…",
 	"UNBOUND_CRASH_RELOAD": "Muat Ulang",
 	"UNBOUND_CRASH_RECOVERY": "Pemulihan",
 	"UNBOUND_CRASH_COPY": "Salin Diagnostik",

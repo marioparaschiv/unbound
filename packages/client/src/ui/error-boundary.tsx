@@ -7,6 +7,7 @@ import { reportCaughtError } from '~/ui/settings/report-crash';
 import { readDebugInfo } from '~/diagnostics/read-debug-info';
 import { Discord, SafeArea } from '~/metro/components';
 import type { CaughtError } from '~/ui/error-fallback';
+import { useCrashUpdate } from '~/ui/use-crash-update';
 import { getAll as getPlugins } from '~/plugins/api';
 import { Clipboard } from '~/metro/common';
 import { messages } from '~/i18n/api';
@@ -40,6 +41,7 @@ function ErrorFallback({
 	const styles = useStyles();
 	const caught = { error, componentStack };
 	const [copied, setCopied] = useState(false);
+	const update = useCrashUpdate();
 
 	function copyDiagnostics() {
 		const enabled = getPlugins().filter((plugin) => plugin.isEnabled());
@@ -65,9 +67,24 @@ function ErrorFallback({
 					</Animated.View>
 					<Animated.View entering={FadeInDown.delay(120).duration(320)}>
 						<Discord.Stack spacing={12}>
+							{update.state === 'none' ? null : (
+								<Discord.Button
+									size='lg'
+									variant='primary'
+									text={
+										update.state === 'updating'
+											? messages.UNBOUND_CRASH_UPDATING
+											: messages.UNBOUND_CRASH_UPDATE
+									}
+									icon={icons.DownloadIcon}
+									iconPosition='start'
+									disabled={update.state === 'updating'}
+									onPress={update.apply}
+								/>
+							)}
 							<Discord.Button
 								size='lg'
-								variant='primary'
+								variant={update.state === 'none' ? 'primary' : 'secondary'}
 								text={messages.UNBOUND_CRASH_RETRY}
 								icon={icons.RetryIcon}
 								iconPosition='start'

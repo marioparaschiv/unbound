@@ -337,6 +337,8 @@
 	"UNBOUND_CRASH_STACK": "Stack trace",
 	"UNBOUND_CRASH_COMPONENT_STACK": "Stiva componentelor",
 	"UNBOUND_CRASH_RETRY": "Încearcă din nou",
+	"UNBOUND_CRASH_UPDATE": "Update Unbound, which may fix this",
+	"UNBOUND_CRASH_UPDATING": "Updating Unbound…",
 	"UNBOUND_CRASH_RELOAD": "Reîncarcă",
 	"UNBOUND_CRASH_RECOVERY": "Recuperare",
 	"UNBOUND_CRASH_COPY": "Copiază diagnosticul",

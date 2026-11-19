@@ -337,6 +337,8 @@
 	"UNBOUND_CRASH_STACK": "Трассировка стека",
 	"UNBOUND_CRASH_COMPONENT_STACK": "Стек компонентов",
 	"UNBOUND_CRASH_RETRY": "Повторить",
+	"UNBOUND_CRASH_UPDATE": "Update Unbound, which may fix this",
+	"UNBOUND_CRASH_UPDATING": "Updating Unbound…",
 	"UNBOUND_CRASH_RELOAD": "Перезагрузить",
 	"UNBOUND_CRASH_RECOVERY": "Восстановление",
 	"UNBOUND_CRASH_COPY": "Копировать диагностику",
