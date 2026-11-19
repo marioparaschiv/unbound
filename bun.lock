@@ -2486,6 +2486,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/picker-video-previews": {
+      "name": "picker-video-previews",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/picture-in-picture": {
       "name": "picture-in-picture",
       "dependencies": {
@@ -6136,6 +6150,8 @@
     "petpet": ["petpet@workspace:packages/plugins/petpet"],
 
     "photo-metadata": ["photo-metadata@workspace:packages/plugins/photo-metadata"],
+
+    "picker-video-previews": ["picker-video-previews@workspace:packages/plugins/picker-video-previews"],
 
     "picocolors": ["picocolors@1.1.1", "", {}, "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA=="],
 
