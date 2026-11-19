@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.1] - 2026-11-19
+
+### Fixed
+
+- Messages that `ubd debug message add` made only on the device are no longer kept as deleted when the command removes them.
+
 ## [1.3.0] - 2026-11-14
 
 ### Added
