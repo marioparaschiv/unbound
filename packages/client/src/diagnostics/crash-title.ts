@@ -1,4 +1,4 @@
-const NATIVE_FRAME = /^#\d+\s+(?:0x[0-9a-f]+\s+)?(\S+)\s+\+\s+0x[0-9a-f]+(?:\s+(\S+))?/i;
+const NATIVE_FRAME = /^#\d+\s+(?:0x[0-9a-f]+\s+)?(\S+)\s+\+\s+0x[0-9a-f]+(?:\s+([^\s(]\S*))?/i;
 const SYSTEM_ABORT_IMAGE =
 	/^(libsystem_kernel|libsystem_c|libsystem_pthread|libsystem_platform|libc\+\+abi|libdyld|libc\.so|libart\.so)/i;
 const NATIVE_CALL_FREEZE = /native call (?:invoke\((.+)\)|(.+?)) for (\d+) ms/;

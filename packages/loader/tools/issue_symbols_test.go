@@ -120,3 +120,30 @@ func TestNamesSignalsPerPlatform(t *testing.T) {
 		t.Fatal("a stack without a signal got a headline")
 	}
 }
+
+func TestNamesTombstoneFramesByTheirLibraryPath(t *testing.T) {
+	stack := "Signal 11 (SIGSEGV) in thread 1234, from Android's tombstone\n" +
+		"#0 0x7300000040 /data/app/~~a/lib/arm64/libunbound.so + 0x40 (BuildId: abcdef)\n" +
+		"#1 0x7200000020 /apex/libc.so + 0x20 (BuildId: 123456)\n" +
+		"Image libunbound.so abcdef\n"
+
+	var asked []uint64
+
+	symbolize := func(object string, addresses []uint64) ([][]sourceLocation, error) {
+		asked = addresses
+
+		return [][]sourceLocation{{{function: "loader::crash"}}}, nil
+	}
+
+	if _, count, err := symbolicateLoaderStack(stack, "libunbound.so", symbolize); err != nil || count != 1 {
+		t.Fatalf("count %d, err %v", count, err)
+	}
+
+	if len(asked) != 1 || asked[0] != 0x40 {
+		t.Fatalf("asked for %x", asked)
+	}
+
+	if match := imageLinePattern.FindStringSubmatch(stack); match == nil || match[2] != "abcdef" {
+		t.Fatalf("image %q", match)
+	}
+}
