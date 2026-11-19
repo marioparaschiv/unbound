@@ -1,0 +1,17 @@
+{
+	"id": "unbound.big-download-warning",
+	"name": "Big Download Warning",
+	"description": "Asks before opening a large attachment while you are on mobile data.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "FileIcon",
+	"main": "index.tsx"
+}
