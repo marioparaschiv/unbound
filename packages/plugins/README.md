@@ -1,6 +1,6 @@
 # Plugins
 
-221 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+222 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -27,6 +27,7 @@
 - <img src="../../assets/plugins/readme-icons/laptop-phone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better Sessions](https://unbound.rip/addons/unbound.better-sessions): Marks new sessions, shows exactly when each was last used and lets you name them, in Settings > Devices.
 - <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better Status Indicators](https://unbound.rip/addons/unbound.better-status-indicators): Draws a ring in the status colour around avatars, so online, idle, do not disturb and streaming read at a glance.
 - <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better You Bar](https://unbound.rip/addons/unbound.better-you-bar): Adds Favorites and Settings shortcuts to the You bar, and can keep favorite channels past Discord's limit on this device.
+- <img src="../../assets/plugins/readme-icons/file-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Big Download Warning](https://unbound.rip/addons/unbound.big-download-warning): Asks before opening a large attachment while you are on mobile data.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Blur NSFW](https://unbound.rip/addons/unbound.blur-nsfw): Blurs attachments and embedded media in age-restricted channels until you tap them.
 - <img src="../../assets/plugins/readme-icons/plus-large-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Calculator](https://unbound.rip/addons/unbound.calculator): Adds a calculator button to the chat input when your draft is a calculation, to insert the result or the full calculation.
 - <img src="../../assets/plugins/readme-icons/calendar-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Calendar Files](https://unbound.rip/addons/unbound.calendar-files): Previews .ics calendar invites in messages with an Add to Calendar button, and makes one with /event.

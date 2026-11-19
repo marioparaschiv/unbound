@@ -739,6 +739,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/big-download-warning": {
+      "name": "big-download-warning",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/blur-nsfw": {
       "name": "blur-nsfw",
       "dependencies": {
@@ -4914,6 +4928,8 @@
     "better-status-indicators": ["better-status-indicators@workspace:packages/plugins/better-status-indicators"],
 
     "better-you-bar": ["better-you-bar@workspace:packages/plugins/better-you-bar"],
+
+    "big-download-warning": ["big-download-warning@workspace:packages/plugins/big-download-warning"],
 
     "blur-nsfw": ["blur-nsfw@workspace:packages/plugins/blur-nsfw"],
 

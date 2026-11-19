@@ -1,0 +1,8 @@
+{
+	"THRESHOLD": "Ask from (MB)",
+	"THRESHOLD_SUBTITLE": "Attachments at least this large ask before opening on mobile data.",
+	"TITLE": "Large attachment",
+	"BODY": "This file is {size}. Open it on mobile data?",
+	"OPEN": "Open",
+	"CANCEL": "Cancel"
+}
