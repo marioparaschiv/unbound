@@ -334,7 +334,7 @@ static void writeOtherThreads(int) {}
 
 // Async-signal-safe apart from dladdr, and on Apple platforms the thread names: walks the
 // frame-pointer chain of the crashing thread, then records its registers and every other thread.
-static void writeNativeStack(int signal, void *context)
+static void writeNativeStack(int signal, siginfo_t *info, void *context)
 {
     int descriptor = gStackDescriptor.exchange(-1);
     if (descriptor < 0)
@@ -357,6 +357,13 @@ static void writeNativeStack(int signal, void *context)
     {
         ssize_t written = write(descriptor, gImageLine, gImageLineLength);
         (void) written;
+    }
+
+    if (info && (signal == SIGSEGV || signal == SIGBUS))
+    {
+        writeText(descriptor, "Fault ");
+        writeHex(descriptor, reinterpret_cast<uintptr_t>(info->si_addr));
+        writeText(descriptor, "\n");
     }
 
     writeAbortMessages(descriptor);
@@ -442,7 +449,7 @@ static void recordCrashingAddon(int signal, siginfo_t *info, void *context)
         writeCrashingAddonRecord(descriptor);
     }
 
-    writeNativeStack(signal, context);
+    writeNativeStack(signal, info, context);
 #if defined(__ANDROID__)
     static char abortMessage[kAddonRecordByteLimit + 32];
     if (crashingAddonMessage(abortMessage, sizeof(abortMessage)) > 0)

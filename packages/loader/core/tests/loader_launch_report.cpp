@@ -20,6 +20,15 @@ static void checkNativeCrashes()
                                  "Addon {\"id\":\"x\",\"name\":\"Chat Bubbles\"}\n")
            == "SIGSEGV in Chat Bubbles");
     assert(nativeCrashHeadline("Signal " + std::to_string(SIGABRT) + "\n#0 0x1\n") == "SIGABRT");
+    assert(nativeCrashHeadline("Signal " + std::to_string(SIGSEGV)
+                               + "\nFault 0x2000000102345678\n"
+                                 "Addon {\"id\":\"x\",\"name\":\"Chat Bubbles\"}\n")
+           == "SIGSEGV (likely pointer authentication failure) in Chat Bubbles");
+    assert(nativeCrashHeadline("Signal " + std::to_string(SIGSEGV) + "\nFault 0x10\n")
+           == "SIGSEGV");
+    assert(isLikelyPointerAuthFailure(0x0021000102345678ull));
+    assert(!isLikelyPointerAuthFailure(0x0000000102345678ull));
+    assert(!isLikelyPointerAuthFailure(0xffffff8000001000ull));
     assert(nativeCrashHeadline("Signal " + std::to_string(SIGABRT)
                                + "\nException NSInvalidArgumentException: bad selector\n#0 0x1\n")
            == "SIGABRT (NSInvalidArgumentException)");
