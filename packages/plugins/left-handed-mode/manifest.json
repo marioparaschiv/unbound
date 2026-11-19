@@ -1,0 +1,18 @@
+{
+	"id": "unbound.left-handed-mode",
+	"name": "Left Handed Mode",
+	"description": "Mirrors the chat input, so the send and emoji buttons sit on the left within reach of your thumb. iOS only.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ArrowsLeftRightIcon",
+	"minNativeBridgeApi": "1.0.0",
+	"main": "index.tsx"
+}
