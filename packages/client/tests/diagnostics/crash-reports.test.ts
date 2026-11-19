@@ -73,6 +73,14 @@ mock.module('~/diagnostics/crash-consent', () => ({
 	},
 }));
 mock.module('~/toasts/api', () => ({ info: (...args: unknown[]) => toasts.push(args) }));
+mock.module('~/plugins/manager', () => ({
+	plugins: {
+		getAddon: (id: string) =>
+			id === 'unbound.chat-bubbles'
+				? { id, version: '1.6.28', manifest: { trust: 'signed' } }
+				: undefined,
+	},
+}));
 
 const { fileRecordedCrash, reportCrash, reportNativeCrash, reportSystemHang, retryPendingIssues } =
 	await import('~/diagnostics/crash-reports');
@@ -276,6 +284,25 @@ describe('reportSystemHang', () => {
 			stack: hangLaunch.system.lastHang.stack,
 		});
 		expect(settings.get('crash-reports.hangAt')).toBe(5_000);
+	});
+
+	test('blames the plugin that froze during the hang', async () => {
+		await reportSystemHang({
+			...launch,
+			system: {
+				lastHang: {
+					...hangLaunch.system.lastHang,
+					at: 6_000,
+					addon: 'Chat Bubbles',
+					addonId: 'unbound.chat-bubbles',
+				},
+			},
+		});
+
+		expect(sent[0]).toMatchObject({
+			kind: 'freeze',
+			addon: { id: 'unbound.chat-bubbles', version: '1.6.28', trust: 'signed' },
+		});
 	});
 
 	test('does nothing without a hang', async () => {

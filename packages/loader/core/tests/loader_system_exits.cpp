@@ -50,6 +50,20 @@ const char *kHangWithStack = R"({
   ]
 })";
 
+const char *kHangInWindow = R"({
+  "timeStampBegin": "2026-11-12 00:00:00",
+  "timeStampEnd": "2026-11-12 23:00:00",
+  "hangDiagnostics": [
+    {
+      "diagnosticMetaData": {"hangDuration": "5 sec"},
+      "callStackTree": {"callStacks": [{
+        "threadAttributed": true,
+        "callStackRootFrames": [{"address": 4096, "binaryName": "Unbound.dylib", "offsetIntoBinaryTextSegment": 16}]
+      }]}
+    }
+  ]
+})";
+
 std::string documents()
 {
     std::filesystem::path root = std::filesystem::temp_directory_path() / "unbound-system-exits";
@@ -107,6 +121,33 @@ void keepsTheLatestHangsStack()
            == "Hang 4 sec\n#0 0x1000 Unbound.dylib + 0x10\n#1 0x2000 Discord + 0x20\n");
 }
 
+void blamesThePluginThatFrozeDuringTheHang()
+{
+    std::string directory = documents();
+    int64_t noon          = exits::parseMetricKitTimestamp("2026-11-12 12:00:00");
+    exits::recordFreeze(directory, "Message Logger", noon, 2000);
+    exits::recordFreeze(directory, "Chat Bubbles", noon + 1000, 5000, "unbound.chat-bubbles");
+    exits::recordFreeze(directory, "Clean Channel Names",
+                        exits::parseMetricKitTimestamp("2026-11-11 12:00:00"), 9000);
+    exits::recordMetricKitDiagnostics(directory, kHangInWindow);
+
+    nlohmann::json last = exits::summary(directory, dayAfter())["lastHang"];
+    assert(last["addon"] == "Chat Bubbles");
+    assert(last["addonId"] == "unbound.chat-bubbles");
+    assert(last["inUnbound"] == true);
+}
+
+void blamesNoPluginWithoutFreezes()
+{
+    std::string directory = documents();
+    exits::recordMetricKitDiagnostics(directory, kHangWithStack);
+
+    nlohmann::json last = exits::summary(directory, dayAfter())["lastHang"];
+    assert(!last.contains("addon"));
+    assert(exits::stackRunsUnbound("#0 0x1 Unbound.dylib + 0x10\n"));
+    assert(!exits::stackRunsUnbound("#0 0x1 Discord + 0x10\n"));
+}
+
 void forgetsOldExits()
 {
     std::string directory = documents();
@@ -151,5 +192,7 @@ int main()
     forgetsOldExits();
     recordsPlatformExitsByKey();
     namesThePluginsThatFroze();
+    blamesThePluginThatFrozeDuringTheHang();
+    blamesNoPluginWithoutFreezes();
     return 0;
 }

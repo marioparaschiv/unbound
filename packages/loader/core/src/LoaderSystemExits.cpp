@@ -250,7 +250,39 @@ static void keepNewestHangStacks(nlohmann::json &events)
     }
 }
 
-static void recordHangs(nlohmann::json &store, const nlohmann::json &payload, int64_t at)
+HangSuspect hangSuspect(const nlohmann::json &events, int64_t windowStart, int64_t windowEnd)
+{
+    HangSuspect suspect;
+    int64_t longest = 0;
+    for (const nlohmann::json &event : events)
+    {
+        if (!event.is_object() || event.value("kind", std::string()) != "freeze")
+        {
+            continue;
+        }
+
+        int64_t at = event.value("at", int64_t{0});
+        int64_t ms = event.value("ms", int64_t{0});
+        if (at < windowStart || at > windowEnd || ms <= longest)
+        {
+            continue;
+        }
+
+        suspect = {event.value("addon", std::string()), event.value("addonId", std::string())};
+        longest = ms;
+    }
+
+    return suspect;
+}
+
+bool stackRunsUnbound(const std::string &stack)
+{
+    return stack.find(" Unbound.dylib + ") != std::string::npos
+           || stack.find(" Unbound + ") != std::string::npos;
+}
+
+static void recordHangs(nlohmann::json &store, const nlohmann::json &payload, int64_t at,
+                        int64_t windowStart)
 {
     auto hangs = payload.find("hangDiagnostics");
     if (hangs == payload.end() || !hangs->is_array())
@@ -258,14 +290,30 @@ static void recordHangs(nlohmann::json &store, const nlohmann::json &payload, in
         return;
     }
 
+    HangSuspect suspect = hangSuspect(store["events"], windowStart, at);
     for (const nlohmann::json &hang : *hangs)
     {
         nlohmann::json metadata = hang.value("diagnosticMetaData", nlohmann::json::object());
         addEvent(store, ExitKind::Hang, at,
                  parseMetricKitDuration(stringMember(metadata, "hangDuration")));
+        nlohmann::json &event = store["events"].back();
         if (std::optional<std::string> stack = metricKitHangStack(hang))
         {
-            store["events"].back()["stack"] = stack->substr(0, kMaximumHangStack);
+            event["stack"] = stack->substr(0, kMaximumHangStack);
+            if (stackRunsUnbound(*stack))
+            {
+                event["inUnbound"] = true;
+            }
+        }
+
+        if (!suspect.name.empty())
+        {
+            event["addon"] = suspect.name;
+        }
+
+        if (!suspect.id.empty())
+        {
+            event["addonId"] = suspect.id;
         }
     }
 
@@ -302,8 +350,11 @@ void recordMetricKitDiagnostics(const std::string &documents, const std::string 
             return;
         }
 
-        crash = latestCrashStack(payload);
-        recordHangs(store, payload, at);
+        crash             = latestCrashStack(payload);
+        std::string begin = stringMember(payload, "timeStampBegin");
+        int64_t windowStart =
+            begin.empty() ? at - kSummaryWindowMs : parseMetricKitTimestamp(begin);
+        recordHangs(store, payload, at, windowStart);
         writeStore(documents, store);
     }
 
@@ -328,7 +379,7 @@ void recordExit(const std::string &documents, const std::string &key, ExitKind k
 }
 
 void recordFreeze(const std::string &documents, const std::string &addon, int64_t at,
-                  int64_t durationMs)
+                  int64_t durationMs, const std::string &addonId)
 {
     if (addon.empty())
     {
@@ -339,6 +390,11 @@ void recordFreeze(const std::string &documents, const std::string &addon, int64_
     nlohmann::json store = readStore(documents);
     addEvent(store, ExitKind::Freeze, at, durationMs);
     store["events"].back()["addon"] = addon;
+    if (!addonId.empty())
+    {
+        store["events"].back()["addonId"] = addonId;
+    }
+
     writeStore(documents, store);
 }
 
@@ -425,6 +481,18 @@ nlohmann::json summary(const std::string &documents, int64_t now)
             lastHang = {{"at", event.value("at", int64_t{0})},
                         {"ms", event.value("ms", int64_t{0})},
                         {"stack", event.value("stack", std::string())}};
+            for (const char *key : {"addon", "addonId"})
+            {
+                if (event.contains(key))
+                {
+                    lastHang[key] = event[key];
+                }
+            }
+
+            if (event.value("inUnbound", false))
+            {
+                lastHang["inUnbound"] = true;
+            }
         }
 
         std::string name = kind == "hang" ? "hangs" : kind;
