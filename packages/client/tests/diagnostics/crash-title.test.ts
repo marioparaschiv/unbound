@@ -8,6 +8,14 @@ import {
 } from '~/diagnostics/crash-title';
 
 describe('crash titles', () => {
+	test('reads no function from an Android frame that carries only its build ID', () => {
+		expect(
+			nativeCrashFrame(
+				'#0 0x7300000040 /data/app/~~a/lib/arm64/libunbound.so + 0x40 (BuildId: abcdef)\n',
+			),
+		).toBe('/data/app/~~a/lib/arm64/libunbound.so');
+	});
+
 	test('names the first frame outside the abort machinery', () => {
 		const stack = [
 			'Signal 6',

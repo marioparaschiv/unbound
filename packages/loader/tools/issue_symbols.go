@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	loaderStackFramePattern = regexp.MustCompile(`#(\d+)\s+0x[0-9a-fA-F]+\s+(Unbound\.dylib|libunbound[^\s]*\.so)\s+\+\s+0x([0-9a-fA-F]+)`)
+	loaderStackFramePattern = regexp.MustCompile(`#(\d+)\s+0x[0-9a-fA-F]+\s+(?:\S*/)?(Unbound\.dylib|libunbound[^\s/]*\.so)\s+\+\s+0x([0-9a-fA-F]+)`)
 	issueLoaderPattern      = regexp.MustCompile(`loader (\d+\.\d+\.\d+)`)
 	issuePlatformPattern    = regexp.MustCompile(`\bon (iOS|Android)\b`)
 	imageLinePattern        = regexp.MustCompile(`(?m)^Image (\S+) ([0-9A-Fa-f-]+)$`)

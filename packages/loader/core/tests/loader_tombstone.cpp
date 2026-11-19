@@ -73,8 +73,19 @@ int main()
            == "Signal 11 (SIGSEGV) in thread 1234 (mqt_js), from Android's tombstone\n"
               "Abort message: assertion failed\n"
               "#0 0x7100001a2b /data/app/libhermes.so + 0x1a2b "
-              "hermes::vm::Runtime::crash+12\n"
-              "#1 0x7200000020 /apex/libc.so + 0x20\n");
+              "hermes::vm::Runtime::crash+12 (BuildId: abcdef)\n"
+              "#1 0x7200000020 /apex/libc.so + 0x20 (BuildId: abcdef)\n");
+
+    std::string inLoader =
+        thread(1234, "mqt_js",
+               bytes(4, frame(0x40, 0x7300000040, "", 0, "/data/app/~~a/lib/arm64/libunbound.so")));
+    std::string loaderTombstone =
+        number(6, 1234) + bytes(10, number(1, 11)) + threadEntry(1234, inLoader);
+    std::optional<std::string> loaderStack = loader::tombstoneStack(loaderTombstone);
+    assert(loaderStack);
+    assert(loaderStack->ends_with(
+        "#0 0x7300000040 /data/app/~~a/lib/arm64/libunbound.so + 0x40 (BuildId: abcdef)\n"
+        "Image libunbound.so abcdef\n"));
 
     assert(!loader::tombstoneStack(number(6, 5) + threadEntry(1000, other)));
     assert(!loader::tombstoneStack(tombstone.substr(0, tombstone.size() / 2))

@@ -25,6 +25,7 @@ namespace {
     constexpr uint32_t kFrameFunctionName     = 4;
     constexpr uint32_t kFrameFunctionOffset   = 5;
     constexpr uint32_t kFrameFileName         = 6;
+    constexpr uint32_t kFrameBuildId          = 8;
     constexpr uint8_t kWireVarint             = 0;
     constexpr uint8_t kWireFixed64            = 1;
     constexpr uint8_t kWireLengthDelimited    = 2;
@@ -128,6 +129,7 @@ namespace {
         uint64_t offset     = 0;
         std::string function;
         std::string file;
+        std::string buildId;
     };
 
     struct Thread {
@@ -160,6 +162,9 @@ namespace {
                 case kFrameFileName:
                     frame.file = field.bytes;
                     break;
+                case kFrameBuildId:
+                    frame.buildId = field.bytes;
+                    break;
                 default:
                     break;
             }
@@ -191,6 +196,18 @@ namespace {
         }
 
         return thread;
+    }
+
+    std::string baseName(const std::string &path)
+    {
+        size_t slash = path.rfind('/');
+        return slash == std::string::npos ? path : path.substr(slash + 1);
+    }
+
+    bool isLoaderLibrary(const std::string &path)
+    {
+        std::string name = baseName(path);
+        return name.starts_with("libunbound") && name.ends_with(".so");
     }
 
     std::string hex(uint64_t value)
@@ -290,6 +307,7 @@ std::optional<std::string> tombstoneStack(const std::string &tombstone)
     }
 
     size_t index = 0;
+    std::string loaderImage;
     for (const Frame &frame : crashing->second.frames)
     {
         text += "#" + std::to_string(index++) + " " + hex(frame.pc) + " "
@@ -299,10 +317,19 @@ std::optional<std::string> tombstoneStack(const std::string &tombstone)
             text += " " + frame.function + "+" + std::to_string(frame.offset);
         }
 
+        if (!frame.buildId.empty())
+        {
+            text += " (BuildId: " + frame.buildId + ")";
+            if (loaderImage.empty() && isLoaderLibrary(frame.file))
+            {
+                loaderImage = "Image " + baseName(frame.file) + " " + frame.buildId + "\n";
+            }
+        }
+
         text += "\n";
     }
 
-    return text;
+    return text + loaderImage;
 }
 
 static std::string trimmed(const std::string &line)
