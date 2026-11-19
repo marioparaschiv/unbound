@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.2] - 2026-11-19
+
+### Fixed
+
+- On iOS, a reply to a deleted message shows "Original message was deleted" again. Reply previews keep Discord's size; only message text is resized.
+
 ## [1.1.1] - 2026-11-19
 
 ### Fixed
