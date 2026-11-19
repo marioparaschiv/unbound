@@ -37,6 +37,7 @@ import { builtins } from '~/builtins/registry';
 import staffMode from '~/builtins/staff-mode';
 import { icons } from '~/icon-packs/manager';
 import nativeConsent from '~/native/builtin';
+import diskFull from '~/builtins/disk-full';
 import { plugins } from '~/plugins/manager';
 import { Manager } from '~/addons/manager';
 import appIcons from '~/app-icons/builtin';
@@ -92,6 +93,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	['coreCommands', coreCommands],
 	['discordSupport', discordSupport],
 	['profileExpiry', profileExpiry],
+	['diskFull', diskFull],
 	['errorBoundary', errorBoundary],
 	// Developer tooling ships only in the dev bundle; the hot refresh client also needs a local dev build.
 	...(import.meta.env.DEV_TOOLS ? ([['debug', debug]] as BuiltInEntry[]) : []),

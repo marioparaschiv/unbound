@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "LoaderCrashHandler.h"
+#include "LoaderDiskFull.h"
 #include "LoaderFiles.h"
 
 namespace loader {
@@ -347,6 +348,11 @@ nlohmann::json launchReportJSON(const LaunchReport &report, const std::string &n
     {
         json["revision"] = report.revision;
         json["channel"]  = report.channel;
+    }
+
+    if (std::optional<DiskFullNote> full = diskFullNote())
+    {
+        json["diskFull"] = {{"at", full->at}, {"file", full->file}};
     }
 
     if (!history.empty())
