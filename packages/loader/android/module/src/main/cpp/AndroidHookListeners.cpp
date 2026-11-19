@@ -20,6 +20,7 @@
 #include "JniCall.h"
 #include "LoaderAddonActivity.h"
 #include "LoaderBootstrap.h"
+#include "LoaderHookBreadcrumbs.h"
 #include "LoaderJSIJSON.h"
 #include "LoaderLog.h"
 #include "LoaderThreadWarnings.h"
@@ -81,6 +82,7 @@ struct HookListener {
     jsi::Runtime *inlineRuntime = nullptr;
     uint64_t runtimeIdentity    = 0;
     uint64_t runtimeGeneration  = 0;
+    uint32_t breadcrumb         = 0;
 };
 
 bool onMainThread()
@@ -167,6 +169,7 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
         return std::nullopt;
     }
 
+    loader::noteHookCall(listener.breadcrumb, listener.addon);
     if (!listener.coalesce && !listener.inlineRuntime
         && !loader::native::admitHookEvent(std::hash<std::string>{}(token), listener.addon,
                                            [&token] {
@@ -367,7 +370,8 @@ void rememberHookListener(jsi::Runtime &runtime, const std::string &token,
                         returnsValue,
                         loader::native::currentUIScopeRuntime(),
                         resources->identity(),
-                        loader::native::runtimeGeneration()};
+                        loader::native::runtimeGeneration(),
+                        loader::registerHookName(token)};
     std::lock_guard<std::mutex> lock(gHookMutex);
     gHookListeners[token] = std::move(stored);
 }

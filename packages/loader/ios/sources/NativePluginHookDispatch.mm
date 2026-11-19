@@ -708,6 +708,11 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
     }
 
     std::vector<std::shared_ptr<HookState>> hooks = activeHookStates(dispatcher, object);
+    for (const std::shared_ptr<HookState> &state : hooks)
+    {
+        loader::noteHookCall(dispatcher->breadcrumb, state->addon);
+    }
+
     if (hooks.empty() || touchesDeallocatingObject(dispatcher, arguments))
     {
         invokeHookOriginal(dispatcher, arguments, returnValue);
