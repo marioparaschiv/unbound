@@ -1,6 +1,7 @@
 import type { Message, Renderers, RowGenerator } from '~/lib/modules';
 import { contentText, nativeUsernameColor } from '~/lib/link-targets';
 import { enableAnimatedEmojiSources } from '~/lib/animated-media';
+import { fitHeader, headerWidth } from '~/lib/header-fit';
 
 export type EmbeddedContent = {
 	generator: RowGenerator;
@@ -120,6 +121,10 @@ export function buildEmbeddedContent(
 					rendered.colorString = usernameColor;
 					rendered.usernameColor = usernameColor;
 				}
+
+				const width = headerWidth(generator);
+
+				if (width) fitHeader(rendered, width);
 			}
 
 			return row;

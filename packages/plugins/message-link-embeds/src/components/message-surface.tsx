@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { EmbeddedMediaContext } from '~/components/embedded-media';
 import type { Message, Renderers, RowGenerator } from '~/lib/modules';
 import { CollapsedRemount, Surface } from '~/lib/constants';
+import { setHeaderWidth } from '~/lib/header-fit';
 
 export type SurfaceContent = {
 	record: Message;
@@ -65,6 +66,8 @@ export function registerMessageSurface(source: SurfaceSource): string | undefine
 		);
 
 		if (!surface || !ChatItem) return <View style={{ height: 1 }} />;
+
+		setHeaderWidth(surface.generator, surface.width);
 
 		function onItemLayout(event: LayoutChangeEvent) {
 			const collapsed = event.nativeEvent.layout.height < CollapsedRemount.minHeight;
