@@ -2,7 +2,7 @@ import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbou
 
 import type { RowRoom, RowRooms } from '~/lib/style';
 import { isStandaloneCell } from '~/native/ios/standalone-cell';
-import { followSwipe } from '~/native/ios/swipe-follow';
+import { followSwipe, swipeIndicator } from '~/native/ios/swipe-follow';
 import { fittedLoss } from '~/native/ios/media-fit';
 
 const STATE_KEY = '__unboundChatBubbleRows';
@@ -16,6 +16,8 @@ export type PackedInset = { left: number; right: number; below: number; none: nu
 type RowState = { rooms: RowRooms; inset: PackedInset | null };
 
 type StateHolder = Record<typeof STATE_KEY, RowState | undefined>;
+
+type SwipeLayout = { offset: number; indicator: NativeObjectHandle | null; frame: unknown };
 
 function holder(): StateHolder {
 	'worklet';
@@ -207,7 +209,7 @@ export function installRowPadding(
 		},
 	});
 	// UIKit lays the content view over the whole cell; moving it down by the room above puts the content back between its rooms.
-	const swipeOffsets = new Map<string, number>();
+	const swipeOffsets = new Map<string, SwipeLayout>();
 
 	objc.hook(messageCell, 'layoutSubviews', {
 		before: ({ self }) => {
@@ -217,13 +219,22 @@ export function installRowPadding(
 
 			const content = objc.invoke(self, 'contentView', []) as NativeObjectHandle | null;
 
-			if (content)
-				swipeOffsets.set(String(objc.call(self, 'hash')), swipeOffset(objc, content));
+			if (!content) return;
+
+			const offset = swipeOffset(objc, content);
+			const indicator = offset === 0 ? null : swipeIndicator(objc, content);
+
+			swipeOffsets.set(String(objc.call(self, 'hash')), {
+				offset,
+				indicator,
+				frame: indicator ? objc.invoke(indicator, 'frame', []) : undefined,
+			});
 		},
 		after: ({ self }) => {
 			try {
 				const key = String(objc.call(self, 'hash'));
-				const offset = swipeOffsets.get(key) ?? 0;
+				const swipe = swipeOffsets.get(key);
+				const offset = swipe?.offset ?? 0;
 				const content = objc.invoke(self, 'contentView', []) as NativeObjectHandle;
 				const frame = isStandaloneCell(objc, self)
 					? undefined
@@ -233,6 +244,10 @@ export function installRowPadding(
 
 				if (frame) objc.invoke(content, 'setFrame:', [frame]);
 				else if (offset !== 0) keepOffset(objc, content, offset);
+
+				if (swipe?.indicator && swipe.frame) {
+					objc.invoke(swipe.indicator, 'setFrame:', [swipe.frame]);
+				}
 			} catch (error) {
 				console.error(`[Chat Bubbles] Failed to centre a message row: ${String(error)}`);
 			}

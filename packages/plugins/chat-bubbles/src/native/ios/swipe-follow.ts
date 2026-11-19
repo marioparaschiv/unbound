@@ -10,6 +10,7 @@ function unbox(raw: unknown): Record<string, number> {
 }
 
 const SWIPE_ANIMATION_KEY = 'unbound.chat-bubbles.swipe';
+const SWIPE_INDICATOR_CLASS = 'DCDSwipeToReplyView';
 
 function animateLike(
 	objc: NativeObjCBridge,
@@ -24,7 +25,13 @@ function animateLike(
 		'position',
 	]) as NativeObjectHandle | null;
 
-	if (!running) return;
+	const layer = objc.invoke(view, 'layer', []) as NativeObjectHandle;
+
+	if (!running) {
+		objc.invoke(layer, 'removeAnimationForKey:', [SWIPE_ANIMATION_KEY]);
+
+		return;
+	}
 
 	const animation = objc.invoke(running, 'copy', []) as NativeObjectHandle;
 
@@ -32,10 +39,28 @@ function animateLike(
 	objc.invoke(animation, 'setAdditive:', [false]);
 	objc.invoke(animation, 'setFromValue:', [from]);
 	objc.invoke(animation, 'setToValue:', [to]);
-	objc.invoke(objc.invoke(view, 'layer', []) as NativeObjectHandle, 'addAnimation:forKey:', [
-		animation,
-		SWIPE_ANIMATION_KEY,
-	]);
+	objc.invoke(animation, 'setRemovedOnCompletion:', [true]);
+	objc.invoke(layer, 'addAnimation:forKey:', [animation, SWIPE_ANIMATION_KEY]);
+}
+
+/**
+ * @description Finds the reply or edit icon Discord reveals beside a message's content while it is swiped.
+ * @param objc The Objective-C bridge.
+ * @param content The cell's content view.
+ * @returns The icon's view, or `null` when the row has none.
+ */
+export function swipeIndicator(
+	objc: NativeObjCBridge,
+	content: NativeObjectHandle,
+): NativeObjectHandle | null {
+	'worklet';
+	// UNKNOWN: `subviews` comes back as a JS array or an `NSArray` handle.
+	const list = objc.invoke(content, 'subviews', []) as unknown;
+	const views = (
+		Array.isArray(list) ? list : list ? objc.array(list as NativeObjectHandle) : []
+	) as NativeObjectHandle[];
+
+	return views.find((view) => objc.className(view) === SWIPE_INDICATOR_CLASS) ?? null;
 }
 
 /**

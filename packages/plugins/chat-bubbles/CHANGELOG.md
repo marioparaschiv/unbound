@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.24] - 2026-11-19
+
+### Fixed
+
+- On iOS, the reply and edit icon shows again while you swipe a message, instead of only for a moment at the far end.
+- On iOS, a bubble no longer stays shifted sideways after a swipe; its slide animation ends with the message's.
+
 ## [1.6.23] - 2026-11-18
 
 ### Fixed
