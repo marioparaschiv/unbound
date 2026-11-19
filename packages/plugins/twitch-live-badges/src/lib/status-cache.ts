@@ -8,6 +8,7 @@ export type StatusCache = {
 	get(channel: string): StreamStatus | undefined;
 	set(channel: string, status: StreamStatus): void;
 	isStale(channel: string): boolean;
+	clear(): void;
 };
 
 /**
@@ -27,6 +28,9 @@ export function createStatusCache(now: () => number = Date.now): StatusCache {
 			const entry = entries.get(channel);
 
 			return !entry || now() - entry.at > FRESH_MS;
+		},
+		clear() {
+			entries.clear();
 		},
 	};
 }

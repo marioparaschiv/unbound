@@ -86,8 +86,11 @@ export function priceBandcampRows(): (() => void) | undefined {
 	patcher.after(rows.prototype, 'generate', ({ result }) => priceRow(result as GeneratedRow));
 	plugins.redrawChat?.();
 
+	const stopClearing = plugins.onMemoryPressure?.(() => prices.clear());
+
 	return () => {
 		running = false;
+		stopClearing?.();
 		plugins.redrawChat?.();
 	};
 }
