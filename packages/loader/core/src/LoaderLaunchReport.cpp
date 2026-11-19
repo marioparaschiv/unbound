@@ -259,6 +259,25 @@ static std::string exceptionName(const std::string &line)
     return colon == std::string::npos ? text : text.substr(0, colon);
 }
 
+bool isLikelyPointerAuthFailure(uint64_t address)
+{
+    uint64_t high = address >> 47;
+    return high != 0 && high != 0x1ffff;
+}
+
+static bool faultsOnSignedPointer(const std::vector<std::string> &lines)
+{
+    for (const std::string &line : lines)
+    {
+        if (line.starts_with("Fault 0x"))
+        {
+            return isLikelyPointerAuthFailure(std::strtoull(line.c_str() + 6, nullptr, 16));
+        }
+    }
+
+    return false;
+}
+
 std::string nativeCrashHeadline(const std::string &stack)
 {
     std::vector<std::string> lines = linesOf(stack);
@@ -275,6 +294,10 @@ std::string nativeCrashHeadline(const std::string &stack)
     if (!anr && !exception && lines.size() > 1 && lines[1].starts_with("Exception "))
     {
         headline += " (" + exceptionName(lines[1]) + ")";
+    }
+    else if (!anr && !exception && faultsOnSignedPointer(lines))
+    {
+        headline += " (likely pointer authentication failure)";
     }
 
     for (size_t index = 1; index < lines.size(); index++)

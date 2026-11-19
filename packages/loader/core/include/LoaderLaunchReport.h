@@ -49,6 +49,7 @@ void recordUpdateCheck(int64_t at, const std::string &outcome, const std::string
 void recordSettingsRecovery(const std::string &recovery);
 
 std::string bundleSourceOf(const std::string &updateURL, bool development);
+bool isLikelyPointerAuthFailure(uint64_t address);
 int pullRequestOf(const std::string &updateURL);
 
 constexpr const char *kCrashHistoryFile = "crash-history.json";
