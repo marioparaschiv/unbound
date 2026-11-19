@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <filesystem>
 #include <thread>
 
 #include "AndroidHotReload.h"
@@ -13,7 +14,9 @@
 #include "LoaderFiles.h"
 #include "LoaderInjectedLibraries.h"
 #include "LoaderJSON.h"
+#include "LoaderLeftoverMods.h"
 #include "LoaderLog.h"
+#include "LoaderNetworkStack.h"
 #include "LoaderSystemExits.h"
 #include "NativeHookConflicts.h"
 #include "NativeMainQueue.h"
@@ -165,59 +168,73 @@ std::shared_ptr<loader::NativePlatformProvider> AndroidLoader::platformProvider(
             loader::native::conflictsAmong(loader::native::recordedRewritingHooks());
         return state;
     };
-    provider->environment = [callbacks]() {
-        nlohmann::json facts = nlohmann::json::parse(
-            callStaticString(callbacks.bridgeClass, callbacks.environmentFacts).value_or("{}"),
-            nullptr, false);
-        nlohmann::json environment = nlohmann::json::object();
-        if (!facts.is_object())
-        {
+    provider->environment =
+        [callbacks,
+         home = std::filesystem::path(configuration_.documents).parent_path().string()]() {
+            nlohmann::json facts = nlohmann::json::parse(
+                callStaticString(callbacks.bridgeClass, callbacks.environmentFacts).value_or("{}"),
+                nullptr, false);
+            nlohmann::json environment = nlohmann::json::object();
+            if (!facts.is_object())
+            {
+                return environment;
+            }
+
+            environment["install"] = loader::environment_report::androidInstallLine(
+                facts.value("install", nlohmann::json()));
+            nlohmann::json device = facts.value("device", nlohmann::json::object());
+            loader::environment_report::AndroidDeviceFacts markers;
+            if (device["selinux"].is_boolean())
+            {
+                markers.selinuxEnforcing = device["selinux"].get<bool>();
+            }
+
+            markers.verifiedBootState = device.value("verifiedBoot", std::string());
+            markers.buildTags         = device.value("buildTags", std::string());
+            markers.customROM         = device.value("rom", std::string());
+            markers.pageSize          = device.value("pageSize", 0L);
+            markers.webView           = device.value("webView", std::string());
+            markers.host              = device.value("host", std::string());
+            markers.skin              = device.value("skin", std::string());
+            nlohmann::json background = device.value("background", nlohmann::json::object());
+            if (background.is_object())
+            {
+                markers.batteryOptimized     = background.value("optimized", false);
+                markers.backgroundRestricted = background.value("restricted", false);
+                markers.standbyBucket        = background.value("bucket", 0);
+            }
+
+            markers.abiBridge        = device.value("abiBridge", std::string());
+            markers.lowRam           = device.value("lowRam", false);
+            markers.harmonyOS        = device.value("harmony", false);
+            markers.adoptableStorage = device.value("adoptable", false);
+            markers.refreshRate      = device.value("refreshRate", 0);
+            markers.boldText         = device.value("boldText", false);
+            markers.formFactor       = device.value("formFactor", std::string());
+            markers.duplicateCopy    = device.value("duplicateCopy", std::string());
+            nlohmann::json locale    = device.value("locale", nlohmann::json::object());
+            if (locale.is_object())
+            {
+                markers.locale.calendar       = locale.value("calendar", std::string());
+                markers.locale.nonLatinDigits = locale.value("nonLatinDigits", false);
+                markers.locale.rightToLeft    = locale.value("rtl", false);
+            }
+
+            environment["markers"] = loader::environment_report::androidMarkers(markers);
+            if (std::string stack = loader::environment_report::currentNetworkStackMarker();
+                !stack.empty())
+            {
+                environment["markers"].push_back(stack);
+            }
+
+            if (std::string leftover = loader::environment_report::leftoverModsMarker(home);
+                !leftover.empty())
+            {
+                environment["markers"].push_back(leftover);
+            }
+
             return environment;
-        }
-
-        environment["install"] = loader::environment_report::androidInstallLine(
-            facts.value("install", nlohmann::json()));
-        nlohmann::json device = facts.value("device", nlohmann::json::object());
-        loader::environment_report::AndroidDeviceFacts markers;
-        if (device["selinux"].is_boolean())
-        {
-            markers.selinuxEnforcing = device["selinux"].get<bool>();
-        }
-
-        markers.verifiedBootState = device.value("verifiedBoot", std::string());
-        markers.buildTags         = device.value("buildTags", std::string());
-        markers.customROM         = device.value("rom", std::string());
-        markers.pageSize          = device.value("pageSize", 0L);
-        markers.webView           = device.value("webView", std::string());
-        markers.host              = device.value("host", std::string());
-        markers.skin              = device.value("skin", std::string());
-        nlohmann::json background = device.value("background", nlohmann::json::object());
-        if (background.is_object())
-        {
-            markers.batteryOptimized     = background.value("optimized", false);
-            markers.backgroundRestricted = background.value("restricted", false);
-            markers.standbyBucket        = background.value("bucket", 0);
-        }
-
-        markers.abiBridge        = device.value("abiBridge", std::string());
-        markers.lowRam           = device.value("lowRam", false);
-        markers.harmonyOS        = device.value("harmony", false);
-        markers.adoptableStorage = device.value("adoptable", false);
-        markers.refreshRate      = device.value("refreshRate", 0);
-        markers.boldText         = device.value("boldText", false);
-        markers.formFactor       = device.value("formFactor", std::string());
-        markers.duplicateCopy    = device.value("duplicateCopy", std::string());
-        nlohmann::json locale    = device.value("locale", nlohmann::json::object());
-        if (locale.is_object())
-        {
-            markers.locale.calendar       = locale.value("calendar", std::string());
-            markers.locale.nonLatinDigits = locale.value("nonLatinDigits", false);
-            markers.locale.rightToLeft    = locale.value("rtl", false);
-        }
-
-        environment["markers"] = loader::environment_report::androidMarkers(markers);
-        return environment;
-    };
+        };
     provider->isVerifiedBuild = [callbacks]() {
         return callStaticBoolean(callbacks.bridgeClass, callbacks.isVerifiedBuild);
     };
