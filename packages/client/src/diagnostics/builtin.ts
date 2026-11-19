@@ -3,8 +3,8 @@ import noop from '@unbound-app/utils/noop';
 import type { SectionEntry } from '~/settings/section';
 import { Screens } from '~/core/constants';
 
+import { setRejectionFloodHandler, setRejectionTracker } from './promise-rejections';
 import { startAppSession, stopAppSession } from './app-session';
-import { setRejectionTracker } from './promise-rejections';
 import { recordError } from './recent-errors';
 
 type ErrorHandler = ReturnType<typeof ErrorUtils.getGlobalHandler>;
@@ -26,6 +26,11 @@ async function announceFixedCrashes() {
  */
 export function start() {
 	setRejectionTracker();
+	setRejectionFloodHandler((addon) => {
+		void import('./rejection-flood-disable').then(({ disableFloodingPlugin }) =>
+			disableFloodingPlugin(addon),
+		);
+	});
 	startAppSession();
 	void import('./breadcrumbs').then(({ startBreadcrumbs }) => startBreadcrumbs());
 	void import('./crash-reports').then(
@@ -54,6 +59,7 @@ export function start() {
 /** Stops logging rejections; Hermes cannot remove a tracker, so a silent one replaces it. */
 export function stop() {
 	setRejectionTracker(noop);
+	setRejectionFloodHandler(undefined);
 	stopAppSession();
 	void import('./breadcrumbs').then(({ stopBreadcrumbs }) => stopBreadcrumbs());
 

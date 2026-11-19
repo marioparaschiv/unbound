@@ -10,13 +10,22 @@ const PLUGIN_FRAME = /unbound-plugin\/([^\s/:)]+)\.js/;
 const recent: RecentError[] = [];
 
 /**
+ * @description Names the plugin whose bundle an error's stack starts in.
+ * @param stack The error's stack.
+ * @returns The plugin's source name, or `undefined` when no plugin frame is on the stack.
+ */
+export function stackAddon(stack: string): string | undefined {
+	return PLUGIN_FRAME.exec(stack)?.[1];
+}
+
+/**
  * @description Remembers an uncaught error or unhandled rejection for `/debug`, keeping the newest three.
  * @param error The thrown or rejected value.
  */
 // UNKNOWN: anything can be thrown or rejected.
 export function recordError(error: unknown): void {
 	const { message, stack = '' } = toError(error);
-	const addon = PLUGIN_FRAME.exec(stack)?.[1];
+	const addon = stackAddon(stack);
 
 	recent.push({
 		at: Date.now(),
@@ -37,4 +46,4 @@ export function recentErrors(): RecentError[] {
 	return [...recent];
 }
 
-export default { recordError, recentErrors };
+export default { recordError, recentErrors, stackAddon };

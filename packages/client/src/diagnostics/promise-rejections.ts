@@ -1,13 +1,37 @@
 import { createLogger } from '@unbound-app/logger';
+import toError from '@unbound-app/utils/to-error';
 
-import { recordError } from './recent-errors';
+import { recordError, stackAddon } from './recent-errors';
+import { createFloodCounter } from './rejection-floods';
 
 const Logger = createLogger('Core', 'PromiseRejections');
+const countRejection = createFloodCounter();
+
+let onFlood: ((addon: string) => void) | undefined;
+
+/**
+ * @description Sets what happens when one plugin floods Discord with unhandled rejections.
+ * @param handler Receives the plugin's source name, once per plugin, or `undefined` to stop reacting.
+ */
+export function setRejectionFloodHandler(handler: ((addon: string) => void) | undefined): void {
+	onFlood = handler;
+}
 
 // UNKNOWN: a promise can be rejected with any value.
 function logRejection(id: number, error: unknown) {
+	const addon = stackAddon(toError(error).stack ?? '');
+
 	recordError(error);
-	Logger.error(`Unhandled promise rejection ${id}:`, error);
+	Logger.error(
+		addon
+			? `Unhandled promise rejection ${id} in ${addon}:`
+			: `Unhandled promise rejection ${id}:`,
+		error,
+	);
+
+	if (addon && countRejection(addon)) {
+		onFlood?.(addon);
+	}
 }
 
 /**
