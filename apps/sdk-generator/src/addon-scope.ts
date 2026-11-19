@@ -69,6 +69,11 @@ const ADDON_SCOPE: Record<string, ScopeGlobal> = {
 		doc: "The commands API, registering each command under this plugin's id; Unbound removes them when it stops.",
 		declare: true,
 	},
+	fetch: {
+		sdkType: 'typeof fetch',
+		doc: "`fetch`, reaching only the hosts this plugin's manifest lists under `network`, when it lists any.",
+		declare: false,
+	},
 };
 
 /**

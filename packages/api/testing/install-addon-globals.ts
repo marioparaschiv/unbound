@@ -90,7 +90,8 @@ type ScopeFake =
 	| RecordingPatcher
 	| AddonLogger
 	| FakeCommands
-	| FakeTimers[keyof FakeTimers];
+	| FakeTimers[keyof FakeTimers]
+	| typeof fetch;
 
 const LOG_LEVELS: LogLevel[] = ['log', 'info', 'success', 'warn', 'error', 'debug'];
 
@@ -248,6 +249,7 @@ export function installAddonGlobals(options: InstallOptions = {}): InstalledAddo
 		setInterval: timers.setInterval,
 		clearTimeout: timers.clearTimeout,
 		clearInterval: timers.clearInterval,
+		fetch: globalThis.fetch,
 	} satisfies Record<keyof AddonScope, ScopeFake>;
 	const previous = new Map<string, PropertyDescriptor | undefined>();
 

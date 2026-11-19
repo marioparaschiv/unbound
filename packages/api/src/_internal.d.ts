@@ -212,6 +212,7 @@ export declare const NATIVE_BRIDGE_METHOD_CAPABILITIES: {
 	readonly 'hooks.clearReturnValues': 'native.java.hooks';
 	readonly 'hooks.remove': 'native.java.hooks';
 	readonly 'hooks.proxy': 'native.java.hooks';
+	readonly 'hooks.deoptimize': 'native.java.hooks';
 };
 /** The host platforms a native bridge runs on. */
 export declare const NATIVE_BRIDGE_PLATFORMS: readonly ['ios', 'android'];
@@ -4015,6 +4016,9 @@ export type NativeDeviceState = {
 	network?: NativeNetworkState;
 	/** Other tweaks or modules loaded into Discord: iOS dylib names, Android packages or Magisk modules; older loaders omit it. */
 	injected?: string[];
+	/** Methods two or more plugins rewrite, as `<plugin> × <plugin> · <method>`; older loaders omit it. */
+	hookConflicts?: string[];
+	foreignHooks?: string[];
 	/** Low Power Mode (Battery Saver), the battery level and whether it charges; older loaders omit it. */
 	power?: NativePowerState;
 	/** The resolvers the active connection uses; older loaders omit it. */
@@ -4709,6 +4713,11 @@ export type NativeJavaHooksBridge = {
 	clearReturnValues(token: NativeJavaHookToken): void;
 	/** Removes a hook or a proxy. */
 	remove(token: NativeJavaHookToken): void;
+	/**
+	 * Stops ART running a caller with a hooked method compiled into it, so the hook fires from there too. Pass the
+	 * caller, not the hooked method. Returns whether the framework deoptimized it; loaders before 1.10 lack it.
+	 */
+	deoptimize(className: string, methodName: string, parameterTypes?: string[]): boolean;
 	/**
 	 * Creates a Java object implementing `interfaces`, from a UI scope only. Calls on the main thread run `handler`
 	 * inline and return its value; calls on other threads reach it later and return the type's default.
