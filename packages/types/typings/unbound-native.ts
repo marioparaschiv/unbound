@@ -54,7 +54,16 @@ export type UnboundSystemExits = {
  * A hang MetricKit reported with the main thread's stack while Discord was stuck.
  * @internal
  */
-export type UnboundSystemHang = { at: number; ms: number; stack: string };
+export type UnboundSystemHang = {
+	at: number;
+	ms: number;
+	stack: string;
+	/** The plugin that froze Discord's JavaScript longest in the same MetricKit window, the likely cause, and its id. */
+	addon?: string;
+	addonId?: string;
+	/** Whether Unbound's own code is on the hung main thread's stack. */
+	inUnbound?: boolean;
+};
 
 /**
  * How often one plugin froze Discord's JavaScript thread over the last week, from the loader's freeze watchdog.

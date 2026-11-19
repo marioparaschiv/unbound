@@ -3,6 +3,12 @@ import { createLogger } from '@unbound-app/logger';
 import uuid from '@unbound-app/utils/uuid';
 
 import {
+	buildCrashReport,
+	crashReportAddon,
+	type CrashEvent,
+	type CrashReportAddon,
+} from '~/diagnostics/crash-report';
+import {
 	markCrashReported,
 	recordCrash,
 	type CrashIssueLink,
@@ -14,11 +20,6 @@ import {
 	repeatsOf,
 	wasJustReported,
 } from '~/diagnostics/crash-repeats';
-import {
-	buildCrashReport,
-	type CrashEvent,
-	type CrashReportAddon,
-} from '~/diagnostics/crash-report';
 import { nativeCrashAddon, nativeCrashFrame } from '~/diagnostics/crash-title';
 import { getSetting, setSetting } from '~/settings/unbound';
 import { currentEnvironment } from '~/core/environment';
@@ -238,6 +239,12 @@ const CRASH_KINDS: Record<CrashEvent['kind'], true> = {
 	'native-crash': true,
 };
 
+async function installedPlugin(id: string) {
+	const { plugins } = await import('~/plugins/manager');
+
+	return plugins.getAddon(id);
+}
+
 /**
  * @description Reports the newest hang MetricKit caught with a main-thread stack once, asking first while reporting is
  * off, and keeps it in the crash history.
@@ -254,15 +261,23 @@ export async function reportSystemHang(launch = getLoader()?.launch): Promise<vo
 
 	const message = hang.stack.split('\n')[0] ?? 'Hang';
 	const where = nativeCrashFrame(hang.stack);
+	const suspect = hang.addonId ? await installedPlugin(hang.addonId) : undefined;
 	const event: CrashEvent = {
 		kind: 'freeze',
 		phase: 'frozen',
 		seconds: hang.ms / 1000,
 		message,
 		stack: hang.stack,
+		...(suspect ? { addon: crashReportAddon(suspect) } : {}),
 	};
 
-	await recordCrash({ at: hang.at, kind: event.kind, message, ...(where ? { where } : {}) });
+	await recordCrash({
+		at: hang.at,
+		kind: event.kind,
+		message,
+		...(hang.addonId ? { addon: hang.addonId } : {}),
+		...(where ? { where } : {}),
+	});
 
 	if (wasJustReported(crashSignature(event)) || !(await consentToReport(event))) {
 		return;

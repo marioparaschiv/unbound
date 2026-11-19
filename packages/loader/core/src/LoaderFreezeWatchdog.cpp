@@ -78,7 +78,7 @@ static void watch(const std::shared_ptr<FreezeWatchdog::State> &state)
                     current.name + " froze Discord for " + std::to_string(current.seconds)
                         + " seconds.");
                 system_exits::recordFreeze(state->directory, current.name, sentAt,
-                                           answered - sentAt);
+                                           answered - sentAt, current.id);
                 state->listener(current);
                 reported = false;
             }
