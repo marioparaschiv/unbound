@@ -3,6 +3,11 @@
 import type { AddonHandle, PluginSelfTestResult, PushedManifest } from './_internal';
 /** Stops a running plugin without changing its enabled state. */
 declare const stop$1: (id: string) => void | Promise<void>;
+/**
+ * @description Redraws every row of the open chat shortly after a plugin starts or stops, so rows built before the change
+ * show its patches at once. Calls within the delay share one redraw; nothing is scheduled while no chat is open.
+ */
+declare function scheduleChatRedraw(): void;
 /** Every installed plugin, keyed by id. */
 export declare const addons: ReadonlyMap<PropertyKey, AddonHandle>;
 /** Disables a plugin and stops it. */
@@ -95,6 +100,6 @@ export type ReloadResult =
 			error: Error;
 	  };
 
-export { stop$1 as stop };
+export { scheduleChatRedraw as redrawChat, stop$1 as stop };
 
 export {};

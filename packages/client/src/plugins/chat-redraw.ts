@@ -106,8 +106,9 @@ function redrawOpenChat(): void {
 }
 
 /**
- * @description Redraws every row of the open chat shortly after a plugin starts or stops, so rows built before the change
- * show its patches at once. Calls within the delay share one redraw; nothing is scheduled while no chat is open.
+ * @description Redraws every row of the open chat shortly after a call, such as a plugin starting, stopping or changing how
+ * rows draw, so rows built before the change show it at once. Calls within the delay share one redraw; nothing is
+ * scheduled while no chat is open.
  */
 export function scheduleChatRedraw(): void {
 	if (!openChat()) return;
