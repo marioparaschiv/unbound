@@ -15,6 +15,7 @@ import type { SyncStatus } from '~/ui/settings/sync/describe-sync';
 import type { SyncHeroAction } from '~/ui/settings/sync/sync-hero';
 import SyncFocusPage from '~/ui/settings/sync/sync-focus-page';
 import SyncHero from '~/ui/settings/sync/sync-hero';
+import type { SyncStrategy } from '~/sync/merge';
 import useSignIn from '~/ui/account/use-sign-in';
 import { Discord } from '~/metro/components';
 import { useAccount } from '~/account/api';
@@ -59,6 +60,23 @@ function SyncPage() {
 			confirmText: messages.UNBOUND_DELETE,
 			cancelText: messages.UNBOUND_CANCEL,
 			onConfirm: () => void deleteData(),
+		});
+	}
+
+	// Pushing replaces the cloud's setup outright, so it asks first; the other choices keep what the cloud holds.
+	function chooseFirstSync(strategy: SyncStrategy) {
+		if (strategy !== 'push') {
+			track(resolveFirstSync(strategy));
+
+			return;
+		}
+
+		Discord.showConfirmModal({
+			title: messages.UNBOUND_CLOUD_SYNC_CHOICE_PUSH,
+			content: messages.UNBOUND_CLOUD_SYNC_CHOICE_PUSH_CONFIRM,
+			confirmText: messages.UNBOUND_CLOUD_SYNC_CHOICE_PUSH_CONFIRM_ACTION,
+			cancelText: messages.UNBOUND_CANCEL,
+			onConfirm: () => track(resolveFirstSync(strategy)),
 		});
 	}
 
@@ -119,7 +137,7 @@ function SyncPage() {
 									icon={<Discord.TableRowIcon source={icons[choice.icon]} />}
 									arrow
 									disabled={busy}
-									onPress={() => track(resolveFirstSync(choice.value))}
+									onPress={() => chooseFirstSync(choice.value)}
 								/>
 							))}
 						</Discord.TableRowGroup>

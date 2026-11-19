@@ -65,6 +65,8 @@
 	"UNBOUND_CLOUD_SYNC_CHOICE_PULL_DESC": "Replace this device's addons and settings.",
 	"UNBOUND_CLOUD_SYNC_CHOICE_PUSH": "Use this device's setup",
 	"UNBOUND_CLOUD_SYNC_CHOICE_PUSH_DESC": "Replace what is stored in the cloud.",
+	"UNBOUND_CLOUD_SYNC_CHOICE_PUSH_CONFIRM": "This replaces the addons and settings stored in the cloud with this device's setup. What the cloud holds now is lost and cannot be recovered.",
+	"UNBOUND_CLOUD_SYNC_CHOICE_PUSH_CONFIRM_ACTION": "Replace",
 	"UNBOUND_MARKETPLACE": "Marketplace",
 	"UNBOUND_CUSTOM": "Page",
 	"UNBOUND_RECOVERY_MODE": "Recovery Mode",
