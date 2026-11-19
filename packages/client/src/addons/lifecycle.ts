@@ -26,6 +26,7 @@ import { turnOffWithdrawnAddon } from '~/addons/withdrawn';
 import { disableIfCrashed } from '~/addons/crash-disable';
 import { reportCrash } from '~/diagnostics/crash-reports';
 import { beginNativeStop } from '~/native/plugin-context';
+import { followAsyncStart } from '~/addons/async-start';
 import { afterFirstFrame } from '~/core/first-frame';
 import { monotonicNow } from '~/core/monotonic-now';
 import { currentPlatform } from '~/native/platform';
@@ -344,20 +345,17 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 				runAsAddon(running, () => state.instance?.start?.(context)),
 			);
 
-			// An async start runs on in the background, so its rejection is recorded like a deferred failure.
 			if (starting && typeof starting.then === 'function') {
 				state.settling = 'starting';
-				starting.then(
-					() => {
+				followAsyncStart(starting, {
+					name: resolved.name,
+					logger: this.logger,
+					onSettled: () => {
 						addonScope?.endStart();
 						this.settle(resolved, 'starting');
 					},
-					(cause: unknown) => {
-						addonScope?.endStart();
-						this.settle(resolved, 'starting');
-						this.recordStartFailure(resolved, toError(cause), 'running');
-					},
-				);
+					onFailed: (failure) => this.recordStartFailure(resolved, failure, 'running'),
+				});
 			} else {
 				addonScope?.endStart();
 			}
