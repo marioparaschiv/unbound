@@ -56,7 +56,7 @@ import {
 	startSettle,
 	type ReuseSettle,
 } from '~/lib/reuse-settle';
-import { isStandaloneCell } from '~/native/ios/standalone-cell';
+import { isStandaloneCellAsync } from '~/native/ios/standalone-cell';
 import { AVATAR_TAG } from '~/native/ios/ui-cell';
 
 const BUBBLE_TAG = 0x0b0b1e;
@@ -249,7 +249,7 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 
 		notePlaced(settlingReuse.get(key));
 
-		if (isStandaloneCell(objc, cell)) return;
+		if (await isStandaloneCellAsync(objc, cell)) return;
 
 		if (await isNested(key, cell)) {
 			await objc.invokeAsync(cell, 'setBackgroundColor:', [clear]);
