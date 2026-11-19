@@ -24,6 +24,13 @@ describe('environmentFacts', () => {
 		).toEqual(['WebView com.google.android.webview 96', 'SELinux permissive']);
 	});
 
+	test('names other Discord mods running alongside', () => {
+		expect(environmentFacts({ markers: ['SELinux permissive'] }, ['Bunny'])?.markers).toEqual([
+			'SELinux permissive',
+			'another Discord mod: Bunny',
+		]);
+	});
+
 	test('passes no report through as none', () => {
 		expect(environmentFacts(undefined)).toBeUndefined();
 	});

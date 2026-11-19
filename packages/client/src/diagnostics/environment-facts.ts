@@ -1,5 +1,7 @@
 import type { DebugCardRequest } from '@unbound-app/contracts/debug-cards';
 
+import { otherDiscordMods } from '~/diagnostics/other-mods';
+
 type Environment = NonNullable<DebugCardRequest['environment']>;
 
 const NOISE_BINARY_PARTS = /^(\d+ dylibs|\d+ injected|UUID \S+)$/;
@@ -20,11 +22,15 @@ function isWorthShowing(marker: string): boolean {
 
 /**
  * @description Keeps the parts of the loader's environment report that tell installs apart: the binary's build without its
- * dylib count and UUID, and only the markers an ordinary install does not report.
+ * dylib count and UUID, only the markers an ordinary install does not report, and any other Discord mod running alongside.
  * @param environment The report, missing on older loaders.
+ * @param mods The other Discord mods running in this runtime.
  * @returns The report to send, or `undefined` when there is none.
  */
-export function environmentFacts(environment: Environment | undefined): Environment | undefined {
+export function environmentFacts(
+	environment: Environment | undefined,
+	mods: string[] = otherDiscordMods(),
+): Environment | undefined {
 	if (!environment) {
 		return undefined;
 	}
@@ -37,6 +43,13 @@ export function environmentFacts(environment: Environment | undefined): Environm
 	return {
 		...environment,
 		...(binary === undefined ? {} : { binary }),
-		...(environment.markers ? { markers: environment.markers.filter(isWorthShowing) } : {}),
+		...(environment.markers || mods.length
+			? {
+					markers: [
+						...(environment.markers ?? []).filter(isWorthShowing),
+						...mods.map((mod) => `another Discord mod: ${mod}`),
+					],
+				}
+			: {}),
 	};
 }
