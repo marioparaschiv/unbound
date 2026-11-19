@@ -90,6 +90,34 @@ static void writesTheCallACrashHappenedIn()
     assert(crashLine(false).empty());
 }
 
+static void writesEachPluginsRecentBridgeCalls()
+{
+    loader::AddonSlot slot = loader::registerAddonSlot("unbound.bridgey", "Bridgey");
+    {
+        loader::AddonScope addon(slot);
+        for (const char *selector : {"a", "b", "c", "d", "e", "f"})
+        {
+            loader::NativeCallScope scope("objc.invoke", selector);
+        }
+    }
+
+    FILE *file = tmpfile();
+    assert(loader::writeRecentBridgeCallLines(fileno(file)));
+    rewind(file);
+    char buffer[1024] = {};
+    std::string text(buffer, fread(buffer, 1, sizeof(buffer) - 1, file));
+    fclose(file);
+    assert(text.find("Bridge calls {\"id\":\"unbound.bridgey\"") == 0);
+    assert(text.find("objc.invoke(b) | objc.invoke(c) | objc.invoke(d) | objc.invoke(e) | "
+                     "objc.invoke(f)\n")
+           != std::string::npos);
+    assert(text.find("objc.invoke(a)") == std::string::npos);
+
+    FILE *later = tmpfile();
+    assert(!loader::writeRecentBridgeCallLines(fileno(later), loader::nativeCallClock() + 60000));
+    fclose(later);
+}
+
 int main()
 {
     reportsNothingOutsideACall();
@@ -97,5 +125,6 @@ int main()
     describesHowLongTheCallHasRun();
     capsLongLabels();
     writesTheCallACrashHappenedIn();
+    writesEachPluginsRecentBridgeCalls();
     return 0;
 }
