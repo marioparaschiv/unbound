@@ -121,9 +121,11 @@ void listsDisplayLocaleAndDeviceFacts()
     android.harmonyOS        = true;
     android.adoptableStorage = true;
     android.refreshRate      = 90;
+    android.formFactor       = "foldable, unfolded";
     assert((report::androidMarkers(android)
             == std::vector<std::string>{"ABI translation (libhoudini.so)", "low-RAM device",
-                                        "HarmonyOS", "installed on adoptable storage", "90 Hz"}));
+                                        "HarmonyOS", "installed on adoptable storage",
+                                        "foldable, unfolded", "90 Hz"}));
 
     report::AndroidDeviceFacts noBridge;
     noBridge.abiBridge = "0";

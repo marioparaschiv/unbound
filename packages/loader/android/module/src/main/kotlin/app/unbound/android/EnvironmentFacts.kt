@@ -1,9 +1,11 @@
 package app.unbound.android
 
 import android.app.ActivityManager
+import android.app.UiModeManager
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Build
 import android.os.PowerManager
 import android.os.Process
@@ -77,6 +79,7 @@ object EnvironmentFacts {
     private const val ONE_UI_MINOR = 100
     private const val NATIVE_BRIDGE_PROPERTY = "ro.dalvik.vm.native.bridge"
     private const val ADOPTABLE_STORAGE = "/mnt/expand/"
+    private const val UNFOLDED_WIDTH_DP = 600
     private const val FONT_WEIGHT_ADJUSTMENT = "font_weight_adjustment"
     private const val HARMONY_BUILD_CLASS = "com.huawei.system.BuildEx"
     private const val HARMONY_BRAND = "harmony"
@@ -116,7 +119,25 @@ object EnvironmentFacts {
         .put("adoptable", context.applicationInfo.sourceDir?.startsWith(ADOPTABLE_STORAGE) == true)
         .put("refreshRate", refreshRate(context))
         .put("boldText", isBoldText(context))
+        .put("formFactor", formFactor(context))
         .put("locale", localeFacts())
+
+    private fun formFactor(context: Context): String = runCatching {
+        when (context.getSystemService(UiModeManager::class.java)?.currentModeType) {
+            Configuration.UI_MODE_TYPE_TELEVISION -> "Android TV"
+            Configuration.UI_MODE_TYPE_WATCH -> "Wear OS"
+            Configuration.UI_MODE_TYPE_CAR -> "Android Automotive"
+            else -> foldState(context)
+        }
+    }.getOrDefault("")
+
+    private fun foldState(context: Context): String {
+        if (!context.packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_HINGE_ANGLE)) return ""
+
+        val unfolded = context.resources.configuration.smallestScreenWidthDp >= UNFOLDED_WIDTH_DP
+
+        return if (unfolded) "foldable, unfolded" else "foldable, folded"
+    }
 
     private fun isHarmonyOS(): Boolean = runCatching {
         Class.forName(HARMONY_BUILD_CLASS).getMethod("getOsBrand").invoke(null) == HARMONY_BRAND

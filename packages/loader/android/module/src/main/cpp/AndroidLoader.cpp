@@ -204,6 +204,7 @@ std::shared_ptr<loader::NativePlatformProvider> AndroidLoader::platformProvider(
         markers.adoptableStorage = device.value("adoptable", false);
         markers.refreshRate      = device.value("refreshRate", 0);
         markers.boldText         = device.value("boldText", false);
+        markers.formFactor       = device.value("formFactor", std::string());
         nlohmann::json locale    = device.value("locale", nlohmann::json::object());
         if (locale.is_object())
         {

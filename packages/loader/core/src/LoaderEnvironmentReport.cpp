@@ -287,6 +287,11 @@ std::vector<std::string> androidMarkers(const AndroidDeviceFacts &facts)
         markers.emplace_back("installed on adoptable storage");
     }
 
+    if (!facts.formFactor.empty())
+    {
+        markers.push_back(facts.formFactor);
+    }
+
     append(markers, displayMarkers(facts.refreshRate, facts.boldText));
     append(markers, localeMarkers(facts.locale));
     return markers;

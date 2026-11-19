@@ -27,6 +27,14 @@ object InstallSource {
         "com.apkpure.aegon" to "APKPure",
         "com.rosan.installer.x" to "InstallerX",
         "com.rosan.installer.x.revived" to "InstallerX",
+        "com.taptap" to "TapTap",
+        "com.taptap.global" to "TapTap",
+        "com.qooapp.qoohelper" to "QooApp",
+        "com.heytap.market" to "OPPO App Market",
+        "com.oppo.market" to "OPPO App Market",
+        "com.oneplus.market" to "OnePlus Store",
+        "com.bbk.appstore" to "vivo App Store",
+        "com.hihonor.appmarket" to "Honor App Market",
     )
 
     private val PACKAGE_INSTALLERS = setOf(
