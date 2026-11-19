@@ -166,12 +166,15 @@ export const BundleManager: DCDBundleManagerType = getNativeModule('BundleUpdate
 export const DeviceInfo: DeviceInfoType = getNativeModule('NativeDeviceModule', 'DCDDeviceManager');
 
 /**
- * @description Persists pending settings to storage, then reloads the native bundle.
+ * @description Persists pending settings to storage and unmounts the surfaces plugins still have mounted, then reloads
+ * the native bundle.
  */
 export async function reload() {
 	const { persist } = await import('~/storage/api');
+	const { unmountLiveSurfaces } = await import('~/native/surface-registry');
 
 	await persist();
+	await unmountLiveSurfaces();
 
 	BundleManager.reload();
 }

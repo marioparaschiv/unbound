@@ -29,6 +29,7 @@ import { createScopeGate, type ScopeLifecycle } from '~/native/scope-gate';
 import { retryUntilInstalled, type HookRetry } from '~/native/hook-retry';
 import { attributeBridge, withFallback } from '~/native/scope-proxies';
 import { createObjectFactory } from '~/native/object-factory-ios';
+import { createTrackedSurfaces } from '~/native/surface-registry';
 import { createFluxRuntimeBridge } from '~/flux/runtime-bridge';
 import { unavailableNativeBridge } from '~/native/capabilities';
 import { createScopedObjCHook } from '~/native/scope-objc-hook';
@@ -84,7 +85,7 @@ export function createScopedNativeBridge(
 	const hooksBridge = attributeBridge(hooksSource, attribute);
 	const tokens = new Set<NativeHookToken>();
 	const objcPlans = new Set<NativeObjCCallPlan>();
-	const surfaces = new Set<NativeFabricSurface>();
+	const surfaces = createTrackedSurfaces((surface) => fabricBridge.unmountAsync(surface));
 	const javaHookTokens = new Set<NativeJavaHookToken>();
 	const runtimeTokens = new Set<NativeRuntimeEventToken>();
 	const pendingInvocations = new Set<NativeCancelablePromise<unknown>>();
