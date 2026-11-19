@@ -100,3 +100,4 @@ export type { NativeWeakHandle } from '~/native/weak-handle';
 export type { PlatformHandlers } from '~/native/platform';
 export { weakJava, weakObjC } from '~/native/weak-handle';
 export { has, supports } from '~/native/capabilities';
+export { hookOwners } from '~/native/hook-owners';

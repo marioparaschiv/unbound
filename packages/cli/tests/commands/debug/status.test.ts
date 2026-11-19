@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { analyzeSamples } from '~/commands/debug/status-handler';
+import { analyzeSamples, describeHookOwners } from '~/commands/debug/status-handler';
 
 const sample = (handles: number, hooks = 12) => ({ handles, hooks, surfaces: 1, cachedReturns: 0 });
 
@@ -31,5 +31,28 @@ describe('analyzeSamples', () => {
 		expect(analyzeSamples([sample(40, 12), sample(40, 13), sample(40, 14)]).growing).toEqual([
 			'hooks',
 		]);
+	});
+});
+
+describe('hook owners', () => {
+	test('lists who holds hooks and what is left over', () => {
+		expect(
+			describeHookOwners(150, [
+				{ owner: 'unbound.chat-bubbles', hooks: 60 },
+				{ owner: 'unbound.message-latency', hooks: 3 },
+			]),
+		).toEqual([
+			'Hooks by owner: unbound.chat-bubbles 60, unbound.message-latency 3; 87 in UI scopes, evals and the loader',
+		]);
+	});
+
+	test('warns near the hook limit', () => {
+		expect(describeHookOwners(230, [{ owner: 'a', hooks: 1 }])[1]).toStartWith(
+			'Warning: 230 of 256 hooks are in use',
+		);
+	});
+
+	test('says nothing without scoped hooks', () => {
+		expect(describeHookOwners(150, [])).toEqual([]);
 	});
 });
