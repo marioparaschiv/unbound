@@ -30,23 +30,47 @@ async function downloadFile(url: string, file: AddonFile): Promise<string> {
 	return Buffer.from(bytes).toString('base64');
 }
 
+async function installedCopy(
+	directory: string | undefined,
+	file: AddonFile,
+): Promise<string | undefined> {
+	const path = `${directory}/${file.path}`;
+
+	if (!directory || !(await fs.exists(path))) {
+		return undefined;
+	}
+
+	const contents = await fs.readFile(path, 'base64');
+
+	return sha256(Buffer.from(contents, 'base64')) === file.sha256 ? contents : undefined;
+}
+
+async function fetchFile(url: string, file: AddonFile, directory?: string): Promise<string> {
+	const installed = await installedCopy(directory, file).catch(() => undefined);
+
+	return installed ?? downloadFile(url, file);
+}
+
 /**
- * @description Downloads every extra file the manifest lists, in parallel, from beside the bundle. A file that
- * fails is logged and left out, so the addon still installs without it.
+ * @description Fetches every extra file the manifest lists, in parallel, from beside the bundle, reusing the
+ * installed copy of each file whose SHA-256 still matches, so an update downloads only the files it changed.
+ * A file that fails is logged and left out, so the addon still installs without it.
  * @param manifest The addon's manifest.
  * @param bundleUrl The bundle's URL; each file's path is relative to the folder holding the manifest.
  * @param logger The manager's logger.
- * @returns The downloaded files, by path.
+ * @param directory The installed addon's folder, relative to the documents directory, when it has one.
+ * @returns The files, by path.
  */
 export async function downloadAddonFiles(
 	manifest: AddonManifest,
 	bundleUrl: string,
 	logger: Logger,
+	directory?: string,
 ): Promise<AddonFiles> {
 	const listed = listAddonFiles(manifest);
 	const base = bundleUrl.slice(0, bundleUrl.length - manifest.main.length);
 	const results = await Promise.allSettled(
-		listed.map((file) => downloadFile(`${base}${file.path}`, file)),
+		listed.map((file) => fetchFile(`${base}${file.path}`, file, directory)),
 	);
 	const files: AddonFiles = {};
 
