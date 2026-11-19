@@ -1,6 +1,6 @@
 # Plugins
 
-220 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+221 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -191,6 +191,7 @@
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Silent Typing](https://unbound.rip/addons/unbound.silent-typing): Hides that you are typing, with a toggle in the chat input to turn it on and off.
 - <img src="../../assets/plugins/readme-icons/hourglass-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Slowmode Queue](https://unbound.rip/addons/unbound.slowmode-queue): Lets you send while slowmode is cooling down: the message waits with a countdown you can cancel, then sends.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Smart Paste](https://unbound.rip/addons/unbound.smart-paste): Adds a paste button to the chat input that pastes the clipboard as plain text, a code block, a quote, a link without a preview, or a text file.
+- <img src="../../assets/plugins/readme-icons/music-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Song Link Converter](https://unbound.rip/addons/unbound.song-link-converter): Tapping a Spotify, Apple Music, YouTube Music or Deezer link opens the song in the music service you use instead.
 - <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Spell With Reactions](https://unbound.rip/addons/unbound.spell-with-reactions): Spells a word on a message with letter reactions, using look-alike emoji for repeated letters.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Split Large Messages](https://unbound.rip/addons/unbound.split-large-messages): Sends messages over the length limit as several messages instead of refusing them.
 - <img src="../../assets/plugins/readme-icons/headphones-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Spotify Listen Along](https://unbound.rip/addons/unbound.spotify-listen-along): Listen along to someone's Spotify activity and invite a channel to listen along with you.

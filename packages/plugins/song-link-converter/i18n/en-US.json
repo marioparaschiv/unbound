@@ -1,0 +1,9 @@
+{
+	"SERVICE": "Open music in",
+	"SERVICE_SUBTITLE": "Song and album links from other services open a search for the same music here.",
+	"SPOTIFY": "Spotify",
+	"APPLE_MUSIC": "Apple Music",
+	"YOUTUBE_MUSIC": "YouTube Music",
+	"DEEZER": "Deezer",
+	"TIDAL": "Tidal"
+}
