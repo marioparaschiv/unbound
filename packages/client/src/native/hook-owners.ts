@@ -1,7 +1,12 @@
 const tracked = new Map<ReadonlySet<unknown>, string>();
 
 /** How many hooks one owner holds through its native scopes. */
-export type HookOwner = { owner: string; hooks: number };
+export type HookOwner = {
+	/** The plugin id or tool name the scopes belong to. */
+	owner: string;
+	/** How many hooks those scopes hold now. */
+	hooks: number;
+};
 
 /**
  * @description Counts a native scope's hooks under its owner, so a pile of hooks can be traced to the plugin holding them.
