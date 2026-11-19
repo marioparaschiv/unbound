@@ -3,60 +3,98 @@ import { format, messages } from '@unbound-app/i18n';
 import { settings } from '@unbound-app/settings';
 import type { ReactNode } from 'react';
 
+import { attachmentByUrl, type Attachment } from '~/lib/attachments';
 import { formatMegabytes, shouldAsk } from '~/lib/size';
 
 type MediaEvent = { nativeEvent?: { id?: string; type?: string; index?: number } };
-type ChatProps = { channelId?: string; onTapImage?: (event: MediaEvent) => void };
+type LinkEvent = { nativeEvent?: { data?: { url?: string } } };
+type ChatProps = {
+	channelId?: string;
+	onTapImage?: (event: MediaEvent) => void;
+	onTapLink?: (event: LinkEvent) => void;
+};
+type StoredMessage = { attachments?: Attachment[] };
 type MessageStore = {
-	getMessage(
-		channelId: string,
-		messageId: string,
-	): { attachments?: { size?: number }[] } | undefined;
+	getMessage(channelId: string, messageId: string): StoredMessage | undefined;
+	getMessages(channelId: string): { toArray?: () => StoredMessage[] } | undefined;
 };
 type NetworkStore = { getType(): string };
 
-function attachmentSize(channelId: string | undefined, event: MediaEvent): number | undefined {
+function messageStore(): MessageStore {
+	return flux.getStore('Message') as unknown as MessageStore;
+}
+
+function mediaSize(channelId: string | undefined, event: MediaEvent): number | undefined {
 	const { id, type, index = 0 } = event?.nativeEvent ?? {};
 
 	if (!channelId || !id || type !== 'attachment') return undefined;
 
-	const store = flux.getStore('Message') as unknown as MessageStore;
+	return messageStore().getMessage(channelId, id)?.attachments?.[index]?.size;
+}
 
-	return store.getMessage(channelId, id)?.attachments?.[index]?.size;
+function fileSize(channelId: string | undefined, event: LinkEvent): number | undefined {
+	const url = event?.nativeEvent?.data?.url;
+
+	if (!channelId || !url) return undefined;
+
+	const loaded = messageStore().getMessages(channelId)?.toArray?.() ?? [];
+
+	return attachmentByUrl(
+		loaded.flatMap((message) => message.attachments ?? []),
+		url,
+	)?.size;
 }
 
 function isCellular(): boolean {
 	return (flux.getStore('Network') as unknown as NetworkStore).getType?.() === 'cellular';
 }
 
-function wrapChat(chat: ChatProps) {
+function askFirst(size: number | undefined, open: () => void): void {
+	if (!shouldAsk(size, settings.threshold, isCellular())) {
+		open();
+
+		return;
+	}
+
+	dialogs.showDialog({
+		title: messages.TITLE,
+		body: format('BODY', { size: formatMegabytes(size!) }),
+		buttons: [{ label: messages.OPEN, onPress: open }],
+		cancel: messages.CANCEL,
+	});
+}
+
+function wrapMedia(chat: ChatProps) {
 	const original = chat.onTapImage;
 
 	if (!original) return;
 
 	chat.onTapImage = (event) => {
-		const size = attachmentSize(chat.channelId, event);
-
-		if (!shouldAsk(size, settings.threshold, isCellular())) {
-			original(event);
-
-			return;
-		}
-
 		const saved: MediaEvent = { ...event, nativeEvent: { ...event?.nativeEvent } };
 
-		dialogs.showDialog({
-			title: messages.TITLE,
-			body: format('BODY', { size: formatMegabytes(size!) }),
-			buttons: [{ label: messages.OPEN, onPress: () => original(saved) }],
-			cancel: messages.CANCEL,
-		});
+		askFirst(mediaSize(chat.channelId, event), () => original(saved));
+	};
+}
+
+function wrapFiles(chat: ChatProps) {
+	const original = chat.onTapLink;
+
+	if (!original) return;
+
+	chat.onTapLink = (event) => {
+		const saved: LinkEvent = {
+			...event,
+			nativeEvent: { ...event?.nativeEvent, data: { ...event?.nativeEvent?.data } },
+		};
+
+		askFirst(fileSize(chat.channelId, event), () => original(saved));
 	};
 }
 
 /**
- * @description Asks before a large image or video attachment opens on mobile data. Patches the render of
- * `MessagesRenderer` to wrap the chat's `onTapImage`.
+ * @description Asks before a large attachment opens on mobile data: images and videos through the chat's
+ * `onTapImage`, and files such as archives or documents, which open as links to the attachment, through its
+ * `onTapLink`. Patches the render of `MessagesRenderer` to wrap both.
  */
 export function patchMediaTaps(): void {
 	const MessagesRenderer = metro.findByFilePath('modules/messages/native/MessagesRenderer.tsx');
@@ -73,7 +111,10 @@ export function patchMediaTaps(): void {
 			(node: unknown) => typeof (node as ChatProps | null)?.onTapImage === 'function',
 		) as ChatProps | undefined;
 
-		if (chat) wrapChat(chat);
+		if (!chat) return;
+
+		wrapMedia(chat);
+		wrapFiles(chat);
 	});
 }
 
