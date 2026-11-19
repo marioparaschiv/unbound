@@ -343,6 +343,7 @@
 	"UNBOUND_CRASH_RECOVERY": "กู้คืน",
 	"UNBOUND_CRASH_COPY": "คัดลอกข้อมูลวินิจฉัย",
 	"UNBOUND_CRASH_COPIED": "คัดลอกแล้ว",
+	"UNBOUND_CRASH_LINK_COPIED": "Copied a link to issue #{number}",
 	"UNBOUND_CRASH_REPORT": "รายงานบั๊ก",
 	"UNBOUND_LIBRARY": "ไลบรารี",
 	"UNBOUND_DEVELOPMENT_COPY": "Dev",

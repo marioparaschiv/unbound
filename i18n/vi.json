@@ -343,6 +343,7 @@
 	"UNBOUND_CRASH_RECOVERY": "Khôi phục",
 	"UNBOUND_CRASH_COPY": "Sao chép thông tin chẩn đoán",
 	"UNBOUND_CRASH_COPIED": "Đã sao chép",
+	"UNBOUND_CRASH_LINK_COPIED": "Copied a link to issue #{number}",
 	"UNBOUND_CRASH_REPORT": "Báo lỗi",
 	"UNBOUND_LIBRARY": "Thư viện",
 	"UNBOUND_DEVELOPMENT_COPY": "Dev",

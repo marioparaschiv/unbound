@@ -343,6 +343,7 @@
 	"UNBOUND_CRASH_RECOVERY": "恢复模式",
 	"UNBOUND_CRASH_COPY": "复制诊断信息",
 	"UNBOUND_CRASH_COPIED": "已复制",
+	"UNBOUND_CRASH_LINK_COPIED": "Copied a link to issue #{number}",
 	"UNBOUND_CRASH_REPORT": "报告错误",
 	"UNBOUND_LIBRARY": "库",
 	"UNBOUND_DEVELOPMENT_COPY": "开发版",

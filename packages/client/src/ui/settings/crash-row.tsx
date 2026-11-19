@@ -7,7 +7,10 @@ import reportCrashOnGitHub from '~/ui/settings/report-crash';
 import { format, messages } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
+import { API_URL } from '~/core/constants';
+import { Clipboard } from '~/metro/common';
 import { icons } from '~/assets/api';
+import { info } from '~/toasts/api';
 
 const ORIGIN_LABELS: Record<CrashOrigin, () => string> = {
 	unbound: () => messages.UNBOUND_CRASH_ORIGIN_UNBOUND,
@@ -62,6 +65,11 @@ function crashTitle(record: CrashRecord): string {
 	return record.message;
 }
 
+function copyIssueLink(issue: CrashIssueLink) {
+	Clipboard.setString(`${API_URL}/c/${issue.number}`);
+	info('UNBOUND_CRASH_LINK_COPIED', { number: issue.number });
+}
+
 type CrashRowProps = {
 	record: CrashRecord;
 	onDisable: (id: string) => void;
@@ -70,7 +78,7 @@ type CrashRowProps = {
 
 /**
  * @description One recorded crash: its message, when it happened, the plugin it blamed and where it came from, with a
- * button to disable that plugin while it is on. Tapping it opens its GitHub issue, or offers to have Unbound file one.
+ * button to disable that plugin while it is on. Tapping it opens its GitHub issue, or offers to have Unbound file one; holding it copies a short link to the issue.
  */
 function CrashRow({ record, onDisable, onLinked }: CrashRowProps) {
 	const plugins = Manager.for('plugin');
@@ -90,6 +98,7 @@ function CrashRow({ record, onDisable, onLinked }: CrashRowProps) {
 					(found) => onLinked(record.at, found),
 				)
 			}
+			onLongPress={record.issue ? () => copyIssueLink(record.issue!) : undefined}
 			trailing={
 				plugin && enabled ? (
 					<Discord.Button

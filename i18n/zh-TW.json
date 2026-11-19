@@ -343,6 +343,7 @@
 	"UNBOUND_CRASH_RECOVERY": "復原",
 	"UNBOUND_CRASH_COPY": "複製診斷資訊",
 	"UNBOUND_CRASH_COPIED": "已複製",
+	"UNBOUND_CRASH_LINK_COPIED": "Copied a link to issue #{number}",
 	"UNBOUND_CRASH_REPORT": "回報錯誤",
 	"UNBOUND_LIBRARY": "程式庫",
 	"UNBOUND_DEVELOPMENT_COPY": "開發",

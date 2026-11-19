@@ -343,6 +343,7 @@
 	"UNBOUND_CRASH_RECOVERY": "Kurtarma",
 	"UNBOUND_CRASH_COPY": "Tanılama Bilgilerini Kopyala",
 	"UNBOUND_CRASH_COPIED": "Kopyalandı",
+	"UNBOUND_CRASH_LINK_COPIED": "Copied a link to issue #{number}",
 	"UNBOUND_CRASH_REPORT": "Hata Bildir",
 	"UNBOUND_LIBRARY": "Kütüphane",
 	"UNBOUND_DEVELOPMENT_COPY": "Geliştirme",

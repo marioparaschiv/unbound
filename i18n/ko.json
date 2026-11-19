@@ -343,6 +343,7 @@
 	"UNBOUND_CRASH_RECOVERY": "복구",
 	"UNBOUND_CRASH_COPY": "진단 정보 복사",
 	"UNBOUND_CRASH_COPIED": "복사됨",
+	"UNBOUND_CRASH_LINK_COPIED": "Copied a link to issue #{number}",
 	"UNBOUND_CRASH_REPORT": "버그 신고",
 	"UNBOUND_LIBRARY": "라이브러리",
 	"UNBOUND_DEVELOPMENT_COPY": "개발",

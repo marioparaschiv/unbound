@@ -343,6 +343,7 @@
 	"UNBOUND_CRASH_RECOVERY": "Gendannelse",
 	"UNBOUND_CRASH_COPY": "Kopiér diagnosticering",
 	"UNBOUND_CRASH_COPIED": "Kopieret",
+	"UNBOUND_CRASH_LINK_COPIED": "Copied a link to issue #{number}",
 	"UNBOUND_CRASH_REPORT": "Rapportér fejl",
 	"UNBOUND_LIBRARY": "Bibliotek",
 	"UNBOUND_DEVELOPMENT_COPY": "Dev",

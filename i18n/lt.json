@@ -343,6 +343,7 @@
 	"UNBOUND_CRASH_RECOVERY": "Atkūrimas",
 	"UNBOUND_CRASH_COPY": "Kopijuoti diagnostiką",
 	"UNBOUND_CRASH_COPIED": "Nukopijuota",
+	"UNBOUND_CRASH_LINK_COPIED": "Copied a link to issue #{number}",
 	"UNBOUND_CRASH_REPORT": "Pranešti apie klaidą",
 	"UNBOUND_LIBRARY": "Biblioteka",
 	"UNBOUND_DEVELOPMENT_COPY": "Kūrimo",

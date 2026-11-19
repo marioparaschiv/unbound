@@ -26,6 +26,7 @@ import { Route as SiteSubmitRouteImport } from './routes/_site/submit'
 import { Route as SiteTermsRouteImport } from './routes/_site/terms'
 import { Route as SiteThemesRouteImport } from './routes/_site/themes'
 import { Route as AuthErrorRouteImport } from './routes/auth/error'
+import { Route as CNumberRouteImport } from './routes/c/$number'
 import { Route as DevelopersSplatRouteImport } from './routes/developers/$'
 import { Route as InstallIdRouteImport } from './routes/install/$id'
 import { Route as SiteStaffReviewRouteImport } from './routes/_site/_staff/review'
@@ -180,6 +181,11 @@ const SiteThemesRoute = SiteThemesRouteImport.update({
 const AuthErrorRoute = AuthErrorRouteImport.update({
   id: '/auth/error',
   path: '/auth/error',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CNumberRoute = CNumberRouteImport.update({
+  id: '/c/$number',
+  path: '/c/$number',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevelopersSplatRoute = DevelopersSplatRouteImport.update({
@@ -571,6 +577,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof SiteTermsRoute
   '/themes': typeof SiteThemesRoute
   '/auth/error': typeof AuthErrorRoute
+  '/c/$number': typeof CNumberRoute
   '/developers/$': typeof DevelopersSplatRoute
   '/install/$id': typeof InstallIdRoute
   '/addons': typeof SiteAddonsListingRouteRouteWithChildren
@@ -659,6 +666,7 @@ export interface FileRoutesByTo {
   '/terms': typeof SiteTermsRoute
   '/themes': typeof SiteThemesRoute
   '/auth/error': typeof AuthErrorRoute
+  '/c/$number': typeof CNumberRoute
   '/developers/$': typeof DevelopersSplatRoute
   '/install/$id': typeof InstallIdRoute
   '/addons': typeof SiteAddonsIndexRoute
@@ -748,6 +756,7 @@ export interface FileRoutesById {
   '/_site/terms': typeof SiteTermsRoute
   '/_site/themes': typeof SiteThemesRoute
   '/auth/error': typeof AuthErrorRoute
+  '/c/$number': typeof CNumberRoute
   '/developers/$': typeof DevelopersSplatRoute
   '/install/$id': typeof InstallIdRoute
   '/_site/': typeof SiteIndexRoute
@@ -840,6 +849,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/themes'
     | '/auth/error'
+    | '/c/$number'
     | '/developers/$'
     | '/install/$id'
     | '/addons'
@@ -928,6 +938,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/themes'
     | '/auth/error'
+    | '/c/$number'
     | '/developers/$'
     | '/install/$id'
     | '/addons'
@@ -1016,6 +1027,7 @@ export interface FileRouteTypes {
     | '/_site/terms'
     | '/_site/themes'
     | '/auth/error'
+    | '/c/$number'
     | '/developers/$'
     | '/install/$id'
     | '/_site/'
@@ -1096,6 +1108,7 @@ export interface RootRouteChildren {
   DeviceRoute: typeof DeviceRoute
   LoginRoute: typeof LoginRoute
   AuthErrorRoute: typeof AuthErrorRoute
+  CNumberRoute: typeof CNumberRoute
   DevelopersSplatRoute: typeof DevelopersSplatRoute
   InstallIdRoute: typeof InstallIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -1246,6 +1259,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/error'
       fullPath: '/auth/error'
       preLoaderRoute: typeof AuthErrorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/c/$number': {
+      id: '/c/$number'
+      path: '/c/$number'
+      fullPath: '/c/$number'
+      preLoaderRoute: typeof CNumberRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/developers/$': {
@@ -2005,6 +2025,7 @@ const rootRouteChildren: RootRouteChildren = {
   DeviceRoute: DeviceRoute,
   LoginRoute: LoginRoute,
   AuthErrorRoute: AuthErrorRoute,
+  CNumberRoute: CNumberRoute,
   DevelopersSplatRoute: DevelopersSplatRoute,
   InstallIdRoute: InstallIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
