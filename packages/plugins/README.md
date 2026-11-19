@@ -1,6 +1,6 @@
 # Plugins
 
-223 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+224 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -18,6 +18,7 @@
 - <img src="../../assets/plugins/readme-icons/magic-wand-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Background Remover](https://unbound.rip/addons/unbound.background-remover): Cuts the subject out of an image in a message and adds it to your message as a transparent PNG.
 - <img src="../../assets/plugins/readme-icons/headphones-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Background Voice Messages](https://unbound.rip/addons/unbound.background-voice-messages): Keeps voice messages and audio files playing when you leave Discord or lock your phone.
 - <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Badges In Chat](https://unbound.rip/addons/unbound.badges-in-chat): Shows a profile badge next to people's names in chat, where a role icon would go.
+- <img src="../../assets/plugins/readme-icons/music-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Bandcamp Cards](https://unbound.rip/addons/unbound.bandcamp-cards): Bandcamp album and track links show their price in the embed, or that you can name your price.
 - <img src="../../assets/plugins/readme-icons/folder-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better Folders](https://unbound.rip/addons/unbound.better-folders): Collapses your other server folders when you open one, and gives closed folders a custom icon or a plain folder icon instead of server icons.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better GIF Alt Text](https://unbound.rip/addons/unbound.better-gif-alt-text): Names GIFs in chat for screen readers by their tags or file name, instead of just 'GIF'.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Better GIF Picker](https://unbound.rip/addons/unbound.better-gif-picker): Opens the GIF picker on your favourite GIFs instead of the category grid.
