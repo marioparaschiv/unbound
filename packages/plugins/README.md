@@ -1,6 +1,6 @@
 # Plugins
 
-215 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+216 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -106,6 +106,7 @@
 - <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Keep Emoji Picker Open](https://unbound.rip/addons/unbound.keep-emoji-picker-open): Keeps the reaction emoji picker open after each pick, so you can add several reactions at once.
 - <img src="../../assets/plugins/readme-icons/bell-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Keyword Notify](https://unbound.rip/addons/unbound.keyword-notify): Treats messages that contain your keywords as mentions, so Discord highlights them and counts them like a ping.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Last Message Date](https://unbound.rip/addons/unbound.last-message-date): Shows when someone last sent a message in this server or your DMs, on their profile.
+- <img src="../../assets/plugins/readme-icons/arrows-left-right-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Left Handed Mode](https://unbound.rip/addons/unbound.left-handed-mode): Mirrors the chat input, so the send and emoji buttons sit on the left within reach of your thumb. iOS only.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Link Unshortener](https://unbound.rip/addons/unbound.link-unshortener): Shows where a short link like bit.ly or t.co really goes, from the link's long-press menu, before you open it.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Live Markdown](https://unbound.rip/addons/unbound.live-markdown): Shows markdown as you type it in the message box: bold, italics, underline, strikethrough, code, spoilers, headings, quotes and custom emoji.
 - <img src="../../assets/plugins/readme-icons/camera-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Live Photo Sender](https://unbound.rip/addons/unbound.live-photo-sender): Lets you send a Live Photo as a still image, its video, or a GIF. iOS only.
