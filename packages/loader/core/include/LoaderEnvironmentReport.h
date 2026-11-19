@@ -25,6 +25,7 @@ struct AppleDeviceFacts {
     bool lockdownMode     = false;
     bool iPhoneAppOnIPad  = false;
     bool iOSAppOnMac      = false;
+    bool playCover        = false;
     bool managedApp       = false;
     bool jitEnabled       = false;
     bool debuggerAttached = false;

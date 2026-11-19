@@ -5,8 +5,10 @@
 #import <UIKit/UIKit.h>
 #include <arpa/inet.h>
 #include <atomic>
+#include <cstring>
 #include <dlfcn.h>
 #include <ifaddrs.h>
+#include <mach-o/dyld.h>
 #include <net/if.h>
 #import <objc/message.h>
 #include <set>
@@ -256,6 +258,20 @@ static bool isiOSAppOnVision()
            && ((BOOL (*)(id, SEL)) objc_msgSend)(process, selector);
 }
 
+static bool hasPlayTools()
+{
+    for (uint32_t index = 0; index < _dyld_image_count(); index++)
+    {
+        const char *name = _dyld_get_image_name(index);
+        if (name && std::strstr(name, "/PlayTools.framework/"))
+        {
+            return YES;
+        }
+    }
+
+    return NO;
+}
+
 static report::AppleDeviceFacts deviceFacts()
 {
     report::AppleDeviceFacts facts;
@@ -263,6 +279,7 @@ static report::AppleDeviceFacts deviceFacts()
     facts.iPhoneAppOnIPad =
         UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad && !supportsIPad();
     facts.iOSAppOnMac      = NSProcessInfo.processInfo.isiOSAppOnMac;
+    facts.playCover        = hasPlayTools();
     facts.managedApp       = isManagedApp();
     facts.jitEnabled       = detectedJailbreak().empty() && isJITEnabled();
     facts.debuggerAttached = isDebuggerAttached();

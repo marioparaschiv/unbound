@@ -163,7 +163,11 @@ std::vector<std::string> appleMarkers(const AppleDeviceFacts &facts)
         markers.emplace_back("iPhone app on iPad");
     }
 
-    if (facts.iOSAppOnMac)
+    if (facts.playCover)
+    {
+        markers.emplace_back("PlayCover");
+    }
+    else if (facts.iOSAppOnMac)
     {
         markers.emplace_back("iPhone app on Mac");
     }
