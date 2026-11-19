@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.4] - 2026-11-19
+
+### Fixed
+
+- On iOS, reactions draw their emoji from your pack too.
+
 ## [1.2.3] - 2026-11-18
 
 ### Fixed
