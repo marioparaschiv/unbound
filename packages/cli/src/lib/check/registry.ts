@@ -2,6 +2,8 @@ import { CHECK as COMMAND_LOCALES_CHECK } from '~/rollup/command-locales';
 import { CHECK as ENTRY_EXPORTS_CHECK } from '~/rollup/entry-exports';
 import { textInputPropsCheck } from '~/lib/checks/text-input-props';
 import { CHECK as FILTER_KEYS_CHECK } from '~/rollup/filter-keys';
+import { scopedCleanupCheck } from '~/lib/checks/scoped-cleanup';
+import { mainThreadUiCheck } from '~/lib/checks/main-thread-ui';
 import { CHECK as SVG_ASSETS_CHECK } from '~/rollup/svg-assets';
 import { CHECK as SETTINGS_CHECK } from '~/rollup/settings';
 import { CHECK as LOCALES_CHECK } from '~/rollup/locales';
@@ -25,6 +27,8 @@ export const CHECKS: readonly Check[] = [
 	bundleCheck,
 	manifestCheck,
 	textInputPropsCheck,
+	mainThreadUiCheck,
+	scopedCleanupCheck,
 ];
 
 /** Ids rollup plugins report under with `reportDiagnostic`, which `--only` accepts. */

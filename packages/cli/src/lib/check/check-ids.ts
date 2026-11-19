@@ -13,6 +13,8 @@ export const CHECK_IDS: readonly string[] = [
 	'bundle',
 	'manifest',
 	'text-input-props',
+	'main-thread-ui',
+	'scoped-cleanup',
 	'types',
 	'locales',
 	'filters',
