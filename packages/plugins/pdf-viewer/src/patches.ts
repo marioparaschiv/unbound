@@ -3,12 +3,17 @@ import { Linking } from 'react-native';
 import { format } from '@unbound-app/i18n';
 import { metro, patcher, toasts, utils } from '@unbound-app/api';
 
-import { downloadPdf, isPdf } from '~/lib/pdf-files';
+import { attachmentFileName, downloadPdf, isPdf } from '~/lib/pdf-files';
 import type { PdfViewer } from '~/native/viewer';
 
 type AttachmentEvent = { nativeEvent?: { data?: { attachmentUrl?: string; fileName?: string } } };
 
-type ChatProps = { onTapAttachmentLink?: (event: AttachmentEvent) => void };
+type LinkEvent = { nativeEvent?: { data?: { url?: string } } };
+
+type ChatProps = {
+	onTapAttachmentLink?: (event: AttachmentEvent) => void;
+	onTapLink?: (event: LinkEvent) => void;
+};
 
 async function openPdf(viewer: PdfViewer, folder: string, url: string, fileName: string) {
 	const toast = toasts.show({ content: format('OPENING', { name: fileName }), duration: 0 });
@@ -38,11 +43,27 @@ function wrapChat(chat: ChatProps, viewer: PdfViewer, folder: string) {
 
 		void openPdf(viewer, folder, attachmentUrl, fileName!);
 	};
+
+	const tapLink = chat.onTapLink;
+
+	chat.onTapLink = (event) => {
+		const url = event?.nativeEvent?.data?.url;
+		const fileName = url ? attachmentFileName(url) : undefined;
+
+		if (!url || !isPdf(fileName)) {
+			tapLink?.(event);
+
+			return;
+		}
+
+		void openPdf(viewer, folder, url, fileName!);
+	};
 }
 
 /**
  * @description Opens tapped PDF attachments in the phone's PDF viewer, by patching the render of Discord's
- * `MessagesRenderer` to wrap the chat's attachment tap handler. Other attachments open as before.
+ * `MessagesRenderer` to wrap the chat's attachment and link tap handlers, since iOS hands a tap on a file over as a
+ * link to the attachment. Other attachments and links open as before.
  * @param viewer The platform's PDF viewer.
  * @param folder The plugin's temporary folder, where PDFs download to.
  */

@@ -56,4 +56,25 @@ export async function downloadPdf(url: string, folder: string, fileName: string)
 	return `${fs.documentsPath}/${path}`;
 }
 
-export default { isPdf, safeFileName, downloadPdf };
+const ATTACHMENT_HOSTS = new Set(['cdn.discordapp.com', 'media.discordapp.net']);
+
+/**
+ * @description Reads the file name of a tapped link when it points at a Discord attachment, which is how iOS hands over
+ * a tap on a file in chat.
+ * @param url The tapped link.
+ * @returns The attachment's file name, or `undefined` for any other link.
+ */
+export function attachmentFileName(url: string): string | undefined {
+	try {
+		const { hostname, pathname } = new URL(url);
+
+		if (!ATTACHMENT_HOSTS.has(hostname) || !pathname.startsWith('/attachments/'))
+			return undefined;
+
+		return decodeURIComponent(pathname.split('/').pop() ?? '') || undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+export default { isPdf, safeFileName, downloadPdf, attachmentFileName };
