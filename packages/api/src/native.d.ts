@@ -165,7 +165,8 @@ export declare function getRuntimeProperties(): HermesRuntimeProperties;
  */
 export declare function has(capability: NativeBridgeCapability): boolean;
 /**
- * @description Persists pending settings to storage, then reloads the native bundle.
+ * @description Persists pending settings to storage and unmounts the surfaces plugins still have mounted, then reloads
+ * the native bundle.
  */
 export declare function reload(): Promise<void>;
 /**

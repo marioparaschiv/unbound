@@ -4,8 +4,9 @@ import type { AddonHandle, PluginSelfTestResult, PushedManifest } from './_inter
 /** Stops a running plugin without changing its enabled state. */
 declare const stop$1: (id: string) => void | Promise<void>;
 /**
- * @description Redraws every row of the open chat shortly after a plugin starts or stops, so rows built before the change
- * show its patches at once. Calls within the delay share one redraw; nothing is scheduled while no chat is open.
+ * @description Redraws every row of the open chat shortly after a call, such as a plugin starting, stopping or changing how
+ * rows draw, so rows built before the change show it at once. Calls within the delay share one redraw; nothing is
+ * scheduled while no chat is open.
  */
 declare function scheduleChatRedraw(): void;
 /** Every installed plugin, keyed by id. */
@@ -52,6 +53,13 @@ export declare function answerBisect(
  * @returns Its round, how many rounds are left and which plugins are on, or `undefined` when none runs.
  */
 export declare function bisectStatus(): BisectStatus | undefined;
+/**
+ * @description Calls `listener` whenever the system asks the app to free memory: iOS memory warnings, and Android
+ * `onTrimMemory` at `TRIM_MEMORY_RUNNING_LOW` or more. Plugins empty their caches there.
+ * @param listener Runs on the JavaScript thread for each warning.
+ * @returns A function that stops the listener; the system is watched only while a listener remains.
+ */
+export declare function onMemoryPressure(listener: () => void): () => void;
 /**
  * @description Runs a running plugin's self-test, as the device matrix does after restarting it.
  * @param id The plugin's id.

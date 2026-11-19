@@ -7,6 +7,7 @@ import { plugins } from '~/plugins/manager';
 
 export { answerBisect, bisectStatus, startBisect, stopBisect } from '~/plugins/bisect';
 export { scheduleChatRedraw as redrawChat } from '~/plugins/chat-redraw';
+export { onMemoryPressure } from '~/plugins/memory-pressure';
 
 /** Lists every installed plugin. */
 export const getAll: () => AddonHandle[] = plugins.getAddons.bind(plugins);
