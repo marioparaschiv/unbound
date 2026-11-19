@@ -16,6 +16,7 @@
 #include "LoaderLog.h"
 #include "LoaderSystemExits.h"
 #include "NativeHookConflicts.h"
+#include "NativeMainQueue.h"
 #include "NativePluginBridge.h"
 
 namespace unbound::android {
@@ -437,7 +438,7 @@ void AndroidLoader::runOnMain(std::function<void()> work)
 {
     {
         std::lock_guard<std::mutex> lock(mainQueueMutex_);
-        mainQueue_.push_back(std::move(work));
+        mainQueue_.push_back(loader::native::chargeMainWork(std::move(work)));
         if (mainDrainScheduled_)
         {
             return;

@@ -6,6 +6,7 @@
 #include <string>
 
 #import "Logger.h"
+#import "NativeMainQueue.h"
 #import "NativePluginBridge.h"
 #import "NativePluginFrameScheduler.h"
 #import "NativePluginRuntime.h"
@@ -37,7 +38,8 @@ public:
 
     void runOnMain(std::function<void()> work) override
     {
-        auto task = std::make_shared<std::function<void()>>(std::move(work));
+        auto task = std::make_shared<std::function<void()>>(
+            loader::native::chargeMainWork(std::move(work)));
         dispatch_async(dispatch_get_main_queue(), ^{
             @autoreleasepool
             {
