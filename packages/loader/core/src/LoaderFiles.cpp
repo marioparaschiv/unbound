@@ -10,6 +10,9 @@
 #include <system_error>
 #include <unistd.h>
 
+#include "LoaderDiskFull.h"
+#include "LoaderPipelineTime.h"
+
 namespace loader {
 // One sized read: an ostringstream copy was ~8x slower on a 12 MB file. The size is a hint only;
 // reading runs to EOF so a file with no reliable size (pipe, procfs) still arrives whole.
@@ -151,6 +154,7 @@ bool writeTextFileAtomically(const std::string &path, const std::string &content
     int descriptor      = mkstemp(staging.data());
     if (descriptor < 0)
     {
+        noteWriteFailure(errno, path, pipeline_time::epochMs());
         return false;
     }
 
@@ -158,9 +162,11 @@ bool writeTextFileAtomically(const std::string &path, const std::string &content
     fchmod(descriptor, 0644);
 
     bool written = writeAll(descriptor, contents) && fsync(descriptor) == 0;
+    int failure  = written ? 0 : errno;
     written      = close(descriptor) == 0 && written;
     if (!written)
     {
+        noteWriteFailure(failure != 0 ? failure : errno, path, pipeline_time::epochMs());
         unlink(staging.c_str());
         return false;
     }

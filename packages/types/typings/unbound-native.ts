@@ -31,6 +31,8 @@ export type UnboundLaunchReport = {
 	settings?: 'restored' | 'reset';
 	/** What the system killed or caught over the last week: out-of-memory, watchdog, CPU and locked-file exits, and hangs. */
 	system?: UnboundSystemExits;
+	/** The newest write the loader could not finish because the device was out of storage; `at` is milliseconds since the epoch. */
+	diskFull?: { at: number; file: string };
 };
 
 /**
