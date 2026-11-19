@@ -1,0 +1,11 @@
+{
+	"CHECK_BUTTON": "Check grammar",
+	"CHECKING": "Checking your draft…",
+	"NOTHING_TO_CHECK": "Write something first.",
+	"NO_MISTAKES": "No mistakes found.",
+	"CHECK_FAILED": "Couldn't check your draft",
+	"MISTAKES_TITLE": "{count} possible mistakes",
+	"FIX_ALL": "Fix all",
+	"CLOSE": "Close",
+	"FIXING": "Fixing your draft…"
+}

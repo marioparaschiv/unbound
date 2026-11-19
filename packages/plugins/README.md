@@ -1,6 +1,6 @@
 # Plugins
 
-214 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+215 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -89,6 +89,7 @@
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Maker](https://unbound.rip/addons/unbound.gif-maker): Turns part of a video in chat into a GIF, cropped and captioned as you like, and attaches it to your message.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Paste](https://unbound.rip/addons/unbound.gif-paste): Makes GIF picker selections paste a link into the chat box instead of sending immediately.
 - <img src="../../assets/plugins/readme-icons/gif-icon.svg" width="20" height="20" align="absmiddle" alt=""> [GIF Provider Switcher](https://unbound.rip/addons/unbound.gif-provider-switcher): Search GIFs from Tenor or Giphy instead of Klipy, and switch providers right from the GIF picker.
+- <img src="../../assets/plugins/readme-icons/pencil-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Grammar Check](https://unbound.rip/addons/unbound.grammar-check): Checks your draft's spelling and grammar with LanguageTool from a button in the chat input, and fixes what you pick.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Greentext](https://unbound.rip/addons/unbound.greentext): Shows lines that start with > in green, like on imageboards.
 - <img src="../../assets/plugins/readme-icons/sticker-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Greet Sticker Picker](https://unbound.rip/addons/unbound.greet-sticker-picker): Lets you pick which sticker 'Wave to say hi!' sends to a new member, instead of a random one.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Hide Servers](https://unbound.rip/addons/unbound.hide-servers): Hides the servers you pick from your server list, without leaving them.
