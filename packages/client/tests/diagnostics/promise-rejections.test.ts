@@ -3,6 +3,15 @@ import { describe, expect, mock, spyOn, test } from 'bun:test';
 mock.module('react-native', () => ({
 	AppState: { addEventListener: () => ({ remove: () => undefined }) },
 }));
+mock.module('~/diagnostics/breadcrumbs', () => ({
+	startBreadcrumbs: () => undefined,
+	stopBreadcrumbs: () => undefined,
+}));
+mock.module('~/diagnostics/crash-reports', () => ({
+	reportNativeCrash: async () => undefined,
+	reportSystemHang: async () => undefined,
+	retryPendingIssues: async () => undefined,
+}));
 
 const { setRejectionTracker } = await import('~/diagnostics/promise-rejections');
 const { default: diagnostics } = await import('~/diagnostics/builtin');
