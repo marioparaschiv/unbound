@@ -1,5 +1,7 @@
 #import "FontOverflow.h"
 
+#import "SingleCopy.h"
+
 // A replacement font can be taller than the line box Discord's text styles fix. TextKit seats
 // such a line on the box's bottom and React Native clips the paragraph to its frame, cutting the
 // ink's top. Each line is instead centred on its own ink, and the paragraph draws past its frame.
@@ -270,6 +272,13 @@ static void applyOutset(UIView *textView, CGRect frame, CGFloat outset)
 
 %ctor
 {
+    if (UnboundIsDuplicateCopy())
+    {
+        return;
+    }
+
+    %init;
+
     centring = [FontLineCentring new];
     SEL storage =
         @selector(_textStorageAndLayoutManagerWithAttributesString:paragraphAttributes:size:);

@@ -1,6 +1,7 @@
 #import "Analytics.h"
 
 #import "MetricKitReports.h"
+#import "SingleCopy.h"
 
 // ATTrackingManagerAuthorizationStatusDenied: Discord and its SDKs see a user who declined.
 static const NSUInteger kTrackingDenied = 2;
@@ -190,6 +191,11 @@ static NSError *attributionUnavailableError(void)
 
 %ctor
 {
+    if (UnboundIsDuplicateCopy())
+    {
+        return;
+    }
+
     %init();
 
     // A group hooks a system class only once its framework is loaded; Discord links each of these.

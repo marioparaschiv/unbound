@@ -2,6 +2,7 @@
 
 #import "CoreBridge.h"
 #import "CoreConversions.h"
+#import "SingleCopy.h"
 #import "Unbound.h"
 
 using unbound::ios::toNSString;
@@ -247,3 +248,13 @@ static void showRecoveryStatus(NSString *status)
 }
 
 %end
+
+%ctor
+{
+    if (UnboundIsDuplicateCopy())
+    {
+        return;
+    }
+
+    %init;
+}

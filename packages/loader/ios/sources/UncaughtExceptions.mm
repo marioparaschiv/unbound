@@ -2,6 +2,7 @@
 #include <string>
 
 #include "LoaderCrashHandler.h"
+#import "SingleCopy.h"
 
 static NSUncaughtExceptionHandler *gPreviousExceptionHandler = nullptr;
 
@@ -22,6 +23,11 @@ static void noteUncaughtObjCException(NSException *exception)
 
 __attribute__((constructor)) static void installUncaughtExceptionNote(void)
 {
+    if (UnboundIsDuplicateCopy())
+    {
+        return;
+    }
+
     gPreviousExceptionHandler = NSGetUncaughtExceptionHandler();
     NSSetUncaughtExceptionHandler(noteUncaughtObjCException);
 }

@@ -1,5 +1,7 @@
 #import "Fonts.h"
 
+#import "SingleCopy.h"
+
 @implementation Fonts
 static NSDictionary<NSString *, NSString *> *overrides = nil;
 static NSString *everyFamily                           = nil;
@@ -425,3 +427,13 @@ static _Thread_local BOOL replacing = NO;
 }
 
 %end
+
+%ctor
+{
+    if (UnboundIsDuplicateCopy())
+    {
+        return;
+    }
+
+    %init;
+}

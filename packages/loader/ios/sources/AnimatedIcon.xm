@@ -5,6 +5,8 @@
 #import <notify.h>
 #import <unistd.h>
 
+#import "SingleCopy.h"
+
 NSString *const UBAnimatedIconId = @"UnboundAnimated";
 
 static NSString *const kInfoKey         = @"UnboundAnimatedIcon";
@@ -349,6 +351,11 @@ void UBSetAppIcon(NSString *iconName, UBIconCompletion completion, UBIconSetter 
 
 %ctor
 {
+    if (UnboundIsDuplicateCopy())
+    {
+        return;
+    }
+
     %init();
     observe(UIApplicationDidEnterBackgroundNotification, ^(NSNotification *note) {
         gBackgrounded = YES;

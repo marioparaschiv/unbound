@@ -4,6 +4,7 @@
 
 #import "CoreConversions.h"
 #include "LoaderDiagnostics.h"
+#import "SingleCopy.h"
 
 using unbound::ios::toStdString;
 
@@ -105,6 +106,11 @@ static BOOL shouldIgnoreException(id name)
 
 %ctor
 {
+    if (UnboundIsDuplicateCopy())
+    {
+        return;
+    }
+
     %init();
 }
 

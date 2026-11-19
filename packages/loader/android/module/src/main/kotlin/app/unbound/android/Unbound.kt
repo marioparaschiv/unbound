@@ -42,6 +42,11 @@ class Unbound : XposedModule() {
             return
         }
 
+        if (!SingleCopy.claim(moduleApplicationInfo.sourceDir, javaClass.classLoader)) {
+            Logger.warning(LogCategory.DEFAULT, "Another copy of Unbound already runs in Discord; skipping this one.")
+            return
+        }
+
         runCatching { initialize(param) }
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to initialize Unbound", it) }
     }

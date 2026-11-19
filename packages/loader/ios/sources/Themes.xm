@@ -8,6 +8,7 @@
 #import "CoreBridge.h"
 #import "CoreConversions.h"
 #include "LoaderThemes.h"
+#import "SingleCopy.h"
 
 using unbound::ios::toNSString;
 using unbound::ios::toStdString;
@@ -562,3 +563,13 @@ static void reloadVisibleChats(void)
 }
 
 %end
+
+%ctor
+{
+    if (UnboundIsDuplicateCopy())
+    {
+        return;
+    }
+
+    %init;
+}

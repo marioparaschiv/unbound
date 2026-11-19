@@ -30,6 +30,7 @@
 #import "NativePluginBridge.h"
 #import "RCTHost.h"
 #import "SettingsCore.h"
+#import "SingleCopy.h"
 #import "Toolbox.h"
 #import "UpdateBanner.h"
 #import "UpdaterCore.h"
@@ -579,6 +580,13 @@ static void prepareLoading(id instance)
 
 %ctor
 {
+    if (UnboundIsDuplicateCopy())
+    {
+        return;
+    }
+
+    %init;
+
     [CoreBridge installLogging];
     [FileSystem init];
     [CoreBridge openLogFile];

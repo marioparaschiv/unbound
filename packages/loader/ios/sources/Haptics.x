@@ -1,5 +1,7 @@
 #import "Haptics.h"
 
+#import "SingleCopy.h"
+
 static NSError *vphoneHapticsUnavailableError(void)
 {
     return [NSError errorWithDomain:@"com.apple.CoreHaptics"
@@ -61,6 +63,11 @@ static NSError *vphoneHapticsUnavailableError(void)
 
 %ctor
 {
+    if (UnboundIsDuplicateCopy())
+    {
+        return;
+    }
+
     if ([Utilities isVPhone])
     {
         %init(VPhoneHaptics);

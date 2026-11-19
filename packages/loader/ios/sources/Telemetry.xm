@@ -5,6 +5,7 @@
 #include "LoaderTelemetry.h"
 #import "Logger.h"
 #import "SettingsCore.h"
+#import "SingleCopy.h"
 
 using unbound::ios::toStdString;
 
@@ -74,6 +75,11 @@ static NSURLSessionConfiguration *withTelemetryProtocol(NSURLSessionConfiguratio
 
 %ctor
 {
+    if (UnboundIsDuplicateCopy())
+    {
+        return;
+    }
+
     [NSURLProtocol registerClass:UBTelemetryProtocol.class];
     %init;
 }

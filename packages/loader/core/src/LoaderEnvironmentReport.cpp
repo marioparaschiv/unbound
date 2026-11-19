@@ -108,9 +108,26 @@ static void append(std::vector<std::string> &markers, const std::vector<std::str
     markers.insert(markers.end(), more.begin(), more.end());
 }
 
+std::string duplicateCopyMarker(const std::string &path)
+{
+    if (path.empty())
+    {
+        return "";
+    }
+
+    const size_t slash = path.find_last_of('/');
+    return "second Unbound copy skipped ("
+           + (slash == std::string::npos ? path : path.substr(slash + 1)) + ")";
+}
+
 std::vector<std::string> appleMarkers(const AppleDeviceFacts &facts)
 {
     std::vector<std::string> markers;
+    if (!facts.duplicateCopy.empty())
+    {
+        markers.push_back(duplicateCopyMarker(facts.duplicateCopy));
+    }
+
     if (!facts.modelEdit.empty())
     {
         markers.push_back(facts.modelEdit);
@@ -226,6 +243,11 @@ static std::vector<std::string> backgroundLimits(const AndroidDeviceFacts &facts
 std::vector<std::string> androidMarkers(const AndroidDeviceFacts &facts)
 {
     std::vector<std::string> markers;
+    if (!facts.duplicateCopy.empty())
+    {
+        markers.push_back(duplicateCopyMarker(facts.duplicateCopy));
+    }
+
     if (facts.selinuxEnforcing && !*facts.selinuxEnforcing)
     {
         markers.emplace_back("SELinux permissive");

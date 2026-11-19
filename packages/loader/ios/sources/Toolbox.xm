@@ -6,6 +6,7 @@
 #include "LoaderToolbox.h"
 #include "LoaderToolboxGestures.h"
 #import "RecoveryQuickAction.h"
+#import "SingleCopy.h"
 
 using unbound::ios::jsonFromObject;
 using unbound::ios::toNSString;
@@ -658,3 +659,13 @@ void showToolboxSheet(void)
 }
 
 @end
+
+%ctor
+{
+    if (UnboundIsDuplicateCopy())
+    {
+        return;
+    }
+
+    %init;
+}
