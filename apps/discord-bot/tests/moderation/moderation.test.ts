@@ -49,7 +49,8 @@ describe.skipIf(!DATABASE_URL)('moderation', () => {
 		const entry = await moderation.record(DRAFT);
 
 		expect(fake.requests).toHaveLength(1);
-		expect(JSON.stringify(fake.requests[0])).toContain(`Case ${entry.id} · mod`);
+		expect(JSON.stringify(fake.requests[0])).toContain(`-# Case ${entry.id}`);
+		expect(JSON.stringify(fake.requests[0])).toContain('**Moderator:** <@200>');
 		expect(entry.logChannelId).toBe(fake.channelId);
 		expect(entry.logMessageId).toBe(fake.messages[0]?.id ?? '');
 	});
