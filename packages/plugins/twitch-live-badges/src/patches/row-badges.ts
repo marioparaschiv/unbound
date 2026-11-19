@@ -77,8 +77,11 @@ export function badgeTwitchRows(): (() => void) | undefined {
 	patcher.after(rows.prototype, 'generate', ({ result }) => badgeRow(result as GeneratedRow));
 	plugins.redrawChat?.();
 
+	const stopClearing = plugins.onMemoryPressure?.(() => cache.clear());
+
 	return () => {
 		running = false;
+		stopClearing?.();
 		plugins.redrawChat?.();
 	};
 }
