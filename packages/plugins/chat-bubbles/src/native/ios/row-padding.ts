@@ -2,6 +2,7 @@ import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbou
 
 import type { RowRoom, RowRooms } from '~/lib/style';
 import { isStandaloneCell } from '~/native/ios/standalone-cell';
+import { clearLayer, clearSwipeBackdrop, paintPress } from '~/native/ios/bubble-overlays';
 import { followSwipe, swipeIndicator } from '~/native/ios/swipe-follow';
 import { fittedLoss } from '~/native/ios/media-fit';
 
@@ -179,6 +180,7 @@ export function installRowPadding(
 	const objc = scope.objc as NativeObjCBridge;
 	const none = { top: 0, bottom: 0 };
 	const state: RowState = { rooms: { first: none, next: none, reply: none }, inset: null };
+	const [bubbleTag = 0] = followTags;
 
 	holder()[STATE_KEY] = state;
 
@@ -279,11 +281,29 @@ export function installRowPadding(
 			return result;
 		},
 	});
+	objc.hook(contentView, 'setBackgroundColor:', {
+		after: ({ self, args }) => {
+			try {
+				const cell = objc.invoke(self, 'superview', []) as NativeObjectHandle | null;
+
+				if (!cell || objc.className(cell) !== messageCell || isStandaloneCell(objc, cell))
+					return;
+
+				if (paintPress(objc, cell, bubbleTag, args[0] as NativeObjectHandle | null)) {
+					clearLayer(objc, self);
+				}
+			} catch (error) {
+				console.error(`[Chat Bubbles] Failed to highlight a bubble: ${String(error)}`);
+			}
+		},
+	});
 	objc.hook(messageCell, 'handlePan:', {
 		after: ({ self }) => {
 			const content = objc.invoke(self, 'contentView', []) as NativeObjectHandle | null;
 
 			if (content) follow(content);
+
+			if (!isStandaloneCell(objc, self)) clearSwipeBackdrop(objc, self, bubbleTag);
 		},
 	});
 

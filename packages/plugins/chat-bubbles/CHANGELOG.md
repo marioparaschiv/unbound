@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.25] - 2026-11-19
+
+### Fixed
+
+- On iOS, pressing a message lights up its whole bubble, in the bubble's shape, instead of a rectangle the size of the message's content.
+- On iOS, swiping a message no longer slides in a dark panel with hooked corners that cut into the bubbles around it; the reply and edit icon sits over your chat background.
+
 ## [1.6.24] - 2026-11-19
 
 ### Fixed
