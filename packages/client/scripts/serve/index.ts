@@ -1,6 +1,7 @@
 import Logger from '@unbound-app/logger';
 
 import { PORT, HOST, LAN_URL, DIST_DIR } from './constants';
+import { readBuildInfo, staleWarning } from './build-info';
 import { handleOutcome, reloadPending } from './outcome';
 import { hotBuildPath, serveStatic } from './static';
 import { lanCandidates } from '../dev-host';
@@ -9,9 +10,26 @@ import * as hot from './hot-reload';
 
 const logger = Logger.create('Serve');
 
+const STALE_CHECK_MS = 60_000;
+
+function watchStaleness(): void {
+	let warned: string | undefined;
+
+	setInterval(() => {
+		const warning = staleWarning(readBuildInfo());
+
+		if (warning && warning !== warned) {
+			logger.warn(warning);
+		}
+
+		warned = warning;
+	}, STALE_CHECK_MS);
+}
+
 /**
  * @description Starts the dev server: the loader's reload stream at `/__hot`, the client's hot-patch
- * socket at `/__refresh`, how the device took the latest edit at `/__outcome`, and the built files in `dist/`.
+ * socket at `/__refresh`, how the device took the latest edit at `/__outcome`, how current each bundle is at `/__build`,
+ * and the built files in `dist/`. It warns once a minute's check finds the bundle it last served older than the sources.
  * @param reloadOnRebuild Whether the loader reloads the app after every build. Off when the client takes hot patches:
  * the loader then reloads only for a change no patch covered. The hot build writes only the default flavour, so the
  * developer flavour's files are then served from it.
@@ -38,6 +56,10 @@ export function startServer(reloadOnRebuild: boolean = true) {
 				return handleOutcome();
 			}
 
+			if (pathname === '/__build') {
+				return Response.json(readBuildInfo());
+			}
+
 			return serveStatic(
 				reloadOnRebuild ? pathname : hotBuildPath(pathname),
 				req.headers.get('If-None-Match'),
@@ -51,6 +73,8 @@ export function startServer(reloadOnRebuild: boolean = true) {
 	} else {
 		hot.gateReloads(reloadPending);
 	}
+
+	watchStaleness();
 
 	logger.info(`Server listening on http://${HOST}:${PORT}/`);
 	logger.info(`Devices on the LAN should connect to: ${LAN_URL}`);
