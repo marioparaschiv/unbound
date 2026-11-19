@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.17] - 2026-11-19
+
+### Fixed
+
+- On iOS, the badge sits in front of the name by frame, the way Discord lays out the header, so it no longer drifts over the name or tags after the row is laid out again, and the name gives up the badge's room when the row is full.
+- On iOS, the plugin no longer reads or draws into the hidden cells in the chat's reuse pool or into grouped messages without a name; a hidden cell gets its badge as soon as it shows.
+
 ## [1.2.16] - 2026-11-19
 
 ### Fixed

@@ -4,7 +4,6 @@ import type {
 	NativeHookOptions,
 	NativeObjCBridge,
 	NativeObjectHandle,
-	NativeViewSnapshotNode,
 } from '@unbound-app/api/native';
 import { LATEST_CALL_PER_RECEIVER } from '@unbound-plugins/shared/native/ios/hook-options';
 import { readNativeMessageInfo } from '@unbound-plugins/shared/native/ios/message-info';
@@ -12,27 +11,27 @@ import { safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke'
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
 
 import { createIcon, describeIcon, fillKey, recolorIcon } from '~/native/ios/icon';
-import { installLayout, restoreLayout, type Layout } from '~/native/ios/layout';
+import { addBadge, removeBadge, showsNameRow } from '~/native/ios/layout';
 import type { TooltipController } from '~/native/ios/tooltip';
 import type { LatencyRecord, LatencyRecords } from '~/lib/records';
-import { findUsernameHeader } from '~/lib/username-header';
-import { CELL_SNAPSHOT } from '~/lib/constants';
 import { subscribeTheme } from '~/lib/theme';
 
 type LatencyView = {
+	cell: NativeObjectHandle;
 	cellKey: string;
 	messageId: string;
 	icon: NativeObjectHandle;
-	layout: Layout;
 	fillKey: string;
 	tooltip: string;
 };
 
-const HIDDEN_RETRIES = 3;
-const HIDDEN_RETRY_MS = 300;
-
 export type MessageCells = {
 	hook(): () => Promise<void>;
+};
+
+const SHOWN_CALLS: NativeHookOptions<true> = {
+	coalesce: 'receiver',
+	payload: { receiver: true, arguments: [0], phase: 'after' },
 };
 
 type Cell = {
@@ -40,7 +39,7 @@ type Cell = {
 	revision: number;
 	rendering: boolean;
 	rerender?: boolean;
-	hiddenRetries?: number;
+	awaitingShow?: boolean;
 	messageId?: string;
 	view?: LatencyView;
 };
@@ -92,8 +91,7 @@ export function createMessageCells(
 
 		if (cell?.view === view) cell.view = undefined;
 
-		await restoreLayout(objc, view.layout);
-		await safeInvokeAsync(objc, view.icon, 'removeFromSuperview');
+		await removeBadge(objc, view.icon, view.cell);
 	}
 
 	async function updateView(view: LatencyView, record: LatencyRecord) {
@@ -114,44 +112,38 @@ export function createMessageCells(
 	}
 
 	async function addView(
+		handle: NativeObjectHandle,
 		key: string,
 		messageId: string,
 		record: LatencyRecord,
-		nodes: NativeViewSnapshotNode[],
 		isFresh: () => boolean,
 	) {
-		const match = findUsernameHeader(nodes, record.username);
-
-		if (!match) return;
+		if (!(await showsNameRow(objc, handle)) || !isFresh()) return;
 
 		const icon = await createIcon(objc, record);
 
 		if (!icon || !viewKey(objc, icon) || !isFresh()) return;
 
-		const layout = await installLayout(objc, icon, match.label, match.header);
 		const cell = cells.get(key);
 
-		if (!cell || !isFresh()) {
-			await restoreLayout(objc, layout);
-			await safeInvokeAsync(objc, icon, 'removeFromSuperview');
-
-			return;
-		}
+		if (!cell || !isFresh() || !(await addBadge(objc, icon, handle))) return;
 
 		cell.view = {
+			cell: handle,
 			cellKey: key,
 			messageId,
 			icon,
-			layout,
 			fillKey: fillKey(record.details.fill),
 			tooltip: record.tooltip,
 		};
-		await safeInvokeAsync(objc, match.header, 'setNeedsLayout');
-		await safeInvokeAsync(objc, match.header, 'layoutIfNeeded');
 	}
 
 	async function isAttached(handle: NativeObjectHandle): Promise<boolean> {
 		return Boolean(await safeInvokeAsync(objc, handle, 'window'));
+	}
+
+	async function isHidden(handle: NativeObjectHandle): Promise<boolean> {
+		return Boolean(await safeInvokeAsync(objc, handle, 'isHidden'));
 	}
 
 	async function render(handle: NativeObjectHandle, key: string, revision: number) {
@@ -159,6 +151,14 @@ export function createMessageCells(
 
 		if (!(await isAttached(handle))) {
 			disposeCell(handle);
+
+			return;
+		}
+
+		if (await isHidden(handle)) {
+			const cell = cells.get(key);
+
+			if (cell && isFresh()) cell.awaitingShow = true;
 
 			return;
 		}
@@ -200,31 +200,18 @@ export function createMessageCells(
 				return;
 			}
 
-			const nodes = await objc.snapshot(handle, CELL_SNAPSHOT);
-
-			if (!isFresh()) return;
-
-			if (!nodes[0]?.visible) {
-				retryWhileHidden(handle, cell);
-
-				return;
-			}
-
-			cell.hiddenRetries = 0;
-
-			await addView(key, messageId, record, nodes, isFresh);
+			await addView(handle, key, messageId, record, isFresh);
 		});
 	}
 
-	function retryWhileHidden(handle: NativeObjectHandle, cell: Cell) {
-		const tries = cell.hiddenRetries ?? 0;
+	function onShown(handle: NativeObjectHandle) {
+		const key = viewKey(objc, handle);
+		const cell = key ? cells.get(key) : undefined;
 
-		if (tries >= HIDDEN_RETRIES) return;
+		if (!cell || (!cell.awaitingShow && !cell.rendering)) return;
 
-		cell.hiddenRetries = tries + 1;
-		setTimeout(() => {
-			if (!disposed) schedule(handle);
-		}, HIDDEN_RETRY_MS);
+		cell.awaitingShow = false;
+		schedule(handle);
 	}
 
 	function schedule(handle: NativeObjectHandle) {
@@ -246,6 +233,7 @@ export function createMessageCells(
 		cell.revision = revision;
 		cell.rendering = true;
 		cell.rerender = false;
+		cell.awaitingShow = false;
 		cells.set(key, cell);
 
 		// Deferred so the native lifecycle call that triggered it returns first.
@@ -342,6 +330,16 @@ export function createMessageCells(
 				'didMoveToWindow',
 				{ after: ({ self }) => schedule(self) },
 				LATEST_CALL_PER_RECEIVER,
+			],
+			[
+				'DCDMessageTableViewCell',
+				'setHidden:',
+				{
+					after: ({ self, args }) => {
+						if (!args[0]) onShown(self);
+					},
+				},
+				SHOWN_CALLS,
 			],
 			[
 				'DCDMessageTableViewCell',
