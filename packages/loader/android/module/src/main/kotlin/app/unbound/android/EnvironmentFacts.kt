@@ -120,6 +120,7 @@ object EnvironmentFacts {
         .put("refreshRate", refreshRate(context))
         .put("boldText", isBoldText(context))
         .put("formFactor", formFactor(context))
+        .put("duplicateCopy", SingleCopy.duplicate())
         .put("locale", localeFacts())
 
     private fun formFactor(context: Context): String = runCatching {

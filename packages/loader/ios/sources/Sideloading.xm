@@ -6,6 +6,7 @@
 #import "CoreConversions.h"
 #include "LoaderBrowserLogin.h"
 #include "LoaderDiagnostics.h"
+#import "SingleCopy.h"
 
 using unbound::ios::toNSString;
 using unbound::ios::toStdString;
@@ -574,6 +575,11 @@ static NSString *remappedAppGroup(NSString *identifier)
 
 %ctor
 {
+    if (UnboundIsDuplicateCopy())
+    {
+        return;
+    }
+
     if (![Utilities hasDiscordProductionEntitlements])
     {
         %init();

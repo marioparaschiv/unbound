@@ -127,6 +127,12 @@ void listsDisplayLocaleAndDeviceFacts()
                                         "HarmonyOS", "installed on adoptable storage",
                                         "foldable, unfolded", "90 Hz"}));
 
+    report::AndroidDeviceFacts twice;
+    twice.duplicateCopy = "/data/app/~~x/app.unbound.android-1/base.apk";
+    assert((report::androidMarkers(twice)
+            == std::vector<std::string>{"second Unbound copy skipped (base.apk)"}));
+    assert(report::duplicateCopyMarker("").empty());
+
     report::AndroidDeviceFacts noBridge;
     noBridge.abiBridge = "0";
     assert(report::androidMarkers(noBridge).empty());

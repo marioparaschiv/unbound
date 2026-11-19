@@ -17,6 +17,7 @@
 #include "JailbreakDetection.h"
 #include "LoaderBinaryAnatomy.h"
 #include "LoaderEnvironmentReport.h"
+#import "SingleCopy.h"
 #import "Utilities.h"
 
 using unbound::ios::toStdString;
@@ -271,9 +272,11 @@ static report::AppleDeviceFacts deviceFacts()
     facts.sideStoreVPN     = hasSideStoreVPN();
     facts.liveContainerMultitask =
         [NSBundle.mainBundle.executablePath containsString:@"LiveProcess"];
-    facts.refreshRate = refreshRate();
-    facts.boldText    = UIAccessibilityIsBoldTextEnabled();
-    facts.locale      = localeFacts();
+    facts.refreshRate     = refreshRate();
+    facts.boldText        = UIAccessibilityIsBoldTextEnabled();
+    facts.locale          = localeFacts();
+    const char *duplicate = UnboundDuplicateCopyPath();
+    facts.duplicateCopy   = duplicate ? duplicate : "";
     return facts;
 }
 

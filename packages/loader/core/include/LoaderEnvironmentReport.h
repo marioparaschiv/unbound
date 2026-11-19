@@ -30,6 +30,7 @@ struct AppleDeviceFacts {
     bool debuggerAttached = false;
     bool trollFools       = false;
     bool appSync          = false;
+    std::string duplicateCopy;
 };
 
 struct AndroidDeviceFacts {
@@ -51,6 +52,7 @@ struct AndroidDeviceFacts {
     int refreshRate       = 0;
     bool boldText         = false;
     std::string formFactor;
+    std::string duplicateCopy;
     LocaleFacts locale;
 };
 
@@ -63,6 +65,7 @@ struct HttpsCheck {
 bool isBetaBuild(const std::string &build);
 std::vector<std::string> localeMarkers(const LocaleFacts &facts);
 std::vector<std::string> displayMarkers(int refreshRate, bool boldText);
+std::string duplicateCopyMarker(const std::string &path);
 std::vector<std::string> appleMarkers(const AppleDeviceFacts &facts);
 std::vector<std::string> androidMarkers(const AndroidDeviceFacts &facts);
 nlohmann::json httpsVerdict(const HttpsCheck &check);
