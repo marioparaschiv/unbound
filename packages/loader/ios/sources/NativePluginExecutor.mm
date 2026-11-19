@@ -1,4 +1,5 @@
 #include <chrono>
+#include <deque>
 #include <exception>
 #include <functional>
 #include <memory>
@@ -38,14 +39,19 @@ public:
 
     void runOnMain(std::function<void()> work) override
     {
-        auto task = std::make_shared<std::function<void()>>(
-            loader::native::chargeMainWork(std::move(work)));
-        dispatch_async(dispatch_get_main_queue(), ^{
-            @autoreleasepool
+        {
+            std::lock_guard<std::mutex> lock(mainQueueMutex_);
+            mainQueue_.push_back(loader::native::chargeMainWork(std::move(work)));
+            if (mainDrainScheduled_)
             {
-                (*task)();
+                return;
             }
-        });
+
+            mainDrainScheduled_ = true;
+        }
+
+        auto owner = shared_from_this();
+        dispatch_async(dispatch_get_main_queue(), ^{ owner->drainMainWork(); });
     }
 
     bool runOnMainNextFrame(std::function<void()> work) override
@@ -80,6 +86,44 @@ public:
     }
 
 private:
+    void drainMainWork()
+    {
+        std::deque<std::function<void()>> work;
+        {
+            std::lock_guard<std::mutex> lock(mainQueueMutex_);
+            work.swap(mainQueue_);
+            mainDrainScheduled_ = false;
+        }
+
+        if (work.empty())
+        {
+            return;
+        }
+
+        const auto startedAt = std::chrono::steady_clock::now();
+        for (auto &item : work)
+        {
+            @autoreleasepool
+            {
+                try
+                {
+                    item();
+                }
+                catch (const std::exception &error)
+                {
+                    [Logger error:LOG_CATEGORY_PLUGINS
+                           format:@"Main-thread native work failed: %s", error.what()];
+                }
+                catch (...)
+                {
+                    [Logger error:LOG_CATEGORY_PLUGINS format:@"Main-thread native work failed."];
+                }
+            }
+        }
+
+        loader::native::recordMainDrain(work.size(), std::chrono::steady_clock::now() - startedAt);
+    }
+
     void enqueueRuntime(std::function<void(Runtime &)> work,
                         loader::native::NativeWorkPriority priority)
     {
@@ -128,6 +172,9 @@ private:
     }
 
     loader::native::NativeWorkQueue<std::function<void(Runtime &)>> runtimeQueue_;
+    std::mutex mainQueueMutex_;
+    std::deque<std::function<void()>> mainQueue_;
+    bool mainDrainScheduled_ = false;
 };
 }
 
