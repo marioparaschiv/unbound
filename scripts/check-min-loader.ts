@@ -154,7 +154,20 @@ async function findingsAgainst(tag: string): Promise<MinLoaderFinding[]> {
 		}
 
 		return parseFindings(
-			run(['bunx', 'tsc', '-p', '.', '--noEmit', '--pretty', 'false'], CLIENT).output,
+			run(
+				[
+					'bunx',
+					'tsc',
+					'-p',
+					'.',
+					'--noEmit',
+					'--pretty',
+					'false',
+					'--incremental',
+					'false',
+				],
+				CLIENT,
+			).output,
 		);
 	} finally {
 		for (const [path, text] of originals) {
