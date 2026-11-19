@@ -5,6 +5,7 @@ import { withdrawOnCrashSpike } from '~/lib/crash-issues/crash-withdrawal';
 import { crashOrigin, filesIssue } from '~/lib/crash-issues/crash-origin';
 import { fileCrashIssue } from '~/lib/crash-issues/file-crash-issue';
 import { crashFingerprint } from '~/lib/crash-issues/fingerprint';
+import { crashSpread } from '~/lib/crash-issues/crash-spread';
 import { crashReport } from '~/db/schema';
 import endpoint from '~/lib/api/endpoint';
 
@@ -47,7 +48,9 @@ const reportCrashEndpoint = endpoint(
 			? await fileCrashIssue(ctx, body, id, fingerprint)
 			: undefined;
 
-		return issue ? { id, origin, issue } : { id, origin };
+		const seen = await crashSpread(ctx, fingerprint, body.clientVersion);
+
+		return issue ? { id, origin, issue, seen } : { id, origin, seen };
 	},
 	{ rateLimit: { bucket: 'crash-reports', budget: 'CRASH_REPORTS' } },
 );

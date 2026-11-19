@@ -20,7 +20,12 @@ export type CrashRecord = {
 	issue?: CrashIssueLink;
 	issuePending?: boolean;
 	issueState?: IssueState;
+	/** How many installs reported this crash, in all and on the reporting version, when it was sent. */
+	seen?: CrashSpread;
 };
+
+/** How many installs reported one crash, in all and on one client version. */
+export type CrashSpread = { installs: number; versionInstalls: number };
 
 /** Whether a crash's GitHub issue is open, closed as fixed, or closed for another reason. */
 export type IssueState = 'open' | 'fixed' | 'closed';
@@ -33,6 +38,15 @@ function isIssueLink(value: CrashIssueLink): boolean {
 		typeof value === 'object' &&
 		typeof value.number === 'number' &&
 		typeof value.url === 'string'
+	);
+}
+
+function isSpread(value: unknown): value is CrashSpread {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		typeof (value as Partial<CrashSpread>).installs === 'number' &&
+		typeof (value as Partial<CrashSpread>).versionInstalls === 'number'
 	);
 }
 
@@ -51,7 +65,8 @@ function isCrashRecord(value: unknown): value is CrashRecord {
 		(record.where === undefined || typeof record.where === 'string') &&
 		(record.issuePending === undefined || typeof record.issuePending === 'boolean') &&
 		(record.issueState === undefined || ISSUE_STATES.includes(record.issueState)) &&
-		(record.issue === undefined || isIssueLink(record.issue))
+		(record.issue === undefined || isIssueLink(record.issue)) &&
+		(record.seen === undefined || isSpread(record.seen))
 	);
 }
 
@@ -108,7 +123,10 @@ export async function recordCrash(record: CrashRecord): Promise<void> {
  */
 export async function markCrashReported(
 	at: number,
-	sent: Pick<CrashRecord, 'origin' | 'reportId' | 'issue' | 'issuePending' | 'issueState'>,
+	sent: Pick<
+		CrashRecord,
+		'origin' | 'reportId' | 'issue' | 'issuePending' | 'issueState' | 'seen'
+	>,
 ): Promise<void> {
 	const records = await readCrashHistory();
 

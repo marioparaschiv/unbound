@@ -1,0 +1,1 @@
+CREATE INDEX "crash_report_fingerprint_install_idx" ON "crash_report" ("fingerprint","install_id");

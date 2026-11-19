@@ -70,6 +70,13 @@ export const crashReportResponseSchema = Type.Object({
 			created: Type.Boolean(),
 		}),
 	),
+	/** How many installs reported this same crash, in all and on this report's client version. */
+	seen: Type.Optional(
+		Type.Object({
+			installs: Type.Integer({ minimum: 0 }),
+			versionInstalls: Type.Integer({ minimum: 0 }),
+		}),
+	),
 });
 
 export const crashIssueResponseSchema = Type.Object({

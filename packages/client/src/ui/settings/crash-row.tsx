@@ -33,6 +33,7 @@ function crashDetails(record: CrashRecord, pluginName: string | undefined): stri
 		record.issue
 			? format(ISSUE_LABELS[record.issueState ?? 'open'], { number: record.issue.number })
 			: record.reportId && `#${record.reportId.slice(0, 8)}`,
+		record.seen && record.seen.installs > 1 && format('UNBOUND_CRASH_SEEN', record.seen),
 	]
 		.filter(Boolean)
 		.join(' · ');

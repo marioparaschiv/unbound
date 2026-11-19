@@ -40,6 +40,7 @@ export const crashReport = pgTable(
 	(table) => [
 		index('crash_report_addonId_receivedAt_idx').on(table.addonId, table.receivedAt),
 		index('crash_report_receivedAt_idx').on(table.receivedAt),
+		index('crash_report_fingerprint_install_idx').on(table.fingerprint, table.installId),
 		index('crash_report_addon_version_idx').on(
 			table.addonId,
 			table.addonVersion,
