@@ -11,21 +11,21 @@ import android.os.PowerManager
 import android.os.Process
 import android.os.UserManager
 import android.provider.Settings
+import android.system.Os
+import android.system.OsConstants
 import android.text.TextUtils
 import android.view.View
 import android.view.WindowManager
-import android.system.Os
-import android.system.OsConstants
 import android.webkit.WebView
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.text.DecimalFormatSymbols
-import java.util.Locale
-import java.util.zip.ZipFile
 import java.security.MessageDigest
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
+import java.text.DecimalFormatSymbols
+import java.util.Locale
+import java.util.zip.ZipFile
 
 object EnvironmentFacts {
     private const val DISCORD_CERTIFICATE = "3c39d23cf9367849a5c699395647fe0e5bfea5a1f1f40d8c717ddc70f8bfa113"
@@ -190,8 +190,11 @@ object EnvironmentFacts {
         val packages = context.packageManager
         return when {
             packages.hasSystemFeature(PLAY_GAMES_PC_FEATURE) -> "Play Games PC"
+
             packages.hasSystemFeature(CHROME_OS_FEATURE) -> "ChromeOS"
+
             property(WAYDROID_PROPERTY) != null -> "Waydroid"
+
             else -> EMULATOR_FILES.firstOrNull { (path, _) -> File(path).exists() }?.second
                 ?: virtualHost(context)
                 ?: ""
