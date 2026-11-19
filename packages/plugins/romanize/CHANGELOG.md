@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.1] - 2026-11-19
+
+### Changed
+
+- Hindi and other Devanagari messages are recognised from their first letter, with the script ranges written as plain escapes.
+
 ## [1.0.0] - 2026-11-19
 
 ### Added
