@@ -65,11 +65,15 @@ export function fitNameRow(
 
 	if (!container || !holder || !label) return;
 
+	const natural = naturalWidth(objc, label);
+
+	if (natural <= 0) return;
+
 	const name = box(objc.invoke(holder, 'frame', []));
 	const after = tags ? box(objc.invoke(tags, 'frame', [])) : undefined;
 	const gap = after ? Math.max(after.x - name.x - name.width, TAG_GAP) : 0;
 	const reserved = after && after.width > 0 ? gap + after.width : 0;
-	const width = Math.max(0, Math.min(naturalWidth(objc, label), room - name.x - reserved));
+	const width = Math.max(0, Math.min(natural, room - name.x - reserved));
 
 	if (Math.abs(width - name.width) < 0.5) return;
 

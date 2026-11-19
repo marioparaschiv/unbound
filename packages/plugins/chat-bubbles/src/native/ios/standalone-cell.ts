@@ -15,4 +15,20 @@ export function isStandaloneCell(objc: NativeObjCBridge, cell: NativeObjectHandl
 	return Boolean(parent) && objc.className(parent!) === STANDALONE_HOST;
 }
 
+/**
+ * @description {@link isStandaloneCell} for the JavaScript thread, which must not call UIKit synchronously while the main
+ * thread may be waiting for JavaScript.
+ * @param objc The Objective-C bridge.
+ * @param cell The message cell.
+ * @returns Whether the cell's parent is a standalone message view.
+ */
+export async function isStandaloneCellAsync(
+	objc: NativeObjCBridge,
+	cell: NativeObjectHandle,
+): Promise<boolean> {
+	const parent = (await objc.invokeAsync(cell, 'superview', [])) as NativeObjectHandle | null;
+
+	return Boolean(parent) && objc.className(parent!) === STANDALONE_HOST;
+}
+
 export default isStandaloneCell;

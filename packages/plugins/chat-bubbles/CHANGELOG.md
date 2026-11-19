@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.28] - 2026-11-19
+
+### Fixed
+
+- On iOS, rows no longer fail to get a bubble at launch with a wrong-thread error: the check for pinned and notification messages now reads the cell's parent without blocking on the main thread.
+- On iOS, a new message's name row is left as Discord laid it out until its name has text, instead of shrinking the name to nothing on the first layout.
+
 ## [1.6.27] - 2026-11-19
 
 ### Fixed
