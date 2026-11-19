@@ -1,0 +1,17 @@
+{
+	"id": "unbound.furigana",
+	"name": "Furigana",
+	"description": "Shows the readings of the kanji in Japanese messages in a small line under them, on iOS.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "LanguageIcon",
+	"main": "index.ts"
+}
