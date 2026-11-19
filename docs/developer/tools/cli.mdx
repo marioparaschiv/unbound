@@ -258,6 +258,7 @@ Keys built at run time, such as `messages[name]`, are not found. The report coun
 | `ubd debug views [filter]` | Prints the native view tree: Android views of the current activity, or iOS views of every visible window, with size, visibility, text and handle. |
 | `ubd debug inspect <class\|views\|find> [name]` | `class` lists constructors, methods and fields (`--filter` narrows). `views` dumps view subtrees (`--class` keeps one view class). |
 | `ubd debug hook <className> [method]` | Records calls to an Android Java method or iOS Objective-C selector. On Android, `--parameters` gives Java parameter types, such as `android.view.MotionEvent`. |
+| `ubd debug gesture --from-x <x> --from-y <y>` | Drives a drag from a point by `--dx=-100`/`--dy` over `--duration` ms and holds it for `--hold` ms, such as a swipe to reply. Android sends real touch events; iOS drives the pan recognizer under the point through its targets. |
 | `ubd debug spans [match]` | Prints the text and spans of matching Android text views, with each span's class and range and invisible characters escaped. |
 
 ## Logs and Device State
