@@ -29,5 +29,23 @@
 		"min": "3.0.0"
 	},
 	"icon": "LaptopPhoneIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.objc.classes",
+				"native.objc.hooks",
+				"native.objc.invoke",
+				"native.objc.ivars"
+			]
+		},
+		"android": {}
+	},
+	"bytecode": {
+		"98": "7926f657dd0a55bcf7a4506c0ea2f5ec40e69ebf98ca8e7b5b0516e71714c7595f31cf3c71f56430ec172de85b5f29ccce0b2580750836acf0af53675aad5791"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "Bfx2betROMIFc0Z3hz7a/YRkNR59PH2GvvhyX6MH6DzoUhWNoYV1D9q5NtumJXZTzoNyruBno6QSH5iRHR+ACw=="
+	}
 }
