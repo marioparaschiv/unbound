@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2] - 2026-11-19
+
+### Changed
+
+- On iOS, previewed videos downloaded from iCloud are kept on disk up to 500 MB in all, instead of the last three whatever their size; the one on screen always stays.
+
 ## [1.0.1] - 2026-11-19
 
 ### Fixed
