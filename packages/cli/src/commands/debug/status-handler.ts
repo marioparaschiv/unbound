@@ -70,6 +70,10 @@ const deviceStatusReportSchema = Type.Object({
 	slowestStarts: defaulted(Type.Array(Type.Tuple([Type.String(), Type.Number()])), []),
 	startTotal: defaulted(Type.Number(), 0),
 	updateUrl: defaulted(Type.String(), ''),
+	hookOwners: defaulted(
+		Type.Array(Type.Object({ owner: Type.String(), hooks: Type.Number() })),
+		[],
+	),
 });
 
 type DeviceStatusReport = StaticDecode<typeof deviceStatusReportSchema>;
@@ -98,9 +102,43 @@ function readDeviceStatus({ unbound, plugins }: DevicePrelude): string {
 		slowestStarts: [...(durations ?? [])].sort((left, right) => right[1] - left[1]).slice(0, 8),
 		startTotal: [...(durations?.values() ?? [])].reduce((total, ms) => total + ms, 0),
 		updateUrl: String(unbound.storage.getBucket('unbound').get('loader.update.url', '')),
+		hookOwners: unbound.native.hookOwners?.() ?? [],
 	};
 
 	return JSON.stringify(report);
+}
+
+const HOOK_LIMIT = 256;
+const HOOK_WARNING_SHARE = 0.8;
+const LISTED_OWNERS = 8;
+
+/**
+ * @description Says who holds the native hooks, and warns when they near the loader's limit, past which new hooks fail.
+ * @param total Every hook the loader holds.
+ * @param owners The hooks plugin and tool scopes hold, most first.
+ * @returns Status lines; none when no scope holds a hook.
+ */
+export function describeHookOwners(
+	total: number,
+	owners: { owner: string; hooks: number }[],
+): string[] {
+	if (!owners.length) {
+		return [];
+	}
+
+	const scoped = owners.reduce((sum, { hooks }) => sum + hooks, 0);
+	const listed = owners.slice(0, LISTED_OWNERS).map(({ owner, hooks }) => `${owner} ${hooks}`);
+	const lines = [
+		`Hooks by owner: ${listed.join(', ')}; ${Math.max(0, total - scoped)} in UI scopes, evals and the loader`,
+	];
+
+	if (total >= HOOK_LIMIT * HOOK_WARNING_SHARE) {
+		lines.push(
+			`Warning: ${total} of ${HOOK_LIMIT} hooks are in use; plugins started now may fail to hook. Restart Discord to reset.`,
+		);
+	}
+
+	return lines;
 }
 
 /**
@@ -150,6 +188,7 @@ function formatStatus(
 
 		lines.push(
 			`Native resources after GC: ${handles ?? 0} handles, ${hooks ?? 0} hooks, ${surfaces ?? 0} surfaces, ${cachedReturns ?? 0} cached returns`,
+			...describeHookOwners(hooks ?? 0, report.hookOwners),
 		);
 	} else {
 		lines.push('Native resources: this loader does not report them');

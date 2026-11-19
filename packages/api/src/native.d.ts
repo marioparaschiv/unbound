@@ -165,6 +165,11 @@ export declare function getRuntimeProperties(): HermesRuntimeProperties;
  */
 export declare function has(capability: NativeBridgeCapability): boolean;
 /**
+ * @description Lists the owners holding hooks through native scopes, most first.
+ * @returns Each owner with its live hook count; owners with none are left out.
+ */
+export declare function hookOwners(): HookOwner[];
+/**
  * @description Persists pending settings to storage and unmounts the surfaces plugins still have mounted, then reloads
  * the native bundle.
  */
@@ -298,6 +303,11 @@ export type DeviceInfoType = {
 };
 /** What `HermesInternal.getRuntimeProperties()` reports; empty when the engine is not Hermes. */
 export type HermesRuntimeProperties = ReturnType<HermesInternalObject['getRuntimeProperties']>;
+/** How many hooks one owner holds through its native scopes. */
+export type HookOwner = {
+	owner: string;
+	hooks: number;
+};
 /** A reference that does not keep its native object alive; `deref` reads `null` once the object is gone. */
 export type NativeWeakHandle<T> = {
 	/** The object while it lives, else `null`. */

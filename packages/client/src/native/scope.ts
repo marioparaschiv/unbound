@@ -37,6 +37,7 @@ import type { AddonAttribution } from '~/addons/crash-guard';
 import { createScopedJavaBridge } from '~/native/scope-java';
 import { trackCapabilities } from '~/native/capability-use';
 import { createScopedFFIBridge } from '~/native/scope-ffi';
+import { trackHookOwner } from '~/native/hook-owners';
 import { createScopedUIBridge } from '~/native/ui';
 import { getNativeBridge } from '~/native/bridge';
 
@@ -87,6 +88,7 @@ export function createScopedNativeBridge(
 	const objcPlans = new Set<NativeObjCCallPlan>();
 	const surfaces = createTrackedSurfaces((surface) => fabricBridge.unmountAsync(surface));
 	const javaHookTokens = new Set<NativeJavaHookToken>();
+	const untrackHooks = trackHookOwner(owner ?? 'unknown', tokens, javaHookTokens);
 	const runtimeTokens = new Set<NativeRuntimeEventToken>();
 	const pendingInvocations = new Set<NativeCancelablePromise<unknown>>();
 	const associations: AssociationBinding[] = [];
@@ -691,6 +693,7 @@ export function createScopedNativeBridge(
 			if (lifecycle.disposed) return;
 
 			lifecycle.disposed = true;
+			untrackHooks();
 			ui.dispose();
 
 			for (const pending of pendingInvocations) pending.cancel();
