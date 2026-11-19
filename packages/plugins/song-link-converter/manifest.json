@@ -1,0 +1,17 @@
+{
+	"id": "unbound.song-link-converter",
+	"name": "Song Link Converter",
+	"description": "Tapping a Spotify, Apple Music, YouTube Music or Deezer link opens the song in the music service you use instead.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "MusicIcon",
+	"main": "index.tsx"
+}
