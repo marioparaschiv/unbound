@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 
+#include "LoaderGzip.h"
 #include "LoaderLogFile.h"
 
 static std::string read(const std::string &path)
@@ -105,6 +106,24 @@ static void rotatesAndKeepsOnlyTheNewestFiles()
     assert(!std::filesystem::exists(file.path(3)));
 }
 
+static void compressesFilesPastThePlainOnes()
+{
+    std::string directory = scratchDirectory("unbound-log-compress");
+    loader::RotatingLogFile file("unbound", 10, 2, 8, 2);
+    file.open(directory);
+    for (const char *line : {"aaaaaaaa\n", "bbbbbbbb\n", "cccccccc\n", "dddddddd\n", "eeeeeeee\n"})
+    {
+        file.append(line);
+    }
+
+    assert(read(file.path(0)) == "eeeeeeee\n");
+    assert(read(file.path(1)) == "dddddddd\n");
+    assert(file.compressedPath(0) == directory + "/unbound.2.log.gz");
+    assert(loader::gunzipFile(file.compressedPath(0)) == "cccccccc\n");
+    assert(loader::gunzipFile(file.compressedPath(1)) == "bbbbbbbb\n");
+    assert(!std::filesystem::exists(directory + "/unbound.4.log.gz"));
+}
+
 static void appendsToAnExistingFileAcrossLaunches()
 {
     std::string directory = scratchDirectory("unbound-log-reopen");
@@ -134,6 +153,7 @@ int main()
     namesEachFileAfterItsStem();
     buffersLinesUntilOpened();
     rotatesAndKeepsOnlyTheNewestFiles();
+    compressesFilesPastThePlainOnes();
     appendsToAnExistingFileAcrossLaunches();
     placesLogsBesideTheOtherUnboundFiles();
     return 0;

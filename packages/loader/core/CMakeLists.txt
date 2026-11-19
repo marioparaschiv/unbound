@@ -103,6 +103,7 @@ endif()
 
 add_library(unbound_core STATIC ${UNBOUND_CORE_SOURCES})
 target_link_libraries(unbound_core PRIVATE unbound_bearssl unbound_woff2)
+target_link_libraries(unbound_core PUBLIC z)
 target_include_directories(unbound_core PRIVATE ${UNBOUND_VENDOR_DIR}/brotli/c/include)
 
 add_executable(bundle_patch_check ${CMAKE_CURRENT_LIST_DIR}/tools/bundle_patch_check.cpp)

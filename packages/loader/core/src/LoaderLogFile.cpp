@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "LoaderGzip.h"
 #include "LoaderLogStream.h"
 #include "NativePluginRuntime.h"
 
@@ -16,10 +17,30 @@ namespace jsi = facebook::jsi;
 static const char *const kLoaderScope = "Loader";
 
 RotatingLogFile::RotatingLogFile(std::string name, std::size_t maximumSize, std::size_t filesKept,
-                                 std::size_t linesBuffered)
+                                 std::size_t linesBuffered, std::size_t filesCompressed)
     : name_(std::move(name)), maximumSize_(maximumSize), filesKept_(filesKept),
-      linesBuffered_(linesBuffered)
+      linesBuffered_(linesBuffered), filesCompressed_(filesCompressed)
 {
+}
+
+std::string RotatingLogFile::compressedPath(std::size_t generation) const
+{
+    return directory_ + "/" + name_ + "." + std::to_string(filesKept_ + generation) + ".log.gz";
+}
+
+void RotatingLogFile::compressOldest()
+{
+    std::error_code error;
+    std::filesystem::remove(compressedPath(filesCompressed_ - 1), error);
+    for (std::size_t generation = filesCompressed_ - 1; generation > 0; generation--)
+    {
+        std::filesystem::rename(compressedPath(generation - 1), compressedPath(generation), error);
+    }
+
+    if (std::filesystem::exists(path(filesKept_ - 1), error))
+    {
+        gzipFile(path(filesKept_ - 1), compressedPath(0));
+    }
 }
 
 std::string RotatingLogFile::path(std::size_t generation) const
@@ -149,6 +170,11 @@ void RotatingLogFile::append(const std::string &line)
 void RotatingLogFile::rotate()
 {
     stream_.close();
+    if (filesCompressed_ > 0)
+    {
+        compressOldest();
+    }
+
     std::error_code error;
     std::filesystem::remove(path(filesKept_ - 1), error);
     for (std::size_t generation = filesKept_ - 1; generation > 0; generation--)
@@ -162,7 +188,8 @@ void RotatingLogFile::rotate()
 
 static RotatingLogFile &sharedLogFile()
 {
-    static RotatingLogFile file("unbound", kLogFileMaximumSize, kLogFilesKept, kLogLinesBuffered);
+    static RotatingLogFile file("unbound", kLogFileMaximumSize, kLogFilesKept, kLogLinesBuffered,
+                                kLogFilesCompressed);
     return file;
 }
 
@@ -173,7 +200,8 @@ std::string previousLaunchLogTail(std::size_t lines)
 
 static RotatingLogFile &nativeLogFile()
 {
-    static RotatingLogFile file("native", kLogFileMaximumSize, kLogFilesKept, kLogLinesBuffered);
+    static RotatingLogFile file("native", kLogFileMaximumSize, kLogFilesKept, kLogLinesBuffered,
+                                kLogFilesCompressed);
     return file;
 }
 
