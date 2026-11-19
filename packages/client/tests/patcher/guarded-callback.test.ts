@@ -10,6 +10,23 @@ const { createPatcher } = await import('~/patcher/create-patcher');
 const { flush } = await import('~/hot-refresh/live-patch');
 
 describe('guarded function patches', () => {
+	test('remove a patch at once when it recurses until the stack runs out', () => {
+		const target = { add: (a: number, b: number) => a + b };
+		const patcher = createPatcher('test.recursion');
+		let calls = 0;
+
+		patcher.before(target, 'add', () => {
+			calls++;
+			throw new RangeError('Maximum call stack size exceeded');
+		});
+		flush();
+
+		expect(target.add(1, 2)).toBe(3);
+		expect(target.add(1, 2)).toBe(3);
+		expect(calls).toBe(1);
+		patcher.unpatchAll();
+	});
+
 	test('remove a patch after three throws in a row and keep the original working', () => {
 		const target = { add: (a: number, b: number) => a + b };
 		const patcher = createPatcher('test.guard');
