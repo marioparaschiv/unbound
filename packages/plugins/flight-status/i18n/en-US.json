@@ -1,0 +1,12 @@
+{
+	"ROW": "Flight {flight} status",
+	"AIRBORNE": "In the air at {altitude} ft, {speed} kt, heading {heading}.",
+	"CLIMBING": "Climbing.",
+	"DESCENDING": "Descending.",
+	"AIRCRAFT": "Aircraft {type} ({registration}).",
+	"ON_GROUND": "On the ground.",
+	"NOT_FLYING": "Not in the air right now, or not reporting its position.",
+	"LOOKUP_FAILED": "Couldn't look up flight {flight}",
+	"OPEN_TRACKER": "Open in Flightradar24",
+	"CLOSE": "Close"
+}

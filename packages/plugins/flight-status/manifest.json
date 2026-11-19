@@ -1,0 +1,17 @@
+{
+	"id": "unbound.flight-status",
+	"name": "Flight Status",
+	"description": "Long-press a message that mentions a flight number to see whether it is in the air, its altitude, speed and aircraft.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "GlobeEarthIcon",
+	"main": "index.tsx"
+}
