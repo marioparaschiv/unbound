@@ -33,6 +33,12 @@ void listsDeviceMarkers()
     apple.debuggerAttached = true;
     assert(report::appleMarkers(apple)[3] == "debugger attached");
 
+    report::AppleDeviceFacts mac;
+    mac.iOSAppOnMac = true;
+    assert((report::appleMarkers(mac) == std::vector<std::string>{"iPhone app on Mac"}));
+    mac.playCover = true;
+    assert((report::appleMarkers(mac) == std::vector<std::string>{"PlayCover"}));
+
     report::AndroidDeviceFacts android;
     android.selinuxEnforcing  = false;
     android.verifiedBootState = "orange";
