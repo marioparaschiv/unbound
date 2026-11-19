@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <unordered_map>
 
+#include "LoaderAddonHandles.h"
 #include "LoaderJSIJSON.h"
 #include "NativePluginRuntime.h"
 
@@ -32,6 +33,13 @@ public:
         auto [found, inserted] = entries_.try_emplace(id);
         if (inserted)
         {
+            found->second.charge = chargeHandle();
+            if (!found->second.charge.admitted)
+            {
+                entries_.erase(found);
+                throw jsi::JSINativeException(handleLimitMessage(currentAddon()));
+            }
+
             gLeasedHandles++;
         }
 
@@ -59,6 +67,7 @@ public:
             }
 
             issues = found->second.issues;
+            releaseHandle(found->second.charge);
             entries_.erase(found);
             gLeasedHandles--;
         }
@@ -76,6 +85,7 @@ private:
     struct Entry {
         uint64_t live   = 0;
         uint64_t issues = 0;
+        HandleCharge charge;
     };
 
     void forgetStaleGeneration()
@@ -84,6 +94,11 @@ private:
         if (current != generation_)
         {
             gLeasedHandles -= entries_.size();
+            for (const auto &[id, entry] : entries_)
+            {
+                releaseHandle(entry.charge);
+            }
+
             entries_.clear();
             generation_ = current;
         }
