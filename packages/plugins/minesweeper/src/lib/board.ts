@@ -7,6 +7,7 @@ export type Board = number[][];
 
 const NUMBERS = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣'];
 const MINE = '💥';
+const TILE_SEPARATOR = '\u200B';
 
 /**
  * @description The most mines a board of this size can hold while one tile and its neighbours stay clear to start from.
@@ -68,7 +69,8 @@ export function createBoard(
 }
 
 /**
- * @description Writes a board as Discord emoji in spoilers, leaving the start tile uncovered.
+ * @description Writes a board as Discord emoji in spoilers, leaving the start tile uncovered. Tiles are split by a
+ * zero-width space, since Discord pairs the bars of touching spoilers (`||a||||b||`) wrongly and reveals two at once.
  * @param board The board.
  * @param start The tile shown uncovered.
  * @returns One line of tiles per row.
@@ -82,7 +84,7 @@ export function formatBoard(board: Board, start: [number, number]): string {
 
 					return r === start[0] && c === start[1] ? emoji : `||${emoji}||`;
 				})
-				.join(''),
+				.join(TILE_SEPARATOR),
 		)
 		.join('\n');
 }

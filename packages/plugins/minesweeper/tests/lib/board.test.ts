@@ -54,7 +54,8 @@ describe('board', () => {
 			[0, 0],
 		);
 
-		expect(text).toBe('0️⃣||1️⃣||\n||1️⃣||||💥||');
+		expect(text).toBe('0️⃣\u200B||1️⃣||\n||1️⃣||\u200B||💥||');
+		expect(text).not.toContain('||||');
 	});
 
 	test('leaves room for a clear start', () => {
