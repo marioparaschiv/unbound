@@ -147,17 +147,20 @@ function restoreStrays(
 
 function resetTyping(objc: NativeObjCBridge, textView: NativeObjectHandle) {
 	'worklet';
-	const typing = objc.call(textView, 'typingAttributes') as NativeObjectHandle | null;
+	// UNKNOWN: the bridge hands an `NSDictionary` over as a plain object.
+	const typing = objc.call(textView, 'typingAttributes') as Record<string, unknown> | null;
 	const font = objc.call(textView, 'font');
 	const color = objc.call(textView, 'textColor');
 
-	if (!typing) return;
+	if (!typing || !font || !color || !('NSKern' in typing)) return;
 
-	const attributes = objc.call(typing, 'mutableCopy') as NativeObjectHandle;
+	const attributes = objc.call(
+		objc.getClass('NSMutableDictionary')!,
+		'new',
+	) as NativeObjectHandle;
 
-	if (font) objc.call(attributes, 'setObject:forKey:', font, 'NSFont');
-	if (color) objc.call(attributes, 'setObject:forKey:', color, 'NSColor');
-	objc.call(attributes, 'removeObjectForKey:', 'NSKern');
+	objc.call(attributes, 'setObject:forKey:', font, 'NSFont');
+	objc.call(attributes, 'setObject:forKey:', color, 'NSColor');
 	objc.call(textView, 'setTypingAttributes:', attributes);
 }
 

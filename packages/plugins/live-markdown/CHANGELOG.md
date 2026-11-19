@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.3] - 2026-11-19
+
+### Fixed
+
+- On iOS, clearing an emoji's spacing from what you type next no longer fails with an error in the log.
+
 ## [1.1.2] - 2026-11-19
 
 ### Fixed
