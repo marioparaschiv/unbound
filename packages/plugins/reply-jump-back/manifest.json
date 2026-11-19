@@ -1,0 +1,17 @@
+{
+	"id": "unbound.reply-jump-back",
+	"name": "Reply Jump Back",
+	"description": "After tapping a reply to jump to the message it answers, a button takes you back to the reply.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ArrowsLeftRightIcon",
+	"main": "index.tsx"
+}
