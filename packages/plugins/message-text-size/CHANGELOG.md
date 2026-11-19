@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.3] - 2026-11-19
+
+### Fixed
+
+- On iOS, the chat redraws as soon as the first message is resized after launch, instead of after a fixed three seconds, so rows Discord laid out before the plugin could run catch up at once.
+
 ## [1.1.2] - 2026-11-19
 
 ### Fixed

@@ -1,4 +1,5 @@
 import type { NativeBridge, NativeObjectHandle } from '@unbound-app/api/native';
+import { plugins } from '@unbound-app/api';
 
 import type { MessageTextSize } from '~/native/text-size';
 
@@ -61,7 +62,8 @@ function scaledText(
 /**
  * @description Scales message text on iOS. Discord lays out each message's text with YYText's
  * `+[YYTextLayout layoutWithContainer:text:]` off the main thread, so the hook swaps in a copy of a message body's text
- * with every font scaled before the layout is measured, and the row grows or shrinks with it.
+ * with every font scaled before the layout is measured, and the row grows or shrinks with it. The first message it scales
+ * redraws the open chat once, since rows laid out while Discord's JavaScript was too busy to run the hook kept their size.
  * @param native The plugin's native bridge.
  * @param scale The factor to start with.
  * @returns `update`, which changes the factor for rows laid out from then on, and `dispose`, which removes the hook.
@@ -69,6 +71,7 @@ function scaledText(
 export function messageTextSizeIOS(native: NativeBridge, scale: number): MessageTextSize {
 	const { objc, ffi } = native;
 	let current = scale;
+	let redrawn = false;
 
 	if (!ffi || !objc.getClass(LAYOUT_CLASS)) {
 		logger.warn('Message text size skipped: Discord no longer lays out messages with YYText.');
@@ -85,6 +88,11 @@ export function messageTextSizeIOS(native: NativeBridge, scale: number): Message
 
 			try {
 				if (!isMessageBody(objc, context.args[0] as NativeObjectHandle | null)) return;
+
+				if (!redrawn) {
+					redrawn = true;
+					setTimeout(() => plugins.redrawChat?.(), 0);
+				}
 
 				context.replaceObjectArgument(1, scaledText(objc, ffi, range, text, current));
 			} catch (error) {
