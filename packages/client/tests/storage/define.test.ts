@@ -91,13 +91,17 @@ describe('storage.define', () => {
 		expect(() => (settings.values.badge = {})).toThrow('it is not a setting');
 	});
 
-	test('reads an invalid stored value as its default and removes it', () => {
+	test('reads an invalid stored value as its default and keeps it for the version that wrote it', () => {
 		const { name, settings } = define();
 
 		storage.getBucket(name).set('size', 'big');
 
 		expect(settings.values.size).toBe(14);
-		expect(storage.getBucket(name).get('size', undefined)).toBeUndefined();
+		expect(storage.getBucket(name).get<unknown>('size', undefined)).toBe('big');
+
+		settings.values.size = 16;
+
+		expect(storage.getBucket(name).get<unknown>('size', undefined)).toBe(16);
 	});
 
 	test('resets only its own settings', () => {
