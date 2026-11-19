@@ -1,0 +1,7 @@
+{
+	"MINESWEEPER_DESC": "Send a game of Minesweeper made of spoiler tiles",
+	"MINESWEEPER_SIZE": "Tiles per side, from 5 to 10",
+	"MINESWEEPER_MINES": "How many mines to hide",
+	"HEADER": "Minesweeper · {mines, plural, one {# mine} other {# mines}}",
+	"TOO_MANY_MINES": "A {size}×{size} board fits at most {max} mines."
+}

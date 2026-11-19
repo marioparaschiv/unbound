@@ -1,0 +1,17 @@
+{
+	"id": "unbound.minesweeper",
+	"name": "Minesweeper",
+	"description": "Sends a game of Minesweeper made of spoiler tiles: tap a tile to reveal it.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "DiceIcon",
+	"main": "index.tsx"
+}
