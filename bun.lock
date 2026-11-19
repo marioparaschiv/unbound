@@ -2191,6 +2191,20 @@
         "rollup": "^4.68.2",
       },
     },
+    "packages/plugins/music-file-cards": {
+      "name": "music-file-cards",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.68.2",
+      },
+    },
     "packages/plugins/music-previews": {
       "name": "music-previews",
       "dependencies": {
@@ -5903,6 +5917,8 @@
     "ms": ["ms@2.1.3", "", {}, "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA=="],
 
     "multi-account": ["multi-account@workspace:packages/plugins/multi-account"],
+
+    "music-file-cards": ["music-file-cards@workspace:packages/plugins/music-file-cards"],
 
     "music-previews": ["music-previews@workspace:packages/plugins/music-previews"],
 

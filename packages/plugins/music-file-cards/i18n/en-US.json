@@ -1,0 +1,9 @@
+{
+	"SHOW_SONG": "Show song info",
+	"SONG_BODY": "{artist}{album}",
+	"BY_ARTIST": "by {artist}",
+	"ON_ALBUM": "\n{album}",
+	"NO_TAGS": "This file has no song info.",
+	"LOAD_FAILED": "Couldn't read the song info",
+	"CLOSE": "Close"
+}

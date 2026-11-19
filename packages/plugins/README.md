@@ -1,6 +1,6 @@
 # Plugins
 
-213 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+214 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -132,6 +132,7 @@
 - <img src="../../assets/plugins/readme-icons/microphone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Morse Code](https://unbound.rip/addons/unbound.morse-code): Sends text as Morse code with /morse, and decodes or plays Morse messages as sound or vibration from their long-press menu.
 - <img src="../../assets/plugins/readme-icons/microphone-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Moyai](https://unbound.rip/addons/unbound.moyai): Plays a thud when Moyai appears in the current channel or as a reaction.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Multi Account](https://unbound.rip/addons/unbound.multi-account): Unlocks Discord's built-in multi-account switcher on mobile.
+- <img src="../../assets/plugins/readme-icons/music-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Music File Cards](https://unbound.rip/addons/unbound.music-file-cards): Shows the title, artist, album and cover art of MP3, FLAC and M4A files sent in chat.
 - <img src="../../assets/plugins/readme-icons/play-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Music Previews](https://unbound.rip/addons/unbound.music-previews): Plays 30-second previews of Spotify, Apple Music, Deezer and Tidal links right in their embeds, like desktop.
 - <img src="../../assets/plugins/readme-icons/music-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Music Rich Presence](https://unbound.rip/addons/unbound.music-rich-presence): Shows what you are scrobbling on Last.fm or ListenBrainz as your Discord activity.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Mutual Group DMs](https://unbound.rip/addons/unbound.mutual-group-dms): Shows the group DMs you share with someone on their profile, and opens them from there.

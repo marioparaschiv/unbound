@@ -1,0 +1,17 @@
+{
+	"id": "unbound.music-file-cards",
+	"name": "Music File Cards",
+	"description": "Shows the title, artist, album and cover art of MP3, FLAC and M4A files sent in chat.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "MusicIcon",
+	"main": "index.tsx"
+}
