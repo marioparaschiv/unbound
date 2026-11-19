@@ -13,6 +13,7 @@
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
 #include "LoaderLogRateLimit.h"
+#include "LoaderLogRepeats.h"
 #include "LoaderLogStream.h"
 #include "NativePluginRuntime.h"
 
@@ -135,6 +136,23 @@ static jsi::Function logFunction(jsi::Runtime &runtime)
             if (!admission.write)
             {
                 return jsi::Value::undefined();
+            }
+
+            if (*level == LogLevel::Warning || *level == LogLevel::Error)
+            {
+                RepeatAdmission repeat =
+                    jsLogRepeats().admit(scopedLogLine(scope, message), logNow());
+                for (const std::string &summary : repeat.summaries)
+                {
+                    writeSystemLog(LogLevel::Warning, summary);
+                    appendLogEntry(
+                        {logNow(), LogSource::Unbound, LogLevel::Warning, scope, summary});
+                }
+
+                if (!repeat.write)
+                {
+                    return jsi::Value::undefined();
+                }
             }
 
             writeSystemLog(*level, scopedLogLine(scope, message));
