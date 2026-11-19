@@ -151,6 +151,8 @@ std::string exitKindName(ExitKind kind)
             return "hang";
         case ExitKind::Freeze:
             return "freeze";
+        case ExitKind::DiskWrites:
+            return "diskWrites";
     }
 
     return "unknown";
@@ -208,6 +210,44 @@ int64_t parseMetricKitDuration(const std::string &duration)
     }
 
     return static_cast<int64_t>(value * 1000);
+}
+
+int64_t parseMetricKitMegabytes(const std::string &size)
+{
+    std::string number;
+    std::string unit;
+    for (char character : size)
+    {
+        if (std::isdigit(static_cast<unsigned char>(character)) || character == '.')
+        {
+            if (unit.empty())
+            {
+                number += character;
+            }
+        }
+        else if (std::isalpha(static_cast<unsigned char>(character)))
+        {
+            unit += static_cast<char>(std::tolower(static_cast<unsigned char>(character)));
+        }
+    }
+
+    if (number.empty())
+    {
+        return 0;
+    }
+
+    double value = std::atof(number.c_str());
+    if (unit.starts_with("g"))
+    {
+        return static_cast<int64_t>(value * 1024);
+    }
+
+    if (unit.starts_with("k"))
+    {
+        return static_cast<int64_t>(value / 1024);
+    }
+
+    return static_cast<int64_t>(value);
 }
 
 void recordMetricKitMetrics(const std::string &documents, const std::string &payloadJSON)
@@ -320,6 +360,33 @@ static void recordHangs(nlohmann::json &store, const nlohmann::json &payload, in
     keepNewestHangStacks(store["events"]);
 }
 
+static void recordDiskWrites(nlohmann::json &store, const nlohmann::json &payload, int64_t at)
+{
+    auto writes = payload.find("diskWriteExceptionDiagnostics");
+    if (writes == payload.end() || !writes->is_array())
+    {
+        return;
+    }
+
+    for (const nlohmann::json &write : *writes)
+    {
+        nlohmann::json metadata = write.value("diagnosticMetaData", nlohmann::json::object());
+        addEvent(store, ExitKind::DiskWrites, at, 0);
+        nlohmann::json &event = store["events"].back();
+        event["mb"]           = parseMetricKitMegabytes(stringMember(metadata, "writesCaused"));
+        if (std::optional<std::string> stack = metricKitDiskWriteStack(write))
+        {
+            event["stack"] = stack->substr(0, kMaximumHangStack);
+            if (stackRunsUnbound(*stack))
+            {
+                event["inUnbound"] = true;
+            }
+        }
+    }
+
+    keepNewestHangStacks(store["events"]);
+}
+
 static std::optional<std::string> latestCrashStack(const nlohmann::json &payload)
 {
     auto crashes = payload.find("crashDiagnostics");
@@ -355,6 +422,7 @@ void recordMetricKitDiagnostics(const std::string &documents, const std::string 
         int64_t windowStart =
             begin.empty() ? at - kSummaryWindowMs : parseMetricKitTimestamp(begin);
         recordHangs(store, payload, at, windowStart);
+        recordDiskWrites(store, payload, at);
         writeStore(documents, store);
     }
 
@@ -459,6 +527,7 @@ nlohmann::json summary(const std::string &documents, int64_t now)
     nlohmann::json counts = nlohmann::json::object();
     int64_t longestHangMs = 0;
     nlohmann::json lastHang;
+    nlohmann::json lastDiskWrite;
     std::vector<FrozenAddon> frozen;
     for (const nlohmann::json &event : store["events"])
     {
@@ -495,6 +564,19 @@ nlohmann::json summary(const std::string &documents, int64_t now)
             }
         }
 
+        if (kind == "diskWrites" && event.contains("stack")
+            && (lastDiskWrite.is_null()
+                || event.value("at", int64_t{0}) >= lastDiskWrite.value("at", int64_t{0})))
+        {
+            lastDiskWrite = {{"at", event.value("at", int64_t{0})},
+                             {"mb", event.value("mb", int64_t{0})},
+                             {"stack", event.value("stack", std::string())}};
+            if (event.value("inUnbound", false))
+            {
+                lastDiskWrite["inUnbound"] = true;
+            }
+        }
+
         std::string name = kind == "hang" ? "hangs" : kind;
         counts[name]     = counts.value(name, 0) + 1;
         longestHangMs    = std::max(longestHangMs, event.value("ms", int64_t{0}));
@@ -513,6 +595,11 @@ nlohmann::json summary(const std::string &documents, int64_t now)
     if (!lastHang.is_null())
     {
         counts["lastHang"] = std::move(lastHang);
+    }
+
+    if (!lastDiskWrite.is_null())
+    {
+        counts["lastDiskWrite"] = std::move(lastDiskWrite);
     }
 
     return counts;

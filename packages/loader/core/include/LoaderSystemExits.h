@@ -17,11 +17,13 @@ enum class ExitKind
     LockedFile,
     Hang,
     Freeze,
+    DiskWrites,
 };
 
 std::string exitKindName(ExitKind kind);
 int64_t parseMetricKitTimestamp(const std::string &timestamp);
 int64_t parseMetricKitDuration(const std::string &duration);
+int64_t parseMetricKitMegabytes(const std::string &size);
 
 struct HangSuspect {
     std::string name;

@@ -50,12 +50,19 @@ export function systemNotes(system?: DebugCardLaunch['system']): string[] {
 		? ` (longest ${(system.longestHangMs / 1000).toFixed(1)}s)`
 		: '';
 	const hangs = counted(system.hangs, 'hang', 'hangs');
+	const diskWrites = counted(
+		system.diskWrites,
+		'excessive disk-write report',
+		'excessive disk-write reports',
+	);
+	const written = system.lastDiskWrite ? ` (latest ${system.lastDiskWrite.mb} MB)` : '';
 	const notes = [
 		counted(system.memory, 'out-of-memory kill', 'out-of-memory kills'),
 		counted(system.watchdog, 'watchdog kill', 'watchdog kills'),
 		counted(system.cpu, 'CPU limit kill', 'CPU limit kills'),
 		counted(system.lockedFile, 'locked-file kill', 'locked-file kills'),
 		hangs && `${hangs}${longest}`,
+		diskWrites && `${diskWrites}${written}`,
 	];
 
 	return [...notes, ...freezeNotes(system.freezes)]
