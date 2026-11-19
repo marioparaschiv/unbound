@@ -50,7 +50,8 @@ namespace {
         std::atomic_bool originalCalled{false};
         std::atomic_bool deferredOriginalRequested{false};
         std::vector<std::pair<size_t, std::vector<uint8_t>>> deferredReplacements;
-        void *originalObject = nullptr;
+        void *originalObject                   = nullptr;
+        __strong NSException *pendingException = nil;
     };
 }
 
@@ -171,6 +172,33 @@ static void balanceReplacedHookReturn(SEL selector,
     {
         CFRelease((__bridge CFTypeRef) receiver);
     }
+}
+
+static void invokeOriginalForScript(Runtime &runtime,
+                                    const std::shared_ptr<HookInvocation> &invocation)
+{
+    NSException *thrown = nil;
+    @try
+    {
+        invokeHookOriginal(invocation->dispatcher, invocation->nativeArguments,
+                           invocation->returnValue);
+    }
+
+    @catch (NSException *exception)
+    {
+        thrown = exception;
+    }
+
+    if (!thrown)
+    {
+        return;
+    }
+
+    invocation->pendingException = thrown;
+    invocation->originalCalled.store(true);
+    throw JSError(runtime, std::string("The hooked method threw ")
+                               + (thrown.name.UTF8String ?: "an exception") + ": "
+                               + (thrown.reason.UTF8String ?: "no reason given"));
 }
 
 static bool invokeDeferredHookOriginal(const std::shared_ptr<HookInvocation> &invocation)
@@ -530,8 +558,7 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                         return Value::undefined();
                     }
 
-                    invokeHookOriginal(original->dispatcher, original->nativeArguments,
-                                       original->returnValue);
+                    invokeOriginalForScript(rt, original);
                     recordHookOriginalObject(original);
                     copyHookResult(original, original->returnValue);
                     original->originalCalled.store(true);
@@ -1019,6 +1046,11 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
     for (const std::shared_ptr<HookState> &state : onceHooks)
     {
         removeHook(state, true);
+    }
+
+    if (NSException *thrown = invocation->pendingException)
+    {
+        @throw thrown;
     }
 }
 
