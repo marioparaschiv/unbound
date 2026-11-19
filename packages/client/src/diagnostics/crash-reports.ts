@@ -129,7 +129,7 @@ async function sendCrashReport(
 		}
 
 		const request = createUnboundClient();
-		const { id, issue, origin } = await request('POST /api/v1/crash-reports', {
+		const { id, issue, origin, seen } = await request('POST /api/v1/crash-reports', {
 			body: report,
 		});
 
@@ -141,6 +141,7 @@ async function sendCrashReport(
 				...(origin ? { origin } : {}),
 				...(issue ? { issue: { number: issue.number, url: issue.url } } : {}),
 				...(!issue && filesIssue(origin, event.addon?.id) ? { issuePending: true } : {}),
+				...(seen ? { seen } : {}),
 			});
 		}
 

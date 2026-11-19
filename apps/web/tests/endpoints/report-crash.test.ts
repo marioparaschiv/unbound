@@ -70,6 +70,20 @@ describe('crash reports', () => {
 		expect(stored?.log).toBe(log);
 	});
 
+	test('counts the installs that reported the same crash', async () => {
+		const crash = { ...report, message: 'spread probe', stack: 'Error: spread probe' };
+		const first = { ...crash, installId: 'aaaaaaaaaaaaaaaa1' };
+		const second = { ...crash, installId: 'bbbbbbbbbbbbbbbb2', clientVersion: '1.1.0' };
+
+		await send(first, '203.0.113.20');
+		await send(first, '203.0.113.21');
+
+		const response = await send(second, '203.0.113.22');
+		const { seen } = parse(crashReportResponseSchema, await response.json());
+
+		expect(seen).toEqual({ installs: 2, versionInstalls: 1 });
+	});
+
 	test('refuses malformed and oversized reports', async () => {
 		const invalid = await send({ ...report, kind: 'other' }, '203.0.113.11');
 
