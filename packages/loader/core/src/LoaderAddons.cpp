@@ -1,5 +1,8 @@
 #include "LoaderAddons.h"
 
+#include <cerrno>
+#include <cstring>
+#include <filesystem>
 #include <optional>
 
 #include "HermesBytecodeHeader.h"
@@ -33,6 +36,23 @@ static void scanAddonDirectory(const std::string &documents, const std::string &
     }
 }
 
+static void noteMovedAside(const std::string &path, const std::string &folder,
+                           const std::string &category)
+{
+    std::string name = std::filesystem::path(path).filename().string();
+    if (moveAsideUnreadable(path))
+    {
+        log(LogLevel::Warning, category,
+            "Moved " + folder + "'s unreadable " + name + " aside, so it can be installed again.");
+    }
+    else
+    {
+        log(LogLevel::Warning, category,
+            "Failed to move " + folder + "'s unreadable " + name
+                + " aside: " + std::strerror(errno));
+    }
+}
+
 static std::optional<nlohmann::json> parseObjectFile(const std::string &path,
                                                      const std::string &folder,
                                                      const std::string &category,
@@ -42,14 +62,18 @@ static std::optional<nlohmann::json> parseObjectFile(const std::string &path,
     if (!contents)
     {
         log(LogLevel::Error, category,
-            "Skipping " + folder + " as its " + label + " failed to be read.");
+            "Skipping " + folder + " as its " + label
+                + " failed to be read: " + unreadableReason(path) + ".");
+        noteMovedAside(path, folder, category);
         return std::nullopt;
     }
 
     nlohmann::json parsed = parseBoundedJSON(*contents);
     if (parsed.is_discarded() || !parsed.is_object())
     {
-        log(LogLevel::Info, category, "Skipping " + folder + " as its " + label + " is invalid.");
+        log(LogLevel::Info, category,
+            "Skipping " + folder + " as its " + label
+                + (parsed.is_discarded() ? " is not valid JSON." : " is not a JSON object."));
         return std::nullopt;
     }
 
@@ -233,7 +257,9 @@ nlohmann::json scanPlugins(const std::string &documents, uint32_t bytecodeVersio
             if (!bundle)
             {
                 log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
-                    "Skipping " + folder + " as its entry failed to be read.");
+                    "Skipping " + folder
+                        + " as its entry failed to be read: " + unreadableReason(*entry) + ".");
+                noteMovedAside(*entry, folder, LOG_CATEGORY_PLUGINS);
                 return;
             }
 
@@ -313,7 +339,9 @@ nlohmann::json scanThemes(const std::string &documents)
             if (!bundle)
             {
                 log(LogLevel::Error, LOG_CATEGORY_THEMES,
-                    "Skipping " + folder + " as its bundle failed to be read.");
+                    "Skipping " + folder + " as its bundle failed to be read: "
+                        + unreadableReason(bundlePath) + ".");
+                noteMovedAside(bundlePath, folder, LOG_CATEGORY_THEMES);
                 return;
             }
 

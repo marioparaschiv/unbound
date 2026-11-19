@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstdlib>
+#include <cstring>
 #include <fcntl.h>
 #include <filesystem>
 #include <sys/stat.h>
@@ -96,7 +97,47 @@ static void syncDirectory(const std::filesystem::path &directory)
 }
 
 // A unique staging name per write, so two writers to one path never share a staging file; the
+std::string unreadableReason(const std::string &path)
+{
+    struct stat status{};
+    if (stat(path.c_str(), &status) != 0)
+    {
+        return errno == ENOENT ? "the file is missing" : std::string(std::strerror(errno));
+    }
+
+    int descriptor = open(path.c_str(), O_RDONLY | O_CLOEXEC);
+    if (descriptor < 0)
+    {
+        int error          = errno;
+        std::string reason = std::strerror(error);
+        return error == EACCES ? reason + " (owned by uid " + std::to_string(status.st_uid) + ")"
+                               : reason;
+    }
+
+    close(descriptor);
+    return "it could not be read";
+}
+
 // fsyncs keep a power loss from leaving an empty file behind the rename.
+bool moveAsideUnreadable(const std::string &path)
+{
+    int descriptor = open(path.c_str(), O_RDONLY | O_CLOEXEC);
+    if (descriptor >= 0)
+    {
+        close(descriptor);
+        return false;
+    }
+
+    if (errno != EACCES && errno != EPERM)
+    {
+        return false;
+    }
+
+    std::string aside = path + ".unreadable";
+    unlink(aside.c_str());
+    return rename(path.c_str(), aside.c_str()) == 0;
+}
+
 bool writeTextFileAtomically(const std::string &path, const std::string &contents)
 {
     std::error_code error;

@@ -84,6 +84,22 @@ static void writesWithoutStagingLeftovers(const std::filesystem::path &parent)
     assert(loader::listDirectory(directory.string()) == std::vector<std::string>{"settings.json"});
 }
 
+static void explainsWhyAFileCannotBeRead(const std::filesystem::path &parent)
+{
+    assert(loader::unreadableReason((parent / "missing.json").string()) == "the file is missing");
+
+    std::filesystem::path locked = parent / "locked.json";
+    touch(locked);
+    std::filesystem::permissions(locked, std::filesystem::perms::none);
+    if (geteuid() != 0)
+    {
+        assert(loader::unreadableReason(locked.string()).find("(owned by uid ")
+               != std::string::npos);
+    }
+
+    std::filesystem::permissions(locked, std::filesystem::perms::owner_all);
+}
+
 int main()
 {
     const auto parent = makeTemporaryDirectory();
@@ -91,6 +107,7 @@ int main()
 
     readsWholeFiles(parent);
     writesWithoutStagingLeftovers(parent);
+    explainsWhyAFileCannotBeRead(parent);
 
     touch(root / "Themes" / "a" / "manifest.json");
     touch(root / "Themes" / "a" / "nested" / "bundle.json");
