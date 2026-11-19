@@ -7,9 +7,17 @@ const LAYOUT_SELECTOR = '+layoutWithContainer:text:';
 const RANGE_BYTES = 16;
 const LENGTH_OFFSET = 8;
 const SAME_SCALE = 0.001;
+const UNLIMITED_ROWS = 0;
 
 type ObjC = NativeBridge['objc'];
 type FFI = NonNullable<NativeBridge['ffi']>;
+
+function isMessageBody(objc: ObjC, container: NativeObjectHandle | null): boolean {
+	return (
+		Boolean(container) &&
+		Number(objc.call(container!, 'maximumNumberOfRows')) === UNLIMITED_ROWS
+	);
+}
 
 function scaledText(
 	objc: ObjC,
@@ -52,8 +60,8 @@ function scaledText(
 
 /**
  * @description Scales message text on iOS. Discord lays out each message's text with YYText's
- * `+[YYTextLayout layoutWithContainer:text:]` off the main thread, so the hook swaps in a copy of the text with every
- * font scaled before the layout is measured, and the row grows or shrinks with it.
+ * `+[YYTextLayout layoutWithContainer:text:]` off the main thread, so the hook swaps in a copy of a message body's text
+ * with every font scaled before the layout is measured, and the row grows or shrinks with it.
  * @param native The plugin's native bridge.
  * @param scale The factor to start with.
  * @returns `update`, which changes the factor for rows laid out from then on, and `dispose`, which removes the hook.
@@ -76,6 +84,8 @@ export function messageTextSizeIOS(native: NativeBridge, scale: number): Message
 			if (!text || Math.abs(current - 1) < SAME_SCALE) return;
 
 			try {
+				if (!isMessageBody(objc, context.args[0] as NativeObjectHandle | null)) return;
+
 				context.replaceObjectArgument(1, scaledText(objc, ffi, range, text, current));
 			} catch (error) {
 				logger.error('Failed to scale a message layout:', error);
