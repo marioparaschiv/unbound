@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1] - 2026-11-19
+
+### Fixed
+
+- On iOS, one tap no longer opens the tooltip twice, which unmounted the first tooltip while it was still starting and could crash Discord.
+
 ## [1.1.0] - 2026-11-16
 
 ### Changed

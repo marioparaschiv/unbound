@@ -55,6 +55,8 @@ export function createIOSTooltips({ objc, fabric }: Native, surfaceKey: string):
 	let generation = 0;
 	let disposed = false;
 	let surfaceName: string | undefined;
+	let queue: Promise<void> = Promise.resolve();
+	let opening: string | null = null;
 
 	function track(task: Promise<void>) {
 		const settled = task.catch(() => undefined);
@@ -193,8 +195,21 @@ export function createIOSTooltips({ objc, fabric }: Native, surfaceKey: string):
 		}
 	}
 
+	function enqueueShow(anchor: IOSTooltipAnchor, isCurrent: () => boolean) {
+		if (opening === anchor.key || shown?.key === anchor.key) return;
+
+		opening = anchor.key;
+		queue = queue
+			.then(() => show(anchor, isCurrent))
+			.catch(() => undefined)
+			.finally(() => {
+				if (opening === anchor.key) opening = null;
+			});
+		track(queue);
+	}
+
 	return {
-		show: (anchor, isCurrent = () => true) => track(show(anchor, isCurrent)),
+		show: (anchor, isCurrent = () => true) => enqueueShow(anchor, isCurrent),
 		dismissFor(key) {
 			if (shown?.key === key) track(dismiss());
 		},
