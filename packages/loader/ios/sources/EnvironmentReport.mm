@@ -17,6 +17,8 @@
 #include "JailbreakDetection.h"
 #include "LoaderBinaryAnatomy.h"
 #include "LoaderEnvironmentReport.h"
+#include "LoaderLeftoverMods.h"
+#include "LoaderNetworkStack.h"
 #import "SingleCopy.h"
 #import "Utilities.h"
 
@@ -315,6 +317,19 @@ nlohmann::json UnboundEnvironmentReport()
     });
     nlohmann::json environment = cached;
     environment["markers"]     = report::appleMarkers(deviceFacts());
+    if (std::string stack = report::currentNetworkStackMarker(); !stack.empty())
+    {
+        environment["markers"].push_back(stack);
+    }
+
+    NSString *home =
+        NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+    if (std::string leftover = report::leftoverModsMarker(home ? home.UTF8String : "");
+        !leftover.empty())
+    {
+        environment["markers"].push_back(leftover);
+    }
+
     return environment;
 }
 
