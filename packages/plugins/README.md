@@ -1,6 +1,6 @@
 # Plugins
 
-218 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+219 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -166,6 +166,7 @@
 - <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Reaction Avatars](https://unbound.rip/addons/unbound.reaction-avatars): Shows the people who reacted beside each message reaction.
 - <img src="../../assets/plugins/readme-icons/checkmark-large-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Read All Notifications](https://unbound.rip/addons/unbound.read-all-notifications): Adds a button to your server list that marks every server as read at once.
 - <img src="../../assets/plugins/readme-icons/user-minus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Relationship Notifier](https://unbound.rip/addons/unbound.relationship-notifier): Notifies you when a friend, group chat, or server removes you.
+- <img src="../../assets/plugins/readme-icons/arrows-left-right-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Reply Jump Back](https://unbound.rip/addons/unbound.reply-jump-back): After tapping a reply to jump to the message it answers, a button takes you back to the reply.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Reverse Image Search](https://unbound.rip/addons/unbound.reverse-image-search): Adds Search image to the media viewer's menu: Google Lens, Yandex, SauceNAO, IQDB, Bing, TinEye or ImgOps.
 - <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [ReviewDB](https://unbound.rip/addons/unbound.reviewdb): Leave reviews on other users' profiles and see what others think of you.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Role Color Everywhere](https://unbound.rip/addons/unbound.role-color-everywhere): Colors mentions, typing names, voice users, reaction users, poll voters, and role headers.
