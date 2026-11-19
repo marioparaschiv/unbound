@@ -333,6 +333,34 @@ static NSString *documents    = nil;
     {
         [FileSystem createDirectory:documents];
     }
+
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0),
+                   ^{ [FileSystem excludeRebuildableFilesFromBackup]; });
+}
+
++ (void)excludeRebuildableFilesFromBackup
+{
+    NSArray<NSString *> *names = @[
+        @"Cache", @"cache", @"Temp", @"Logs", @"PluginBackups", @"metro-cache.json",
+        @"metro-cache.assets.json", @"metro-stubs.json"
+    ];
+    for (NSString *name in names)
+    {
+        NSURL *url = [NSURL fileURLWithPath:[documents stringByAppendingPathComponent:name]];
+        NSNumber *excluded = nil;
+        [url getResourceValue:&excluded forKey:NSURLIsExcludedFromBackupKey error:nil];
+        if (![manager fileExistsAtPath:url.path] || excluded.boolValue)
+        {
+            continue;
+        }
+
+        NSError *error = nil;
+        if (![url setResourceValue:@YES forKey:NSURLIsExcludedFromBackupKey error:&error])
+        {
+            [Logger error:LOG_CATEGORY_FILESYSTEM
+                   format:@"Failed to exclude %@ from backups: %@", name, error];
+        }
+    }
 }
 
 + (NSString *)documents
