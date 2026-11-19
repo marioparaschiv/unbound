@@ -589,6 +589,7 @@ export type AddonScope = {
 		keyof UnboundGlobal['commands']
 	> &
 		UnboundGlobal['commands'];
+	/** `fetch`, reaching only the hosts this plugin's manifest lists under `network`, when it lists any. */ fetch: typeof fetch;
 };
 
 /** The lifecycle entry points, all the global `unbound` object keeps after {@link shutdown}. */
