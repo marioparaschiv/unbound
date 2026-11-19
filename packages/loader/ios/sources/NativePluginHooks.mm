@@ -8,6 +8,7 @@
 #include <substrate.h>
 #include <unordered_map>
 
+#import "LoaderHookBreadcrumbs.h"
 #import "NativeAddressValidation.h"
 #import "NativeFFIClosureProbe.h"
 #import "NativeHookCallbacks.h"
@@ -356,11 +357,14 @@ Value makeHook(Runtime &runtime, const Value *args, size_t count)
         auto iterator = gDispatchers.find(key);
         if (iterator == gDispatchers.end())
         {
-            dispatcher            = std::make_shared<HookDispatcher>();
-            dispatcher->cls       = cls;
-            dispatcher->selector  = selector;
-            dispatcher->signature = signature;
-            auto prepareClosure   = [&]() -> bool {
+            dispatcher             = std::make_shared<HookDispatcher>();
+            dispatcher->cls        = cls;
+            dispatcher->selector   = selector;
+            dispatcher->signature  = signature;
+            dispatcher->breadcrumb = loader::registerHookName(
+                std::string(NSStringFromClass(cls).UTF8String ?: "?") + " -"
+                + (NSStringFromSelector(selector).UTF8String ?: "?"));
+            auto prepareClosure = [&]() -> bool {
                 dispatcher->closure =
                     (ffi_closure *) ffi_closure_alloc(sizeof(ffi_closure), &dispatcher->code);
                 bool closureReady =

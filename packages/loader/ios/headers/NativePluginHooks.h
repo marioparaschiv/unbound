@@ -41,6 +41,7 @@ struct HookDispatcher {
     std::vector<std::shared_ptr<HookState>> hooks;
     std::atomic_uint activeCalls{0};
     std::atomic_bool retired{false};
+    uint32_t breadcrumb = 0;
 };
 
 struct HookState {

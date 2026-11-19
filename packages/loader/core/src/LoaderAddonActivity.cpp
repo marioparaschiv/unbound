@@ -25,6 +25,8 @@ struct AddonRecord {
 struct ThreadActivity {
     std::atomic<uintptr_t> owner;
     uint32_t addon;
+    HookCall hooks[kHookTrailLength];
+    uint32_t nextHook;
 };
 
 static AddonRecord gRecords[kAddonSlotCapacity];
@@ -165,6 +167,7 @@ static ThreadActivity *claimThreadActivity()
         if (activity.owner.compare_exchange_strong(expected, key, std::memory_order_acq_rel))
         {
             storeAddon(&activity.addon, kNoAddon);
+            __atomic_store_n(&activity.nextHook, 0, __ATOMIC_RELEASE);
             tClaim.entry = &activity;
             ensureAlternateSignalStack();
             return &activity;
@@ -269,6 +272,58 @@ AddonSlot addonOnThread(uintptr_t thread)
 static AddonSlot crashingThreadAddon()
 {
     return addonOnThread(currentThreadKey());
+}
+
+void noteHookCall(uint32_t hook, AddonSlot addon)
+{
+    ThreadActivity *activity = claimThreadActivity();
+    if (!activity)
+    {
+        return;
+    }
+
+    uint32_t index = __atomic_load_n(&activity->nextHook, __ATOMIC_RELAXED);
+    HookCall &call = activity->hooks[index % kHookTrailLength];
+    __atomic_store_n(&call.hook, hook, __ATOMIC_RELAXED);
+    __atomic_store_n(&call.addon, addon, __ATOMIC_RELAXED);
+    __atomic_store_n(&activity->nextHook, index + 1, __ATOMIC_RELEASE);
+}
+
+size_t crashingThreadHookCalls(HookCall *out, size_t capacity)
+{
+    uintptr_t thread = currentThreadKey();
+    for (const ThreadActivity &activity : gThreads)
+    {
+        if (activity.owner.load(std::memory_order_acquire) != thread)
+        {
+            continue;
+        }
+
+        uint32_t next = __atomic_load_n(&activity.nextHook, __ATOMIC_ACQUIRE);
+        size_t count  = std::min<size_t>({next, kHookTrailLength, capacity});
+        for (size_t index = 0; index < count; index++)
+        {
+            const HookCall &call = activity.hooks[(next - 1 - index) % kHookTrailLength];
+            out[index]           = {__atomic_load_n(&call.hook, __ATOMIC_RELAXED),
+                                    __atomic_load_n(&call.addon, __ATOMIC_RELAXED)};
+        }
+
+        return count;
+    }
+
+    return 0;
+}
+
+const char *addonRecordText(AddonSlot slot, uint32_t &length)
+{
+    if (slot == kNoAddon || slot >= kAddonSlotCapacity)
+    {
+        length = 0;
+        return nullptr;
+    }
+
+    length = __atomic_load_n(&gRecords[slot].length, __ATOMIC_ACQUIRE);
+    return gRecords[slot].text;
 }
 
 bool writeCrashingAddonRecord(int descriptor)
