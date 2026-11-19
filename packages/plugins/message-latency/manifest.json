@@ -18,5 +18,41 @@
 	},
 	"icon": "TimerIcon",
 	"minNativeBridgeApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.fabric.async",
+				"native.objc.batch",
+				"native.objc.classes",
+				"native.objc.hooks",
+				"native.objc.invoke",
+				"native.objc.invokeAsync",
+				"native.objc.ivars",
+				"native.objc.snapshot",
+				"native.runtime.events"
+			]
+		},
+		"android": {
+			"capabilities": [
+				"native.fabric.async",
+				"native.java.associations",
+				"native.java.batch",
+				"native.java.classes",
+				"native.java.construct",
+				"native.java.fields",
+				"native.java.hooks",
+				"native.java.invoke",
+				"native.java.invokeAsync",
+				"native.runtime.events"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "eda94629354966f69272ce2a735533459304150fbce5cf160d694c9ee5e3a38248bf546f47d2b7ea067c23528c3e9738076600de61c7ec02f5e764ef65752693"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "a29oNpoB7K6je9PmZV05hNXFoYQm5STSyqVEkwGm8wQYWqvvAjgZCjc4XCYQMbU2sd1e45M6qbO7+0pIfpG1Ag=="
+	}
 }
