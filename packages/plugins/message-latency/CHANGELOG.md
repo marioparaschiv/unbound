@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.15] - 2026-11-19
+
+### Fixed
+
+- On iOS, the badge shows when the name reads differently from the account name, such as "Name (@username)", or when role tags and badges sit beside a nickname.
+
 ## [1.2.14] - 2026-11-19
 
 ### Fixed
