@@ -68,13 +68,13 @@ static BOOL recoverListUpdate(id list, NSException *exception)
     return YES;
 }
 
-% hook UITableView
+%hook UITableView
 
-    - (void) endUpdates
+- (void)endUpdates
 {
     @try
     {
-        % orig;
+        %orig;
     }
 
     @catch (NSException *exception)
@@ -90,7 +90,7 @@ static BOOL recoverListUpdate(id list, NSException *exception)
 {
     @try
     {
-        % orig;
+        %orig;
     }
 
     @catch (NSException *exception)
@@ -102,15 +102,15 @@ static BOOL recoverListUpdate(id list, NSException *exception)
     }
 }
 
-% end
+%end
 
-        % hook UICollectionView
+%hook UICollectionView
 
-    - (void) performBatchUpdates : (void (^)(void)) updates completion : (void (^)(BOOL)) completion
+- (void)performBatchUpdates:(void (^)(void))updates completion:(void (^)(BOOL))completion
 {
     @try
     {
-        % orig;
+        %orig;
     }
 
     @catch (NSException *exception)
@@ -122,14 +122,14 @@ static BOOL recoverListUpdate(id list, NSException *exception)
     }
 }
 
-% end
+%end
 
-    % ctor
+%ctor
 {
     if (UnboundIsDuplicateCopy())
     {
         return;
     }
 
-    % init;
+    %init;
 }
