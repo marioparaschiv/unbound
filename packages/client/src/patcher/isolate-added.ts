@@ -1,7 +1,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import { isValidElement } from 'react';
 
-import { withElementBoundary } from '~/patcher/element-boundary';
+import { withElementBoundary, type AddedBy } from '~/patcher/element-boundary';
 
 // Elements Discord's renders returned, by identity. Weak, so each dies with the render that made it.
 const discord = new WeakSet<object>();
@@ -36,13 +36,9 @@ function hasDiscordTwin(element: Element, siblings: readonly ReactNode[]): boole
 }
 
 // `node` fills a slot of an element on Discord's side: an added element there renders inside its own boundary.
-function isolateSlot(
-	node: ReactNode,
-	component: string,
-	siblings: readonly ReactNode[],
-): ReactNode {
+function isolateSlot(node: ReactNode, owner: AddedBy, siblings: readonly ReactNode[]): ReactNode {
 	if (Array.isArray(node)) {
-		return isolateList(node, component);
+		return isolateList(node, owner);
 	}
 
 	if (!isValidElement<MetroExport>(node)) {
@@ -50,19 +46,19 @@ function isolateSlot(
 	}
 
 	if (holdsDiscord(node)) {
-		return isolateElement(node, component);
+		return isolateElement(node, owner);
 	}
 
-	return hasDiscordTwin(node, siblings) ? node : withElementBoundary(node, component);
+	return hasDiscordTwin(node, siblings) ? node : withElementBoundary(node, owner);
 }
 
 // Copies the list only when one of its items changes.
-function isolateList(items: readonly ReactNode[], component: string): readonly ReactNode[] {
+function isolateList(items: readonly ReactNode[], owner: AddedBy): readonly ReactNode[] {
 	let copy: ReactNode[] | undefined;
 
 	for (let index = 0; index < items.length; index++) {
 		const item = items[index];
-		const next = isolateSlot(item, component, items);
+		const next = isolateSlot(item, owner, items);
 
 		if (next !== item) {
 			copy ??= [...items];
@@ -74,12 +70,12 @@ function isolateList(items: readonly ReactNode[], component: string): readonly R
 }
 
 // Copies the element and its props only when one of its props changes.
-function isolateElement(element: Element, component: string): Element {
+function isolateElement(element: Element, owner: AddedBy): Element {
 	let props: Element['props'];
 
 	for (const key in element.props) {
 		const value = element.props[key];
-		const next = isolateSlot(value, component, []);
+		const next = isolateSlot(value, owner, []);
 
 		if (next !== value) {
 			props = { ...(props ?? element.props), [key]: next };
@@ -123,9 +119,9 @@ function markElement(element: Element): void {
  * throws, so a crash leaves Discord's elements, and their fibers, in place. A tree holding none of Discord's
  * elements replaced it and comes back as it is.
  * @param node The patched tree.
- * @param component The patched component's name, for the log.
+ * @param owner The patched component's name, for the log, and its patch's failures.
  * @returns The tree, copied along the paths to each wrapped element.
  */
-export function isolateAdded(node: ReactNode, component: string): ReactNode {
-	return holdsDiscord(node) ? isolateSlot(node, component, []) : node;
+export function isolateAdded(node: ReactNode, owner: AddedBy): ReactNode {
+	return holdsDiscord(node) ? isolateSlot(node, owner, []) : node;
 }

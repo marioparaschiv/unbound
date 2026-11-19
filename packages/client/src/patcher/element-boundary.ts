@@ -2,11 +2,19 @@ import type { CElement, ReactElement, ReactNode } from 'react';
 import { createLogger } from '@unbound-app/logger';
 import { Component, createElement } from 'react';
 
-/** The props an element boundary takes: the element a patch added, and the patched component's name for the log. */
-export type ElementBoundaryProps = {
-	children?: ReactElement;
+import { isUpdateLoop, recordFailure, type PatchFailures } from '~/patcher/patch-failures';
+
+/** The patch that added an element: the patched component's name for the log, and the patch's failures. */
+export type AddedBy = {
 	/** The patched component's name. */
 	component: string;
+	/** The patch's failures, so an update loop in its element removes the patch. */
+	failures?: PatchFailures;
+};
+
+/** The props an element boundary takes: the element a patch added, and the patch that added it. */
+export type ElementBoundaryProps = AddedBy & {
+	children?: ReactElement;
 };
 
 type ElementBoundaryState = { failed: boolean };
@@ -38,12 +46,16 @@ class ElementBoundary extends Component<ElementBoundaryProps, ElementBoundarySta
 	}
 
 	componentDidCatch(error: Error) {
-		const { children, component } = this.props;
+		const { children, component, failures } = this.props;
 
 		logger.error(
 			`Failed to render ${typeName(children?.type)} added by a patch on component ${component}:`,
 			error,
 		);
+
+		if (failures && isUpdateLoop(error)) {
+			recordFailure(failures, error);
+		}
 	}
 
 	render(): ReactNode {
@@ -54,12 +66,9 @@ class ElementBoundary extends Component<ElementBoundaryProps, ElementBoundarySta
 /**
  * @description Wraps an element a patch added in a boundary that renders nothing while it throws.
  * @param element The added element.
- * @param component The patched component's name, for the log.
+ * @param owner The patched component's name, for the log, and its patch's failures.
  * @returns The wrapped element, keyed like `element` so its siblings keep their places.
  */
-export function withElementBoundary(
-	element: ReactElement,
-	component: string,
-): ElementBoundaryElement {
-	return createElement(ElementBoundary, { key: element.key ?? undefined, component }, element);
+export function withElementBoundary(element: ReactElement, owner: AddedBy): ElementBoundaryElement {
+	return createElement(ElementBoundary, { key: element.key ?? undefined, ...owner }, element);
 }

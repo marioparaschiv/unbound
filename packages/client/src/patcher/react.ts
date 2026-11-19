@@ -288,7 +288,7 @@ function adapt(
 
 			// The boundary resets the count once this tree commits cleanly.
 			return withPatchBoundary(
-				isolateAdded(value === undefined ? result : value, name),
+				isolateAdded(value === undefined ? result : value, { component: name, failures }),
 				boundaryProps(inner ? [...earlier, failures] : own, kept),
 			);
 		} catch (error) {
