@@ -1,6 +1,15 @@
 const SOUNDCLOUD = /^https:\/\/(?:www\.|m\.)?soundcloud\.com\/[\w-]+\/(?:sets\/)?[\w-]+/;
 const SHORT = /^https:\/\/on\.soundcloud\.com\/\w+/;
 const PLAYER = 'https://w.soundcloud.com/player/';
+const APP_PROMPT = '.mobilePrestitial';
+
+/** Script for the player page that hides SoundCloud's "Play on SoundCloud" app prompt over the mobile player. */
+export const HIDE_APP_PROMPT = `(() => {
+	const style = document.createElement('style');
+	style.textContent = '${APP_PROMPT} { display: none !important; }';
+	(document.head || document.documentElement).appendChild(style);
+})();
+true;`;
 
 /**
  * @description Reads a SoundCloud track or playlist link, dropping its query.
@@ -29,4 +38,4 @@ export function staysInPlayer(url: string): boolean {
 	return url.startsWith(PLAYER) || url === 'about:blank';
 }
 
-export default { soundcloudLink, playerUrl, staysInPlayer };
+export default { soundcloudLink, playerUrl, staysInPlayer, HIDE_APP_PROMPT };
