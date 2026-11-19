@@ -21,6 +21,7 @@
 #import "Logger.h"
 #import "NativeHookKeys.h"
 #import "NativeHookOptions.h"
+#import "NativeHookStorm.h"
 #import "NativeObjectLifetime.h"
 #import "NativePluginHookReturnCache.h"
 #import "NativePluginHooks.h"
@@ -860,6 +861,15 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
     for (const std::shared_ptr<HookState> &state : hooks)
     {
         if (!state->active || !state->hasAfter)
+        {
+            continue;
+        }
+
+        if (!state->coalesceAfter && !state->inlineRuntime
+            && !loader::native::admitHookEvent(state->identifier, state->addon, [dispatcher] {
+                   return std::string(NSStringFromClass(dispatcher->cls).UTF8String ?: "?") + " -"
+                          + (NSStringFromSelector(dispatcher->selector).UTF8String ?: "?");
+               }))
         {
             continue;
         }
