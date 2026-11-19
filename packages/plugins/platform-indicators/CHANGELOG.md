@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3] - 2026-11-19
+
+### Fixed
+
+- On iOS, when the platform symbols make a message header too long, the end of the timestamp is cut instead of the name, which Discord shrank to nothing.
+
 ## [1.0.2] - 2026-11-11
 
 ### Changed

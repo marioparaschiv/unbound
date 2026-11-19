@@ -5,6 +5,8 @@ import { Text, View } from 'react-native';
 
 import type { StoreSeeds } from '@unbound-app/api/testing';
 
+import { installNameRoom } from '~/native/ios/worklets';
+
 const USER_ROW_PATH = 'modules/main_tabs_v2/native/shared_components/user_list/UserRow.tsx';
 const PROFILE_PATH = 'modules/user_profile/native/UserProfilePrimaryInfo.tsx';
 
@@ -25,11 +27,25 @@ const stores: StoreSeeds = {
 
 const rowModule = { default: userRow };
 
+function fakeUI() {
+	const runs: unknown[] = [];
+	const scope = { disposed: false, dispose: () => void (scope.disposed = true) };
+
+	return {
+		runs,
+		scope,
+		ui: {
+			createScope: () => scope,
+			run: (fn: unknown) => void runs.push(fn),
+		},
+	};
+}
+
 function warnings() {
 	return logs.entries.filter(({ level }) => level === 'warn' || level === 'error');
 }
 
-async function start({ profile = () => <View />, isMobileOnline = true } = {}) {
+async function start({ profile = () => <View />, isMobileOnline = true, ui = fakeUI().ui } = {}) {
 	flux.seed({
 		...stores,
 		Presence: {
@@ -43,10 +59,20 @@ async function start({ profile = () => <View />, isMobileOnline = true } = {}) {
 	metro.register(rowModule, USER_ROW_PATH);
 	metro.register({ default: profile }, PROFILE_PATH);
 	metro.register({ generateMessageRowData: () => ({ message: {} }) });
-	await startPlugin();
+	await startPlugin({ native: { ui: ui as never } });
 }
 
 describe('starting', () => {
+	test('keeps room for names in message headers until it stops', async () => {
+		const fake = fakeUI();
+
+		await start({ ui: fake.ui });
+
+		expect(fake.runs).toEqual([installNameRoom]);
+		await stopPlugin();
+		expect(fake.scope.disposed).toBe(true);
+	});
+
 	test('reports every feature applied to the self test', async () => {
 		await start();
 
