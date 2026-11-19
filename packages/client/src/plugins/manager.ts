@@ -6,6 +6,7 @@ import { attributeAddon, crashGuardKey, setFreezeListener } from '~/addons/crash
 import { performRefresh, withRefreshScope } from '~/hot-refresh/runtime';
 import { installDependencies } from '~/marketplace/install-dependencies';
 import { getLoader, getPlugins } from '~/native/unbound-native';
+import { repairMissingAddons } from '~/addons/missing-sources';
 import type { AddonGlobals, AddonScope } from '~/addons/scope';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { createPluginContext } from '~/native/plugin-context';
@@ -14,6 +15,7 @@ import { scheduleChatRedraw } from '~/plugins/chat-redraw';
 import { readPluginEntry } from '~/plugins/legacy-entry';
 import { pluginSourceName } from '~/plugins/source-name';
 import { rememberSourceDigest } from '~/addons/digests';
+import { afterFirstFrame } from '~/core/first-frame';
 import type { ReloadResult } from '~/addons/addons';
 import { createAddonScope } from '~/addons/scope';
 import { setOwnerCheck } from '~/commands/owners';
@@ -96,6 +98,8 @@ export class Plugins extends Addons<Plugin> {
 
 			this.load(bundle, manifest);
 		}
+
+		afterFirstFrame(() => void repairMissingAddons(this, this.logger));
 	}
 
 	/**
