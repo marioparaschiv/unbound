@@ -22,6 +22,7 @@ import org.json.JSONObject
 import java.io.File
 import java.text.DecimalFormatSymbols
 import java.util.Locale
+import java.util.zip.ZipFile
 import java.security.MessageDigest
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
@@ -31,6 +32,7 @@ object EnvironmentFacts {
     private const val LSPATCH_CONFIG = "lspatch/config.json"
     private const val NPATCH_CONFIG = "npatch/config.json"
     private const val SELINUX_ENFORCE = "/sys/fs/selinux/enforce"
+    private const val NATIVE_LIBRARIES = "lib/"
     private const val USERS_PER_RANGE = 100_000
     private val ABI_SPLITS = setOf("config.arm64_v8a", "config.armeabi_v7a", "config.x86_64", "config.x86")
     private val ROM_PROPERTIES = listOf(
@@ -100,6 +102,7 @@ object EnvironmentFacts {
             .put("patch", patchMode(context))
             .put("splits", context.applicationInfo.splitNames?.size ?: 0)
             .put("missingSplits", JSONArray(missingSplits(context)))
+            .put("merged", isMergedApk(context))
             .put("profile", profile(context))
     }
 
@@ -238,6 +241,13 @@ object EnvironmentFacts {
         if (splits.isEmpty() || splits.any { it in ABI_SPLITS }) return emptyList()
         return listOf("config." + abi.replace('-', '_'))
     }
+
+    private fun isMergedApk(context: Context): Boolean = runCatching {
+        if (!context.applicationInfo.splitNames.isNullOrEmpty()) return false
+        ZipFile(context.applicationInfo.sourceDir).use { zip ->
+            zip.entries().asSequence().any { it.name.startsWith(NATIVE_LIBRARIES) }
+        }
+    }.getOrDefault(false)
 
     private fun profile(context: Context): String {
         val users = context.getSystemService(UserManager::class.java)

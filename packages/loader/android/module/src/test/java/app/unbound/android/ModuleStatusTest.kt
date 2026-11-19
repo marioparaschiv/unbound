@@ -25,6 +25,14 @@ class ModuleStatusTest {
     }
 
     @Test
+    fun namesALegacyFrameworkThatCannotLoadTheModule() {
+        val legacy = ModuleStatusInput("1.4.0 (abc)", null, true, "353.0 (1)", "EdXposed")
+
+        assertEquals("EdXposed can't load Unbound. Install LSPosed or Vector instead, then reboot.", ModuleStatus.summary(legacy))
+        assertEquals("EdXposed (unsupported)", ModuleStatus.rows(legacy)[1].value)
+    }
+
+    @Test
     fun waitsForTheFrameworkBeforeTheTimeout() {
         assertEquals("Checking the framework…", ModuleStatus.summary(input(null)))
     }

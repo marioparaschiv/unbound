@@ -87,7 +87,12 @@ class StatusActivity : Activity() {
         framework = framework,
         frameworkTimedOut = timedOut,
         discordVersion = discordVersion(),
+        legacyFramework = legacyFramework(),
     )
+
+    private fun legacyFramework(): String? = ModuleStatus.LEGACY_FRAMEWORKS.entries.firstOrNull { (name, _) ->
+        runCatching { packageManager.getPackageInfo(name, 0) }.isSuccess
+    }?.value
 
     private fun discordVersion(): String? = runCatching {
         val info = packageManager.getPackageInfo(ModuleStatus.DISCORD_PACKAGE, 0)
