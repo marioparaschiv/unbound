@@ -19,6 +19,14 @@ const schema = Type.Object({
 	attachment: Type.Optional(
 		Type.String({ description: 'A URL to show as the message attachment, such as an image.' }),
 	),
+	delay: defaulted(
+		Type.Number({
+			description:
+				'With `add`, how many milliseconds late the message arrives: its nonce is backdated by this much, so latency badges show it.',
+			minimum: 0,
+		}),
+		0,
+	),
 	state: defaulted(
 		Type.Union([Type.Literal('sent'), Type.Literal('sending'), Type.Literal('failed')], {
 			description: 'How far the message got: `sent`, `sending` or `failed`.',
@@ -39,8 +47,8 @@ const messageCommand: CommandDefinition<typeof schema> = {
 	name: 'message',
 	description:
 		'Add or remove a message that exists only on the connected device, for checking how a plugin ' +
-		'renders one: choose the author, text, an attachment URL and whether it shows as sent, sending ' +
-		"or failed. Nothing reaches Discord's servers. Prints the channel and message ids.",
+		'renders one: choose the author, text, an attachment URL, how late it arrives and whether it shows ' +
+		"as sent, sending or failed. Nothing reaches Discord's servers. Prints the channel and message ids.",
 	summary: 'Add or remove a local message on the device.',
 	mcp: true,
 	schema,

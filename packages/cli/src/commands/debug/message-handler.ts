@@ -5,7 +5,7 @@ import type { CommandHandler } from '~/lib/lazy-handler';
 import type messageCommand from './message';
 
 const handler: CommandHandler<typeof messageCommand.schema> = (
-	{ action, content, channel, author, attachment, state, ids },
+	{ action, content, channel, author, attachment, delay, state, ids },
 	{ client },
 ) => {
 	const channelId = channel ?? null;
@@ -16,6 +16,7 @@ const handler: CommandHandler<typeof messageCommand.schema> = (
 					author,
 					content,
 					attachment: attachment ?? null,
+					delayMs: delay,
 					state,
 				})
 			: toDeviceCode(removeLocalMessages, channelId, ids);

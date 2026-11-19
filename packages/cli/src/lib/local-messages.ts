@@ -10,6 +10,7 @@ export type LocalMessageInput = {
 	author: string;
 	content: string;
 	attachment: string | null;
+	delayMs: number;
 	state: LocalMessageState;
 };
 
@@ -21,15 +22,16 @@ export type LocalMessageResult = { channelId: string; ids: string[] };
  * servers. The ids it adds are kept on the device so `removeLocalMessages` can take them away again.
  * @param device The device prelude.
  * @param input The channel (the open one when `null`), the author (`me`, `clyde` or a user id), the text, an
- * attachment URL and the sending state.
+ * attachment URL, how many milliseconds late it arrives, which backdates its nonce, and the sending state.
  * @returns The channel and the new message's id.
  */
 export function addLocalMessage(
 	{ unbound }: DevicePrelude,
-	{ channelId, author, content, attachment, state }: LocalMessageInput,
+	{ channelId, author, content, attachment, delayMs, state }: LocalMessageInput,
 ): LocalMessageResult {
 	const STATES = { sent: 'SENT', sending: 'SENDING', failed: 'SEND_FAILED' };
 	const PREVIEW_SIZE = 256;
+	const SNOWFLAKE_TIME_SHIFT = BigInt(22);
 	const TYPES: Record<string, string> = {
 		png: 'image/png',
 		jpg: 'image/jpeg',
@@ -88,7 +90,10 @@ export function addLocalMessage(
 
 	message.flags = 0;
 	message.state = STATES[state];
-	message.nonce = message.id;
+	message.nonce =
+		delayMs > 0
+			? String(BigInt(message.id) - (BigInt(Math.round(delayMs)) << SNOWFLAKE_TIME_SHIFT))
+			: message.id;
 	unbound.flux.dispatch({
 		type: 'MESSAGE_CREATE',
 		channelId: id,
