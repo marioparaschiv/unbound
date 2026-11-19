@@ -21,7 +21,7 @@ export type Header<T> = {
 	group: Placed<T>;
 	username: Placed<T>;
 	trailing: Placed<T>[];
-	timestamp: Placed<T>;
+	timestamp?: Placed<T>;
 	icon: T;
 };
 
@@ -91,13 +91,21 @@ export function headerLayout<T>({
 				width: group.frame.width + Icon.controlWidth,
 				height: group.frame.height,
 			},
-			{
-				view: timestamp.view,
-				leading: [group.view, 'trailing', timestamp.frame.x - groupEnd],
-				centerY: [row.view, centerOffset(timestamp.frame, row.frame)],
-				width: timestamp.frame.width,
-				height: timestamp.frame.height,
-			},
+			...(timestamp
+				? [
+						{
+							view: timestamp.view,
+							leading: [
+								group.view,
+								'trailing',
+								timestamp.frame.x - groupEnd,
+							] as const,
+							centerY: [row.view, centerOffset(timestamp.frame, row.frame)] as const,
+							width: timestamp.frame.width,
+							height: timestamp.frame.height,
+						},
+					]
+				: []),
 		],
 		group: inGroup,
 	};
