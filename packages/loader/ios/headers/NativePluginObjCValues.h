@@ -7,6 +7,7 @@
 #include <jsi/jsi.h>
 #include <memory>
 
+#import "LoaderAddonHandles.h"
 #import "NativeObjectLifetime.h"
 
 namespace loader::ios {
@@ -18,8 +19,14 @@ class ObjCHandleHost final : public facebook::jsi::HostObject
 public:
     explicit ObjCHandleHost(__unsafe_unretained id value,
                             std::atomic<size_t> &live = liveObjCHandles())
-        : value_(ownableObject(value)), live_(live)
+        : charge_(loader::chargeHandle()), value_(ownableObject(value)), live_(live)
     {
+        if (!charge_.admitted)
+        {
+            throw facebook::jsi::JSINativeException(
+                loader::handleLimitMessage(loader::currentAddon()));
+        }
+
         live_.fetch_add(1, std::memory_order_relaxed);
     }
 
@@ -27,6 +34,7 @@ public:
     // main.
     ~ObjCHandleHost() override
     {
+        loader::releaseHandle(charge_);
         live_.fetch_sub(1, std::memory_order_relaxed);
         if (!value_ || [NSThread isMainThread])
         {
@@ -46,6 +54,7 @@ public:
     }
 
 private:
+    loader::HandleCharge charge_;
     __strong id value_;
     std::atomic<size_t> &live_;
 };
