@@ -91,6 +91,9 @@ void describesAndroidInstalls()
     assert(report::androidInstallLine(facts)
            == "APK cert 0123456789abcdef · CN=LSPatch · re-signed · LSPatch local · LSPosed 1.9 · "
               "missing config.arm64_v8a · work profile");
+
+    nlohmann::json merged{{"patch", "Xposed module"}, {"merged", true}};
+    assert(report::androidInstallLine(merged) == "Xposed module · merged split APK");
 }
 }
 

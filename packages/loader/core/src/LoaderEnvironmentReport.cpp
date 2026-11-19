@@ -382,6 +382,11 @@ std::string androidInstallLine(const nlohmann::json &facts)
         parts.push_back(std::to_string(facts.value("splits", 0)) + " splits");
     }
 
+    if (facts.value("merged", false))
+    {
+        parts.emplace_back("merged split APK");
+    }
+
     parts.push_back(facts.value("profile", std::string()));
     return joinedWith(parts, " · ");
 }
