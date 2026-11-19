@@ -83,7 +83,7 @@ export type DefinedSettings = {
 	schema: SettingsSchema;
 	/** The settings as an object; assign a property, a section's too, to save it. */
 	values: SettingsValues;
-	/** Reads a setting by its dot-separated key; a stored value the schema rejects is logged, removed and read as the default. */
+	/** Reads a setting by its dot-separated key; a stored value the schema rejects is logged and read as the default, and stays stored for the version that wrote it. */
 	get: (key: string) => SettingValue;
 	/** Saves a setting by its dot-separated key; throws when the schema rejects the value. */
 	set: (key: string, value: SettingValue) => void;
