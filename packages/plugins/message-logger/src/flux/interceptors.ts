@@ -1,6 +1,7 @@
 import { settings } from '@unbound-app/settings';
 import { flux, metro, patcher } from '@unbound-app/api';
 
+import { isDebugLocalMessage } from '~/lib/local-messages';
 import { keepRemovedAttachments, type AttachmentLike } from '~/lib/attachments';
 import { MessageStore, UserStore, findChatModules } from '~/lib/modules';
 import { filterContext } from '~/lib/filter-context';
@@ -39,7 +40,7 @@ function keepDeleted(channelId: string, messageId: string): boolean {
 		return false;
 	}
 
-	if (ownDeletions.has(messageId)) {
+	if (ownDeletions.has(messageId) || isDebugLocalMessage(channelId, messageId)) {
 		return false;
 	}
 
