@@ -50,6 +50,7 @@ struct AndroidDeviceFacts {
     bool adoptableStorage = false;
     int refreshRate       = 0;
     bool boldText         = false;
+    std::string formFactor;
     LocaleFacts locale;
 };
 
