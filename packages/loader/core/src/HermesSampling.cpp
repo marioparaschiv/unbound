@@ -13,6 +13,8 @@
 #include <sstream>
 #include <thread>
 
+#include "LoaderCrashHandler.h"
+
 namespace loader::native {
 namespace jsi = facebook::jsi;
 
@@ -74,17 +76,17 @@ namespace {
     }
 
     struct HermesRootAPI : jsi::ICast {
-        virtual void makeHermesRuntime()                                 = 0;
-        virtual void isHermesBytecode()                                  = 0;
-        virtual void getBytecodeVersion()                                = 0;
-        virtual void prefetchHermesBytecode()                            = 0;
-        virtual void hermesBytecodeSanityCheck()                         = 0;
-        virtual void setFatalHandler()                                   = 0;
-        virtual void getBytecodeEpilogue()                               = 0;
-        virtual void enableSamplingProfiler(double meanHzFreq)           = 0;
-        virtual void disableSamplingProfiler()                           = 0;
-        virtual void dumpSampledTraceToFile(const std::string &fileName) = 0;
-        virtual void dumpSampledTraceToStream(std::ostream &stream)      = 0;
+        virtual void makeHermesRuntime()                                   = 0;
+        virtual void isHermesBytecode()                                    = 0;
+        virtual void getBytecodeVersion()                                  = 0;
+        virtual void prefetchHermesBytecode()                              = 0;
+        virtual void hermesBytecodeSanityCheck()                           = 0;
+        virtual void setFatalHandler(void (*handler)(const std::string &)) = 0;
+        virtual void getBytecodeEpilogue()                                 = 0;
+        virtual void enableSamplingProfiler(double meanHzFreq)             = 0;
+        virtual void disableSamplingProfiler()                             = 0;
+        virtual void dumpSampledTraceToFile(const std::string &fileName)   = 0;
+        virtual void dumpSampledTraceToStream(std::ostream &stream)        = 0;
 
     protected:
         ~HermesRootAPI() = default;
@@ -295,9 +297,26 @@ std::optional<std::string> stopJavaScriptProfiler()
 static constexpr std::chrono::seconds kRuntimeSettling{15};
 static std::atomic<std::chrono::steady_clock::rep> gRuntimeCreatedAt{0};
 
+static void recordHermesFatal(const std::string &message)
+{
+    noteUncaughtException("Hermes fatal error: " + message);
+}
+
+static void installHermesFatalHandler()
+{
+    static std::once_flag installed;
+    std::call_once(installed, [] {
+        if (HermesRootAPI *api = rootAPI())
+        {
+            api->setFatalHandler(recordHermesFatal);
+        }
+    });
+}
+
 void noteRuntimeCreated()
 {
     gRuntimeCreatedAt.store(std::chrono::steady_clock::now().time_since_epoch().count());
+    installHermesFatalHandler();
 }
 
 static bool runtimeSettling()
