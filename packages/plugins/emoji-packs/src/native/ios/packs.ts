@@ -22,12 +22,24 @@ const PARSERS = [
 ] as const;
 
 type PickerEmoji = { id?: string | null; surrogates?: string };
+type RowReaction = { emoji?: { id?: string | null; name?: string; src?: string } };
+type GeneratedRow = { message?: { reactions?: RowReaction[] } } | undefined;
+type RowManagerModule = { prototype: { generate: (...args: unknown[]) => GeneratedRow } };
 type PickerUrlModule = { default: (emoji: PickerEmoji, animated: boolean, size: number) => string };
 type MarkupParsers = Record<(typeof PARSERS)[number], (...args: unknown[]) => Markup>;
 
+// UNKNOWN: a Metro module may export anything.
+function isRowManager(value: unknown): value is RowManagerModule {
+	return (
+		typeof Reflect.get(Object(Reflect.get(Object(value), 'prototype')), 'generate') ===
+		'function'
+	);
+}
+
 /**
  * @description Draws unicode emoji from a pack on iOS. Discord's native chat draws custom emoji from their `src`, so
- * the patched markup parsers hand it each covered emoji as a custom emoji with the pack's image; the emoji picker
+ * the patched markup parsers hand it each covered emoji as a custom emoji with the pack's image, and reaction rows get
+ * the pack's image as their emoji's `src`; the emoji picker
  * reads each emoji's image from `getEmojiItemUrl`, which answers with the pack's image; the composer gets image overlays.
  * @param native The plugin's native bridge, which draws the composer's emoji.
  * @param pack Reads the chosen pack.
@@ -55,6 +67,26 @@ export function packsIOS(native: NativeBridge, pack: () => PackId) {
 		);
 	} else {
 		logger.warn('Emoji picker keeps Discord’s emoji: Discord moved getEmojiItemUrl.');
+	}
+
+	const RowManager: unknown = metro.findByName('RowManager', { interop: false });
+	const rows = [Reflect.get(Object(RowManager), 'default'), RowManager].find(isRowManager);
+
+	if (rows) {
+		unpatches.push(
+			patcher.after(rows.prototype, 'generate', ({ result }) => {
+				for (const reaction of (result as GeneratedRow)?.message?.reactions ?? []) {
+					const { emoji } = reaction;
+
+					if (emoji && !emoji.id && emoji.name)
+						emoji.src = imageFor(emoji.name) ?? emoji.src;
+				}
+
+				return result;
+			}),
+		);
+	} else {
+		logger.warn('Reactions keep Discord’s emoji: Discord moved RowManager.');
 	}
 
 	const scope = native.ui.createScope();
