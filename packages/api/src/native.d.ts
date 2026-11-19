@@ -305,7 +305,9 @@ export type DeviceInfoType = {
 export type HermesRuntimeProperties = ReturnType<HermesInternalObject['getRuntimeProperties']>;
 /** How many hooks one owner holds through its native scopes. */
 export type HookOwner = {
+	/** The plugin id or tool name the scopes belong to. */
 	owner: string;
+	/** How many hooks those scopes hold now. */
 	hooks: number;
 };
 /** A reference that does not keep its native object alive; `deref` reads `null` once the object is gone. */

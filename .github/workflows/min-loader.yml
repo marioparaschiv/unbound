@@ -36,5 +36,8 @@ jobs:
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
 
+            - name: Build the web API types the client imports
+              run: bun run --filter @unbound-app/web build:types
+
             - name: Type-check the client against that loader's native typings
               run: bun scripts/check-min-loader.ts

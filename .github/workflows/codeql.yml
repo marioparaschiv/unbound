@@ -35,7 +35,7 @@ jobs:
                     - language: c-cpp
                       build-mode: none
                     - language: java-kotlin
-                      build-mode: none
+                      build-mode: manual
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -55,6 +55,24 @@ jobs:
                           - '**/dist/**'
                           - '**/tests/**'
                           - '**/build/**'
+
+            - name: Setup Java
+              if: matrix.language == 'java-kotlin'
+              uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78
+              with:
+                  distribution: temurin
+                  java-version-file: packages/loader/android/.java-version
+
+            - name: Compile the Android module's Kotlin
+              if: matrix.language == 'java-kotlin'
+              working-directory: packages/loader/android
+              run: |
+                  set -eu
+                  sdk=$(sed -n 's/.*compileSdk = \([0-9]*\)/\1/p' module/build.gradle.kts)
+                  test -n "$sdk"
+                  yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+                  "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-$sdk.0" "build-tools;$sdk.0.0" > /dev/null
+                  ./gradlew --no-daemon --quiet :module:compileReleaseKotlin
 
             - name: Analyze
               uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066

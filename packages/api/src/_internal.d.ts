@@ -4018,6 +4018,7 @@ export type NativeDeviceState = {
 	injected?: string[];
 	/** Methods two or more plugins rewrite, as `<plugin> × <plugin> · <method>`; older loaders omit it. */
 	hookConflicts?: string[];
+	/** Methods plugins hook that another image has since replaced over the hook, as `<image> · <class> -<selector>`; older loaders omit it. */
 	foreignHooks?: string[];
 	/** Low Power Mode (Battery Saver), the battery level and whether it charges; older loaders omit it. */
 	power?: NativePowerState;
