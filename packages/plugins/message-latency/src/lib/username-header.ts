@@ -35,37 +35,34 @@ function headerFor(nodes: Node[], label: Node): NativeObjectHandle | null {
 	return null;
 }
 
+function mentionsUsername(text: string, username: string): boolean {
+	return text.toLowerCase().includes(username.toLowerCase());
+}
+
 /**
- * @description Finds the username label and its header row in a message cell's view snapshot.
- * @param nodes The cell's view snapshot.
- * @param username The author name the label should show.
- * @returns The label and header, or `null` when the cell has no header row.
+ * @description Finds the username label and its header row in a message cell's view snapshot: the label showing the
+ * account name, else one that contains it (such as "Name (@username)"), else the first label of the only header row,
+ * since role tags and badges in that row are labels too and come after the name.
+ * @param nodes The cell's view snapshot, in drawing order.
+ * @param username The author's account name.
+ * @returns The label and header, or `null` when the cell has no header row or several.
  */
 export function findUsernameHeader(nodes: Node[], username: string): UsernameHeader | null {
-	const exact = nodes.find((node) => isVisibleLabel(node) && node.text === username);
-
-	if (exact) {
-		const header = headerFor(nodes, exact);
-
-		return header ? { label: exact.view, header } : null;
-	}
-
-	// The shown name can differ from the account name (nicknames), so fall back to the only label with a header.
-	let match: UsernameHeader | null = null;
-
-	for (const node of nodes) {
+	const candidates = nodes.flatMap((node) => {
 		const header = isVisibleLabel(node) ? headerFor(nodes, node) : null;
 
-		if (!header) {
-			continue;
-		}
+		return header ? [{ node, header }] : [];
+	});
+	const chosen =
+		candidates.find(({ node }) => node.text === username) ??
+		(username
+			? candidates.find(({ node }) => mentionsUsername(node.text ?? '', username))
+			: undefined) ??
+		(candidates.every(({ header }) => header === candidates[0]?.header)
+			? candidates[0]
+			: undefined);
 
-		if (match) return null;
-
-		match = { label: node.view, header };
-	}
-
-	return match;
+	return chosen ? { label: chosen.node.view, header: chosen.header } : null;
 }
 
 export default { findUsernameHeader };
