@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.16] - 2026-11-19
+
+### Fixed
+
+- On iOS, the badge shows on messages in Chat Bubbles. It no longer gives up when the bubble moves the timestamp, and a cell redrawn while hidden or mid-render is drawn again.
+
 ## [1.2.15] - 2026-11-19
 
 ### Fixed

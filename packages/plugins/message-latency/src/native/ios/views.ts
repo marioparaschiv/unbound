@@ -28,6 +28,9 @@ type LatencyView = {
 	tooltip: string;
 };
 
+const HIDDEN_RETRIES = 3;
+const HIDDEN_RETRY_MS = 300;
+
 export type MessageCells = {
 	hook(): () => Promise<void>;
 };
@@ -36,6 +39,8 @@ type Cell = {
 	// Bumped on every schedule, so a render that resolves after reuse or dispose can tell it is stale.
 	revision: number;
 	rendering: boolean;
+	rerender?: boolean;
+	hiddenRetries?: number;
 	messageId?: string;
 	view?: LatencyView;
 };
@@ -197,22 +202,50 @@ export function createMessageCells(
 
 			const nodes = await objc.snapshot(handle, CELL_SNAPSHOT);
 
-			if (!isFresh() || !nodes[0]?.visible) return;
+			if (!isFresh()) return;
+
+			if (!nodes[0]?.visible) {
+				retryWhileHidden(handle, cell);
+
+				return;
+			}
+
+			cell.hiddenRetries = 0;
 
 			await addView(key, messageId, record, nodes, isFresh);
 		});
 	}
 
+	function retryWhileHidden(handle: NativeObjectHandle, cell: Cell) {
+		const tries = cell.hiddenRetries ?? 0;
+
+		if (tries >= HIDDEN_RETRIES) return;
+
+		cell.hiddenRetries = tries + 1;
+		setTimeout(() => {
+			if (!disposed) schedule(handle);
+		}, HIDDEN_RETRY_MS);
+	}
+
 	function schedule(handle: NativeObjectHandle) {
 		const key = viewKey(objc, handle);
 
-		if (!key || cells.get(key)?.rendering) return;
+		if (!key) return;
+
+		const running = cells.get(key);
+
+		if (running?.rendering) {
+			running.rerender = true;
+
+			return;
+		}
 
 		const revision = ++nextRevision;
 		const cell = cells.get(key) ?? { revision, rendering: true };
 
 		cell.revision = revision;
 		cell.rendering = true;
+		cell.rerender = false;
 		cells.set(key, cell);
 
 		// Deferred so the native lifecycle call that triggered it returns first.
@@ -220,11 +253,16 @@ export function createMessageCells(
 			if (disposed || cells.get(key) !== cell) return;
 
 			void render(handle, key, revision)
-				.catch(() => {
+				.catch((error: unknown) => {
+					logger.warn(`Failed to draw the latency badge in cell ${key}:`, error);
 					if (!disposed && cells.get(key)?.revision === revision) disposeCell(handle);
 				})
 				.finally(() => {
-					if (cells.get(key)?.revision === revision) cell.rendering = false;
+					if (cells.get(key)?.revision !== revision) return;
+
+					cell.rendering = false;
+
+					if (cell.rerender && !disposed) schedule(handle);
 				});
 		}, 0);
 	}

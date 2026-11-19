@@ -178,8 +178,6 @@ export async function installLayout(
 		.filter(hasFrame)
 		.find(({ view, frame }) => objc.className(view) === 'DCDLabel' && frame.x >= groupEnd);
 
-	if (!timestamp) throw new Error('Message latency timestamp row is unavailable');
-
 	const header = headerLayout({
 		row: { view: groupRow, frame: rowFrame },
 		group: { view: group, frame: groupFrame },
@@ -190,9 +188,12 @@ export async function installLayout(
 	});
 	const layout: Layout = {
 		views: await Promise.all(
-			[group, username, ...trailing.map(({ view }) => view), timestamp.view].map((view) =>
-				save(objc, view),
-			),
+			[
+				group,
+				username,
+				...trailing.map(({ view }) => view),
+				...(timestamp ? [timestamp.view] : []),
+			].map((view) => save(objc, view)),
 		),
 		constraints: [],
 	};
