@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, statSync } from 'node:fs';
 import Logger from '@unbound-app/logger';
 import { join } from 'node:path';
 
-import { DIST_DIR, MANIFEST_NAME, MANIFEST_POLL_INTERVAL, SOURCE_BUNDLE_NAME } from './constants';
+import { DIST_DIR, ETAG_SOURCES, MANIFEST_NAME, MANIFEST_POLL_INTERVAL } from './constants';
 
 type ReloadPayload = { etag: string };
 
@@ -18,16 +18,25 @@ let etag = bundleEtag();
 let sendOnConnect: () => boolean = () => true;
 
 /**
- * @description Hashes the built bundle into a quoted etag, so an identical rebuild doesn't reload clients.
- * @returns The quoted content hash, or '' if it has not been built yet.
+ * @description Hashes the built bundles of both flavours into one quoted etag, so a build that changes either one
+ * changes the etag the loader holds, whichever flavour it downloaded, and an identical rebuild reloads nobody.
+ * @returns The quoted content hash, or '' if nothing has been built yet.
  */
 export function bundleEtag(): string {
-	try {
-		// Quoted because the loader compares this byte-for-byte with the `ETag` header it stored.
-		return `"${Bun.hash(readFileSync(join(DIST_DIR, SOURCE_BUNDLE_NAME))).toString(16)}"`;
-	} catch {
-		return '';
+	const hash = new Bun.CryptoHasher('sha256');
+	let found = false;
+
+	for (const name of ETAG_SOURCES) {
+		try {
+			hash.update(readFileSync(join(DIST_DIR, name)));
+			found = true;
+		} catch {
+			hash.update(name);
+		}
 	}
+
+	// Quoted because the loader compares this byte-for-byte with the `ETag` header it stored.
+	return found ? `"${hash.digest('hex').slice(0, 16)}"` : '';
 }
 
 /**
