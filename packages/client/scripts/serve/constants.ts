@@ -16,6 +16,9 @@ export const MANIFEST_POLL_INTERVAL = 250;
 /** The JavaScript bundle inside `DIST_DIR`; every Hermes `unbound.<version>.bundle` is compiled from it. */
 export const SOURCE_BUNDLE_NAME = 'unbound.js';
 
+/** The JavaScript of both flavours, which every Hermes bundle is compiled from; their hash is the bundle etag. */
+export const ETAG_SOURCES = [SOURCE_BUNDLE_NAME, 'unbound-dev.js'];
+
 /** Written after every bundle variant, so its change marks a finished build. */
 export const MANIFEST_NAME = 'manifest.json';
 
