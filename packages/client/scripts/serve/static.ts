@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { join } from 'node:path';
 
 import { DIST_DIR, BUNDLE_PATTERN } from './constants';
+import { noteServed } from './build-info';
 import { bundleEtag } from './hot-reload';
 
 const logger = Logger.create('Serve');
@@ -66,6 +67,8 @@ export async function serveStatic(
 		}
 
 		const isBundle = BUNDLE_PATTERN.test(pathname.slice(1));
+
+		noteServed(pathname.slice(1));
 		const etag = isBundle ? bundleEtag() : '';
 
 		// Without the 304, the loader saves every launch's download as a new bundle and restarts Discord to run it.

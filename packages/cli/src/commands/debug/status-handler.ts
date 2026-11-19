@@ -1,6 +1,7 @@
 import type { CommandOutput } from '@unbound-app/debugger-protocol/registry';
 import type { DeviceInfo } from '@unbound-app/debugger-protocol';
 
+import { describeDevServer, readDevServerBuild } from '~/lib/dev-server-build';
 import { evaluateOnDevice, NOT_CONNECTED, toDeviceCode } from '~/lib/device';
 import { defaulted, Type, type StaticDecode } from '~/lib/schema';
 import { evalFailure, failure } from '~/lib/command-error';
@@ -68,6 +69,7 @@ const deviceStatusReportSchema = Type.Object({
 	resources: Type.Union([Type.Record(Type.String(), Type.Number()), Type.Null()]),
 	slowestStarts: defaulted(Type.Array(Type.Tuple([Type.String(), Type.Number()])), []),
 	startTotal: defaulted(Type.Number(), 0),
+	updateUrl: defaulted(Type.String(), ''),
 });
 
 type DeviceStatusReport = StaticDecode<typeof deviceStatusReportSchema>;
@@ -95,6 +97,7 @@ function readDeviceStatus({ unbound, plugins }: DevicePrelude): string {
 			: null,
 		slowestStarts: [...(durations ?? [])].sort((left, right) => right[1] - left[1]).slice(0, 8),
 		startTotal: [...(durations?.values() ?? [])].reduce((total, ms) => total + ms, 0),
+		updateUrl: String(unbound.storage.getBucket('unbound').get('loader.update.url', '')),
 	};
 
 	return JSON.stringify(report);
@@ -117,9 +120,14 @@ export function describeDevice(device: DeviceInfo | undefined): string {
  * @description Renders the status report.
  * @param device What the device reported in its hello.
  * @param report The plugin and resource counts read from the device.
+ * @param devServer
  * @returns The lines `ubd debug status` prints.
  */
-function formatStatus(device: DeviceInfo | undefined, report: DeviceStatusReport): string {
+function formatStatus(
+	device: DeviceInfo | undefined,
+	report: DeviceStatusReport,
+	devServer: string | undefined,
+): string {
 	const lines = [
 		`Device: ${describeDevice(device)}`,
 		`Plugins: ${report.started} started, ${report.failed.length} failed, ${report.stopped.length} off`,
@@ -145,6 +153,10 @@ function formatStatus(device: DeviceInfo | undefined, report: DeviceStatusReport
 		);
 	} else {
 		lines.push('Native resources: this loader does not report them');
+	}
+
+	if (devServer) {
+		lines.push(devServer);
 	}
 
 	return lines.join('\n');
@@ -219,10 +231,13 @@ const handler: CommandHandler<typeof statusCommand.schema> = async (
 		return report;
 	}
 
+	const build = await readDevServerBuild(report.updateUrl);
+	const devServer = build ? describeDevServer(build) : undefined;
+
 	return {
 		ok: true,
-		text: formatStatus(client.device, report),
-		data: { device: client.device, ...report },
+		text: formatStatus(client.device, report, devServer),
+		data: { device: client.device, ...report, ...(build ? { devServer: build } : {}) },
 	};
 };
 
