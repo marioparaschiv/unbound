@@ -27,6 +27,7 @@ type EmojiState = {
 	painted: Map<string, string>;
 	/** Each text view's overlays and the runs they cover, by the view's hash, to move after a layout pass. */
 	placed: Map<string, number[]>;
+	hidden: Map<string, { start: number; length: number }[]>;
 	side: number;
 	updating: boolean;
 };
@@ -60,6 +61,106 @@ function imageFor(current: EmojiState, url: string): NativeObjectHandle | null {
 	return image;
 }
 
+function attributeAt(
+	objc: NativeObjCBridge,
+	storage: NativeObjectHandle,
+	name: string,
+	index: number,
+): NativeObjectHandle | null {
+	'worklet';
+
+	return objc.call(
+		storage,
+		'attribute:atIndex:effectiveRange:',
+		name,
+		index,
+		null,
+	) as NativeObjectHandle | null;
+}
+
+function isClear(objc: NativeObjCBridge, color: NativeObjectHandle | null): boolean {
+	'worklet';
+	const description = color ? objc.call(color, 'description') : null;
+	const alpha =
+		typeof description === 'string' ? Number(description.trim().split(/\s+/).pop()) : 1;
+
+	return alpha === 0;
+}
+
+function looksHidden(objc: NativeObjCBridge, storage: NativeObjectHandle, index: number): boolean {
+	'worklet';
+	const font = attributeAt(objc, storage, 'NSFont', index);
+	const kern = attributeAt(objc, storage, 'NSKern', index);
+
+	return (
+		isClear(objc, attributeAt(objc, storage, 'NSColor', index)) ||
+		(kern !== null && kern !== undefined) ||
+		Boolean(font && Number(objc.call(font, 'pointSize')) < 1)
+	);
+}
+
+function stillHidden(
+	objc: NativeObjCBridge,
+	storage: NativeObjectHandle,
+	runs: { start: number; length: number }[],
+): boolean {
+	'worklet';
+
+	return runs.every(({ start, length }) => {
+		const color = attributeAt(objc, storage, 'NSColor', start);
+		const font = attributeAt(objc, storage, 'NSFont', start);
+		const kern = attributeAt(objc, storage, 'NSKern', start + length - 1);
+
+		return (
+			isClear(objc, color) &&
+			Boolean(font) &&
+			Number(objc.call(font!, 'pointSize')) < 1 &&
+			kern !== null &&
+			kern !== undefined
+		);
+	});
+}
+
+function restoreStrays(
+	objc: NativeObjCBridge,
+	textView: NativeObjectHandle,
+	storage: NativeObjectHandle,
+	length: number,
+	runs: { start: number; length: number }[],
+) {
+	'worklet';
+	const inRun = (index: number) =>
+		runs.some((run) => index >= run.start && index < run.start + run.length);
+	let strayStart = -1;
+
+	for (let index = 0; index <= length; index++) {
+		const stray = index < length && !inRun(index) && looksHidden(objc, storage, index);
+
+		if (stray && strayStart < 0) strayStart = index;
+
+		if (!stray && strayStart >= 0) {
+			showRun(objc, textView, storage, strayStart, index - strayStart);
+			strayStart = -1;
+		}
+	}
+}
+
+function resetTyping(objc: NativeObjCBridge, textView: NativeObjectHandle) {
+	'worklet';
+	const typing = objc.call(textView, 'typingAttributes') as NativeObjectHandle | null;
+	const font = objc.call(textView, 'font');
+	const color = objc.call(textView, 'textColor');
+
+	if (!typing) return;
+
+	const attributes = objc.call(typing, 'mutableCopy') as NativeObjectHandle;
+
+	if (font) objc.call(attributes, 'setObject:forKey:', font, 'NSFont');
+	if (color) objc.call(attributes, 'setObject:forKey:', color, 'NSColor');
+	objc.call(attributes, 'removeObjectForKey:', 'NSKern');
+	objc.call(textView, 'setTypingAttributes:', attributes);
+}
+
 function paint(current: EmojiState, textView: NativeObjectHandle) {
 	'worklet';
 	const { objc } = current;
@@ -75,7 +176,10 @@ function paint(current: EmojiState, textView: NativeObjectHandle) {
 	const key = String(objc.call(textView, 'hash'));
 	const signature = `${text}\u0000${current.files.size}\u0000${Object.keys(current.known).length}`;
 
-	if (current.painted.get(key) === signature) {
+	if (
+		current.painted.get(key) === signature &&
+		stillHidden(objc, storage, current.hidden.get(key) ?? [])
+	) {
 		const starts = current.placed.get(key);
 
 		if (starts) repositionTaggedOverlays(objc, textView, OVERLAY_TAG, starts, current.side);
@@ -96,6 +200,8 @@ function paint(current: EmojiState, textView: NativeObjectHandle) {
 	try {
 		removeTaggedOverlays(objc, textView, OVERLAY_TAG);
 
+		restoreStrays(objc, textView, storage, text.length, tokens);
+
 		for (const token of found) showRun(objc, textView, storage, token.start, token.length);
 
 		for (const token of tokens) hideRun(objc, storage, token.start, token.length, side);
@@ -109,7 +215,12 @@ function paint(current: EmojiState, textView: NativeObjectHandle) {
 		}
 
 		current.placed.set(key, placed);
+		current.hidden.set(
+			key,
+			tokens.map(({ start, length }) => ({ start, length })),
+		);
 		current.side = side;
+		resetTyping(objc, textView);
 	} finally {
 		current.updating = false;
 	}
@@ -158,6 +269,7 @@ export function installComposerEmoji(scope: NativeUIScope) {
 		images: new Map(),
 		painted: new Map(),
 		placed: new Map(),
+		hidden: new Map(),
 		side: 20,
 		updating: false,
 	};
