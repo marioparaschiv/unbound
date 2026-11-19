@@ -22,7 +22,8 @@ export function start(context: PluginContext) {
 		return;
 	}
 
-	const findFile = (uri: string) => videoFile(context.native, uri);
+	const findFile = (uri: string, onProgress: (fraction: number) => void) =>
+		videoFile(context.native, uri, onProgress);
 
 	patcher.react.after(UploadPreviewSheet, 'default', ({ props, result }) => {
 		const Video = (metro.findByProps('VideoComponent') as VideoModule | undefined)

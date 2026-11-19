@@ -7,10 +7,14 @@ declare module '@unbound-app/i18n' {
 		readonly SOUND: string;
 		/** Previews play with sound instead of muted. */
 		readonly SOUND_SUBTITLE: string;
+		/** iCloud {percent}% */
+		readonly DOWNLOADING: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
-	export type FormatVars = Record<never, never>;
+	export type FormatVars = {
+		DOWNLOADING: { percent: string | number };
+	};
 
 	/** Each message in the user's locale, falling back to en-US. */
 	export const messages: Messages;
