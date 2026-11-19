@@ -22,5 +22,37 @@
 	},
 	"icon": "PaintPaletteIcon",
 	"minNativeBridgeApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.objc.batch",
+				"native.objc.classes",
+				"native.objc.hooks",
+				"native.objc.invoke",
+				"native.objc.invokeAsync",
+				"native.objc.ivars",
+				"native.objc.snapshot"
+			]
+		},
+		"android": {
+			"capabilities": [
+				"native.java.associations",
+				"native.java.batch",
+				"native.java.classes",
+				"native.java.construct",
+				"native.java.fields",
+				"native.java.hooks",
+				"native.java.invoke",
+				"native.java.invokeAsync"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "127463a78c4f14c5a52557a92f87f46c18e6b788672afaf2d6efd727edd0f4df1373fe5a0a6a659da3e3fec8601a9b11a0d0a724aea16945587fd696df3b87fe"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "APrlJCTpB9a/0GrZcziU6unAq8zTpZXBllFBGKz9OsNpdm2qZ60BdesTEZxL+UU1obAI2UIVz7DztiOMoFEZDA=="
+	}
 }
