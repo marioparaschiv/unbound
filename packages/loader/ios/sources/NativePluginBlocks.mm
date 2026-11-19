@@ -13,6 +13,8 @@
 #include <utility>
 #include <vector>
 
+#import "LoaderAddonActivity.h"
+#include "LoaderThreadWarnings.h"
 #import "Logger.h"
 #import "NativeFFI.h"
 #import "NativePluginObjCValues.h"
@@ -81,6 +83,7 @@ namespace {
         uint64_t generation = 0;
         std::string encoding;
         std::string label;
+        loader::AddonSlot addon = loader::kNoAddon;
     };
 
     struct BlockState {
@@ -375,9 +378,12 @@ namespace {
         }
         catch (const std::exception &error)
         {
-            [Logger error:LOG_CATEGORY_PLUGINS
-                   format:@"Failed to run the native callback %s: %s", callback->label.c_str(),
-                          error.what()];
+            std::string reason =
+                std::string("Failed to run ") + callback->label + ": " + error.what();
+            [Logger
+                 error:LOG_CATEGORY_PLUGINS
+                format:@"%s",
+                       loader::threading::callbackFailureMessage(callback->addon, reason).c_str()];
         }
 
         return std::vector<uint8_t>(kMaximumFloatSlots * sizeof(double));
@@ -520,6 +526,7 @@ namespace {
 
         auto callback       = std::make_shared<Callback>();
         callback->label     = std::move(label);
+        callback->addon     = loader::currentAddon();
         callback->signature = loader::ffi::signatureFromValue(runtime, signature);
         size_t integers     = leading;
         size_t floats       = 0;
