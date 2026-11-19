@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.11.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.10.0...loader-v1.11.0) (2026-11-19)
+
+
+### Features
+
+* **loader:** add device, display and locale markers ([#1857](https://github.com/marioparaschiv/unbound/issues/1857)) ([fd94429](https://github.com/marioparaschiv/unbound/commit/fd94429aefd59197312bb8063f8bbeb4d340789d))
+* **loader:** cap native handles per plugin ([#1884](https://github.com/marioparaschiv/unbound/issues/1884)) ([65c7595](https://github.com/marioparaschiv/unbound/commit/65c75951cd85965986ecbd887cba791a47c33e03))
+* **loader:** flag plugin disk access on the Android main thread ([#1856](https://github.com/marioparaschiv/unbound/issues/1856)) ([9afe6bb](https://github.com/marioparaschiv/unbound/commit/9afe6bb98c3eda3945adf39a55ba7d5d1c652468))
+* **loader:** list recent hook calls in native crash reports ([#1888](https://github.com/marioparaschiv/unbound/issues/1888)) ([615f690](https://github.com/marioparaschiv/unbound/commit/615f690c34fd9930079c2e5371813f26d77556b4))
+* **loader:** name more Android stores and form factors ([#1880](https://github.com/marioparaschiv/unbound/issues/1880)) ([a22638e](https://github.com/marioparaschiv/unbound/commit/a22638e6060507fb07d4baaa2cfbf20669af1a72))
+* **loader:** name tweaks that replace a plugin's hooked method ([#1855](https://github.com/marioparaschiv/unbound/issues/1855)) ([1141213](https://github.com/marioparaschiv/unbound/commit/114121305c93c5d31b649eaf6603c274be819da3))
+* **loader:** prebuilt hook trampolines for mixed double and i64 ([#1851](https://github.com/marioparaschiv/unbound/issues/1851)) ([5d8696c](https://github.com/marioparaschiv/unbound/commit/5d8696cb4da623c6778fd66775eb6941907f31fd))
+* **loader:** rate-limit JS log lines per scope ([#1853](https://github.com/marioparaschiv/unbound/issues/1853)) ([090358f](https://github.com/marioparaschiv/unbound/commit/090358f4d0f4519ad2c1d8b5b9222128a9d772fd))
+* **loader:** record C++ exceptions and abort messages in crashes ([#1848](https://github.com/marioparaschiv/unbound/issues/1848)) ([e0f7c11](https://github.com/marioparaschiv/unbound/commit/e0f7c11f80814ea13cd43d2ed3935613ef2e9eed))
+* **loader:** report MetricKit hangs with their main-thread stack ([#1849](https://github.com/marioparaschiv/unbound/issues/1849)) ([cb45fa4](https://github.com/marioparaschiv/unbound/commit/cb45fa4cdab6e2f7b9a1c2975d9572743354a0f4))
+* **loader:** run only one copy of Unbound per process ([#1882](https://github.com/marioparaschiv/unbound/issues/1882)) ([3ac5b3e](https://github.com/marioparaschiv/unbound/commit/3ac5b3ee2886ce888c9bfd46f1313929cd71f00b))
+* **loader:** skip queued hook calls past 1000 a second ([#1886](https://github.com/marioparaschiv/unbound/issues/1886)) ([55b4ef9](https://github.com/marioparaschiv/unbound/commit/55b4ef90a5ffbb43a9d40238b5703cbee38402c3))
+* **loader:** stop plugin hooks recursing into their own method ([#1854](https://github.com/marioparaschiv/unbound/issues/1854)) ([fe2e524](https://github.com/marioparaschiv/unbound/commit/fe2e5248f9d3914276d0b1f6e42419337a725912))
+
+
+### Bug Fixes
+
+* **loader:** keep alternate icons working on sideloaded iOS 27.3 ([#1838](https://github.com/marioparaschiv/unbound/issues/1838)) ([ebf0d08](https://github.com/marioparaschiv/unbound/commit/ebf0d08e028876cf89244e7b8f6c647f88d2db82))
+* **loader:** keep Objective-C exceptions out of JS hook frames ([#1887](https://github.com/marioparaschiv/unbound/issues/1887)) ([63ee40f](https://github.com/marioparaschiv/unbound/commit/63ee40f30de0c9bde9bbebb39045b38cb5c03ea5))
+* **loader:** read class-method hooks in the compat scan ([#1835](https://github.com/marioparaschiv/unbound/issues/1835)) ([95ceef7](https://github.com/marioparaschiv/unbound/commit/95ceef787d0d877839c7e850a6cd34718d9e48ac))
+* **loader:** tell the compat scan Huawei's BuildEx is a system class ([#1862](https://github.com/marioparaschiv/unbound/issues/1862)) ([b8f2250](https://github.com/marioparaschiv/unbound/commit/b8f2250c76794dae14b6a1d63c49a22f5dbec98e))
+
 ## [1.10.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.9.0...loader-v1.10.0) (2026-11-18)
 
 
