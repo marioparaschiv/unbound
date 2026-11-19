@@ -18,6 +18,60 @@ struct NativeCallSlot {
 
 static NativeCallSlot gSlots[kActivityThreadLimit];
 
+struct BridgeTrail {
+    char labels[kBridgeTrailLength][kNativeCallLabelLimit] = {};
+    std::atomic<uint32_t> next{0};
+    std::atomic<int64_t> lastAt{0};
+};
+
+static BridgeTrail gTrails[kAddonSlotCapacity];
+
+static void noteBridgeCall(AddonSlot addon, const std::string &label, int64_t at)
+{
+    if (addon == kNoAddon || addon >= kAddonSlotCapacity)
+    {
+        return;
+    }
+
+    BridgeTrail &trail = gTrails[addon];
+    uint32_t index     = trail.next.fetch_add(1, std::memory_order_relaxed) % kBridgeTrailLength;
+    std::strncpy(trail.labels[index], label.c_str(), kNativeCallLabelLimit - 1);
+    trail.labels[index][kNativeCallLabelLimit - 1] = '\0';
+    trail.lastAt.store(at, std::memory_order_release);
+}
+
+static void writeTrail(int descriptor, AddonSlot addon, const BridgeTrail &trail)
+{
+    uint32_t recordLength  = 0;
+    const char *record     = addonRecordText(addon, recordLength);
+    const char prefix[]    = "Bridge calls ";
+    const char separator[] = " | ";
+    const char space       = ' ';
+    const char newline     = '\n';
+    ssize_t written        = write(descriptor, prefix, sizeof(prefix) - 1);
+    if (record)
+    {
+        written = write(descriptor, record, recordLength);
+        written = write(descriptor, &space, 1);
+    }
+
+    uint32_t next  = trail.next.load(std::memory_order_relaxed);
+    uint32_t count = std::min<uint32_t>(next, kBridgeTrailLength);
+    for (uint32_t offset = count; offset > 0; offset--)
+    {
+        const char *label = trail.labels[(next - offset) % kBridgeTrailLength];
+        size_t length     = strnlen(label, kNativeCallLabelLimit);
+        written           = write(descriptor, label, length);
+        if (offset > 1)
+        {
+            written = write(descriptor, separator, sizeof(separator) - 1);
+        }
+    }
+
+    written = write(descriptor, &newline, 1);
+    (void) written;
+}
+
 struct SlotClaim {
     NativeCallSlot *slot = nullptr;
 
@@ -157,6 +211,29 @@ bool writeCrashingNativeCallLine(int descriptor)
     return false;
 }
 
+bool writeRecentBridgeCallLines(int descriptor, int64_t now)
+{
+    if (descriptor < 0)
+    {
+        return false;
+    }
+
+    bool wrote = false;
+    for (AddonSlot addon = 1; addon < kAddonSlotCapacity; addon++)
+    {
+        int64_t lastAt = gTrails[addon].lastAt.load(std::memory_order_acquire);
+        if (lastAt == 0 || now - lastAt > kBridgeTrailWindowMs)
+        {
+            continue;
+        }
+
+        writeTrail(descriptor, addon, gTrails[addon]);
+        wrote = true;
+    }
+
+    return wrote;
+}
+
 std::string describeNativeCall(const std::optional<NativeCallSnapshot> &call, int64_t now)
 {
     if (!call)
@@ -181,7 +258,9 @@ NativeCallScope::NativeCallScope(const std::string &name, const std::string &det
     previousStartedAt_ = slot_->startedAt.load(std::memory_order_relaxed);
 
     std::string label = detail.empty() ? name : name + "(" + detail + ")";
-    publish(*slot_, label.c_str(), nativeCallClock());
+    int64_t now       = nativeCallClock();
+    noteBridgeCall(currentAddon(), label, now);
+    publish(*slot_, label.c_str(), now);
 }
 
 NativeCallScope::~NativeCallScope()

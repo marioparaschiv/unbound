@@ -362,6 +362,7 @@ static void writeNativeStack(int signal, void *context)
     writeAbortMessages(descriptor);
     writeCrashingAddonLine(descriptor);
     writeCrashingNativeCallLine(descriptor);
+    writeRecentBridgeCallLines(descriptor);
     writeCrashingHookLines(descriptor);
 
     uintptr_t pc = 0, lr = 0, fp = 0;
@@ -519,6 +520,7 @@ bool recordUncaughtException(const std::string &description, const std::string &
 
     writeCrashingAddonLine(descriptor);
     writeCrashingNativeCallLine(descriptor);
+    writeRecentBridgeCallLines(descriptor);
     writeCrashingHookLines(descriptor);
     writeText(descriptor, frames.c_str());
     fsync(descriptor);

@@ -8,6 +8,8 @@
 
 namespace loader {
 inline constexpr size_t kNativeCallLabelLimit = 96;
+inline constexpr size_t kBridgeTrailLength    = 5;
+inline constexpr int64_t kBridgeTrailWindowMs = 3000;
 
 struct NativeCallSlot;
 
@@ -26,6 +28,7 @@ std::optional<NativeCallSnapshot> nativeCallOnThread(uintptr_t thread);
 CurrentNativeCall currentNativeCall();
 std::string describeNativeCall(const std::optional<NativeCallSnapshot> &call, int64_t now);
 bool writeCrashingNativeCallLine(int descriptor);
+bool writeRecentBridgeCallLines(int descriptor, int64_t now = nativeCallClock());
 
 class NativeCallScope
 {
