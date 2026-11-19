@@ -337,6 +337,8 @@
 	"UNBOUND_CRASH_STACK": "Veremkivonat",
 	"UNBOUND_CRASH_COMPONENT_STACK": "Komponensverem",
 	"UNBOUND_CRASH_RETRY": "Újrapróbálás",
+	"UNBOUND_CRASH_UPDATE": "Update Unbound, which may fix this",
+	"UNBOUND_CRASH_UPDATING": "Updating Unbound…",
 	"UNBOUND_CRASH_RELOAD": "Újratöltés",
 	"UNBOUND_CRASH_RECOVERY": "Helyreállítás",
 	"UNBOUND_CRASH_COPY": "Diagnosztika másolása",

@@ -466,6 +466,8 @@
 	"UNBOUND_CRASH_STACK": "Stack Trace",
 	"UNBOUND_CRASH_COMPONENT_STACK": "Component Stack",
 	"UNBOUND_CRASH_RETRY": "Try Again",
+	"UNBOUND_CRASH_UPDATE": "Update Unbound, which may fix this",
+	"UNBOUND_CRASH_UPDATING": "Updating Unbound…",
 	"UNBOUND_CRASH_RELOAD": "Reload",
 	"UNBOUND_CRASH_RECOVERY": "Recovery",
 	"UNBOUND_CRASH_COPY": "Copy Diagnostics",

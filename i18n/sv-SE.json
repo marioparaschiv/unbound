@@ -337,6 +337,8 @@
 	"UNBOUND_CRASH_STACK": "Stackspårning",
 	"UNBOUND_CRASH_COMPONENT_STACK": "Komponentstack",
 	"UNBOUND_CRASH_RETRY": "Försök igen",
+	"UNBOUND_CRASH_UPDATE": "Update Unbound, which may fix this",
+	"UNBOUND_CRASH_UPDATING": "Updating Unbound…",
 	"UNBOUND_CRASH_RELOAD": "Ladda om",
 	"UNBOUND_CRASH_RECOVERY": "Återställning",
 	"UNBOUND_CRASH_COPY": "Kopiera diagnostik",

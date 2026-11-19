@@ -337,6 +337,8 @@
 	"UNBOUND_CRASH_STACK": "스택 추적",
 	"UNBOUND_CRASH_COMPONENT_STACK": "컴포넌트 스택",
 	"UNBOUND_CRASH_RETRY": "다시 시도",
+	"UNBOUND_CRASH_UPDATE": "Update Unbound, which may fix this",
+	"UNBOUND_CRASH_UPDATING": "Updating Unbound…",
 	"UNBOUND_CRASH_RELOAD": "새로 고침",
 	"UNBOUND_CRASH_RECOVERY": "복구",
 	"UNBOUND_CRASH_COPY": "진단 정보 복사",

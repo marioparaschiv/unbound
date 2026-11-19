@@ -337,6 +337,8 @@
 	"UNBOUND_CRASH_STACK": "堆疊追蹤",
 	"UNBOUND_CRASH_COMPONENT_STACK": "元件堆疊",
 	"UNBOUND_CRASH_RETRY": "再試一次",
+	"UNBOUND_CRASH_UPDATE": "Update Unbound, which may fix this",
+	"UNBOUND_CRASH_UPDATING": "Updating Unbound…",
 	"UNBOUND_CRASH_RELOAD": "重新載入",
 	"UNBOUND_CRASH_RECOVERY": "復原",
 	"UNBOUND_CRASH_COPY": "複製診斷資訊",

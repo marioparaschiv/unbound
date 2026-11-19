@@ -337,6 +337,8 @@
 	"UNBOUND_CRASH_STACK": "Стек на извикванията",
 	"UNBOUND_CRASH_COMPONENT_STACK": "Стек на компонентите",
 	"UNBOUND_CRASH_RETRY": "Опитай отново",
+	"UNBOUND_CRASH_UPDATE": "Update Unbound, which may fix this",
+	"UNBOUND_CRASH_UPDATING": "Updating Unbound…",
 	"UNBOUND_CRASH_RELOAD": "Презареди",
 	"UNBOUND_CRASH_RECOVERY": "Възстановяване",
 	"UNBOUND_CRASH_COPY": "Копирай диагностиката",
