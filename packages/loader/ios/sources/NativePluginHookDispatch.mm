@@ -1059,11 +1059,47 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
     }
 }
 
+static bool returnsObject(ffi_cif *cif, void **arguments, void *userData)
+{
+    if (!cif || !userData || cif->rtype != &ffi_type_pointer)
+    {
+        return false;
+    }
+
+    SEL selector    = *reinterpret_cast<SEL *>(arguments[1]);
+    auto dispatcher = findHookDispatcher(nil, selector, userData);
+    if (!dispatcher)
+    {
+        return false;
+    }
+
+    HookCallGuard guard(dispatcher);
+    return dispatcher->signature->result.name == "object";
+}
+
+static void *retainReturnedObject(void *returnValue)
+{
+    void *object = nullptr;
+    memcpy(&object, returnValue, sizeof(object));
+    return object ? const_cast<void *>(CFRetain(object)) : nullptr;
+}
+
 void dispatchFFIHook(ffi_cif *cif, void *returnValue, void **arguments, void *userData)
 {
+    bool keepResult = returnValue && returnsObject(cif, arguments, userData);
+    void *kept      = nullptr;
     @autoreleasepool
     {
         dispatchFFIHookBody(cif, returnValue, arguments, userData);
+        if (keepResult)
+        {
+            kept = retainReturnedObject(returnValue);
+        }
+    }
+
+    if (kept)
+    {
+        CFAutorelease(kept);
     }
 }
 }
