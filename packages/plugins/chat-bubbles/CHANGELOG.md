@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.29] - 2026-11-19
+
+### Fixed
+
+- On iOS, turning the plugin off puts the name row back as Discord laid it out, instead of leaving the widths the bubbles gave it.
+
 ## [1.6.28] - 2026-11-19
 
 ### Fixed

@@ -7,7 +7,7 @@ import { messageIdOf } from '~/native/ios/message-id';
 import { placeFollowingSwipe } from '~/native/ios/swipe-follow';
 import { ellipsisLike, isolateStartAround } from '~/native/ios/preview-truncation';
 import { fitAttributedPreview } from '~/native/ios/attributed-preview-fit';
-import { fitNameRow } from '~/native/ios/name-fit';
+import { fitNameRow, restoreNameRow } from '~/native/ios/name-fit';
 import { ReplyIcon } from '~/lib/constants';
 
 export const AVATAR_TAG = 0x0b0b26;
@@ -1010,6 +1010,7 @@ export function resetCell(objc: NativeObjCBridge, cell: NativeObjectHandle) {
 	'worklet';
 	moveViews(objc, cell, { name: NO_MOVE, avatar: NO_MOVE, reply: NO_MOVE });
 	clipName(objc, cell, undefined);
+	restoreNameRow(objc, cell);
 
 	const time = objc.getIvar(cell, '_timestampLabel') as NativeObjectHandle | null;
 
