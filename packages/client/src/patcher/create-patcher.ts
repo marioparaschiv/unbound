@@ -5,6 +5,7 @@ import * as Possess from 'possess';
 
 import { patchWhenLoaded, unpatchKeepingReplacement } from '~/patcher/apply';
 import type { ReactPatcher, PatchPlace } from '~/patcher/react';
+import { createRepeatTracker } from '~/patcher/patch-repeats';
 import { guardedCallback } from '~/patcher/guarded-callback';
 import type { after, before, instead } from '~/patcher/api';
 import { createReactPatcher } from '~/patcher/react';
@@ -20,6 +21,8 @@ export type PatcherInstance = {
 	assign: typeof assignValue;
 	unpatchAll: () => void;
 };
+
+const repeats = createRepeatTracker();
 
 /**
  * @description Creates a patcher whose patches share default options, so they can be removed together.
@@ -42,12 +45,17 @@ export function createPatcher(defaultOptions: string | PatchOptions): PatcherIns
 		const merged = { ...defaults, ...options };
 		const unpatch = patchWhenLoaded(parent, merged.caller, (target) => {
 			const place = locate(target);
-
-			return unpatchKeepingReplacement(
+			const uncount = repeats.add(place.parent, `${merged.caller} ${place.method}`);
+			const remove = unpatchKeepingReplacement(
 				place.parent,
 				place.method,
 				patch(type, place.parent, place.method, place.callback, merged),
 			);
+
+			return () => {
+				uncount();
+				remove();
+			};
 		});
 
 		function remove() {
