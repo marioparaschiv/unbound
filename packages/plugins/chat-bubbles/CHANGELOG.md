@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.26] - 2026-11-19
+
+### Fixed
+
+- On iOS, the author's name uses the bubble's whole width instead of being cut short around a timestamp the bubble hides or moves, so the name row ends with the same padding it starts with.
+
 ## [1.6.25] - 2026-11-19
 
 ### Fixed

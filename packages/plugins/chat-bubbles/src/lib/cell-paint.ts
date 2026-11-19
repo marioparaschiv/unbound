@@ -68,6 +68,7 @@ export function cellPaint(
 		...(place.time ? { time: place.time } : {}),
 		...(place.nameClip === undefined ? {} : { nameClip: place.nameClip }),
 		...(place.hideTime ? { hideTime: true } : {}),
+		nameRoom: place.nameRoom,
 		...(quote
 			? {
 					quote: {

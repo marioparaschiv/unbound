@@ -7,6 +7,7 @@ import { messageIdOf } from '~/native/ios/message-id';
 import { placeFollowingSwipe } from '~/native/ios/swipe-follow';
 import { ellipsisLike, isolateStartAround } from '~/native/ios/preview-truncation';
 import { fitAttributedPreview } from '~/native/ios/attributed-preview-fit';
+import { fitNameRow } from '~/native/ios/name-fit';
 import { ReplyIcon } from '~/lib/constants';
 
 export const AVATAR_TAG = 0x0b0b26;
@@ -53,6 +54,8 @@ export type CellPaint = {
 	nameClip?: number;
 	/** Whether the timestamp hides to leave the name's tags room. */
 	hideTime?: boolean;
+	/** How wide the name and its tags may lay out. */
+	nameRoom?: number;
 	quote?: CellQuote;
 	replyBubble?: CellReplyBubble;
 	picture?: CellAvatar;
@@ -967,6 +970,7 @@ export function paintCell(
 
 	if (time) objc.invoke(time, 'setAlpha:', [paint?.hideTime ? 0 : 1]);
 
+	fitNameRow(objc, cell, paint?.nameRoom);
 	clipName(objc, cell, paint?.nameClip);
 
 	paintQuote(objc, cell, fill, paint?.quote, true, paint?.replyBubble, !paint);
