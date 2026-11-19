@@ -13,6 +13,7 @@ import {
 	scopeStorage,
 	scopeToasts,
 } from '~/addons/scoped-namespaces';
+import { guardUnmountedUpdates, reportUnmountedUpdatesOnce } from '~/addons/unmounted-updates';
 import { createSubscriptions, disposeInReverse } from '~/addons/subscriptions';
 import type { ScopedCommands, ScopedI18n } from '~/addons/scoped-namespaces';
 import { createScopedFetch, type ScopedFetch } from '~/addons/network';
@@ -130,7 +131,12 @@ export function createAddonScope(addon: Addon<Plugin>, directory: string): Addon
 
 	return {
 		globals: {
-			React: createScopedReact(),
+			React: guardUnmountedUpdates(
+				createScopedReact(),
+				reportUnmountedUpdatesOnce(addon.name, (message, stack) =>
+					logger.warn(message, stack),
+				),
+			),
 			unbound: liveUnboundView({
 				patcher,
 				commands: commands.namespace,
