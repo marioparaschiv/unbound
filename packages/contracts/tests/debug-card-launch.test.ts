@@ -11,6 +11,9 @@ const launch = {
 
 describe('systemNotes', () => {
 	test('lists forced exits, most severe first', () => {
+		expect(systemNotes({ diskWrites: 1, lastDiskWrite: { mb: 1073 } })).toEqual([
+			'1 excessive disk-write report (latest 1073 MB) this week',
+		]);
 		expect(systemNotes({ memory: 2, watchdog: 1, hangs: 3, longestHangMs: 4200 })).toEqual([
 			'2 out-of-memory kills this week',
 			'1 watchdog kill this week',

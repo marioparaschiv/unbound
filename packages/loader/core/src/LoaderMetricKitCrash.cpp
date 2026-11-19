@@ -127,6 +127,18 @@ std::optional<std::string> metricKitCrashStack(const nlohmann::json &crash)
     return text + *frames;
 }
 
+std::optional<std::string> metricKitDiskWriteStack(const nlohmann::json &diskWrite)
+{
+    std::optional<std::string> frames = attributedFrames(diskWrite);
+    if (!frames)
+    {
+        return std::nullopt;
+    }
+
+    nlohmann::json metadata = diskWrite.value("diagnosticMetaData", nlohmann::json::object());
+    return "Disk writes " + textMember(metadata, "writesCaused") + "\n" + *frames;
+}
+
 std::optional<std::string> metricKitHangStack(const nlohmann::json &hang)
 {
     std::optional<std::string> frames = attributedFrames(hang);

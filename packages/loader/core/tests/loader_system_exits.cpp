@@ -64,6 +64,20 @@ const char *kHangInWindow = R"({
   ]
 })";
 
+const char *kDiskWrites = R"({
+  "timeStampBegin": "2026-11-12 00:00:00",
+  "timeStampEnd": "2026-11-12 23:30:00",
+  "diskWriteExceptionDiagnostics": [
+    {
+      "diagnosticMetaData": {"writesCaused": "1,073.74 MB"},
+      "callStackTree": {"callStacks": [{
+        "threadAttributed": true,
+        "callStackRootFrames": [{"address": 4096, "binaryName": "Unbound.dylib", "offsetIntoBinaryTextSegment": 16}]
+      }]}
+    }
+  ]
+})";
+
 std::string documents()
 {
     std::filesystem::path root = std::filesystem::temp_directory_path() / "unbound-system-exits";
@@ -148,6 +162,23 @@ void blamesNoPluginWithoutFreezes()
     assert(!exits::stackRunsUnbound("#0 0x1 Discord + 0x10\n"));
 }
 
+void summarisesExcessiveDiskWrites()
+{
+    assert(exits::parseMetricKitMegabytes("1,073.74 MB") == 1073);
+    assert(exits::parseMetricKitMegabytes("2 GB") == 2048);
+    assert(exits::parseMetricKitMegabytes("512 KB") == 0);
+
+    std::string directory = documents();
+    exits::recordMetricKitDiagnostics(directory, kDiskWrites);
+
+    nlohmann::json summary = exits::summary(directory, dayAfter());
+    assert(summary["diskWrites"] == 1);
+    assert(summary["lastDiskWrite"]["mb"] == 1073);
+    assert(summary["lastDiskWrite"]["inUnbound"] == true);
+    assert(summary["lastDiskWrite"]["stack"].get<std::string>().starts_with(
+        "Disk writes 1,073.74 MB\n#0 0x1000 Unbound.dylib + 0x10"));
+}
+
 void forgetsOldExits()
 {
     std::string directory = documents();
@@ -194,5 +225,6 @@ int main()
     namesThePluginsThatFroze();
     blamesThePluginThatFrozeDuringTheHang();
     blamesNoPluginWithoutFreezes();
+    summarisesExcessiveDiskWrites();
     return 0;
 }

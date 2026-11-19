@@ -48,6 +48,9 @@ export type UnboundSystemExits = {
 	longestHangMs?: number;
 	freezes?: UnboundPluginFreeze[];
 	lastHang?: UnboundSystemHang;
+	/** Reports of more than about 1 GB written in a day, and the newest with its stack. */
+	diskWrites?: number;
+	lastDiskWrite?: { at: number; mb: number; stack: string; inUnbound?: boolean };
 };
 
 /**

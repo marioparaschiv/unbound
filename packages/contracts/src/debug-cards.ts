@@ -60,6 +60,10 @@ const launchSchema = Type.Object({
 			lockedFile: Type.Optional(exitCount),
 			hangs: Type.Optional(exitCount),
 			longestHangMs: Type.Optional(Type.Integer({ minimum: 0, maximum: 3_600_000 })),
+			diskWrites: Type.Optional(exitCount),
+			lastDiskWrite: Type.Optional(
+				Type.Object({ mb: Type.Integer({ minimum: 0, maximum: 10_000_000 }) }),
+			),
 			freezes: Type.Optional(
 				Type.Array(
 					Type.Object({
