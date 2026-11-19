@@ -1,6 +1,6 @@
 # Plugins
 
-216 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+217 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -179,6 +179,7 @@
 - <img src="../../assets/plugins/readme-icons/shield-user-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Sensitive Paste Guard](https://unbound.rip/addons/unbound.sensitive-paste-guard): Warns before you send what looks like a password, token or private key, such as one pasted by accident, and offers to redact it.
 - <img src="../../assets/plugins/readme-icons/settings-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Settings Demo](https://unbound.rip/addons/unbound.settings-demo): Shows every generated settings row.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Settings Theme](https://unbound.rip/addons/unbound.settings-theme): Shows your Nitro or custom app theme behind User Settings and every page in it, which Discord leaves plain.
+- <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Share Location](https://unbound.rip/addons/unbound.share-location): Adds a button to the chat input that puts a map link to where you are into your message. iOS only.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Shiki Codeblocks](https://unbound.rip/addons/unbound.shiki-codeblocks): Highlights code blocks with VS Code-style syntax colors.
 - <img src="../../assets/plugins/readme-icons/eye-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Show Hidden Things](https://unbound.rip/addons/unbound.show-hidden-things): Displays hidden and moderator-only features regardless of permissions.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Show Me Your Name](https://unbound.rip/addons/unbound.show-me-your-name): Display usernames next to display names, or show usernames only.
