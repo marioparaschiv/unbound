@@ -20,6 +20,7 @@ constexpr const char *kLogFileName        = "unbound.log";
 constexpr const char *kNativeLogFileName  = "native.log";
 constexpr std::size_t kLogFileMaximumSize = 1024 * 1024;
 constexpr std::size_t kLogFilesKept       = 3;
+constexpr std::size_t kLogFilesCompressed = 6;
 constexpr std::size_t kLogLinesBuffered   = 512;
 constexpr std::size_t kPreviousTailBytes  = 16 * 1024;
 
@@ -28,22 +29,26 @@ class RotatingLogFile
 public:
     // `name` is the file's stem: `unbound` writes `unbound.log`, then `unbound.1.log` and so on.
     RotatingLogFile(std::string name, std::size_t maximumSize, std::size_t filesKept,
-                    std::size_t linesBuffered);
+                    std::size_t linesBuffered, std::size_t filesCompressed = 0);
 
     void open(const std::string &directory);
     void append(const std::string &line);
     std::string path(std::size_t generation) const;
+    // Older generations past `filesKept`, gzipped: `unbound.3.log.gz` and on.
+    std::string compressedPath(std::size_t generation) const;
     // The end of the file as the previous launch left it, read before this launch writes, so a
     // crash report can show what led up to the crash.
     std::string previousTail();
 
 private:
     void rotate();
+    void compressOldest();
 
     std::string name_;
     std::size_t maximumSize_;
     std::size_t filesKept_;
     std::size_t linesBuffered_;
+    std::size_t filesCompressed_;
     std::string directory_;
     std::ofstream stream_;
     std::size_t size_ = 0;
