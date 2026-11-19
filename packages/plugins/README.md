@@ -1,6 +1,6 @@
 # Plugins
 
-227 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+228 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -176,6 +176,7 @@
 - <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [ReviewDB](https://unbound.rip/addons/unbound.reviewdb): Leave reviews on other users' profiles and see what others think of you.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Role Color Everywhere](https://unbound.rip/addons/unbound.role-color-everywhere): Colors mentions, typing names, voice users, reaction users, poll voters, and role headers.
 - <img src="../../assets/plugins/readme-icons/shield-user-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Role Tools](https://unbound.rip/addons/unbound.role-tools): Long-press a role on a profile to copy its color or see its members.
+- <img src="../../assets/plugins/readme-icons/language-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Romanize](https://unbound.rip/addons/unbound.romanize): Long-press a message to read it in Latin letters: Cyrillic, Greek, Arabic, Thai and more, and Korean by the Revised Romanization.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Round Corners](https://unbound.rip/addons/unbound.round-corners): Undoes the redesign's squares: round server icons and buttons, a pill You bar and message box, and the older corners elsewhere.
 - <img src="../../assets/plugins/readme-icons/play-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Run Code Blocks](https://unbound.rip/addons/unbound.run-code-blocks): Runs a message's code block from its long-press menu on Compiler Explorer and shows what it printed: Python, JavaScript, C, C++, Rust, Go and more.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Save To Album](https://unbound.rip/addons/unbound.save-to-album): Puts the images and videos you save from Discord into their own Photos album instead of loose in your library. iOS only.
