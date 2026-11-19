@@ -1,13 +1,15 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, mock, spyOn, test } from 'bun:test';
 
 const folders = new Set<string>();
 const failed: string[] = [];
+const stored = new Map<string, string>();
 
 // Like the native write: it creates a missing parent folder, and fails when another write created it meanwhile.
 mock.module('~/native/fs', () => ({
 	default: {
 		documentsPath: '/docs',
-		exists: async () => false,
+		exists: async (path: string) => stored.has(path),
+		readFile: async (path: string) => stored.get(path) ?? '',
 		removeFile: async () => true,
 		writeFile: async (path: string) => {
 			const folder = path.slice(0, path.lastIndexOf('/'));
@@ -25,7 +27,8 @@ mock.module('~/native/fs', () => ({
 	},
 }));
 
-const { writeAddonFiles } = await import('~/addons/files');
+const { downloadAddonFiles, writeAddonFiles } = await import('~/addons/files');
+const { default: sha256 } = await import('@unbound-app/utils/sha256');
 
 describe('writeAddonFiles', () => {
 	test('writes many files into a new folder without racing to create it', async () => {
@@ -64,5 +67,58 @@ describe('writeAddonFiles', () => {
 
 		expect(failed).toEqual([]);
 		expect(folders.has('Unbound/Icons/unbound.pack/assets')).toBe(true);
+	});
+});
+
+describe('downloadAddonFiles', () => {
+	test('reuses installed files whose SHA-256 matches and downloads the rest', async () => {
+		const kept = Buffer.from('kept');
+		const changed = Buffer.from('changed');
+		const manifest = {
+			id: 'unbound.pack',
+			name: 'Pack',
+			description: '',
+			authors: [],
+			version: '1.0.1',
+			main: 'icons.json',
+			assets: {
+				'icons/Kept': {
+					type: 'png' as const,
+					width: 1,
+					height: 1,
+					scales: { '3': sha256(kept) },
+				},
+				'icons/Changed': {
+					type: 'png' as const,
+					width: 1,
+					height: 1,
+					scales: { '3': sha256(changed) },
+				},
+			},
+		};
+		const logger = { error: mock(() => undefined) };
+
+		stored.set(
+			`Unbound/Icons/unbound.pack/assets/${sha256(kept)}.png`,
+			kept.toString('base64'),
+		);
+		stored.set(
+			`Unbound/Icons/unbound.pack/assets/${sha256(changed)}.png`,
+			Buffer.from('stale').toString('base64'),
+		);
+		const requests = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(changed));
+
+		const files = await downloadAddonFiles(
+			manifest,
+			'https://cdn.example/unbound.pack/icons.json',
+			logger as never,
+			'Unbound/Icons/unbound.pack',
+		);
+
+		expect(requests.mock.calls.map(([url]) => url)).toEqual([
+			`https://cdn.example/unbound.pack/assets/${sha256(changed)}.png`,
+		]);
+		expect(files[`assets/${sha256(kept)}.png`]).toBe(kept.toString('base64'));
+		expect(files[`assets/${sha256(changed)}.png`]).toBe(changed.toString('base64'));
 	});
 });

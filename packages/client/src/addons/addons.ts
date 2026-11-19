@@ -205,7 +205,7 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 			const [bundle, bytecode, files] = await Promise.all([
 				downloadBundle(bundleUrl),
 				this.fetchBytecode(manifest, bundleUrl),
-				downloadAddonFiles(manifest, bundleUrl, this.logger),
+				downloadAddonFiles(manifest, bundleUrl, this.logger, this.directoryOf(manifest.id)),
 			]);
 
 			if (digest) {
@@ -270,7 +270,12 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 			]);
 			const [bytecode, files] = await Promise.all([
 				this.fetchBytecode(manifest, update.bundleUrl),
-				downloadAddonFiles(manifest, update.bundleUrl, this.logger),
+				downloadAddonFiles(
+					manifest,
+					update.bundleUrl,
+					this.logger,
+					this.directoryOf(resolved.id),
+				),
 			]);
 
 			assertTextDigest(bundle, update.sha256);
