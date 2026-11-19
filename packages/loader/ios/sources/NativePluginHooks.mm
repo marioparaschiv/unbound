@@ -251,6 +251,17 @@ activeHookStates(const std::shared_ptr<HookDispatcher> &dispatcher, id object)
     return hooks;
 }
 
+static void insertInAddonOrder(std::vector<std::shared_ptr<HookState>> &hooks,
+                               const std::shared_ptr<HookState> &state)
+{
+    std::string key = loader::addonRecord(state->addon);
+    auto position   = std::upper_bound(hooks.begin(), hooks.end(), key,
+                                       [](const std::string &record, const auto &existing) {
+                                         return record < loader::addonRecord(existing->addon);
+                                       });
+    hooks.insert(position, state);
+}
+
 Value makeHook(Runtime &runtime, const Value *args, size_t count)
 {
     if (count < 3 || !args[0].isString() || !args[1].isString() || !args[2].isObject())
@@ -463,7 +474,7 @@ Value makeHook(Runtime &runtime, const Value *args, size_t count)
     state->addon          = loader::currentAddon();
     {
         std::lock_guard<std::mutex> lock(gHookMutex);
-        dispatcher->hooks.push_back(state);
+        insertInAddonOrder(dispatcher->hooks, state);
     }
 
     reservation.commit();
