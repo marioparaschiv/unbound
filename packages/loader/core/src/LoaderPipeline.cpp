@@ -146,7 +146,8 @@ void LoaderPipeline::prepare()
     // Hot reload waits for the newest bundle too: reloading once it lands would tear the runtime
     // down while Discord's bundle is still starting its native modules.
     bool hotReload       = preferences::hotReloadEnabled(settings_);
-    bool waitForDownload = !hasSaved || flavourSwitch || loaderChanged || hotReload;
+    bool devServer       = isDevelopmentBundleURL(preferences::updateURL(settings_));
+    bool waitForDownload = !hasSaved || flavourSwitch || loaderChanged || hotReload || devServer;
     {
         std::lock_guard<std::mutex> lock(savedMutex_);
         if (hasSaved && waitForDownload)
