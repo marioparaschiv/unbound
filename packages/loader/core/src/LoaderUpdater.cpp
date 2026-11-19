@@ -7,6 +7,7 @@
 
 #include "LoaderBundlePatch.h"
 #include "LoaderBundleRecord.h"
+#include "LoaderCaptivePortal.h"
 #include "LoaderDigestCache.h"
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
@@ -557,5 +558,11 @@ std::optional<std::string> BundleUpdater::patchedCandidate(const DownloadPlan &p
 const std::string &BundleUpdater::documents() const
 {
     return documents_;
+}
+
+bool BundleUpdater::behindCaptivePortal() const
+{
+    CaptiveProbe probe = platformCaptiveProbe();
+    return isCaptivePortal(fetchText_(probe.url, kManifestFetchTimeoutSeconds), probe);
 }
 }

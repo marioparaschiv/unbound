@@ -58,6 +58,7 @@ constexpr const char *kBundleExtensions[] = {"bundle", "js"};
 class BundleUpdater
 {
 public:
+    bool behindCaptivePortal() const;
     BundleUpdater(std::string documents, SettingsStore &settings, TextFetcher fetchText,
                   FileDownloader download, BundleTrust trust = compiledBundleTrust());
 
