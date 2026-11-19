@@ -1,12 +1,12 @@
-import { watchTwitchEmbeds } from '~/flux/live-badges';
+import { badgeTwitchRows } from '~/patches/row-badges';
 
-let stopWatching: (() => void) | undefined;
+let stopBadges: (() => void) | undefined;
 
 export function start() {
-	stopWatching = watchTwitchEmbeds();
+	stopBadges = badgeTwitchRows();
 }
 
 export function stop() {
-	stopWatching?.();
-	stopWatching = undefined;
+	stopBadges?.();
+	stopBadges = undefined;
 }
