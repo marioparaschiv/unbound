@@ -106,7 +106,7 @@ func runFormat(args []string) error {
 		failures = append(failures, goFiles...)
 	}
 
-	if (only == nil || only.hasExtension(map[string]string{".kt": ".kt", ".kts": ".kts"})) && kotlinFormatterRuns(os.Getenv, javaRuns) {
+	if (only == nil || only.hasExtension(map[string]string{".kt": ".kt", ".kts": ".kts"})) && kotlinJavaReady() {
 		if err := runKotlinFormatter(rootPath, *check, only.withExtensions(".kt", ".kts")); err != nil {
 			failures = append(failures, "Kotlin sources ("+err.Error()+")")
 		}
@@ -623,8 +623,20 @@ func kotlinFormatterRuns(env func(string) string, javaWorks func(string) bool) b
 	return false
 }
 
+func kotlinJavaReady() bool {
+	if err := usePinnedJDK(); err != nil {
+		fmt.Fprintln(os.Stderr, "loader format: the pinned JDK is unavailable ("+err.Error()+"); trying JAVA_HOME")
+	}
+
+	return kotlinFormatterRuns(os.Getenv, javaRuns)
+}
+
 func javaRuns(java string) bool {
-	return exec.Command(java, "-version").Run() == nil
+	return exec.Command(java, javaProbeArguments(os.TempDir())...).Run() == nil
+}
+
+func javaProbeArguments(crashDirectory string) []string {
+	return []string{"-XX:ErrorFile=" + filepath.Join(crashDirectory, "hs_err_pid%p.log"), "-version"}
 }
 
 func runKotlinFormatter(root string, check bool, files []string) error {

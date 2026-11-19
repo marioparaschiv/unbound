@@ -177,3 +177,11 @@ func TestKotlinFormatterUsesJavaHome(t *testing.T) {
 		t.Fatalf("tried %q", tried)
 	}
 }
+
+func TestJavaProbeWritesCrashLogsToTheTempDirectory(t *testing.T) {
+	arguments := javaProbeArguments("/tmp/probe")
+
+	if arguments[0] != "-XX:ErrorFile=/tmp/probe/hs_err_pid%p.log" || arguments[1] != "-version" {
+		t.Fatalf("arguments %q", arguments)
+	}
+}

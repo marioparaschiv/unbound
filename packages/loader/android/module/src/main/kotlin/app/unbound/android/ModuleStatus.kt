@@ -36,10 +36,15 @@ object ModuleStatus {
         return when {
             framework == null && input.frameworkTimedOut && input.legacyFramework != null ->
                 "${input.legacyFramework} can't load Unbound. Install LSPosed or Vector instead, then reboot."
+
             framework == null && input.frameworkTimedOut -> "Unbound isn't active. Enable it in LSPosed or Vector, then reboot."
+
             framework == null -> "Checking the framework…"
+
             input.discordVersion == null -> "Install Discord to use Unbound."
+
             DISCORD_PACKAGE !in framework.scope -> "Add Discord to Unbound's scope in your framework."
+
             else -> "Unbound is active. Force-stop and reopen Discord after a module update."
         }
     }
