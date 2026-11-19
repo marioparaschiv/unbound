@@ -6,6 +6,7 @@ import devicePullCommand from '~/commands/device/pull';
 import devicePushCommand from '~/commands/device/push';
 import restoreCommand from '~/commands/device/restore';
 import commandCommand from '~/commands/debug/command';
+import gestureCommand from '~/commands/debug/gesture';
 import inspectCommand from '~/commands/debug/inspect';
 import messageCommand from '~/commands/debug/message';
 import modulesCommand from '~/commands/debug/modules';
@@ -135,7 +136,10 @@ export const debugGroup: CommandGroup = {
 			],
 		},
 		{ title: 'Discord modules', entries: [modulesCommand, traceCommand] },
-		{ title: 'Native', entries: [viewsCommand, inspectCommand, spansCommand, hookCommand] },
+		{
+			title: 'Native',
+			entries: [viewsCommand, inspectCommand, spansCommand, hookCommand, gestureCommand],
+		},
 		{ title: 'Performance', entries: [profileCommand, timingCommand] },
 	],
 };
