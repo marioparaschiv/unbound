@@ -1,0 +1,17 @@
+{
+	"id": "unbound.bandcamp-cards",
+	"name": "Bandcamp Cards",
+	"description": "Bandcamp album and track links show their price in the embed, or that you can name your price.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "MusicIcon",
+	"main": "index.tsx"
+}
