@@ -1,0 +1,18 @@
+{
+	"id": "unbound.share-location",
+	"name": "Share Location",
+	"description": "Adds a button to the chat input that puts a map link to where you are into your message. iOS only.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "GlobeEarthIcon",
+	"minNativeBridgeApi": "1.0.0",
+	"main": "index.tsx"
+}

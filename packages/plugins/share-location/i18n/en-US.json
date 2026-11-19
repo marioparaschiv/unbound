@@ -1,0 +1,6 @@
+{
+	"SHARE_BUTTON": "Share location",
+	"LOCATING": "Finding where you are…",
+	"DENIED": "Discord isn't allowed to use your location. Allow it in Settings › Discord › Location.",
+	"FAILED": "Couldn't find your location"
+}
