@@ -1,0 +1,17 @@
+{
+	"id": "unbound.picker-video-previews",
+	"name": "Picker Video Previews",
+	"description": "Plays videos when you long-press them in the media picker, instead of showing a still frame.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "VideoIcon",
+	"main": "index.tsx"
+}
