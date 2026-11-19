@@ -13,6 +13,7 @@
 #import "NativeHookCallbacks.h"
 #include "NativeHookConflicts.h"
 #import "NativeHookKeys.h"
+#import "NativeHookStorm.h"
 #import "NativePluginHookDispatch.h"
 #import "NativePluginHookFallbacks.h"
 #import "NativePluginHookReturnCache.h"
@@ -53,6 +54,7 @@ static void releaseHookCallbacks(const std::shared_ptr<HookState> &state)
 void removeHook(const std::shared_ptr<HookState> &state, bool preserveAfter,
                 bool restoreImplementation)
 {
+    loader::native::forgetHookEvents(state->identifier);
     if (!state)
     {
         return;

@@ -33,6 +33,7 @@
 #include "NativeHookConflicts.h"
 #include "NativeHookKeys.h"
 #include "NativeHookReturnCache.h"
+#include "NativeHookStorm.h"
 #include "NativeLimits.h"
 #include "NativePlatformBridge.h"
 #include "NativePluginBridge.h"
@@ -159,6 +160,21 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
     {
         std::optional<JavaCallbacks> callbacks = javaReleaseCallbacks();
         if (callbacks && dispatchGeneration == loader::native::runtimeGeneration())
+        {
+            releaseJavaHandleIssues(javaHandleReleaser(*callbacks), payload);
+        }
+
+        return std::nullopt;
+    }
+
+    if (!listener.coalesce && !listener.inlineRuntime
+        && !loader::native::admitHookEvent(std::hash<std::string>{}(token), listener.addon,
+                                           [&token] {
+                                               return token;
+                                           }))
+    {
+        std::optional<JavaCallbacks> callbacks = javaReleaseCallbacks();
+        if (callbacks)
         {
             releaseJavaHandleIssues(javaHandleReleaser(*callbacks), payload);
         }
