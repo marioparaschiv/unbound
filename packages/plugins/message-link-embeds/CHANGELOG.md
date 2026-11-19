@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.9] - 2026-11-19
+
+### Fixed
+
+- When a preview is too narrow for the whole header, it drops the role icon, then the clan tag and the user tag, so the name shows and the tags no longer overlap the time.
+
 ## [1.1.8] - 2026-11-18
 
 ### Fixed
