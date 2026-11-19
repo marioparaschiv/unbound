@@ -19,7 +19,7 @@ type ParentProps = { children: ReactNode[] };
 
 type Parent = ReactElement<ParentProps>;
 
-const ElementBoundary = withElementBoundary(createElement('View'), 'probe').type;
+const ElementBoundary = withElementBoundary(createElement('View'), { component: 'probe' }).type;
 
 const row = createElement('Text', { key: 'row' }, 'row');
 

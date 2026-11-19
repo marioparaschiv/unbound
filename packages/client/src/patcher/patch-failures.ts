@@ -16,14 +16,40 @@ export const FAILURE_LIMIT = 3;
 
 const logger = createLogger('Patcher', 'React');
 
+const UPDATE_LOOP = /Maximum update depth exceeded|Minified React error #185\b/;
+
 /**
- * @description Counts a patch's render failure, removing the patch and showing a toast on its third in a row.
+ * @description Tells whether React stopped a component that kept updating itself, which only gets worse on each retry.
+ * @param cause What the patch or its tree threw.
+ * @returns Whether it is React's "Maximum update depth exceeded" error, in full or minified.
+ */
+export function isUpdateLoop(cause: unknown): boolean {
+	return cause instanceof Error && UPDATE_LOOP.test(cause.message);
+}
+
+/**
+ * @description Counts a patch's render failure, removing the patch and showing a toast on its third in a row, or at once
+ * when React stopped it for updating itself in a loop.
  * @param failures The patch's failure count.
  * @param cause What the patch or its tree threw.
  */
 export function recordFailure(failures: PatchFailures, cause: unknown): void {
-	failures.count++;
+	if (failures.count >= FAILURE_LIMIT) return;
+
 	failures.unstable = true;
+
+	if (isUpdateLoop(cause)) {
+		failures.count = FAILURE_LIMIT;
+		logger.error(
+			`Failed to render patch on component ${failures.name}: it updates itself in a loop, so it is removed now.`,
+			cause,
+		);
+		removeFailingPatch(failures);
+
+		return;
+	}
+
+	failures.count++;
 	logger.error(`Failed to render patch on component ${failures.name}:`, cause);
 
 	if (failures.count !== FAILURE_LIMIT) return;
