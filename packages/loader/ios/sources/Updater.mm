@@ -1,4 +1,7 @@
+#import <UIKit/UIKit.h>
+#include <atomic>
 #include <istream>
+#include <memory>
 #include <ostream>
 #include <streambuf>
 
@@ -53,10 +56,44 @@ static std::optional<std::string> fetchText(const std::string &url, double timeo
     return std::string(static_cast<const char *>(data.bytes), data.length);
 }
 
+class BackgroundTime
+{
+public:
+    explicit BackgroundTime(NSString *name)
+        : task_(std::make_shared<std::atomic<UIBackgroundTaskIdentifier>>(UIBackgroundTaskInvalid))
+    {
+        std::shared_ptr<std::atomic<UIBackgroundTaskIdentifier>> task = task_;
+        task_->store([UIApplication.sharedApplication beginBackgroundTaskWithName:name
+                                                                expirationHandler:^{ end(task); }]);
+    }
+
+    ~BackgroundTime()
+    {
+        end(task_);
+    }
+
+    BackgroundTime(const BackgroundTime &)            = delete;
+    BackgroundTime &operator=(const BackgroundTime &) = delete;
+
+private:
+    static void end(const std::shared_ptr<std::atomic<UIBackgroundTaskIdentifier>> &task)
+    {
+        UIBackgroundTaskIdentifier current = task->exchange(UIBackgroundTaskInvalid);
+        if (current != UIBackgroundTaskInvalid)
+        {
+            [UIApplication.sharedApplication endBackgroundTask:current];
+        }
+    }
+
+    std::shared_ptr<std::atomic<UIBackgroundTaskIdentifier>> task_;
+};
+
 static std::optional<loader::DownloadResult>
 download(const std::string &url, const std::string &destination,
          const std::map<std::string, std::string> &headers, const loader::DownloadPolicy &policy)
 {
+    BackgroundTime keepRunning(@"Unbound update download");
+
     NSMutableDictionary *requestHeaders = [NSMutableDictionary dictionary];
     for (const auto &[key, value] : headers)
     {
