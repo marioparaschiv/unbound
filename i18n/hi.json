@@ -343,6 +343,7 @@
 	"UNBOUND_CRASH_RECOVERY": "रिकवरी",
 	"UNBOUND_CRASH_COPY": "डायग्नोस्टिक्स कॉपी करें",
 	"UNBOUND_CRASH_COPIED": "कॉपी हो गया",
+	"UNBOUND_CRASH_LINK_COPIED": "Copied a link to issue #{number}",
 	"UNBOUND_CRASH_REPORT": "बग रिपोर्ट करें",
 	"UNBOUND_LIBRARY": "लाइब्रेरी",
 	"UNBOUND_DEVELOPMENT_COPY": "डेव",

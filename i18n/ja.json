@@ -343,6 +343,7 @@
 	"UNBOUND_CRASH_RECOVERY": "リカバリー",
 	"UNBOUND_CRASH_COPY": "診断情報をコピー",
 	"UNBOUND_CRASH_COPIED": "コピーしました",
+	"UNBOUND_CRASH_LINK_COPIED": "Copied a link to issue #{number}",
 	"UNBOUND_CRASH_REPORT": "バグを報告",
 	"UNBOUND_LIBRARY": "ライブラリ",
 	"UNBOUND_DEVELOPMENT_COPY": "開発版",

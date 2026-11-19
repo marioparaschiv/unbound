@@ -372,6 +372,7 @@
 	"UNBOUND_CRASH_RECOVERY": "Recovery",
 	"UNBOUND_CRASH_COPY": "Copy Diagnostics",
 	"UNBOUND_CRASH_COPIED": "Copied",
+	"UNBOUND_CRASH_LINK_COPIED": "Copied a link to issue #{number}",
 	"UNBOUND_CRASH_REPORT": "Report Bug",
 	"UNBOUND_LIBRARY": "Library",
 	"UNBOUND_DEVELOPMENT_COPY": "Dev",

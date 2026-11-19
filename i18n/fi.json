@@ -343,6 +343,7 @@
 	"UNBOUND_CRASH_RECOVERY": "Palautus",
 	"UNBOUND_CRASH_COPY": "Kopioi diagnostiikka",
 	"UNBOUND_CRASH_COPIED": "Kopioitu",
+	"UNBOUND_CRASH_LINK_COPIED": "Copied a link to issue #{number}",
 	"UNBOUND_CRASH_REPORT": "Ilmoita virheestä",
 	"UNBOUND_LIBRARY": "Kirjasto",
 	"UNBOUND_DEVELOPMENT_COPY": "Kehitys",

@@ -343,6 +343,7 @@
 	"UNBOUND_CRASH_RECOVERY": "Helyreállítás",
 	"UNBOUND_CRASH_COPY": "Diagnosztika másolása",
 	"UNBOUND_CRASH_COPIED": "Másolva",
+	"UNBOUND_CRASH_LINK_COPIED": "Copied a link to issue #{number}",
 	"UNBOUND_CRASH_REPORT": "Hiba jelentése",
 	"UNBOUND_LIBRARY": "Könyvtár",
 	"UNBOUND_DEVELOPMENT_COPY": "Dev",

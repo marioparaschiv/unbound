@@ -343,6 +343,7 @@
 	"UNBOUND_CRASH_RECOVERY": "Възстановяване",
 	"UNBOUND_CRASH_COPY": "Копирай диагностиката",
 	"UNBOUND_CRASH_COPIED": "Копирано",
+	"UNBOUND_CRASH_LINK_COPIED": "Copied a link to issue #{number}",
 	"UNBOUND_CRASH_REPORT": "Докладвай за грешка",
 	"UNBOUND_LIBRARY": "Библиотека",
 	"UNBOUND_DEVELOPMENT_COPY": "Dev",

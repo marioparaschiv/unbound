@@ -343,6 +343,7 @@
 	"UNBOUND_CRASH_RECOVERY": "Återställning",
 	"UNBOUND_CRASH_COPY": "Kopiera diagnostik",
 	"UNBOUND_CRASH_COPIED": "Kopierat",
+	"UNBOUND_CRASH_LINK_COPIED": "Copied a link to issue #{number}",
 	"UNBOUND_CRASH_REPORT": "Rapportera bugg",
 	"UNBOUND_LIBRARY": "Bibliotek",
 	"UNBOUND_DEVELOPMENT_COPY": "Dev",
