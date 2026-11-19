@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.27] - 2026-11-19
+
+### Fixed
+
+- On iOS, a bubble grows to fit the author's whole name and tags, up to the row's width, instead of sizing to a short message or video and cutting the name off.
+
 ## [1.6.26] - 2026-11-19
 
 ### Fixed

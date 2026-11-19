@@ -50,16 +50,30 @@ export function createMeasure({ objc, media, highlight, inset: readInset }: Meas
 		return node?.view ? textWidth(objc, node.view, node.frame.width) : 0;
 	}
 
-	async function drawnHeading(nodes: SnapshotNode[], heading: Heading | undefined) {
-		const label = heading?.timeLabel === undefined ? undefined : nodes[heading.timeLabel];
+	async function drawnTime(nodes: SnapshotNode[], heading: Heading): Promise<Heading> {
+		const label = heading.timeLabel === undefined ? undefined : nodes[heading.timeLabel];
 
-		if (!heading?.time || !label?.view) return heading;
+		if (!heading.time || !label?.view) return heading;
 
 		const drawn = await textWidth(objc, label.view, UNLIMITED_WIDTH);
 
 		return drawn > heading.time.width
 			? { ...heading, time: { ...heading.time, width: drawn } }
 			: heading;
+	}
+
+	async function fullName(nodes: SnapshotNode[], heading: Heading): Promise<Heading> {
+		const label = heading.nameLabel === undefined ? undefined : nodes[heading.nameLabel];
+
+		if (!label?.view) return heading;
+
+		const cut = (await textWidth(objc, label.view, UNLIMITED_WIDTH)) - label.frame.width;
+
+		return cut > 0.5 ? { ...heading, nameWidth: heading.nameWidth + Math.ceil(cut) } : heading;
+	}
+
+	async function drawnHeading(nodes: SnapshotNode[], heading: Heading | undefined) {
+		return heading && (await fullName(nodes, await drawnTime(nodes, heading)));
 	}
 
 	return async function measure(cell: NativeObjectHandle): Promise<Measured | undefined> {

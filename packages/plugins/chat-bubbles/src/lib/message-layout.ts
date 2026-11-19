@@ -52,6 +52,8 @@ export type Heading = {
 	time?: Box;
 	/** The timestamp label's snapshot index, to measure the text it draws past its frame. */
 	timeLabel?: number;
+	/** The name label's snapshot index, to measure the name Discord cut short. */
+	nameLabel?: number;
 	/** The reply preview's holder, the view holding its avatar and text, its text label and where that label starts in the cell. */
 	reply?: { container: Box; content: Box; label: number; labelX: number };
 };
@@ -206,10 +208,12 @@ function headingOf(
 	);
 	const [container] = replyViews;
 	const [label] = container === undefined ? [] : descendants(nodes, container, isText);
+	const nameLabel = descendants(nodes, name, isText).find((index) => index !== time);
 
 	return {
 		name: absolute(nodes, name),
 		nameWidth,
+		...(nameLabel === undefined ? {} : { nameLabel }),
 		...(time === undefined ? {} : { time: absolute(nodes, time), timeLabel: time }),
 		...(label === undefined
 			? {}
