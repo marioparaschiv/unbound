@@ -2,7 +2,7 @@ import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
 import type { PluginContext } from '@unbound-app/api/native';
 
 import { createMessageCells } from '~/native/ios/views';
-import { installReuseGuard } from '~/native/ios/worklets';
+import { installCellGuards } from '~/native/ios/worklets';
 import type { LatencyRecords } from '~/lib/records';
 import { createTooltips } from '~/native/ios/tooltip';
 import type { Indicators } from '~/native/indicators';
@@ -19,16 +19,14 @@ export function createIndicators(
 ): Indicators | null {
 	const { objc, ui } = context.native;
 
-	if (
-		!ensureClasses(objc, ['DCDMessageTableViewCell', 'NSLayoutConstraint', 'UIColor', 'UIFont'])
-	) {
+	if (!ensureClasses(objc, ['DCDMessageTableViewCell', 'UIColor', 'UIFont'])) {
 		return null;
 	}
 
 	const cells = createMessageCells(objc, records, createTooltips(context.native));
 	const scope = ui.createScope();
 
-	ui.run(installReuseGuard, scope);
+	ui.run(installCellGuards, scope);
 
 	const unhook = cells.hook();
 

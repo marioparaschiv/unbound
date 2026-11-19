@@ -1,39 +1,52 @@
 import { describe, expect, test } from 'bun:test';
 
-import { headerLayout } from '~/lib/header-layout';
+import { badgedHeader, type HeaderFrames } from '~/lib/header-layout';
 
-const header = {
-	row: { view: 'row', frame: { x: 0, y: 0, width: 300, height: 20 } },
-	group: { view: 'group', frame: { x: 10, y: 0, width: 140, height: 20 } },
-	username: { view: 'name', frame: { x: 0, y: 1, width: 70, height: 18 } },
-	trailing: [{ view: 'tag', frame: { x: 76, y: 4, width: 30, height: 12 } }],
-	timestamp: { view: 'time', frame: { x: 160, y: 2, width: 50, height: 16 } },
-	icon: 'icon',
+const BADGE = { width: 16, height: 20 };
+
+const frame = (x: number, width: number, y = 0, height = 20) => ({ x, y, width, height });
+
+const header: HeaderFrames = {
+	row: frame(0, 300),
+	container: frame(0, 140),
+	name: frame(0, 70),
+	label: frame(0, 70, 2, 16),
+	tags: frame(74, 66),
+	timestamp: frame(144, 50, 4, 16),
 };
 
-describe('headerLayout', () => {
-	const layout = headerLayout(header);
+describe('badgedHeader', () => {
+	test('puts the badge where the name started and moves everything after it', () => {
+		const { icon, frames } = badgedHeader(header, BADGE);
 
-	test('widens the name group by the icon and keeps the timestamp gap after it', () => {
-		const [group, timestamp] = layout.row;
-
-		expect(group).toMatchObject({ view: 'group', leading: ['row', 'leading', 10], width: 156 });
-		expect(timestamp).toMatchObject({
-			view: 'time',
-			leading: ['group', 'trailing', 10],
-			centerY: ['row', 0],
-		});
+		expect(icon).toEqual({ x: 0, y: 0, width: 16, height: 20 });
+		expect(frames.name).toEqual(frame(16, 70));
+		expect(frames.tags).toEqual(frame(90, 66));
+		expect(frames.container).toEqual(frame(0, 156));
+		expect(frames.timestamp).toEqual(frame(160, 50, 4, 16));
 	});
 
-	test('puts the icon where the name was and the name and badges after it', () => {
-		const [icon, name, tag] = layout.group;
+	test('takes the room a full row lacks from the name', () => {
+		const { frames } = badgedHeader({ ...header, row: frame(0, 200) }, BADGE);
 
-		expect(icon).toMatchObject({ view: 'icon', leading: ['group', 'leading', 0], width: 16 });
-		expect(name).toMatchObject({ view: 'name', leading: ['icon', 'trailing', 0] });
-		expect(tag).toMatchObject({
-			view: 'tag',
-			leading: ['name', 'trailing', 6],
-			centerY: ['group', 0],
-		});
+		expect(frames.name).toEqual(frame(16, 60));
+		expect(frames.label.width).toBe(60);
+		expect(frames.tags?.x).toBe(80);
+		expect(frames.timestamp?.x).toBe(150);
+	});
+
+	test('takes the badge from a name already cut short', () => {
+		const { frames } = badgedHeader(header, BADGE, 120);
+
+		expect(frames.name).toEqual(frame(16, 54));
+		expect(frames.tags?.x).toBe(74);
+		expect(frames.container.width).toBe(140);
+	});
+
+	test('leaves a timestamp that sits inside the name row where it is', () => {
+		const timestamp = frame(100, 50, 4, 16);
+		const { frames } = badgedHeader({ ...header, timestamp }, BADGE);
+
+		expect(frames.timestamp).toEqual(timestamp);
 	});
 });

@@ -13,8 +13,6 @@ export const ANDROID_OFFSET_TOLERANCE = 86_400_000;
 
 export const MAX_LATENCY_RECORDS = 500;
 
-export const CELL_SNAPSHOT = { maxDepth: 12, maxNodes: 120 };
-
 export const Icon = {
 	width: 12,
 	height: 12,
@@ -33,15 +31,3 @@ export const FILL_TOKENS: Record<LatencyColor, string> = {
 	positive: 'STATUS_POSITIVE',
 	warning: 'STATUS_WARNING',
 };
-
-// NSLayoutAttribute and NSLayoutRelation values from UIKit.
-export const LayoutAttribute = {
-	NotAnAttribute: 0,
-	Leading: 5,
-	Trailing: 6,
-	Width: 7,
-	Height: 8,
-	CenterY: 10,
-};
-
-export const LAYOUT_RELATION_EQUAL = 0;
