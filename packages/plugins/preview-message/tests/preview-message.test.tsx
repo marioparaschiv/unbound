@@ -21,6 +21,9 @@ function stores(draft: string): StoreSeeds {
 		UploadAttachment: { getUploadCount: () => 0 },
 		SelectedChannel: { getChannelId: () => '1' },
 		User: { getCurrentUser: () => ({ id: '1', username: 'wumpus' }) },
+		Channel: { getChannel: () => ({ id: '1', guild_id: '2' }) },
+		Guild: { getGuilds: () => ({ '2': {} }) },
+		Emoji: { getGuildEmoji: () => [] },
 	};
 }
 

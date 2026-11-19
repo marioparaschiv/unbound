@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1] - 2026-11-19
+
+### Fixed
+
+- The preview draws custom emoji picked in the message box, which Discord keeps as `:name:` until it sends.
+
 ## [1.2.0] - 2026-11-18
 
 ### Added
