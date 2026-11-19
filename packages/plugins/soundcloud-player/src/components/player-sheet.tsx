@@ -2,7 +2,7 @@ import { Discord } from '@unbound-app/api/metro/components';
 import type { ComponentType } from 'react';
 import { Linking, View } from 'react-native';
 
-import { playerUrl, staysInPlayer } from '~/lib/soundcloud';
+import { HIDE_APP_PROMPT, playerUrl, staysInPlayer } from '~/lib/soundcloud';
 
 type Navigation = { url: string };
 
@@ -11,6 +11,7 @@ export type WebViewProps = {
 	style?: unknown;
 	allowsInlineMediaPlayback?: boolean;
 	mediaPlaybackRequiresUserAction?: boolean;
+	injectedJavaScript?: string;
 	onShouldStartLoadWithRequest?: (navigation: Navigation) => boolean;
 };
 
@@ -50,6 +51,7 @@ export function PlayerSheet({ link, WebView }: PlayerSheetProps) {
 					style={{ flex: 1, backgroundColor: 'transparent' }}
 					allowsInlineMediaPlayback
 					mediaPlaybackRequiresUserAction={false}
+					injectedJavaScript={HIDE_APP_PROMPT}
 					onShouldStartLoadWithRequest={routeNavigation}
 				/>
 			</View>
