@@ -2,7 +2,7 @@ import { Animated, KeyboardAvoidingView, Pressable, View } from 'react-native';
 import { Discord } from '@unbound-app/api/metro/components';
 import { useEffect, useRef, useState } from 'react';
 import { format, messages } from '@unbound-app/i18n';
-import { metro } from '@unbound-app/api';
+import { flux, metro } from '@unbound-app/api';
 
 import { Haptics, type PreviewModules } from '~/lib/modules';
 import { extractUrls, fetchLinkEmbed, type LinkEmbed } from '~/lib/embeds';
@@ -10,6 +10,7 @@ import type { Sticker } from '~/lib/types';
 import { MAX_PREVIEW_URLS, MESSAGE_ROW_TYPE, Timing } from '~/lib/constants';
 import { createDraftMessage } from '~/lib/draft-message';
 import { applyTextReplace } from '~/lib/text-replace';
+import { emojiMarkdown, knownEmoji } from '~/lib/emoji-markdown';
 import useStyles from '~/components/preview-overlay.style';
 
 type PreviewOverlayProps = {
@@ -79,7 +80,12 @@ function MessagePreview({ channelId, modules, content, stickers, embeds }: Messa
 
 function PreviewOverlay({ content, onClose, ...props }: PreviewOverlayProps) {
 	const styles = useStyles();
-	const rendered = applyTextReplace(content);
+	const guildId = (
+		flux.getStore('Channel') as unknown as {
+			getChannel(id: string): { guild_id?: string } | undefined;
+		}
+	).getChannel(props.channelId)?.guild_id;
+	const rendered = emojiMarkdown(applyTextReplace(content), knownEmoji(guildId));
 	const embeds = useLinkEmbeds(rendered);
 	const opacity = useRef(new Animated.Value(0)).current;
 
