@@ -1,0 +1,17 @@
+{
+	"id": "unbound.calendar-files",
+	"name": "Calendar Files",
+	"description": "Previews .ics calendar invites in messages with an Add to Calendar button, and makes one with /event.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "CalendarIcon",
+	"main": "index.tsx"
+}

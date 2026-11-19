@@ -1,0 +1,20 @@
+{
+	"EVENT_HEADING": "{summary}",
+	"SHOW_EVENT": "Show calendar event",
+	"EVENT_BODY": "{when}{location}{description}",
+	"ALL_DAY": "All day, {date}",
+	"AT_LOCATION": "\n📍 {location}",
+	"ADD_TO_CALENDAR": "Add to Calendar",
+	"CLOSE": "Close",
+	"NO_EVENTS": "This calendar file has no events.",
+	"LOAD_FAILED": "Couldn't open the calendar file",
+	"EVENT_DESC": "Attach a calendar invite to your message",
+	"EVENT_TITLE": "What the event is called",
+	"EVENT_START": "When it starts, like 18:30 or 2026-12-24 19:00",
+	"EVENT_MINUTES": "How many minutes it lasts (60 by default)",
+	"EVENT_LOCATION": "Where it is",
+	"BAD_START": "Couldn't read “{start}” as a time. Try 18:30 or 2026-12-24 19:00.",
+	"ATTACHED": "Attached {file} to your message.",
+	"ATTACH_FAILED": "Couldn't attach the calendar file.",
+	"MORE_EVENTS": "This file holds {count} more events; adding it adds them all."
+}
