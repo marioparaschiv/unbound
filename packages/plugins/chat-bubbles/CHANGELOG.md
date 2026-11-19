@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.30] - 2026-11-19
+
+### Fixed
+
+- On iOS, a bubble is measured again when another plugin adds a view to the name row, such as Message Latency's badge, so the last tag no longer touches or clips at the bubble's edge.
+
 ## [1.6.29] - 2026-11-19
 
 ### Fixed

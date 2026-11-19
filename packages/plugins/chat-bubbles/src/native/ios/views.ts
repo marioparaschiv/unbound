@@ -180,15 +180,25 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 	}
 
 	// The content's offset counts too: the row grows first and its content moves down by half the room on a later layout.
+	async function nameRowViews(cell: NativeObjectHandle): Promise<number> {
+		const container = objc.getIvar(cell, '_usernameContainerView') as NativeObjectHandle | null;
+		const views = container ? await objc.invokeAsync(container, 'subviews', []) : null;
+
+		return Array.isArray(views) ? views.length : 0;
+	}
+
 	async function sizeOf(cell: NativeObjectHandle): Promise<string> {
-		const [bounds, , content] = await objc.batch([
-			{ target: cell, selector: 'bounds', args: [] },
-			{ target: cell, selector: 'contentView', args: [] },
-			{ target: { $nativeBatchResult: 1 }, selector: 'frame', args: [] },
+		const [[bounds, , content], nameViews] = await Promise.all([
+			objc.batch([
+				{ target: cell, selector: 'bounds', args: [] },
+				{ target: cell, selector: 'contentView', args: [] },
+				{ target: { $nativeBatchResult: 1 }, selector: 'frame', args: [] },
+			]),
+			nameRowViews(cell),
 		]);
 		const { width, height } = readRect(bounds);
 
-		return `${Math.round(width)}x${Math.round(height)}@${Math.round(readRect(content).y)}`;
+		return `${Math.round(width)}x${Math.round(height)}@${Math.round(readRect(content).y)}#${nameViews}`;
 	}
 
 	async function senderOf(key: string, cell: NativeObjectHandle): Promise<Sender> {
