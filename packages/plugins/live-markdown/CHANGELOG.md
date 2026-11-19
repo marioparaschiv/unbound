@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2] - 2026-11-19
+
+### Fixed
+
+- On iOS, custom emoji in the message box draw again after Discord restyles their names, so emoji side by side show as images without typing a space.
+- On iOS, deleting into an emoji's text no longer leaves that text invisible, and what you type next no longer inherits the emoji's spacing, which pushed the message box onto extra lines.
+
 ## [1.1.1] - 2026-11-18
 
 ### Fixed
