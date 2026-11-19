@@ -95,9 +95,15 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
             // Even a failed check counts, so an offline launch does not wait again next time.
             preferences::setCheckedByLoader(settings_, loaderVersion());
             currentAtMs_.store(0);
-            recordUpdateCheck(epochMs(), "failed", error.what());
+            std::string detail = error.what();
+            if (failure == BundleUpdateFailure::Network && updater_.behindCaptivePortal())
+            {
+                detail += "; the network shows a sign-in page (captive portal)";
+            }
+
+            recordUpdateCheck(epochMs(), "failed", detail);
             log(hasSaved ? LogLevel::Warning : LogLevel::Error, LOG_CATEGORY_DEFAULT,
-                std::string("Bundle download failed. (") + error.what() + ")"
+                "Bundle download failed. (" + detail + ")"
                     + (hasSaved ? "; using the cached bundle" : ""));
             if (waitForDownload)
             {
