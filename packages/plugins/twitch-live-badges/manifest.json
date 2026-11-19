@@ -1,0 +1,17 @@
+{
+	"id": "unbound.twitch-live-badges",
+	"name": "Twitch Live Badges",
+	"description": "Twitch channel links show whether the stream is live, and for how long, in their embed.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "VideoIcon",
+	"main": "index.tsx"
+}

@@ -1,6 +1,6 @@
 # Plugins
 
-219 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+220 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -204,6 +204,7 @@
 - <img src="../../assets/plugins/readme-icons/globe-earth-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Timezones](https://unbound.rip/addons/unbound.timezones): Shows each user's local time on their profile and beside their messages, from TimezoneDB or a timezone you set.
 - <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Tone Indicators](https://unbound.rip/addons/unbound.tone-indicators): Turns tone tags such as /j and /srs into pills that spell out what they mean.
 - <img src="../../assets/plugins/readme-icons/language-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Translate](https://unbound.rip/addons/unbound.translate): Translate messages.
+- <img src="../../assets/plugins/readme-icons/video-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Twitch Live Badges](https://unbound.rip/addons/unbound.twitch-live-badges): Twitch channel links show whether the stream is live, and for how long, in their embed.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Typing Avatars](https://unbound.rip/addons/unbound.typing-avatars): Shows the avatars of people typing in the channel.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Typing Speed](https://unbound.rip/addons/unbound.typing-speed): Shows how fast you type, in words per minute, above the message box, and keeps your average and best.
 - <img src="../../assets/plugins/readme-icons/timer-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Undo Send](https://unbound.rip/addons/unbound.undo-send): Holds each message you send for a few seconds, with an Undo button that puts it back in the chat input before it goes out.
