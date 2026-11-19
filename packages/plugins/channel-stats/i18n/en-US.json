@@ -1,0 +1,10 @@
+{
+	"STATS_DESC": "See who talks most and when this channel is busiest, only to you",
+	"NO_MESSAGES": "No messages are loaded in this channel yet. Scroll up a little and try again.",
+	"HEADER": "**Channel stats** from the last {count, plural, one {# loaded message} other {# loaded messages}}, since {since}",
+	"TOP_POSTERS": "**Who talks most**",
+	"POSTER": "{rank}. {name}: {count} ({share}%)",
+	"BUSIEST_HOURS": "**Busiest hours**: {hours}",
+	"HOUR": "{hour}:00 ({count})",
+	"PER_DAY": "**Per day**: about {count, plural, one {# message} other {# messages}}"
+}

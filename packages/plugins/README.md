@@ -1,6 +1,6 @@
 # Plugins
 
-226 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+227 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -34,6 +34,7 @@
 - <img src="../../assets/plugins/readme-icons/calendar-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Calendar Files](https://unbound.rip/addons/unbound.calendar-files): Previews .ics calendar invites in messages with an Add to Calendar button, and makes one with /event.
 - <img src="../../assets/plugins/readme-icons/voice-normal-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Call Join Confirmation](https://unbound.rip/addons/unbound.call-join-confirmation): Asks before you join a voice channel or start a call, so a stray tap doesn't put you in one.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Channel Badges](https://unbound.rip/addons/unbound.channel-badges): Labels channels in the channel list with badges for NSFW, locked and rules channels, and optionally their type.
+- <img src="../../assets/plugins/readme-icons/chat-dots-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Channel Stats](https://unbound.rip/addons/unbound.channel-stats): Shows who talks most and when a channel is busiest, from the messages you have loaded, only to you.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Channel Typing Indicators](https://unbound.rip/addons/unbound.channel-typing-indicators): Shows animated typing dots and avatars beside channels where people are typing.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Character Counter](https://unbound.rip/addons/unbound.character-counter): Shows the current message length and Discord's character limit in the composer.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Chat Bubbles](https://unbound.rip/addons/unbound.chat-bubbles): Draws a rounded bubble behind each message.

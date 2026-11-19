@@ -1,0 +1,17 @@
+{
+	"id": "unbound.channel-stats",
+	"name": "Channel Stats",
+	"description": "Shows who talks most and when a channel is busiest, from the messages you have loaded, only to you.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ChatDotsIcon",
+	"main": "index.tsx"
+}
