@@ -1,0 +1,17 @@
+{
+	"id": "unbound.pinyin",
+	"name": "Pinyin",
+	"description": "Shows the pinyin of Chinese messages in a small line under them.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "LanguageIcon",
+	"main": "index.ts"
+}
