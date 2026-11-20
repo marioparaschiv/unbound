@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :sparkle: `/channelstats` sums up the messages loaded in the channel you are in: the five people who wrote most and their share, the three busiest hours and about how many messages a day.

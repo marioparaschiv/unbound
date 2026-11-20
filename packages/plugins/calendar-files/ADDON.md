@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :calendar: Long-press a message with an `.ics` invite and pick **Show calendar event** to see what, when and where, then **Add to Calendar**.

@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :signal: On mobile data, tapping an image or video attachment of 20 MB or more asks before it opens and downloads.

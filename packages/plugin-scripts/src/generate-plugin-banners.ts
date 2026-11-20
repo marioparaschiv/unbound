@@ -6,14 +6,14 @@ import { pluginIcon, readPluginManifests } from './plugin-manifests';
 import { PLUGIN_ICONS_DIR, PLUGINS_DIR, REPO_ROOT } from './paths';
 
 const FONTS_DIR = resolve(REPO_ROOT, 'apps/devtools/crates/app/assets/fonts');
-const FONT_FILES = ['Inter-Medium.ttf', 'Inter-SemiBold.ttf'].map((name) => join(FONTS_DIR, name));
+const FONT_FILES = ['Geist-Medium.ttf', 'Geist-SemiBold.ttf'].map((name) => join(FONTS_DIR, name));
 
 const BANNER_WIDTH = 1200;
 const BANNER_HEIGHT = 400;
 const BANNER_PATH = 'media/banner.png';
 const MARKER_KEYWORD = 'Software';
 const MARKER_VALUE = 'unbound generate-plugin-banners';
-const FONT_STACK = 'Inter, sans-serif';
+const FONT_STACK = 'Geist, sans-serif';
 const TEXT_X = 310;
 const TEXT_WIDTH = 800;
 const NAME_SIZE = 64;
@@ -166,7 +166,7 @@ export function withBannerFrontmatter(source: string): string {
 export function renderBanner(svg: string): Uint8Array {
 	const resvg = new Resvg(svg, {
 		fitTo: { mode: 'width', value: BANNER_WIDTH },
-		font: { fontFiles: FONT_FILES, loadSystemFonts: false, defaultFontFamily: 'Inter' },
+		font: { fontFiles: FONT_FILES, loadSystemFonts: false, defaultFontFamily: 'Geist' },
 	});
 
 	return markGenerated(resvg.render().asPng());
@@ -217,7 +217,18 @@ function readIcon(icon: string): string {
 	return readFileSync(path).toString('base64');
 }
 
+function requireFonts(): void {
+	const missing = FONT_FILES.filter((path) => !existsSync(path));
+
+	if (missing.length > 0) {
+		throw new Error(
+			`Banner fonts are missing, so banners would have no text: ${missing.join(', ')}`,
+		);
+	}
+}
+
 function main(): void {
+	requireFonts();
 	const selection = parseBannerArgs(process.argv.slice(2));
 	let written = 0;
 

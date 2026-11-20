@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :pen: A **Check grammar** button in the chat input sends your draft to LanguageTool and lists the spelling and grammar mistakes it finds.

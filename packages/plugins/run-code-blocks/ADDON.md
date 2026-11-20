@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :circle-play: Adds **Run** to the long-press menu of messages with a code block in a language Compiler Explorer runs: Python, JavaScript, TypeScript, C, C++, C#, Rust, Go, Java, Kotlin, Swift, Ruby, Lua, Haskell and Zig.

@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :volume-up: New messages in the channel you have open are read aloud in a babbling animal voice, one blip per letter.

@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :sparkle: `/minesweeper` sends a board of spoiler tiles. Tap a tile to reveal a number or a mine.

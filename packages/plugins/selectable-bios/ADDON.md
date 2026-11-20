@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :text: Long-press a profile's bio to select text in it, then copy or share just that part.

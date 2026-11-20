@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :pen: Send `s/teh/the/` and your last message in the channel is corrected instead of a new message going out.

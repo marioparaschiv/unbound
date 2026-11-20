@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :arrow-up: **D-pad up / down** moves to the previous or next channel in the server.

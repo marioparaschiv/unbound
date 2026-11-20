@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :bell: Calls from users and group DMs you pick don't ring on this device; you can still join from the chat.

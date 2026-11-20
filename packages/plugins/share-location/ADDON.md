@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :pin: A **Share location** button in the chat input adds a Google Maps link to where you are to your message. Nothing is sent until you send it.

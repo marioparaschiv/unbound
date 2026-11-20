@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :headphones: Before you join a voice or stage channel, you're asked **Join #channel?** first.

@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :star: Profiles show the badges people earned in other client mods (Vencord, Aliucord, Enmity, BetterDiscord, Replugged and BadgeVault), after Discord's own.

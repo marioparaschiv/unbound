@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :globe: Gives each writing system in messages its own font: Japanese in one, Korean in another, Latin left as Discord draws it.
