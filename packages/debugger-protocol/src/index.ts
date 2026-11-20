@@ -249,9 +249,24 @@ export type DeviceHello = {
 	device: DeviceInfo;
 };
 
+/** The React Native app states a device reports. */
+export const APP_STATES = ['active', 'inactive', 'background'] as const;
+
+export type AppStateName = (typeof APP_STATES)[number];
+
+/** Device → bridge, whenever Discord changes app state, so a silent device can be told apart from a hung one. */
+export type DeviceAppState = {
+	type: 'app-state';
+	state: AppStateName;
+};
+
 /** Bridge → controller, once on attach and whenever the device connects, drops or says hello. */
 export type DeviceStatus = { type: 'device-status' } & (
-	| { connected: false }
+	| {
+			connected: false;
+			/** Set when the last device left because Discord went to the background. */
+			inBackground?: boolean;
+	  }
 	| {
 			connected: true;
 			/** Present once the connected device has said hello. */
@@ -283,6 +298,7 @@ export type BridgeMessage =
 	| PushResult
 	| LogMessage
 	| DeviceHello
+	| DeviceAppState
 	| DeviceStatus
 	| BridgeInfo
 	| ViewsRequest
@@ -425,10 +441,13 @@ function hasRequiredFields(frame: unknown): frame is BridgeMessage {
 			);
 		case 'hello':
 			return 'device' in frame && isDeviceInfo(frame.device);
+		case 'app-state':
+			return 'state' in frame && APP_STATES.some((name) => name === frame.state);
 		case 'device-status':
 			return (
 				'connected' in frame &&
-				(frame.connected === false ||
+				((frame.connected === false &&
+					(!('inBackground' in frame) || typeof frame.inBackground === 'boolean')) ||
 					(frame.connected === true &&
 						(!('device' in frame) ||
 							frame.device === undefined ||

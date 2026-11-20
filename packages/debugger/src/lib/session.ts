@@ -1,4 +1,5 @@
 import type {
+	AppStateName,
 	DeviceInfo,
 	DeviceStatus,
 	LogMessage,
@@ -47,9 +48,15 @@ export const state: {
 	controllers: Set<SocketLike>;
 	/** The controller acting as the React DevTools frontend: the last one to send a React DevTools frame. */
 	reactDevtools: SocketLike | null;
+	/** The app state the device last reported; a device that never reports counts as active. */
+	appState: AppStateName;
+	/** Whether the last device left because Discord went to the background. */
+	leftInBackground: boolean;
 } = {
 	device: null,
 	deviceInfo: null,
+	appState: 'active',
+	leftInBackground: false,
 	controllers: new Set(),
 	reactDevtools: null,
 };
@@ -68,6 +75,21 @@ const controllerListeners = new Set<(connected: boolean, count: number) => void>
 
 const VIEWS_TIMEOUT_MS = 15_000;
 
+function noDeviceError() {
+	return state.leftInBackground
+		? 'No device is connected to the debugger. Discord went to the background, which closes its debugger; open Discord to reconnect.'
+		: 'No device is connected to the debugger.';
+}
+
+function evalTimeoutError(timeout: number) {
+	const reason =
+		state.appState === 'active'
+			? 'Discord is in the foreground, so its JS thread is busy or hung.'
+			: 'Discord is not in the foreground, so iOS may have suspended it; open Discord and retry.';
+
+	return `Evaluation timed out after ${timeout}ms. ${reason}`;
+}
+
 /**
  * @description Registers the connected device, replacing any earlier one so a relaunched or
  * reconnecting app always takes over from a socket that died without closing.
@@ -82,6 +104,8 @@ export function attachDevice(socket: SocketLike) {
 	}
 
 	state.device = socket;
+	state.appState = 'active';
+	state.leftInBackground = false;
 	broadcastDeviceStatus(true);
 }
 
@@ -95,6 +119,7 @@ export function detachDevice(socket: SocketLike) {
 
 	state.device = null;
 	state.deviceInfo = null;
+	state.leftInBackground = state.appState === 'background';
 
 	pending.failAll((id) => ({
 		type: 'eval-result',
@@ -196,7 +221,7 @@ export function pushForController(socket: SocketLike, request: PushRequest) {
 			type: 'plugin-push-result',
 			id: request.id,
 			ok: false,
-			error: 'No device is connected to the debugger.',
+			error: noDeviceError(),
 			code: 'no-device',
 		});
 
@@ -232,7 +257,7 @@ export function requestViewsForController(socket: SocketLike, request: ViewsRequ
 			type: 'views-result',
 			id: request.id,
 			ok: false,
-			error: 'No device is connected to the debugger.',
+			error: noDeviceError(),
 		});
 
 		return;
@@ -266,7 +291,7 @@ export function requestViewDetailsForController(socket: SocketLike, request: Vie
 			type: 'view-details-result',
 			id: request.id,
 			ok: false,
-			error: 'No device is connected to the debugger.',
+			error: noDeviceError(),
 		});
 
 		return;
@@ -354,7 +379,7 @@ function dispatch(
 			type: 'eval-result',
 			id,
 			ok: false,
-			error: 'No device is connected to the debugger.',
+			error: noDeviceError(),
 			code: 'no-device',
 		});
 
@@ -368,7 +393,7 @@ function dispatch(
 			type: 'eval-result',
 			id,
 			ok: false,
-			error: `Evaluation timed out after ${timeout}ms.`,
+			error: evalTimeoutError(timeout),
 			code: 'timeout',
 		}),
 		meta: origin,
@@ -420,6 +445,12 @@ export function handleDeviceMessage(message: BridgeMessage) {
 
 	if (message.type === 'react-devtools') {
 		state.reactDevtools?.send(serializeMessage(message));
+
+		return;
+	}
+
+	if (message.type === 'app-state') {
+		state.appState = message.state;
 
 		return;
 	}
@@ -498,7 +529,11 @@ export function onController(listener: (connected: boolean, count: number) => vo
 function sendDeviceStatus(socket: SocketLike, connected: boolean) {
 	const status: DeviceStatus = connected
 		? { type: 'device-status', connected, device: state.deviceInfo ?? void 0 }
-		: { type: 'device-status', connected };
+		: {
+				type: 'device-status',
+				connected,
+				...(state.leftInBackground ? { inBackground: true } : {}),
+			};
 
 	socket.send(serializeMessage(status));
 }

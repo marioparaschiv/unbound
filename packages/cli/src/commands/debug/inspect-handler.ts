@@ -1,6 +1,6 @@
 import type { CommandOutput } from '@unbound-app/debugger-protocol/registry';
 
-import { evaluateOnDevice, NOT_CONNECTED, toDeviceCode, type DeviceClient } from '~/lib/device';
+import { evaluateOnDevice, notConnected, toDeviceCode, type DeviceClient } from '~/lib/device';
 import { formatClassReport, formatFoundViews, formatViewTree } from '~/lib/inspect-format';
 import { inspectReportSchema, type InspectReport } from '~/lib/inspect-report';
 import { inspectNative, type InspectRequest } from '~/lib/inspect-probe';
@@ -40,7 +40,7 @@ export async function runInspect(
 	);
 
 	if (!result) {
-		return NOT_CONNECTED;
+		return notConnected(client);
 	}
 
 	if (!result.ok) {

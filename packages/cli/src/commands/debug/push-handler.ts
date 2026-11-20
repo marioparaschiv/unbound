@@ -4,7 +4,7 @@ import { staleBuildReason } from '~/lib/stale-build';
 import { pushBuiltAddon } from '~/lib/built-addon';
 import { failure } from '~/lib/command-error';
 import { waitForDevice } from '~/lib/context';
-import { NOT_CONNECTED } from '~/lib/device';
+import { notConnected } from '~/lib/device';
 
 import type pushCommand from './push';
 
@@ -28,7 +28,7 @@ const handler: CommandHandler<typeof pushCommand.schema> = async (
 	await waitForDevice(client);
 
 	if (!client.isDeviceConnected) {
-		return NOT_CONNECTED;
+		return notConnected(client);
 	}
 
 	const pushed = await pushBuiltAddon(client, resolved.addon);

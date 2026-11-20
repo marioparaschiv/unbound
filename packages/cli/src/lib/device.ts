@@ -8,7 +8,10 @@ import { lowerForHermes } from '~/lib/hermes-code';
 import { waitForDevice } from '~/lib/context';
 import { formatResult } from '~/lib/format';
 
-export type DeviceClient = Pick<ControllerClient, 'isDeviceConnected' | 'evaluate'>;
+export type DeviceClient = Pick<
+	ControllerClient,
+	'isDeviceConnected' | 'isDeviceInBackground' | 'evaluate'
+>;
 
 /** A JSON value, the only kind of argument that survives the trip to the device. */
 export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
@@ -43,6 +46,25 @@ export const NOT_CONNECTED: CommandOutput = failure(
 	},
 );
 
+/** The answer every device command gives when Discord went to the background and closed its debugger. */
+export const IN_BACKGROUND: CommandOutput = failure(
+	'no-device',
+	'No device is connected to the debugger: Discord went to the background, which closes its debugger. Open Discord, then retry.',
+	{
+		message: 'No device is connected to the debugger.',
+		hint: 'Discord went to the background, which closes its debugger. Open Discord, then retry.',
+	},
+);
+
+/**
+ * @description Picks the answer for a missing device: backgrounded, or never connected.
+ * @param client The bridge controller.
+ * @returns {@link IN_BACKGROUND} or {@link NOT_CONNECTED}.
+ */
+export function notConnected(client: DeviceClient): CommandOutput {
+	return client.isDeviceInBackground ? IN_BACKGROUND : NOT_CONNECTED;
+}
+
 /**
  * @description Waits briefly for a device, then evaluates code on it.
  * @param client The bridge controller.
@@ -67,7 +89,7 @@ export async function evaluateOnDevice(
  * @param client The bridge controller.
  * @param code The JavaScript to evaluate on the device.
  * @param timeout How long the bridge waits for the result, in milliseconds; its default when omitted.
- * @returns The formatted transcript with the raw result as data, or {@link NOT_CONNECTED}.
+ * @returns The formatted transcript with the raw result as data, or the missing-device answer.
  */
 export async function runOnDevice(
 	client: DeviceClient,
@@ -77,7 +99,7 @@ export async function runOnDevice(
 	const result = await evaluateOnDevice(client, code, timeout);
 
 	if (!result) {
-		return NOT_CONNECTED;
+		return notConnected(client);
 	}
 
 	return result.ok
@@ -85,4 +107,12 @@ export async function runOnDevice(
 		: evalFailure(result, formatResult(result), result);
 }
 
-export default { NOT_CONNECTED, RECORDING_GRACE_MS, toDeviceCode, evaluateOnDevice, runOnDevice };
+export default {
+	IN_BACKGROUND,
+	NOT_CONNECTED,
+	notConnected,
+	RECORDING_GRACE_MS,
+	toDeviceCode,
+	evaluateOnDevice,
+	runOnDevice,
+};

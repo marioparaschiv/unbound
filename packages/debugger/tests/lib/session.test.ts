@@ -50,10 +50,36 @@ describe('evaluateForController', () => {
 				type: 'eval-result',
 				id: 'slow',
 				ok: false,
-				error: 'Evaluation timed out after 30ms.',
+				error: 'Evaluation timed out after 30ms. Discord is in the foreground, so its JS thread is busy or hung.',
 				code: 'timeout',
 			},
 		]);
+	});
+
+	test('says a timed out eval may be a suspended app when Discord left the foreground', async () => {
+		attachDevice(device);
+		attachController(controller);
+		handleDeviceMessage({ type: 'app-state', state: 'inactive' });
+
+		evaluateForController(controller, { type: 'eval', id: 'paused', code: 'x', timeout: 30 });
+		await Bun.sleep(80);
+
+		expect(evalResults(controller)[0]).toMatchObject({
+			error: expect.stringContaining('iOS may have suspended it'),
+		});
+	});
+
+	test('says a device that left in the background must be reopened', () => {
+		attachDevice(device);
+		attachController(controller);
+		handleDeviceMessage({ type: 'app-state', state: 'background' });
+		detachDevice(device);
+
+		evaluateForController(controller, { type: 'eval', id: 'gone', code: 'x' });
+
+		expect(evalResults(controller)[0]).toMatchObject({
+			error: expect.stringContaining('open Discord to reconnect'),
+		});
 	});
 
 	test('delivers a result that arrives within the requested timeout', async () => {

@@ -60,6 +60,7 @@ type InspectInput = Partial<StaticDecode<typeof inspectCommand.schema>> & {
 function clientAnswering(report: InspectReport, codes: string[] = []): DeviceClient {
 	return {
 		isDeviceConnected: true,
+		isDeviceInBackground: false,
 		evaluate(code: string, timeout?: number): Promise<EvalResult> {
 			codes.push(`${timeout} ${code}`);
 

@@ -1,4 +1,6 @@
 import type {
+	AppStateName,
+	DeviceAppState,
 	DeviceHello,
 	PushRequest,
 	PushResult,
@@ -13,7 +15,12 @@ import type {
 	ViewsRequest,
 	ViewsResult,
 } from '@unbound-app/debugger-protocol';
-import { isExplorerRequest, isMetroRequest, parseMessage } from '@unbound-app/debugger-protocol';
+import {
+	APP_STATES,
+	isExplorerRequest,
+	isMetroRequest,
+	parseMessage,
+} from '@unbound-app/debugger-protocol';
 import type { UnboundLogEntry, UnboundLogLevel } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
 
@@ -433,6 +440,18 @@ function sayHello() {
 	}
 }
 
+function reportAppState(appState: AppStateName) {
+	if (ws?.readyState !== WebSocket.OPEN) return;
+
+	const message: DeviceAppState = { type: 'app-state', state: appState };
+
+	try {
+		ws.send(JSON.stringify(message));
+	} catch {
+		return;
+	}
+}
+
 function reply(
 	payload:
 		| EvalResult
@@ -577,10 +596,18 @@ function patchLoggingHook() {
 	});
 }
 
+function isAppStateName(value: string): value is AppStateName {
+	return APP_STATES.some((name) => name === value);
+}
+
 function listenToAppState() {
 	const { AppState } = globalThis.ReactNative;
 
 	const subscription = AppState.addEventListener('change', (state: string) => {
+		if (isAppStateName(state)) {
+			reportAppState(state);
+		}
+
 		switch (state) {
 			case 'active':
 				backgrounded = false;
