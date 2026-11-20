@@ -98,6 +98,8 @@ export function keepNameRoom(objc: NativeObjCBridge, cell: NativeObjectHandle) {
 
 	if (!header) return;
 
+	if (views.tags && header.tags) objc.invoke(views.tags, 'setClipsToBounds:', [true]);
+
 	for (const part of Object.keys(IVARS) as HeaderPart[]) {
 		const view = views[part];
 		const frame = header[part];

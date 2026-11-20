@@ -27,11 +27,23 @@ describe('roomForName', () => {
 		expect(header?.timestamp).toEqual(frame(266, 44));
 	});
 
-	test('keeps the start of the timestamp', () => {
+	test('keeps the start of the timestamp and takes the rest from the tags', () => {
 		const header = roomForName({ ...crowded, timestamp: frame(231, 60) }, 120);
 
 		expect(header?.timestamp).toEqual(frame(251, 40));
-		expect(header?.name.width).toBe(22);
+		expect(header?.name.width).toBe(64);
+		expect(header?.container.width).toBe(220);
+		expect(header?.tags).toEqual(frame(68, 152));
+	});
+
+	test('keeps the start of the tags', () => {
+		const header = roomForName(
+			{ ...crowded, tags: frame(6, 30), timestamp: frame(231, 60) },
+			120,
+		);
+
+		expect(header?.tags).toEqual(frame(32, 24));
+		expect(header?.name.width).toBe(28);
 	});
 
 	test('wants no more room than the name draws', () => {
