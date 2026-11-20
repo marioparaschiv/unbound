@@ -12,6 +12,12 @@ mock.module('~/diagnostics/crash-reports', () => ({
 	reportSystemHang: async () => undefined,
 	retryPendingIssues: async () => undefined,
 }));
+mock.module('~/diagnostics/crash-issue-state', () => ({
+	refreshIssueStates: async () => [],
+}));
+mock.module('~/toasts/api', () => ({
+	info: () => undefined,
+}));
 
 const { setRejectionTracker } = await import('~/diagnostics/promise-rejections');
 const { default: diagnostics } = await import('~/diagnostics/builtin');
