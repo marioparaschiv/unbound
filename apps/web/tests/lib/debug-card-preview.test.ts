@@ -29,7 +29,7 @@ const busiest: DebugCardRequest = {
 	platform: 'iOS',
 	os: '26.1 (23B85)',
 	device: 'iPad Pro 13-inch (M4) (Wi-Fi + Cellular)',
-	flags: ['Jailed', 'verified build', 'simulator', 'system app'],
+	flags: ['Jailed', 'verified build', 'virtual iPhone', 'system app'],
 	plugins: { enabled: 12, installed: 60 },
 	themes: { enabled: 1, installed: 3 },
 	disabledAddons: ['Chat Bubbles (crashed)', 'Mention Avatars (froze)'],

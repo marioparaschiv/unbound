@@ -13,21 +13,9 @@ static NSString *bootstrapRootOfImage(const char *path)
         return nil;
     }
 
-    NSString *image = [@(path) stringByResolvingSymlinksInPath];
-    for (NSString *suffix in @[
-             @"/Library/MobileSubstrate/DynamicLibraries/", @"/usr/lib/TweakInject/",
-             @"/usr/lib/ellekit/", @"/usr/lib/TweakLoader.dylib", @"/usr/lib/libellekit.dylib",
-             @"/usr/lib/libsubstrate.dylib"
-         ])
-    {
-        NSRange range = [image rangeOfString:suffix];
-        if (range.location != NSNotFound && range.location > 0)
-        {
-            return [image substringToIndex:range.location];
-        }
-    }
-
-    return nil;
+    NSString *image                 = [@(path) stringByResolvingSymlinksInPath];
+    std::optional<std::string> root = loader::environment::bootstrapRootOfImage(image.UTF8String);
+    return root ? @(root->c_str()) : nil;
 }
 
 static NSString *activeBootstrapRoot()

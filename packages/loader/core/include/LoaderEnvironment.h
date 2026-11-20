@@ -76,4 +76,5 @@ std::string frameworkLabel(const std::string &name, const std::string &version);
 std::string jailbreakName(const std::string &root, const std::vector<std::string> &markers,
                           const std::vector<std::string> &images, bool roothide = false);
 std::string jailbreakLabel(const std::string &name, const std::string &version);
+std::optional<std::string> bootstrapRootOfImage(const std::string &imagePath);
 }

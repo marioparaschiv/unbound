@@ -246,6 +246,21 @@ int main()
     assert(jailbreakLabel("Dopamine", "3.0.9\n") == "Dopamine");
     assert(jailbreakLabel("Dopamine", "3..9") == "Dopamine");
     assert(jailbreakLabel("palera1n", "3.0.9") == "palera1n");
+    assert(bootstrapRootOfImage("/private/preboot/ABC/dopamine-x/procursus/usr/lib/ellekit/"
+                                "libinjector.dylib")
+           == "/private/preboot/ABC/dopamine-x/procursus");
+    assert(bootstrapRootOfImage("/var/jb/Library/MobileSubstrate/DynamicLibraries/Choicy.dylib")
+           == "/var/jb");
+    assert(
+        bootstrapRootOfImage("/private/preboot/ABC/jb-1/procursus/usr/lib/TweakInject/Crane.dylib")
+        == "/private/preboot/ABC/jb-1/procursus");
+    assert(
+        bootstrapRootOfImage(
+            "/private/var/containers/Bundle/Application/.jbroot-0011/usr/lib/TweakInject/x.dylib")
+        == "/private/var/containers/Bundle/Application/.jbroot-0011");
+    assert(!bootstrapRootOfImage("/var/containers/Bundle/Application/X/Discord.app/Frameworks/"
+                                 "Unbound.dylib"));
+    assert(!bootstrapRootOfImage("/Library/MobileSubstrate/DynamicLibraries/x.dylib"));
     checkHookFrameworks();
     checkInstallSources();
     checkRoutingTable();
