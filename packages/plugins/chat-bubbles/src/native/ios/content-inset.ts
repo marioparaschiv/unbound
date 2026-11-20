@@ -35,7 +35,7 @@ export function packInset(inset: number, below = 0): PackedInset {
 }
 
 /**
- * @description Removes the content inset and the accessories' margin from message cells, including those waiting for reuse, which no sizing pass reaches once the hooks are gone.
+ * @description Removes the content inset and the accessories' margin from message cells, including those waiting for reuse, which no sizing pass reaches once the hooks are gone; Discord lays them out again only when their rows are resized.
  * @param objc The Objective-C bridge.
  * @param cells Every message cell in the windows.
  */
@@ -48,16 +48,21 @@ export async function removeContentInsets(objc: NativeObjCBridge, cells: NativeO
 				.batch([
 					{ target: cell, selector: 'messageContentView', args: [] },
 					{ target: { $nativeBatchResult: 0 }, selector: 'yoga', args: [] },
-					{ target: { $nativeBatchResult: 1 }, selector: 'setLeft:', args: [unset] },
-					{
-						target: { $nativeBatchResult: 1 },
-						selector: 'setPaddingRight:',
-						args: [unset],
-					},
 					{ target: { $nativeBatchResult: 0 }, selector: 'superview', args: [] },
-					{ target: { $nativeBatchResult: 4 }, selector: 'subviews', args: [] },
+					{ target: { $nativeBatchResult: 2 }, selector: 'subviews', args: [] },
 				])
-				.then(async ([content, , , , , list]) => {
+				.then(async ([content, contentYoga, , list]) => {
+					if (contentYoga) {
+						await objc.invokeAsync(contentYoga as NativeObjectHandle, 'setLeft:', [
+							unset,
+						]);
+						await objc.invokeAsync(
+							contentYoga as NativeObjectHandle,
+							'setPaddingRight:',
+							[unset],
+						);
+					}
+
 					// UNKNOWN: `subviews` comes back as a JS array or an `NSArray` handle.
 					const siblings = (
 						Array.isArray(list)

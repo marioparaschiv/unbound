@@ -654,7 +654,6 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 			await setRows({ rooms: NO_ROW_ROOM, inset: 0, below: 0 });
 			const cells = await findVisibleCells(objc, IOSClass.messageCell);
 
-			await removeContentInsets(objc, cells);
 			ui.run(restoreCells, [...cells, ...[...bubbles.values()].map(({ cell }) => cell)]);
 			ui.run(forgetBubbles);
 			ui.run(unfitMedia, scope);
@@ -662,6 +661,9 @@ export function drawIOSBubbles({ objc, ui }: NativeBridge) {
 			scope.dispose();
 
 			for (const hook of hooks) hook.remove();
+
+			await removeContentInsets(objc, cells);
+			await resizeRows(objc).catch(() => undefined);
 
 			pending.clear();
 			placedSizes.clear();
