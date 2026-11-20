@@ -281,6 +281,8 @@ int main()
            == "nathanlr");
     assert(jailbreakName("/var/containers/Bundle/Application/.jbroot-5C1D2E", {}, {})
            == "roothide");
+    assert(jailbreakName("/var/jb", {"basebins"}, {}) == "Serotonin");
+    assert(jailbreakName("/var/jb", {".installed_nathanlr", "basebins"}, {}) == "nathanlr");
     assert(jailbreakName("/private/preboot/9F2A/jb-Qx7/procursus", {".palecursus_strapped"}, {})
            == "palera1n");
     checkHookFrameworks();

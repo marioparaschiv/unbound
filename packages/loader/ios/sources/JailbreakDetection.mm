@@ -67,7 +67,7 @@ std::string detectedJailbreak()
     for (NSString *marker in @[
              @".installed_relaxin", @".installed_nekojb", @".installed_nathanlr",
              @".palecursus_strapped", @".installed_palera1n", @".installed_dopamine",
-             @".xia0o0o0o_jb_installed"
+             @".xia0o0o0o_jb_installed", @"basebins"
          ])
     {
         if ([[NSFileManager defaultManager]
