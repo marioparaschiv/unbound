@@ -29,9 +29,11 @@ int main()
     assert(std::strcmp(nativeStructEncoding("UIEdgeInsets"), "{UIEdgeInsets=dddd}") == 0);
     assert(std::strcmp(nativeStructEncoding("CGAffineTransform"), "{CGAffineTransform=dddddd}")
            == 0);
-    assert(!nativeStructEncoding("CGVector"));
+    assert(std::strcmp(nativeStructEncoding("CGVector"), "{CGVector=dd}") == 0);
+    assert(!nativeStructEncoding("CATransform3D"));
     assert(!nativeStructEncoding(""));
-    for (const char *name : {"CGPoint", "CGSize", "CGRect", "NSRange", "UIEdgeInsets"})
+    for (const char *name : {"CGPoint", "CGSize", "CGRect", "NSRange", "UIEdgeInsets", "CGVector",
+                             "UIOffset", "NSDirectionalEdgeInsets", "YGValue"})
     {
         assert(nativeFFITypeName(nativeStructEncoding(name)) == std::string("struct:") + name);
     }
