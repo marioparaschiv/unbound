@@ -1,0 +1,17 @@
+{
+	"id": "unbound.role-change-alerts",
+	"name": "Role Change Alerts",
+	"description": "Notifies you when you gain or lose a role in a server.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ShieldUserIcon",
+	"main": "index.tsx"
+}

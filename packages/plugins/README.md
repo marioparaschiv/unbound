@@ -1,6 +1,6 @@
 # Plugins
 
-233 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+234 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -178,6 +178,7 @@
 - <img src="../../assets/plugins/readme-icons/arrows-left-right-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Reply Jump Back](https://unbound.rip/addons/unbound.reply-jump-back): After tapping a reply to jump to the message it answers, a button takes you back to the reply.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Reverse Image Search](https://unbound.rip/addons/unbound.reverse-image-search): Adds Search image to the media viewer's menu: Google Lens, Yandex, SauceNAO, IQDB, Bing, TinEye or ImgOps.
 - <img src="../../assets/plugins/readme-icons/star-icon.svg" width="20" height="20" align="absmiddle" alt=""> [ReviewDB](https://unbound.rip/addons/unbound.reviewdb): Leave reviews on other users' profiles and see what others think of you.
+- <img src="../../assets/plugins/readme-icons/shield-user-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Role Change Alerts](https://unbound.rip/addons/unbound.role-change-alerts): Notifies you when you gain or lose a role in a server.
 - <img src="../../assets/plugins/readme-icons/paint-palette-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Role Color Everywhere](https://unbound.rip/addons/unbound.role-color-everywhere): Colors mentions, typing names, voice users, reaction users, poll voters, and role headers.
 - <img src="../../assets/plugins/readme-icons/shield-user-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Role Tools](https://unbound.rip/addons/unbound.role-tools): Long-press a role on a profile to copy its color or see its members.
 - <img src="../../assets/plugins/readme-icons/language-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Romanize](https://unbound.rip/addons/unbound.romanize): Long-press a message to read it in Latin letters: Cyrillic, Greek, Arabic, Thai and more, and Korean by the Revised Romanization.
