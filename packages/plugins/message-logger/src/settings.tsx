@@ -4,6 +4,7 @@ import { resetSettings, settings, useSetting } from '@unbound-app/settings';
 import { messages } from '@unbound-app/i18n';
 import { ui } from '@unbound-app/api';
 
+import DeletedChannels, { useDeletedChannels } from '~/components/deleted-channels';
 import IgnoreList, { IGNORE_LISTS, type IgnoreListKey } from '~/components/ignore-list';
 
 type SwitchKey =
@@ -15,6 +16,7 @@ type SwitchKey =
 	| 'logEdits'
 	| 'persistLog'
 	| 'logDeletedAttachments'
+	| 'logDeletedChannels'
 	| 'ignoreBots'
 	| 'ignoreSelf';
 
@@ -101,6 +103,18 @@ function IgnoreListRow({ setting }: { setting: IgnoreListKey }) {
 	);
 }
 
+function DeletedChannelsRow() {
+	const channels = useDeletedChannels();
+
+	return (
+		<EntityListRow
+			label={messages.DELETED_CHANNELS}
+			count={channels.length}
+			renderList={() => <DeletedChannels />}
+		/>
+	);
+}
+
 // A custom panel, so each ignore list is a page of users, channels or servers rather than typed ids.
 function SettingsPanel() {
 	return (
@@ -149,6 +163,11 @@ function SettingsPanel() {
 					subLabel={messages.LOG_DELETED_ATTACHMENTS_SUBTITLE}
 				/>
 				<SwitchRow
+					setting='logDeletedChannels'
+					label={messages.LOG_DELETED_CHANNELS}
+					subLabel={messages.LOG_DELETED_CHANNELS_SUBTITLE}
+				/>
+				<SwitchRow
 					setting='ignoreBots'
 					label={messages.IGNORE_BOTS}
 					subLabel={messages.IGNORE_BOTS_SUBTITLE}
@@ -158,6 +177,9 @@ function SettingsPanel() {
 					label={messages.IGNORE_SELF}
 					subLabel={messages.IGNORE_SELF_SUBTITLE}
 				/>
+			</ui.Section>
+			<ui.Section title={messages.DELETED_CHANNELS}>
+				<DeletedChannelsRow />
 			</ui.Section>
 			<ui.Section title={messages.IGNORED}>
 				<IgnoreListRow setting='ignoreUsers' />

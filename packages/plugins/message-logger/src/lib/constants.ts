@@ -12,3 +12,8 @@ export const LOG_FILE = 'Unbound/Data/message-logger/log.json';
 
 /** How many deleted messages, edited messages and messages with deleted attachments the saved log keeps each, newest first. */
 export const SAVED_MESSAGE_LIMIT = 1000;
+
+export const DELETED_CHANNELS_FILE = 'Unbound/Data/message-logger/deleted-channels.json';
+
+/** How many deleted channels the log keeps, newest first. */
+export const DELETED_CHANNEL_LIMIT = 200;

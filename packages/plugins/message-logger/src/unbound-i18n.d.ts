@@ -119,12 +119,27 @@ declare module '@unbound-app/i18n' {
 		readonly UNKNOWN_SERVER: string;
 		/** Remove */
 		readonly REMOVE: string;
+		/** Log deleted channels */
+		readonly LOG_DELETED_CHANNELS: string;
+		/** Keep a list of server channels deleted while Discord is open. */
+		readonly LOG_DELETED_CHANNELS_SUBTITLE: string;
+		/** Deleted Channels */
+		readonly DELETED_CHANNELS: string;
+		/** Server channels deleted while Discord was open, newest first. */
+		readonly DELETED_CHANNELS_DESCRIPTION: string;
+		/** No channels deleted yet. */
+		readonly NO_DELETED_CHANNELS: string;
+		/** Deleted {time} */
+		readonly DELETED_CHANNEL_AT: string;
+		/** Clear Deleted Channels */
+		readonly CLEAR_DELETED_CHANNELS: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
 	export type FormatVars = {
 		LOG_CLEARED: { count: number };
 		BEFORE_EDIT: { time: string | number };
+		DELETED_CHANNEL_AT: { time: string | number };
 	};
 
 	/** Each message in the user's locale, falling back to en-US. */

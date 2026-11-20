@@ -183,6 +183,12 @@ declare module '@unbound-app/settings' {
 		 */
 		logDeletedAttachments: boolean;
 		/**
+		 * Log deleted channels
+		 *
+		 * Keep a list of server channels deleted while Discord is open.
+		 */
+		logDeletedChannels: boolean;
+		/**
 		 * Ignore bots
 		 *
 		 * Do not log messages sent by bots.
@@ -253,6 +259,12 @@ declare module '@unbound-app/settings' {
 		 */
 		"logDeletedAttachments": boolean;
 		/**
+		 * Log deleted channels
+		 *
+		 * Keep a list of server channels deleted while Discord is open.
+		 */
+		"logDeletedChannels": boolean;
+		/**
 		 * Ignore bots
 		 *
 		 * Do not log messages sent by bots.
@@ -278,7 +290,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "redText" | "deletedHighlight" | "deletedMarker" | "inlineEdits" | "logDeletes" | "logEdits" | "persistLog" | "logDeletedAttachments" | "ignoreBots" | "ignoreSelf";
+	export type BooleanSettingKey = "redText" | "deletedHighlight" | "deletedMarker" | "inlineEdits" | "logDeletes" | "logEdits" | "persistLog" | "logDeletedAttachments" | "logDeletedChannels" | "ignoreBots" | "ignoreSelf";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

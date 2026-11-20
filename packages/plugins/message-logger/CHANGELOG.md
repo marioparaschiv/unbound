@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.0] - 2026-11-21
+
+### Added
+
+- **Deleted channels:** lists server channels deleted while Discord is open, with their server, category, topic and when they went, in the settings under Deleted Channels.
+
 ## [1.3.1] - 2026-11-19
 
 ### Fixed
