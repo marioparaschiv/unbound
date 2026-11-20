@@ -19,8 +19,8 @@ import {
 	powerSummary,
 	pushSummary,
 } from '~/lib/debug-card/device-notes';
-import { errorDetails, hookNotes } from '~/lib/debug-card/issue-notes';
 import type { DebugCardContext } from '~/lib/debug-card/context';
+import { errorDetails } from '~/lib/debug-card/issue-notes';
 import { storageSummary } from '~/lib/debug-card/storage';
 import { cleanNames } from '~/lib/debug-card/spans';
 
@@ -46,7 +46,6 @@ const DROP_ORDER = [
 	'session',
 	'display',
 	'push',
-	'hooks',
 	'errors',
 	'disabled',
 	'crashes',
@@ -111,7 +110,6 @@ export function debugAltText(
 		}),
 		...(info.launch?.settings && { settings: info.launch.settings }),
 		...(info.errors?.length && { errors: errorDetails(info.errors) }),
-		...(hookNotes(info).length && { hooks: hookNotes(info) }),
 		...(storageSummary(info.storage) && { storage: storageSummary(info.storage) }),
 		...(info.patches?.length && {
 			patches: info.patches.map((patch) => `${patch.caller} ${patch.count}`),

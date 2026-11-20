@@ -483,40 +483,6 @@ describe('debug card', () => {
 			native: '2 hooks · 0 surfaces · 5 handles',
 		});
 	});
-	test('names each plugin hook that failed to install', () => {
-		const report: DebugCardRequest = {
-			...info,
-			hookFailures: [
-				{
-					addon: 'unbound.message-text-size',
-					target: 'DCDMessageCell -layoutSubviews',
-					reason: 'Unsupported native hook argument type encoding',
-				},
-			],
-		};
-		const card = layoutDebugCard(report, new Date());
-		const labels = texts(card)
-			.filter((run) => run.x === 14)
-			.map((run) => run.text);
-
-		expect(labels).toContain('hooks');
-		expect(JSON.parse(altJson(report))).toMatchObject({
-			hooks: ['unbound.message-text-size: DCDMessageCell -layoutSubviews'],
-		});
-	});
-
-	test('flags libffi closures that failed the launch probe', () => {
-		const report: DebugCardRequest = {
-			...info,
-			ffiClosures: false,
-			ffiClosureProbe: 'not-executable',
-		};
-
-		expect(JSON.parse(altJson(report))).toMatchObject({
-			hooks: ['libffi closures blocked (not-executable)'],
-		});
-	});
-
 	test('shows storage once the Discord data grows large', () => {
 		const report: DebugCardRequest = {
 			...info,
