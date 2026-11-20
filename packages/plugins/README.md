@@ -1,6 +1,6 @@
 # Plugins
 
-230 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+231 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -43,6 +43,7 @@
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Clean Channel Names](https://unbound.rip/addons/unbound.clean-channel-names): Shows channel names without dashes, emoji and decorative letters, as plain words.
 - <img src="../../assets/plugins/readme-icons/link-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Clear URLs](https://unbound.rip/addons/unbound.clear-urls): Removes tracking garbage from URLs before you send them.
 - <img src="../../assets/plugins/readme-icons/eye-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Client Side Block](https://unbound.rip/addons/unbound.client-side-block): Hides messages from blocked, ignored and hand-picked users, replies to them, and messages with keywords you pick, without blocking anyone on Discord.
+- <img src="../../assets/plugins/readme-icons/eye-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Color Blind Roles](https://unbound.rip/addons/unbound.color-blind-roles): Shifts role colors in chat names and role mentions so they stay apart with protanopia, deuteranopia or tritanopia.
 - <img src="../../assets/plugins/readme-icons/text-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Compact Mode](https://unbound.rip/addons/unbound.compact-mode): Drops message headers and avatars and puts each author's name inline with their message, like desktop's compact layout.
 - <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Composer Account Avatar](https://unbound.rip/addons/unbound.composer-account-avatar): Shows the account you're signed in as above the message box while you write, so you notice before sending from the wrong one.
 - <img src="../../assets/plugins/readme-icons/keyboard-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Controller Navigation](https://unbound.rip/addons/unbound.controller-navigation): Moves between channels and servers with a game controller's D-pad and buttons. Android only.
