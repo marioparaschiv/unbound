@@ -14,5 +14,23 @@
 	},
 	"icon": "ImageIcon",
 	"minNativeBridgeApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.objc.classes",
+				"native.objc.hooks",
+				"native.objc.invoke",
+				"native.objc.ivars"
+			]
+		},
+		"android": {}
+	},
+	"bytecode": {
+		"98": "71accccc4bd01d099a9af2bcc992e3b2e6faf7f998c647953471f91c274d4f2e9ff92b09949c49a3408ae3bfa05b426905bc683777aaffb273e8ac827d3a6375"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "exDcdmxSHzn6ROGjNao/m1I4mui3oUtkap6SCoTWuhjFVfcITPm4n62GnQ31yl+YPoU1NEiACUl0bgXvMOojCg=="
+	}
 }
