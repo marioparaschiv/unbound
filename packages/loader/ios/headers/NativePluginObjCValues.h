@@ -66,6 +66,8 @@ public:
 
     facebook::jsi::Value get(facebook::jsi::Runtime &runtime,
                              const facebook::jsi::PropNameID &name) override;
+    std::vector<facebook::jsi::PropNameID>
+    getPropertyNames(facebook::jsi::Runtime &runtime) override;
 
     NSString *name(void) const
     {

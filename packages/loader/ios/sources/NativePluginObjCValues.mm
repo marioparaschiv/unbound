@@ -552,6 +552,14 @@ Value StructHost::get(Runtime &runtime, const PropNameID &name)
     return Value::undefined();
 }
 
+std::vector<PropNameID> StructHost::getPropertyNames(Runtime &runtime)
+{
+    std::vector<PropNameID> names;
+    names.push_back(PropNameID::forAscii(runtime, "name"));
+    names.push_back(PropNameID::forAscii(runtime, "value"));
+    return names;
+}
+
 Value structFields(Runtime &runtime, NSString *name, NSValue *value)
 {
     const loader::native::StructLayout *layout =
