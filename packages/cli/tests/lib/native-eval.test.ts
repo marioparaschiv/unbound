@@ -11,6 +11,12 @@ describe('withNativeBridge', () => {
 		expect(wrapped.endsWith('\nnative.objc')).toBe(true);
 	});
 
+	test('binds inspector from the development inspector when the build has one', () => {
+		expect(withNativeBridge('inspector')).toContain(
+			"var inspector = typeof globalThis.__unboundDevInspector === 'function'",
+		);
+	});
+
 	test('explains a build without the development bridge', () => {
 		expect(withNativeBridge('1')).toContain('no development native bridge');
 	});

@@ -19,7 +19,7 @@ const schema = Type.Object({
 	native: defaulted(
 		Type.Boolean({
 			description:
-				'Give the code a `native` variable: a native bridge with every capability, kept for the debugger session. Development builds only.',
+				'Give the code a `native` variable: a native bridge with every capability, kept for the debugger session, and on iOS an `inspector` variable for Objective-C reflection (`inspectClass`, `inspectMembers`). Development builds only.',
 		}),
 		false,
 	),
