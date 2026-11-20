@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :photo: Long-press a message with an image and pick **Make Emoji Mosaic**.

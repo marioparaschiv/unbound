@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :msg: Long-press a message and pick **Spell With Reactions**, type a word, and its letters go on as reactions.

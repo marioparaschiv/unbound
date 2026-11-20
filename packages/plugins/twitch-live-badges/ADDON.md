@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :video: A Twitch channel link's embed says whether the stream is live right now, and for how long: **Twitch · 🔴 Live 2h 5m** or **Twitch · Offline**.

@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :command: Long-press a bot's reply to a slash command and pick **Copy Command Mention** to copy its clickable mention, like `</ping:123>`.

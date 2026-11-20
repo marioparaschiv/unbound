@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :globe: Checks discordstatus.com every five minutes while Discord is open and shows a toast when Discord itself has an outage, so you know it isn't your connection or Unbound.

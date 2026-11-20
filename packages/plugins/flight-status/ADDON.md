@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :globe: Long-press a message that mentions a flight number, such as **LH400** or **BA 286**, and pick **Flight status** to see whether it is in the air right now.

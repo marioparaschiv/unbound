@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :shield: Tap a link to Never Gonna Give You Up and you're asked first, with **Open Anyway** and **Don't Open**.

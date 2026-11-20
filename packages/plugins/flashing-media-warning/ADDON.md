@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :eye: Long-press a message with a GIF or video and pick **Check for Flashing**: its frames are read without playing it.

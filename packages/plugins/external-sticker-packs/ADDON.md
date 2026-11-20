@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :sticker: A sticker button in the chat input opens your LINE sticker packs; tap a sticker to attach it to your message as an image.

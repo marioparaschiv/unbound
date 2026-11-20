@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :circle-check: Polls you haven't voted in show how each answer stands, as if you'd tapped **Show results**.

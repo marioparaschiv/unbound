@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :face-smile: Emoji in messages, embeds and the emoji picker draw from the pack you pick instead of Discord's.

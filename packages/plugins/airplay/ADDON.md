@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :video: Open a video in the media viewer and press the new AirPlay button next to Discord's own buttons.

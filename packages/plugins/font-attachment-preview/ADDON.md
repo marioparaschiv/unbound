@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :text: Long-press a message with a font attachment and pick **Preview Font** to see it in three sizes.

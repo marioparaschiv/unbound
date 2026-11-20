@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :photo: `/xkcd` opens the latest comic, with its title, date and alt text.

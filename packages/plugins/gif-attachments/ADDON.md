@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :upload: Picking a GIF in the GIF picker adds it to your message as a file, ready to send with a caption, instead of sending a link.

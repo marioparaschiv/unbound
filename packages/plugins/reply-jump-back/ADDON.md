@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :msg: Tap a reply's preview to jump to the message it answers, and Discord's return button appears to take you back to the reply.

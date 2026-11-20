@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :text: `/morse` sends your text as Morse code: `... --- ...`.

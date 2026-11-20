@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :keyboard: A **WPM** pill above the message box shows how fast you're typing the message you're writing.

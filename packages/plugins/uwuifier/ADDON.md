@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :msg-smile: Turns what you send into uwu speak: "really" becomes "weawwy", "hello" becomes "hewwo" and "love" becomes "wuv".
