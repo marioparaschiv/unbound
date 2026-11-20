@@ -36,6 +36,7 @@ import evalCommand from '~/commands/debug/eval';
 import hookCommand from '~/commands/debug/hook';
 import openCommand from '~/commands/debug/open';
 import pushCommand from '~/commands/debug/push';
+import rowsCommand from '~/commands/debug/rows';
 import publishCommand from '~/commands/publish';
 import createCommand from '~/commands/create';
 import addCommand from '~/commands/i18n/add';
@@ -131,6 +132,7 @@ export const debugGroup: CommandGroup = {
 				messageCommand,
 				openCommand,
 				routeCommand,
+				rowsCommand,
 				reportCommand,
 				bisectCommand,
 			],
