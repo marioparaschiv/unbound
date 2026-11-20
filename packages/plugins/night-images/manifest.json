@@ -1,0 +1,17 @@
+{
+	"id": "unbound.night-images",
+	"name": "Night Images",
+	"description": "Dims very bright images and videos in chat while you use a dark theme or during the night hours you choose.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "ImageIcon",
+	"main": "index.tsx"
+}

@@ -1,0 +1,12 @@
+{
+	"WHEN": "When",
+	"WHEN_DARK": "With a dark theme",
+	"WHEN_NIGHT": "During night hours",
+	"WHEN_ALWAYS": "Always",
+	"NIGHT_START": "Night Starts At",
+	"NIGHT_END": "Night Ends At",
+	"BRIGHTNESS": "Brightness",
+	"BRIGHTNESS_SUBTITLE": "Only images at least this bright, in percent, are dimmed.",
+	"DIM": "Dim By",
+	"DIM_SUBTITLE": "How much a bright image is dimmed, in percent."
+}
