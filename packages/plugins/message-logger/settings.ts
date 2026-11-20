@@ -45,6 +45,11 @@ export default defineSettings(
 			title: 'LOG_DELETED_ATTACHMENTS',
 			subtitle: 'LOG_DELETED_ATTACHMENTS_SUBTITLE',
 		}),
+		logDeletedChannels: setting.boolean({
+			default: true,
+			title: 'LOG_DELETED_CHANNELS',
+			subtitle: 'LOG_DELETED_CHANNELS_SUBTITLE',
+		}),
 		ignoreBots: setting.boolean({
 			default: true,
 			title: 'IGNORE_BOTS',

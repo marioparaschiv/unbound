@@ -56,5 +56,12 @@
 	"UNKNOWN_USER": "Unknown user",
 	"UNKNOWN_CHANNEL": "Unknown channel",
 	"UNKNOWN_SERVER": "Unknown server",
-	"REMOVE": "Remove"
+	"REMOVE": "Remove",
+	"LOG_DELETED_CHANNELS": "Log deleted channels",
+	"LOG_DELETED_CHANNELS_SUBTITLE": "Keep a list of server channels deleted while Discord is open.",
+	"DELETED_CHANNELS": "Deleted Channels",
+	"DELETED_CHANNELS_DESCRIPTION": "Server channels deleted while Discord was open, newest first.",
+	"NO_DELETED_CHANNELS": "No channels deleted yet.",
+	"DELETED_CHANNEL_AT": "Deleted {time}",
+	"CLEAR_DELETED_CHANNELS": "Clear Deleted Channels"
 }

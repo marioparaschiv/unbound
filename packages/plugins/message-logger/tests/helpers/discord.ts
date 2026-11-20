@@ -92,7 +92,11 @@ export async function startLogger(
 			getMessage: (_channel: string, id: string) => (id === message.id ? message : undefined),
 			getMessages: () => ({ toArray: () => [message] }),
 		},
-		Channel: { getChannel: () => ({ guild_id: 'g1' }) },
+		Channel: {
+			getChannel: (id: string) =>
+				id === 'cat1' ? { name: 'Text Channels', guild_id: 'g1' } : { guild_id: 'g1' },
+		},
+		Guild: { getGuild: (id: string) => (id === 'g1' ? { name: 'Unbound' } : undefined) },
 		User: { getCurrentUser: () => ({ id: ME }) },
 	});
 

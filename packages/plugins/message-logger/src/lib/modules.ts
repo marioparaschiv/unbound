@@ -3,6 +3,7 @@ import { flux, metro } from '@unbound-app/api';
 export const MessageStore = flux.getStore('Message');
 export const ChannelStore = flux.getStore('Channel');
 export const UserStore = flux.getStore('User');
+export const GuildStore = flux.getStore('Guild');
 
 export const { ActionSheets } = metro.api;
 
