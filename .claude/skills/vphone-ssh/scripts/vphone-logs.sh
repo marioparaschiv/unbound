@@ -56,13 +56,19 @@ need idevicesyslog libimobiledevice
 need jq jq
 [ -x /usr/bin/log ] || { echo "/usr/bin/log (macOS unified logging) not found" >&2; exit 1; }
 
+is_vphone() {
+  [ "$(ideviceinfo -u "$1" -k ProductType 2>/dev/null || true)" = "$VPHONE_PRODUCT" ] && return 0
+  case "$(ideviceinfo -u "$1" -k ModelNumber 2>/dev/null || true)" in VM*) return 0 ;; esac
+  return 1
+}
+
 resolve_udid() {
   if [ -n "${VPHONE_UDID:-}" ]; then echo "$VPHONE_UDID"; return; fi
   need idevice_id libimobiledevice; need ideviceinfo libimobiledevice
   local match=""
   while IFS= read -r udid; do
     [ -n "$udid" ] || continue
-    if [ "$(ideviceinfo -u "$udid" -k ProductType 2>/dev/null || true)" = "$VPHONE_PRODUCT" ]; then
+    if is_vphone "$udid"; then
       [ -z "$match" ] && match="$udid" || { echo "multiple vphone candidates; set VPHONE_UDID" >&2; exit 1; }
     fi
   done < <(idevice_id -l 2>/dev/null)
