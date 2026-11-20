@@ -308,13 +308,15 @@ describe('debug card', () => {
 		expect(labels).toContain('crashes');
 		expect(labels).toContain('issues');
 		expect(labels).toContain('memory');
+		expect(labels).toContain('thermal');
 		expect(labels).toContain('launch');
 
 		const quiet = layoutDebugCard({ ...busy, launch: undefined, disabledAddons: [] }, now);
 
 		expect(texts(quiet).find((run) => run.text.startsWith('180 MB'))?.text).toBe(
-			'180 MB free · 2 warnings · thermal serious',
+			'180 MB free · 2 warnings',
 		);
+		expect(texts(quiet).find((run) => run.text === 'serious')).toBeDefined();
 
 		const alt = JSON.parse(altJson(busy));
 

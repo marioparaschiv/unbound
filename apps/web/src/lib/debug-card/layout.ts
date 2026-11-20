@@ -295,11 +295,7 @@ function memoryNotes(memory?: DebugCardMemory): string[] {
 		return [];
 	}
 
-	const pressured =
-		memory.lowMemory ||
-		(memory.memoryWarnings ?? 0) > 0 ||
-		memory.thermal === 'serious' ||
-		memory.thermal === 'critical';
+	const pressured = memory.lowMemory || (memory.memoryWarnings ?? 0) > 0;
 
 	if (!pressured) {
 		return [];
@@ -310,10 +306,15 @@ function memoryNotes(memory?: DebugCardMemory): string[] {
 		memory.availableMB !== undefined && `${memory.availableMB} MB free`,
 		memory.lowMemory && 'low memory',
 		warnings > 0 && `${warnings} ${warnings === 1 ? 'warning' : 'warnings'}`,
-		memory.thermal && memory.thermal !== 'nominal' && `thermal ${memory.thermal}`,
 	];
 
 	return notes.filter((note): note is string => typeof note === 'string');
+}
+
+function thermalNote(memory?: DebugCardMemory): string | undefined {
+	return memory?.thermal === 'serious' || memory?.thermal === 'critical'
+		? memory.thermal
+		: undefined;
 }
 
 /**
@@ -362,7 +363,7 @@ export function networkSummary(network: DebugCardNetwork): string {
 }
 
 /**
- * @description Summarises free memory, warnings and thermal state.
+ * @description Summarises free memory and memory warnings.
  * @param memory The memory report.
  * @returns The summary.
  */
@@ -371,7 +372,6 @@ export function memorySummary(memory: DebugCardMemory): string {
 		memory.availableMB !== undefined ? `${memory.availableMB} MB free` : undefined,
 		memory.lowMemory ? 'low memory' : undefined,
 		memory.memoryWarnings ? `${memory.memoryWarnings} warnings` : undefined,
-		memory.thermal ? `thermal ${memory.thermal}` : undefined,
 	]);
 }
 
@@ -379,6 +379,7 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 	const crashes = crashSummary(info.launch?.crashes ?? [], now);
 	const launch = launchNotes(info.launch);
 	const memory = memoryNotes(info.memory);
+	const thermal = thermalNote(info.memory);
 	const hooks = hookNotes(info);
 	const storage = storageMatters(info.storage) ? storageSummary(info.storage) : undefined;
 	const updates = updateNotes(context, info.addonUpdates);
@@ -398,6 +399,7 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 		['gateway', gateway ? [warn(joined([gateway]))] : []],
 		['push', push.length ? [warn(joined(push))] : []],
 		['memory', memory.length ? [warn(joined(memory))] : []],
+		['thermal', thermal ? [warn(thermal)] : []],
 		[
 			'account',
 			accountNotes(info.account).length ? [warn(joined(accountNotes(info.account)))] : [],
