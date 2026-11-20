@@ -116,7 +116,7 @@ The [debugger](https://unbound.rip/docs/developer/tools/debugger) (`bunx @unboun
 
 ### Architecture
 
-<a href="./assets/architecture-light.svg">
+<a href="https://excalidraw.com/#json=toyaW8MVsKURvdevh43vD,jXFiv9Ih1SKpcSmXbqXzsQ">
     <picture>
         <source media="(prefers-color-scheme: dark)" srcset="./assets/architecture-overview-dark.svg" />
         <img src="./assets/architecture-overview-light.svg" alt="Unbound's architecture: the build pipeline, the four layers inside Discord on the phone, unbound.rip, and the developer tooling" />
@@ -129,7 +129,7 @@ The [debugger](https://unbound.rip/docs/developer/tools/debugger) (`bunx @unboun
 4. The client calls into the loader for native capabilities such as reload, the filesystem, and `evaluateBytecode`.
 5. The client runs on a single `initialize` / `shutdown` lifecycle. Each manager starts its add-ons on startup and tears them down on shutdown, and settings are saved before the global is cleared.
 
-Click the overview for the [full diagram](./assets/architecture-light.svg) ([dark](./assets/architecture-dark.svg)), or read the [Architecture](https://unbound.rip/docs/developer/core/architecture) page. The SVGs embed their Excalidraw scene, so you can open any of them at [excalidraw.com](https://excalidraw.com) to edit it.
+Click the overview to open the [full diagram on Excalidraw](https://excalidraw.com/#json=toyaW8MVsKURvdevh43vD,jXFiv9Ih1SKpcSmXbqXzsQ), where you can zoom and pan. It is also here as an SVG ([light](./assets/architecture-light.svg), [dark](./assets/architecture-dark.svg)), and the [Architecture](https://unbound.rip/docs/developer/core/architecture) page walks through each part.
 
 #### Packages
 
