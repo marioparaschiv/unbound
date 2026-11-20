@@ -180,7 +180,12 @@ function registerRow() {
 }
 
 function seedDiscord() {
-	flux.seed({ User: { getCurrentUser: () => ({ id: 'me' }) }, Theme: { theme: 'dark' } });
+	flux.seed({
+		User: { getCurrentUser: () => ({ id: 'me' }) },
+		Theme: { theme: 'dark' },
+		Message: { getMessages: () => undefined },
+		SelectedChannel: { getChannelId: () => undefined },
+	});
 	metro.register({ colors: {}, internal: {}, themes: { DARK: 'dark' } });
 	metro.register({ TooltipArrowDirections: {}, TooltipArrowPositions: {} });
 	metro.register({ generateMessageRowData: () => ({ message: {} }) });

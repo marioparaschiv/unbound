@@ -21,7 +21,11 @@ function delayed(delay: number, id = '1') {
 }
 
 beforeEach(() => {
-	flux.seed({ User: { getCurrentUser: () => ({ id: 'self' }) } });
+	flux.seed({
+		User: { getCurrentUser: () => ({ id: 'self' }) },
+		Message: { getMessages: () => undefined },
+		SelectedChannel: { getChannelId: () => undefined },
+	});
 });
 
 describe('the latency records', () => {
