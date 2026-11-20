@@ -144,6 +144,7 @@ public:
     // Discord's first screen rendered: counts the launch as healthy shortly after, unless the
     // fallback timer already did.
     void markRendered();
+    bool startedWithoutUnbound();
     void offerHelpIfStuck();
 
     // Seconds since the last update check before returning to the foreground checks again.
@@ -170,6 +171,7 @@ private:
         bool pending   = false;
         bool settled   = false;
         bool abandoned = false;
+        bool bannerUp  = false;
         std::optional<SavedBundle> fallback;
         std::optional<std::string> path;
     };

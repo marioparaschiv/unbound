@@ -283,6 +283,12 @@ bool LoaderPipeline::settleFirstDownload(uint64_t token, std::optional<std::stri
     firstDownload_.settled = true;
     firstDownload_.path    = std::move(path);
     firstDownloadSettled_.notify_all();
+    if (firstDownload_.bannerUp)
+    {
+        firstDownload_.bannerUp = false;
+        host_->showUpdateProgress(false);
+    }
+
     return !firstDownload_.abandoned;
 }
 
@@ -303,9 +309,16 @@ std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::awaitFirstDownload(ui
     bool settled = firstDownloadSettled_.wait_for(lock, kFirstDownloadWait, [this, token]() {
         return firstDownload_.token != token || firstDownload_.settled;
     });
-    if (waiting)
+    if (waiting && settled)
     {
         host_->showUpdateProgress(false);
+    }
+    else if (waiting)
+    {
+        firstDownload_.bannerUp = true;
+        log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
+            "Discord starts without Unbound while its first bundle keeps downloading; the banner "
+            "stays up until it lands.");
     }
 
     if (firstDownload_.token != token)
@@ -509,10 +522,24 @@ void LoaderPipeline::noteVisible()
     });
 }
 
+bool LoaderPipeline::startedWithoutUnbound()
+{
+    std::lock_guard<std::mutex> lock(savedMutex_);
+    return firstDownload_.abandoned && bundleExecutedMs_.load() == 0;
+}
+
 void LoaderPipeline::offerHelpIfStuck()
 {
     if (awaitingVisibility())
     {
+        return;
+    }
+
+    if (startedWithoutUnbound())
+    {
+        log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
+            "Skipped the stuck-launch notice: Discord started without Unbound while its first "
+            "bundle downloads.");
         return;
     }
 
