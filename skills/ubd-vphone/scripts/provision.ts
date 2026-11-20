@@ -100,7 +100,7 @@ async function main(): Promise<number> {
 		const remote = `${paths.documentsPath}/Unbound/settings.json`;
 		const settings = await readSettings(vphone, remote);
 		const keys: Setting[] = [
-			['unbound.loader.update.url', `http://${DEV_HOST}:${UNBOUND_DEV_PORT}/unbound.bundle`],
+			['unbound.loader.update.url', `http://${DEV_HOST}:${UNBOUND_DEV_PORT}/`],
 			['unbound.loader.update.hmr', true],
 			['unbound.debugger.enabled', true],
 			['unbound.debugger.address', `${DEV_HOST}:${UNBOUND_BRIDGE_PORT}`],
