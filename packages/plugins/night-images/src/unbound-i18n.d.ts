@@ -19,6 +19,10 @@ declare module '@unbound-app/i18n' {
 		readonly BRIGHTNESS: string;
 		/** Only images at least this bright, in percent, are dimmed. */
 		readonly BRIGHTNESS_SUBTITLE: string;
+		/** Dim Images Without a Preview */
+		readonly DIM_UNKNOWN: string;
+		/** Images still uploading or added locally have no preview to read brightness from; dim them anyway. */
+		readonly DIM_UNKNOWN_SUBTITLE: string;
 		/** Dim By */
 		readonly DIM: string;
 		/** How much a bright image is dimmed, in percent. */

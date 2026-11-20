@@ -20,6 +20,11 @@ export default defineSettings({
 		title: 'BRIGHTNESS',
 		subtitle: 'BRIGHTNESS_SUBTITLE',
 	}),
+	dimUnknown: setting.boolean({
+		default: false,
+		title: 'DIM_UNKNOWN',
+		subtitle: 'DIM_UNKNOWN_SUBTITLE',
+	}),
 	dim: setting.integer({
 		default: 35,
 		min: 10,
