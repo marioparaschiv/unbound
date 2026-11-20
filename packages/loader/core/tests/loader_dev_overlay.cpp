@@ -91,6 +91,13 @@ int main()
     assert(nlohmann::json::parse(loader::toolbox::perform(context, "save-settings", "{}"))["saved"]
            == true);
     assert(!loader::preferences::developerMode(settings));
+    assert(!loader::preferences::wantsDevelopmentBundle(settings));
+
+    assert(saveSettings(settings, "{\"unbound\":{\"debugger\":{\"enabled\":true}}}").saved);
+    assert(!loader::preferences::developerMode(settings));
+    assert(loader::preferences::wantsDevelopmentBundle(settings));
+    assert(updater.developerMode());
+    assert(saveSettings(settings, "{}").saved);
 
     const Size phone{375, 667};
     const Insets safe{20, 0, 34, 0};

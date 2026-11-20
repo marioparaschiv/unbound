@@ -101,7 +101,7 @@ std::optional<BundleBaseline> BundleUpdater::baseline() const
 
 bool BundleUpdater::developerMode() const
 {
-    return preferences::developerMode(settings_);
+    return preferences::wantsDevelopmentBundle(settings_);
 }
 
 // The developer mode a bundle was downloaded for; a manifest without the dev files leaves the

@@ -86,6 +86,11 @@ bool debuggerEnabled(const SettingsStore &settings)
     return settings.getBoolean(kStore, kDebuggerEnabled, false);
 }
 
+bool wantsDevelopmentBundle(const SettingsStore &settings)
+{
+    return developerMode(settings) || debuggerEnabled(settings);
+}
+
 bool inspectorEnabled(const SettingsStore &settings, bool debugBuild)
 {
     return debugBuild || developerMode(settings) || debuggerEnabled(settings);

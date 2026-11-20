@@ -32,6 +32,7 @@ bool developerMode(const SettingsStore &settings);
 bool devOverlayVisible(const SettingsStore &settings, bool virtualDevice, bool debugBuild);
 // Whether the client's debugger connection is switched on.
 bool debuggerEnabled(const SettingsStore &settings);
+bool wantsDevelopmentBundle(const SettingsStore &settings);
 // Whether the debugger may load the native object inspector: developer mode, the debugger or a
 // debug build.
 bool inspectorEnabled(const SettingsStore &settings, bool debugBuild);
