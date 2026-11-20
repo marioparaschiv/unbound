@@ -395,7 +395,7 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 		"Native batch requires at most 64 steps",
 		"loader::native::batchResultIndex(runtime, value, stepIndex)",
 		"Native batch method return type is unsupported",
-		"loader::native::validateBatchArgument(argument, encoding)",
+		"loader::native::validateBatchArgument(argument, encoding, size)",
 		"loader::native::validateScalarArgument(nativeNumberArgument(value), type)",
 		"executeMainAsynchronously(",
 	} {
