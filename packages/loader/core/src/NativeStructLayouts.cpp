@@ -49,6 +49,21 @@ static const std::vector<StructLayout> &layouts()
          "{YGValue=fi}",
          8,
          {{"value", 0, StructScalar::Float}, {"unit", 4, StructScalar::Int32}}},
+        {"CGVector",
+         "{CGVector=dd}",
+         16,
+         {{"dx", 0, StructScalar::Double}, {"dy", 8, StructScalar::Double}}},
+        {"UIOffset",
+         "{UIOffset=dd}",
+         16,
+         {{"horizontal", 0, StructScalar::Double}, {"vertical", 8, StructScalar::Double}}},
+        {"NSDirectionalEdgeInsets",
+         "{NSDirectionalEdgeInsets=dddd}",
+         32,
+         {{"top", 0, StructScalar::Double},
+          {"leading", 8, StructScalar::Double},
+          {"bottom", 16, StructScalar::Double},
+          {"trailing", 24, StructScalar::Double}}},
     };
     return table;
 }
@@ -68,7 +83,7 @@ const StructLayout *structLayout(std::string_view name)
 
 const StructLayout *structLayoutForTypeName(std::string_view typeName)
 {
-    static constexpr std::array<std::pair<std::string_view, std::string_view>, 7> kRecognized = {{
+    static constexpr std::array<std::pair<std::string_view, std::string_view>, 10> kRecognized = {{
         {"_NSRange", "NSRange"},
         {"CGAffineTransform", "CGAffineTransform"},
         {"UIEdgeInsets", "UIEdgeInsets"},
@@ -76,6 +91,9 @@ const StructLayout *structLayoutForTypeName(std::string_view typeName)
         {"CGPoint", "CGPoint"},
         {"CGSize", "CGSize"},
         {"YGValue", "YGValue"},
+        {"NSDirectionalEdgeInsets", "NSDirectionalEdgeInsets"},
+        {"CGVector", "CGVector"},
+        {"UIOffset", "UIOffset"},
     }};
     for (const auto &[needle, name] : kRecognized)
     {

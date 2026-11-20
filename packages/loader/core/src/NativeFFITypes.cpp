@@ -37,6 +37,12 @@ namespace {
               {"tx", "double"},
               {"ty", "double"}}},
             {"YGValue", {{"value", "float"}, {"unit", "i32"}}},
+            {"UIOffset", {{"horizontal", "double"}, {"vertical", "double"}}},
+            {"NSDirectionalEdgeInsets",
+             {{"top", "double"},
+              {"leading", "double"},
+              {"bottom", "double"},
+              {"trailing", "double"}}},
             {"timespec", {{"tv_sec", "i64"}, {"tv_nsec", "i64"}}},
             {"timeval", {{"tv_sec", "i64"}, {"tv_usec", "i64"}}},
         };

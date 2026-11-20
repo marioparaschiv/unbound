@@ -24,6 +24,9 @@ int main()
     assert(nativeFFITypeName("{UIEdgeInsets=dddd}") == "struct:UIEdgeInsets");
     assert(nativeFFITypeName("{YGValue=fi}") == "struct:YGValue");
     assert(nativeFFITypeName("{YGValue=dd}").empty());
+    assert(nativeFFITypeName("{CGVector=dd}") == "struct:CGVector");
+    assert(nativeFFITypeName("{UIOffset=dd}") == "struct:UIOffset");
+    assert(nativeFFITypeName("{NSDirectionalEdgeInsets=dddd}") == "struct:NSDirectionalEdgeInsets");
     assert(nativeFFITypeName("{CGAffineTransform=dddddd}") == "struct:CGAffineTransform");
     assert(nativeFFITypeName("{_CGRect={_CGPoint=dd}{_CGSize=dd}}") == "struct:CGRect");
     assert(nativeFFITypeName("i24").empty());

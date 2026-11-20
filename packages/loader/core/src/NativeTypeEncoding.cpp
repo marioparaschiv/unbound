@@ -125,6 +125,21 @@ std::string nativeFFITypeName(const char *encoding)
         return "struct:YGValue";
     }
 
+    if ((name == "CGVector" || name == "_CGVector") && fields == "dd")
+    {
+        return "struct:CGVector";
+    }
+
+    if (name == "UIOffset" && fields == "dd")
+    {
+        return "struct:UIOffset";
+    }
+
+    if (name == "NSDirectionalEdgeInsets" && fields == "dddd")
+    {
+        return "struct:NSDirectionalEdgeInsets";
+    }
+
     if (name == "CGRect" || name == "_CGRect")
     {
         if (fields == "{CGPoint=dd}{CGSize=dd}" || fields == "{_CGPoint=dd}{_CGSize=dd}"
@@ -172,6 +187,21 @@ const char *nativeStructEncoding(std::string_view name)
     if (name == "YGValue")
     {
         return "{YGValue=fi}";
+    }
+
+    if (name == "CGVector")
+    {
+        return "{CGVector=dd}";
+    }
+
+    if (name == "UIOffset")
+    {
+        return "{UIOffset=dd}";
+    }
+
+    if (name == "NSDirectionalEdgeInsets")
+    {
+        return "{NSDirectionalEdgeInsets=dddd}";
     }
 
     return nullptr;

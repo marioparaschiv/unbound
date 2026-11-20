@@ -36,10 +36,12 @@ int main()
     require(loader::native::structLayoutForTypeName("_NSRange")
                 == loader::native::structLayout("NSRange"),
             "the _NSRange type name resolves to NSRange");
-    require(loader::native::structLayout("CGVector") == nullptr, "an unknown struct has no layout");
+    require(loader::native::structLayout("CATransform3D") == nullptr,
+            "an unknown struct has no layout");
 
     for (const char *name :
-         {"NSRange", "CGPoint", "CGSize", "CGRect", "UIEdgeInsets", "CGAffineTransform"})
+         {"NSRange", "CGPoint", "CGSize", "CGRect", "UIEdgeInsets", "CGAffineTransform", "CGVector",
+          "UIOffset", "NSDirectionalEdgeInsets"})
     {
         const loader::native::StructLayout *layout = loader::native::structLayout(name);
         require(layout && !layout->fields.empty(), std::string(name) + " has a layout");
