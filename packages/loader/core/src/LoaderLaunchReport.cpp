@@ -1,5 +1,6 @@
 #include "LoaderLaunchReport.h"
 
+#include <cctype>
 #include <csignal>
 #include <cstdlib>
 #include <mutex>
@@ -310,6 +311,72 @@ std::string nativeCrashHeadline(const std::string &stack)
     }
 
     return headline;
+}
+
+static std::string lowered(std::string value)
+{
+    for (char &character : value)
+    {
+        character = static_cast<char>(std::tolower(static_cast<unsigned char>(character)));
+    }
+
+    return value;
+}
+
+static bool isUnboundImage(const std::string &image)
+{
+    const std::string name = lowered(image);
+    for (const char *prefix : {"unbound", "libunbound", "hermes", "libhermes"})
+    {
+        if (name.rfind(prefix, 0) == 0)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool nativeCrashOutsideUnbound(const std::string &stack)
+{
+    static const std::regex frame(R"(^#\d+\s+(?:0x[0-9a-fA-F]+\s+)?(\S+)\s+\+\s+0x)");
+    size_t frames = 0;
+    size_t start  = 0;
+    while (start <= stack.size())
+    {
+        size_t end = stack.find('\n', start);
+        std::string line =
+            stack.substr(start, end == std::string::npos ? std::string::npos : end - start);
+        if (line.rfind("Registers ", 0) == 0 || line.rfind("Thread ", 0) == 0)
+        {
+            break;
+        }
+
+        if (line.rfind("Addon {", 0) == 0)
+        {
+            return false;
+        }
+
+        std::smatch match;
+        if (std::regex_search(line, match, frame))
+        {
+            if (isUnboundImage(match[1].str()))
+            {
+                return false;
+            }
+
+            ++frames;
+        }
+
+        if (end == std::string::npos)
+        {
+            break;
+        }
+
+        start = end + 1;
+    }
+
+    return frames > 0;
 }
 
 std::string describeNativeCrash(const std::string &stack)
