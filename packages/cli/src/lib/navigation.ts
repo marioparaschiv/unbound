@@ -10,7 +10,12 @@ type Route = { name: string; params?: ScreenParams; state?: NavigationState };
 type NavigationState = { index?: number; routes: Route[] };
 
 /** What the device reports for `ubd debug route`. */
-export type CurrentRoute = { name: string; params: ScreenParams; path: string[] };
+export type CurrentRoute = {
+	name: string | null;
+	params: ScreenParams;
+	path: string[];
+	unmounted?: true;
+};
 
 /**
  * @description Opens a settings screen from anywhere in the app, through Discord's root navigation ref.
@@ -61,7 +66,8 @@ export function openScreen({ unbound }: DevicePrelude, name: string, params: Scr
 /**
  * @description Reads the focused route and the stack of route names leading to it.
  * @param device The device prelude.
- * @returns The route as a JSON string of {@link CurrentRoute}.
+ * @returns The route as a JSON string of {@link CurrentRoute}; `unmounted` with no name while no navigator is mounted,
+ * such as while Unbound's crash screen shows.
  */
 export function currentRoute({ unbound }: DevicePrelude): string {
 	const Navigation = unbound.metro.findByProps('getRootNavigationRef');
@@ -70,7 +76,15 @@ export function currentRoute({ unbound }: DevicePrelude): string {
 		throw new Error("Discord's navigation module is missing.");
 	}
 
-	const ref = Navigation.getRootNavigationRef();
+	const ref = Navigation.getRootNavigationRef?.();
+	const current: Route | undefined = ref?.getCurrentRoute?.();
+
+	if (!current) {
+		const unmounted: CurrentRoute = { name: null, params: {}, path: [], unmounted: true };
+
+		return JSON.stringify(unmounted);
+	}
+
 	const path: string[] = [];
 	let state: NavigationState | undefined = ref.getRootState();
 
@@ -85,8 +99,7 @@ export function currentRoute({ unbound }: DevicePrelude): string {
 		state = route.state;
 	}
 
-	const { name, params }: Route = ref.getCurrentRoute();
-	const result: CurrentRoute = { name, params: params ?? {}, path };
+	const result: CurrentRoute = { name: current.name, params: current.params ?? {}, path };
 
 	return JSON.stringify(result);
 }

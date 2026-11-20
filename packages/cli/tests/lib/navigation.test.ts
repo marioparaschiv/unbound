@@ -1,7 +1,7 @@
 import type { UnboundGlobal } from '@unbound-app/api/global';
 import { describe, expect, test } from 'bun:test';
 
-import { openScreen, type ScreenParams } from '~/lib/navigation';
+import { currentRoute, openScreen, type ScreenParams } from '~/lib/navigation';
 import { createDevicePrelude } from '~/lib/device-prelude';
 
 type Navigated = { screen: string; params: ScreenParams };
@@ -60,5 +60,45 @@ describe('openScreen', () => {
 
 		expect(openScreen(prelude, 'APPEARANCE_THEME_PICKER', {})).toBe('APPEARANCE_THEME_PICKER');
 		expect(opened).toEqual([{ screen: 'Appearance Theme Picker', params: {} }]);
+	});
+});
+
+type FakeRoute = { name: string; params?: ScreenParams; state?: FakeState };
+
+type FakeState = { index?: number; routes: FakeRoute[] };
+
+type FakeRef = { getCurrentRoute: () => FakeRoute | undefined; getRootState?: () => FakeState };
+
+function preludeWith(ref: FakeRef) {
+	const device = { metro: { findByProps: () => ({ getRootNavigationRef: () => ref }) } };
+
+	if (!isDevice(device)) {
+		throw new Error('The fake device has no metro.');
+	}
+
+	return createDevicePrelude(device);
+}
+
+describe('currentRoute', () => {
+	test('reports an unmounted navigator, such as under the crash screen, instead of throwing', () => {
+		const route = currentRoute(preludeWith({ getCurrentRoute: () => undefined }));
+
+		expect(JSON.parse(route)).toEqual({ name: null, params: {}, path: [], unmounted: true });
+	});
+
+	test('reads the focused route and the names leading to it', () => {
+		const ref = {
+			getCurrentRoute: () => ({ name: 'channel', params: { channelId: '1' } }),
+			getRootState: () => ({
+				index: 0,
+				routes: [{ name: 'main', state: { routes: [{ name: 'channel' }] } }],
+			}),
+		};
+
+		expect(JSON.parse(currentRoute(preludeWith(ref)))).toEqual({
+			name: 'channel',
+			params: { channelId: '1' },
+			path: ['main', 'channel'],
+		});
 	});
 });
