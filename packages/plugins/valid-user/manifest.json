@@ -1,0 +1,21 @@
+{
+	"id": "unbound.valid-user",
+	"name": "Valid User",
+	"description": "Tapping an @unknown-user mention loads that user, opens their profile and shows the mention by name.",
+	"authors": [
+		{
+			"name": "k1ng_op",
+			"id": "641266820187160576"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "UserCircleIcon",
+	"main": "index.tsx"
+}
