@@ -1,6 +1,6 @@
 # Plugins
 
-232 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+233 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -225,6 +225,7 @@
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [UserPFP](https://unbound.rip/addons/unbound.userpfp): Shows the avatars people set on UserPFP, so anyone can have an animated profile picture without Nitro.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [USRBG](https://unbound.rip/addons/unbound.usrbg): Shows the banners people set on USRBG, so anyone can have a profile banner without Nitro.
 - <img src="../../assets/plugins/readme-icons/reaction-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Uwuifier](https://unbound.rip/addons/unbound.uwuifier): Turns your messages into uwu speak before you send them, from a chat input toggle or the /uwu command.
+- <img src="../../assets/plugins/readme-icons/user-circle-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Valid User](https://unbound.rip/addons/unbound.valid-user): Tapping an @unknown-user mention loads that user, opens their profile and shows the mention by name.
 - <img src="../../assets/plugins/readme-icons/headphones-icon.svg" width="20" height="20" align="absmiddle" alt=""> [VC Narrator](https://unbound.rip/addons/unbound.vc-narrator): Says out loud when people join, leave or move in your voice channel.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [View Icons](https://unbound.rip/addons/unbound.view-icons): View user avatars, banners, server icons, server banners, and group DM icons.
 - <img src="../../assets/plugins/readme-icons/chevron-large-right-icon.svg" width="20" height="20" align="absmiddle" alt=""> [View Raw](https://unbound.rip/addons/unbound.view-raw): View and copy raw data for messages, channels, guilds, and user profiles.
