@@ -24,6 +24,7 @@
 			}
 		],
 		"unbound/no-window-unbound": "error",
+		"unbound/no-silent-native-batch": "error",
 		"unbound/worklet-declaration-order": "error",
 		"unbound/test-file-location": "error",
 		"unbound/platform-check-only-in-platform-file": "error",

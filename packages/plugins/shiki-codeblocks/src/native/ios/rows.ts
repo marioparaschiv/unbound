@@ -30,7 +30,9 @@ function flushTableUpdates(session: Session): void {
 				{ target: table, selector: 'beginUpdates', args: [] },
 				{ target: table, selector: 'endUpdates', args: [] },
 			])
-			.catch(() => undefined);
+			.catch((error: unknown) =>
+				logger.warn('Failed to resize the rows of a chat table:', error),
+			);
 	}
 }
 
@@ -63,7 +65,9 @@ export function updateRow(session: Session, surface: Surface): void {
 			{ target: surface.cell, selector: 'setNeedsUpdateConstraints', args: [] },
 			{ target: surface.cell, selector: 'setNeedsLayout', args: [] },
 		])
-		.catch(() => undefined);
+		.catch((error: unknown) =>
+			logger.warn('Failed to lay out a highlighted code block again:', error),
+		);
 
 	const table = surface.table ?? tableForCell(ui, surface.cell);
 

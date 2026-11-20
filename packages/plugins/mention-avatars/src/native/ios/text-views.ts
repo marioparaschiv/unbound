@@ -176,7 +176,11 @@ export function createTextViews(bridge: Bridge, images: ImageCache, showAtSymbol
 				.batch(
 					chunk.map((view) => ({ target: view, selector: 'attributedText', args: [] })),
 				)
-				.catch(() => null);
+				.catch((error: unknown) => {
+					logger.warn('Failed to read the text of chat views:', error);
+
+					return null;
+				});
 
 			for (const [offset, view] of chunk.entries()) {
 				const text = texts ? ((texts[offset] ?? null) as Handle | null) : null;
