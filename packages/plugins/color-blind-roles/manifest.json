@@ -1,0 +1,17 @@
+{
+	"id": "unbound.color-blind-roles",
+	"name": "Color Blind Roles",
+	"description": "Shifts role colors in chat names and role mentions so they stay apart with protanopia, deuteranopia or tritanopia.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"unbound": {
+		"min": "3.0.0"
+	},
+	"icon": "EyeIcon",
+	"main": "index.tsx"
+}

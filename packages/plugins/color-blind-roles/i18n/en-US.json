@@ -1,0 +1,10 @@
+{
+	"VISION": "Color Vision",
+	"VISION_PROTANOPIA": "Protanopia (red-weak)",
+	"VISION_DEUTERANOPIA": "Deuteranopia (green-weak)",
+	"VISION_TRITANOPIA": "Tritanopia (blue-weak)",
+	"STRENGTH": "Strength",
+	"STRENGTH_SUBTITLE": "How far colors move toward ones you can tell apart.",
+	"MENTIONS": "Role Mentions",
+	"MENTIONS_SUBTITLE": "Also adjust the colors of mentioned roles."
+}
