@@ -16,8 +16,8 @@ export function start(context: PluginContext) {
 	startNameRoom(context);
 }
 
-export function stop() {
-	stopNameRoom();
+export async function stop() {
+	await stopNameRoom();
 	patcher.unpatchAll();
 }
 
