@@ -448,7 +448,7 @@ std::string jailbreakName(const std::string &root, const std::vector<std::string
     const std::vector<std::pair<std::string, std::string>> names = {
         {".installed_nekojb", "nekoJB"},      {".installed_nathanlr", "nathanlr"},
         {".palecursus_strapped", "palera1n"}, {".installed_palera1n", "palera1n"},
-        {".installed_dopamine", "Dopamine"},
+        {".installed_dopamine", "Dopamine"},  {"basebins", "Serotonin"},
     };
     for (const auto &[marker, name] : names)
     {
