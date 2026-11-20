@@ -1,0 +1,12 @@
+{
+	"NOTIFY_WHEN": "Notify When",
+	"GAINED": "You get a role",
+	"GAINED_SUBTITLE": "Tell you when a server gives you a role.",
+	"LOST": "You lose a role",
+	"LOST_SUBTITLE": "Tell you when a server takes a role away.",
+	"NOTICES": "Persistent notices",
+	"NOTICES_SUBTITLE": "Keep each notification on screen until you tap OK.",
+	"ROLE_GAINED": "You got the {role} role in {server}.",
+	"ROLE_LOST": "You lost the {role} role in {server}.",
+	"OK": "OK"
+}
