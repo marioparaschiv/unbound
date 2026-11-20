@@ -1,5 +1,7 @@
 #include <cassert>
+#include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "LoaderInjectedLibraries.h"
@@ -50,9 +52,28 @@ void androidListsOtherModulesOnce()
          == std::vector<std::string>{"com.example.hide", "com.legacy.module", "zygisk_shamiko"}));
 }
 
+void iosNamesThePackageThatInstalledEachDylib()
+{
+    const std::vector<std::pair<std::string, std::string>> lists = {
+        {"com.opa334.choicy",
+         "/.\n/var/jb/Library/MobileSubstrate/DynamicLibraries/Choicy.dylib\r\n"
+         "/var/jb/Library/MobileSubstrate/DynamicLibraries/Choicy.plist\n"},
+        {"com.example.crane", "/var/jb/usr/lib/TweakInject/Crane.dylib\n"},
+        {"com.example.other", "/var/jb/usr/lib/TweakInject/Choicy.dylib\n"},
+    };
+
+    const std::map<std::string, std::string> owners =
+        loader::injectedLibraryPackages(lists, {"Choicy", "Crane", "Unknown"});
+
+    assert((owners
+            == std::map<std::string, std::string>{{"Choicy", "com.opa334.choicy"},
+                                                  {"Crane", "com.example.crane"}}));
+}
+
 int main()
 {
     iosListsTweaksAndInjectedDylibs();
+    iosNamesThePackageThatInstalledEachDylib();
     androidListsOtherModulesOnce();
     return 0;
 }
