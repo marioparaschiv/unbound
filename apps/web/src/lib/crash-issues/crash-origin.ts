@@ -1,4 +1,8 @@
-import type { CrashOrigin, CrashReport } from '@unbound-app/contracts/crash-reports';
+import type {
+	CrashOrigin,
+	CrashReport,
+	CrashUnfiledReason,
+} from '@unbound-app/contracts/crash-reports';
 
 const NATIVE_IMAGE = /^#\d+\s+(?:0x[0-9a-f]+\s+)?(\S+)\s+\+\s+0x/i;
 const JAVA_FRAME = /^#\d+\s+at\s+([\w$.]+)/;
@@ -87,28 +91,38 @@ export function crashOrigin(report: CrashReport): CrashOrigin {
 }
 
 /**
- * @description Whether a crash belongs in Unbound's issue tracker: Unbound's own crashes and those of its first-party addons.
+ * @description Whether a crash goes on GitHub: every crash, from Unbound, Discord or the system, except one a
+ * third-party addon caused, which belongs to that addon's author.
  * @param report The crash report.
- * @param origin Its origin.
- * @returns Whether to open or update an issue for it.
+ * @param origin Where the crash came from.
+ * @returns Whether to open or join an issue for it.
  */
 export function filesIssue(report: CrashReport, origin: CrashOrigin): boolean {
-	if (origin === 'unbound') {
+	if (origin !== 'addon') {
 		return true;
 	}
 
 	const addon = report.addon?.id ?? nativeCrashAddon(report.stack);
 
-	return origin === 'addon' && Boolean(addon?.startsWith('unbound.'));
+	return Boolean(addon?.startsWith('unbound.'));
 }
 
 /**
- * @description Decides whether a crash its user asked to report goes on GitHub: every crash except one a third-party
- * addon caused, which belongs to that addon's author.
+ * @description Says why a crash got no GitHub issue: a third-party addon caused it, the server has no GitHub token, or
+ * GitHub did not open the issue.
  * @param report The crash report.
  * @param origin Where the crash came from.
- * @returns Whether to file it.
+ * @param canFile Whether the server has a token to file issues with.
+ * @returns The reason.
  */
-export function filesRequestedIssue(report: CrashReport, origin: CrashOrigin): boolean {
-	return origin !== 'addon' || filesIssue(report, origin);
+export function unfiledReason(
+	report: CrashReport,
+	origin: CrashOrigin,
+	canFile: boolean,
+): CrashUnfiledReason {
+	if (!filesIssue(report, origin)) {
+		return 'third-party';
+	}
+
+	return canFile ? 'failed' : 'unavailable';
 }

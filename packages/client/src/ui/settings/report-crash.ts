@@ -66,10 +66,16 @@ export async function reportCrashOnGitHub(
 	if (filed?.issue) {
 		onLinked(filed.issue);
 		await Linking.openURL(filed.issue.url);
-	} else if (filed?.origin === 'addon') {
+	} else if (filed?.unfiled === 'third-party') {
 		info('UNBOUND_CRASH_REPORT_THIRD_PARTY', { name: plugin?.name ?? record.addon ?? '' });
+	} else if (filed) {
+		info(
+			filed.unfiled === 'unavailable'
+				? 'UNBOUND_CRASH_ISSUE_UNAVAILABLE'
+				: 'UNBOUND_CRASH_ISSUE_RETRY',
+		);
 	} else {
-		error('UNBOUND_CRASH_ISSUE_FAILED', new Error(`No issue for crash ${record.at}`));
+		error('UNBOUND_CRASH_ISSUE_FAILED', new Error(`Failed to send crash ${record.at}`));
 	}
 }
 

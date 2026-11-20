@@ -58,6 +58,8 @@ export const crashReportSchema = Type.Object({
 	),
 });
 
+export const CRASH_UNFILED_REASONS = ['third-party', 'unavailable', 'failed'] as const;
+
 export const crashReportResponseSchema = Type.Object({
 	id: Type.String(),
 	origin: Type.Optional(Type.Enum(CRASH_ORIGINS)),
@@ -70,6 +72,7 @@ export const crashReportResponseSchema = Type.Object({
 			created: Type.Boolean(),
 		}),
 	),
+	unfiled: Type.Optional(Type.Enum(CRASH_UNFILED_REASONS)),
 	/** How many installs reported this same crash, in all and on this report's client version. */
 	seen: Type.Optional(
 		Type.Object({
@@ -84,6 +87,7 @@ export const crashIssueResponseSchema = Type.Object({
 	issue: Type.Optional(
 		Type.Object({ number: Type.Integer(), url: Type.String(), created: Type.Boolean() }),
 	),
+	unfiled: Type.Optional(Type.Enum(CRASH_UNFILED_REASONS)),
 });
 
 export const crashNoteSchema = Type.Object({
@@ -98,10 +102,13 @@ export type CrashContext = NonNullable<CrashReport['context']>;
 
 export type CrashOrigin = (typeof CRASH_ORIGINS)[number];
 
+export type CrashUnfiledReason = (typeof CRASH_UNFILED_REASONS)[number];
+
 export default {
 	CRASH_REPORT_KINDS,
 	CRASH_REPORT_PLATFORMS,
 	CRASH_ORIGINS,
+	CRASH_UNFILED_REASONS,
 	CRASH_REPORT_LOG_LIMIT,
 	crashReportSchema,
 	crashReportResponseSchema,

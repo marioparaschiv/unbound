@@ -7,7 +7,7 @@ import {
 import { safeParse, Type } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
-import { crashOrigin, filesRequestedIssue } from '~/lib/crash-issues/crash-origin';
+import { crashOrigin, filesIssue, unfiledReason } from '~/lib/crash-issues/crash-origin';
 import { fileRequestedCrashIssue } from '~/lib/crash-issues/file-crash-issue';
 import { crashFingerprint } from '~/lib/crash-issues/fingerprint';
 import endpoint, { requireParam } from '~/lib/api/endpoint';
@@ -66,8 +66,8 @@ const fileCrashIssueEndpoint = endpoint(
 
 		const origin = storedOrigin(row, report);
 
-		if (!filesRequestedIssue(report, origin)) {
-			return { origin };
+		if (!filesIssue(report, origin)) {
+			return { origin, unfiled: 'third-party' as const };
 		}
 
 		const issue = await fileRequestedCrashIssue(
@@ -77,7 +77,12 @@ const fileCrashIssueEndpoint = endpoint(
 			row.fingerprint ?? crashFingerprint(report),
 		);
 
-		return issue ? { origin, issue } : { origin };
+		return issue
+			? { origin, issue }
+			: {
+					origin,
+					unfiled: unfiledReason(report, origin, Boolean(ctx.env.GITHUB_ISSUES_TOKEN)),
+				};
 	},
 	{ rateLimit: { bucket: 'crash-issues', budget: 'CRASH_REPORTS' } },
 );
