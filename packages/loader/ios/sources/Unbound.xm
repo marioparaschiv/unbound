@@ -364,7 +364,7 @@ public:
                              {"image", image}});
         }
 
-        std::string preview = animatedIconImageURL(animated);
+        std::string preview = UBAnimatedIconAvailable() ? animatedIconImageURL(animated) : "";
         if (!preview.empty())
         {
             icons.push_back({{"id", toStdString(UBAnimatedIconId)},

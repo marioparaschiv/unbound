@@ -70,7 +70,8 @@ static BOOL springBoardAnimates(void)
 
 static BOOL animatedIconEnabled(void)
 {
-    return UBAnimatedIconInfo() && [NSUserDefaults.standardUserDefaults boolForKey:kEnabledKey];
+    return UBAnimatedIconAvailable() &&
+           [NSUserDefaults.standardUserDefaults boolForKey:kEnabledKey];
 }
 
 static void setAnimatedIconEnabled(BOOL enabled)
@@ -94,6 +95,11 @@ static BOOL iconChangesNeedConfirmation(void)
     return [NSProcessInfo.processInfo isOperatingSystemAtLeastVersion:gated] ||
            [[NSUserDefaults.standardUserDefaults stringForKey:kConfirmedKey]
                isEqualToString:osVersion()];
+}
+
+BOOL UBAnimatedIconAvailable(void)
+{
+    return UBAnimatedIconInfo() && (springBoardAnimates() || !iconChangesNeedConfirmation());
 }
 
 static void stopFrames(void);
