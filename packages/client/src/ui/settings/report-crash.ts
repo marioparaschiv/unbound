@@ -66,6 +66,8 @@ export async function reportCrashOnGitHub(
 	if (filed?.issue) {
 		onLinked(filed.issue);
 		await Linking.openURL(filed.issue.url);
+	} else if (filed?.tweak) {
+		info('UNBOUND_CRASH_REPORT_TWEAK', { name: filed.tweak });
 	} else if (filed?.unfiled === 'third-party') {
 		info('UNBOUND_CRASH_REPORT_THIRD_PARTY', { name: plugin?.name ?? record.addon ?? '' });
 	} else if (filed) {

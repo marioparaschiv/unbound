@@ -1,7 +1,12 @@
 import { crashReportResponseSchema, crashReportSchema } from '@unbound-app/contracts/crash-reports';
 import { Type } from '@unbound-app/contracts/schema';
 
-import { crashOrigin, filesIssue, unfiledReason } from '~/lib/crash-issues/crash-origin';
+import {
+	crashingTweak,
+	crashOrigin,
+	filesIssue,
+	unfiledReason,
+} from '~/lib/crash-issues/crash-origin';
 import { withdrawOnCrashSpike } from '~/lib/crash-issues/crash-withdrawal';
 import { fileCrashIssue } from '~/lib/crash-issues/file-crash-issue';
 import { crashFingerprint } from '~/lib/crash-issues/fingerprint';
@@ -54,10 +59,13 @@ const reportCrashEndpoint = endpoint(
 			return { id, origin, issue, seen };
 		}
 
+		const tweak = crashingTweak(body);
+
 		return {
 			id,
 			origin,
 			unfiled: unfiledReason(body, origin, Boolean(ctx.env.GITHUB_ISSUES_TOKEN)),
+			...(tweak ? { tweak } : {}),
 			seen,
 		};
 	},

@@ -73,6 +73,8 @@ export const crashReportResponseSchema = Type.Object({
 		}),
 	),
 	unfiled: Type.Optional(Type.Enum(CRASH_UNFILED_REASONS)),
+	/** The injected library a native crash happened in, as the report listed it; such crashes are not filed. */
+	tweak: Type.Optional(Type.String({ maxLength: 160 })),
 	/** How many installs reported this same crash, in all and on this report's client version. */
 	seen: Type.Optional(
 		Type.Object({
@@ -88,6 +90,8 @@ export const crashIssueResponseSchema = Type.Object({
 		Type.Object({ number: Type.Integer(), url: Type.String(), created: Type.Boolean() }),
 	),
 	unfiled: Type.Optional(Type.Enum(CRASH_UNFILED_REASONS)),
+	/** The injected library a native crash happened in, as the report listed it; such crashes are not filed. */
+	tweak: Type.Optional(Type.String({ maxLength: 160 })),
 });
 
 export const crashNoteSchema = Type.Object({

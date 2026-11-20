@@ -7,7 +7,12 @@ import {
 import { safeParse, Type } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
-import { crashOrigin, filesIssue, unfiledReason } from '~/lib/crash-issues/crash-origin';
+import {
+	crashingTweak,
+	crashOrigin,
+	filesIssue,
+	unfiledReason,
+} from '~/lib/crash-issues/crash-origin';
 import { fileRequestedCrashIssue } from '~/lib/crash-issues/file-crash-issue';
 import { crashFingerprint } from '~/lib/crash-issues/fingerprint';
 import endpoint, { requireParam } from '~/lib/api/endpoint';
@@ -67,7 +72,9 @@ const fileCrashIssueEndpoint = endpoint(
 		const origin = storedOrigin(row, report);
 
 		if (!filesIssue(report, origin)) {
-			return { origin, unfiled: 'third-party' as const };
+			const tweak = crashingTweak(report);
+
+			return { origin, unfiled: 'third-party' as const, ...(tweak ? { tweak } : {}) };
 		}
 
 		const issue = await fileRequestedCrashIssue(

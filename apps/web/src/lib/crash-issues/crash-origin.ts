@@ -66,6 +66,45 @@ export function nativeCrashAddon(stack: string | undefined): string | undefined 
 	return undefined;
 }
 
+function injectedName(entry: string): string {
+	return entry.replace(/ \(.*\)$| \S+$/, '').toLowerCase();
+}
+
+/**
+ * @description Names the injected library a native crash happened in: the crashing thread's topmost frame that belongs to
+ * Unbound, Discord or a library the report lists as injected, when it is the injected one.
+ * @param report The crash report.
+ * @returns The injected library as the report lists it, such as `Choicy (com.opa334.choicy)`, or `undefined`.
+ */
+export function crashingTweak(report: CrashReport): string | undefined {
+	const injected = report.context?.injected ?? [];
+
+	if (report.kind !== 'native-crash' || !injected.length) {
+		return undefined;
+	}
+
+	for (const line of crashingThread(report.stack)) {
+		const image = NATIVE_IMAGE.exec(line)?.[1];
+
+		if (!image) {
+			continue;
+		}
+
+		const name = image.replace(/\.dylib$/i, '').toLowerCase();
+		const tweak = injected.find((entry) => injectedName(entry) === name);
+
+		if (tweak) {
+			return tweak;
+		}
+
+		if (frameOwner(line)) {
+			return undefined;
+		}
+	}
+
+	return undefined;
+}
+
 /**
  * @description Decides where a crash came from: an addon it names, Unbound's own code or frames, Discord's binaries, or
  * only the system's, from the crashing thread's frames.
@@ -98,6 +137,10 @@ export function crashOrigin(report: CrashReport): CrashOrigin {
  * @returns Whether to open or join an issue for it.
  */
 export function filesIssue(report: CrashReport, origin: CrashOrigin): boolean {
+	if (crashingTweak(report)) {
+		return false;
+	}
+
 	if (origin !== 'addon') {
 		return true;
 	}
