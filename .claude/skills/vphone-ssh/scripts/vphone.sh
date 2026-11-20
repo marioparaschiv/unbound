@@ -49,6 +49,12 @@ port_open() {
 # Resolve the vphone's UDID over usbmux by ProductType — mirrors vphone-logs.sh's
 # resolve_udid so both scripts pick the same device and never silently target a
 # real iPhone that happens to be paired too.
+is_vphone() {
+  [ "$(ideviceinfo -u "$1" -k ProductType 2>/dev/null || true)" = "$VPHONE_PRODUCT" ] && return 0
+  case "$(ideviceinfo -u "$1" -k ModelNumber 2>/dev/null || true)" in VM*) return 0 ;; esac
+  return 1
+}
+
 resolve_udid() {
   if [ -n "${VPHONE_UDID:-}" ]; then echo "$VPHONE_UDID"; return 0; fi
   command -v idevice_id >/dev/null 2>&1 || { echo "idevice_id not found (brew install libimobiledevice)" >&2; return 1; }
@@ -56,7 +62,7 @@ resolve_udid() {
   local match=""
   while IFS= read -r udid; do
     [ -n "$udid" ] || continue
-    if [ "$(ideviceinfo -u "$udid" -k ProductType 2>/dev/null || true)" = "$VPHONE_PRODUCT" ]; then
+    if is_vphone "$udid"; then
       [ -z "$match" ] && match="$udid" || { echo "multiple vphone candidates; set VPHONE_UDID" >&2; return 1; }
     fi
   done < <(idevice_id -l 2>/dev/null)
