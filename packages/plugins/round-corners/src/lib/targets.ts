@@ -1,5 +1,5 @@
 import { classicTokens, overrideToken, roundTokens } from '~/lib/tokens';
-import { FULL, rules, type Rule } from '~/lib/rounder';
+import { rules, type Rule } from '~/lib/rounder';
 
 /** A setting of this plugin that turns a target on. */
 export type TargetSetting =
@@ -27,6 +27,7 @@ export type SelectedShape = () => 'classic' | 'round';
 
 const YOU_BAR = 'modules/main_tabs_v2/native/you_bar/';
 const CHAT = 'modules/chat_input/native/';
+const YOU_BAR_PILL_RADIUS = 32;
 
 /**
  * @description Lists every target, with the server icon rule reading how the selected server should look.
@@ -75,7 +76,10 @@ export function targets(selectedShape: SelectedShape): Target[] {
 			],
 			rule: rules.fullRoundIf(8),
 			deep: true,
-			tokens: (active) => overrideToken('YOU_BAR_BORDER_RADIUS', active, () => FULL),
+			tokens: (active) =>
+				overrideToken('YOU_BAR_BORDER_RADIUS', active, (stock) =>
+					Math.max(stock, YOU_BAR_PILL_RADIUS),
+				),
 		},
 		{
 			setting: 'chatButtons',
@@ -116,7 +120,6 @@ export function targets(selectedShape: SelectedShape): Target[] {
 						'MEDIA_KEYBOARD_BUTTON_BORDER_RADIUS',
 						'VOICE_MESSAGE_RECORDING_PILL_BORDER_RADIUS',
 						'VOICE_PANEL_CONTROLS_BORDER_RADIUS',
-						'QUEST_DOCK_BORDER_RADIUS',
 						'button.BORDER_RADIUS',
 						'button.BORDER_RADIUS_LG',
 					],
