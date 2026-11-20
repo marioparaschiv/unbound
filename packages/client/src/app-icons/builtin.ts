@@ -1,11 +1,16 @@
 import { createLogger } from '@unbound-app/logger';
 
-import { canInstallHomeScreenIcon, canSyncAppIcons } from '~/native/unbound-native';
+import {
+	canInstallHomeScreenIcon,
+	canSyncAppIcons,
+	takeAppIconError,
+} from '~/native/unbound-native';
 import type * as CustomIconsSheet from '~/ui/app-icons/open-custom-icons-sheet';
 import { createPatcher } from '~/patcher/create-patcher';
 import { onModuleLoaded } from '~/metro/wait';
 import { byFilePath } from '~/metro/filters';
 import { icons } from '~/assets/api';
+import { error } from '~/toasts/api';
 import { format } from '~/i18n/api';
 
 import type { DiscordAppIcon, DiscordAppIconSelection, DiscordIconRow } from './bridge-icons';
@@ -98,13 +103,21 @@ function patchConstants(constants: MetroExport) {
 	});
 }
 
+function explainFailure() {
+	const reason = takeAppIconError();
+
+	if (reason) {
+		error('UNBOUND_APP_ICON_NOT_CHANGED', new Error(reason));
+	}
+}
+
 function patchUtils(utils: MetroExport) {
 	Patcher.after(utils, 'setAppIcon', ({ args, result }) => {
 		const id = args[0];
 
 		if (typeof id === 'string' && result instanceof Promise) {
 			result.then(
-				(applied) => applied && AppIconStore.getState().setCurrent(id),
+				(applied) => (applied ? AppIconStore.getState().setCurrent(id) : explainFailure()),
 				() => {
 					// Discord's caller reports the failed change.
 				},

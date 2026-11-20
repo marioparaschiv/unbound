@@ -1,397 +1,77 @@
 #import "AnimatedIcon.h"
 
-#import <AVFoundation/AVFoundation.h>
-#import <QuartzCore/QuartzCore.h>
 #import <notify.h>
-#import <unistd.h>
 
+#import "AnimatedIconPlayer.h"
+#include "LoaderAppIcon.h"
 #import "SingleCopy.h"
-#import "Utilities.h"
 
 NSString *const UBAnimatedIconId = @"UnboundAnimated";
 
-static NSString *const kInfoKey         = @"UnboundAnimatedIcon";
-static NSString *const kEnabledKey      = @"UnboundAnimatedIconEnabled";
-static NSString *const kConfirmedKey    = @"UnboundIconChangesNeedConfirmation";
-static const char *kChangedNotification = "app.unbound.animated-icon.changed";
-static const CFTimeInterval kTick       = 0.02;
-static const double kSilenceSeconds     = 1.0;
-static const int kSampleRate            = 8000;
+static NSString *const kIconErrorDomain    = @"app.unbound.icon";
+static const char *kChangedNotification    = "app.unbound.animated-icon.changed";
+static const int64_t kQueuedPickTimeoutSec = 30;
 
-static CFRunLoopTimerRef gTimer;
-static CFTimeInterval gStart;
-static NSInteger gShown = -1;
-static BOOL gInFlight;
-static CFTimeInterval gInFlightSince;
-static const CFTimeInterval kStuckRequest = 1.0;
-static BOOL gBackgrounded;
-static BOOL gLocked;
-static UIBackgroundTaskIdentifier gTask = UIBackgroundTaskInvalid;
-static AVAudioPlayer *gSilence;
-static NSString *gRestoreCategory;
-static AVAudioSessionCategoryOptions gRestoreOptions;
+static loader::appicon::IconChangeQueue gQueue;
+static uint64_t gNextPick;
+static int gStartingPicks;
+static NSString *gLastError;
+static NSMutableDictionary<NSNumber *, dispatch_block_t> *gQueuedStarts;
+static NSMutableDictionary<NSNumber *, UBIconCompletion> *gQueuedCompletions;
 
-NSDictionary *UBAnimatedIconInfo(void)
+static void rememberError(NSError *error)
 {
-    static NSDictionary *info;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        NSString *path =
-            [NSBundle.mainBundle.bundlePath stringByAppendingPathComponent:@"Info.plist"];
-        NSDictionary *candidate = [NSDictionary dictionaryWithContentsOfFile:path][kInfoKey];
-        NSArray *frames         = candidate[@"Frames"];
-        NSArray *durations      = candidate[@"Durations"];
-        if ([candidate isKindOfClass:NSDictionary.class] && [frames isKindOfClass:NSArray.class] &&
-            [durations isKindOfClass:NSArray.class] && frames.count > 0
-            && frames.count == durations.count && [candidate[@"Rest"] isKindOfClass:NSString.class])
-        {
-            info = candidate;
-        }
-    });
-    return info;
-}
-
-static BOOL springBoardAnimates(void)
-{
-    for (NSString *path in @[
-             @"/var/jb/Library/MobileSubstrate/DynamicLibraries/UnboundSpringBoard.dylib",
-             @"/var/jb/usr/lib/TweakInject/UnboundSpringBoard.dylib",
-             @"/Library/MobileSubstrate/DynamicLibraries/UnboundSpringBoard.dylib"
-         ])
+    NSString *message = error.localizedDescription;
+    @synchronized(kIconErrorDomain)
     {
-        if (access(path.fileSystemRepresentation, F_OK) == 0)
-        {
-            return YES;
-        }
-    }
-
-    return NO;
-}
-
-static BOOL animatedIconEnabled(void)
-{
-    return UBAnimatedIconAvailable() &&
-           [NSUserDefaults.standardUserDefaults boolForKey:kEnabledKey];
-}
-
-static void setAnimatedIconEnabled(BOOL enabled)
-{
-    [NSUserDefaults.standardUserDefaults setBool:enabled forKey:kEnabledKey];
-}
-
-static BOOL isIconChangeBusy(NSError *error)
-{
-    return [error.domain isEqualToString:NSPOSIXErrorDomain] && error.code == EAGAIN;
-}
-
-static NSString *osVersion(void)
-{
-    return NSProcessInfo.processInfo.operatingSystemVersionString;
-}
-
-static BOOL iconChangesNeedConfirmation(void)
-{
-    NSOperatingSystemVersion gated = {27, 0, 0};
-    return [NSProcessInfo.processInfo isOperatingSystemAtLeastVersion:gated] ||
-           [[NSUserDefaults.standardUserDefaults stringForKey:kConfirmedKey]
-               isEqualToString:osVersion()];
-}
-
-BOOL UBAnimatedIconAvailable(void)
-{
-    return UBAnimatedIconInfo() && (springBoardAnimates() || !iconChangesNeedConfirmation());
-}
-
-static void stopFrames(void);
-static void stopKeepAlive(void);
-static void endBackgroundTask(void);
-
-static void markIconChangesNeedConfirmation(NSString *reason)
-{
-    if (![[NSUserDefaults.standardUserDefaults stringForKey:kConfirmedKey]
-            isEqualToString:osVersion()])
-    {
-        [NSUserDefaults.standardUserDefaults setObject:osVersion() forKey:kConfirmedKey];
-        [Logger warning:LOG_CATEGORY_DEFAULT
-                 format:@"iOS asks the user to confirm each icon change (%@); the app icon stops "
-                        @"animating on this iOS version.",
-                        reason];
-    }
-
-    stopFrames();
-    stopKeepAlive();
-    endBackgroundTask();
-}
-
-static NSInteger frameAt(NSArray<NSNumber *> *durations, CFTimeInterval elapsed)
-{
-    double total = 0;
-    for (NSNumber *duration in durations)
-    {
-        total += duration.doubleValue / 1000.0;
-    }
-
-    double position = total > 0 ? fmod(elapsed, total) : 0;
-    for (NSUInteger index = 0; index < durations.count; index++)
-    {
-        position -= durations[index].doubleValue / 1000.0;
-        if (position < 0)
-        {
-            return (NSInteger) index;
-        }
-    }
-
-    return (NSInteger) durations.count - 1;
-}
-
-static void showFrame(NSString *frame, NSInteger index, void (^done)(NSError *error))
-{
-    gInFlight      = YES;
-    gInFlightSince = CACurrentMediaTime();
-    SetAlternateIconName(frame, ^(NSError *error) {
-        gInFlight = NO;
-        if (!error)
-        {
-            gShown = index;
-        }
-        else if (index >= 0 && isIconChangeBusy(error))
-        {
-            markIconChangesNeedConfirmation(@"a frame came back busy");
-        }
-
-        if (done)
-        {
-            done(error);
-        }
-    });
-}
-
-static void tick(void)
-{
-    NSDictionary *info = UBAnimatedIconInfo();
-    if (gInFlight && CACurrentMediaTime() - gInFlightSince > kStuckRequest)
-    {
-        markIconChangesNeedConfirmation(@"a frame got no answer");
-        return;
-    }
-
-    if (gInFlight || !info)
-    {
-        return;
-    }
-
-    NSInteger index = frameAt(info[@"Durations"], CACurrentMediaTime() - gStart);
-    if (index != gShown)
-    {
-        showFrame(info[@"Frames"][index], index, nil);
+        gLastError = [message hasPrefix:@"Unbound: "] ? [message substringFromIndex:9] : message;
     }
 }
 
-static NSData *silentWave(void)
+static NSError *iconError(NSInteger code, NSString *description, NSError *underlying)
 {
-    uint32_t samples    = (uint32_t) (kSampleRate * kSilenceSeconds);
-    uint32_t bytes      = samples * 2;
-    NSMutableData *data = [NSMutableData dataWithCapacity:44 + bytes];
-    uint32_t riff       = 36 + bytes;
-    uint32_t fmtSize    = 16;
-    uint16_t format     = 1;
-    uint16_t mono       = 1;
-    uint32_t rate       = kSampleRate;
-    uint32_t byteRate   = kSampleRate * 2;
-    uint16_t align      = 2;
-    uint16_t depth      = 16;
-    [data appendBytes:"RIFF" length:4];
-    [data appendBytes:&riff length:4];
-    [data appendBytes:"WAVEfmt " length:8];
-    [data appendBytes:&fmtSize length:4];
-    [data appendBytes:&format length:2];
-    [data appendBytes:&mono length:2];
-    [data appendBytes:&rate length:4];
-    [data appendBytes:&byteRate length:4];
-    [data appendBytes:&align length:2];
-    [data appendBytes:&depth length:2];
-    [data appendBytes:"data" length:4];
-    [data appendBytes:&bytes length:4];
-    [data increaseLengthBy:bytes];
-    return data;
+    NSMutableDictionary *info = [@{NSLocalizedDescriptionKey : description} mutableCopy];
+    if (underlying)
+    {
+        info[NSUnderlyingErrorKey] = underlying;
+    }
+
+    return [NSError errorWithDomain:kIconErrorDomain code:code userInfo:info];
 }
 
-static void startKeepAlive(void)
+static NSError *busyError(NSError *underlying)
 {
-    if (gSilence.isPlaying)
-    {
-        return;
-    }
-
-    AVAudioSession *session = AVAudioSession.sharedInstance;
-    if ([session.category isEqualToString:AVAudioSessionCategorySoloAmbient])
-    {
-        gRestoreCategory = session.category;
-        gRestoreOptions  = session.categoryOptions;
-        NSError *error;
-        if (![session setCategory:AVAudioSessionCategoryPlayback
-                      withOptions:AVAudioSessionCategoryOptionMixWithOthers
-                            error:&error]
-            || ![session setActive:YES error:&error])
-        {
-            [Logger error:LOG_CATEGORY_DEFAULT
-                   format:@"Failed to start the animated icon's audio session: %@", error];
-            return;
-        }
-    }
-
-    gSilence = gSilence ?: [[AVAudioPlayer alloc] initWithData:silentWave() error:nil];
-    gSilence.numberOfLoops = -1;
-    [gSilence play];
+    return iconError(
+        EAGAIN,
+        @"Unbound: iOS is still waiting for you to confirm an earlier icon change. Tap "
+        @"OK on that notice, or restart your iPhone if none is showing, then pick the "
+        @"icon again.",
+        underlying);
 }
 
-static void stopKeepAlive(void)
+static NSError *describedError(NSError *error, NSString *iconName)
 {
-    [gSilence stop];
-    if (!gRestoreCategory)
+    if (!UBIconChangeIsBusy(error))
     {
-        return;
+        return error;
     }
 
-    AVAudioSession *session = AVAudioSession.sharedInstance;
-    [session setActive:NO
-           withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
-                 error:nil];
-    [session setCategory:gRestoreCategory withOptions:gRestoreOptions error:nil];
-    gRestoreCategory = nil;
+    [Logger warning:LOG_CATEGORY_DEFAULT
+             format:@"iOS refused the icon change %@: an earlier change is still waiting for "
+                    @"confirmation.",
+                    iconName ?: @"<primary>"];
+    return busyError(error);
 }
 
-static void endBackgroundTask(void)
+static void performIconChange(NSString *iconName, UBIconCompletion completion, UBIconSetter setIcon)
 {
-    if (gTask != UIBackgroundTaskInvalid)
+    if (UBAnimatedIconInfo() && [iconName isEqualToString:UBAnimatedIconId])
     {
-        [UIApplication.sharedApplication endBackgroundTask:gTask];
-        gTask = UIBackgroundTaskInvalid;
-    }
-}
-
-static void stopFrames(void)
-{
-    if (gTimer)
-    {
-        CFRunLoopTimerInvalidate(gTimer);
-        CFRelease(gTimer);
-        gTimer = NULL;
-    }
-}
-
-static void stopAnimation(BOOL showRest, BOOL expiring)
-{
-    stopFrames();
-    stopKeepAlive();
-    NSDictionary *info = UBAnimatedIconInfo();
-    if (!showRest || !info)
-    {
-        endBackgroundTask();
-        return;
-    }
-
-    gShown = -1;
-    if (expiring)
-    {
-        showFrame(info[@"Rest"], -1, nil);
-        endBackgroundTask();
-        return;
-    }
-
-    showFrame(info[@"Rest"], -1, ^(NSError *error) { endBackgroundTask(); });
-}
-
-static void startFrames(void)
-{
-    if (gTimer || gLocked)
-    {
-        return;
-    }
-
-    gStart = CACurrentMediaTime();
-    gShown = -1;
-    gTimer = CFRunLoopTimerCreateWithHandler(kCFAllocatorDefault, CFAbsoluteTimeGetCurrent(), kTick,
-                                             0, 0, ^(CFRunLoopTimerRef timer) { tick(); });
-    CFRunLoopAddTimer(CFRunLoopGetMain(), gTimer, kCFRunLoopCommonModes);
-}
-
-static void startAnimation(void)
-{
-    if (gTimer || !gBackgrounded || !animatedIconEnabled() || springBoardAnimates()
-        || iconChangesNeedConfirmation())
-    {
-        return;
-    }
-
-    if (gTask == UIBackgroundTaskInvalid)
-    {
-        gTask = [UIApplication.sharedApplication beginBackgroundTaskWithName:@"UnboundAnimatedIcon"
-                                                           expirationHandler:^{
-                                                               if (gSilence.isPlaying)
-                                                               {
-                                                                   endBackgroundTask();
-                                                                   return;
-                                                               }
-
-                                                               stopAnimation(YES, YES);
-                                                           }];
-    }
-
-    startKeepAlive();
-    startFrames();
-    [Logger info:LOG_CATEGORY_DEFAULT
-          format:@"Animating the app icon while Discord is in the background."];
-}
-
-static void observe(NSNotificationName name, void (^handler)(NSNotification *note))
-{
-    [NSNotificationCenter.defaultCenter addObserverForName:name
-                                                    object:nil
-                                                     queue:NSOperationQueue.mainQueue
-                                                usingBlock:handler];
-}
-
-static void explainBusyIconChange(void)
-{
-    static BOOL explained;
-    if (explained)
-    {
-        return;
-    }
-
-    explained = YES;
-    [Utilities
-        alert:@"iOS is still waiting for an earlier icon change to be confirmed. If no notice "
-              @"is on screen, restart your iPhone, then pick the icon again."
-        title:@"Can't Change the Icon Yet"];
-}
-
-void UBSetAppIcon(NSString *iconName, UBIconCompletion requested, UBIconSetter setIcon)
-{
-    UBIconCompletion completion = ^(NSError *error) {
-        if (isIconChangeBusy(error))
-        {
-            [Logger warning:LOG_CATEGORY_DEFAULT
-                     format:@"iOS refused the icon change %@: an earlier change is still waiting "
-                            @"for confirmation.",
-                            iconName ?: @"<primary>"];
-            explainBusyIconChange();
-        }
-
-        if (requested)
-        {
-            requested(error);
-        }
-    };
-    NSDictionary *info = UBAnimatedIconInfo();
-    if (info && [iconName isEqualToString:UBAnimatedIconId])
-    {
-        setAnimatedIconEnabled(YES);
-        showFrame(info[@"Rest"], -1, ^(NSError *error) {
+        UBSetAnimatedIconEnabled(YES);
+        UBShowAnimatedIconRest(^(NSError *error) {
             if (error)
             {
-                setAnimatedIconEnabled(NO);
+                UBSetAnimatedIconEnabled(NO);
             }
 
             notify_post(kChangedNotification);
@@ -400,10 +80,10 @@ void UBSetAppIcon(NSString *iconName, UBIconCompletion requested, UBIconSetter s
         return;
     }
 
-    if (animatedIconEnabled())
+    if (UBAnimatedIconEnabled())
     {
-        setAnimatedIconEnabled(NO);
-        stopAnimation(NO, NO);
+        UBSetAnimatedIconEnabled(NO);
+        UBStopAnimatedIcon();
         UBIconCompletion original = completion;
         completion                = ^(NSError *error) {
             notify_post(kChangedNotification);
@@ -412,6 +92,108 @@ void UBSetAppIcon(NSString *iconName, UBIconCompletion requested, UBIconSetter s
     }
 
     setIcon(iconName, completion);
+}
+
+static void startNextQueuedPick(void)
+{
+    std::optional<uint64_t> next = gQueue.finish();
+    if (!next)
+    {
+        return;
+    }
+
+    NSNumber *key          = @(*next);
+    dispatch_block_t start = gQueuedStarts[key];
+    [gQueuedStarts removeObjectForKey:key];
+    [gQueuedCompletions removeObjectForKey:key];
+    if (start)
+    {
+        start();
+    }
+}
+
+NSString *UBTakeAppIconError(void)
+{
+    @synchronized(kIconErrorDomain)
+    {
+        NSString *error = gLastError;
+        gLastError      = nil;
+        return error;
+    }
+}
+
+static void failQueuedPick(uint64_t pick, NSError *error)
+{
+    rememberError(error);
+    NSNumber *key               = @(pick);
+    UBIconCompletion completion = gQueuedCompletions[key];
+    [gQueuedStarts removeObjectForKey:key];
+    [gQueuedCompletions removeObjectForKey:key];
+    if (completion)
+    {
+        completion(error);
+    }
+}
+
+void UBSetAppIcon(NSString *iconName, UBIconCompletion requested, UBIconSetter setIcon)
+{
+    if (gStartingPicks > 0)
+    {
+        setIcon(iconName, requested);
+        return;
+    }
+
+    gQueuedStarts      = gQueuedStarts ?: [NSMutableDictionary dictionary];
+    gQueuedCompletions = gQueuedCompletions ?: [NSMutableDictionary dictionary];
+
+    uint64_t pick               = ++gNextPick;
+    UBIconCompletion completion = ^(NSError *error) {
+        NSError *described = describedError(error, iconName);
+        if ([described.domain isEqualToString:kIconErrorDomain])
+        {
+            rememberError(described);
+        }
+
+        if (requested)
+        {
+            requested(described);
+        }
+
+        startNextQueuedPick();
+    };
+    dispatch_block_t start = ^{
+        gStartingPicks++;
+        performIconChange(iconName, completion, setIcon);
+        gStartingPicks--;
+    };
+
+    loader::appicon::IconRequest request = gQueue.request(pick);
+    if (request.superseded)
+    {
+        failQueuedPick(*request.superseded,
+                       iconError(ECANCELED,
+                                 @"Unbound: You picked another icon before this one was applied.",
+                                 nil));
+    }
+
+    if (request.startNow)
+    {
+        start();
+        return;
+    }
+
+    [Logger info:LOG_CATEGORY_DEFAULT
+          format:@"Queued the icon change %@ behind one iOS is still applying.",
+                 iconName ?: @"<primary>"];
+    gQueuedStarts[@(pick)]      = start;
+    gQueuedCompletions[@(pick)] = requested ?: ^(NSError *error) {};
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, kQueuedPickTimeoutSec * NSEC_PER_SEC),
+                   dispatch_get_main_queue(), ^{
+                       if (gQueue.cancel(pick))
+                       {
+                           failQueuedPick(pick, busyError(nil));
+                       }
+                   });
 }
 
 %hook UIApplication
@@ -424,7 +206,7 @@ void UBSetAppIcon(NSString *iconName, UBIconCompletion requested, UBIconSetter s
 
 - (NSString *)alternateIconName
 {
-    return animatedIconEnabled() ? UBAnimatedIconId : %orig;
+    return UBAnimatedIconEnabled() ? UBAnimatedIconId : %orig;
 }
 
 %end
@@ -437,39 +219,4 @@ void UBSetAppIcon(NSString *iconName, UBIconCompletion requested, UBIconSetter s
     }
 
     %init();
-    observe(UIApplicationDidEnterBackgroundNotification, ^(NSNotification *note) {
-        gBackgrounded = YES;
-        startAnimation();
-    });
-    observe(UIApplicationWillEnterForegroundNotification, ^(NSNotification *note) {
-        gBackgrounded = NO;
-        if (gTimer || gSilence.isPlaying)
-        {
-            stopAnimation(YES, NO);
-        }
-    });
-    observe(UIApplicationProtectedDataWillBecomeUnavailable, ^(NSNotification *note) {
-        gLocked            = YES;
-        NSDictionary *info = UBAnimatedIconInfo();
-        if (gTimer && info)
-        {
-            stopFrames();
-            showFrame(info[@"Rest"], -1, nil);
-        }
-    });
-    observe(UIApplicationProtectedDataDidBecomeAvailable, ^(NSNotification *note) {
-        gLocked = NO;
-        if (gBackgrounded && gSilence.isPlaying)
-        {
-            startFrames();
-        }
-    });
-    observe(AVAudioSessionInterruptionNotification, ^(NSNotification *note) {
-        NSNumber *type = note.userInfo[AVAudioSessionInterruptionTypeKey];
-        if (type.unsignedIntegerValue == AVAudioSessionInterruptionTypeEnded && gBackgrounded
-            && gRestoreCategory)
-        {
-            [gSilence play];
-        }
-    });
 }

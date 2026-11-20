@@ -32,6 +32,14 @@ export function getAppIcons(): UnboundAppIcon[] {
 }
 
 /**
+ * @description Takes why the loader's last app icon change failed; each reason is returned once.
+ * @returns The reason in words for the user, or `undefined` when there is none or the loader cannot say.
+ */
+export function takeAppIconError(): string | undefined {
+	return read('takeAppIconError', (bridge) => bridge.takeAppIconError?.()) ?? undefined;
+}
+
+/**
  * @description Reports whether the installed loader can add or remove custom app icons.
  * @returns Whether `syncAppIcons` is available.
  */

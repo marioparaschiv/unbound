@@ -544,6 +544,7 @@
 	"UNBOUND_COMMAND_DEBUGGER_DESC": "Turn the WebSocket debugger on or off, or connect it to an address",
 	"UNBOUND_COMMAND_DEBUGGER_ADDRESS_DESC": "The bridge address, such as 192.168.1.2:9090",
 	"UNBOUND_APP_ICON_CUSTOM": "Custom icons",
+	"UNBOUND_APP_ICON_NOT_CHANGED": "Couldn't change the app icon",
 	"UNBOUND_APP_ICON_ADD_TILE": "Add or remove custom icons",
 	"UNBOUND_APP_ICON_ADD_HOME_SCREEN_TILE": "Create a Home Screen shortcut",
 	"UNBOUND_APP_ICON_HOME_SCREEN": "Home Screen shortcuts",

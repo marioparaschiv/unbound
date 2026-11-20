@@ -237,6 +237,13 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
                        getter(runtime, "getThemes", std::move(provider.getThemes), none));
     bridge.setProperty(runtime, "getAppIcons",
                        getter(runtime, "getAppIcons", std::move(provider.getAppIcons), none));
+    if (provider.takeAppIconError)
+    {
+        bridge.setProperty(runtime, "takeAppIconError",
+                           getter(runtime, "takeAppIconError", std::move(provider.takeAppIconError),
+                                  nlohmann::json(nullptr)));
+    }
+
     if (provider.hasStagedBundle)
     {
         bridge.setProperty(runtime, "hasStagedBundle",
