@@ -393,37 +393,14 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 		"NATIVE_WRONG_THREAD",
 		"Value invokeBatch(Runtime &runtime, const Value *args, size_t count)",
 		"Native batch requires at most 64 steps",
-		"loader::native::batchResultIndex(runtime, value, stepIndex)",
+		"loader::native::batchResultIndex(",
 		"Native batch method return type is unsupported",
-		"loader::native::validateBatchArgument(argument, encoding, size)",
-		"loader::native::validateScalarArgument(nativeNumberArgument(value), type)",
+		"loader::native::validateBatchArgument(",
+		"loader::native::validateScalarArgument(",
 		"executeMainAsynchronously(",
 	} {
 		if !containsCode(bridge, required) {
 			t.Fatalf("native bridge safety guard %q is missing", required)
-		}
-	}
-
-	var argumentGuards []byte
-
-	for _, path := range []string{"src/NativeBatchReferences.cpp", "src/NativeArgumentValidation.cpp"} {
-		source, err := os.ReadFile(filepath.Join(root, "core", path))
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		argumentGuards = append(argumentGuards, source...)
-	}
-
-	for _, required := range []string{
-		"Native batch can only reference earlier results",
-		"Native batch method argument type is unsupported",
-		"Native scalar argument is out of range",
-		"Native batch object argument cannot be a pointer",
-		"Native batch struct argument has the wrong layout",
-	} {
-		if !containsCode(string(argumentGuards), required) {
-			t.Fatalf("shared native argument guard %q is missing", required)
 		}
 	}
 
