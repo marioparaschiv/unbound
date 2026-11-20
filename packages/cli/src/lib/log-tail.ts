@@ -167,6 +167,14 @@ export async function tailAndroid(
 	}
 }
 
+const NO_PILOT_BRIDGE = 'unable to connect to device bridge';
+
+function explainLogFileFailure(udid: string, error: string) {
+	return error.includes(NO_PILOT_BRIDGE)
+		? `${udid} runs no jb-p1lot bridge, as on a vphone, so its files are out of reach. Its live log still works: run without --since, or add --follow.`
+		: error;
+}
+
 /**
  * @description Tails Discord's log on a jailbroken iPhone: the unified log streams over USB through `idevicesyslog`, keeping what Discord's binary and the Unbound tweak log, the JavaScript console included, and crash reports about Discord. History before now comes from a log archive read with macOS's `log` tool, which holds only what iOS persists: notices, errors and faults.
  * @param target The device.
@@ -236,15 +244,22 @@ export async function tailIOS(target: IOSTarget, options: IOSTailOptions): Promi
 
 			const entries = await readLoaderLogHistory(target.pilot, start, stems);
 
-			if ('error' in entries) {
+			if ('error' in entries && !live) {
 				return {
 					ok: false,
-					text: `Unbound's log files could not be read either: ${entries.error}`,
+					text: `Unbound's log files could not be read either: ${explainLogFileFailure(udid, entries.error)}`,
 				};
 			}
 
-			emitAll(entries, emit);
-			historyEnd = entries.at(-1)?.epochMs ?? historyEnd;
+			if ('error' in entries) {
+				emit({
+					kind: 'notice',
+					message: `Unbound's log files could not be read either: ${explainLogFileFailure(udid, entries.error)} Following the live log.`,
+				});
+			} else {
+				emitAll(entries, emit);
+				historyEnd = entries.at(-1)?.epochMs ?? historyEnd;
+			}
 		}
 	}
 
@@ -255,7 +270,7 @@ export async function tailIOS(target: IOSTarget, options: IOSTailOptions): Promi
 			if ('error' in entries) {
 				return {
 					ok: false,
-					text: `Unbound's log files could not be read: ${entries.error}`,
+					text: `Unbound's log files could not be read: ${explainLogFileFailure(udid, entries.error)}`,
 				};
 			}
 
