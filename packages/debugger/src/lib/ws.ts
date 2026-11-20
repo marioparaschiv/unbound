@@ -3,13 +3,17 @@ import {
 	isExplorerRequest,
 	isMetroRequest,
 	parseMessage,
-	type DeviceInfo,
 } from '@unbound-app/debugger-protocol';
-import { terminal, stripEscapeSequences } from 'terminal-kit';
+import { terminal } from 'terminal-kit';
 import os from 'node:os';
 
-import { abortCurrentReplInput, setupReplListeners, takeReplInput } from './repl';
-import { formatLogLine } from './format-log';
+import {
+	abortCurrentReplInput,
+	setupReplListeners,
+	state as replState,
+	takeReplInput,
+} from './repl';
+import { describeDevice, printLog, system, timestamp } from './output';
 import { createIdleExit } from './idle-exit';
 import { printBanner } from './banner';
 import * as session from './session';
@@ -20,52 +24,6 @@ export const state: {
 } = {
 	isInitialized: false,
 };
-
-const MESSAGE_LEVELS = {
-	1: terminal.gray,
-	2: terminal.yellow,
-	3: terminal.red,
-} as const;
-
-/** The glyph that prefixes every bridge lifecycle line, so system events read as one family. */
-const SYSTEM_GLYPH = '✦';
-
-/** Hex colours for the system banners: pink for MCP, green/red for the device, gray for startup. */
-const SYSTEM_COLORS = {
-	pink: '#ff5fbf',
-	green: '#3cb371',
-	red: '#ff6b6b',
-	gray: '#9ca3af',
-} as const;
-
-/**
- * @description Prints a bold, glyph-prefixed banner line for a bridge lifecycle event.
- * @param color The banner colour, keyed into {@link SYSTEM_COLORS}.
- * @param text The line to print (the glyph is prepended and a trailing newline added).
- */
-function system(color: keyof typeof SYSTEM_COLORS, text: string) {
-	terminal.bold.colorRgbHex(SYSTEM_COLORS[color], `${timestamp()} ${SYSTEM_GLYPH} ${text}\n`);
-}
-
-/**
- * @description Formats the current local time for the start of a bridge log line.
- * @param now The moment to format.
- * @returns The time as `HH:MM:SS.mmm`.
- */
-export function timestamp(now = new Date()): string {
-	const pad = (value: number, width = 2) => String(value).padStart(width, '0');
-
-	return `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}.${pad(now.getMilliseconds(), 3)}`;
-}
-
-/**
- * @description Describes a device from its hello for the bridge log.
- * @param device What the device reported.
- * @returns A one-line summary such as `ios, Discord 351.0, loader 1.0.0, client 0.9.0`.
- */
-export function describeDevice(device: DeviceInfo): string {
-	return `${device.platform}, Discord ${device.discordVersion}, loader ${device.loaderVersion}, client ${device.clientVersion}`;
-}
 
 /**
  * Marks a socket's role so the WebSocket handlers can route it. Set at upgrade time from the URL: a
@@ -79,13 +37,40 @@ type SocketData = {
  * @description Boots the bridge: the phone-facing WebSocket server, the shared session routing, and
  * the terminal REPL as an in-process controller. A device connects plainly; controllers (MCP
  * clients) connect with `?mcp` and share the single device socket.
+ * @returns Whether this process now hosts the bridge; `false` when another process holds the port.
  */
-export function setupWebSocket() {
-	if (state.isInitialized) return;
+export function setupWebSocket(): boolean {
+	if (state.isInitialized) {
+		return true;
+	}
+
+	try {
+		serve();
+	} catch {
+		// Bun throws when the port is taken: another bridge owns it, so the caller attaches instead.
+		return false;
+	}
 
 	state.isInitialized = true;
+	replState.evaluate = session.evaluate;
 
+	listenToSession();
+
+	const localAddress = getLocalAddress();
+
+	printBanner(
+		`${localAddress}:${argv.flags.port}`,
+		`ws://127.0.0.1:${argv.flags.port}?${CONTROLLER_ENDPOINT_MARKER}`,
+	);
+
+	return true;
+}
+
+function serve() {
 	Bun.serve<SocketData>({
+		// IPv4 only, like the DevTools bridge: on macOS a dual-stack `::` listener can share the port with
+		// another bridge's `0.0.0.0` one, splitting the device and the controllers across two bridges.
+		hostname: '0.0.0.0',
 		port: argv.flags.port,
 		fetch(request, server) {
 			const url = new URL(request.url);
@@ -142,17 +127,15 @@ export function setupWebSocket() {
 			},
 		},
 	});
+}
 
+function listenToSession() {
 	// The REPL is a local controller: the device's log stream surfaces in the terminal without going
 	// back out over a socket.
 	session.onLog((log) => {
 		// Erase the drawn prompt so its leftover marker doesn't stack in front of the log.
 		abortCurrentReplInput({ deletePrompt: true });
-		// The client colours its own log lines, so strip the embedded ANSI — the level colour below is
-		// the terminal's, and the raw escapes would otherwise render as literal `[...` noise.
-		MESSAGE_LEVELS[log.level](
-			`${timestamp()} « ${formatLogLine({ ...log, message: stripEscapeSequences(log.message) })}\n`,
-		);
+		printLog(log);
 		takeReplInput();
 	});
 
@@ -200,21 +183,14 @@ export function setupWebSocket() {
 
 	// A bridge spawned in the background exits once every controller has left, so closing the last
 	// tool leaves nothing running. A terminal REPL is a controller of its own, so it never idles.
-	if (argv.flags.idleTimeout > 0 && !process.stdin.isTTY) {
-		const onControllerCount = createIdleExit(argv.flags.idleTimeout * 1000, () => {
-			system('gray', `No controller for ${argv.flags.idleTimeout}s, exiting`);
-			process.exit(0);
-		});
+	if (argv.flags.idleTimeout <= 0 || process.stdin.isTTY) return;
 
-		session.onController((_connected, count) => onControllerCount(count));
-	}
+	const onControllerCount = createIdleExit(argv.flags.idleTimeout * 1000, () => {
+		system('gray', `No controller for ${argv.flags.idleTimeout}s, exiting`);
+		process.exit(0);
+	});
 
-	const localAddress = getLocalAddress();
-
-	printBanner(
-		`${localAddress}:${argv.flags.port}`,
-		`ws://127.0.0.1:${argv.flags.port}?${CONTROLLER_ENDPOINT_MARKER}`,
-	);
+	session.onController((_connected, count) => onControllerCount(count));
 }
 
 function handleDeviceMessage(raw: string) {
