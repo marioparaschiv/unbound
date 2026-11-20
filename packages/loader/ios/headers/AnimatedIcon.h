@@ -12,6 +12,7 @@ BOOL UBAnimatedIconAvailable(void);
 typedef void (^UBIconCompletion)(NSError *error);
 typedef void (^UBIconSetter)(NSString *iconName, UBIconCompletion completion);
 void UBSetAppIcon(NSString *iconName, UBIconCompletion completion, UBIconSetter setIcon);
+NSString *UBTakeAppIconError(void);
 #ifdef __cplusplus
 }
 #endif

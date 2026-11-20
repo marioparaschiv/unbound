@@ -300,6 +300,8 @@ export type UnboundNativeBridge = {
 	 */
 	getThemes(): UnboundAddonBundle[];
 	getAppIcons?(): UnboundAppIcon[];
+	/** Why the last app icon change failed, in words for the user, once; `null` when there is nothing new to tell. */
+	takeAppIconError?(): string | null;
 	/**
 	 * Whether a newer client bundle downloaded during this launch and runs after the next restart. Missing on a loader
 	 * from before it.

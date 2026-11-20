@@ -19,6 +19,7 @@ struct UnboundNativeProvider {
     std::function<nlohmann::json()> getPlugins;
     std::function<nlohmann::json()> getThemes;
     std::function<nlohmann::json()> getAppIcons;
+    std::function<nlohmann::json()> takeAppIconError;
     // Whether a newer bundle downloaded this launch and runs at the next restart.
     std::function<nlohmann::json()> hasStagedBundle;
     // Whether a newer bundle is published, honouring paused client updates. Runs off the JS thread;

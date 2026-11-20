@@ -380,6 +380,10 @@ public:
         provider.getAppIcons = [] {
             return declaredUnboundIcons();
         };
+        provider.takeAppIconError = [] {
+            NSString *error = UBTakeAppIconError();
+            return error ? nlohmann::json(toStdString(error)) : nlohmann::json(nullptr);
+        };
         provider.installHomeScreenIcon = [](const std::string &name, const std::string &imagePath) {
             return UBInstallHomeScreenIcon(toNSString(name), toNSString(imagePath)) == YES;
         };
