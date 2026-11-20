@@ -4,4 +4,5 @@ Run `ubd debug <command>` (`bunx --bun @unbound-app/cli` outside the Unbound rep
 
 - `ubd debug modules <regex>`: Metro modules by tracked path or export name, and whether they loaded. Compare platforms with it.
 - `ubd debug eval "unbound.metro.findByProps('<name>', { lazy: false })"`; stores: `unbound.flux.getStore('User')`, as plugins read them; `unbound.metro.stores` holds only a few prebuilt ones.
+- `ubd debug rows [message id]`: the chat row Discord draws a message from, after every plugin's patches (name colors, content nodes, attachments, embeds); the open chat's newest message by default.
 - `ubd debug trace <prop> [prop ...]`: records calls to a module's function found by props. Trigger the behaviour; no call means the wrong target, so climb again per [target.md](target.md).
