@@ -4,7 +4,11 @@ import { reportWorkletError } from '@unbound-plugins/shared/native/report-workle
 import { roomForName, type Frame, type HeaderRow } from '~/lib/name-room';
 
 const CELL_CLASS = 'DCDMessageTableViewCell';
+const TAG_VIEW_CLASS = 'DiscordChat.MessageTagView';
+const MAX_TAG_DEPTH = 8;
 const UNBOUNDED = 10_000;
+const TRUNCATE_MIDDLE = 5;
+const SYMBOLS_SEPARATOR = ' • ';
 
 type BoxedRect = {
 	value?: BoxedRect;
@@ -49,6 +53,19 @@ function setFrameOf(
 	]);
 }
 
+function keepSymbolsVisible(objc: NativeObjCBridge, timestamp: NativeObjectHandle): boolean {
+	'worklet';
+	const text = objc.invoke(timestamp, 'text', []);
+
+	if (typeof text !== 'string' || !text.includes(SYMBOLS_SEPARATOR)) return false;
+
+	if (Number(objc.invoke(timestamp, 'lineBreakMode', [])) === TRUNCATE_MIDDLE) return false;
+
+	objc.invoke(timestamp, 'setLineBreakMode:', [TRUNCATE_MIDDLE]);
+
+	return true;
+}
+
 function naturalWidth(objc: NativeObjCBridge, label: NativeObjectHandle): number {
 	'worklet';
 	const raw = objc.invoke(label, 'sizeThatFits:', [
@@ -84,6 +101,12 @@ export function keepNameRoom(objc: NativeObjCBridge, cell: NativeObjectHandle) {
 	if (objc.invoke(row, 'isHidden', []) || Number(objc.invoke(timestamp, 'alpha', [])) === 0)
 		return;
 
+	if (keepSymbolsVisible(objc, timestamp)) {
+		objc.invoke(cell, 'setNeedsLayout', []);
+
+		return;
+	}
+
 	const header = roomForName(
 		{
 			row: frameOf(objc, row),
@@ -113,9 +136,36 @@ export function keepNameRoom(objc: NativeObjCBridge, cell: NativeObjectHandle) {
  * out, which it does on every layout pass.
  * @param scope The plugin's UI scope.
  */
+function cellOf(objc: NativeObjCBridge, view: NativeObjectHandle): NativeObjectHandle | undefined {
+	'worklet';
+	let current = objc.invoke(view, 'superview', []) as NativeObjectHandle | null;
+
+	for (let depth = 0; current && depth < MAX_TAG_DEPTH; depth++) {
+		if (objc.className(current) === CELL_CLASS) return current;
+
+		current = objc.invoke(current, 'superview', []) as NativeObjectHandle | null;
+	}
+
+	return undefined;
+}
+
 export function installNameRoom(scope: NativeUIScope) {
 	'worklet';
 	const objc = scope.objc as NativeObjCBridge;
+
+	if (objc.getClass(TAG_VIEW_CLASS)) {
+		objc.hook(TAG_VIEW_CLASS, 'layoutSubviews', {
+			after: ({ self }) => {
+				try {
+					const cell = cellOf(objc, self);
+
+					if (cell) keepNameRoom(objc, cell);
+				} catch (error) {
+					reportWorkletError('Platform Indicators', error);
+				}
+			},
+		});
+	}
 
 	objc.hook(CELL_CLASS, 'layoutSubviews', {
 		after: ({ self }) => {
