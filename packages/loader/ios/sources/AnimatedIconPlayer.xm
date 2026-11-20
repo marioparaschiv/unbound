@@ -51,8 +51,7 @@ static BOOL springBoardAnimates(void)
 {
     for (NSString *path in @[
              @"/var/jb/Library/MobileSubstrate/DynamicLibraries/UnboundSpringBoard.dylib",
-             @"/var/jb/usr/lib/TweakInject/UnboundSpringBoard.dylib",
-             @"/Library/MobileSubstrate/DynamicLibraries/UnboundSpringBoard.dylib"
+             @"/var/jb/usr/lib/TweakInject/UnboundSpringBoard.dylib"
          ])
     {
         if (access(path.fileSystemRepresentation, F_OK) == 0)
