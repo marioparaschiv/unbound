@@ -15,6 +15,7 @@ import type {
 import * as Possess from 'possess';
 
 import { patchWhenLoaded, pendingPatchCallers } from '~/patcher/apply';
+import { adoptReplacedMethods } from '~/patcher/replaced-methods';
 import { patch, recordRemovals } from '~/hot-refresh/live-patch';
 import type { IsUntyped } from '~/patcher/is-untyped';
 import { createReactPatcher } from '~/patcher/react';
@@ -256,6 +257,7 @@ export function unpatchAll(): void {
 	for (const drop of pendingPatchCallers.keys()) drop();
 
 	recordRemovals(() => true);
+	adoptReplacedMethods();
 	Possess.unpatchAll();
 }
 
@@ -271,5 +273,6 @@ export function unpatchAllByCaller(caller: string): void {
 	}
 
 	recordRemovals((patch) => patch.caller === caller);
+	adoptReplacedMethods();
 	Possess.unpatchAllByCaller(caller);
 }
