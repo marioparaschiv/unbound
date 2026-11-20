@@ -286,11 +286,31 @@ bool LoaderPipeline::onBackground()
 {
     checkIfDue("Going to the background; checking for a newer bundle while there is time.",
                kBackgroundCheckSeconds);
-    return checking_.load();
+    refreshInBackgroundIfDue();
+    return isWorkingInBackground();
+}
+
+void LoaderPipeline::refreshInBackgroundIfDue()
+{
+    std::optional<uint64_t> run = backgroundRefresh_.begin(nowMs());
+    if (!run)
+    {
+        return;
+    }
+
+    log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Running the client's background refresh.");
+    runBackgroundRefresh([this, run = *run]() {
+        backgroundRefresh_.finish(run);
+    });
 }
 
 bool LoaderPipeline::isCheckingForUpdate() const
 {
     return checking_.load();
+}
+
+bool LoaderPipeline::isWorkingInBackground() const
+{
+    return checking_.load() || backgroundRefresh_.running(nowMs());
 }
 }

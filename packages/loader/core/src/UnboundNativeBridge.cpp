@@ -7,11 +7,13 @@
 #include <stdexcept>
 #include <utility>
 
+#include "LoaderBackgroundRefresh.h"
 #include "LoaderCrashHandler.h"
 #include "LoaderCrypto.h"
 #include "LoaderFiles.h"
 #include "LoaderJSIJSON.h"
 #include "LoaderLaunchReport.h"
+#include "LoaderLog.h"
 #include "LoaderRequiredLoader.h"
 #include "LoaderSystemExits.h"
 #include "LoaderVersion.h"
@@ -224,6 +226,75 @@ static jsi::Function buildIconIPAFunction(jsi::Runtime &runtime, std::function<s
         });
 }
 
+static jsi::Function backgroundRefreshSetter(jsi::Runtime &runtime)
+{
+    return native::makeFunction(
+        runtime, "setBackgroundRefresh", 1,
+        [](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args,
+           size_t count) -> jsi::Value {
+            bool callable = count > 0 && args[0].isObject() && args[0].asObject(rt).isFunction(rt);
+            rt.global().setProperty(rt, kBackgroundRefreshHandler,
+                                    callable ? jsi::Value(rt, args[0]) : jsi::Value::undefined());
+            return jsi::Value::undefined();
+        });
+}
+
+static jsi::Function settleOnce(jsi::Runtime &runtime,
+                                std::shared_ptr<std::function<void()>> settled)
+{
+    return native::makeFunction(
+        runtime, "settleBackgroundRefresh", 1,
+        [settled](jsi::Runtime &, const jsi::Value &, const jsi::Value *, size_t) -> jsi::Value {
+            if (*settled)
+            {
+                std::function<void()> settle = std::move(*settled);
+                *settled                     = nullptr;
+                settle();
+            }
+
+            return jsi::Value::undefined();
+        });
+}
+
+void runBackgroundRefresh(std::function<void()> settled)
+{
+    auto pending = std::make_shared<std::function<void()>>(std::move(settled));
+    native::executeRuntimeAsynchronously([pending](jsi::Runtime &runtime) {
+        jsi::Value handler = runtime.global().getProperty(runtime, kBackgroundRefreshHandler);
+        if (!handler.isObject() || !handler.asObject(runtime).isFunction(runtime))
+        {
+            settleOnce(runtime, pending).call(runtime);
+            return;
+        }
+
+        jsi::Value result;
+        try
+        {
+            result = handler.asObject(runtime).asFunction(runtime).call(runtime);
+        }
+        catch (const std::exception &error)
+        {
+            log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
+                std::string("Failed to run the background refresh: ") + error.what());
+            settleOnce(runtime, pending).call(runtime);
+            return;
+        }
+
+        jsi::Value then = result.isObject() ? result.asObject(runtime).getProperty(runtime, "then")
+                                            : jsi::Value();
+        if (!then.isObject() || !then.asObject(runtime).isFunction(runtime))
+        {
+            settleOnce(runtime, pending).call(runtime);
+            return;
+        }
+
+        jsi::Function settle = settleOnce(runtime, pending);
+        then.asObject(runtime).asFunction(runtime).callWithThis(runtime, result.asObject(runtime),
+                                                                jsi::Value(runtime, settle),
+                                                                jsi::Value(runtime, settle));
+    });
+}
+
 void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
 {
     const nlohmann::json none = nlohmann::json::array();
@@ -305,6 +376,7 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
     }
 
     bridge.setProperty(runtime, "getSha256", sha256Function(runtime));
+    bridge.setProperty(runtime, "setBackgroundRefresh", backgroundRefreshSetter(runtime));
     installLogBridge(runtime, bridge);
     bridge.setProperty(runtime, "downloadFile",
                        downloadFunction(runtime, std::move(provider.downloadFile)));

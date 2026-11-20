@@ -159,6 +159,24 @@ static void nativeOnBackground(JNIEnv *, jclass)
     }
 }
 
+static jboolean nativeOnScheduledRefresh(JNIEnv *, jclass)
+{
+    auto host   = currentHost();
+    auto loader = currentLoader();
+    if (!loader || (host && host->visibleNow()))
+    {
+        return JNI_FALSE;
+    }
+
+    return loader->onBackground() ? JNI_TRUE : JNI_FALSE;
+}
+
+static jboolean nativeIsWorkingInBackground(JNIEnv *, jclass)
+{
+    auto loader = currentLoader();
+    return loader && loader->isWorkingInBackground() ? JNI_TRUE : JNI_FALSE;
+}
+
 static std::atomic<uintptr_t> mainActivityThread{0};
 
 static void nativeMarkMainThread(JNIEnv *, jclass)

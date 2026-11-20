@@ -218,6 +218,44 @@ static void requireChecks(jsi::Runtime &runtime, const char *source, const char 
     require(failures.empty(), std::string("every check in ") + name + " passes");
 }
 
+static int backgroundRefreshSettles(jsi::Runtime &runtime, QueuedExecutor &executor,
+                                    const char *setup)
+{
+    runtime.evaluateJavaScript(std::make_shared<jsi::StringBuffer>(setup), "background-refresh.js");
+    auto settled = std::make_shared<int>(0);
+    loader::runBackgroundRefresh([settled] {
+        (*settled)++;
+    });
+    executor.drain(runtime, [settled] {
+        return *settled > 0;
+    });
+    return *settled;
+}
+
+static void requireBackgroundRefresh(jsi::Runtime &runtime, QueuedExecutor &executor)
+{
+    require(backgroundRefreshSettles(runtime, executor, "UnboundNative.setBackgroundRefresh();")
+                == 1,
+            "a background refresh settles at once without a handler");
+    require(backgroundRefreshSettles(runtime, executor,
+                                     "globalThis.refreshed = 0; "
+                                     "UnboundNative.setBackgroundRefresh(() => Promise.resolve()"
+                                     ".then(() => { globalThis.refreshed++; }));")
+                    == 1
+                && runtime.global().getProperty(runtime, "refreshed").asNumber() == 1,
+            "a background refresh settles once after the handler's promise");
+    require(backgroundRefreshSettles(runtime, executor,
+                                     "UnboundNative.setBackgroundRefresh(() => Promise.reject("
+                                     "new Error('offline')));")
+                == 1,
+            "a rejected background refresh still settles");
+    require(backgroundRefreshSettles(runtime, executor,
+                                     "UnboundNative.setBackgroundRefresh(() => { throw new "
+                                     "Error('broken'); });")
+                == 1,
+            "a throwing background refresh still settles");
+}
+
 int main()
 {
     loader::bootstrap::setScriptSource(bootstrapScript);
@@ -318,6 +356,7 @@ int main()
                 == "https://fonts.invalid/a.ttf",
             "downloadFile writes the response to the path");
     require(!fs::exists(documents.parent_path() / "a.ttf"), "a refused path writes nothing");
+    requireBackgroundRefresh(*runtime, *executor);
     fs::remove_all(documents);
     std::printf("UnboundNative: the real scan and the bridge agree on Hermes\n");
     return 0;

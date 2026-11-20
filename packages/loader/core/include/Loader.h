@@ -55,6 +55,7 @@ public:
     bool onBackground();
     void onVisible();
     bool isCheckingForUpdate() const;
+    bool isWorkingInBackground() const;
 
     SettingsStore &settings();
     BundleUpdater &updater();

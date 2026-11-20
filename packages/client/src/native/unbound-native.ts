@@ -115,6 +115,15 @@ export async function updateBundle(): Promise<boolean> {
 }
 
 /**
+ * @description Sets the work the loader runs while Discord is in the background; it keeps Discord awake until the
+ * promise settles.
+ * @param handler The work, or nothing to clear it.
+ */
+export function setBackgroundRefresh(handler?: () => Promise<void>): void {
+	read('setBackgroundRefresh', (bridge) => bridge.setBackgroundRefresh?.(handler));
+}
+
+/**
  * @description Tells the loader Discord's first screen rendered, so it counts this launch as healthy.
  */
 export function markRendered(): void {

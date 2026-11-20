@@ -11,7 +11,9 @@
 #include <string>
 #include <thread>
 
+#include "LoaderBackgroundRefresh.h"
 #include "LoaderLaunchGuard.h"
+#include "LoaderPipelineTime.h"
 #include "LoaderUpdater.h"
 #include "UnboundNativeBridge.h"
 
@@ -157,6 +159,8 @@ public:
     void noteVisible();
     bool awaitingVisibility() const;
     bool isCheckingForUpdate() const;
+    // Whether the update check or the client's background refresh still runs.
+    bool isWorkingInBackground() const;
 
     // Delays before retrying a failed update check, before jitter.
     static constexpr double kRetryDelaysSeconds[] = {30, 120, 600};
@@ -214,6 +218,11 @@ private:
     std::atomic_bool frozen_{false};
     std::atomic_bool stuckOffered_{false};
     std::atomic_int64_t lastCheckMs_{0};
+    static constexpr int64_t kBackgroundRefreshLimitMs = 60 * 1000;
+    BackgroundRefreshGate backgroundRefresh_{pipeline_time::nowMs(),
+                                             static_cast<int64_t>(kBackgroundCheckSeconds * 1000),
+                                             kBackgroundRefreshLimitMs};
+    void refreshInBackgroundIfDue();
     // When the last finished check found the running or staged bundle current; 0 after any other.
     std::atomic_int64_t currentAtMs_{0};
     std::atomic_int64_t runtimeCreatedMs_{0};
