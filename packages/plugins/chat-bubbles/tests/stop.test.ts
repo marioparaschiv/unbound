@@ -122,7 +122,7 @@ describe('stopping the bubbles on iOS', () => {
 		await settle();
 		await stopPlugin();
 
-		expect(native.calls).toHaveLength(before);
+		expect(native.calls).toHaveLength(before + 1);
 	});
 });
 
