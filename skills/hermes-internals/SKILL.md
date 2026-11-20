@@ -11,6 +11,6 @@ Read only the file for the task, then write the patch per the `unbound-patching`
 | ---------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | [source.md](source.md) | `scripts/source.sh`, `scripts/decompile.py`, the `mods/` layout, typegen                      | You need Discord's source for the device's version, or another IPA or APK |
 | [target.md](target.md) | Grepping `mods/` for a string, i18n key or `= 'UserStore';`, climbing to the narrowest export | You know the behaviour but not the module that produces it                |
-| [live.md](live.md)     | `ubd debug modules`, `ubd debug eval`, `unbound.metro.findStore`, `ubd debug trace`           | Proving a lookup resolves and its function runs on device                 |
+| [live.md](live.md)     | `ubd debug modules`, `ubd debug eval`, `unbound.flux.getStore`, `ubd debug trace`             | Proving a lookup resolves and its function runs on device                 |
 
 Native views, Objective-C or Java methods: the `react-native-internals` skill.
