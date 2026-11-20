@@ -111,8 +111,8 @@ func TestCyanInputsKeepDiscordsIconsAndSchemes(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(merge.keys) != 9 {
-		t.Fatalf("merge plist must hold only the version, speech, icon, URL, local network and animated icon keys, has %v", merge.keys)
+	if len(merge.keys) != 11 {
+		t.Fatalf("merge plist must hold only the version, speech, background refresh, icon, URL, local network and animated icon keys, has %v", merge.keys)
 	}
 
 	if merge.get("NSSpeechRecognitionUsageDescription").text != unboundSpeechUsage {
@@ -282,7 +282,7 @@ func TestCyanInputsNameTheLoaderInTheVersion(t *testing.T) {
 			t.Fatalf("branding %v: the loader restores Discord's version from %s, got %q", branding, discordVersionKey, discord)
 		}
 
-		if !branding && (len(args) != 2 || len(files) != 0 || len(merge.keys) != 3) {
+		if !branding && (len(args) != 2 || len(files) != 0 || len(merge.keys) != 5) {
 			t.Fatalf("TestFlight keeps Discord's name and icons: args %v, files %v, keys %v", args, files, merge.keys)
 		}
 	}
@@ -303,5 +303,39 @@ func TestCyanInputsRejectAnIPAThatAlreadyNamesALoader(t *testing.T) {
 
 	if _, err := mergePlist(data, "1.5.0", true); err == nil {
 		t.Fatal("a version that already names a loader was extended again")
+	}
+}
+
+func TestCyanInputsDeclareTheBackgroundRefreshTask(t *testing.T) {
+	info, err := readPlist([]byte(discordInfoPlist))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	info.set("UIBackgroundModes", plistStrings("audio", "remote-notification", "voip"))
+
+	data, err := writePlist(info)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	merged, err := mergePlist(data, "1.5.0", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	merge, err := readPlist(merged)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	modes := merge.get("UIBackgroundModes").valuesOrNil()
+	if len(modes) != 4 || modes[0].text != "audio" || modes[3].text != "fetch" {
+		t.Fatalf("cyan replaces UIBackgroundModes whole, so Discord's modes must stay and fetch appear once: %v", modes)
+	}
+
+	tasks := merge.get("BGTaskSchedulerPermittedIdentifiers").valuesOrNil()
+	if len(tasks) != 1 || tasks[0].text != unboundRefreshTask {
+		t.Fatalf("the refresh task must be declared: %v", tasks)
 	}
 }
