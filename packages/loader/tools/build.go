@@ -305,10 +305,8 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 		return err
 	}
 
-	injectionOutput := options.output
-	if samePath(input, options.output) {
-		injectionOutput = filepath.Join(work, "injected.ipa")
-	}
+	// cyan asks before overwriting its output, which a non-interactive build cannot answer.
+	injectionOutput := filepath.Join(work, "injected.ipa")
 
 	args := []string{"-duwsgq"}
 	if options.channel == "testflight" {
@@ -324,10 +322,8 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 		return fmt.Errorf("IPA injection failed: %w", err)
 	}
 
-	if injectionOutput != options.output {
-		if err := os.Rename(injectionOutput, options.output); err != nil {
-			return err
-		}
+	if err := replaceFile(injectionOutput, options.output); err != nil {
+		return fmt.Errorf("moving the IPA to %s failed: %w", options.output, err)
 	}
 	// Added after cyan, which would give any *.dylib it injects a load command.
 	if err := addInspectorToIPA(options.output, inspector); err != nil {
@@ -719,11 +715,16 @@ func executableExists(path string) bool {
 	return err == nil && !info.IsDir() && info.Mode()&0o111 != 0
 }
 
-func samePath(left, right string) bool {
-	leftAbs, leftErr := filepath.Abs(left)
-	rightAbs, rightErr := filepath.Abs(right)
+func replaceFile(source, destination string) error {
+	if err := os.Rename(source, destination); err == nil {
+		return nil
+	}
 
-	return leftErr == nil && rightErr == nil && filepath.Clean(leftAbs) == filepath.Clean(rightAbs)
+	if err := copyFile(source, destination); err != nil {
+		return err
+	}
+
+	return os.Remove(source)
 }
 
 func isTerminal(file *os.File) bool {

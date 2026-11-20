@@ -357,3 +357,30 @@ func TestXcbeautifyKeepsCIOutputPlain(t *testing.T) {
 		t.Fatalf("unexpected local arguments: %#v", xcbeautifyArguments(false))
 	}
 }
+
+func TestReplaceFileOverwritesAnExistingOutput(t *testing.T) {
+	directory := t.TempDir()
+	source := filepath.Join(directory, "injected.ipa")
+	destination := filepath.Join(directory, "out.ipa")
+
+	if err := os.WriteFile(source, []byte("new"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(destination, []byte("old"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := replaceFile(source, destination); err != nil {
+		t.Fatal(err)
+	}
+
+	contents, err := os.ReadFile(destination)
+	if err != nil || string(contents) != "new" {
+		t.Fatalf("destination = %q, %v; want the new IPA", contents, err)
+	}
+
+	if _, err := os.Stat(source); !os.IsNotExist(err) {
+		t.Fatalf("source still exists: %v", err)
+	}
+}
