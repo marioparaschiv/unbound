@@ -150,6 +150,12 @@ declare module '@unbound-app/settings' {
 		 */
 		brightness: number;
 		/**
+		 * Dim Images Without a Preview
+		 *
+		 * Images still uploading or added locally have no preview to read brightness from; dim them anyway.
+		 */
+		dimUnknown: boolean;
+		/**
 		 * Dim By
 		 *
 		 * How much a bright image is dimmed, in percent.
@@ -178,6 +184,12 @@ declare module '@unbound-app/settings' {
 		 */
 		"brightness": number;
 		/**
+		 * Dim Images Without a Preview
+		 *
+		 * Images still uploading or added locally have no preview to read brightness from; dim them anyway.
+		 */
+		"dimUnknown": boolean;
+		/**
 		 * Dim By
 		 *
 		 * How much a bright image is dimmed, in percent.
@@ -194,7 +206,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = never;
+	export type BooleanSettingKey = "dimUnknown";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

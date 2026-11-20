@@ -13,4 +13,5 @@ banner: media/banner.png
 - **When:** with a dark theme, during night hours, or always.
 - **Night Starts At** and **Night Ends At:** the hours, from 0 to 23, that count as night.
 - **Brightness:** how bright an image must be to be dimmed.
+- **Dim Images Without a Preview:** also dims images still uploading or added locally, whose brightness is unknown.
 - **Dim By:** how much a bright image is dimmed.

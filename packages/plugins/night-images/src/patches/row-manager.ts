@@ -26,7 +26,9 @@ function isActive(): boolean {
 }
 
 function isBright(attachment: Attachment): boolean {
-	if (!DIMMED_TYPES.has(attachment.attachmentType ?? '') || !attachment.placeholder) return false;
+	if (!DIMMED_TYPES.has(attachment.attachmentType ?? '')) return false;
+
+	if (!attachment.placeholder) return settings.dimUnknown;
 
 	return (placeholderLightness(attachment.placeholder) ?? 0) >= settings.brightness / 100;
 }

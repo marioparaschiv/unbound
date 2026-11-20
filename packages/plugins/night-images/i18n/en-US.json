@@ -7,6 +7,8 @@
 	"NIGHT_END": "Night Ends At",
 	"BRIGHTNESS": "Brightness",
 	"BRIGHTNESS_SUBTITLE": "Only images at least this bright, in percent, are dimmed.",
+	"DIM_UNKNOWN": "Dim Images Without a Preview",
+	"DIM_UNKNOWN_SUBTITLE": "Images still uploading or added locally have no preview to read brightness from; dim them anyway.",
 	"DIM": "Dim By",
 	"DIM_SUBTITLE": "How much a bright image is dimmed, in percent."
 }
