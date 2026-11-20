@@ -14,7 +14,6 @@ import { accent, cleanNames, COLORS, dim, joined, value, warn, type Span } from 
 import { dnsNote, gatewayNote, powerNote, pushNotes } from './device-notes';
 import { storageMatters, storageSummary } from './storage';
 import { environmentRows } from './environment-rows';
-import { hookNotes } from './issue-notes';
 import { accountNotes } from './account';
 import { wrapped } from './wrap-lines';
 import { tweakSpans } from './tweaks';
@@ -380,7 +379,6 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 	const launch = launchNotes(info.launch);
 	const memory = memoryNotes(info.memory);
 	const thermal = thermalNote(info.memory);
-	const hooks = hookNotes(info);
 	const storage = storageMatters(info.storage) ? storageSummary(info.storage) : undefined;
 	const updates = updateNotes(context, info.addonUpdates);
 	const tweaks = cleanNames(info.injected ?? []);
@@ -394,7 +392,6 @@ function diagnosticRows(info: DebugInfo, now: Date, context: DebugCardContext): 
 		['issues', info.disabledAddons?.length ? [warn(joined(info.disabledAddons))] : []],
 		['tweaks', tweaks.length ? tweakSpans(tweaks) : []],
 		['appex', extensionNotes(info).length ? [warn(joined(extensionNotes(info)))] : []],
-		['hooks', hooks.length ? [warn(joined(hooks))] : []],
 		['launch', launch.length ? [warn(joined(launch))] : []],
 		['gateway', gateway ? [warn(joined([gateway]))] : []],
 		['push', push.length ? [warn(joined(push))] : []],

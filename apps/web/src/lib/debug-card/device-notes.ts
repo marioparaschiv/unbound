@@ -9,7 +9,6 @@ import { joined } from './spans';
 
 const LOW_BATTERY = 15;
 const SLOW_HEARTBEAT_MS = 1000;
-const MANY_IDENTIFIES = 3;
 const HEALTHY_GATEWAY = new Set(['session established', 'ready']);
 const FILTERING_RESOLVERS = new Set(['AdGuard', 'NextDNS', 'Control D', 'OpenDNS']);
 
@@ -98,7 +97,7 @@ export function dnsNote(dns?: DebugCardDns): string | undefined {
 }
 
 /**
- * @description Summarises the gateway connection: its state, heartbeat latency, identifies and failed attempts.
+ * @description Summarises the gateway connection: its state, heartbeat latency and failed attempts.
  * @param gateway The gateway report.
  * @returns The summary, such as `session established · 130 ms`.
  */
@@ -107,7 +106,6 @@ export function gatewaySummary(gateway: DebugCardGateway): string {
 		gateway.state,
 		gateway.latencyMs === undefined ? undefined : `${gateway.latencyMs} ms`,
 		gateway.connectedS === undefined ? undefined : `up ${gateway.connectedS} s`,
-		gateway.identifies ? `identified ${gateway.identifies}x` : undefined,
 		gateway.failedAttempts ? `${gateway.failedAttempts} failed` : undefined,
 	]);
 }
@@ -126,9 +124,6 @@ export function gatewayNote(gateway?: DebugCardGateway): string | undefined {
 		HEALTHY_GATEWAY.has(gateway.state) ? undefined : gateway.state,
 		(gateway.latencyMs ?? 0) > SLOW_HEARTBEAT_MS
 			? `${gateway.latencyMs} ms heartbeat`
-			: undefined,
-		(gateway.identifies ?? 0) > MANY_IDENTIFIES
-			? `identified ${gateway.identifies}x`
 			: undefined,
 		gateway.failedAttempts ? `${gateway.failedAttempts} failed connects` : undefined,
 	];
