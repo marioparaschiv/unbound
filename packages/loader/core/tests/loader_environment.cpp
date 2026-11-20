@@ -77,8 +77,14 @@ static void checkInstallSources()
     signing.getTaskAllow = false;
     signing.sideloader   = "";
     assert(signingDetails(signing).rfind("Ad Hoc (`ABCDE12345`)", 0) == 0);
+    signing.teamName = "Jane Appleseed";
+    assert(signingDetails(signing).find("Jane Appleseed") == std::string::npos);
     signing.provisionsAllDevices = true;
     assert(signingDetails(signing).rfind("Enterprise (`ABCDE12345`)", 0) == 0);
+    signing.teamName = " Example `Media` · Ltd\n";
+    assert(signingDetails(signing)
+           == "Enterprise (`ABCDE12345`) · Example Media - Ltd · exp 2026-11-18");
+    signing.teamName.reset();
     signing.provisionsAllDevices = false;
     signing.listsDevices         = false;
     assert(signingDetails(signing).rfind("Distribution (`ABCDE12345`)", 0) == 0);

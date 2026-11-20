@@ -99,6 +99,31 @@ std::string sideloaderName(const SideloaderMarkers &markers)
     return markers.altBundleIdentifier || markers.altDeviceIdentifier ? "AltStore/SideStore" : "";
 }
 
+static std::string certificateTeamName(const std::string &name)
+{
+    constexpr size_t kMaxTeamName = 60;
+    std::string clean;
+    for (char character : name)
+    {
+        if (character == '`' || static_cast<unsigned char>(character) < 0x20)
+        {
+            continue;
+        }
+
+        clean += character;
+    }
+
+    while (clean.find(" · ") != std::string::npos)
+    {
+        clean.replace(clean.find(" · "), 4, " - ");
+    }
+
+    const size_t start = clean.find_first_not_of(' ');
+    const size_t end   = clean.find_last_not_of(' ');
+    clean              = start == std::string::npos ? "" : clean.substr(start, end - start + 1);
+    return clean.size() > kMaxTeamName ? clean.substr(0, kMaxTeamName) : clean;
+}
+
 std::string signingDetails(const SigningFacts &facts)
 {
     std::vector<std::string> parts;
@@ -131,6 +156,14 @@ std::string signingDetails(const SigningFacts &facts)
     if (facts.teamIdentifier && !facts.teamIdentifier->empty())
     {
         parts.front() += " (`" + *facts.teamIdentifier + "`)";
+    }
+
+    if (facts.provisionsAllDevices && !discord && facts.teamName)
+    {
+        if (std::string team = certificateTeamName(*facts.teamName); !team.empty())
+        {
+            parts.push_back(team);
+        }
     }
 
     if (facts.profileExpiry && !discord)

@@ -198,7 +198,12 @@ static loader::environment::SideloaderMarkers sideloaderMarkers(NSBundle *bundle
             {
                 facts.hasProfile           = true;
                 facts.provisionsAllDevices = [profile[@"ProvisionsAllDevices"] boolValue];
-                id devices                 = profile[@"ProvisionedDevices"];
+                if ([profile[@"TeamName"] isKindOfClass:[NSString class]])
+                {
+                    facts.teamName = toStdString(profile[@"TeamName"]);
+                }
+
+                id devices         = profile[@"ProvisionedDevices"];
                 facts.listsDevices = [devices isKindOfClass:[NSArray class]] && [devices count] > 0;
                 if ([profile[@"ExpirationDate"] isKindOfClass:[NSDate class]])
                 {

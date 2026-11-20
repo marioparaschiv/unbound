@@ -32,6 +32,7 @@ struct SigningFacts {
     bool provisionsAllDevices = false;
     bool listsDevices         = false;
     std::optional<std::string> profileExpiry;
+    std::optional<std::string> teamName;
     std::string sideloader;
     std::string entitlementSource;
 };
