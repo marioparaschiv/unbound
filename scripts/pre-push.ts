@@ -6,7 +6,7 @@ import { buildWebTypes, TSC_ARGS } from './typecheck';
 import { loadProjects, ROOT } from './workspaces';
 import { runCommand } from './run-command';
 
-export type Check = { label: string; cwd: string; command: string[] };
+export type Check = { label: string; cwd: string; command: string[]; exclusive?: boolean };
 
 // A bare `bun test` in the plugins root runs every plugin's tests in one process, where mocks leak.
 const ALL_PLUGINS: Check[] = [
@@ -24,6 +24,7 @@ const MIN_LOADER: Check = {
 	label: 'client on minLoaderVersion',
 	cwd: '.',
 	command: ['bun', 'scripts/check-min-loader.ts'],
+	exclusive: true,
 };
 const MIN_LOADER_INPUTS =
 	/^packages\/client\/(src\/|min-loader-exceptions\.json$)|^packages\/types\/typings\/(native[^/]*|unbound-native)\.ts$/;
@@ -131,7 +132,11 @@ async function main(): Promise<void> {
 		return;
 	}
 
-	const results = await Promise.all(checks.map(runCheck));
+	const results = await Promise.all(checks.filter((check) => !check.exclusive).map(runCheck));
+
+	for (const check of checks.filter((found) => found.exclusive)) {
+		results.push(await runCheck(check));
+	}
 
 	if (results.every(Boolean)) {
 		console.log('All pushed changes pass their tests and type-check.');

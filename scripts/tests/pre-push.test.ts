@@ -56,6 +56,14 @@ describe('pre-push checks', () => {
 		);
 	});
 
+	test('runs the minimum-loader check alone, since it swaps the native typings in place', () => {
+		const check = checksFor(['packages/client/src/core/index.ts'], projects).find(
+			(found) => found.label === 'client on minLoaderVersion',
+		);
+
+		expect(check?.exclusive).toBe(true);
+	});
+
 	test('checks a client script with the client and its own config', () => {
 		expect(labels(['packages/client/scripts/build/index.ts'])).toEqual([
 			'packages/client tests',
