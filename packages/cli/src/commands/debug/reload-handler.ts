@@ -1,4 +1,4 @@
-import { evaluateOnDevice, NOT_CONNECTED, toDeviceCode } from '~/lib/device';
+import { evaluateOnDevice, notConnected, toDeviceCode } from '~/lib/device';
 import { evalFailure, failure } from '~/lib/command-error';
 import type { DevicePrelude } from '~/lib/device-prelude';
 import type { CommandHandler } from '~/lib/lazy-handler';
@@ -32,7 +32,7 @@ const handler: CommandHandler<typeof reloadCommand.schema> = async ({ timeout },
 	const result = await evaluateOnDevice(client, toDeviceCode(tagAndReload, TOKEN_KEY, token));
 
 	if (!result) {
-		return NOT_CONNECTED;
+		return notConnected(client);
 	}
 
 	if (!result.ok) {

@@ -45,6 +45,7 @@ export class ControllerClient {
 	private readonly pending = new PendingRequests<EvalResult, LogMessage[]>();
 	private readonly pendingPushes = new PendingRequests<PushResult>();
 	private deviceConnected = false;
+	private deviceInBackground = false;
 	private deviceInfo: DeviceInfo | undefined;
 	private closed = false;
 	/** Whether the current socket ever opened, so a close is told apart from a failed dial. */
@@ -112,6 +113,11 @@ export class ControllerClient {
 
 	get isDeviceConnected(): boolean {
 		return this.deviceConnected;
+	}
+
+	/** @description Whether the last device left because Discord went to the background. */
+	get isDeviceInBackground(): boolean {
+		return this.deviceInBackground;
 	}
 
 	/** @description What the connected device reported about itself in its hello, once it has said hello. */
@@ -213,6 +219,7 @@ export class ControllerClient {
 		if (message.type === 'device-status') {
 			this.deviceConnected = message.connected;
 			this.deviceInfo = message.connected ? message.device : void 0;
+			this.deviceInBackground = !message.connected && message.inBackground === true;
 			this.options.onDeviceStatus?.(this.deviceConnected, this.deviceInfo);
 
 			return;

@@ -1,4 +1,4 @@
-import { NOT_CONNECTED, evaluateOnDevice, toDeviceCode } from '~/lib/device';
+import { notConnected, evaluateOnDevice, toDeviceCode } from '~/lib/device';
 import type { CommandHandler } from '~/lib/lazy-handler';
 import { readDebugReport } from '~/lib/debug-report';
 import { evalFailure } from '~/lib/command-error';
@@ -35,7 +35,7 @@ const handler: CommandHandler<typeof reportCommand.schema> = async (
 	const result = await evaluateOnDevice(client, toDeviceCode(readDebugReport), 20_000);
 
 	if (!result) {
-		return NOT_CONNECTED;
+		return notConnected(client);
 	}
 
 	if (!result.ok) {

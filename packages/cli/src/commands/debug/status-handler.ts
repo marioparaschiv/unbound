@@ -2,7 +2,7 @@ import type { CommandOutput } from '@unbound-app/debugger-protocol/registry';
 import type { DeviceInfo } from '@unbound-app/debugger-protocol';
 
 import { describeDevServer, readDevServerBuild } from '~/lib/dev-server-build';
-import { evaluateOnDevice, NOT_CONNECTED, toDeviceCode } from '~/lib/device';
+import { evaluateOnDevice, notConnected, toDeviceCode } from '~/lib/device';
 import { defaulted, Type, type StaticDecode } from '~/lib/schema';
 import { evalFailure, failure } from '~/lib/command-error';
 import type { DevicePrelude } from '~/lib/device-prelude';
@@ -205,7 +205,7 @@ async function readReport(client: DeviceClient): Promise<DeviceStatusReport | Co
 	const result = await evaluateOnDevice(client, toDeviceCode(readDeviceStatus));
 
 	if (!result) {
-		return NOT_CONNECTED;
+		return notConnected(client);
 	}
 
 	if (!result.ok) {

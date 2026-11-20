@@ -2,7 +2,7 @@ import type { CommandOutput } from '@unbound-app/debugger-protocol/registry';
 
 import {
 	evaluateOnDevice,
-	NOT_CONNECTED,
+	notConnected,
 	RECORDING_GRACE_MS,
 	toDeviceCode,
 	type DeviceClient,
@@ -54,7 +54,7 @@ export async function runProfile(
 	);
 
 	if (!result) {
-		return NOT_CONNECTED;
+		return notConnected(client);
 	}
 
 	if (!result.ok) {
