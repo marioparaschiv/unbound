@@ -1,9 +1,7 @@
-import { flux, metro, patcher } from '@unbound-app/api';
+import { metro, patcher } from '@unbound-app/api';
 import type { MetroFunction } from '@unbound-app/api/metro';
-import { settings } from '@unbound-app/settings';
 
-import { placeholderLightness } from '~/lib/brightness';
-import { isNightHour } from '~/lib/schedule';
+import { dimmedOpacity, isActive, isBrightPlaceholder } from '~/lib/dimming';
 
 type Attachment = { attachmentType?: string; placeholder?: string | null };
 
@@ -11,26 +9,12 @@ type ChatRowMessage = { attachments?: Attachment[] | null; attachmentsOpacity?: 
 
 type ChatRow = { message?: ChatRowMessage };
 
-type ThemeStore = { theme?: string };
-
 const DIMMED_TYPES = new Set(['image', 'video']);
-
-function isActive(): boolean {
-	if (settings.when === 'always') return true;
-
-	if (settings.when === 'night') {
-		return isNightHour(new Date().getHours(), settings.nightStart, settings.nightEnd);
-	}
-
-	return (flux.getStore('Theme') as unknown as ThemeStore).theme !== 'light';
-}
 
 function isBright(attachment: Attachment): boolean {
 	if (!DIMMED_TYPES.has(attachment.attachmentType ?? '')) return false;
 
-	if (!attachment.placeholder) return settings.dimUnknown;
-
-	return (placeholderLightness(attachment.placeholder) ?? 0) >= settings.brightness / 100;
+	return isBrightPlaceholder(attachment.placeholder);
 }
 
 function dimRow(row: ChatRow | undefined): void {
@@ -38,7 +22,7 @@ function dimRow(row: ChatRow | undefined): void {
 
 	if (!message?.attachments?.some(isBright) || !isActive()) return;
 
-	message.attachmentsOpacity = Math.min(message.attachmentsOpacity ?? 1, 1 - settings.dim / 100);
+	message.attachmentsOpacity = Math.min(message.attachmentsOpacity ?? 1, dimmedOpacity());
 }
 
 /**
