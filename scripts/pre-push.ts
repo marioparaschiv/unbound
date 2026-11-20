@@ -20,6 +20,13 @@ const LOADER_LINT: Check = {
 	cwd: 'packages/loader',
 	command: ['go', 'run', './tools', 'lint'],
 };
+const MIN_LOADER: Check = {
+	label: 'client on minLoaderVersion',
+	cwd: '.',
+	command: ['bun', 'scripts/check-min-loader.ts'],
+};
+const MIN_LOADER_INPUTS =
+	/^packages\/client\/(src\/|min-loader-exceptions\.json$)|^packages\/types\/typings\/(native[^/]*|unbound-native)\.ts$/;
 
 function projectChecks({ dir, checks, typed }: Project): Check[] {
 	const found: Check[] = [];
@@ -40,7 +47,8 @@ function projectChecks({ dir, checks, typed }: Project): Check[] {
 
 /**
  * @description Works out which tests and type-checks a set of changed files needs: those of every
- * project containing a file, and every plugin's when the innermost one is a `plugins` workspace.
+ * project containing a file, every plugin's when the innermost one is a `plugins` workspace, and the minimum
+ * loader check when client code or the native typings change.
  * @param files Changed file paths, relative to the repository root.
  * @param projects The projects, parents before the projects inside them, as `loadProjects` returns.
  * @returns The checks to run, without duplicates.
@@ -52,6 +60,10 @@ export function checksFor(files: string[], projects: Project[]): Check[] {
 	for (const file of files) {
 		if (LOADER_LINTED.some((prefix) => file.startsWith(prefix)) && !/\.mdx?$/.test(file)) {
 			add(LOADER_LINT);
+		}
+
+		if (MIN_LOADER_INPUTS.test(file)) {
+			add(MIN_LOADER);
 		}
 
 		if (SKIPPED.some((prefix) => file.startsWith(prefix))) {
