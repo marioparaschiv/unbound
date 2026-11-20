@@ -261,6 +261,22 @@ int main()
     assert(!bootstrapRootOfImage("/var/containers/Bundle/Application/X/Discord.app/Frameworks/"
                                  "Unbound.dylib"));
     assert(!bootstrapRootOfImage("/Library/MobileSubstrate/DynamicLibraries/x.dylib"));
+    assert(bootstrapRootOfImage("/private/var/jb/usr/lib/ellekit/libinjector.dylib")
+           == "/private/var/jb");
+    assert(bootstrapRootOfImage("/private/preboot/9F2A/jb-Qx7/procursus/usr/lib/TweakLoader.dylib")
+           == "/private/preboot/9F2A/jb-Qx7/procursus");
+    assert(bootstrapRootOfImage("/private/preboot/9F2A/jb-Qx7/procursus/usr/lib/libellekit.dylib")
+           == "/private/preboot/9F2A/jb-Qx7/procursus");
+    assert(
+        bootstrapRootOfImage(
+            "/var/containers/Bundle/Application/.jbroot-5C1D2E/usr/lib/ellekit/libinjector.dylib")
+        == "/var/containers/Bundle/Application/.jbroot-5C1D2E");
+    assert(jailbreakName("/private/preboot/9F2A/jb-Qx7/procursus", {".installed_nathanlr"}, {})
+           == "nathanlr");
+    assert(jailbreakName("/var/containers/Bundle/Application/.jbroot-5C1D2E", {}, {})
+           == "roothide");
+    assert(jailbreakName("/private/preboot/9F2A/jb-Qx7/procursus", {".palecursus_strapped"}, {})
+           == "palera1n");
     checkHookFrameworks();
     checkInstallSources();
     checkRoutingTable();
