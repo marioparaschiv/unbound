@@ -121,6 +121,7 @@ export const GUIDE_NAV: Record<GuideTab, GuideTabNav> = {
 			{
 				label: 'Core Development',
 				items: [
+					'core/architecture',
 					'core/building',
 					{
 						label: 'The Loader',
