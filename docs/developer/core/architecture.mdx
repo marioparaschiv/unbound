@@ -1,0 +1,36 @@
+---
+title: 'Architecture'
+description: 'How the loader, the client, addons and unbound.rip fit together.'
+icon: 'sitemap'
+---
+
+Unbound runs in four layers inside the stock Discord app. GitHub Actions build it and unbound.rip serves it.
+
+![Overview of Unbound's architecture: the build pipeline, the four layers inside Discord on the phone, unbound.rip, and the developer tooling](/img/docs/architecture-overview.svg)
+
+## Full Diagram
+
+Every part of the loader, client and server, plus what happens at launch. [Open it full size](/img/docs/architecture.svg) to read it. Both SVGs embed their Excalidraw scene, so you can open them at [excalidraw.com](https://excalidraw.com) to edit them.
+
+![Unbound's full architecture](/img/docs/architecture.svg)
+
+## Layers
+
+| Layer | Lives in | What it does |
+| --- | --- | --- |
+| Addons | Users' devices | Plugins, themes, icon packs and fonts, built against `@unbound-app/api`. See [Concepts](/docs/developer/concepts). |
+| Unbound client | `packages/client` | Finds Discord's modules through Metro, patches them, and starts and stops addons. See [Metro](/docs/developer/plugins/metro). |
+| Discord | The stock app | Its module registry, React Native UI, Flux stores and native views. It stays unmodified on disk. |
+| Native loader | `packages/loader` | Runs Unbound's bundle before Discord's, updates it, guards against crashes, and backs the native bridge. See [The Loader](/docs/developer/loader/introduction). |
+
+## At Launch
+
+<Flow>
+	<FlowStep title='Loader' detail="Reads settings.json, scans addon folders, runs the signed bundle before Discord's" />
+	<FlowStep title='Client' detail='Traps Metro so every Discord module is searchable' />
+	<FlowStep title='Built-ins' detail="Unbound's own features start" />
+	<FlowStep title='Addons' detail='Each manager starts its addons' />
+	<FlowStep title='Discord' detail='Renders with every patch applied' />
+</Flow>
+
+If an addon crashes or freezes Discord, Unbound blames the addon whose code was running and disables it, so Discord keeps working.

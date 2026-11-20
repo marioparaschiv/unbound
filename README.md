@@ -116,58 +116,20 @@ The [debugger](https://unbound.rip/docs/developer/tools/debugger) (`bunx @unboun
 
 ### Architecture
 
+<a href="./assets/architecture-light.svg">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="./assets/architecture-overview-dark.svg" />
+        <img src="./assets/architecture-overview-light.svg" alt="Unbound's architecture: the build pipeline, the four layers inside Discord on the phone, unbound.rip, and the developer tooling" />
+    </picture>
+</a>
+
 1. A platform-specific native loader patches Discord to run JavaScript, then injects the client bundle.
 2. On boot, the client traps Discord's Metro registry (`__r`/`__d`) and wraps every module factory. That gives it a searchable view of Discord's internal modules.
 3. Add-ons find modules through the Metro layer (`findByProps`, `findByName`, `findStore`) and patch them, both plain functions and React components, with [possess](https://www.npmjs.com/package/possess).
 4. The client calls into the loader for native capabilities such as reload, the filesystem, and `evaluateBytecode`.
 5. The client runs on a single `initialize` / `shutdown` lifecycle. Each manager starts its add-ons on startup and tears them down on shutdown, and settings are saved before the global is cleared.
 
-```mermaid
-%%{init: {"flowchart": {"nodeSpacing": 40, "rankSpacing": 45}}}%%
-flowchart TB
-    subgraph Native["Native Side · iOS / Android"]
-        direction LR
-        Loader["<b>Unbound Loader</b><br/>Tweak / Xposed Module"]
-        App["<b>Discord App</b><br/>UIKit / Android Views"]
-        Loader -->|Hooks Colors and Fonts| App
-    end
-
-    subgraph JS["JS Land · Hermes"]
-        direction LR
-        subgraph Client["Unbound Client"]
-            direction TB
-            Managers["<b>Add-on Managers</b><br/>Plugins, Themes,<br/>Fonts, Icon Packs"]
-            APIs["<b>APIs</b><br/>Storage, Toasts, Assets"]
-            Patcher["<b>Patcher</b><br/>possess"]
-            Metro["<b>Metro Layer</b><br/>findByProps, findByName"]
-            Managers --> APIs
-            Managers --> Patcher
-            APIs --> Metro
-            Patcher --> Metro
-        end
-        subgraph DJS["Discord JS"]
-            direction TB
-            Registry["<b>Module Registry</b><br/>__r / __d"]
-            UI["<b>React UI</b><br/>Components"]
-            Stores["<b>Flux Stores</b><br/>App State"]
-            Registry ~~~ UI ~~~ Stores
-        end
-        Client -->|Find and Patch| DJS
-    end
-
-    Native <-->|"Injects Bundle<br/>Native Bridge"| JS
-
-    classDef native fill:#2b2b2b,stroke:#6b6b6b,color:#ffffff
-    classDef core fill:#c74050,stroke:#c74050,color:#ffffff
-    classDef discord fill:#5865f2,stroke:#5865f2,color:#ffffff
-    class App,Loader native
-    class Managers,APIs,Patcher,Metro core
-    class Registry,UI,Stores discord
-    style Native fill:transparent,stroke:#6b6b6b,stroke-width:2px
-    style JS fill:transparent,stroke:#6b6b6b,stroke-width:2px
-    style Client fill:transparent,stroke:#c74050,stroke-width:2px
-    style DJS fill:transparent,stroke:#5865f2,stroke-width:2px
-```
+Click the overview for the [full diagram](./assets/architecture-light.svg) ([dark](./assets/architecture-dark.svg)), or read the [Architecture](https://unbound.rip/docs/developer/core/architecture) page. The SVGs embed their Excalidraw scene, so you can open any of them at [excalidraw.com](https://excalidraw.com) to edit it.
 
 #### Packages
 
