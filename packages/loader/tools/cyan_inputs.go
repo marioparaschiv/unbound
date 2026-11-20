@@ -35,6 +35,7 @@ const (
 	unboundURLName       = "app.unbound.rip"
 	// The debugger bridge's Bonjour type; iOS refuses to browse a type the app does not declare.
 	unboundBonjourService = "_unbound-bridge._tcp"
+	unboundRefreshTask    = "app.unbound.bundle-refresh"
 	// Shown in iOS's Local Network prompt, unless Discord declares its own text.
 	unboundLocalNetworkUsage = "Unbound's debugger finds and connects to the debugger bridge on your computer over the local network."
 	unboundSpeechUsage       = "Unbound plugins turn voice messages into text."
@@ -117,6 +118,11 @@ func mergePlist(data []byte, loader string, branding bool) ([]byte, error) {
 	if info.get("NSSpeechRecognitionUsageDescription") == nil {
 		merge.set("NSSpeechRecognitionUsageDescription", plistText(unboundSpeechUsage))
 	}
+
+	addPlistString(info, "UIBackgroundModes", "fetch")
+	addPlistString(info, "BGTaskSchedulerPermittedIdentifiers", unboundRefreshTask)
+	merge.set("UIBackgroundModes", info.get("UIBackgroundModes"))
+	merge.set("BGTaskSchedulerPermittedIdentifiers", info.get("BGTaskSchedulerPermittedIdentifiers"))
 
 	if !branding {
 		return writePlist(merge)
@@ -282,19 +288,23 @@ func addURLScheme(root *plistNode) {
 
 // Appends the bridge's type to Discord's own, since cyan replaces the array whole.
 func addBonjourService(root *plistNode) {
-	services := root.get("NSBonjourServices")
-	if services == nil || services.kind != plistArrayKind {
-		services = &plistNode{kind: plistArrayKind}
-		root.set("NSBonjourServices", services)
+	addPlistString(root, "NSBonjourServices", unboundBonjourService)
+}
+
+func addPlistString(root *plistNode, key, value string) {
+	values := root.get(key)
+	if values == nil || values.kind != plistArrayKind {
+		values = &plistNode{kind: plistArrayKind}
+		root.set(key, values)
 	}
 
-	for _, service := range services.values {
-		if service.text == unboundBonjourService {
+	for _, existing := range values.values {
+		if existing.text == value {
 			return
 		}
 	}
 
-	services.values = append(services.values, plistText(unboundBonjourService))
+	values.values = append(values.values, plistText(value))
 }
 
 func (node *plistNode) valuesOrNil() []*plistNode {
