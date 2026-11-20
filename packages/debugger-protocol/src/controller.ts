@@ -31,6 +31,12 @@ type ControllerOptions = {
 	/** Runs before every dial, such as starting the bridge when none listens; the dial waits for it. */
 	// UNKNOWN: the dial only awaits it and ignores its value.
 	beforeConnect?: () => Promise<unknown>;
+	/** Called with each device log line the bridge forwards. */
+	onLog?: (log: LogMessage) => void;
+	/** Called whenever the bridge reports the device connecting, dropping or saying hello. */
+	onDeviceStatus?: (connected: boolean, device: DeviceInfo | undefined) => void;
+	/** Called when the socket to the bridge opens or closes. */
+	onConnection?: (open: boolean) => void;
 };
 
 export class ControllerClient {
@@ -41,26 +47,30 @@ export class ControllerClient {
 	private deviceConnected = false;
 	private deviceInfo: DeviceInfo | undefined;
 	private closed = false;
+	/** Whether the current socket ever opened, so a close is told apart from a failed dial. */
+	private socketOpened = false;
 	private readonly url: string;
-	private readonly beforeConnect: ControllerOptions['beforeConnect'];
+	private readonly options: ControllerOptions;
 
-	constructor(url: string, { beforeConnect }: ControllerOptions = {}) {
+	constructor(url: string, options: ControllerOptions = {}) {
 		this.url = url;
-		this.beforeConnect = beforeConnect;
+		this.options = options;
 	}
 
 	/** @description Opens the socket and keeps it open, reconnecting on drop until {@link close}d. */
 	connect() {
 		if (this.closed) return;
 
-		if (!this.beforeConnect) {
+		const { beforeConnect } = this.options;
+
+		if (!beforeConnect) {
 			this.open();
 
 			return;
 		}
 
 		// A failed hook still dials, so the reconnect loop keeps running.
-		void this.beforeConnect()
+		void beforeConnect()
 			.catch(() => void 0)
 			.then(() => this.open());
 	}
@@ -70,6 +80,10 @@ export class ControllerClient {
 
 		this.ws = new WebSocket(this.url);
 
+		this.ws.addEventListener('open', () => {
+			this.socketOpened = true;
+			this.options.onConnection?.(true);
+		});
 		this.ws.addEventListener('message', (event) => this.onMessage(String(event.data)));
 		this.ws.addEventListener('close', () => this.onClose());
 		this.ws.addEventListener('error', () => this.ws?.close());
@@ -199,6 +213,7 @@ export class ControllerClient {
 		if (message.type === 'device-status') {
 			this.deviceConnected = message.connected;
 			this.deviceInfo = message.connected ? message.device : void 0;
+			this.options.onDeviceStatus?.(this.deviceConnected, this.deviceInfo);
 
 			return;
 		}
@@ -207,6 +222,8 @@ export class ControllerClient {
 			// Device logs carry no eval id, so each goes to every in-flight eval. Exact for the MCP's
 			// one-at-a-time use; concurrent evals get a superset.
 			for (const logs of this.pending.metas()) logs.push(message);
+
+			this.options.onLog?.(message);
 
 			return;
 		}
@@ -223,8 +240,14 @@ export class ControllerClient {
 	}
 
 	private onClose() {
+		const wasOpen = this.socketOpened;
+
 		this.ws = null;
+		this.socketOpened = false;
 		this.deviceConnected = false;
+
+		// A failed redial never opened, so only a real drop is reported.
+		if (wasOpen) this.options.onConnection?.(false);
 
 		if (this.closed) return;
 

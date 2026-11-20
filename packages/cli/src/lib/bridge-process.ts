@@ -1,8 +1,8 @@
 import type { CommandOutput } from '@unbound-app/debugger-protocol/registry';
 import { SERVE_BRIDGE_COMMAND } from '@unbound-app/debugger-protocol';
+import { isListening } from '@unbound-app/debugger-protocol/is-listening';
 import { closeSync, openSync } from 'node:fs';
 import { spawn } from 'node:child_process';
-import { connect } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -12,18 +12,6 @@ const LISTEN_TIMEOUT_MS = 15_000;
 // Polls a local port, so short: a spawned bridge listens within a few hundred milliseconds.
 const LISTEN_POLL_MS = 20;
 const LOOKUP_TIMEOUT_MS = 5_000;
-
-function isListening(port: number): Promise<boolean> {
-	return new Promise((resolve) => {
-		const socket = connect({ host: '127.0.0.1', port });
-
-		socket.once('connect', () => {
-			socket.destroy();
-			resolve(true);
-		});
-		socket.once('error', () => resolve(false));
-	});
-}
 
 async function waitUntil(port: number, listening: boolean): Promise<boolean> {
 	const deadline = Date.now() + LISTEN_TIMEOUT_MS;

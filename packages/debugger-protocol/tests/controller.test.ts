@@ -1,10 +1,14 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import type { Server } from 'bun';
+import type { Server, ServerWebSocket } from 'bun';
 
 import { ControllerClient } from '~/controller';
 import type { EvalRequest } from '~/index';
 
-type FakeBridge = { server: Server<undefined>; requests: EvalRequest[] };
+type FakeBridge = {
+	server: Server<undefined>;
+	requests: EvalRequest[];
+	sockets: Set<ServerWebSocket<undefined>>;
+};
 
 const bridges: FakeBridge[] = [];
 const clients: ControllerClient[] = [];
@@ -17,6 +21,7 @@ afterEach(() => {
 
 function fakeBridge(port = 0): FakeBridge {
 	const requests: EvalRequest[] = [];
+	const sockets = new Set<ServerWebSocket<undefined>>();
 	const server = Bun.serve({
 		port,
 		fetch(request, server) {
@@ -24,6 +29,7 @@ function fakeBridge(port = 0): FakeBridge {
 		},
 		websocket: {
 			open(socket) {
+				sockets.add(socket);
 				socket.send(JSON.stringify({ type: 'device-status', connected: true }));
 			},
 			message(socket, raw) {
@@ -36,7 +42,7 @@ function fakeBridge(port = 0): FakeBridge {
 			},
 		},
 	});
-	const bridge = { server, requests };
+	const bridge = { server, requests, sockets };
 
 	bridges.push(bridge);
 
@@ -71,6 +77,52 @@ describe('ControllerClient.connect', () => {
 		await Bun.sleep(300);
 
 		expect(client.isDeviceConnected).toBe(true);
+	});
+});
+
+describe('ControllerClient hooks', () => {
+	test('reports the device status, logs and a dropped bridge', async () => {
+		const bridge = fakeBridge();
+		const statuses: boolean[] = [];
+		const connections: boolean[] = [];
+		const logs: string[] = [];
+		const client = new ControllerClient(`ws://127.0.0.1:${bridge.server.port}`, {
+			onDeviceStatus: (connected) => statuses.push(connected),
+			onConnection: (open) => connections.push(open),
+			onLog: (log) => logs.push(log.message),
+		});
+
+		clients.push(client);
+		client.connect();
+
+		while (!client.isDeviceConnected) await Bun.sleep(5);
+
+		for (const socket of bridge.sockets) {
+			socket.send(JSON.stringify({ type: 'log', level: 1, message: 'hi' }));
+		}
+
+		while (!logs.length) await Bun.sleep(5);
+
+		await bridge.server.stop(true);
+
+		while (connections.length < 2) await Bun.sleep(5);
+
+		expect(statuses).toEqual([true]);
+		expect(logs).toEqual(['hi']);
+		expect(connections).toEqual([true, false]);
+	});
+
+	test('does not report a dial that never opened as a drop', async () => {
+		const connections: boolean[] = [];
+		const client = new ControllerClient('ws://127.0.0.1:9', {
+			onConnection: (open) => connections.push(open),
+		});
+
+		clients.push(client);
+		client.connect();
+		await Bun.sleep(100);
+
+		expect(connections).toEqual([]);
 	});
 });
 

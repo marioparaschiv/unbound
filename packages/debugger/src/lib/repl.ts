@@ -1,3 +1,4 @@
+import type { EvalResult } from '@unbound-app/debugger-protocol';
 import { terminal } from 'terminal-kit';
 
 import { addHistoryItem, history } from './history';
@@ -6,13 +7,21 @@ import * as session from './session';
 export const state: {
 	repl: ReturnType<typeof terminal.inputField> | null;
 	currentInput: string;
+	/** Runs a submitted line: this process's own bridge, or another bridge's when attached to it. */
+	evaluate: (code: string) => Promise<EvalResult>;
 } = {
 	repl: null,
 	currentInput: '',
+	evaluate: session.evaluate,
 };
+
+let listening = false;
 
 /** @description Exits the debugger on Ctrl+C. */
 export function setupReplListeners() {
+	if (listening) return;
+
+	listening = true;
 	terminal.on('key', (name: string) => {
 		if (name !== 'CTRL_C') return;
 
@@ -43,7 +52,7 @@ export async function takeReplInput() {
 			terminal.white.bold(`» ${input}\n`);
 			addHistoryItem(input);
 
-			session.evaluate(input).then((result) => {
+			state.evaluate(input).then((result) => {
 				if (result.ok) {
 					terminal.gray(`« ${result.value}\n`);
 				} else {
