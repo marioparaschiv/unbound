@@ -588,8 +588,7 @@ static const NSTimeInterval kAlertRetrySeconds = 0.5;
     if (dladdr((const void *) &loaderImageAnchor, &info) && info.dli_fname)
     {
         NSString *image = @(info.dli_fname);
-        for (NSString *root in
-             @[ @"/var/jb/", @"/Library/MobileSubstrate/", @"/usr/lib/TweakInject/" ])
+        for (NSString *root in @[ @"/var/jb/", @"/usr/lib/TweakInject/" ])
         {
             if ([image hasPrefix:root] || [image containsString:@"/.jbroot-"])
             {
