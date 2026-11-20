@@ -39,6 +39,7 @@ type SentCrashReport = {
 	origin?: CrashOrigin;
 	issue?: CrashReportIssue;
 	unfiled?: CrashUnfiledReason;
+	tweak?: string;
 };
 
 /** What filing a recorded crash on GitHub came to. */
@@ -46,6 +47,7 @@ export type FiledCrash = {
 	origin?: CrashOrigin;
 	issue?: CrashIssueLink;
 	unfiled?: CrashUnfiledReason;
+	tweak?: string;
 };
 
 const logger = createLogger('Crash Reports');
@@ -80,10 +82,13 @@ async function announceReport(
 	issue: CrashReportIssue | undefined,
 	unfiled: CrashUnfiledReason | undefined,
 	addon: string | undefined,
+	tweak: string | undefined,
 ) {
 	const { info } = await import('~/toasts/api');
 
-	if (issue) {
+	if (tweak) {
+		info('UNBOUND_CRASH_REPORT_TWEAK', { name: tweak });
+	} else if (issue) {
 		info(issue.created ? 'UNBOUND_CRASH_REPORT_FILED' : 'UNBOUND_CRASH_REPORT_JOINED', {
 			number: issue.number,
 		});
@@ -148,9 +153,12 @@ async function sendCrashReport(
 		}
 
 		const request = createUnboundClient();
-		const { id, issue, origin, unfiled, seen } = await request('POST /api/v1/crash-reports', {
-			body: report,
-		});
+		const { id, issue, origin, unfiled, tweak, seen } = await request(
+			'POST /api/v1/crash-reports',
+			{
+				body: report,
+			},
+		);
 
 		rememberReported(signature);
 
@@ -168,7 +176,7 @@ async function sendCrashReport(
 			const blamed =
 				event.addon?.id ?? (event.stack ? nativeCrashAddon(event.stack) : undefined);
 
-			await announceReport(issue, unfiled, blamed);
+			await announceReport(issue, unfiled, blamed, tweak);
 		}
 
 		return {
@@ -176,6 +184,7 @@ async function sendCrashReport(
 			...(origin ? { origin } : {}),
 			...(issue ? { issue } : {}),
 			...(unfiled ? { unfiled } : {}),
+			...(tweak ? { tweak } : {}),
 		};
 	} catch (error) {
 		logger.warn(`Failed to send a ${event.kind} crash report:`, error);
@@ -393,6 +402,7 @@ export async function fileRecordedCrash(
 	const origin = filed?.origin ?? sent.origin;
 	const issue = filed?.issue && { number: filed.issue.number, url: filed.issue.url };
 	const unfiled = issue ? undefined : (filed?.unfiled ?? sent.unfiled);
+	const tweak = filed?.tweak ?? sent.tweak;
 
 	await markCrashReported(record.at, {
 		reportId: sent.id,
@@ -408,6 +418,7 @@ export async function fileRecordedCrash(
 		...(origin ? { origin } : {}),
 		...(issue ? { issue } : {}),
 		...(unfiled ? { unfiled } : {}),
+		...(tweak ? { tweak } : {}),
 	};
 }
 

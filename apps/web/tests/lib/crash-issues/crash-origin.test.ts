@@ -2,6 +2,7 @@ import type { CrashReport } from '@unbound-app/contracts/crash-reports';
 import { describe, expect, test } from 'bun:test';
 
 import {
+	crashingTweak,
 	crashOrigin,
 	filesIssue,
 	nativeCrashAddon,
@@ -92,5 +93,27 @@ describe('crashOrigin', () => {
 
 	test('counts JavaScript crashes without an addon as Unbound', () => {
 		expect(crashOrigin({ ...base, kind: 'crash' })).toBe('unbound');
+	});
+});
+
+describe('crashingTweak', () => {
+	const injected = { context: { injected: ['Choicy (com.opa334.choicy)', 'Crane'] } };
+
+	test('names the injected tweak the crashing thread reaches before Unbound or Discord', () => {
+		const report = {
+			...native('libsystem_kernel.dylib + 0x1', 'Choicy.dylib + 0x2', 'Discord + 0x3'),
+			...injected,
+		};
+
+		expect(crashingTweak(report)).toBe('Choicy (com.opa334.choicy)');
+		expect(filesIssue(report, crashOrigin(report))).toBe(false);
+		expect(unfiledReason(report, crashOrigin(report), true)).toBe('third-party');
+	});
+
+	test('leaves crashes where Unbound or Discord comes first, or no tweak is listed', () => {
+		expect(
+			crashingTweak({ ...native('Unbound.dylib + 0x1', 'Crane.dylib + 0x2'), ...injected }),
+		).toBeUndefined();
+		expect(crashingTweak(native('Choicy.dylib + 0x2'))).toBeUndefined();
 	});
 });

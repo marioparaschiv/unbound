@@ -637,6 +637,7 @@
 	"UNBOUND_CRASH_REPORT_NOT_NOW": "Not Now",
 	"UNBOUND_CRASH_REPORT_SENT": "Report sent, thanks. Its GitHub issue isn't open yet; Unbound asks again on the next launch.",
 	"UNBOUND_CRASH_REPORT_THIRD_PARTY": "Report sent, thanks. {name} isn't made by Unbound, so tell its author about the crash too.",
+	"UNBOUND_CRASH_REPORT_TWEAK": "Report sent, thanks. Discord crashed inside {name}, a tweak not made by Unbound, so tell its developer about the crash.",
 	"UNBOUND_SUPPORT_GATE_TITLE": "Before you post in #chat",
 	"UNBOUND_SUPPORT_GATE_HEADING": "This is not the support channel",
 	"UNBOUND_SUPPORT_GATE_BODY": "#chat is the server's general chat, but it is not a support channel. Nobody here will help with installing, setting up or fixing Unbound, and support questions posted here go unanswered.\n\nFor help, make a post in the support forum, where staff and helpers answer.",
