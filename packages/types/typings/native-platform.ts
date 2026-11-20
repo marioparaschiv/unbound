@@ -48,6 +48,8 @@ export type NativeDeviceState = {
 	injected?: string[];
 	/** The dpkg package that installed each injected iOS dylib, by dylib name; older loaders and Android omit it. */
 	injectedPackages?: Record<string, string>;
+	/** The version of each injected Android module installed as an app (LSPosed modules), by package; older loaders and iOS omit it. */
+	injectedVersions?: Record<string, string>;
 	/** Methods two or more plugins rewrite, as `<plugin> × <plugin> · <method>`; older loaders omit it. */
 	hookConflicts?: string[];
 	/** Methods plugins hook that another image has since replaced over the hook, as `<image> · <class> -<selector>`; older loaders omit it. */

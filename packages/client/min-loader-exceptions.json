@@ -360,6 +360,11 @@
 			"file": "src/native/unbound-native.ts",
 			"error": "TS2339: Property 'takeAppIconError' does not exist on type 'UnboundNativeBridge'.",
 			"reason": "Called optionally (takeAppIconError?.()); older loaders return no reason."
+		},
+		{
+			"file": "src/diagnostics/crash-context.ts",
+			"error": "TS2339: Property 'injectedVersions' does not exist on type 'NativeDeviceState'.",
+			"reason": "Read optionally inside a try with an empty fallback; older loaders list Android modules without versions."
 		}
 	]
 }

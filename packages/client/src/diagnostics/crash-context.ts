@@ -21,30 +21,40 @@ export function scrubBreadcrumbs(breadcrumbs: string[]): string[] {
 		.map((line) => scrubLogLine(line).replace(SNOWFLAKE, '<id>').slice(0, 240));
 }
 
-function readInjectedPackages(): Record<string, string> {
+type InjectedDetails = { packages: Record<string, string>; versions: Record<string, string> };
+
+function readInjectedDetails(): InjectedDetails {
 	try {
-		return globalThis.NativePlatform?.device.getState?.()?.injectedPackages ?? {};
+		const state = globalThis.NativePlatform?.device.getState?.();
+
+		return { packages: state?.injectedPackages ?? {}, versions: state?.injectedVersions ?? {} };
 	} catch {
-		return {};
+		return { packages: {}, versions: {} };
 	}
 }
 
 /**
- * @description Names the package that installed each injected library, so a crash report shows which tweak to blame.
+ * @description Names the package that installed each injected iOS library, or the version of each Android module, so a
+ * crash report shows which tweak to blame.
  * @param names The injected library names.
- * @returns The names, as `name (package)` where the package is known.
+ * @returns The names, as `name (package)` or `name version` where known.
  */
 export function withPackages(names: string[] | undefined): string[] | undefined {
 	if (!names) {
 		return undefined;
 	}
 
-	const packages = readInjectedPackages();
+	const { packages, versions } = readInjectedDetails();
 
 	return names.map((name) => {
 		const owner = packages[name];
+		const version = versions[name];
 
-		return typeof owner === 'string' && owner ? `${name} (${owner})`.slice(0, 120) : name;
+		if (typeof owner === 'string' && owner) {
+			return `${name} (${owner})`.slice(0, 120);
+		}
+
+		return typeof version === 'string' && version ? `${name} ${version}`.slice(0, 120) : name;
 	});
 }
 
