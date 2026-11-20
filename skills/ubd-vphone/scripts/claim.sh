@@ -84,7 +84,7 @@ rollback() {
 
 "$here/up.sh" $([[ $(served_root) != "$root" ]] && echo --restart=dev) || rollback
 
-want="http://$DEV_HOST:$UNBOUND_DEV_PORT/unbound.bundle"
+want="http://$DEV_HOST:$UNBOUND_DEV_PORT/"
 url=$("$here/ubd" debug eval 'unbound.storage.getBucket("unbound").get("loader.update.url", "")' 2>/dev/null | tail -n 1 | tr -d '"')
 
 if [[ $url != "$want" ]]; then
