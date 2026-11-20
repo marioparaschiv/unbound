@@ -355,6 +355,34 @@ std::string frameworkLabel(const std::string &name, const std::string &version)
     return name + " " + version;
 }
 
+std::optional<std::string> bootstrapRootOfImage(const std::string &imagePath)
+{
+    constexpr std::string_view kRoothide = "/.jbroot-";
+    if (const size_t start = imagePath.find(kRoothide); start != std::string::npos)
+    {
+        const size_t end = imagePath.find('/', start + kRoothide.size());
+        return imagePath.substr(0, end);
+    }
+
+    constexpr std::array<std::string_view, 6> kInjectionFolders = {
+        "/Library/MobileSubstrate/DynamicLibraries/",
+        "/usr/lib/TweakInject/",
+        "/usr/lib/ellekit/",
+        "/usr/lib/TweakLoader.dylib",
+        "/usr/lib/libellekit.dylib",
+        "/usr/lib/libsubstrate.dylib"};
+    for (std::string_view folder : kInjectionFolders)
+    {
+        const size_t found = imagePath.find(folder);
+        if (found != std::string::npos && found > 0)
+        {
+            return imagePath.substr(0, found);
+        }
+    }
+
+    return std::nullopt;
+}
+
 std::string jailbreakName(const std::string &root, const std::vector<std::string> &markers,
                           const std::vector<std::string> &images, bool roothide)
 {
