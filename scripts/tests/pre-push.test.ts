@@ -37,9 +37,23 @@ describe('pre-push checks', () => {
 	});
 
 	test('runs the client tests in isolation', () => {
-		const [check] = checksFor(['packages/client/src/core/index.ts'], projects);
+		const check = checksFor(['packages/client/src/core/index.ts'], projects).find(
+			(found) => found.label === 'packages/client tests',
+		);
 
 		expect(check?.command).toEqual(['bun', 'test', '--parallel']);
+	});
+
+	test('checks the client against minLoaderVersion when client code or native typings change', () => {
+		expect(labels(['packages/client/src/core/index.ts'])).toContain(
+			'client on minLoaderVersion',
+		);
+		expect(labels(['packages/types/typings/native-objc.ts'])).toContain(
+			'client on minLoaderVersion',
+		);
+		expect(labels(['packages/client/scripts/build/index.ts'])).not.toContain(
+			'client on minLoaderVersion',
+		);
 	});
 
 	test('checks a client script with the client and its own config', () => {
