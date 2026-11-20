@@ -36,6 +36,34 @@ describe('adjustRowColors', () => {
 		expect(user.color).toBe(7);
 	});
 
+	test('adjusts users and names in content that carry their role color', () => {
+		const user = {
+			type: 'mention',
+			userId: '2',
+			roleColor: 7,
+			roleColors: { primaryColor: 8 },
+		};
+		const name = { action: 'bindUserMenu', userId: '3', roleColor: 9, linkColor: 4 };
+
+		adjustRowColors({ content: [user, { type: 'text', content: [name] }] }, plusOne, true);
+
+		expect(user).toEqual({
+			type: 'mention',
+			userId: '2',
+			roleColor: 8,
+			roleColors: { primaryColor: 9 },
+		});
+		expect(name).toEqual({ action: 'bindUserMenu', userId: '3', roleColor: 10, linkColor: 4 });
+	});
+
+	test('adjusts the replied-to message as well', () => {
+		const reply: Record<string, unknown> = { roleColor: 1, usernameColor: 2 };
+
+		adjustRowColors({ referencedMessage: { state: 0, message: reply } }, plusOne, true);
+
+		expect(reply).toEqual({ roleColor: 2, usernameColor: 3 });
+	});
+
 	test('leaves mentions alone when asked', () => {
 		const role = { type: 'mention', roleId: '1', roleColor: 5 };
 
