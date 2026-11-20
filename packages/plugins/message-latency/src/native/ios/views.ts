@@ -40,6 +40,7 @@ type Cell = {
 	rendering: boolean;
 	rerender?: boolean;
 	awaitingShow?: boolean;
+	showHook?: NativeHookToken;
 	messageId?: string;
 	view?: LatencyView;
 };
@@ -158,7 +159,7 @@ export function createMessageCells(
 		if (await isHidden(handle)) {
 			const cell = cells.get(key);
 
-			if (cell && isFresh()) cell.awaitingShow = true;
+			if (cell && isFresh()) await awaitShow(handle, cell);
 
 			return;
 		}
@@ -204,13 +205,38 @@ export function createMessageCells(
 		});
 	}
 
+	function stopAwaitingShow(cell: Cell) {
+		cell.showHook?.remove();
+		cell.showHook = undefined;
+		cell.awaitingShow = false;
+	}
+
+	async function awaitShow(handle: NativeObjectHandle, cell: Cell) {
+		cell.awaitingShow = true;
+
+		if (!cell.showHook?.active) {
+			cell.showHook = objc.hook(
+				'DCDMessageTableViewCell',
+				'setHidden:',
+				{
+					after: ({ args }) => {
+						if (!args[0]) onShown(handle);
+					},
+				},
+				{ ...SHOWN_CALLS, instance: handle },
+			);
+		}
+
+		if (!(await isHidden(handle))) onShown(handle);
+	}
+
 	function onShown(handle: NativeObjectHandle) {
 		const key = viewKey(objc, handle);
 		const cell = key ? cells.get(key) : undefined;
 
-		if (!cell || (!cell.awaitingShow && !cell.rendering)) return;
+		if (!cell?.awaitingShow) return;
 
-		cell.awaitingShow = false;
+		stopAwaitingShow(cell);
 		schedule(handle);
 	}
 
@@ -233,7 +259,7 @@ export function createMessageCells(
 		cell.revision = revision;
 		cell.rendering = true;
 		cell.rerender = false;
-		cell.awaitingShow = false;
+		stopAwaitingShow(cell);
 		cells.set(key, cell);
 
 		// Deferred so the native lifecycle call that triggered it returns first.
@@ -263,6 +289,7 @@ export function createMessageCells(
 
 		const { view, messageId } = cell;
 
+		stopAwaitingShow(cell);
 		cells.delete(key);
 
 		if (view) void enqueue(key, () => removeView(view));
@@ -333,16 +360,6 @@ export function createMessageCells(
 			],
 			[
 				'DCDMessageTableViewCell',
-				'setHidden:',
-				{
-					after: ({ self, args }) => {
-						if (!args[0]) onShown(self);
-					},
-				},
-				SHOWN_CALLS,
-			],
-			[
-				'DCDMessageTableViewCell',
 				'prepareForReuse',
 				{
 					after: ({ self }) => {
@@ -368,6 +385,8 @@ export function createMessageCells(
 
 		return () => {
 			for (const token of hooks) token.remove();
+
+			for (const cell of cells.values()) stopAwaitingShow(cell);
 
 			unsubscribeRecords();
 			unsubscribeTheme();
