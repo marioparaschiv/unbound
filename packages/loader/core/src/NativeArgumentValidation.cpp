@@ -53,7 +53,8 @@ void validateScalarArgument(const std::optional<NativeNumberArgument> &number,
     }
 }
 
-void validateBatchArgument(const NativeArgumentShape &argument, const char *encoding)
+void validateBatchArgument(const NativeArgumentShape &argument, const char *encoding,
+                           size_t encodingSize)
 {
     std::string type = nativeFFITypeName(encoding);
     if (type.empty() || type == "void")
@@ -105,6 +106,13 @@ void validateBatchArgument(const NativeArgumentShape &argument, const char *enco
     if (type.starts_with("struct:"))
     {
         if (argument.boxedEncoding && nativeFFITypeName(argument.boxedEncoding) == type)
+        {
+            return;
+        }
+
+        if (argument.number && argument.boxedEncoding
+            && nativeFFITypeName(argument.boxedEncoding) == "double"
+            && encodingSize == sizeof(double))
         {
             return;
         }

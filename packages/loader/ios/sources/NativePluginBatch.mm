@@ -47,7 +47,13 @@ static void validateBatchArgument(id value, const char *encoding)
     argument.classObject = object_isClass(value);
     argument.boxedEncoding =
         [value isKindOfClass:[NSValue class]] ? [(NSValue *) value objCType] : nullptr;
-    loader::native::validateBatchArgument(argument, encoding);
+    NSUInteger size = 0;
+    if (encoding[0] == '{')
+    {
+        NSGetSizeAndAlignment(encoding, &size, nullptr);
+    }
+
+    loader::native::validateBatchArgument(argument, encoding, size);
 }
 
 static id batchNativeResult(NSInvocation *invocation)

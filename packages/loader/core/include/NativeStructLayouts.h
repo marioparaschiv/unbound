@@ -11,7 +11,9 @@ namespace loader::native {
 enum class StructScalar
 {
     Double,
-    UnsignedLong
+    UnsignedLong,
+    Float,
+    Int32
 };
 
 struct StructField {
