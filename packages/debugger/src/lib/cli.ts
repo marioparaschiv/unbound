@@ -12,7 +12,7 @@ const argv = cli({
 		idleTimeout: {
 			type: Number,
 			description:
-				'Seconds to keep running with no controller attached before exiting; 0 never exits. Ignored in an interactive terminal, whose REPL counts as a controller.',
+				'Seconds to keep running with no controller or device attached before exiting; 0 never exits. Ignored in an interactive terminal, whose REPL counts as a controller.',
 			default: 60,
 		},
 	},

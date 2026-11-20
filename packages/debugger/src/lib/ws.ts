@@ -181,16 +181,31 @@ function listenToSession() {
 		takeReplInput();
 	});
 
-	// A bridge spawned in the background exits once every controller has left, so closing the last
-	// tool leaves nothing running. A terminal REPL is a controller of its own, so it never idles.
+	// A bridge spawned in the background exits once every controller and the device have left, so
+	// closing the last tool leaves nothing running. A terminal REPL is a controller of its own.
 	if (argv.flags.idleTimeout <= 0 || process.stdin.isTTY) return;
 
-	const onControllerCount = createIdleExit(argv.flags.idleTimeout * 1000, () => {
-		system('gray', `No controller for ${argv.flags.idleTimeout}s, exiting`);
+	const onAttachedCount = createIdleExit(argv.flags.idleTimeout * 1000, () => {
+		system(
+			'gray',
+			`No controller or device for ${argv.flags.idleTimeout}s, exiting (--idle-timeout 0 keeps the bridge running)`,
+		);
 		process.exit(0);
 	});
 
-	session.onController((_connected, count) => onControllerCount(count));
+	let controllers = 0;
+	let deviceAttached = false;
+	const reportAttached = () => onAttachedCount(controllers + (deviceAttached ? 1 : 0));
+
+	session.onController((_connected, count) => {
+		controllers = count;
+		reportAttached();
+	});
+
+	session.onDevice((connected) => {
+		deviceAttached = connected;
+		reportAttached();
+	});
 }
 
 function handleDeviceMessage(raw: string) {
