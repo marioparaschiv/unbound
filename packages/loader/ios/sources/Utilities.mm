@@ -8,6 +8,7 @@
 #import <sys/sysctl.h>
 
 #import "CoreBridge.h"
+#import "JailbreakDetection.h"
 #import "Utilities+CodeSignature.h"
 
 #if __has_include(<net/route.h>)
@@ -578,7 +579,7 @@ static const NSTimeInterval kAlertRetrySeconds = 0.5;
 
 + (BOOL)isJailbroken
 {
-    if (access("/var/mobile", R_OK) == 0 || access("/var/jb", F_OK) == 0)
+    if (access("/var/mobile", R_OK) == 0 || access("/var/jb", F_OK) == 0 || hasJailbreakBootstrap())
     {
         return YES;
     }

@@ -3,3 +3,4 @@
 #include <string>
 
 std::string detectedJailbreak();
+bool hasJailbreakBootstrap();

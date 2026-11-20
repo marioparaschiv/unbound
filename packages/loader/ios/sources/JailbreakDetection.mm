@@ -6,6 +6,30 @@
 
 #include "LoaderEnvironment.h"
 
+static NSString *bootstrapRootOfImage(const char *path)
+{
+    if (!path)
+    {
+        return nil;
+    }
+
+    NSString *image = [@(path) stringByResolvingSymlinksInPath];
+    for (NSString *suffix in @[
+             @"/Library/MobileSubstrate/DynamicLibraries/", @"/usr/lib/TweakInject/",
+             @"/usr/lib/ellekit/", @"/usr/lib/TweakLoader.dylib", @"/usr/lib/libellekit.dylib",
+             @"/usr/lib/libsubstrate.dylib"
+         ])
+    {
+        NSRange range = [image rangeOfString:suffix];
+        if (range.location != NSNotFound && range.location > 0)
+        {
+            return [image substringToIndex:range.location];
+        }
+    }
+
+    return nil;
+}
+
 static NSString *activeBootstrapRoot()
 {
     auto rootGetter  = reinterpret_cast<const char *(*)()>(dlsym(RTLD_DEFAULT, "get_jbroot"));
@@ -16,23 +40,31 @@ static NSString *activeBootstrapRoot()
     }
 
     Dl_info info{};
-    if (!dladdr(reinterpret_cast<const void *>(&detectedJailbreak), &info) || !info.dli_fname)
+    if (dladdr(reinterpret_cast<const void *>(&detectedJailbreak), &info))
     {
-        return nil;
+        NSString *own = bootstrapRootOfImage(info.dli_fname);
+        if (own)
+        {
+            return own;
+        }
     }
 
-    NSString *image = [@(info.dli_fname) stringByResolvingSymlinksInPath];
-    for (NSString *suffix in
-         @[ @"/Library/MobileSubstrate/DynamicLibraries/", @"/usr/lib/TweakInject/" ])
+    uint32_t count = _dyld_image_count();
+    for (uint32_t index = 0; index < count; ++index)
     {
-        NSRange range = [image rangeOfString:suffix];
-        if (range.location != NSNotFound && range.location > 0)
+        NSString *injected = bootstrapRootOfImage(_dyld_get_image_name(index));
+        if (injected)
         {
-            return [image substringToIndex:range.location];
+            return injected;
         }
     }
 
     return nil;
+}
+
+bool hasJailbreakBootstrap()
+{
+    return activeBootstrapRoot() != nil;
 }
 
 std::string detectedJailbreak()
