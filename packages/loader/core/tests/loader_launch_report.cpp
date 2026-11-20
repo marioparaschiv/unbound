@@ -132,5 +132,15 @@ int main()
     checkNativeCrashes();
     checkReport();
     checkState();
+    assert(loader::nativeCrashOutsideUnbound(
+        "Signal 11\n#0 0x1 libsystem_platform.dylib + 0x18e4 _platform_strlen\n#1 0x2 "
+        "DiscordMediaEngine + 0x57294\nThread 1\n#0 0x3 Unbound.dylib + 0x10"));
+    assert(!loader::nativeCrashOutsideUnbound(
+        "Signal 11\n#0 0x1 libobjc.A.dylib + 0x10 objc_release\n#1 0x2 Unbound.dylib + 0x20"));
+    assert(!loader::nativeCrashOutsideUnbound("Signal 6\n#0 0x1 hermesvm + 0x10"));
+    assert(!loader::nativeCrashOutsideUnbound(
+        "Signal 11\nAddon {\"id\":\"unbound.example\"}\n#0 0x1 Discord + 0x10"));
+    assert(!loader::nativeCrashOutsideUnbound(""));
+    assert(!loader::nativeCrashOutsideUnbound("Signal 11"));
     return 0;
 }

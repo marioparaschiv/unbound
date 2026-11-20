@@ -1,6 +1,8 @@
 #include <stdexcept>
 
 #include "LoaderBundleRecord.h"
+#include "LoaderBundleSignature.h"
+#include "LoaderCrashHandler.h"
 #include "LoaderDigestCache.h"
 #include "LoaderFiles.h"
 #include "LoaderLaunchReport.h"
@@ -135,7 +137,15 @@ std::string BundleUpdater::resolveBundlePath()
             preferences::setBundleEtag(settings_, "");
         }
 
-        if (fileExists(candidate + ".attempting"))
+        if (fileExists(candidate + ".attempting")
+            && nativeCrashOutsideUnbound(previousNativeCrash()))
+        {
+            log(LogLevel::Warning, LOG_CATEGORY_UPDATER,
+                "Kept the new bundle: Discord crashed outside Unbound before it ran long enough to "
+                "count as healthy, so it gets another try.");
+            removeFile(candidate + ".attempting");
+        }
+        else if (fileExists(candidate + ".attempting"))
         {
             log(LogLevel::Warning, LOG_CATEGORY_UPDATER,
                 "Discarded the new bundle: Discord closed before it ran long enough to count as "
@@ -306,7 +316,8 @@ void BundleUpdater::discardFailedBundle(const std::string &path)
     nlohmann::json record = parseBundleRecord(readTextFile(path + kBundleTrustSuffix));
     std::optional<BundleManifest> manifest =
         parseBundleManifest(bundleRecordField(record, "manifest"));
-    if (manifest && !manifest->revision.empty())
+    if (manifest && !manifest->revision.empty()
+        && !isDevelopmentBundleURL(preferences::updateURL(settings_)))
     {
         preferences::setRejectedRevision(settings_, manifest->revision);
         log(LogLevel::Warning, LOG_CATEGORY_UPDATER,

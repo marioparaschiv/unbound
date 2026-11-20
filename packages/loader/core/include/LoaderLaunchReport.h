@@ -61,6 +61,7 @@ bool recordCrash(const std::string &directory, const std::string &stack, int64_t
 std::string bundleStateName(BundleState state);
 std::string nativeCrashHeadline(const std::string &stack);
 std::string describeNativeCrash(const std::string &stack);
+bool nativeCrashOutsideUnbound(const std::string &stack);
 
 nlohmann::json launchReportJSON(const LaunchReport &report, const std::string &nativeCrash,
                                 const std::vector<NativeCrashRecord> &history = {});
