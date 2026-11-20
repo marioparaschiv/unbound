@@ -47,7 +47,7 @@ describe('crash reports', () => {
 
 		expect(response.status).toBe(200);
 
-		const { id } = parse(crashReportResponseSchema, await response.json());
+		const { id, unfiled } = parse(crashReportResponseSchema, await response.json());
 		const [stored] = await ctx.db.select().from(crashReport).where(eq(crashReport.id, id));
 
 		expect(stored?.kind).toBe('freeze');
@@ -56,6 +56,7 @@ describe('crash reports', () => {
 		expect(stored?.seconds).toBe(9.5);
 		expect(stored?.message).toBeNull();
 		expect(stored?.log).toBeNull();
+		expect(unfiled).toBe('unavailable');
 	});
 
 	test('stores the log lines a report carries', async () => {
@@ -192,5 +193,22 @@ describe('crash issues', () => {
 		);
 		expect(calls[0]?.body.labels).toEqual(['Bug', 'crash', 'iOS']);
 		expect(calls[0]?.body.body).not.toContain('Failed to start addon');
+	});
+
+	test('files a crash in Discord itself', async () => {
+		const { addon: _addon, ...withoutAddon } = native;
+		const answer = parse(
+			crashReportResponseSchema,
+			await (
+				await sendFiled(
+					{ ...withoutAddon, stack: 'Signal 11\n#0 0x1 Discord + 0x10 main' },
+					'203.0.113.23',
+				)
+			).json(),
+		);
+
+		expect(answer.origin).toBe('discord');
+		expect(answer.issue?.number).toBe(77);
+		expect(answer.unfiled).toBeUndefined();
 	});
 });

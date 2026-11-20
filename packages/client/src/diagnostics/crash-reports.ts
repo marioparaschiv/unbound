@@ -1,4 +1,4 @@
-import type { CrashOrigin } from '@unbound-app/contracts/crash-reports';
+import type { CrashOrigin, CrashUnfiledReason } from '@unbound-app/contracts/crash-reports';
 import { createLogger } from '@unbound-app/logger';
 import uuid from '@unbound-app/utils/uuid';
 
@@ -34,10 +34,19 @@ type CrashReportIssue = { number: number; url: string; created: boolean };
 const RETRIES_PER_LAUNCH = 3;
 const MAX_STACK = 16_000;
 
-type SentCrashReport = { id: string; origin?: CrashOrigin; issue?: CrashReportIssue };
+type SentCrashReport = {
+	id: string;
+	origin?: CrashOrigin;
+	issue?: CrashReportIssue;
+	unfiled?: CrashUnfiledReason;
+};
 
 /** What filing a recorded crash on GitHub came to. */
-export type FiledCrash = { origin?: CrashOrigin; issue?: CrashIssueLink };
+export type FiledCrash = {
+	origin?: CrashOrigin;
+	issue?: CrashIssueLink;
+	unfiled?: CrashUnfiledReason;
+};
 
 const logger = createLogger('Crash Reports');
 
@@ -57,9 +66,19 @@ async function readLoaderLog(): Promise<string | undefined> {
 	}
 }
 
+async function addonName(id: string | undefined): Promise<string> {
+	if (!id) {
+		return '';
+	}
+
+	const { plugins } = await import('~/plugins/manager');
+
+	return plugins.getAddon(id)?.manifest.name ?? id;
+}
+
 async function announceReport(
 	issue: CrashReportIssue | undefined,
-	origin: CrashOrigin | undefined,
+	unfiled: CrashUnfiledReason | undefined,
 	addon: string | undefined,
 ) {
 	const { info } = await import('~/toasts/api');
@@ -68,10 +87,10 @@ async function announceReport(
 		info(issue.created ? 'UNBOUND_CRASH_REPORT_FILED' : 'UNBOUND_CRASH_REPORT_JOINED', {
 			number: issue.number,
 		});
-	} else if (origin === 'discord' || origin === 'system') {
-		info('UNBOUND_CRASH_REPORT_OUTSIDE');
-	} else if (origin === 'addon' && addon) {
-		info('UNBOUND_CRASH_REPORT_THIRD_PARTY', { name: addon });
+	} else if (unfiled === 'third-party') {
+		info('UNBOUND_CRASH_REPORT_THIRD_PARTY', { name: await addonName(addon) });
+	} else {
+		info('UNBOUND_CRASH_REPORT_SENT');
 	}
 }
 
@@ -129,7 +148,7 @@ async function sendCrashReport(
 		}
 
 		const request = createUnboundClient();
-		const { id, issue, origin, seen } = await request('POST /api/v1/crash-reports', {
+		const { id, issue, origin, unfiled, seen } = await request('POST /api/v1/crash-reports', {
 			body: report,
 		});
 
@@ -140,16 +159,24 @@ async function sendCrashReport(
 				reportId: id,
 				...(origin ? { origin } : {}),
 				...(issue ? { issue: { number: issue.number, url: issue.url } } : {}),
-				...(!issue && filesIssue(origin, event.addon?.id) ? { issuePending: true } : {}),
+				...(!issue && unfiled !== 'third-party' ? { issuePending: true } : {}),
 				...(seen ? { seen } : {}),
 			});
 		}
 
 		if (announce) {
-			await announceReport(issue, origin, event.addon?.id);
+			const blamed =
+				event.addon?.id ?? (event.stack ? nativeCrashAddon(event.stack) : undefined);
+
+			await announceReport(issue, unfiled, blamed);
 		}
 
-		return { id, ...(origin ? { origin } : {}), ...(issue ? { issue } : {}) };
+		return {
+			id,
+			...(origin ? { origin } : {}),
+			...(issue ? { issue } : {}),
+			...(unfiled ? { unfiled } : {}),
+		};
 	} catch (error) {
 		logger.warn(`Failed to send a ${event.kind} crash report:`, error);
 
@@ -330,10 +357,6 @@ async function sendRecordedCrash(
 		: undefined;
 }
 
-function filesIssue(origin: CrashOrigin | undefined, addon: string | undefined): boolean {
-	return origin === 'unbound' || (origin === 'addon' && Boolean(addon?.startsWith('unbound.')));
-}
-
 async function requestIssue(reportId: string): Promise<FiledCrash | undefined> {
 	try {
 		const { createUnboundClient } = await import('~/account/client');
@@ -369,18 +392,23 @@ export async function fileRecordedCrash(
 	const filed = sent.issue ? sent : await requestIssue(sent.id);
 	const origin = filed?.origin ?? sent.origin;
 	const issue = filed?.issue && { number: filed.issue.number, url: filed.issue.url };
+	const unfiled = issue ? undefined : (filed?.unfiled ?? sent.unfiled);
 
 	await markCrashReported(record.at, {
 		reportId: sent.id,
 		...(origin ? { origin } : {}),
 		...(issue
 			? { issue, issuePending: false }
-			: origin === 'addon'
+			: unfiled === 'third-party'
 				? {}
 				: { issuePending: true }),
 	});
 
-	return { ...(origin ? { origin } : {}), ...(issue ? { issue } : {}) };
+	return {
+		...(origin ? { origin } : {}),
+		...(issue ? { issue } : {}),
+		...(unfiled ? { unfiled } : {}),
+	};
 }
 
 /**

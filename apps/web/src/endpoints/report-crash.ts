@@ -1,8 +1,8 @@
 import { crashReportResponseSchema, crashReportSchema } from '@unbound-app/contracts/crash-reports';
 import { Type } from '@unbound-app/contracts/schema';
 
+import { crashOrigin, filesIssue, unfiledReason } from '~/lib/crash-issues/crash-origin';
 import { withdrawOnCrashSpike } from '~/lib/crash-issues/crash-withdrawal';
-import { crashOrigin, filesIssue } from '~/lib/crash-issues/crash-origin';
 import { fileCrashIssue } from '~/lib/crash-issues/file-crash-issue';
 import { crashFingerprint } from '~/lib/crash-issues/fingerprint';
 import { crashSpread } from '~/lib/crash-issues/crash-spread';
@@ -50,7 +50,16 @@ const reportCrashEndpoint = endpoint(
 
 		const seen = await crashSpread(ctx, fingerprint, body.clientVersion);
 
-		return issue ? { id, origin, issue, seen } : { id, origin, seen };
+		if (issue) {
+			return { id, origin, issue, seen };
+		}
+
+		return {
+			id,
+			origin,
+			unfiled: unfiledReason(body, origin, Boolean(ctx.env.GITHUB_ISSUES_TOKEN)),
+			seen,
+		};
 	},
 	{ rateLimit: { bucket: 'crash-reports', budget: 'CRASH_REPORTS' } },
 );

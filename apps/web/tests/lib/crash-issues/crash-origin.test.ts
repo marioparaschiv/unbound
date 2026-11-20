@@ -1,7 +1,12 @@
 import type { CrashReport } from '@unbound-app/contracts/crash-reports';
 import { describe, expect, test } from 'bun:test';
 
-import { crashOrigin, filesIssue, nativeCrashAddon } from '~/lib/crash-issues/crash-origin';
+import {
+	crashOrigin,
+	filesIssue,
+	nativeCrashAddon,
+	unfiledReason,
+} from '~/lib/crash-issues/crash-origin';
 
 const base: CrashReport = {
 	kind: 'native-crash',
@@ -33,7 +38,11 @@ describe('crashOrigin', () => {
 		expect(crashOrigin(native('libsystem_kernel.dylib + 0x1', 'UIKitCore + 0x2'))).toBe(
 			'system',
 		);
-		expect(filesIssue(native('Discord + 0x2'), 'discord')).toBe(false);
+	});
+
+	test('files crashes in Discord and the system too', () => {
+		expect(filesIssue(native('Discord + 0x2'), 'discord')).toBe(true);
+		expect(filesIssue(native('UIKitCore + 0x2'), 'system')).toBe(true);
 	});
 
 	test('reads only the crashing thread, not the other threads after it', () => {
@@ -65,6 +74,9 @@ describe('crashOrigin', () => {
 		expect(crashOrigin(ours)).toBe('addon');
 		expect(filesIssue(ours, 'addon')).toBe(true);
 		expect(filesIssue(theirs, 'addon')).toBe(false);
+		expect(unfiledReason(theirs, 'addon', true)).toBe('third-party');
+		expect(unfiledReason(ours, 'addon', true)).toBe('failed');
+		expect(unfiledReason(ours, 'addon', false)).toBe('unavailable');
 	});
 
 	test('reads the addon a native crash names', () => {

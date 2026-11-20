@@ -185,13 +185,25 @@ describe('reportNativeCrash', () => {
 		expect(toasts).toEqual([['UNBOUND_CRASH_REPORT_JOINED', { number: 77 }]]);
 	});
 
-	test("says when the crash was Discord's own and opened no issue", async () => {
+	test('says the report was sent when its issue is not open yet', async () => {
 		settings.set('crash-reports', true);
-		answer = (count) => ({ id: `report-${count}`, origin: 'discord' });
+		answer = (count) => ({ id: `report-${count}`, origin: 'discord', unfiled: 'failed' });
 
 		await reportNativeCrash(launch);
 
-		expect(toasts).toEqual([['UNBOUND_CRASH_REPORT_OUTSIDE']]);
+		expect(toasts).toEqual([['UNBOUND_CRASH_REPORT_SENT']]);
+	});
+
+	test("never calls one of Unbound's own plugins third-party", async () => {
+		settings.set('crash-reports', true);
+		answer = (count) => ({ id: `report-${count}`, origin: 'addon', unfiled: 'unavailable' });
+
+		await reportNativeCrash({
+			...launch,
+			crashStack: `${launch.crashStack}\nAddon {"id":"unbound.chat-bubbles"}`,
+		});
+
+		expect(toasts).toEqual([['UNBOUND_CRASH_REPORT_SENT']]);
 	});
 });
 
@@ -239,7 +251,7 @@ describe('fileRecordedCrash', () => {
 	});
 
 	test('reports a third-party crash without an issue', async () => {
-		issueAnswer = () => ({ origin: 'addon' });
+		issueAnswer = () => ({ origin: 'addon', unfiled: 'third-party' });
 
 		const filed = await fileRecordedCrash({
 			at: 8,
@@ -248,7 +260,7 @@ describe('fileRecordedCrash', () => {
 			reportId: 'r',
 		});
 
-		expect(filed).toEqual({ origin: 'addon' });
+		expect(filed).toEqual({ origin: 'addon', unfiled: 'third-party' });
 	});
 });
 

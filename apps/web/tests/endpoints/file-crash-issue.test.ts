@@ -92,16 +92,16 @@ async function requestIssue(id: string) {
 }
 
 describe('requested crash issues', () => {
-	test('files a crash the server kept off GitHub when its user asks', async () => {
+	test('files a system crash when it is reported, and joins that issue when its user asks', async () => {
 		const id = await store(systemCrash);
 
-		expect(calls).toHaveLength(0);
+		expect(calls.map(({ path }) => path)).toEqual(['/repos/owner/repo/issues']);
 
 		const answer = parse(crashIssueResponseSchema, await (await requestIssue(id)).json());
 
 		expect(answer.origin).toBe('system');
-		expect(answer.issue?.created).toBe(true);
-		expect(calls.map(({ path }) => path)).toEqual(['/repos/owner/repo/issues']);
+		expect(answer.issue?.created).toBe(false);
+		expect(calls).toHaveLength(1);
 	});
 
 	test('joins the open issue instead of opening another', async () => {
@@ -121,7 +121,7 @@ describe('requested crash issues', () => {
 		});
 		const answer = parse(crashIssueResponseSchema, await (await requestIssue(id)).json());
 
-		expect(answer).toEqual({ origin: 'addon' });
+		expect(answer).toEqual({ origin: 'addon', unfiled: 'third-party' });
 		expect(calls).toHaveLength(0);
 	});
 
