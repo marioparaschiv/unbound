@@ -141,6 +141,39 @@ std::vector<std::string> injectedIOSLibraries(const std::vector<std::string> &im
     return {found.begin(), found.end()};
 }
 
+std::map<std::string, std::string>
+injectedLibraryPackages(const std::vector<std::pair<std::string, std::string>> &packageLists,
+                        const std::vector<std::string> &libraries)
+{
+    const std::set<std::string> wanted(libraries.begin(), libraries.end());
+    std::map<std::string, std::string> owners;
+    for (const auto &[package, list] : packageLists)
+    {
+        std::istringstream lines(list);
+        std::string line;
+        while (std::getline(lines, line))
+        {
+            if (!line.empty() && line.back() == '\r')
+            {
+                line.pop_back();
+            }
+
+            if (!line.ends_with(".dylib"))
+            {
+                continue;
+            }
+
+            const std::string name = withoutSuffix(baseName(line), ".dylib");
+            if (wanted.count(name) != 0 && owners.count(name) == 0)
+            {
+                owners[name] = package;
+            }
+        }
+    }
+
+    return owners;
+}
+
 std::vector<std::string> injectedAndroidModules(const std::string &memoryMaps,
                                                 const std::string &ownPackage)
 {

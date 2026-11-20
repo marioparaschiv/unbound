@@ -16,6 +16,7 @@
 #import "EnvironmentReport.h"
 #import "FileSystem.h"
 #include "JailbreakDetection.h"
+#include "LoaderEnvironment.h"
 #include "LoaderInjectedLibraries.h"
 #include "NativeFFIClosureProbe.h"
 #include "NativePlatformBridge.h"
@@ -411,6 +412,58 @@ static std::vector<std::string> loadedImagePaths()
     return paths;
 }
 
+static std::string bootstrapRoot(const std::vector<std::string> &images)
+{
+    for (const std::string &image : images)
+    {
+        if (std::optional<std::string> root = loader::environment::bootstrapRootOfImage(image))
+        {
+            return *root;
+        }
+    }
+
+    return "/var/jb";
+}
+
+static std::vector<std::pair<std::string, std::string>> dpkgFileLists(const std::string &root)
+{
+    std::vector<std::pair<std::string, std::string>> lists;
+    NSString *folder =
+        [unbound::ios::toNSString(root) stringByAppendingPathComponent:@"Library/dpkg/info"];
+    for (NSString *file in [NSFileManager.defaultManager contentsOfDirectoryAtPath:folder
+                                                                             error:nil])
+    {
+        if (![file.pathExtension isEqualToString:@"list"])
+        {
+            continue;
+        }
+
+        NSString *text =
+            [NSString stringWithContentsOfFile:[folder stringByAppendingPathComponent:file]
+                                      encoding:NSUTF8StringEncoding
+                                         error:nil];
+        if (text)
+        {
+            lists.emplace_back(unbound::ios::toStdString(file.stringByDeletingPathExtension),
+                               unbound::ios::toStdString(text));
+        }
+    }
+
+    return lists;
+}
+
+static const std::map<std::string, std::string> &injectedPackages()
+{
+    static const std::map<std::string, std::string> packages = [] {
+        std::vector<std::string> images   = loadedImagePaths();
+        std::vector<std::string> injected = loader::injectedIOSLibraries(images);
+        return injected.empty() ? std::map<std::string, std::string>{}
+                                : loader::injectedLibraryPackages(
+                                      dpkgFileLists(bootstrapRoot(images)), injected);
+    }();
+    return packages;
+}
+
 static nlohmann::json deviceStateJSON()
 {
     nlohmann::json state = {
@@ -418,6 +471,7 @@ static nlohmann::json deviceStateJSON()
         {"memoryWarnings", memoryWarnings.load()},
         {"thermal", thermalName(NSProcessInfo.processInfo.thermalState)},
         {"injected", loader::injectedIOSLibraries(loadedImagePaths())},
+        {"injectedPackages", injectedPackages()},
         {"ffiClosures", loader::ffi::closuresExecutable()},
         {"ffiClosureProbe", loader::ffi::closureProbe()},
         {"hookConflicts", loader::ios::replacingHookConflicts()},

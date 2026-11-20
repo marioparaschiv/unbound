@@ -21,6 +21,33 @@ export function scrubBreadcrumbs(breadcrumbs: string[]): string[] {
 		.map((line) => scrubLogLine(line).replace(SNOWFLAKE, '<id>').slice(0, 240));
 }
 
+function readInjectedPackages(): Record<string, string> {
+	try {
+		return globalThis.NativePlatform?.device.getState?.()?.injectedPackages ?? {};
+	} catch {
+		return {};
+	}
+}
+
+/**
+ * @description Names the package that installed each injected library, so a crash report shows which tweak to blame.
+ * @param names The injected library names.
+ * @returns The names, as `name (package)` where the package is known.
+ */
+export function withPackages(names: string[] | undefined): string[] | undefined {
+	if (!names) {
+		return undefined;
+	}
+
+	const packages = readInjectedPackages();
+
+	return names.map((name) => {
+		const owner = packages[name];
+
+		return typeof owner === 'string' && owner ? `${name} (${owner})`.slice(0, 120) : name;
+	});
+}
+
 /**
  * @description Describes what else was running for a crash report: Discord's build, how it was installed, injected
  * libraries, enabled plugins, Discord's last breadcrumbs and the screen it showed.
@@ -39,7 +66,7 @@ export async function crashContext(breadcrumbs: string[]): Promise<CrashContext>
 
 	const discordBuild = presentText(info?.discordBuild, 32);
 	const installSource = presentText(info?.appSource, 120);
-	const injected = info?.injected?.slice(0, CRASH_CONTEXT_LIMITS.injected);
+	const injected = withPackages(info?.injected)?.slice(0, CRASH_CONTEXT_LIMITS.injected);
 	const addons = info?.enabledPlugins?.slice(0, CRASH_CONTEXT_LIMITS.addons);
 	const scrubbed = scrubBreadcrumbs(breadcrumbs);
 	const route = (await currentRoutePath())?.slice(0, 120);

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { scrubBreadcrumbs } from '~/diagnostics/crash-context';
+import { scrubBreadcrumbs, withPackages } from '~/diagnostics/crash-context';
 
 describe('scrubBreadcrumbs', () => {
 	test('blanks Discord ids and secrets, keeping the newest forty', () => {
@@ -14,5 +14,18 @@ describe('scrubBreadcrumbs', () => {
 		expect(scrubbed).toHaveLength(40);
 		expect(scrubbed.at(-2)).toBe('12:00:01 navigation: /channels/<id>/<id>');
 		expect(scrubbed.at(-1)).toBe('12:00:02 http: authorization=[redacted]');
+	});
+});
+
+describe('withPackages', () => {
+	test('names the package that installed each injected library', () => {
+		Reflect.set(globalThis, 'NativePlatform', {
+			device: { getState: () => ({ injectedPackages: { Choicy: 'com.opa334.choicy' } }) },
+		});
+
+		expect(withPackages(['Choicy', 'Crane'])).toEqual(['Choicy (com.opa334.choicy)', 'Crane']);
+		expect(withPackages(undefined)).toBeUndefined();
+
+		Reflect.deleteProperty(globalThis, 'NativePlatform');
 	});
 });
