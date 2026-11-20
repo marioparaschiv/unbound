@@ -6,7 +6,7 @@ import { keepIOSNameRoom as ios } from '~/native/ios/name-room';
 
 const keepNameRoom = native.definePlatform({ ios, android });
 
-let release: (() => void) | undefined;
+let release: (() => void | Promise<void>) | undefined;
 
 /**
  * @description Keeps message names readable beside the platform symbols this plugin adds to their timestamps.
@@ -21,11 +21,13 @@ export function startNameRoom(context: PluginContext): void {
 }
 
 /**
- * @description Removes the hook `startNameRoom` installed.
+ * @description Removes the hook `startNameRoom` installed, once the timestamps it changed are restored.
  */
-export function stopNameRoom(): void {
-	release?.();
+export async function stopNameRoom(): Promise<void> {
+	const current = release;
+
 	release = undefined;
+	await current?.();
 }
 
 export default { startNameRoom, stopNameRoom };

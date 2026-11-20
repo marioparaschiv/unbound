@@ -9,6 +9,7 @@ const MAX_TAG_DEPTH = 8;
 const UNBOUNDED = 10_000;
 const TRUNCATE_MIDDLE = 5;
 const SYMBOLS_SEPARATOR = ' • ';
+const TRUNCATED_KEY = '__unboundPlatformIndicatorsTimestamps';
 
 type BoxedRect = {
 	value?: BoxedRect;
@@ -53,17 +54,69 @@ function setFrameOf(
 	]);
 }
 
+type TruncatedLabel = { label: NativeObjectHandle; mode: number };
+
+type TruncationState = { labels: TruncatedLabel[]; stopped: boolean };
+
+type TruncationHolder = Record<typeof TRUNCATED_KEY, TruncationState | undefined>;
+
+function truncation(): TruncationState {
+	'worklet';
+	const holder = globalThis as unknown as TruncationHolder;
+
+	holder[TRUNCATED_KEY] ??= { labels: [], stopped: false };
+
+	return holder[TRUNCATED_KEY];
+}
+
 function keepSymbolsVisible(objc: NativeObjCBridge, timestamp: NativeObjectHandle): boolean {
 	'worklet';
 	const text = objc.invoke(timestamp, 'text', []);
+	const mode = Number(objc.invoke(timestamp, 'lineBreakMode', []));
+	const { labels, stopped } = truncation();
 
-	if (typeof text !== 'string' || !text.includes(SYMBOLS_SEPARATOR)) return false;
+	if (stopped) return false;
 
-	if (Number(objc.invoke(timestamp, 'lineBreakMode', [])) === TRUNCATE_MIDDLE) return false;
+	const index = labels.findIndex(({ label }) => objc.call(label, 'isEqual:', timestamp));
+
+	if (typeof text !== 'string' || !text.includes(SYMBOLS_SEPARATOR)) {
+		if (index >= 0) {
+			objc.invoke(timestamp, 'setLineBreakMode:', [labels[index]!.mode]);
+			labels.splice(index, 1);
+		}
+
+		return false;
+	}
+
+	if (mode === TRUNCATE_MIDDLE) return false;
+
+	if (index < 0) labels.push({ label: timestamp, mode });
 
 	objc.invoke(timestamp, 'setLineBreakMode:', [TRUNCATE_MIDDLE]);
 
 	return true;
+}
+
+/**
+ * @description Puts back the line breaking of every timestamp this plugin cut in the middle, so turning it off
+ * leaves Discord's timestamps as they were.
+ * @param scope The plugin's UI scope, before it is disposed.
+ */
+export function restoreTimestamps(scope: NativeUIScope) {
+	'worklet';
+	const objc = scope.objc as NativeObjCBridge;
+	const state = truncation();
+
+	state.stopped = true;
+
+	for (const { label, mode } of state.labels.splice(0)) {
+		try {
+			objc.invoke(label, 'setLineBreakMode:', [mode]);
+			objc.invoke(label, 'setNeedsLayout', []);
+		} catch (error) {
+			reportWorkletError('Platform Indicators', error);
+		}
+	}
 }
 
 function naturalWidth(objc: NativeObjCBridge, label: NativeObjectHandle): number {
@@ -153,6 +206,8 @@ export function installNameRoom(scope: NativeUIScope) {
 	'worklet';
 	const objc = scope.objc as NativeObjCBridge;
 
+	truncation().stopped = false;
+
 	if (objc.getClass(TAG_VIEW_CLASS)) {
 		objc.hook(TAG_VIEW_CLASS, 'layoutSubviews', {
 			after: ({ self }) => {
@@ -178,4 +233,4 @@ export function installNameRoom(scope: NativeUIScope) {
 	});
 }
 
-export default { installNameRoom, keepNameRoom };
+export default { installNameRoom, keepNameRoom, restoreTimestamps };
