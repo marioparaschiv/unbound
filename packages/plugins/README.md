@@ -1,6 +1,6 @@
 # Plugins
 
-231 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
+232 first-party plugins for Unbound. Install them from the [store](https://unbound.rip/plugins).
 
 <!-- Generated from each manifest.json by `bun run plugins:readme`. Do not edit by hand. -->
 
@@ -148,6 +148,7 @@
 - <img src="../../assets/plugins/readme-icons/hourglass-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Necro Reply Warning](https://unbound.rip/addons/unbound.necro-reply-warning): Asks before you reply to a message older than a month, so you don't revive a long-dead conversation by accident.
 - <img src="../../assets/plugins/readme-icons/bell-icon.svg" width="20" height="20" align="absmiddle" alt=""> [New Guild Settings](https://unbound.rip/addons/unbound.new-guild-settings): Mutes new servers and applies your notification and channel defaults as soon as you join them.
 - <img src="../../assets/plugins/readme-icons/user-plus-icon.svg" width="20" height="20" align="absmiddle" alt=""> [New Member Sprout](https://unbound.rip/addons/unbound.new-member-sprout): Shows desktop's new member sprout beside people who joined the server in the last week, with its tooltip.
+- <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [Night Images](https://unbound.rip/addons/unbound.night-images): Dims very bright images and videos in chat while you use a dark theme or during the night hours you choose.
 - <img src="../../assets/plugins/readme-icons/image-icon.svg" width="20" height="20" align="absmiddle" alt=""> [No Image Mosaic](https://unbound.rip/addons/unbound.no-image-mosaic): Shows each image of a message on its own row at full size, instead of cropped into a grid.
 - <img src="../../assets/plugins/readme-icons/bell-slash-icon.svg" width="20" height="20" align="absmiddle" alt=""> [No Pending Count](https://unbound.rip/addons/unbound.no-pending-count): Hides the red counts for incoming friend requests and message requests.
 - <img src="../../assets/plugins/readme-icons/ic-swipe-reply-24px.svg" width="20" height="20" align="absmiddle" alt=""> [No Reply Mention](https://unbound.rip/addons/unbound.no-reply-mention): Disable reply mentions by default.
