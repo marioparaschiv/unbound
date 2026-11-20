@@ -4950,7 +4950,7 @@ export type NativeObjCBridge = {
 		value: NativeObjCResult,
 		policy?: string,
 	): void;
-	/** Builds a registered struct, such as `CGRect` or `UIEdgeInsets`, to pass to native calls. */
+	/** Builds a registered struct, such as `CGRect`, `UIEdgeInsets` or Yoga's `YGValue`, to pass to native calls. */
 	struct<T extends NativeStructFields = NativeStructFields>(
 		name: string,
 		fields: T,

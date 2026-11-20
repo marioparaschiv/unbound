@@ -51,10 +51,11 @@ static std::string scalar(const std::optional<NativeNumberArgument> &value, cons
     });
 }
 
-static std::string batch(const NativeArgumentShape &argument, const char *encoding)
+static std::string batch(const NativeArgumentShape &argument, const char *encoding,
+                         size_t encodingSize = 0)
 {
     return failure([&] {
-        validateBatchArgument(argument, encoding);
+        validateBatchArgument(argument, encoding, encodingSize);
     });
 }
 
@@ -116,6 +117,12 @@ int main()
 
     assert(batch(stringArgument(), "v") == "Native batch method argument type is unsupported");
     assert(batch(stringArgument(), "?") == "Native batch method argument type is unsupported");
+
+    assert(batch(boxedNumber(number(1e-314), "d"), "{YGValue=fi}", 8).empty());
+    assert(batch(boxedNumber(number(1), "d"), "{CGSize=dd}", 16)
+           == "Native batch struct argument has the wrong layout");
+    assert(batch(boxedNumber(number(1), "i"), "{YGValue=fi}", 8)
+           == "Native batch struct argument has the wrong layout");
 
     assert(batch(stringArgument(), "@").empty());
     assert(batch(nullArgument(), "@").empty());

@@ -78,6 +78,27 @@ int main()
     std::memcpy(&parsed, rangeBytes.data(), sizeof(parsed));
     require(parsed.location == 4 && parsed.length == 9, "an NSRange is written as unsigned longs");
 
+    jsi::Value yoga = runtime->evaluateJavaScript(
+        std::make_shared<jsi::StringBuffer>("({ value: 14, unit: 1 })"), "yoga.js");
+    std::vector<uint8_t> yogaBytes =
+        loader::native::structFromJS(*runtime, *loader::native::structLayout("YGValue"), yoga);
+    float yogaPoints = 0;
+    int32_t yogaUnit = 0;
+    std::memcpy(&yogaPoints, yogaBytes.data(), sizeof(yogaPoints));
+    std::memcpy(&yogaUnit, yogaBytes.data() + 4, sizeof(yogaUnit));
+    require(yogaBytes.size() == 8 && yogaPoints == 14 && yogaUnit == 1,
+            "a YGValue is written as a float and an int32");
+    runtime->global().setProperty(
+        *runtime, "yoga",
+        loader::native::structToJS(*runtime, *loader::native::structLayout("YGValue"),
+                                   yogaBytes.data()));
+    require(runtime->evaluateJavaScript(std::make_shared<jsi::StringBuffer>("JSON.stringify(yoga)"),
+                                        "yoga.js")
+                    .getString(*runtime)
+                    .utf8(*runtime)
+                == R"({"value":14,"unit":1})",
+            "a YGValue reads back as value and unit");
+
     bool rejected = false;
     try
     {

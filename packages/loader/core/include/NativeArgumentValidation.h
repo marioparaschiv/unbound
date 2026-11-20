@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -29,5 +30,6 @@ struct NativeArgumentShape {
 
 void validateScalarArgument(const std::optional<NativeNumberArgument> &number,
                             const std::string &type);
-void validateBatchArgument(const NativeArgumentShape &argument, const char *encoding);
+void validateBatchArgument(const NativeArgumentShape &argument, const char *encoding,
+                           size_t encodingSize = 0);
 }

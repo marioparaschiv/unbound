@@ -45,6 +45,10 @@ static const std::vector<StructLayout> &layouts()
           {"d", 24, StructScalar::Double},
           {"tx", 32, StructScalar::Double},
           {"ty", 40, StructScalar::Double}}},
+        {"YGValue",
+         "{YGValue=fi}",
+         8,
+         {{"value", 0, StructScalar::Float}, {"unit", 4, StructScalar::Int32}}},
     };
     return table;
 }
@@ -64,13 +68,14 @@ const StructLayout *structLayout(std::string_view name)
 
 const StructLayout *structLayoutForTypeName(std::string_view typeName)
 {
-    static constexpr std::array<std::pair<std::string_view, std::string_view>, 6> kRecognized = {{
+    static constexpr std::array<std::pair<std::string_view, std::string_view>, 7> kRecognized = {{
         {"_NSRange", "NSRange"},
         {"CGAffineTransform", "CGAffineTransform"},
         {"UIEdgeInsets", "UIEdgeInsets"},
         {"CGRect", "CGRect"},
         {"CGPoint", "CGPoint"},
         {"CGSize", "CGSize"},
+        {"YGValue", "YGValue"},
     }};
     for (const auto &[needle, name] : kRecognized)
     {
@@ -116,6 +121,20 @@ static jsi::Object childObject(jsi::Runtime &runtime, jsi::Object &parent, std::
 
 static double readScalar(const uint8_t *bytes, const StructField &field)
 {
+    if (field.scalar == StructScalar::Float)
+    {
+        float value = 0;
+        std::memcpy(&value, bytes + field.offset, sizeof(value));
+        return static_cast<double>(value);
+    }
+
+    if (field.scalar == StructScalar::Int32)
+    {
+        int32_t value = 0;
+        std::memcpy(&value, bytes + field.offset, sizeof(value));
+        return static_cast<double>(value);
+    }
+
     if (field.scalar == StructScalar::UnsignedLong)
     {
         uint64_t value = 0;
@@ -130,6 +149,20 @@ static double readScalar(const uint8_t *bytes, const StructField &field)
 
 static void writeScalar(uint8_t *bytes, const StructField &field, double number)
 {
+    if (field.scalar == StructScalar::Float)
+    {
+        float value = static_cast<float>(number);
+        std::memcpy(bytes + field.offset, &value, sizeof(value));
+        return;
+    }
+
+    if (field.scalar == StructScalar::Int32)
+    {
+        int32_t value = static_cast<int32_t>(number);
+        std::memcpy(bytes + field.offset, &value, sizeof(value));
+        return;
+    }
+
     if (field.scalar == StructScalar::UnsignedLong)
     {
         uint64_t value = static_cast<uint64_t>(number);

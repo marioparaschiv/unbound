@@ -120,6 +120,11 @@ std::string nativeFFITypeName(const char *encoding)
         return "struct:CGAffineTransform";
     }
 
+    if (name == "YGValue" && (fields == "fi" || fields == "fI"))
+    {
+        return "struct:YGValue";
+    }
+
     if (name == "CGRect" || name == "_CGRect")
     {
         if (fields == "{CGPoint=dd}{CGSize=dd}" || fields == "{_CGPoint=dd}{_CGSize=dd}"
@@ -162,6 +167,11 @@ const char *nativeStructEncoding(std::string_view name)
     if (name == "CGAffineTransform")
     {
         return "{CGAffineTransform=dddddd}";
+    }
+
+    if (name == "YGValue")
+    {
+        return "{YGValue=fi}";
     }
 
     return nullptr;

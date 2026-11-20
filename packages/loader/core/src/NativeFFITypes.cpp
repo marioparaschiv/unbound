@@ -36,6 +36,7 @@ namespace {
               {"d", "double"},
               {"tx", "double"},
               {"ty", "double"}}},
+            {"YGValue", {{"value", "float"}, {"unit", "i32"}}},
             {"timespec", {{"tv_sec", "i64"}, {"tv_nsec", "i64"}}},
             {"timeval", {{"tv_sec", "i64"}, {"tv_usec", "i64"}}},
         };
