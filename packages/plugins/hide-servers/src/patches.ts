@@ -8,6 +8,7 @@ import { settings } from '@unbound-app/settings';
 import { format, messages } from '@unbound-app/i18n';
 
 import {
+	folderState,
 	type GuildBarNode,
 	type GuildsTree,
 	treeWithoutHiddenGuilds,
@@ -38,7 +39,7 @@ type GuildSheetProps = {
 const SortedGuildStore = flux.getStore('SortedGuild');
 const GuildStore = flux.getStore('Guild');
 
-type Filtered<T> = { source: T; hidden: string; value: T };
+type Filtered<T> = { source: T; key: string; value: T };
 
 const cache = new Map<string, Filtered<unknown>>();
 
@@ -46,14 +47,16 @@ function filterOnce<T>(
 	method: string,
 	source: T,
 	filter: (source: T, hidden: Set<string>) => T,
+	state = '',
 ): T {
 	const cached = cache.get(method) as Filtered<T> | undefined;
+	const key = `${settings.hidden}|${state}`;
 
-	if (cached?.source === source && cached.hidden === settings.hidden) return cached.value;
+	if (cached?.source === source && cached.key === key) return cached.value;
 
 	const value = filter(source, new Set(parseIdList(settings.hidden)));
 
-	cache.set(method, { source, hidden: settings.hidden, value });
+	cache.set(method, { source, key, value });
 
 	return value;
 }
@@ -94,7 +97,9 @@ function hideGuild(guildId: string): void {
  */
 export function patchGuildBar(): void {
 	patcher.after(SortedGuildStore, 'getGuildsTree', ({ result }) =>
-		isGuildsTree(result) ? filterOnce('tree', result, treeWithoutHiddenGuilds) : result,
+		isGuildsTree(result)
+			? filterOnce('tree', result, treeWithoutHiddenGuilds, folderState(result))
+			: result,
 	);
 	patcher.after(SortedGuildStore, 'getFastListGuildFolders', ({ result }) =>
 		isNodeList(result) ? filterOnce('folders', result, withoutHiddenGuilds) : result,

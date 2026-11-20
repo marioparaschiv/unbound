@@ -1,6 +1,7 @@
 export type GuildBarNode = {
 	type: string;
 	id: unknown;
+	expanded?: boolean;
 	children?: GuildBarNode[];
 };
 
@@ -87,6 +88,19 @@ export function treeWithoutHiddenGuilds<T extends GuildsTree>(
 		nodes: indexNodes(children),
 		version: `${String(tree.version)}:${[...hidden].join(',')}`,
 	});
+}
+
+/**
+ * @description Describes which folders are open, since Discord swaps in a new folder node when one opens or closes
+ * while keeping the same tree and version.
+ * @param tree `SortedGuildStore.getGuildsTree()`.
+ * @returns The ids of the open folders, joined.
+ */
+export function folderState(tree: GuildsTree): string {
+	return (tree.root.children ?? [])
+		.filter((node) => node.type === 'folder' && node.expanded)
+		.map((node) => String(node.id))
+		.join(',');
 }
 
 export default withoutHiddenGuilds;

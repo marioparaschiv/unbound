@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { treeWithoutHiddenGuilds, withoutHiddenGuilds } from '~/lib/hidden-guilds';
+import { folderState, treeWithoutHiddenGuilds, withoutHiddenGuilds } from '~/lib/hidden-guilds';
 
 const guild = (id: string) => ({ type: 'guild', id });
 const folder = (id: number, ...children: ReturnType<typeof guild>[]) => ({
@@ -62,5 +62,24 @@ describe('hidden guilds in the tree', () => {
 		const tree = new Tree([guild('1')]);
 
 		expect(treeWithoutHiddenGuilds(tree, new Set(['9']))).toBe(tree);
+	});
+});
+
+describe('folderState', () => {
+	test('names the open folders, so a toggled folder is seen as a change', () => {
+		const tree = {
+			root: {
+				type: 'root',
+				id: 'root',
+				children: [
+					{ type: 'folder', id: 1, expanded: true, children: [] },
+					{ type: 'folder', id: 2, expanded: false, children: [] },
+					{ type: 'guild', id: '3' },
+				],
+			},
+			nodes: {},
+		};
+
+		expect(folderState(tree)).toBe('1');
 	});
 });
