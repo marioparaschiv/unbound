@@ -1,0 +1,178 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+usage() {
+	cat <<'EOF'
+Sets up and drives an iOS 27 vphone built with vphone-cli (roothide, mobile/alpine over SSH).
+  ios27 preflight                       checks host DNS (Mullvad) and free disk before a build
+  ios27 create <name> <vm create args>  preflight, reuse the cached IPSWs, run vphone-cli vm create, cache them again
+  ios27 autolock-off                    stops the VM locking itself, which makes uiopen fail
+  ios27 app-group <group id>            creates the app group container a re-signed IPA needs
+  ios27 install <ipa>                   installs an IPA, killing a hung installd and retrying once
+Env: VPHONE_UDID (default: the only usbmux device named like an iPhone17), VPHONE_PASSWORD (alpine),
+VPHONE_IPSW_CACHE (~/.vphone/ipsw-cache), IOS27_MIN_FREE_GB (63), IOS27_INSTALL_TIMEOUT (300).
+EOF
+}
+
+password=${VPHONE_PASSWORD:-alpine}
+ipsws="$HOME/.vphone/ipsws"
+cache=${VPHONE_IPSW_CACHE:-$HOME/.vphone/ipsw-cache}
+min_free_gb=${IOS27_MIN_FREE_GB:-63}
+install_timeout=${IOS27_INSTALL_TIMEOUT:-300}
+ssh_port=2222
+
+fail() {
+	echo "FAIL $*" >&2
+	exit 1
+}
+
+vm_udid() {
+	if [[ -n ${VPHONE_UDID:-} ]]; then
+		echo "$VPHONE_UDID"
+		return
+	fi
+
+	local found
+	found=$(jb-p1lot device_list 2>/dev/null | python3 -c '
+import json, sys
+devices = json.load(sys.stdin).get("devices", [])
+print("\n".join(d["id"] for d in devices if not d.get("bridge") and d.get("osVersion", "").startswith("27")))
+')
+	[[ $(grep -c . <<<"$found") == 1 ]] || fail "set VPHONE_UDID: found $(grep -c . <<<"$found") iOS 27 devices without a jb-p1lot bridge"
+	echo "$found"
+}
+
+forward_ssh() {
+	nc -z 127.0.0.1 "$ssh_port" 2>/dev/null && return
+	iproxy "$ssh_port" 22 -u "$(vm_udid)" >/dev/null 2>&1 &
+	for _ in 1 2 3 4 5 6 7 8 9 10; do
+		nc -z 127.0.0.1 "$ssh_port" 2>/dev/null && return
+		sleep 1
+	done
+	fail "no SSH on 127.0.0.1:$ssh_port; is the VM booted?"
+}
+
+vm_ssh() {
+	sshpass -p "$password" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR \
+		-p "$ssh_port" mobile@127.0.0.1 "$@"
+}
+
+vm_root() {
+	vm_ssh "echo '$password' | sudo -S -p '' sh -c '$1'"
+}
+
+check_dns() {
+	if launchctl print system/net.mullvad.daemon 2>/dev/null | grep -q 'state = running'; then
+		echo "FAIL dns: Mullvad's daemon holds UDP port 53 even while disconnected, so the VM gets no DNS."
+		echo "     sudo launchctl bootout system/net.mullvad.daemon && sudo killall mDNSResponder"
+		echo "     restore later: sudo launchctl bootstrap system /Library/LaunchDaemons/net.mullvad.daemon.plist"
+		return 1
+	fi
+	echo "ok   dns: Mullvad's daemon is not running"
+}
+
+check_disk() {
+	local free_gb need_gb=$min_free_gb
+	free_gb=$(df -g "$HOME" | awk 'NR == 2 { print $4 }')
+	[[ -d $cache ]] && need_gb=$((need_gb - 13))
+	if ((free_gb < need_gb)); then
+		echo "FAIL disk: ${free_gb} GB free, the build needs ${need_gb} GB (cfw install refuses below 50 GB, after a 30 minute restore)"
+		return 1
+	fi
+	echo "ok   disk: ${free_gb} GB free of ${need_gb} GB needed"
+}
+
+preflight() {
+	local status=0
+	check_dns || status=1
+	check_disk || status=1
+	return $status
+}
+
+clone_tree() {
+	mkdir -p "$2"
+	cp -cR "$1/." "$2/" 2>/dev/null || cp -R "$1/." "$2/"
+}
+
+create() {
+	[[ $# -ge 1 ]] || fail "create needs a VM name"
+	preflight || exit 1
+	if [[ -d $cache && ! -d $ipsws ]]; then
+		clone_tree "$cache" "$ipsws"
+		echo "ok   reused the cached IPSWs from $cache"
+	fi
+	sudo vphone-cli vm create "$@"
+	local status=$?
+	if [[ -d $ipsws ]]; then
+		clone_tree "$ipsws" "$cache"
+		echo "ok   cached the IPSWs in $cache"
+	fi
+	return $status
+}
+
+autolock_off() {
+	forward_ssh
+	local dir=/rootfs/var/mobile/Library/UserConfigurationProfiles local=$(mktemp -d)
+	for name in EffectiveUserSettings UserSettings; do
+		vm_root "cat $dir/$name.plist" >"$local/$name.plist" || fail "could not read $name.plist"
+		plutil -replace restrictedValue.maxInactivity.value -integer 2147483647 "$local/$name.plist" ||
+			fail "could not set maxInactivity in $name.plist"
+		vm_ssh "cat > /tmp/$name.plist" <"$local/$name.plist"
+		vm_root "cp /tmp/$name.plist $dir/$name.plist && chown mobile:mobile $dir/$name.plist"
+	done
+	rm -r "$local"
+	vm_root "killall -9 profiled SpringBoard" >/dev/null 2>&1
+	echo "ok   auto-lock off"
+}
+
+app_group() {
+	[[ $# == 1 ]] || fail "app-group needs a group id"
+	forward_ssh
+	local root=/var/mobile/Containers/Shared/AppGroup group=$1 uuid template local=$(mktemp -d)
+	if vm_root "grep -l '$group' $root/*/.com.apple.mobile_container_manager.metadata.plist" 2>/dev/null | grep -q .; then
+		echo "ok   $group exists"
+		return
+	fi
+	template=$(vm_root "ls $root/*/.com.apple.mobile_container_manager.metadata.plist" | head -1)
+	[[ -n $template ]] || fail "no app group container to copy"
+	uuid=$(uuidgen)
+	vm_root "cat $template" >"$local/metadata.plist"
+	plutil -convert xml1 "$local/metadata.plist"
+	plutil -replace MCMMetadataIdentifier -string "$group" "$local/metadata.plist"
+	plutil -replace MCMMetadataUUID -string "$uuid" "$local/metadata.plist"
+	plutil -convert binary1 "$local/metadata.plist"
+	vm_ssh "cat > /tmp/metadata.plist" <"$local/metadata.plist"
+	rm -r "$local"
+	vm_root "mkdir -p $root/$uuid/Library/Caches && mv /tmp/metadata.plist $root/$uuid/.com.apple.mobile_container_manager.metadata.plist && chown -R mobile:mobile $root/$uuid && killall -9 containermanagerd"
+	echo "ok   created $group at $root/$uuid"
+}
+
+install_ipa() {
+	[[ $# == 1 && -f $1 ]] || fail "install needs an IPA path"
+	local udid attempt
+	udid=$(vm_udid)
+	for attempt in 1 2; do
+		if timeout "$install_timeout" ideviceinstaller -u "$udid" install "$1"; then
+			echo "ok   installed $1"
+			return
+		fi
+		echo "WARN install attempt $attempt failed or hung past ${install_timeout}s; killing installd" >&2
+		forward_ssh
+		vm_root "killall -9 installd" >/dev/null 2>&1
+		sleep 3
+	done
+	fail "ideviceinstaller could not install $1"
+}
+
+case ${1:-} in
+preflight) preflight ;;
+create) shift && create "$@" ;;
+autolock-off) autolock_off ;;
+app-group) shift && app_group "$@" ;;
+install) shift && install_ipa "$@" ;;
+-h | --help) usage ;;
+*)
+	usage >&2
+	exit 2
+	;;
+esac
