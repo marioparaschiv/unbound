@@ -109,6 +109,9 @@ object NativeBridge {
         powerState(context)?.let { state.put("power", it) }
         dnsState(context)?.let { state.put("dns", it) }
         pushState(context)?.let { state.put("push", it) }
+        ModuleVersions.versions(context).takeIf { it.isNotEmpty() }?.let {
+            state.put("injectedVersions", JSONObject(it))
+        }
         state.toString()
     }.getOrDefault("{}")
 

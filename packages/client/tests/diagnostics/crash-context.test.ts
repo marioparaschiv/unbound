@@ -28,4 +28,17 @@ describe('withPackages', () => {
 
 		Reflect.deleteProperty(globalThis, 'NativePlatform');
 	});
+
+	test('adds the version of each Android module', () => {
+		Reflect.set(globalThis, 'NativePlatform', {
+			device: { getState: () => ({ injectedVersions: { 'com.example.hide': '2.1.0' } }) },
+		});
+
+		expect(withPackages(['com.example.hide', 'zygisk_shamiko'])).toEqual([
+			'com.example.hide 2.1.0',
+			'zygisk_shamiko',
+		]);
+
+		Reflect.deleteProperty(globalThis, 'NativePlatform');
+	});
 });
