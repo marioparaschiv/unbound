@@ -2,8 +2,8 @@ import Logger from '@unbound-app/logger';
 import { format } from 'date-fns';
 import { join } from 'node:path';
 
+import { noteServed, readBuildInfo } from './build-info';
 import { DIST_DIR, BUNDLE_PATTERN } from './constants';
-import { noteServed } from './build-info';
 import { bundleEtag } from './hot-reload';
 
 const logger = Logger.create('Serve');
@@ -33,6 +33,19 @@ function formatBytes(bytes: number): string {
  */
 export function hotBuildPath(pathname: string): string {
 	return pathname.replace(/^\/unbound-dev\./, '/unbound.');
+}
+
+let warnedBuild: string | undefined;
+
+function warnIfStale(file: string): void {
+	const bundle = readBuildInfo().bundles.find((entry) => entry.file === file);
+
+	if (!bundle?.stale || warnedBuild === bundle.builtAt) return;
+
+	warnedBuild = bundle.builtAt;
+	logger.warn(
+		`Serving ${file} built before the client sources last changed; run bun run build:dev in packages/client.`,
+	);
 }
 
 /**
@@ -69,6 +82,11 @@ export async function serveStatic(
 		const isBundle = BUNDLE_PATTERN.test(pathname.slice(1));
 
 		noteServed(pathname.slice(1));
+
+		if (isBundle) {
+			warnIfStale(pathname.slice(1));
+		}
+
 		const etag = isBundle ? bundleEtag() : '';
 
 		// Without the 304, the loader saves every launch's download as a new bundle and restarts Discord to run it.

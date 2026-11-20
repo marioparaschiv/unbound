@@ -14,7 +14,7 @@ describe('reload command', () => {
 		const output = await reloadCommand.handler(parse(reloadCommand.schema, {}), { client });
 
 		expect(output.ok).toBe(true);
-		expect(client.sent).toHaveLength(2);
+		expect(client.sent).toHaveLength(3);
 
 		for (const { code } of client.sent) {
 			expect(code).not.toMatch(/\b(const|let)\b/);

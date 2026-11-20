@@ -1,3 +1,4 @@
+import { describeDevServer, readDevServerBuild } from '~/lib/dev-server-build';
 import { evaluateOnDevice, notConnected, toDeviceCode } from '~/lib/device';
 import { evalFailure, failure } from '~/lib/command-error';
 import type { DevicePrelude } from '~/lib/device-prelude';
@@ -21,6 +22,18 @@ function tagAndReload({ unbound }: DevicePrelude, key: string, token: string): s
 	return 'reloading';
 }
 
+// Runs on the device: reads where the loader fetches the client from.
+function readUpdateUrl({ unbound }: DevicePrelude): string {
+	return String(unbound.storage.getBucket('unbound').get('loader.update.url', ''));
+}
+
+async function staleDevServerNote(updateUrl: string): Promise<string> {
+	const build = await readDevServerBuild(updateUrl);
+	const served = build?.bundles.find((bundle) => bundle.file === build.served);
+
+	return build && served?.stale ? `\n${describeDevServer(build)}` : '';
+}
+
 // Runs on the device: a fresh bundle no longer carries the token.
 function bundleFreshness(_device: DevicePrelude, key: string, token: string): string {
 	return Reflect.get(globalThis, key) === token ? 'stale' : 'fresh';
@@ -29,6 +42,7 @@ function bundleFreshness(_device: DevicePrelude, key: string, token: string): st
 const handler: CommandHandler<typeof reloadCommand.schema> = async ({ timeout }, { client }) => {
 	const token = crypto.randomUUID();
 	const started = Date.now();
+	const updateUrl = await evaluateOnDevice(client, toDeviceCode(readUpdateUrl));
 	const result = await evaluateOnDevice(client, toDeviceCode(tagAndReload, TOKEN_KEY, token));
 
 	if (!result) {
@@ -52,7 +66,9 @@ const handler: CommandHandler<typeof reloadCommand.schema> = async ({ timeout },
 		);
 
 		if (probe.ok && probe.value === 'fresh') {
-			return { ok: true, text: `Reloaded in ${Date.now() - started}ms.` };
+			const note = updateUrl?.ok ? await staleDevServerNote(updateUrl.value) : '';
+
+			return { ok: true, text: `Reloaded in ${Date.now() - started}ms.${note}` };
 		}
 	}
 
