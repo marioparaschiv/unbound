@@ -3,6 +3,7 @@ import preferDiscriminatedUnion from './rules/prefer-discriminated-union.ts';
 import noAssertedExternalData from './rules/no-asserted-external-data.ts';
 import noImportOutsidePackage from './rules/no-import-outside-package.ts';
 import noPassThroughWrapper from './rules/no-pass-through-wrapper.ts';
+import noSilentNativeBatch from './rules/no-silent-native-batch.ts';
 import addonRules from '../../packages/cli/src/oxlint/plugin.ts';
 import testFileLocation from './rules/test-file-location.ts';
 import noUpwardImports from './rules/no-upward-imports.ts';
@@ -21,6 +22,7 @@ export default {
 		'no-upward-imports': noUpwardImports,
 		'no-inline-styles': noInlineStyles,
 		'no-env-mutation': noEnvMutation,
+		'no-silent-native-batch': noSilentNativeBatch,
 		'test-file-location': testFileLocation,
 		'max-file-bytes': maxFileBytes,
 	},

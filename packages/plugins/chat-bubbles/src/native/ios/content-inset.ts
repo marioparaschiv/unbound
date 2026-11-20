@@ -86,7 +86,9 @@ export async function removeContentInsets(objc: NativeObjCBridge, cells: NativeO
 
 					await objc.invokeAsync(cell, 'setNeedsLayout', []);
 				})
-				.catch(() => undefined),
+				.catch((error: unknown) =>
+					logger.warn('Failed to remove the content inset of a message cell:', error),
+				),
 		),
 	);
 }

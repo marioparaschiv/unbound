@@ -104,7 +104,7 @@ function restoreVisibleCell(
 
 			if (frame && layoutEpoch(session, entry) === epoch) restoreFrame(objc, cell, frame);
 		})
-		.catch(() => undefined);
+		.catch((error: unknown) => logger.warn('Failed to restore a reaction pill frame:', error));
 }
 
 function restoreVisibleCells(session: Session, entry: LayoutEntry, epoch: number): void {
@@ -149,7 +149,9 @@ function restoreCollectionHeight(
 
 			if (frame) restoreFrame(objc, collection, { ...frame, height: baseHeight });
 		})
-		.catch(() => undefined);
+		.catch((error: unknown) =>
+			logger.warn('Failed to restore the height of a reaction collection:', error),
+		);
 }
 
 /**
