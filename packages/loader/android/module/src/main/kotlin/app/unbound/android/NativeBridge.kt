@@ -65,6 +65,13 @@ object NativeBridge {
     @JvmStatic
     external fun nativeOnBackground()
 
+    /** The scheduled refresh fired; returns whether the loader started work, never while Discord is visible. */
+    @JvmStatic
+    external fun nativeOnScheduledRefresh(): Boolean
+
+    @JvmStatic
+    external fun nativeIsWorkingInBackground(): Boolean
+
     @JvmStatic
     external fun nativeAdoptTombstone(tombstone: ByteArray): Boolean
 

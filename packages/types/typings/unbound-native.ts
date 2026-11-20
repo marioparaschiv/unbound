@@ -323,6 +323,11 @@ export type UnboundNativeBridge = {
 	 */
 	markRendered?(): void;
 	/**
+	 * Sets the work the loader runs when Discord goes to the background and, on sideloaded iOS, when the scheduled
+	 * background refresh fires; it waits for the returned promise. No argument clears it. Missing on a loader from before it.
+	 */
+	setBackgroundRefresh?(handler?: () => Promise<void>): void;
+	/**
 	 * Rereads only the installed themes, so `getThemes` lists ones installed, updated or deleted since launch and native
 	 * views take the applied theme's new colours. Missing on a loader from before it.
 	 */

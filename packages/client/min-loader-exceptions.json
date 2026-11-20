@@ -365,6 +365,16 @@
 			"file": "src/diagnostics/crash-context.ts",
 			"error": "TS2339: Property 'injectedVersions' does not exist on type 'NativeDeviceState'.",
 			"reason": "Read optionally inside a try with an empty fallback; older loaders list Android modules without versions."
+		},
+		{
+			"file": "src/native/unbound-native.ts",
+			"error": "TS2345: Argument of type '\"setBackgroundRefresh\"' is not assignable to parameter of type 'keyof UnboundNativeBridge'.",
+			"reason": "read() checks the bridge member exists; older loaders run no background refresh and addons update at launch as before."
+		},
+		{
+			"file": "src/native/unbound-native.ts",
+			"error": "TS2339: Property 'setBackgroundRefresh' does not exist on type 'UnboundNativeBridge'.",
+			"reason": "Called optionally (setBackgroundRefresh?.()); older loaders skip it."
 		}
 	]
 }

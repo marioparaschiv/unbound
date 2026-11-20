@@ -15,6 +15,7 @@ import themes, {
 import { createSettings, generalSection, panelHostSection } from '~/settings/builtin';
 import { marketplaceSection, addonPageSection } from '~/marketplace/builtin';
 import promiseRejections, { crashesSection } from '~/diagnostics/builtin';
+import backgroundRefresh from '~/builtins/background-refresh';
 import gatewayReconnect from '~/builtins/gateway-reconnect';
 import updater, { updatesSection } from '~/updates/builtin';
 import { developerSection } from '~/settings/builtin.dev';
@@ -88,6 +89,7 @@ const SECTIONS_IN_OVERVIEW_ORDER: SectionEntry[] = [
 // The account starts first, so its session refresh is already in flight when other built-ins reach unbound.rip.
 const BUILT_INS: BuiltInEntry[] = [
 	['account', account],
+	['backgroundRefresh', backgroundRefresh],
 	['sync', sync],
 	['commands', commands],
 	['coreCommands', coreCommands],

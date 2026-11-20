@@ -270,6 +270,11 @@ bool Loader::isCheckingForUpdate() const
     return pipeline_ && pipeline_->isCheckingForUpdate();
 }
 
+bool Loader::isWorkingInBackground() const
+{
+    return pipeline_ && pipeline_->isWorkingInBackground();
+}
+
 SettingsStore &Loader::settings()
 {
     return settings_;

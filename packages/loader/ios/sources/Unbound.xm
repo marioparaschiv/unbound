@@ -134,7 +134,7 @@ static void keepAwakeForUpdateCheck()
 {
     UIApplication *application = UIApplication.sharedApplication;
     __block UIBackgroundTaskIdentifier task =
-        [application beginBackgroundTaskWithName:@"Unbound update check"
+        [application beginBackgroundTaskWithName:@"Unbound background refresh"
                                expirationHandler:^{
                                    [application endBackgroundTask:task];
                                    task = UIBackgroundTaskInvalid;
@@ -147,7 +147,7 @@ static void keepAwakeForUpdateCheck()
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
         if (UnboundLoader()->onBackground())
         {
-            for (int waited = 0; waited < 25 && UnboundLoader()->isCheckingForUpdate(); waited++)
+            for (int waited = 0; waited < 25 && UnboundLoader()->isWorkingInBackground(); waited++)
             {
                 [NSThread sleepForTimeInterval:1.0];
             }

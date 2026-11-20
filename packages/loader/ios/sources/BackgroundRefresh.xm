@@ -48,7 +48,7 @@ static void runRefresh(BGTask *task)
         if (UnboundLoader()->onBackground())
         {
             for (int waited = 0;
-                 waited < kRefreshCheckLimitSeconds && UnboundLoader()->isCheckingForUpdate();
+                 waited < kRefreshCheckLimitSeconds && UnboundLoader()->isWorkingInBackground();
                  waited++)
             {
                 [NSThread sleepForTimeInterval:1.0];

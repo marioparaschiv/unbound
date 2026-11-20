@@ -195,6 +195,8 @@ class Unbound : XposedModule() {
                 runCatching { Toolbox.onPaused(activity) }
                 runCatching { NativeBridge.nativeMarkHealthy() }
                 runCatching { NativeBridge.nativeOnBackground() }
+                runCatching { ScheduledRefresh.install(activity) }
+                    .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to schedule the background refresh", it) }
                 result
             }
     }
