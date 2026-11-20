@@ -5,11 +5,12 @@ import { COLORS } from '~/lib/debug-card/spans';
 
 describe('tweakSpans', () => {
 	test('shows conflicting tweaks first in red and the rest in yellow', () => {
-		const spans = tweakSpans(['Crane', 'Choicy', 'ColorMyBattery']);
+		const spans = tweakSpans(['Crane', 'Shadow', 'Choicy']);
 
-		expect(spans.map((span) => span.text).join('')).toBe('Choicy · Crane · ColorMyBattery');
-		expect(spans[0]).toEqual({ text: 'Choicy', color: COLORS.bad });
+		expect(spans.map((span) => span.text).join('')).toBe('Shadow · Crane · Choicy');
+		expect(spans[0]).toEqual({ text: 'Shadow', color: COLORS.bad });
 		expect(spans[2]).toEqual({ text: 'Crane', color: COLORS.warn });
+		expect(spans[4]).toEqual({ text: 'Choicy', color: COLORS.warn });
 	});
 
 	test('lists every tweak without a count', () => {
@@ -21,7 +22,8 @@ describe('tweakSpans', () => {
 	});
 
 	test('matches conflicts by name regardless of case', () => {
-		expect(isConflictingTweak(' choicy ')).toBe(true);
+		expect(isConflictingTweak(' shadow ')).toBe(true);
+		expect(isConflictingTweak('Choicy')).toBe(false);
 		expect(isConflictingTweak('Crane')).toBe(false);
 	});
 });

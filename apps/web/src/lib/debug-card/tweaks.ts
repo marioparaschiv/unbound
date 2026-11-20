@@ -2,7 +2,6 @@ import { COLORS, dim, type Span } from './spans';
 
 const CONFLICTING_TWEAKS = new Set(
 	[
-		'Choicy',
 		'Shadow',
 		'A-Bypass',
 		'Liberty Lite',
