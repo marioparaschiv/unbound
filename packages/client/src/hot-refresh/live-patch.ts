@@ -16,6 +16,7 @@ import {
 import { ORIGINAL, commit, cut, fits, resolve } from '~/hot-refresh/instances';
 import { HOOK_FIBERS, reconcile, withAlternates } from '~/hot-refresh/refresh';
 import type { Decision, Fiber, FiberType } from '~/hot-refresh/refresh';
+import { adoptReplacedMethod } from '~/patcher/replaced-methods';
 import type { Instance, Layout } from '~/hot-refresh/instances';
 import { currentAddonAttribution } from '~/addons/crash-guard';
 import type { AddonAttribution } from '~/addons/crash-guard';
@@ -157,6 +158,9 @@ export function patch(
 		untrackedCounts: [],
 	};
 	const run = createRun(live);
+
+	adoptReplacedMethod(parent, method);
+
 	const value = Reflect.get(parent, method);
 	const unpatch = PATCHERS[phase](parent, method, run, options);
 
@@ -165,6 +169,7 @@ export function patch(
 
 	return () => {
 		remove(live);
+		adoptReplacedMethod(parent, method);
 		unpatch();
 	};
 }
