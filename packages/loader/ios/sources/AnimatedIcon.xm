@@ -6,11 +6,13 @@
 #import <unistd.h>
 
 #import "SingleCopy.h"
+#import "Utilities.h"
 
 NSString *const UBAnimatedIconId = @"UnboundAnimated";
 
 static NSString *const kInfoKey         = @"UnboundAnimatedIcon";
 static NSString *const kEnabledKey      = @"UnboundAnimatedIconEnabled";
+static NSString *const kConfirmedKey    = @"UnboundIconChangesNeedConfirmation";
 static const char *kChangedNotification = "app.unbound.animated-icon.changed";
 static const CFTimeInterval kTick       = 0.02;
 static const double kSilenceSeconds     = 1.0;
@@ -76,6 +78,45 @@ static void setAnimatedIconEnabled(BOOL enabled)
     [NSUserDefaults.standardUserDefaults setBool:enabled forKey:kEnabledKey];
 }
 
+static BOOL isIconChangeBusy(NSError *error)
+{
+    return [error.domain isEqualToString:NSPOSIXErrorDomain] && error.code == EAGAIN;
+}
+
+static NSString *osVersion(void)
+{
+    return NSProcessInfo.processInfo.operatingSystemVersionString;
+}
+
+static BOOL iconChangesNeedConfirmation(void)
+{
+    NSOperatingSystemVersion gated = {27, 0, 0};
+    return [NSProcessInfo.processInfo isOperatingSystemAtLeastVersion:gated] ||
+           [[NSUserDefaults.standardUserDefaults stringForKey:kConfirmedKey]
+               isEqualToString:osVersion()];
+}
+
+static void stopFrames(void);
+static void stopKeepAlive(void);
+static void endBackgroundTask(void);
+
+static void markIconChangesNeedConfirmation(NSString *reason)
+{
+    if (![[NSUserDefaults.standardUserDefaults stringForKey:kConfirmedKey]
+            isEqualToString:osVersion()])
+    {
+        [NSUserDefaults.standardUserDefaults setObject:osVersion() forKey:kConfirmedKey];
+        [Logger warning:LOG_CATEGORY_DEFAULT
+                 format:@"iOS asks the user to confirm each icon change (%@); the app icon stops "
+                        @"animating on this iOS version.",
+                        reason];
+    }
+
+    stopFrames();
+    stopKeepAlive();
+    endBackgroundTask();
+}
+
 static NSInteger frameAt(NSArray<NSNumber *> *durations, CFTimeInterval elapsed)
 {
     double total = 0;
@@ -97,7 +138,7 @@ static NSInteger frameAt(NSArray<NSNumber *> *durations, CFTimeInterval elapsed)
     return (NSInteger) durations.count - 1;
 }
 
-static void showFrame(NSString *frame, NSInteger index, void (^done)(void))
+static void showFrame(NSString *frame, NSInteger index, void (^done)(NSError *error))
 {
     gInFlight      = YES;
     gInFlightSince = CACurrentMediaTime();
@@ -107,10 +148,14 @@ static void showFrame(NSString *frame, NSInteger index, void (^done)(void))
         {
             gShown = index;
         }
+        else if (index >= 0 && isIconChangeBusy(error))
+        {
+            markIconChangesNeedConfirmation(@"a frame came back busy");
+        }
 
         if (done)
         {
-            done();
+            done(error);
         }
     });
 }
@@ -120,9 +165,8 @@ static void tick(void)
     NSDictionary *info = UBAnimatedIconInfo();
     if (gInFlight && CACurrentMediaTime() - gInFlightSince > kStuckRequest)
     {
-        [Logger warning:LOG_CATEGORY_DEFAULT
-                 format:@"An animated icon frame got no answer; trying the next one."];
-        gInFlight = NO;
+        markIconChangesNeedConfirmation(@"a frame got no answer");
+        return;
     }
 
     if (gInFlight || !info)
@@ -249,7 +293,7 @@ static void stopAnimation(BOOL showRest, BOOL expiring)
         return;
     }
 
-    showFrame(info[@"Rest"], -1, ^{ endBackgroundTask(); });
+    showFrame(info[@"Rest"], -1, ^(NSError *error) { endBackgroundTask(); });
 }
 
 static void startFrames(void)
@@ -268,7 +312,8 @@ static void startFrames(void)
 
 static void startAnimation(void)
 {
-    if (gTimer || !gBackgrounded || !animatedIconEnabled() || springBoardAnimates())
+    if (gTimer || !gBackgrounded || !animatedIconEnabled() || springBoardAnimates()
+        || iconChangesNeedConfirmation())
     {
         return;
     }
@@ -301,18 +346,50 @@ static void observe(NSNotificationName name, void (^handler)(NSNotification *not
                                                 usingBlock:handler];
 }
 
-void UBSetAppIcon(NSString *iconName, UBIconCompletion completion, UBIconSetter setIcon)
+static void explainBusyIconChange(void)
 {
+    static BOOL explained;
+    if (explained)
+    {
+        return;
+    }
+
+    explained = YES;
+    [Utilities
+        alert:@"iOS is still waiting for an earlier icon change to be confirmed. If no notice "
+              @"is on screen, restart your iPhone, then pick the icon again."
+        title:@"Can't Change the Icon Yet"];
+}
+
+void UBSetAppIcon(NSString *iconName, UBIconCompletion requested, UBIconSetter setIcon)
+{
+    UBIconCompletion completion = ^(NSError *error) {
+        if (isIconChangeBusy(error))
+        {
+            [Logger warning:LOG_CATEGORY_DEFAULT
+                     format:@"iOS refused the icon change %@: an earlier change is still waiting "
+                            @"for confirmation.",
+                            iconName ?: @"<primary>"];
+            explainBusyIconChange();
+        }
+
+        if (requested)
+        {
+            requested(error);
+        }
+    };
     NSDictionary *info = UBAnimatedIconInfo();
     if (info && [iconName isEqualToString:UBAnimatedIconId])
     {
         setAnimatedIconEnabled(YES);
-        showFrame(info[@"Rest"], -1, ^{
-            notify_post(kChangedNotification);
-            if (completion)
+        showFrame(info[@"Rest"], -1, ^(NSError *error) {
+            if (error)
             {
-                completion(nil);
+                setAnimatedIconEnabled(NO);
             }
+
+            notify_post(kChangedNotification);
+            completion(error);
         });
         return;
     }
@@ -324,10 +401,7 @@ void UBSetAppIcon(NSString *iconName, UBIconCompletion completion, UBIconSetter 
         UBIconCompletion original = completion;
         completion                = ^(NSError *error) {
             notify_post(kChangedNotification);
-            if (original)
-            {
-                original(error);
-            }
+            original(error);
         };
     }
 
