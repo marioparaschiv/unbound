@@ -17,6 +17,7 @@ export type LatencyRecord = {
 
 export type LatencyRecords = {
 	get(messageId: string): LatencyRecord | undefined;
+	has(messageId: string): boolean;
 	update(message: LatencyMessage, username?: string): void;
 	subscribe(listener: (messageId: string) => void): () => void;
 };
@@ -73,6 +74,7 @@ export function createLatencyRecords(): LatencyRecords {
 
 	return {
 		get: (messageId) => records.get(messageId),
+		has: (messageId) => records.has(messageId),
 		update,
 		subscribe(listener) {
 			listeners.add(listener);
