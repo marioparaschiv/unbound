@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 
+import { format, messages } from '~/i18n/api';
 import { Discord } from '~/metro/components';
-import { messages } from '~/i18n/api';
 import Logo from '~/ui/icons/logo';
 
 import useStyles from './error-boundary.style';
@@ -9,7 +9,9 @@ import useStyles from './error-boundary.style';
 /**
  * @description The crash screen's top card: what happened, beside the Unbound logo.
  */
-function ErrorHeader() {
+type ErrorHeaderProps = { plugin?: string };
+
+function ErrorHeader({ plugin }: ErrorHeaderProps) {
 	const styles = useStyles();
 
 	return (
@@ -20,7 +22,9 @@ function ErrorHeader() {
 						{messages.UNBOUND_CRASH_TITLE}
 					</Discord.Text>
 					<Discord.Text variant='text-sm/normal' color='text-muted'>
-						{messages.UNBOUND_CRASH_DESCRIPTION}
+						{plugin
+							? format('UNBOUND_CRASH_DESCRIPTION_PLUGIN', { name: plugin })
+							: messages.UNBOUND_CRASH_DESCRIPTION}
 					</Discord.Text>
 				</View>
 				<View style={styles.logo}>

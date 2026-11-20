@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { crashDiagnostics, pluginsLine } from '~/ui/error-fallback';
 import { reportCaughtError } from '~/ui/settings/report-crash';
 import { readDebugInfo } from '~/diagnostics/read-debug-info';
+import { crashedPluginName } from '~/ui/crashed-plugin';
 import { Discord, SafeArea } from '~/metro/components';
 import type { CaughtError } from '~/ui/error-fallback';
 import { useCrashUpdate } from '~/ui/use-crash-update';
@@ -57,7 +58,7 @@ function ErrorFallback({
 			<SafeArea.SafeAreaPaddingView top bottom style={styles.fill}>
 				<Discord.Stack spacing={12} style={styles.fill}>
 					<Animated.View entering={FadeInDown.duration(320)}>
-						<ErrorHeader />
+						<ErrorHeader plugin={crashedPluginName(error, componentStack)} />
 					</Animated.View>
 					<Animated.View
 						entering={FadeInDown.delay(60).duration(320)}
