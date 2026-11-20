@@ -34,8 +34,19 @@ let work: string;
 let remote: string;
 let server: ReturnType<typeof Bun.serve>;
 
+function withoutGitEnv(
+	env: Record<string, string | undefined>,
+): Record<string, string | undefined> {
+	return Object.fromEntries(Object.entries(env).filter(([key]) => !key.startsWith('GIT_')));
+}
+
 function git(cwd: string, ...args: string[]): string {
-	const proc = Bun.spawnSync(['git', ...args], { cwd, stdout: 'pipe', stderr: 'pipe' });
+	const proc = Bun.spawnSync(['git', ...args], {
+		cwd,
+		env: withoutGitEnv(process.env),
+		stdout: 'pipe',
+		stderr: 'pipe',
+	});
 
 	if (proc.exitCode !== 0) {
 		throw new Error(`git ${args.join(' ')}: ${proc.stderr.toString()}`);
@@ -131,7 +142,7 @@ async function run(...args: string[]): Promise<RunResult> {
 	const proc = Bun.spawn(['bun', SCRIPT, '--repository', REPOSITORY, ...args], {
 		cwd: work,
 		env: {
-			...process.env,
+			...withoutGitEnv(process.env),
 			GITHUB_REPOSITORY: '',
 			UNBOUND_API_URL: server.url.href,
 			UNBOUND_API_KEY: 'test-key',
