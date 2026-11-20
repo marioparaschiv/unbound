@@ -109,7 +109,7 @@ function renderOf(type: unknown): ((props: unknown) => Node) | undefined {
 
 // UNKNOWN: a component type may be a function or a memo object.
 function wrapperFor(type: unknown, rule: Rule, level: number): unknown {
-	if (/REA|Animated|Reanimated|Workaround/i.test(componentName(type))) return undefined;
+	if (/REA|Animated|Reanimated|Workaround|Quest/i.test(componentName(type))) return undefined;
 
 	if (typeof type === 'function' && ownWrappers.has(type)) return undefined;
 

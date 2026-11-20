@@ -112,4 +112,16 @@ describe('roundTree', () => {
 		expect(once.type).not.toBe(Inner);
 		expect(twice.type).toBe(once.type);
 	});
+
+	test('leaves Quest components in the You bar as Discord draws them', () => {
+		function QuestDockCard() {
+			return square(300, 24);
+		}
+
+		const tree = roundTree({ type: QuestDockCard, props: {} }, rules.fullRoundIf(8), {
+			deep: true,
+		}) as { type: unknown };
+
+		expect(tree.type).toBe(QuestDockCard);
+	});
 });
