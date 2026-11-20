@@ -1,5 +1,5 @@
-import { CONTROLLER_ENDPOINT_MARKER } from '@unbound-app/debugger-protocol';
 import { ControllerClient } from '@unbound-app/debugger-protocol/controller';
+import { CONTROLLER_ENDPOINT_MARKER } from '@unbound-app/debugger-protocol';
 import { isListening } from '@unbound-app/debugger-protocol/is-listening';
 
 import {
@@ -46,16 +46,22 @@ export function attachToBridge(port: number, onBridgeGone: () => void) {
 				abortCurrentReplInput({ deletePrompt: true });
 
 				if (!connected) {
-					if (deviceConnected) system('red', 'Device disconnected');
+					if (deviceConnected) {
+						system('red', 'Device disconnected');
+					}
 
 					deviceConnected = false;
 
 					return;
 				}
 
-				if (!deviceConnected) system('green', 'Device connected');
+				if (!deviceConnected) {
+					system('green', 'Device connected');
+				}
 
-				if (device) system('green', `Device identified: ${describeDevice(device)}`);
+				if (device) {
+					system('green', `Device identified: ${describeDevice(device)}`);
+				}
 
 				deviceConnected = true;
 				setupReplListeners();
@@ -65,7 +71,9 @@ export function attachToBridge(port: number, onBridgeGone: () => void) {
 				abortCurrentReplInput({ deletePrompt: true });
 				printLog(log);
 
-				if (deviceConnected) takeReplInput();
+				if (deviceConnected) {
+					takeReplInput();
+				}
 			},
 		},
 	);

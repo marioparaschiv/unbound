@@ -1,6 +1,6 @@
 import type { CommandOutput } from '@unbound-app/debugger-protocol/registry';
-import { SERVE_BRIDGE_COMMAND } from '@unbound-app/debugger-protocol';
 import { isListening } from '@unbound-app/debugger-protocol/is-listening';
+import { SERVE_BRIDGE_COMMAND } from '@unbound-app/debugger-protocol';
 import { closeSync, openSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';

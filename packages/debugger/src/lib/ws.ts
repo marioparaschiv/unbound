@@ -40,7 +40,9 @@ type SocketData = {
  * @returns Whether this process now hosts the bridge; `false` when another process holds the port.
  */
 export function setupWebSocket(): boolean {
-	if (state.isInitialized) return true;
+	if (state.isInitialized) {
+		return true;
+	}
 
 	try {
 		serve();
@@ -181,14 +183,14 @@ function listenToSession() {
 
 	// A bridge spawned in the background exits once every controller has left, so closing the last
 	// tool leaves nothing running. A terminal REPL is a controller of its own, so it never idles.
-	if (argv.flags.idleTimeout > 0 && !process.stdin.isTTY) {
-		const onControllerCount = createIdleExit(argv.flags.idleTimeout * 1000, () => {
-			system('gray', `No controller for ${argv.flags.idleTimeout}s, exiting`);
-			process.exit(0);
-		});
+	if (argv.flags.idleTimeout <= 0 || process.stdin.isTTY) return;
 
-		session.onController((_connected, count) => onControllerCount(count));
-	}
+	const onControllerCount = createIdleExit(argv.flags.idleTimeout * 1000, () => {
+		system('gray', `No controller for ${argv.flags.idleTimeout}s, exiting`);
+		process.exit(0);
+	});
+
+	session.onController((_connected, count) => onControllerCount(count));
 }
 
 function handleDeviceMessage(raw: string) {

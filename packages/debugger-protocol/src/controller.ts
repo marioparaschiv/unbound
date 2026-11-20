@@ -247,7 +247,9 @@ export class ControllerClient {
 		this.deviceConnected = false;
 
 		// A failed redial never opened, so only a real drop is reported.
-		if (wasOpen) this.options.onConnection?.(false);
+		if (wasOpen) {
+			this.options.onConnection?.(false);
+		}
 
 		if (this.closed) return;
 
