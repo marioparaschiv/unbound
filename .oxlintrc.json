@@ -70,6 +70,7 @@
 							"packages/client/src/storage",
 							"packages/client/src/native",
 							"packages/client/src/assets",
+							"packages/client/src/background",
 							"packages/client/src/i18n",
 							"packages/client/src/toasts",
 							"packages/client/src/settings",
