@@ -1,5 +1,30 @@
 # Changelog
 
+## [2.10.0](https://github.com/marioparaschiv/unbound/compare/contracts-v2.9.0...contracts-v2.10.0) (2026-11-21)
+
+
+### Features
+
+* **client:** add a note to a filed crash's issue ([#1869](https://github.com/marioparaschiv/unbound/issues/1869)) ([19d2cec](https://github.com/marioparaschiv/unbound/commit/19d2cec01e2218f001b627568ca07c1beab2db2b))
+* **client:** record the screen a crash happened on ([#1860](https://github.com/marioparaschiv/unbound/issues/1860)) ([2dc100f](https://github.com/marioparaschiv/unbound/commit/2dc100f54a4ad2c33900356c16f7af889144145f))
+* **loader:** name tweaks that replace a plugin's hooked method ([#1855](https://github.com/marioparaschiv/unbound/issues/1855)) ([1141213](https://github.com/marioparaschiv/unbound/commit/114121305c93c5d31b649eaf6603c274be819da3))
+* **loader:** record MetricKit disk-write reports ([#1951](https://github.com/marioparaschiv/unbound/issues/1951)) ([b2cc806](https://github.com/marioparaschiv/unbound/commit/b2cc8062459375c48949a27e2081f47602ef111f))
+* **web:** blame the injected tweak a native crash happened in ([#2047](https://github.com/marioparaschiv/unbound/issues/2047)) ([0d0a843](https://github.com/marioparaschiv/unbound/commit/0d0a843a246825fdc4904992c35dacc4271c4b22))
+* **web:** tell reporters how many devices hit the same crash ([#1953](https://github.com/marioparaschiv/unbound/issues/1953)) ([3c7239e](https://github.com/marioparaschiv/unbound/commit/3c7239e996501b3f0c19af2b187390d23d629393))
+
+
+### Bug Fixes
+
+* **client:** file tapped crashes through the crash API ([#1840](https://github.com/marioparaschiv/unbound/issues/1840)) ([d477bd9](https://github.com/marioparaschiv/unbound/commit/d477bd998bba2916c836f3423391ec25850d19da))
+* file every crash and say why one has no issue ([#1993](https://github.com/marioparaschiv/unbound/issues/1993)) ([adfd0c4](https://github.com/marioparaschiv/unbound/commit/adfd0c429544250b0ed61f737d47ae269407bb95))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/types bumped to 1.9.0
+
 ## [2.9.0](https://github.com/marioparaschiv/unbound/compare/contracts-v2.8.0...contracts-v2.9.0) (2026-11-18)
 
 

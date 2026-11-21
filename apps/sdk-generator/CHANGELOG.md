@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.0.10](https://github.com/marioparaschiv/unbound/compare/sdk-generator-v1.0.9...sdk-generator-v1.0.10) (2026-11-21)
+
+
+### Bug Fixes
+
+* **api:** type the fetch scope global and unbreak CI ([#1894](https://github.com/marioparaschiv/unbound/issues/1894)) ([4fc58fd](https://github.com/marioparaschiv/unbound/commit/4fc58fd64192cae5cab76b09820bcae7438c15ab))
+* **sdk-generator:** name the real generator in the SDK header ([#2041](https://github.com/marioparaschiv/unbound/issues/2041)) ([b277867](https://github.com/marioparaschiv/unbound/commit/b2778672e0f9e5c62d841049147e134da7700ef9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.10.0
+
 ## [1.0.9](https://github.com/marioparaschiv/unbound/compare/sdk-generator-v1.0.8...sdk-generator-v1.0.9) (2026-11-18)
 
 

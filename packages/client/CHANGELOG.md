@@ -1,5 +1,99 @@
 # Changelog
 
+## [3.11.0](https://github.com/marioparaschiv/unbound/compare/client-v3.10.0...client-v3.11.0) (2026-11-21)
+
+
+### Features
+
+* **client:** add a note to a filed crash's issue ([#1869](https://github.com/marioparaschiv/unbound/issues/1869)) ([19d2cec](https://github.com/marioparaschiv/unbound/commit/19d2cec01e2218f001b627568ca07c1beab2db2b))
+* **client:** download only changed addon files on update ([#1878](https://github.com/marioparaschiv/unbound/issues/1878)) ([707289d](https://github.com/marioparaschiv/unbound/commit/707289de0d52897b80ac4c126ae3d871751889ff))
+* **client:** drop chat row values Discord cannot draw ([#2114](https://github.com/marioparaschiv/unbound/issues/2114)) ([96bbd6c](https://github.com/marioparaschiv/unbound/commit/96bbd6c8ea4824fa25ec64aeea3fb97c0d7bf001))
+* **client:** file crash-screen errors through the crash API ([#1867](https://github.com/marioparaschiv/unbound/issues/1867)) ([95c1d67](https://github.com/marioparaschiv/unbound/commit/95c1d6728365240a275845bbf73a078e8717ac19))
+* **client:** gate #chat for everyone without a hoisted role ([#1847](https://github.com/marioparaschiv/unbound/issues/1847)) ([ea6c859](https://github.com/marioparaschiv/unbound/commit/ea6c85960dcc782748f4e5b2afcc9f95e8dd7824))
+* **client:** let a patch run after every other patch on a method ([#2112](https://github.com/marioparaschiv/unbound/issues/2112)) ([343c3bb](https://github.com/marioparaschiv/unbound/commit/343c3bb302400c2885f08fcbcf6fab045bfa3b0f))
+* **client:** let plugins add background jobs ([#2059](https://github.com/marioparaschiv/unbound/issues/2059)) ([6e4172b](https://github.com/marioparaschiv/unbound/commit/6e4172b20b58d13542e6f57299610c18d7ef5f75))
+* **client:** let plugins redraw the open chat ([#1925](https://github.com/marioparaschiv/unbound/issues/1925)) ([d61dd7b](https://github.com/marioparaschiv/unbound/commit/d61dd7be91a1940af49395b158d2759b348a369b))
+* **client:** log failing UI worklet calls once per worklet ([#1852](https://github.com/marioparaschiv/unbound/issues/1852)) ([f87ca79](https://github.com/marioparaschiv/unbound/commit/f87ca798c28625dbfceb64050791f3512e517c56))
+* **client:** mark other Discord mods on the debug card ([#1881](https://github.com/marioparaschiv/unbound/issues/1881)) ([cd3ff78](https://github.com/marioparaschiv/unbound/commit/cd3ff787530996b15043f37729657abd0068d168))
+* **client:** name the plugin behind a crash on the crash screen ([#2049](https://github.com/marioparaschiv/unbound/issues/2049)) ([9e0fe00](https://github.com/marioparaschiv/unbound/commit/9e0fe002c3191dac9797edad713521505c9e04b0))
+* **client:** offer a GitHub report when tapping a crash ([#1839](https://github.com/marioparaschiv/unbound/issues/1839)) ([3c6d7bb](https://github.com/marioparaschiv/unbound/commit/3c6d7bb595edda840d317c51ee5cd73abf771bbd))
+* **client:** offer a newer client on the crash screen ([#1895](https://github.com/marioparaschiv/unbound/issues/1895)) ([929457f](https://github.com/marioparaschiv/unbound/commit/929457fce69197961d57a5d822ec4f5bf69d0a29))
+* **client:** record the screen a crash happened on ([#1860](https://github.com/marioparaschiv/unbound/issues/1860)) ([2dc100f](https://github.com/marioparaschiv/unbound/commit/2dc100f54a4ad2c33900356c16f7af889144145f))
+* **client:** reinstall plugins whose files did not load ([#1920](https://github.com/marioparaschiv/unbound/issues/1920)) ([f8cd33c](https://github.com/marioparaschiv/unbound/commit/f8cd33ce4db1c7c3e06eeea521fecd08c46b22a1))
+* **client:** retry filing crashes GitHub couldn't take ([#1866](https://github.com/marioparaschiv/unbound/issues/1866)) ([d1bd6f2](https://github.com/marioparaschiv/unbound/commit/d1bd6f205e0c6915015ae45848ae3ee6d093d53c))
+* **client:** roll a crashing plugin update back ([#1870](https://github.com/marioparaschiv/unbound/issues/1870)) ([55cee27](https://github.com/marioparaschiv/unbound/commit/55cee27ea7e44d1b65e94fca6c5df1ce87dbbc39))
+* **client:** show when a crash's issue is fixed ([#1868](https://github.com/marioparaschiv/unbound/issues/1868)) ([1cad106](https://github.com/marioparaschiv/unbound/commit/1cad1061057d423a61d11cb770a64ec399e420cf))
+* **client:** show who holds native hooks in ubd debug status ([#1965](https://github.com/marioparaschiv/unbound/issues/1965)) ([63612d9](https://github.com/marioparaschiv/unbound/commit/63612d94bd1030d430e36e2dbf444fece6d925bc))
+* **client:** tell plugins when memory runs low ([#1948](https://github.com/marioparaschiv/unbound/issues/1948)) ([8057e48](https://github.com/marioparaschiv/unbound/commit/8057e48fa9da3d2933be2c1e4b5ed2103497db3f))
+* **client:** turn off a patch that updates itself in a loop ([#1970](https://github.com/marioparaschiv/unbound/issues/1970)) ([23403a2](https://github.com/marioparaschiv/unbound/commit/23403a2d85dc5670060eb7e272a27cfcad40c27e))
+* **client:** turn off plugins that flood unhandled rejections ([#1914](https://github.com/marioparaschiv/unbound/issues/1914)) ([d80b2a8](https://github.com/marioparaschiv/unbound/commit/d80b2a8c78770c078b0efcb6277cbb772df2c5ed))
+* **client:** warn about plugins still starting after 5 seconds ([#1921](https://github.com/marioparaschiv/unbound/issues/1921)) ([a7e946c](https://github.com/marioparaschiv/unbound/commit/a7e946cb38b081c509150911bd308564f7ad776e))
+* **client:** warn when a plugin repeats the same patch ([#1916](https://github.com/marioparaschiv/unbound/issues/1916)) ([2a8d742](https://github.com/marioparaschiv/unbound/commit/2a8d74208a89754693978e70abca6ac25c879027))
+* **client:** warn when a plugin updates an unmounted component ([#1971](https://github.com/marioparaschiv/unbound/issues/1971)) ([b0ce078](https://github.com/marioparaschiv/unbound/commit/b0ce078f6ec74d92f34735c4f4ede5db799bb553))
+* **client:** warn when a plugin's stop blocks Discord ([#1861](https://github.com/marioparaschiv/unbound/issues/1861)) ([9a2080c](https://github.com/marioparaschiv/unbound/commit/9a2080c8f9e3c4ed0caf168d1226de7f64e2147b))
+* **cli:** warn when the dev server serves a stale client bundle ([#1939](https://github.com/marioparaschiv/unbound/issues/1939)) ([f223c53](https://github.com/marioparaschiv/unbound/commit/f223c53cfee6e518d36aa4ff480a8b9b77b89f84))
+* **loader:** explain scheduled refresh, add job options, run on charge ([#2071](https://github.com/marioparaschiv/unbound/issues/2071)) ([59c3ee5](https://github.com/marioparaschiv/unbound/commit/59c3ee5a663bdd997fa187f44de0dfbf8aee18a3))
+* **loader:** hash plugins into their digest caches in the background ([#2058](https://github.com/marioparaschiv/unbound/issues/2058)) ([7511089](https://github.com/marioparaschiv/unbound/commit/7511089720d2f7374247f4a95248368bed37911f))
+* **loader:** keep build IDs in Android tombstone frames ([#1952](https://github.com/marioparaschiv/unbound/issues/1952)) ([0bbeb50](https://github.com/marioparaschiv/unbound/commit/0bbeb50a4c86b6319717ac8594c1ff3e99d81b46))
+* **loader:** name the likely plugin behind a MetricKit hang ([#1950](https://github.com/marioparaschiv/unbound/issues/1950)) ([5f5606b](https://github.com/marioparaschiv/unbound/commit/5f5606b2e7ec6c5a12488ac4a32b0234aafd8210))
+* **loader:** name the tweak package behind each injected library ([#2028](https://github.com/marioparaschiv/unbound/issues/2028)) ([8b46028](https://github.com/marioparaschiv/unbound/commit/8b460282fcd143a1a6e9e00c74707727aec75d1e))
+* **loader:** name tweaks that replace a plugin's hooked method ([#1855](https://github.com/marioparaschiv/unbound/issues/1855)) ([1141213](https://github.com/marioparaschiv/unbound/commit/114121305c93c5d31b649eaf6603c274be819da3))
+* **loader:** report MetricKit hangs with their main-thread stack ([#1849](https://github.com/marioparaschiv/unbound/issues/1849)) ([cb45fa4](https://github.com/marioparaschiv/unbound/commit/cb45fa4cdab6e2f7b9a1c2975d9572743354a0f4))
+* **loader:** report the versions of injected Android modules ([#2046](https://github.com/marioparaschiv/unbound/issues/2046)) ([ed64736](https://github.com/marioparaschiv/unbound/commit/ed647362d33180010988f4d625d571d4f2f52ba5))
+* **loader:** run addon updates and client jobs in the background ([#2056](https://github.com/marioparaschiv/unbound/issues/2056)) ([5a9b86b](https://github.com/marioparaschiv/unbound/commit/5a9b86b79ad1d0dc51cc3383eadd8975227a01f6))
+* **loader:** space background refreshes out while nothing changes ([#2073](https://github.com/marioparaschiv/unbound/issues/2073)) ([2a56ecb](https://github.com/marioparaschiv/unbound/commit/2a56ecbfc8937d07e1853cf2278abb1a51589b43))
+* **loader:** stage addon installs and clean up leftover folders ([#2072](https://github.com/marioparaschiv/unbound/issues/2072)) ([1503fa0](https://github.com/marioparaschiv/unbound/commit/1503fa0f6c2b41eda922e599c37a63c572827de8))
+* **loader:** warn once when storage is full ([#1947](https://github.com/marioparaschiv/unbound/issues/1947)) ([af66a97](https://github.com/marioparaschiv/unbound/commit/af66a97b71c6ba5a909cc36de4b3b53ddade4a7b))
+* **web:** add short links to crash issues ([#1917](https://github.com/marioparaschiv/unbound/issues/1917)) ([b2f3aae](https://github.com/marioparaschiv/unbound/commit/b2f3aaee5c669904eef58bc418098af601d81bde))
+* **web:** blame the injected tweak a native crash happened in ([#2047](https://github.com/marioparaschiv/unbound/issues/2047)) ([0d0a843](https://github.com/marioparaschiv/unbound/commit/0d0a843a246825fdc4904992c35dacc4271c4b22))
+* **web:** tell reporters how many devices hit the same crash ([#1953](https://github.com/marioparaschiv/unbound/issues/1953)) ([3c7239e](https://github.com/marioparaschiv/unbound/commit/3c7239e996501b3f0c19af2b187390d23d629393))
+
+
+### Bug Fixes
+
+* **ci:** get main's client, minimum-loader and CodeQL checks green ([#1968](https://github.com/marioparaschiv/unbound/issues/1968)) ([6d1a159](https://github.com/marioparaschiv/unbound/commit/6d1a159b2992b19512d5532ed4647cf6bce6a10b))
+* **ci:** restore min-loader exceptions a cached check dropped ([#1978](https://github.com/marioparaschiv/unbound/issues/1978)) ([c9c7abb](https://github.com/marioparaschiv/unbound/commit/c9c7abbbd313b2f21719f1a0fec92ab4ec475195))
+* **client:** check every image placeholder in a chat row ([#2150](https://github.com/marioparaschiv/unbound/issues/2150)) ([c21f6c6](https://github.com/marioparaschiv/unbound/commit/c21f6c6f05ea9503d57e429e2b328582dcef83c2))
+* **client:** confirm before a first sync replaces the cloud setup ([#1923](https://github.com/marioparaschiv/unbound/issues/1923)) ([f87459b](https://github.com/marioparaschiv/unbound/commit/f87459b1f87102af3d3ce25bd37d2ad227d9b459))
+* **client:** drop malformed image placeholders from chat rows ([#2062](https://github.com/marioparaschiv/unbound/issues/2062)) ([dee7151](https://github.com/marioparaschiv/unbound/commit/dee715152aa917a3d198b6d6fc7cc9bd5cf4b8c2))
+* **client:** file tapped crashes through the crash API ([#1840](https://github.com/marioparaschiv/unbound/issues/1840)) ([d477bd9](https://github.com/marioparaschiv/unbound/commit/d477bd998bba2916c836f3423391ec25850d19da))
+* **client:** forget a plugin's start time when it stops ([#2068](https://github.com/marioparaschiv/unbound/issues/2068)) ([32d1805](https://github.com/marioparaschiv/unbound/commit/32d180514917b525018f7a85c96df4b9ec836459))
+* **client:** keep patching a method something replaced ([#2048](https://github.com/marioparaschiv/unbound/issues/2048)) ([9bb94c0](https://github.com/marioparaschiv/unbound/commit/9bb94c0e9eb557a6cd4fbf1f8207397f445216bd))
+* **client:** keep quit watchdog and VoIP push kills out of crash reports ([#2133](https://github.com/marioparaschiv/unbound/issues/2133)) ([4abc4d1](https://github.com/marioparaschiv/unbound/commit/4abc4d198d55d844c519b9ae2ac1ea1d686bac7f))
+* **client:** keep settings an older schema rejects ([#1883](https://github.com/marioparaschiv/unbound/issues/1883)) ([e10e7bb](https://github.com/marioparaschiv/unbound/commit/e10e7bb35ac3a6d31bc94621e24dba1c06281e4d))
+* **client:** keep staff mode across gateway reconnects ([#1826](https://github.com/marioparaschiv/unbound/issues/1826)) ([189686e](https://github.com/marioparaschiv/unbound/commit/189686eaf86f0637c1f2cb4874428dfb2c7e3ea0))
+* **client:** link repeated crashes to their open issue ([#2109](https://github.com/marioparaschiv/unbound/issues/2109)) ([81aed17](https://github.com/marioparaschiv/unbound/commit/81aed17441e4c9d6100dae014810253a7a6059ae))
+* **client:** record the guarded native reads newer than loader 1.4.0 ([#2031](https://github.com/marioparaschiv/unbound/issues/2031)) ([1ba2629](https://github.com/marioparaschiv/unbound/commit/1ba2629d009b4601c9b657eeeabd922a94363a03))
+* **client:** remove a patch that overflows the stack at once ([#1915](https://github.com/marioparaschiv/unbound/issues/1915)) ([5692091](https://github.com/marioparaschiv/unbound/commit/5692091024198211e93e78d2650408e20b8dca56))
+* **client:** report MetricKit hangs only when Unbound took part ([#2136](https://github.com/marioparaschiv/unbound/issues/2136)) ([e2b61c2](https://github.com/marioparaschiv/unbound/commit/e2b61c214ddc95da5326fae40f453452677bacb8))
+* **client:** stop a numeric image uri crashing Discord on Android ([#2104](https://github.com/marioparaschiv/unbound/issues/2104)) ([a3d0661](https://github.com/marioparaschiv/unbound/commit/a3d06617bc36a818e0dcb1184ee9e78d2088d52f))
+* **client:** stop reporting iOS background watchdog kills as crashes ([#2110](https://github.com/marioparaschiv/unbound/issues/2110)) ([0e608a0](https://github.com/marioparaschiv/unbound/commit/0e608a0af89b6c93b69d92bd89deed4ca2b5833e))
+* **client:** sync installs addons in parallel at their latest version ([#2074](https://github.com/marioparaschiv/unbound/issues/2074)) ([7f6715a](https://github.com/marioparaschiv/unbound/commit/7f6715af66d58eb26437055f0cf9b3df615ab901))
+* **client:** tag dev bundles by both flavours ([#1966](https://github.com/marioparaschiv/unbound/issues/1966)) ([966180c](https://github.com/marioparaschiv/unbound/commit/966180c974c79f7d945491464ddd2797265392ec))
+* **client:** unmount plugin surfaces before a bundle reload ([#1932](https://github.com/marioparaschiv/unbound/issues/1932)) ([99c4d57](https://github.com/marioparaschiv/unbound/commit/99c4d571af320d86be65d0abbc63a4179d6ceedf))
+* **client:** warn when the dev server serves a stale bundle ([#2021](https://github.com/marioparaschiv/unbound/issues/2021)) ([f78f9c6](https://github.com/marioparaschiv/unbound/commit/f78f9c67d4ae38b632ee01972a01c96dc891a36e))
+* **debugger:** tell a suspended or backgrounded app from a hung one ([#2007](https://github.com/marioparaschiv/unbound/issues/2007)) ([f726415](https://github.com/marioparaschiv/unbound/commit/f72641543f12211f2cd63aa15923f5eb1b9aa57d))
+* file every crash and say why one has no issue ([#1993](https://github.com/marioparaschiv/unbound/issues/1993)) ([adfd0c4](https://github.com/marioparaschiv/unbound/commit/adfd0c429544250b0ed61f737d47ae269407bb95))
+* **loader:** find the jailbreak root in core, roothide included ([#2001](https://github.com/marioparaschiv/unbound/issues/2001)) ([a55fac2](https://github.com/marioparaschiv/unbound/commit/a55fac257a9f59d3a55c3589fdb5d1554fadb1d4))
+* **loader:** queue icon picks and say why one failed ([#1999](https://github.com/marioparaschiv/unbound/issues/1999)) ([c697717](https://github.com/marioparaschiv/unbound/commit/c697717219739f53f1b03798ee1483dc49fc3d0a))
+
+
+### Tests
+
+* **client:** stop diagnostics start from loading native modules late ([#2022](https://github.com/marioparaschiv/unbound/issues/2022)) ([f66e98e](https://github.com/marioparaschiv/unbound/commit/f66e98e11814af57d67dfc452d6c4dddd95de722))
+* **client:** stop the diagnostics start from loading the native runtime ([#1972](https://github.com/marioparaschiv/unbound/issues/1972)) ([a71140f](https://github.com/marioparaschiv/unbound/commit/a71140fb8ef41737ca2bf4c359fdc7455ecdf2f3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.10.0
+    * @unbound-app/debugger-protocol bumped to 2.3.0
+    * @unbound-app/types bumped to 1.9.0
+    * @unbound-app/utils bumped to 1.0.9
+    * @unbound-app/web bumped to 2.10.0
+
 ## [3.10.0](https://github.com/marioparaschiv/unbound/compare/client-v3.9.0...client-v3.10.0) (2026-11-18)
 
 

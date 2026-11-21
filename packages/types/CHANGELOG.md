@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.9.0](https://github.com/marioparaschiv/unbound/compare/types-v1.8.0...types-v1.9.0) (2026-11-21)
+
+
+### Features
+
+* **loader:** explain scheduled refresh, add job options, run on charge ([#2071](https://github.com/marioparaschiv/unbound/issues/2071)) ([59c3ee5](https://github.com/marioparaschiv/unbound/commit/59c3ee5a663bdd997fa187f44de0dfbf8aee18a3))
+* **loader:** hash plugins into their digest caches in the background ([#2058](https://github.com/marioparaschiv/unbound/issues/2058)) ([7511089](https://github.com/marioparaschiv/unbound/commit/7511089720d2f7374247f4a95248368bed37911f))
+* **loader:** name the likely plugin behind a MetricKit hang ([#1950](https://github.com/marioparaschiv/unbound/issues/1950)) ([5f5606b](https://github.com/marioparaschiv/unbound/commit/5f5606b2e7ec6c5a12488ac4a32b0234aafd8210))
+* **loader:** name the tweak package behind each injected library ([#2028](https://github.com/marioparaschiv/unbound/issues/2028)) ([8b46028](https://github.com/marioparaschiv/unbound/commit/8b460282fcd143a1a6e9e00c74707727aec75d1e))
+* **loader:** name tweaks that replace a plugin's hooked method ([#1855](https://github.com/marioparaschiv/unbound/issues/1855)) ([1141213](https://github.com/marioparaschiv/unbound/commit/114121305c93c5d31b649eaf6603c274be819da3))
+* **loader:** record MetricKit disk-write reports ([#1951](https://github.com/marioparaschiv/unbound/issues/1951)) ([b2cc806](https://github.com/marioparaschiv/unbound/commit/b2cc8062459375c48949a27e2081f47602ef111f))
+* **loader:** report MetricKit hangs with their main-thread stack ([#1849](https://github.com/marioparaschiv/unbound/issues/1849)) ([cb45fa4](https://github.com/marioparaschiv/unbound/commit/cb45fa4cdab6e2f7b9a1c2975d9572743354a0f4))
+* **loader:** report the versions of injected Android modules ([#2046](https://github.com/marioparaschiv/unbound/issues/2046)) ([ed64736](https://github.com/marioparaschiv/unbound/commit/ed647362d33180010988f4d625d571d4f2f52ba5))
+* **loader:** run addon updates and client jobs in the background ([#2056](https://github.com/marioparaschiv/unbound/issues/2056)) ([5a9b86b](https://github.com/marioparaschiv/unbound/commit/5a9b86b79ad1d0dc51cc3383eadd8975227a01f6))
+* **loader:** space background refreshes out while nothing changes ([#2073](https://github.com/marioparaschiv/unbound/issues/2073)) ([2a56ecb](https://github.com/marioparaschiv/unbound/commit/2a56ecbfc8937d07e1853cf2278abb1a51589b43))
+* **loader:** stage addon installs and clean up leftover folders ([#2072](https://github.com/marioparaschiv/unbound/issues/2072)) ([1503fa0](https://github.com/marioparaschiv/unbound/commit/1503fa0f6c2b41eda922e599c37a63c572827de8))
+* **loader:** warn once when storage is full ([#1947](https://github.com/marioparaschiv/unbound/issues/1947)) ([af66a97](https://github.com/marioparaschiv/unbound/commit/af66a97b71c6ba5a909cc36de4b3b53ddade4a7b))
+
+
+### Bug Fixes
+
+* **ci:** get main's client, minimum-loader and CodeQL checks green ([#1968](https://github.com/marioparaschiv/unbound/issues/1968)) ([6d1a159](https://github.com/marioparaschiv/unbound/commit/6d1a159b2992b19512d5532ed4647cf6bce6a10b))
+* **loader:** pass and read Yoga's YGValue across the native bridge ([#2019](https://github.com/marioparaschiv/unbound/issues/2019)) ([cda81e3](https://github.com/marioparaschiv/unbound/commit/cda81e39d2566f53b22547ed1698ee712bc25856))
+* **loader:** queue icon picks and say why one failed ([#1999](https://github.com/marioparaschiv/unbound/issues/1999)) ([c697717](https://github.com/marioparaschiv/unbound/commit/c697717219739f53f1b03798ee1483dc49fc3d0a))
+
+
+### Documentation
+
+* **types:** document the background API's types ([#2067](https://github.com/marioparaschiv/unbound/issues/2067)) ([8dbf80b](https://github.com/marioparaschiv/unbound/commit/8dbf80bead2cef672a230e4089b221a2f025a531))
+
 ## [1.8.0](https://github.com/marioparaschiv/unbound/compare/types-v1.7.0...types-v1.8.0) (2026-11-18)
 
 
