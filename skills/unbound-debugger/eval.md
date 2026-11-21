@@ -18,5 +18,6 @@ To run a plugin's slash command without sending its reply, use `ubd debug comman
 - Restart it: `unbound.plugins.stop('<id>')`, then `unbound.plugins.start('<id>')`
 - A lookup resolves: `unbound.metro.findByProps('a', 'b', { lazy: false })`
 - Platform: `ReactNative.Platform.OS`
+- Background jobs: `ubd debug background` shows the loader's spacing, the jobs and the last run; `--run` runs them now, past the 30-minute spacing.
 
 Keep each `eval` to one expression that returns the fact you will assert on.
