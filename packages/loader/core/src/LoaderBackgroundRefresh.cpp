@@ -34,4 +34,10 @@ bool BackgroundRefreshGate::running(int64_t nowMs) const
     std::lock_guard lock(mutex_);
     return unsettled_ && nowMs - lastStartMs_ < limitMs_;
 }
+
+BackgroundRefreshState BackgroundRefreshGate::state(int64_t nowMs) const
+{
+    std::lock_guard lock(mutex_);
+    return {nowMs - lastStartMs_, intervalMs_, run_, unsettled_ && nowMs - lastStartMs_ < limitMs_};
+}
 }

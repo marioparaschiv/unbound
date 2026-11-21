@@ -146,9 +146,39 @@ static void firstScanAdoptsThePrescan()
     std::filesystem::remove_all(root);
 }
 
+static void warmingFillsEachPluginsDigestCache()
+{
+    const auto root            = makeTemporaryDirectory();
+    const auto compiled        = root / "Plugins" / "compiled";
+    const std::string bytecode = fakeBytecode(98, "body");
+    write(compiled / "manifest.json", R"({"id":"a.compiled","main":"index.js","bytecode":{"98":")"
+                                          + loader::sha512Hex(bytecode) + R"("}})");
+    write(compiled / "index.js", "module.exports = 1;");
+    write(compiled / "index.98.hbc", bytecode);
+    write(root / "Plugins" / "plain" / "manifest.json", R"({"id":"a.plain","main":"index.js"})");
+    write(root / "Plugins" / "plain" / "index.js", "module.exports = 2;");
+    write(root / "Plugins" / "broken" / "manifest.json", "nope");
+    write(root / "Plugins" / "stray-file", "x");
+
+    assert(loader::warmPluginDigests(root.string(), 98) == 2);
+
+    nlohmann::json cache =
+        nlohmann::json::parse(*loader::readTextFile((compiled / ".verified.json").string()));
+    assert(cache["index.js"]["sha512"] == loader::sha512Hex("module.exports = 1;"));
+    assert(cache["index.js"].contains("sha256"));
+    assert(cache["index.98.hbc"]["sha512"] == loader::sha512Hex(bytecode));
+    nlohmann::json plain = nlohmann::json::parse(
+        *loader::readTextFile((root / "Plugins" / "plain" / ".verified.json").string()));
+    assert(plain["index.js"]["sha512"] == loader::sha512Hex("module.exports = 2;"));
+    assert(!plain["index.js"].contains("sha256"));
+
+    std::filesystem::remove_all(root);
+}
+
 int main()
 {
     pluginEntriesStayInsideTheirFolder();
+    warmingFillsEachPluginsDigestCache();
     pluginBytecodeMatchesItsManifest();
     compiledPluginsLeaveTheirSourceOnDisk();
     firstScanAdoptsThePrescan();

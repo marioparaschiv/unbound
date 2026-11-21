@@ -216,6 +216,55 @@ std::optional<std::string> readPluginSource(const std::string &documents, const 
     return bundle;
 }
 
+static bool warmPluginDigest(const std::string &directory, uint32_t bytecodeVersion)
+{
+    std::optional<std::string> text = readTextFile(joinPath(directory, "manifest.json"));
+    nlohmann::json manifest =
+        text ? nlohmann::json::parse(*text, nullptr, false) : nlohmann::json();
+    if (!manifest.is_object())
+    {
+        return false;
+    }
+
+    std::optional<std::string> entry  = resolveManifestEntry(directory, manifest, "main");
+    std::optional<std::string> bundle = entry ? readTextFile(*entry) : std::nullopt;
+    if (!bundle)
+    {
+        return false;
+    }
+
+    cachedSha512(directory, *entry, *bundle);
+    if (!hasBytecodeFor(manifest, *entry, bytecodeVersion))
+    {
+        return true;
+    }
+
+    cachedSha256(directory, *entry, *bundle);
+    std::string bytecodePath = bytecodePathFor(*entry, bytecodeVersion);
+    if (std::optional<std::string> bytecode = readTextFile(bytecodePath))
+    {
+        cachedSha512(directory, bytecodePath, *bytecode);
+    }
+
+    return true;
+}
+
+size_t warmPluginDigests(const std::string &documents, uint32_t bytecodeVersion)
+{
+    std::string root = joinPath(documents, "Plugins");
+    size_t warmed    = 0;
+    for (const std::string &folder : listDirectory(root))
+    {
+        std::string directory = joinPath(root, folder);
+        if (isDirectory(directory) && warmPluginDigest(directory, bytecodeVersion))
+        {
+            warmed++;
+        }
+    }
+
+    return warmed;
+}
+
 nlohmann::json scanPlugins(const std::string &documents, uint32_t bytecodeVersion)
 {
     nlohmann::json plugins = nlohmann::json::array();

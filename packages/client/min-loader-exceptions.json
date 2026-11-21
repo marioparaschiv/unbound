@@ -375,6 +375,21 @@
 			"file": "src/native/unbound-native.ts",
 			"error": "TS2339: Property 'setBackgroundRefresh' does not exist on type 'UnboundNativeBridge'.",
 			"reason": "Called optionally (setBackgroundRefresh?.()); older loaders skip it."
+		},
+		{
+			"file": "src/native/unbound-native.ts",
+			"error": "TS2339: Property 'warmAddonDigests' does not exist on type 'UnboundNativeBridge'.",
+			"reason": "warmAddonDigests checks the bridge member exists and resolves false on older loaders, which hash at launch as before."
+		},
+		{
+			"file": "src/native/unbound-native.ts",
+			"error": "TS2345: Argument of type '\"getBackgroundRefresh\"' is not assignable to parameter of type 'keyof UnboundNativeBridge'.",
+			"reason": "read() checks the bridge member exists and returns undefined on older loaders, so the status omits the gate."
+		},
+		{
+			"file": "src/native/unbound-native.ts",
+			"error": "TS2339: Property 'getBackgroundRefresh' does not exist on type 'UnboundNativeBridge'.",
+			"reason": "Called optionally (getBackgroundRefresh?.()); older loaders report no gate."
 		}
 	]
 }

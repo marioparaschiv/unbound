@@ -238,6 +238,16 @@ void LoaderPipeline::injectPreBundle(jsi::Runtime &runtime, const std::string &b
         provider.updateBundle = [this]() {
             return updateBundleNow();
         };
+        provider.getBackgroundRefresh = [this]() {
+            BackgroundRefreshState state = backgroundRefresh_.state(pipeline_time::nowMs());
+            return nlohmann::json{
+                {"sinceLastMs", state.sinceLastMs},
+                {"intervalMs", state.intervalMs},
+                {"dueInMs", std::max<int64_t>(0, state.intervalMs - state.sinceLastMs)},
+                {"runs", state.runs},
+                {"running", state.running},
+            };
+        };
         installUnboundNative(runtime, std::move(provider));
     }
     catch (const std::exception &error)
