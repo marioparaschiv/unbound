@@ -1,5 +1,6 @@
 #include "NativePlatformFiles.h"
 
+#include "LoaderAddonFolders.h"
 #include "LoaderFiles.h"
 #include "NativePluginRuntime.h"
 
@@ -66,6 +67,20 @@ jsi::Object filesBridge(jsi::Runtime &runtime, const std::string &documents)
 
                 return jsi::Value(writeTextFileAtomically(*path, args[1].getString(rt).utf8(rt)));
             }));
+    files.setProperty(
+        runtime, "replace",
+        native::makeFunction(runtime, "replace", 2,
+                             [documents](jsi::Runtime &rt, const jsi::Value &,
+                                         const jsi::Value *args, size_t count) -> jsi::Value {
+                                 if (count < 2 || !args[0].isString() || !args[1].isString())
+                                 {
+                                     return jsi::Value(false);
+                                 }
+
+                                 return jsi::Value(
+                                     replaceAddonFolder(documents, args[0].getString(rt).utf8(rt),
+                                                        args[1].getString(rt).utf8(rt)));
+                             }));
     return files;
 }
 }

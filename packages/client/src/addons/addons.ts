@@ -1,6 +1,5 @@
 import type { AddonVersion, ListedAddon } from '@unbound-app/contracts/addons';
 import { DEVELOPMENT_MARKER } from '@unbound-app/contracts/manifest-files';
-import { getBytecodePath } from '@unbound-app/contracts/version-layout';
 import type { AddonManifest, PushedManifest } from '@unbound-app/types';
 import type { AddonRelease } from '@unbound-app/contracts/updates';
 import toError from '@unbound-app/utils/to-error';
@@ -11,14 +10,14 @@ import {
 	downloadManifest,
 	verifySignature,
 } from '~/addons/download';
-import { downloadAddonFiles, writeAddonFiles, type AddonFiles } from '~/addons/files';
+import { downloadAddonFiles, type AddonFiles } from '~/addons/files';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { assertTextDigest, digestOf } from '~/addons/digests';
 import type { InstalledEntry } from '~/updates/addon-updates';
 import { countInstall } from '~/marketplace/count-install';
 import type { UpdatableKind } from '~/addons/manager-of';
 import { AddonSelection } from '~/addons/selection';
-import { getLoader } from '~/native/unbound-native';
+import { writeAddon } from '~/addons/write-addon';
 import { createRecord } from '~/addons/records';
 import { toRelease } from '~/addons/versions';
 import fs from '~/native/fs';
@@ -488,21 +487,13 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 		bytecode?: string,
 		files?: AddonFiles,
 	): Promise<void> {
-		const dir = this.directoryOf(manifest.id);
-		const bytecodeVersion = getLoader()?.bytecodeVersion;
-
-		await fs.writeFile(`${dir}/manifest.json`, JSON.stringify(manifest));
-		await fs.writeFile(`${dir}/${manifest.main}`, bundle);
-
-		if (bytecode && bytecodeVersion) {
-			const path = `${dir}/${getBytecodePath(manifest.main, bytecodeVersion)}`;
-
-			await fs.writeFile(path, bytecode, 'base64');
-		}
-
-		if (files) {
-			await writeAddonFiles(dir, manifest, files);
-		}
+		await writeAddon({
+			target: this.directoryOf(manifest.id),
+			bundle,
+			manifest,
+			bytecode,
+			files,
+		});
 	}
 
 	/**

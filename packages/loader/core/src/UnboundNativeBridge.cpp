@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <utility>
 
+#include "LoaderAddonFolders.h"
 #include "LoaderBackgroundRefresh.h"
 #include "LoaderCrashHandler.h"
 #include "LoaderCrypto.h"
@@ -89,6 +90,13 @@ UnboundNativeProvider makeUnboundNativeProvider(const AddonState &addons,
     {
         provider.warmAddonDigests = [documents, bytecodeVersion] {
             return warmPluginDigests(documents, bytecodeVersion) > 0;
+        };
+        provider.removeOrphanedAddons = [documents] {
+            constexpr int64_t kOrphanAgeSeconds = 24 * 60 * 60;
+            int64_t now = std::chrono::duration_cast<std::chrono::seconds>(
+                              std::chrono::system_clock::now().time_since_epoch())
+                              .count();
+            return removeOrphanedAddonFolders(documents, now, kOrphanAgeSeconds) > 0;
         };
     }
 
@@ -348,6 +356,13 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
         bridge.setProperty(runtime, "warmAddonDigests",
                            backgroundFlagFunction(runtime, "warmAddonDigests",
                                                   std::move(provider.warmAddonDigests)));
+    }
+
+    if (provider.removeOrphanedAddons)
+    {
+        bridge.setProperty(runtime, "removeOrphanedAddons",
+                           backgroundFlagFunction(runtime, "removeOrphanedAddons",
+                                                  std::move(provider.removeOrphanedAddons)));
     }
 
     if (provider.getBackgroundRefresh)

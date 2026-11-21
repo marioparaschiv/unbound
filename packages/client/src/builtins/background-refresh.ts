@@ -1,8 +1,13 @@
 import { createLogger } from '@unbound-app/logger';
 
+import {
+	removeOrphanedAddons,
+	setBackgroundRefresh,
+	warmAddonDigests,
+} from '~/native/unbound-native';
 import { addBackgroundJob, DEFAULT_PHASE, runBackgroundJobs } from '~/background/jobs';
-import { setBackgroundRefresh, warmAddonDigests } from '~/native/unbound-native';
 import { updateInBackground } from '~/updates/update-in-background';
+import { refresh as refreshAccount } from '~/account/api';
 import { isEnabled, now } from '~/sync/api';
 import { persist } from '~/storage/api';
 
@@ -40,13 +45,20 @@ async function warmDigests() {
 	await warmAddonDigests();
 }
 
+async function removeOrphans() {
+	await removeOrphanedAddons();
+}
+
 const BUILT_IN_JOBS: [name: string, run: () => Promise<void>, phase: number][] = [
 	['settings', saveSettings, SETTINGS_PHASE],
+	// Before sync, so it signs in with a fresh session.
+	['session', refreshAccount, SETTINGS_PHASE],
 	['addon updates', updateInBackground, DEFAULT_PHASE],
 	['sync', syncIfEnabled, DEFAULT_PHASE],
 	['crash issues', retryCrashIssues, DEFAULT_PHASE],
 	['marketplace catalog', refreshCatalog, DEFAULT_PHASE],
 	['addon digests', warmDigests, UPKEEP_PHASE],
+	['orphaned addons', removeOrphans, UPKEEP_PHASE],
 ];
 
 async function refresh() {
