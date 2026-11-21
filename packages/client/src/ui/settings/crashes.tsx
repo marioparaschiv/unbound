@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import {
 	clearCrashHistory,
 	readCrashHistory,
+	shareCrashIssues,
 	type CrashIssueLink,
 	type CrashRecord,
 } from '~/diagnostics/crash-history';
@@ -32,7 +33,9 @@ function CrashesPage() {
 
 	function linked(at: number, issue: CrashIssueLink) {
 		setRecords((current) =>
-			current.map((record) => (record.at === at ? { ...record, issue } : record)),
+			shareCrashIssues(
+				current.map((record) => (record.at === at ? { ...record, issue } : record)),
+			),
 		);
 	}
 

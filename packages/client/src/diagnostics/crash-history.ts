@@ -70,6 +70,44 @@ function isCrashRecord(value: unknown): value is CrashRecord {
 	);
 }
 
+function crashKey(record: CrashRecord): string {
+	return [record.kind, record.addon ?? '', record.where ?? '', record.message].join('|');
+}
+
+/**
+ * @description Gives every crash without an issue the newest issue another record of the same crash has, so a repeat
+ * that was never sent links to its issue instead of offering to report it again.
+ * @param records The crashes.
+ * @returns The crashes with shared issues filled in.
+ */
+export function shareCrashIssues(records: CrashRecord[]): CrashRecord[] {
+	const filed = new Map<string, CrashRecord>();
+
+	for (const record of records) {
+		const key = crashKey(record);
+		const newest = filed.get(key);
+
+		if (record.issue && (!newest || record.at > newest.at)) {
+			filed.set(key, record);
+		}
+	}
+
+	return records.map((record) => {
+		const known = record.issue ? undefined : filed.get(crashKey(record));
+
+		if (!known?.issue) {
+			return record;
+		}
+
+		return {
+			...record,
+			issue: known.issue,
+			issuePending: false,
+			...(known.issueState ? { issueState: known.issueState } : {}),
+		};
+	});
+}
+
 async function write(records: CrashRecord[]): Promise<void> {
 	try {
 		const { default: fs } = await import('~/native/fs');
@@ -94,7 +132,7 @@ export async function readCrashHistory(): Promise<CrashRecord[]> {
 
 		const parsed: unknown = JSON.parse(await fs.readFile(CRASH_HISTORY_FILE));
 
-		return Array.isArray(parsed) ? parsed.filter(isCrashRecord) : [];
+		return Array.isArray(parsed) ? shareCrashIssues(parsed.filter(isCrashRecord)) : [];
 	} catch (error) {
 		logger.warn(`Failed to read crash history from ${CRASH_HISTORY_FILE}:`, error);
 
