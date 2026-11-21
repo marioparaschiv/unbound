@@ -17,6 +17,7 @@ import { marketplaceSection, addonPageSection } from '~/marketplace/builtin';
 import promiseRejections, { crashesSection } from '~/diagnostics/builtin';
 import backgroundRefresh from '~/builtins/background-refresh';
 import gatewayReconnect from '~/builtins/gateway-reconnect';
+import placeholderGuard from '~/builtins/placeholder-guard';
 import updater, { updatesSection } from '~/updates/builtin';
 import { developerSection } from '~/settings/builtin.dev';
 import { themes as themeManager } from '~/themes/manager';
@@ -104,6 +105,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	['i18n', i18n],
 	['links', links],
 	['nativeConsent', nativeConsent],
+	['placeholderGuard', placeholderGuard],
 	['promiseRejections', promiseRejections],
 	['settings', createSettings(SECTIONS_IN_OVERVIEW_ORDER)],
 	['sponsorBadges', sponsorBadges],
