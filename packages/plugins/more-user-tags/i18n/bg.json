@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Може да управлява съобщения или да изритва/забранява хора",
 	"TAG_VOICE_MODERATOR": "Гласов мод",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Може да управлява гласови чатове",
+	"TAG_CHAT_MODERATOR": "Чат мод",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Може да дава таймаут на хора",
 	"APPEARANCE": "Облик",
 	"COLORED_TAGS": "Цветни етикети",
 	"COLORED_TAGS_SUBTITLE": "Дай на всеки етикет собствен цвят вместо стандартния стил",

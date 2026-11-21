@@ -42,4 +42,10 @@ export const TAGS: Tag[] = [
 		displayName: () => messages.TAG_VOICE_MODERATOR,
 		permissions: ['MOVE_MEMBERS', 'MUTE_MEMBERS', 'DEAFEN_MEMBERS'],
 	},
+	{
+		name: 'CHAT_MODERATOR',
+		color: '#C27C0E',
+		displayName: () => messages.TAG_CHAT_MODERATOR,
+		permissions: ['MODERATE_MEMBERS'],
+	},
 ];

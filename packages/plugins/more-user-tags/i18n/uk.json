@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Може керувати повідомленнями або виганяти й блокувати людей",
 	"TAG_VOICE_MODERATOR": "Мод голосу",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Може керувати голосовими чатами",
+	"TAG_CHAT_MODERATOR": "Мод чату",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Може відправляти людей у тайм-аут",
 	"APPEARANCE": "Вигляд",
 	"COLORED_TAGS": "Кольорові теги",
 	"COLORED_TAGS_SUBTITLE": "Власний колір для кожного тегу замість стандартного стилю",

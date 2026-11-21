@@ -171,6 +171,12 @@ declare module '@unbound-app/settings' {
 			 * Can manage voice chats
 			 */
 			VOICE_MODERATOR: boolean;
+			/**
+			 * Chat Mod
+			 *
+			 * Can time people out
+			 */
+			CHAT_MODERATOR: boolean;
 		};
 		/**
 		 * Coloured Tags
@@ -241,6 +247,12 @@ declare module '@unbound-app/settings' {
 		 */
 		"tag.VOICE_MODERATOR": boolean;
 		/**
+		 * Chat Mod
+		 *
+		 * Can time people out
+		 */
+		"tag.CHAT_MODERATOR": boolean;
+		/**
 		 * Coloured Tags
 		 *
 		 * Give each tag its own colour instead of the default styling
@@ -275,7 +287,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "tag.WEBHOOK" | "tag.OWNER" | "tag.ADMINISTRATOR" | "tag.MODERATOR_STAFF" | "tag.MODERATOR" | "tag.VOICE_MODERATOR" | "coloredTags" | "useRoleColor" | "useEnhancedRoleColors" | "useOpTagStyle";
+	export type BooleanSettingKey = "tag.WEBHOOK" | "tag.OWNER" | "tag.ADMINISTRATOR" | "tag.MODERATOR_STAFF" | "tag.MODERATOR" | "tag.VOICE_MODERATOR" | "tag.CHAT_MODERATOR" | "coloredTags" | "useRoleColor" | "useEnhancedRoleColors" | "useOpTagStyle";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

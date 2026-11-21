@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "จัดการข้อความ หรือเตะ/แบนผู้อื่นได้",
 	"TAG_VOICE_MODERATOR": "ม็อดเสียง",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "จัดการแชทเสียงได้",
+	"TAG_CHAT_MODERATOR": "ม็อดแชท",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "สามารถหมดเวลาผู้คนได้",
 	"APPEARANCE": "รูปลักษณ์",
 	"COLORED_TAGS": "แท็กสี",
 	"COLORED_TAGS_SUBTITLE": "ให้แต่ละแท็กมีสีของตัวเองแทนสไตล์เริ่มต้น",

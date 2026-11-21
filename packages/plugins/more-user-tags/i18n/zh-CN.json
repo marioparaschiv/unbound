@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "可以管理消息或踢出/封禁成员",
 	"TAG_VOICE_MODERATOR": "语音版主",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "可以管理语音聊天",
+	"TAG_CHAT_MODERATOR": "聊天管理员",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "可以禁言他人",
 	"APPEARANCE": "外观",
 	"COLORED_TAGS": "彩色标签",
 	"COLORED_TAGS_SUBTITLE": "为每种标签设置独立颜色，而不使用默认样式",

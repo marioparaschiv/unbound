@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Poate gestiona mesaje sau da afară ori interzice membri",
 	"TAG_VOICE_MODERATOR": "Mod voce",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Poate gestiona chaturile vocale",
+	"TAG_CHAT_MODERATOR": "Mod chat",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Poate da timeout oamenilor",
 	"APPEARANCE": "Aspect",
 	"COLORED_TAGS": "Etichete colorate",
 	"COLORED_TAGS_SUBTITLE": "Dă fiecărei etichete propria culoare în locul stilului implicit",

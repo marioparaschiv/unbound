@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Může spravovat zprávy nebo vyhazovat či banovat lidi",
 	"TAG_VOICE_MODERATOR": "Hlasový mod",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Může spravovat hlasové chaty",
+	"TAG_CHAT_MODERATOR": "Chat mod",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Může lidem dávat časový limit",
 	"APPEARANCE": "Vzhled",
 	"COLORED_TAGS": "Barevné štítky",
 	"COLORED_TAGS_SUBTITLE": "Každý štítek dostane vlastní barvu místo výchozího stylu",

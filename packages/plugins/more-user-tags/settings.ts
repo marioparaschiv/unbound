@@ -35,6 +35,11 @@ export default defineSettings(
 					title: 'TAG_VOICE_MODERATOR',
 					subtitle: 'TAG_VOICE_MODERATOR_SUBTITLE',
 				}),
+				CHAT_MODERATOR: setting.boolean({
+					default: true,
+					title: 'TAG_CHAT_MODERATOR',
+					subtitle: 'TAG_CHAT_MODERATOR_SUBTITLE',
+				}),
 			},
 		),
 		coloredTags: setting.boolean({

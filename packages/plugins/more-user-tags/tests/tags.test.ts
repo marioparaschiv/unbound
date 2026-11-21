@@ -10,7 +10,7 @@ const SAVE_DELAY_MS = 1_000;
 type TagProperties = { opTagText: string | null; tagText: string | null };
 
 const OWNER_ID = '1';
-const PERMISSIONS = { ADMINISTRATOR: 1n, MANAGE_MESSAGES: 2n };
+const PERMISSIONS = { ADMINISTRATOR: 1n, MANAGE_MESSAGES: 2n, MODERATE_MEMBERS: 4n };
 
 const getTagProperties = {
 	name: 'getTagProperties',
@@ -70,6 +70,18 @@ describe('tags', () => {
 
 	test('mark the server owner', () => {
 		expect(tagFor(memberMessage(OWNER_ID)).tagText).toBe('Owner');
+	});
+
+	test('mark members who can only time people out as chat mods', () => {
+		permissionsOf.value = PERMISSIONS.MODERATE_MEMBERS;
+
+		expect(tagFor(memberMessage('6')).tagText).toBe('Chat Mod');
+	});
+
+	test('prefer the moderator tag over chat mod', () => {
+		permissionsOf.value = PERMISSIONS.MANAGE_MESSAGES | PERMISSIONS.MODERATE_MEMBERS;
+
+		expect(tagFor(memberMessage('7')).tagText).toBe('Mod');
 	});
 
 	test('mark members with a moderator permission', () => {

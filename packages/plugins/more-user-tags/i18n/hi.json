@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "मैसेज मैनेज कर सकता है या लोगों को किक/बैन कर सकता है",
 	"TAG_VOICE_MODERATOR": "VC मॉड",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "वॉइस चैट मैनेज कर सकता है",
+	"TAG_CHAT_MODERATOR": "चैट मॉड",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "लोगों को टाइमआउट कर सकता है",
 	"APPEARANCE": "रूप-रंग",
 	"COLORED_TAGS": "रंगीन टैग",
 	"COLORED_TAGS_SUBTITLE": "डिफ़ॉल्ट स्टाइल के बजाय हर टैग को उसका अपना रंग दें",

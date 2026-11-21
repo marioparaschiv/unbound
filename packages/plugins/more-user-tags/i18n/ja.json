@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "メッセージの管理やメンバーのキック/BANができる",
 	"TAG_VOICE_MODERATOR": "VCモデレーター",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "ボイスチャットを管理できる",
+	"TAG_CHAT_MODERATOR": "チャットモデレーター",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "メンバーをタイムアウトできます",
 	"APPEARANCE": "外観",
 	"COLORED_TAGS": "タグに色を付ける",
 	"COLORED_TAGS_SUBTITLE": "デフォルトのスタイルの代わりに、タグごとに個別の色を付けます",

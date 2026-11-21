@@ -21,7 +21,8 @@ export type PermissionName =
 	| 'BAN_MEMBERS'
 	| 'MOVE_MEMBERS'
 	| 'MUTE_MEMBERS'
-	| 'DEAFEN_MEMBERS';
+	| 'DEAFEN_MEMBERS'
+	| 'MODERATE_MEMBERS';
 
 export type User = { id: string; bot?: boolean };
 export type Guild = { id: string; ownerId: string };
