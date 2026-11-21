@@ -251,10 +251,16 @@ func describeLocations(locations []sourceLocation) []string {
 	return described
 }
 
+const libcxxHeaders = "/usr/include/c++/v1/"
+
 func trimBuildRoot(file string) string {
 	slashed := filepath.ToSlash(file)
 	if index := strings.LastIndex(slashed, "/packages/loader/"); index >= 0 {
 		return path.Clean(slashed[index+1:])
+	}
+
+	if index := strings.LastIndex(slashed, libcxxHeaders); index >= 0 {
+		return "libc++/" + slashed[index+len(libcxxHeaders):]
 	}
 
 	return file
