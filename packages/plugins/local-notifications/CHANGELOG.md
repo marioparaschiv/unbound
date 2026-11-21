@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.3] - 2026-11-21
+
+### Fixed
+
+- Starting the silent player no longer blocks Discord while iOS starts audio playback.
+
 ## [1.1.2] - 2026-11-21
 
 ### Fixed
