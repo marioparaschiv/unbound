@@ -185,7 +185,7 @@ declare module '@unbound-app/settings' {
 		/**
 		 * Log deleted channels
 		 *
-		 * Keep a list of server channels deleted while Discord is open.
+		 * Keep a list of server channels and threads deleted while Discord is open.
 		 */
 		logDeletedChannels: boolean;
 		/**
@@ -261,7 +261,7 @@ declare module '@unbound-app/settings' {
 		/**
 		 * Log deleted channels
 		 *
-		 * Keep a list of server channels deleted while Discord is open.
+		 * Keep a list of server channels and threads deleted while Discord is open.
 		 */
 		"logDeletedChannels": boolean;
 		/**
