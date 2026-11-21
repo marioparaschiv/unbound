@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cstdint>
 #include <functional>
+#include <map>
 #include <memory>
 #include <string>
 
@@ -25,6 +26,7 @@ struct FreezeWatchdogOptions {
 using FreezeHeartbeat = std::function<bool(std::function<void()> beat)>;
 using FreezeListener  = std::function<void(const FreezeReport &report)>;
 
+std::string dominantAddonRecord(const std::map<std::string, int> &samples, int total);
 bool watchdogWasSuspended(int64_t previousTick, int64_t now, const FreezeWatchdogOptions &options);
 
 class FreezeWatchdog

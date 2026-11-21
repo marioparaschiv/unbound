@@ -93,9 +93,18 @@ static void restartsTheMeasurementAfterTheProcessWasSuspended()
     assert(loader::watchdogWasSuspended(10'000, 17'425'000, options));
 }
 
+static void blamesOnlyAPluginThatHeldMostOfTheFreeze()
+{
+    assert(loader::dominantAddonRecord({{"plugin", 3}, {"", 1}}, 4) == "plugin");
+    assert(loader::dominantAddonRecord({{"plugin", 2}, {"", 2}}, 4).empty());
+    assert(loader::dominantAddonRecord({{"a", 2}, {"b", 1}, {"", 2}}, 5).empty());
+    assert(loader::dominantAddonRecord({}, 0).empty());
+}
+
 int main()
 {
     restartsTheMeasurementAfterTheProcessWasSuspended();
+    blamesOnlyAPluginThatHeldMostOfTheFreeze();
 
     std::filesystem::path root = makeTemporaryDirectory();
     std::string marker         = (root / loader::AddonCrashGuard::kFrozenFile).string();
