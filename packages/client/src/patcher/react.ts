@@ -1,4 +1,4 @@
-import type { PatchCallback, PatchContext, PatchOptions, PatchParent } from 'possess';
+import type { PatchCallback, PatchContext, PatchParent } from 'possess';
 import type { JSXElementConstructor, ReactNode } from 'react';
 import noop from '@unbound-app/utils/noop';
 import { PatchType } from 'possess';
@@ -8,6 +8,7 @@ import { fallbackOf, isPatchBoundary, withPatchBoundary } from '~/patcher/patch-
 import { countRender, createRenderRate, removeLoopingPatch } from '~/patcher/render-rate';
 import { isolateAdded, markDiscordTree } from '~/patcher/isolate-added';
 import type { PatchBoundaryProps } from '~/patcher/patch-boundary';
+import type { UnboundPatchOptions } from '~/patcher/patch-order';
 import { snapshotTree } from '~/patcher/snapshot-tree';
 import type { IsUntyped } from '~/patcher/is-untyped';
 import { LateHook } from '~/hot-refresh/hooks';
@@ -94,13 +95,13 @@ export type ReactPatch<Kind extends PatchType> = {
 	<C extends ReactPatchTarget>(
 		component: C,
 		callback: ReactCallbackOf<Kind, ReactPropsOf<C>, ReactSelfOf<C>>,
-		options?: PatchOptions,
+		options?: UnboundPatchOptions,
 	): () => void;
 	<M extends PatchParent, K extends Extract<keyof M, string>>(
 		parent: M,
 		key: K,
 		callback: ReactCallbackOf<Kind, ReactPropsOf<M[K]>, ReactSelfOf<M[K]>>,
-		options?: PatchOptions,
+		options?: UnboundPatchOptions,
 	): () => void;
 };
 
@@ -133,7 +134,7 @@ export type PatchAt = (
 	type: PatchType,
 	parent: PatchParent,
 	locate: (loaded: PatchParent) => PatchPlace,
-	options?: PatchOptions,
+	options?: UnboundPatchOptions,
 ) => () => void;
 
 type Render = { parent: PatchParent; method: string; isClass: boolean };
@@ -144,9 +145,9 @@ type AnyReactCallback = {
 	bivarianceHack(ctx: ReactAfterContext<unknown, unknown>): unknown;
 }['bivarianceHack'];
 
-type ComponentArgs = [callback: AnyReactCallback, options?: PatchOptions];
+type ComponentArgs = [callback: AnyReactCallback, options?: UnboundPatchOptions];
 
-type MemberArgs = [key: string, callback: AnyReactCallback, options?: PatchOptions];
+type MemberArgs = [key: string, callback: AnyReactCallback, options?: UnboundPatchOptions];
 
 const MEMO = Symbol.for('react.memo');
 const FORWARD_REF = Symbol.for('react.forward_ref');

@@ -1,9 +1,10 @@
-import type { PatchCallback, PatchOptions, PatchParent } from 'possess';
+import type { PatchCallback, PatchParent } from 'possess';
 import noop from '@unbound-app/utils/noop';
 import uuid from '@unbound-app/utils/uuid';
 import * as Possess from 'possess';
 
 import { patchWhenLoaded, unpatchKeepingReplacement } from '~/patcher/apply';
+import type { UnboundPatchOptions } from '~/patcher/patch-order';
 import type { ReactPatcher, PatchPlace } from '~/patcher/react';
 import { createRepeatTracker } from '~/patcher/patch-repeats';
 import { guardedCallback } from '~/patcher/guarded-callback';
@@ -29,7 +30,7 @@ const repeats = createRepeatTracker();
  * @param defaultOptions A caller id, or options merged into every patch; a caller id is generated if missing.
  * @returns The scoped patcher.
  */
-export function createPatcher(defaultOptions: string | PatchOptions): PatcherInstance {
+export function createPatcher(defaultOptions: string | UnboundPatchOptions): PatcherInstance {
 	const defaults =
 		typeof defaultOptions === 'string' ? { caller: defaultOptions } : defaultOptions;
 
@@ -40,7 +41,7 @@ export function createPatcher(defaultOptions: string | PatchOptions): PatcherIns
 		type: Possess.PatchType,
 		parent: PatchParent,
 		locate: (loaded: PatchParent) => PatchPlace,
-		options: PatchOptions = {},
+		options: UnboundPatchOptions = {},
 	): () => void {
 		const merged = { ...defaults, ...options };
 		const unpatch = patchWhenLoaded(parent, merged.caller, (target) => {
@@ -73,7 +74,7 @@ export function createPatcher(defaultOptions: string | PatchOptions): PatcherIns
 			parent: PatchParent,
 			method: string,
 			callback: PatchCallback,
-			options?: PatchOptions,
+			options?: UnboundPatchOptions,
 		): () => void {
 			const caller = options?.caller ?? defaults.caller;
 			let remove = noop;

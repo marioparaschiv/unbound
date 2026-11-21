@@ -1,5 +1,5 @@
-import type { Patch, PatchCallback, PatchContext, PatchOptions, PatchParent } from 'possess';
 import { PATCH_SYMBOL, PatchType, instead, patches, before, after } from 'possess';
+import type { Patch, PatchCallback, PatchContext, PatchParent } from 'possess';
 import type { ForwardedRef, ReactNode } from 'react';
 import { createLogger } from '@unbound-app/logger';
 
@@ -13,6 +13,7 @@ import {
 	hookList,
 	settle,
 } from '~/hot-refresh/hooks';
+import { keepLastPatchesLast, type UnboundPatchOptions } from '~/patcher/patch-order';
 import { ORIGINAL, commit, cut, fits, resolve } from '~/hot-refresh/instances';
 import { HOOK_FIBERS, reconcile, withAlternates } from '~/hot-refresh/refresh';
 import type { Decision, Fiber, FiberType } from '~/hot-refresh/refresh';
@@ -88,7 +89,7 @@ type Patcher = (
 	parent: PatchParent,
 	method: string,
 	callback: PatchCallback,
-	options: PatchOptions,
+	options: UnboundPatchOptions,
 ) => () => void;
 
 const FORWARD_REF = Symbol.for('react.forward_ref');
@@ -145,7 +146,7 @@ export function patch(
 	parent: PatchParent,
 	method: string,
 	callback: PatchCallback,
-	options: PatchOptions = {},
+	options: UnboundPatchOptions = {},
 ): () => void {
 	const attribution = currentAddonAttribution();
 	const chained = phase === PatchType.Instead ? chainInstead(parent, method, callback) : callback;
@@ -163,6 +164,8 @@ export function patch(
 
 	const value = Reflect.get(parent, method);
 	const unpatch = PATCHERS[phase](parent, method, run, options);
+
+	keepLastPatchesLast(parent, method, phase);
 
 	lives.set(run, live);
 	touch(parent, method, value);

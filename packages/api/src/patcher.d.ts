@@ -48,7 +48,7 @@ export declare function after<M extends PatchParent, P extends PropOf<M>>(
 	parent: M,
 	method: P,
 	callback: AfterCallback<ArgsOf<M[P]>, ResultOf<M[P]>, SelfOf<M, M[P]>>,
-	options?: PatchOptions,
+	options?: UnboundPatchOptions,
 ): () => void;
 /**
  * @description Runs a callback before a method, which can replace its arguments by returning an array.
@@ -64,7 +64,7 @@ export declare function before<M extends PatchParent, P extends PropOf<M>>(
 	parent: M,
 	method: P,
 	callback: BeforeCallback<ArgsOf<M[P]>, ResultOf<M[P]>, SelfOf<M, M[P]>>,
-	options?: PatchOptions,
+	options?: UnboundPatchOptions,
 ): () => void;
 /**
  * @description Runs a callback in place of a method, which can call `ctx.original` and replaces its result.
@@ -80,7 +80,7 @@ export declare function instead<M extends PatchParent, P extends PropOf<M>>(
 	parent: M,
 	method: P,
 	callback: InsteadCallback<ArgsOf<M[P]>, ResultOf<M[P]>, SelfOf<M, M[P]>>,
-	options?: PatchOptions,
+	options?: UnboundPatchOptions,
 ): () => void;
 /**
  * @description Removes every patch.
@@ -261,13 +261,13 @@ export type ReactPatch<Kind extends PatchType> = {
 	<C extends ReactPatchTarget>(
 		component: C,
 		callback: ReactCallbackOf<Kind, ReactPropsOf<C>, ReactSelfOf<C>>,
-		options?: PatchOptions,
+		options?: UnboundPatchOptions,
 	): () => void;
 	<M extends PatchParent, K extends Extract<keyof M, string>>(
 		parent: M,
 		key: K,
 		callback: ReactCallbackOf<Kind, ReactPropsOf<M[K]>, ReactSelfOf<M[K]>>,
-		options?: PatchOptions,
+		options?: UnboundPatchOptions,
 	): () => void;
 };
 /** A component `patcher.react` finds the render of by itself: a `memo`, a `forwardRef` or a class. */
@@ -322,7 +322,11 @@ export type ResultOf<F> =
 				: never;
 /** The `this` a patch receives: the method's declared `this`, else the object `M` holding it. */
 export type SelfOf<M, F> = unknown extends ThisParameterType<F> ? M : ThisParameterType<F>;
+/** Patch options; `last` runs a patch after every other patch of its kind on the same method. */
+type UnboundPatchOptions = PatchOptions & {
+	last?: boolean;
+};
 
-export { PatchType$1 as PatchType, assignValue as assign };
+export { PatchType$1 as PatchType, UnboundPatchOptions as PatchOptions, assignValue as assign };
 
 export {};
