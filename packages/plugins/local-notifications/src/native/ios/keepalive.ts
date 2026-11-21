@@ -66,7 +66,7 @@ export function startKeepAlive({ objc }: NativeBridge): KeepAlive {
 		]) as NativeObjectHandle;
 		objc.invoke(player, 'setNumberOfLoops:', [-1]);
 		objc.invoke(player, 'setVolume:', [0]);
-		objc.invoke(player, 'play', []);
+		await objc.invokeAsync(player, 'play', []);
 	};
 
 	const ensurePlaying = () => {
