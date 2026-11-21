@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3] - 2026-11-21
+
+### Fixed
+
+- On a loader without the native features it needs, the plugin stays off with a warning instead of failing to start.
+
 ## [1.0.2] - 2026-11-18
 
 ### Fixed

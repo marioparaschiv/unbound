@@ -1,3 +1,4 @@
+import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import type { PluginContext } from '@unbound-app/api/native';
 import { patcher } from '@unbound-app/api';
 
@@ -10,6 +11,10 @@ import SettingsPanel from '~/settings';
 let stopEncrypting: (() => void) | undefined;
 
 export function start(context: PluginContext) {
+	if (!ensureCapabilities(context.native, context.capabilities, 'Encrypted Files')) {
+		return;
+	}
+
 	if (!useSecureRandom(context.native)) {
 		logger.error('Failed to start Encrypted Files: no secure random source on this platform.');
 
