@@ -83,8 +83,20 @@ static std::filesystem::path makeTemporaryDirectory()
     return std::filesystem::path(directory);
 }
 
+static void restartsTheMeasurementAfterTheProcessWasSuspended()
+{
+    loader::FreezeWatchdogOptions options{1000ms, 6000ms};
+    assert(!loader::watchdogWasSuspended(0, 50'000, options));
+    assert(!loader::watchdogWasSuspended(10'000, 11'000, options));
+    assert(!loader::watchdogWasSuspended(10'000, 17'000, options));
+    assert(loader::watchdogWasSuspended(10'000, 17'001, options));
+    assert(loader::watchdogWasSuspended(10'000, 17'425'000, options));
+}
+
 int main()
 {
+    restartsTheMeasurementAfterTheProcessWasSuspended();
+
     std::filesystem::path root = makeTemporaryDirectory();
     std::string marker         = (root / loader::AddonCrashGuard::kFrozenFile).string();
     loader::AddonSlot slot     = loader::registerAddonSlot("unbound.frozen", "Frozen Plugin");

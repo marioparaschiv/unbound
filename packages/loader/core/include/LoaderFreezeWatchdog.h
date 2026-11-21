@@ -25,6 +25,8 @@ struct FreezeWatchdogOptions {
 using FreezeHeartbeat = std::function<bool(std::function<void()> beat)>;
 using FreezeListener  = std::function<void(const FreezeReport &report)>;
 
+bool watchdogWasSuspended(int64_t previousTick, int64_t now, const FreezeWatchdogOptions &options);
+
 class FreezeWatchdog
 {
 public:
