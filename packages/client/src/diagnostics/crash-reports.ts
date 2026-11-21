@@ -286,9 +286,15 @@ async function installedPlugin(id: string) {
 	return plugins.getAddon(id);
 }
 
+const UNBOUND_FRAME = /^#\d+\s+(?:0x[0-9a-f]+\s+)?Unbound[\w.]*\s+\+/im;
+
+function hasUnboundFrame(stack: string) {
+	return UNBOUND_FRAME.test(stack);
+}
+
 /**
- * @description Reports the newest hang MetricKit caught with a main-thread stack once, asking first while reporting is
- * off, and keeps it in the crash history.
+ * @description Reports the newest hang MetricKit caught with a main-thread stack once when Unbound code or a plugin
+ * was part of it, asking first while reporting is off, and keeps every hang in the crash history.
  * @param launch The loader's launch report.
  */
 export async function reportSystemHang(launch = getLoader()?.launch): Promise<void> {
@@ -320,7 +326,11 @@ export async function reportSystemHang(launch = getLoader()?.launch): Promise<vo
 		...(where ? { where } : {}),
 	});
 
-	if (wasJustReported(crashSignature(event)) || !(await consentToReport(event))) {
+	if (
+		!(hang.addonId || hasUnboundFrame(hang.stack)) ||
+		wasJustReported(crashSignature(event)) ||
+		!(await consentToReport(event))
+	) {
 		return;
 	}
 
