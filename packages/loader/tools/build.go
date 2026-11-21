@@ -305,7 +305,6 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 		return err
 	}
 
-	// cyan asks before overwriting its output, which a non-interactive build cannot answer.
 	injectionOutput := filepath.Join(work, "injected.ipa")
 
 	args := []string{"-duwsgq"}

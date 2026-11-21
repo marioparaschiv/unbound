@@ -15,8 +15,6 @@ std::optional<std::string> readPluginBytecode(const std::string &documents,
                                               const std::string &folder, uint32_t bytecodeVersion);
 std::optional<std::string> readPluginSource(const std::string &documents,
                                             const std::string &folder);
-// Hashes each plugin's bundle and bytecode into its folder's digest cache, so the next launch's
-// scan reads the digests instead of computing them. Returns how many plugins it read.
 size_t warmPluginDigests(const std::string &documents, uint32_t bytecodeVersion);
 
 class AddonState

@@ -38,7 +38,6 @@ object ScheduledRefresh {
         } else {
             context.registerReceiver(Receiver, filter)
         }
-        // A system broadcast, so it registers exported; it reaches only a running process.
         context.registerReceiver(ChargeReceiver, IntentFilter(Intent.ACTION_POWER_CONNECTED))
     }
 

@@ -254,7 +254,6 @@ static std::optional<std::string> addonName(const std::string &line)
     return std::nullopt;
 }
 
-// MetricKit reports Mach exceptions by number, as in "6 code 1".
 static std::string machExceptionName(int type)
 {
     switch (type)
@@ -292,8 +291,6 @@ static std::string exceptionName(const std::string &line)
     return colon == std::string::npos ? text : text.substr(0, colon);
 }
 
-// A trap instruction: on Apple platforms almost always a Swift runtime check, such as a force
-// unwrap of nil or an index out of range, which carries no message in release builds.
 static constexpr const char *kTrapReason =
 #if defined(__APPLE__)
     "Swift runtime check failed";

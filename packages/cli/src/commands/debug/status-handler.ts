@@ -87,7 +87,6 @@ function readDeviceStatus({ unbound, plugins }: DevicePrelude): string {
 
 	const addons = [...(plugins?.addons.values() ?? [])];
 	const running = new Set(addons.filter((addon) => addon.started).map((addon) => addon.id));
-	// Older clients keep a stopped plugin's start time, so only running plugins count.
 	const durations = [...(plugins?.startDurations ?? [])].filter(([id]) => running.has(id));
 	const counts = unbound.native.getNativeResources?.();
 	const report: DeviceStatusReport = {
