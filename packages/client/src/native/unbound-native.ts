@@ -6,6 +6,7 @@ import type {
 	UnboundNativeFonts,
 	UnboundPluginBundle,
 } from '@unbound-app/types';
+import type { BackgroundGate } from '@unbound-app/types/background';
 import { createLogger } from '@unbound-app/logger';
 import sha256 from '@unbound-app/utils/sha256';
 
@@ -121,6 +122,28 @@ export async function updateBundle(): Promise<boolean> {
  */
 export function setBackgroundRefresh(handler?: () => Promise<void>): void {
 	read('setBackgroundRefresh', (bridge) => bridge.setBackgroundRefresh?.(handler));
+}
+
+/**
+ * @description Has the loader hash the installed plugins into their digest caches, off the JS thread.
+ * @returns Whether it read any plugin, `false` on a loader from before it.
+ */
+export async function warmAddonDigests(): Promise<boolean> {
+	const bridge = globalThis.UnboundNative;
+
+	if (!bridge?.warmAddonDigests) {
+		return false;
+	}
+
+	return bridge.warmAddonDigests();
+}
+
+/**
+ * @description Reads how the loader spaces background refreshes.
+ * @returns The gate, or `undefined` on a loader from before it.
+ */
+export function getBackgroundRefresh(): BackgroundGate | undefined {
+	return read('getBackgroundRefresh', (bridge) => bridge.getBackgroundRefresh?.());
 }
 
 /**

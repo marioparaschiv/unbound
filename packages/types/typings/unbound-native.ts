@@ -1,3 +1,4 @@
+import type { BackgroundGate } from './background';
 import type { AddonManifest } from './addons';
 
 /**
@@ -327,6 +328,13 @@ export type UnboundNativeBridge = {
 	 * background refresh fires; it waits for the returned promise. No argument clears it. Missing on a loader from before it.
 	 */
 	setBackgroundRefresh?(handler?: () => Promise<void>): void;
+	/**
+	 * Hashes the installed plugins into their digest caches off the JS thread, so the next launch reads the digests.
+	 * Resolves whether it read any plugin. Missing on a loader from before it.
+	 */
+	warmAddonDigests?(): Promise<boolean>;
+	/** Reads how the loader spaces background refreshes. Missing on a loader from before it. */
+	getBackgroundRefresh?(): BackgroundGate;
 	/**
 	 * Rereads only the installed themes, so `getThemes` lists ones installed, updated or deleted since launch and native
 	 * views take the applied theme's new colours. Missing on a loader from before it.

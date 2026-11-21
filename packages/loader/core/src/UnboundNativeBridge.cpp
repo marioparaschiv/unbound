@@ -85,6 +85,13 @@ UnboundNativeProvider makeUnboundNativeProvider(const AddonState &addons,
         return addons.themes();
     };
     provider.fonts = std::move(fonts);
+    if (!documents.empty())
+    {
+        provider.warmAddonDigests = [documents, bytecodeVersion] {
+            return warmPluginDigests(documents, bytecodeVersion) > 0;
+        };
+    }
+
     if (!documents.empty() && download)
     {
         provider.downloadFile = [documents = std::move(documents), download = std::move(download)](
@@ -334,6 +341,21 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
         bridge.setProperty(
             runtime, "updateBundle",
             backgroundFlagFunction(runtime, "updateBundle", std::move(provider.updateBundle)));
+    }
+
+    if (provider.warmAddonDigests)
+    {
+        bridge.setProperty(runtime, "warmAddonDigests",
+                           backgroundFlagFunction(runtime, "warmAddonDigests",
+                                                  std::move(provider.warmAddonDigests)));
+    }
+
+    if (provider.getBackgroundRefresh)
+    {
+        bridge.setProperty(runtime, "getBackgroundRefresh",
+                           getter(runtime, "getBackgroundRefresh",
+                                  std::move(provider.getBackgroundRefresh),
+                                  nlohmann::json::object()));
     }
 
     if (provider.markRendered)

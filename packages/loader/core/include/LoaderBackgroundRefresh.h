@@ -8,6 +8,15 @@ namespace loader {
 // Where the client keeps the work it runs while Discord is in the background.
 inline constexpr const char *kBackgroundRefreshHandler = "__unboundBackgroundRefresh";
 
+// What the gate holds: time since the last start (or launch), the interval, runs so far and
+// whether one is still running.
+struct BackgroundRefreshState {
+    int64_t sinceLastMs;
+    int64_t intervalMs;
+    uint64_t runs;
+    bool running;
+};
+
 // Spaces background refreshes `intervalMs` apart, counting from construction since the
 // client checks at launch. A run that has not settled after `limitMs` no longer blocks the next.
 class BackgroundRefreshGate
@@ -18,6 +27,7 @@ public:
     std::optional<uint64_t> begin(int64_t nowMs);
     void finish(uint64_t run);
     bool running(int64_t nowMs) const;
+    BackgroundRefreshState state(int64_t nowMs) const;
 
 private:
     mutable std::mutex mutex_;
