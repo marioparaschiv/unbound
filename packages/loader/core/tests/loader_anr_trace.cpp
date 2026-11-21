@@ -21,6 +21,12 @@ Cmd line: com.discord
 
 "RenderThread" daemon prio=7 tid=12 Native
   at android.os.MessageQueue.nativePollOnce(Native method)
+
+"mqt_v_js" prio=5 tid=31 Runnable
+  native: #00 pc 0000000000222222  /data/app/com.discord/lib/arm64/libhermesvm.so (hermes::vm::Interpreter::run+40)
+
+"Unbound scheduled refresh" prio=5 tid=40 Native
+  native: #00 pc 0000000000333333  /data/app/com.discord/lib/arm64/libunbound.so (loader::Loader::onBackground+12)
 )";
 
 void readsTheMainThreadOfAnAnrTrace()
@@ -34,6 +40,20 @@ void readsTheMainThreadOfAnAnrTrace()
     assert(stack->find("__futex_wait") != std::string::npos);
     assert(stack->find("nativePollOnce") == std::string::npos);
     assert(stack->find("DumpNativeStack") == std::string::npos);
+    assert(loader::nativeCrashHeadline(*stack) == "ANR (not responding)");
+}
+
+void addsTheReasonAndTheThreadsThatMayHoldTheMainThread()
+{
+    std::optional<std::string> stack =
+        loader::anrTraceStack(kTrace, "", "Input dispatching timed out\n(Waited 5000ms)");
+    assert(stack);
+    assert(stack->find("Reason Input dispatching timed out (Waited 5000ms)\n")
+           != std::string::npos);
+    assert(stack->find("Thread mqt_v_js\n") != std::string::npos);
+    assert(stack->find("Thread Unbound scheduled refresh\n") != std::string::npos);
+    assert(stack->find("Thread RenderThread") == std::string::npos);
+    assert(stack->find("Thread mqt_v_js") > stack->find("ChatView.onLayout"));
     assert(loader::nativeCrashHeadline(*stack) == "ANR (not responding)");
 }
 
@@ -57,6 +77,7 @@ void ignoresATraceWithoutAMainThread()
 int main()
 {
     readsTheMainThreadOfAnAnrTrace();
+    addsTheReasonAndTheThreadsThatMayHoldTheMainThread();
     namesTheAddonThatBlockedTheMainThread();
     ignoresATraceWithoutAMainThread();
     return 0;

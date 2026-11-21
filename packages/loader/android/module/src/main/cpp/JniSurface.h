@@ -109,7 +109,7 @@ constexpr const char *kBridgeClass = "app/unbound/android/NativeBridge";
     X("nativeSetScheduledRefresh", "(Ljava/lang/String;)V", nativeSetScheduledRefresh)             \
     X("nativeOnCharging", "()Z", nativeOnCharging)                                                 \
     X("nativeAdoptTombstone", "([B)Z", nativeAdoptTombstone)                                       \
-    X("nativeAdoptAnrTrace", "([BJ)Z", nativeAdoptAnrTrace)                                        \
+    X("nativeAdoptAnrTrace", "([BJLjava/lang/String;)Z", nativeAdoptAnrTrace)                      \
     X("nativeMarkMainThread", "()V", nativeMarkMainThread)                                         \
     X("nativeAddonOnMainThread", "()" UNBOUND_JNI_STRING, nativeAddonOnMainThread)                 \
     X("nativeSampleJavaScriptStack", "()" UNBOUND_JNI_STRING, nativeSampleJavaScriptStack)         \
