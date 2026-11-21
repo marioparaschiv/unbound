@@ -44,6 +44,7 @@
 #include "NativeTaggedValue.h"
 #include "NativeTraversalOptions.h"
 #include "NativeUIScope.h"
+#include "NativeUIWorkletStalls.h"
 
 namespace unbound::android {
 namespace jsi = facebook::jsi;
@@ -313,6 +314,7 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
                     if (loader::native::runtimeResourceRegistry(*listener.inlineRuntime)->identity()
                         == listener.runtimeIdentity)
                     {
+                        loader::native::UIWorkletTimer timer(listener.addon, listener.breadcrumb);
                         rewritten = deliver(*listener.inlineRuntime, owner);
                     }
                 });
@@ -328,8 +330,10 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
         auto identity      = listener.runtimeIdentity;
         auto resources     = listener.resources;
         auto pending       = operation;
+        auto addon         = listener.addon;
+        auto breadcrumb    = listener.breadcrumb;
         target->runOnMain([deliver = std::move(deliver), inlineRuntime, generation, identity,
-                           resources, pending]() {
+                           resources, pending, addon, breadcrumb]() {
             if (generation == loader::native::runtimeGeneration())
             {
                 loader::native::withRuntimeResource(
@@ -338,6 +342,7 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
                         if (loader::native::runtimeResourceRegistry(*inlineRuntime)->identity()
                             == identity)
                         {
+                            loader::native::UIWorkletTimer timer(addon, breadcrumb);
                             deliver(*inlineRuntime, owner);
                         }
                     });
