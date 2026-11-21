@@ -50,6 +50,9 @@ static void checkNativeCrashes()
     assert(nativeCrashHeadline("garbage").empty());
     assert(describeNativeCrash(kStack).find("Addon Chat Bubbles\n") != std::string::npos);
     assert(describeNativeCrash(kStack).find("{\"id\"") == std::string::npos);
+    assert(describeNativeCrash("Signal 5\nRegisters x0=0x1 esr=0xf2000001\n")
+               .find("Syndrome BRK #0x1 (trap instruction, such as a failed Swift check)\n")
+           != std::string::npos);
 }
 
 static void checkReport()
