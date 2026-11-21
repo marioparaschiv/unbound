@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1] - 2026-11-21
+
+### Fixed
+
+- On older loaders that cannot hook the notification delegate, the plugin starts without notification actions instead of failing to start.
+
 ## [1.1.0] - 2026-11-18
 
 ### Added

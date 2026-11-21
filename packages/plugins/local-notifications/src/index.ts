@@ -194,7 +194,9 @@ export function start(context: PluginContext) {
 	});
 
 	if (!onActions(context.native, onNotificationAction)) {
-		logger.warn('Notification actions skipped: no notification center delegate to hook.');
+		logger.warn(
+			'Notification actions skipped: Discord has no notification delegate this loader can hook.',
+		);
 	}
 
 	stopListening = flux.onAction('MESSAGE_CREATE', (action) =>
