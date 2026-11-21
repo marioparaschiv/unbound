@@ -1,5 +1,6 @@
 #include "Loader.h"
 
+#include "LoaderAbortDetails.h"
 #include "LoaderBackgroundDownload.h"
 #include "LoaderFiles.h"
 #include "LoaderFonts.h"
@@ -432,6 +433,8 @@ void Loader::onAddonsPrepared()
 
 void Loader::onBundleExecuted()
 {
+    installTerminateHandler();
+
     if (hotReload_)
     {
         hotReload_->sync();
