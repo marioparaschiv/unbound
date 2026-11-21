@@ -29,7 +29,7 @@ function describe(cause: unknown): string {
 	return cause instanceof Error ? cause.message : String(cause);
 }
 
-function withTimeout(job: BackgroundJob, limitMs: number): Promise<void> {
+function withTimeout(job: BackgroundJob, limitMs: number): Promise<boolean | void> {
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	const timeout = new Promise<never>((_resolve, reject) => {
 		timer = setTimeout(() => reject(new Error(`timed out after ${limitMs / 1000} s`)), limitMs);
@@ -47,9 +47,14 @@ async function runEntry(entry: BackgroundEntry, limitMs: number): Promise<Backgr
 	}
 
 	try {
-		await withTimeout(entry.run, Math.min(entry.timeoutMs ?? limitMs, limitMs));
+		const changed = await withTimeout(entry.run, Math.min(entry.timeoutMs ?? limitMs, limitMs));
 
-		return { ...result, ok: true, durationMs: Date.now() - started };
+		return {
+			...result,
+			ok: true,
+			durationMs: Date.now() - started,
+			...(changed === true ? { changed } : {}),
+		};
 	} catch (error) {
 		return { ...result, ok: false, durationMs: Date.now() - started, error: describe(error) };
 	}
@@ -103,6 +108,15 @@ export function runBackgroundJobs(
 	});
 
 	return running;
+}
+
+/**
+ * @description Says whether any job in a run found something new.
+ * @param run The run.
+ * @returns Whether a job returned `true`.
+ */
+export function foundSomethingNew(run: BackgroundRun): boolean {
+	return run.jobs.some((job) => job.ok && job.changed === true);
 }
 
 /**

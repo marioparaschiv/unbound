@@ -120,7 +120,7 @@ export async function updateBundle(): Promise<boolean> {
  * promise settles.
  * @param handler The work, or nothing to clear it.
  */
-export function setBackgroundRefresh(handler?: () => Promise<void>): void {
+export function setBackgroundRefresh(handler?: () => Promise<boolean>): void {
 	read('setBackgroundRefresh', (bridge) => bridge.setBackgroundRefresh?.(handler));
 }
 

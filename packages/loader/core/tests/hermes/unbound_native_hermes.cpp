@@ -219,12 +219,16 @@ static void requireChecks(jsi::Runtime &runtime, const char *source, const char 
 }
 
 static int backgroundRefreshSettles(jsi::Runtime &runtime, QueuedExecutor &executor,
-                                    const char *setup)
+                                    const char *setup, bool *changed = nullptr)
 {
     runtime.evaluateJavaScript(std::make_shared<jsi::StringBuffer>(setup), "background-refresh.js");
     auto settled = std::make_shared<int>(0);
-    loader::runBackgroundRefresh([settled] {
+    loader::runBackgroundRefresh([settled, changed](bool found) {
         (*settled)++;
+        if (changed)
+        {
+            *changed = found;
+        }
     });
     executor.drain(runtime, [settled] {
         return *settled > 0;
@@ -234,6 +238,19 @@ static int backgroundRefreshSettles(jsi::Runtime &runtime, QueuedExecutor &execu
 
 static void requireBackgroundRefresh(jsi::Runtime &runtime, QueuedExecutor &executor)
 {
+    bool changed = false;
+    require(backgroundRefreshSettles(
+                runtime, executor,
+                "UnboundNative.setBackgroundRefresh(() => Promise.resolve(true));", &changed)
+                    == 1
+                && changed,
+            "a background refresh passes on that it found something new");
+    require(backgroundRefreshSettles(runtime, executor,
+                                     "UnboundNative.setBackgroundRefresh(() => Promise.resolve());",
+                                     &changed)
+                    == 1
+                && !changed,
+            "a background refresh that resolves nothing found nothing new");
     require(backgroundRefreshSettles(runtime, executor, "UnboundNative.setBackgroundRefresh();")
                 == 1,
             "a background refresh settles at once without a handler");

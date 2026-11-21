@@ -1,16 +1,23 @@
 #include "LoaderBackgroundRefresh.h"
 
+#include <algorithm>
+
 namespace loader {
 BackgroundRefreshGate::BackgroundRefreshGate(int64_t nowMs, int64_t intervalMs, int64_t limitMs)
     : intervalMs_(intervalMs), limitMs_(limitMs), lastStartMs_(nowMs)
 {
 }
 
+int64_t BackgroundRefreshGate::currentIntervalLocked() const
+{
+    return intervalMs_ << quietRuns_;
+}
+
 std::optional<uint64_t> BackgroundRefreshGate::begin(int64_t nowMs)
 {
     std::lock_guard lock(mutex_);
     bool stale = nowMs - lastStartMs_ >= limitMs_;
-    if ((unsettled_ && !stale) || nowMs - lastStartMs_ < intervalMs_)
+    if ((unsettled_ && !stale) || nowMs - lastStartMs_ < currentIntervalLocked())
     {
         return std::nullopt;
     }
@@ -20,13 +27,16 @@ std::optional<uint64_t> BackgroundRefreshGate::begin(int64_t nowMs)
     return ++run_;
 }
 
-void BackgroundRefreshGate::finish(uint64_t run)
+void BackgroundRefreshGate::finish(uint64_t run, bool changed)
 {
     std::lock_guard lock(mutex_);
-    if (run == run_)
+    if (run != run_)
     {
-        unsettled_ = false;
+        return;
     }
+
+    unsettled_ = false;
+    quietRuns_ = changed ? 0 : std::min(quietRuns_ + 1, kMaxQuietDoublings);
 }
 
 bool BackgroundRefreshGate::running(int64_t nowMs) const
@@ -38,6 +48,7 @@ bool BackgroundRefreshGate::running(int64_t nowMs) const
 BackgroundRefreshState BackgroundRefreshGate::state(int64_t nowMs) const
 {
     std::lock_guard lock(mutex_);
-    return {nowMs - lastStartMs_, intervalMs_, run_, unsettled_ && nowMs - lastStartMs_ < limitMs_};
+    return {nowMs - lastStartMs_, currentIntervalLocked(), run_,
+            unsettled_ && nowMs - lastStartMs_ < limitMs_};
 }
 }

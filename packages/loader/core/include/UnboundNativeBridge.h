@@ -63,5 +63,5 @@ void installUnboundNative(facebook::jsi::Runtime &runtime, UnboundNativeProvider
 
 // Runs the client's background refresh on the runtime thread and calls `settled` once its promise
 // settles, at once when the client registered none, or never when the runtime is gone.
-void runBackgroundRefresh(std::function<void()> settled);
+void runBackgroundRefresh(std::function<void(bool)> settled);
 }

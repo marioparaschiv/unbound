@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import {
 	addBackgroundJob,
 	backgroundJobs,
+	foundSomethingNew,
 	lastBackgroundRun,
 	runBackgroundJobs,
 } from '~/background/jobs';
@@ -58,6 +59,29 @@ describe('background jobs', () => {
 		for (const remove of removers) remove();
 
 		expect(backgroundJobs()).toEqual([]);
+	});
+
+	test('records the jobs that found something new', async () => {
+		const removers = [
+			addBackgroundJob({
+				name: 'updates',
+				owner: 'unbound',
+				phase: 1,
+				run: async () => true,
+			}),
+			addBackgroundJob({ name: 'sync', owner: 'unbound', phase: 1, run: async () => false }),
+		];
+
+		const run = await runBackgroundJobs('manual');
+
+		expect(run.jobs).toMatchObject([
+			{ name: 'updates', ok: true, changed: true },
+			{ name: 'sync', ok: true },
+		]);
+		expect(run.jobs[1]).not.toHaveProperty('changed');
+		expect(foundSomethingNew(run)).toBe(true);
+
+		for (const remove of removers) remove();
 	});
 
 	test('shares a run already in flight', async () => {
