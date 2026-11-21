@@ -16,6 +16,7 @@ import { createSettings, generalSection, panelHostSection } from '~/settings/bui
 import { marketplaceSection, addonPageSection } from '~/marketplace/builtin';
 import promiseRejections, { crashesSection } from '~/diagnostics/builtin';
 import backgroundRefresh from '~/builtins/background-refresh';
+import imageSourceGuard from '~/builtins/image-source-guard';
 import gatewayReconnect from '~/builtins/gateway-reconnect';
 import placeholderGuard from '~/builtins/placeholder-guard';
 import updater, { updatesSection } from '~/updates/builtin';
@@ -103,6 +104,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	...(import.meta.env.DEV ? ([['hotRefresh', hotRefresh]] as BuiltInEntry[]) : []),
 	['gatewayReconnect', gatewayReconnect],
 	['i18n', i18n],
+	['imageSourceGuard', imageSourceGuard],
 	['links', links],
 	['nativeConsent', nativeConsent],
 	['placeholderGuard', placeholderGuard],
