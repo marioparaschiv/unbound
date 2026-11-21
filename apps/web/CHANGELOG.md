@@ -1,5 +1,43 @@
 # Changelog
 
+## [2.10.0](https://github.com/marioparaschiv/unbound/compare/web-v2.9.0...web-v2.10.0) (2026-11-21)
+
+
+### Features
+
+* **client:** add a note to a filed crash's issue ([#1869](https://github.com/marioparaschiv/unbound/issues/1869)) ([19d2cec](https://github.com/marioparaschiv/unbound/commit/19d2cec01e2218f001b627568ca07c1beab2db2b))
+* **client:** record the screen a crash happened on ([#1860](https://github.com/marioparaschiv/unbound/issues/1860)) ([2dc100f](https://github.com/marioparaschiv/unbound/commit/2dc100f54a4ad2c33900356c16f7af889144145f))
+* **loader:** name tweaks that replace a plugin's hooked method ([#1855](https://github.com/marioparaschiv/unbound/issues/1855)) ([1141213](https://github.com/marioparaschiv/unbound/commit/114121305c93c5d31b649eaf6603c274be819da3))
+* **web:** add short links to crash issues ([#1917](https://github.com/marioparaschiv/unbound/issues/1917)) ([b2f3aae](https://github.com/marioparaschiv/unbound/commit/b2f3aaee5c669904eef58bc418098af601d81bde))
+* **web:** blame the injected tweak a native crash happened in ([#2047](https://github.com/marioparaschiv/unbound/issues/2047)) ([0d0a843](https://github.com/marioparaschiv/unbound/commit/0d0a843a246825fdc4904992c35dacc4271c4b22))
+* **web:** tell reporters how many devices hit the same crash ([#1953](https://github.com/marioparaschiv/unbound/issues/1953)) ([3c7239e](https://github.com/marioparaschiv/unbound/commit/3c7239e996501b3f0c19af2b187390d23d629393))
+
+
+### Bug Fixes
+
+* **client:** file tapped crashes through the crash API ([#1840](https://github.com/marioparaschiv/unbound/issues/1840)) ([d477bd9](https://github.com/marioparaschiv/unbound/commit/d477bd998bba2916c836f3423391ec25850d19da))
+* file every crash and say why one has no issue ([#1993](https://github.com/marioparaschiv/unbound/issues/1993)) ([adfd0c4](https://github.com/marioparaschiv/unbound/commit/adfd0c429544250b0ed61f737d47ae269407bb95))
+* **loader:** find the jailbreak root in core, roothide included ([#2001](https://github.com/marioparaschiv/unbound/issues/2001)) ([a55fac2](https://github.com/marioparaschiv/unbound/commit/a55fac257a9f59d3a55c3589fdb5d1554fadb1d4))
+* **web:** drop the hooks row and identify count from the debug card ([#2033](https://github.com/marioparaschiv/unbound/issues/2033)) ([4c6c125](https://github.com/marioparaschiv/unbound/commit/4c6c125b30dd43acbee76bcffe07cc3875e4760f))
+* **web:** file one issue per crash across Discord builds ([#2107](https://github.com/marioparaschiv/unbound/issues/2107)) ([efd38d6](https://github.com/marioparaschiv/unbound/commit/efd38d63f60c0c0ac69466b3f5f2255f9b0fe94c))
+* **web:** give thermal state its own debug card row ([#1998](https://github.com/marioparaschiv/unbound/issues/1998)) ([507b6a1](https://github.com/marioparaschiv/unbound/commit/507b6a198694194c781f19cf90d409ae43253ab1))
+* **web:** group one crash's reports under one issue more reliably ([#1865](https://github.com/marioparaschiv/unbound/issues/1865)) ([fcae2f8](https://github.com/marioparaschiv/unbound/commit/fcae2f876ceee5a5799e81838e545576564e37c6))
+
+
+### Documentation
+
+* **web:** add architecture diagrams to the README and docs ([#1989](https://github.com/marioparaschiv/unbound/issues/1989)) ([79159ea](https://github.com/marioparaschiv/unbound/commit/79159ea5cf7072746e635024601dc170a3819337))
+* **web:** serve the dark architecture diagrams under new URLs ([#1991](https://github.com/marioparaschiv/unbound/issues/1991)) ([92bb447](https://github.com/marioparaschiv/unbound/commit/92bb447d5e30fff129420f4d69cc65a3e94fa2c4))
+* **web:** show the dark architecture diagrams on the docs site ([#1990](https://github.com/marioparaschiv/unbound/issues/1990)) ([f10e9ff](https://github.com/marioparaschiv/unbound/commit/f10e9ffb86812762656abd345b965f765d198527))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 2.10.0
+    * @unbound-app/utils bumped to 1.0.9
+
 ## [2.9.0](https://github.com/marioparaschiv/unbound/compare/web-v2.8.0...web-v2.9.0) (2026-11-18)
 
 
