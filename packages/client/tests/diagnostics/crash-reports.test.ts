@@ -140,6 +140,30 @@ describe('reportNativeCrash', () => {
 		expect(settings.get('crash-reports.nativeAt')).toBe(1_000);
 	});
 
+	test('keeps a watchdog kill while quitting out of reports', async () => {
+		settings.set('crash-reports', true);
+
+		await reportNativeCrash({
+			...launch,
+			crashStack:
+				'Signal 9\nException 10 code 0\nTermination <RBSTerminateContext| domain:10 code:0x8BADF00D explanation:Failed to terminate gracefully after 5.0s\nWatchdogEvent: process-exit\nWatchdogVisibility: Foreground',
+		});
+
+		expect(sent).toHaveLength(0);
+	});
+
+	test('keeps a VoIP push kill out of reports', async () => {
+		settings.set('crash-reports', true);
+
+		await reportNativeCrash({
+			...launch,
+			crashStack:
+				'Signal 9\nException 10 code 0\nTermination <RBSTerminateContext| domain:10 code:0xBAADCA11 explanation:<no explanation given>>',
+		});
+
+		expect(sent).toHaveLength(0);
+	});
+
 	test('does not ask when crash reporting is on', async () => {
 		settings.set('crash-reports', true);
 
