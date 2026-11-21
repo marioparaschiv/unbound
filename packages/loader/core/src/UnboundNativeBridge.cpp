@@ -255,25 +255,25 @@ static jsi::Function backgroundRefreshSetter(jsi::Runtime &runtime)
 }
 
 static jsi::Function settleOnce(jsi::Runtime &runtime,
-                                std::shared_ptr<std::function<void()>> settled)
+                                std::shared_ptr<std::function<void(bool)>> settled)
 {
-    return native::makeFunction(
-        runtime, "settleBackgroundRefresh", 1,
-        [settled](jsi::Runtime &, const jsi::Value &, const jsi::Value *, size_t) -> jsi::Value {
-            if (*settled)
-            {
-                std::function<void()> settle = std::move(*settled);
-                *settled                     = nullptr;
-                settle();
-            }
+    return native::makeFunction(runtime, "settleBackgroundRefresh", 1,
+                                [settled](jsi::Runtime &, const jsi::Value &,
+                                          const jsi::Value *args, size_t count) -> jsi::Value {
+                                    if (*settled)
+                                    {
+                                        std::function<void(bool)> settle = std::move(*settled);
+                                        *settled                         = nullptr;
+                                        settle(count > 0 && args[0].isBool() && args[0].getBool());
+                                    }
 
-            return jsi::Value::undefined();
-        });
+                                    return jsi::Value::undefined();
+                                });
 }
 
-void runBackgroundRefresh(std::function<void()> settled)
+void runBackgroundRefresh(std::function<void(bool)> settled)
 {
-    auto pending = std::make_shared<std::function<void()>>(std::move(settled));
+    auto pending = std::make_shared<std::function<void(bool)>>(std::move(settled));
     native::executeRuntimeAsynchronously([pending](jsi::Runtime &runtime) {
         jsi::Value handler = runtime.global().getProperty(runtime, kBackgroundRefreshHandler);
         if (!handler.isObject() || !handler.asObject(runtime).isFunction(runtime))
@@ -299,7 +299,7 @@ void runBackgroundRefresh(std::function<void()> settled)
                                             : jsi::Value();
         if (!then.isObject() || !then.asObject(runtime).isFunction(runtime))
         {
-            settleOnce(runtime, pending).call(runtime);
+            settleOnce(runtime, pending).call(runtime, result);
             return;
         }
 

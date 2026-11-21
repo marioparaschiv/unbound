@@ -306,8 +306,8 @@ void LoaderPipeline::refreshInBackgroundIfDue()
     }
 
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Running the client's background refresh.");
-    runBackgroundRefresh([this, run = *run]() {
-        backgroundRefresh_.finish(run);
+    runBackgroundRefresh([this, run = *run](bool changed) {
+        backgroundRefresh_.finish(run, changed);
     });
 }
 

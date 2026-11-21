@@ -24,8 +24,8 @@ export declare function add(
  * @returns How each job went.
  */
 export declare function run(): Promise<BackgroundRun>;
-/** Work the background refresh runs while Discord is in the background. */
-export type BackgroundJob = () => Promise<void> | void;
+/** Work the background refresh runs while Discord is in the background; returning `true` says it found something new, which keeps refreshes frequent. */
+export type BackgroundJob = () => Promise<boolean | void> | boolean | void;
 /** What every job result names. */
 export type BackgroundJobBase = {
 	/** The job's name. */
@@ -50,6 +50,8 @@ export type BackgroundJobResult = BackgroundJobBase &
 				ok: true;
 				/** Why the job did not run, such as `not on Wi-Fi`. */
 				skipped?: string;
+				/** It found something new, such as an update. */
+				changed?: boolean;
 		  }
 		| {
 				/** It threw or timed out. */

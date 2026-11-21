@@ -2,14 +2,14 @@ import { describe, expect, mock, test } from 'bun:test';
 
 const calls: string[] = [];
 const errors: string[] = [];
-let handler: (() => Promise<void>) | undefined;
+let handler: (() => Promise<boolean>) | undefined;
 
 mock.module('@unbound-app/logger', () => ({
 	createLogger: () => ({ error: (message: string) => void errors.push(message) }),
 }));
 
 mock.module('~/native/unbound-native', () => ({
-	setBackgroundRefresh: (next?: () => Promise<void>) => void (handler = next),
+	setBackgroundRefresh: (next?: () => Promise<boolean>) => void (handler = next),
 	warmAddonDigests: async () => void calls.push('digests'),
 	removeOrphanedAddons: async () => void calls.push('orphans'),
 }));
@@ -53,6 +53,10 @@ describe('background refresh', () => {
 		expect(calls.slice(-2).sort()).toEqual(['digests', 'orphans']);
 		expect(calls.slice(2, -2).sort()).toEqual(['catalog', 'crash issues', 'sync']);
 		expect(errors).toEqual(['Failed to run background job addon updates (unbound):']);
+	});
+
+	test('tells the loader whether the run found something new', async () => {
+		expect(await handler?.()).toBe(false);
 	});
 
 	test('stop clears the handler and the built-in jobs', () => {

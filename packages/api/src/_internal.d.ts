@@ -738,7 +738,7 @@ export type BackgroundBlurViewComponentProps = Omit<
 export type BackgroundGate = {
 	/** Milliseconds since the last refresh started, or since launch before the first. */
 	sinceLastMs: number;
-	/** The least time between two refreshes. */
+	/** The least time between two refreshes now: it doubles after each refresh that found nothing new, up to 8 times the base. */
 	intervalMs: number;
 	/** Milliseconds until the next background transition runs a refresh. */
 	dueInMs: number;

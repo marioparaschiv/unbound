@@ -324,10 +324,10 @@ export type UnboundNativeBridge = {
 	 */
 	markRendered?(): void;
 	/**
-	 * Sets the work the loader runs when Discord goes to the background and, on sideloaded iOS, when the scheduled
-	 * background refresh fires; it waits for the returned promise. No argument clears it. Missing on a loader from before it.
+	 * Sets the background work the loader waits on; it resolves `true` when the run found something new, keeping
+	 * refreshes frequent. No argument clears it. Missing on a loader from before it.
 	 */
-	setBackgroundRefresh?(handler?: () => Promise<void>): void;
+	setBackgroundRefresh?(handler?: () => Promise<boolean | void>): void;
 	/**
 	 * Hashes the installed plugins into their digest caches off the JS thread, so the next launch reads the digests.
 	 * Resolves whether it read any plugin. Missing on a loader from before it.
