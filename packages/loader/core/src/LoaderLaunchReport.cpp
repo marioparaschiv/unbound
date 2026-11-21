@@ -11,6 +11,7 @@
 
 #include "LoaderCrashHandler.h"
 #include "LoaderDiskFull.h"
+#include "LoaderExceptionSyndrome.h"
 #include "LoaderFiles.h"
 
 namespace loader {
@@ -431,6 +432,10 @@ std::string describeNativeCrash(const std::string &stack)
     {
         std::optional<std::string> name = addonName(line);
         described += (name ? "Addon " + *name : line) + "\n";
+        if (std::optional<uint64_t> esr = syndromeOfRegisters(line))
+        {
+            described += "Syndrome " + describeExceptionSyndrome(*esr) + "\n";
+        }
     }
 
     return described;
