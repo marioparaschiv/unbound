@@ -134,8 +134,7 @@ test('ships an assets/ image the bundle names, leaves out one it never mentions,
 	await image('assets/unused.png', 4, 4);
 
 	const built = await build(`
-const kind = 'un';
-export function start() { return [unbound.assets.getIdByName('named'), unbound.assets.getIdByName(\`copy\`), unbound.assets.getIdByName(\`\${kind}used\`), 'not-unused']; }
+export function start(kind) { return [unbound.assets.getIdByName('named'), unbound.assets.getIdByName(\`copy\`), unbound.assets.getIdByName(\`\${kind}used\`), 'not-unused']; }
 `);
 
 	expect(Object.keys(built.manifest.assets ?? {})).toEqual(['copy', 'named']);
