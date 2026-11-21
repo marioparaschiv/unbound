@@ -177,6 +177,28 @@ static jboolean nativeIsWorkingInBackground(JNIEnv *, jclass)
     return loader && loader->isWorkingInBackground() ? JNI_TRUE : JNI_FALSE;
 }
 
+static jboolean nativeOnCharging(JNIEnv *, jclass)
+{
+    auto loader = currentLoader();
+    return loader && loader->onCharging() ? JNI_TRUE : JNI_FALSE;
+}
+
+static void nativeSetScheduledRefresh(JNIEnv *env, jclass, jstring status)
+{
+    auto loader = currentLoader();
+    if (!loader || !status)
+    {
+        return;
+    }
+
+    const char *chars = env->GetStringUTFChars(status, nullptr);
+    if (chars)
+    {
+        loader->setScheduledRefresh(chars);
+        env->ReleaseStringUTFChars(status, chars);
+    }
+}
+
 static std::atomic<uintptr_t> mainActivityThread{0};
 
 static void nativeMarkMainThread(JNIEnv *, jclass)

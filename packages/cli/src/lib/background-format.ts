@@ -31,6 +31,7 @@ export function formatBackground(status: BackgroundStatus, now: number): string 
 		status.gate
 			? gateLine(status.gate)
 			: 'Loader: no background refresh (a loader from before it).',
+		...(status.gate?.scheduled ? [`Scheduled refresh: ${status.gate.scheduled}.`] : []),
 		`Jobs: ${status.jobs.map((job) => (job.owner === 'unbound' ? job.name : `${job.name} (${job.owner})`)).join(', ') || 'none'}.`,
 	];
 	const run = status.lastRun;
@@ -46,8 +47,9 @@ export function formatBackground(status: BackgroundStatus, now: number): string 
 	);
 
 	for (const job of run.jobs) {
-		const mark = job.ok ? 'ok  ' : 'FAIL';
-		const error = job.error ? `: ${job.error}` : '';
+		const reason = job.ok ? job.skipped : job.error;
+		const mark = !job.ok ? 'FAIL' : job.skipped ? 'skip' : 'ok  ';
+		const error = reason ? `: ${reason}` : '';
 
 		lines.push(`  ${mark} ${job.name} (${job.owner}) ${duration(job.durationMs)}${error}`);
 	}

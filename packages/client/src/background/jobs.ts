@@ -1,11 +1,14 @@
 import type {
 	BackgroundJob,
+	BackgroundJobOptions,
 	BackgroundJobResult,
 	BackgroundRun,
 } from '@unbound-app/types/background';
 
+import { onUnmeteredNetwork } from '~/background/network';
+
 /** A registered job. Phases run in order; the jobs of one phase run together. */
-export type BackgroundEntry = {
+export type BackgroundEntry = BackgroundJobOptions & {
 	name: string;
 	owner: string;
 	run: BackgroundJob;
@@ -39,8 +42,12 @@ async function runEntry(entry: BackgroundEntry, limitMs: number): Promise<Backgr
 	const started = Date.now();
 	const result = { name: entry.name, owner: entry.owner };
 
+	if (entry.wifiOnly && !onUnmeteredNetwork()) {
+		return { ...result, ok: true, durationMs: 0, skipped: 'not on Wi-Fi' };
+	}
+
 	try {
-		await withTimeout(entry.run, limitMs);
+		await withTimeout(entry.run, Math.min(entry.timeoutMs ?? limitMs, limitMs));
 
 		return { ...result, ok: true, durationMs: Date.now() - started };
 	} catch (error) {

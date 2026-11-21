@@ -72,6 +72,14 @@ object NativeBridge {
     @JvmStatic
     external fun nativeIsWorkingInBackground(): Boolean
 
+    /** The device started charging; returns whether the loader started background work. */
+    @JvmStatic
+    external fun nativeOnCharging(): Boolean
+
+    /** How the scheduled refresh runs, for `UnboundNative.getBackgroundRefresh`. */
+    @JvmStatic
+    external fun nativeSetScheduledRefresh(status: String)
+
     @JvmStatic
     external fun nativeAdoptTombstone(tombstone: ByteArray): Boolean
 

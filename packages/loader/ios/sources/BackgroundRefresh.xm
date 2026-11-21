@@ -15,8 +15,43 @@ static BOOL declaresRefreshTask(void)
     return [declared isKindOfClass:[NSArray class]] && [declared containsObject:kRefreshTask];
 }
 
+static NSString *refreshUnavailableReason(void)
+{
+    if (NSProcessInfo.processInfo.lowPowerModeEnabled)
+    {
+        return @"paused by Low Power Mode";
+    }
+
+    switch (UIApplication.sharedApplication.backgroundRefreshStatus)
+    {
+        case UIBackgroundRefreshStatusDenied:
+            return @"off: Background App Refresh is turned off for Discord";
+        case UIBackgroundRefreshStatusRestricted:
+            return @"off: Background App Refresh is restricted on this device";
+        default:
+            return nil;
+    }
+}
+
+static void noteScheduledRefresh(NSString *status)
+{
+    UnboundLoader()->setScheduledRefresh(status.UTF8String);
+}
+
 static void scheduleRefresh(void)
 {
+    if (!NSThread.isMainThread)
+    {
+        dispatch_async(dispatch_get_main_queue(), ^{ scheduleRefresh(); });
+        return;
+    }
+
+    if (NSString *reason = refreshUnavailableReason())
+    {
+        noteScheduledRefresh(reason);
+        return;
+    }
+
     BGAppRefreshTaskRequest *request =
         [[BGAppRefreshTaskRequest alloc] initWithIdentifier:kRefreshTask];
     request.earliestBeginDate = [NSDate dateWithTimeIntervalSinceNow:kRefreshInterval];
@@ -27,7 +62,12 @@ static void scheduleRefresh(void)
         [Logger info:LOG_CATEGORY_UPDATER
               format:@"Failed to schedule the background bundle refresh: %@",
                      error.localizedDescription];
+        noteScheduledRefresh(
+            [NSString stringWithFormat:@"failed to schedule: %@", error.localizedDescription]);
+        return;
     }
+
+    noteScheduledRefresh(@"every 6 h at the earliest, when iOS allows");
 }
 
 static void runRefresh(BGTask *task)
@@ -69,8 +109,15 @@ static void runRefresh(BGTask *task)
 
 %ctor
 {
-    if (UnboundIsDuplicateCopy() || !declaresRefreshTask())
+    if (UnboundIsDuplicateCopy())
     {
+        return;
+    }
+
+    if (!declaresRefreshTask())
+    {
+        dispatch_async(dispatch_get_main_queue(),
+                       ^{ noteScheduledRefresh(@"not declared by this install's Info.plist"); });
         return;
     }
 
@@ -90,4 +137,5 @@ static void runRefresh(BGTask *task)
                     object:nil
                      queue:nil
                 usingBlock:^(NSNotification *) { scheduleRefresh(); }];
+    dispatch_async(dispatch_get_main_queue(), ^{ scheduleRefresh(); });
 }

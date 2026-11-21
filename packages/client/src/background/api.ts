@@ -1,4 +1,9 @@
-import type { BackgroundJob, BackgroundRun, BackgroundStatus } from '@unbound-app/types/background';
+import type {
+	BackgroundJob,
+	BackgroundJobOptions,
+	BackgroundRun,
+	BackgroundStatus,
+} from '@unbound-app/types/background';
 
 import {
 	addBackgroundJob,
@@ -16,11 +21,15 @@ export type * from '@unbound-app/types/background';
  * jobs, a time limit and its own error log. A plugin's jobs are removed when it stops.
  * @param name The job's name, shown in `ubd debug background`.
  * @param job The work; a rejected promise or thrown error only fails this job.
- * @param owner Who added it; a plugin's scope fills in its id.
+ * @param options `wifiOnly` to skip it on cellular or metered connections, `timeoutMs` for a shorter limit.
  * @returns A function that removes the job.
  */
-export function add(name: string, job: BackgroundJob, owner = 'unbound'): () => void {
-	return addBackgroundJob({ name, owner, run: job, phase: DEFAULT_PHASE });
+export function add(
+	name: string,
+	job: BackgroundJob,
+	options: BackgroundJobOptions = {},
+): () => void {
+	return addBackgroundJob({ ...options, name, owner: 'unbound', run: job, phase: DEFAULT_PHASE });
 }
 
 /**

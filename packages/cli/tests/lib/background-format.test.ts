@@ -12,6 +12,7 @@ describe('formatBackground', () => {
 					dueInMs: 1_200_000,
 					runs: 1,
 					running: false,
+					scheduled: 'off: Background App Refresh is turned off for Discord',
 				},
 				jobs: [
 					{ name: 'settings', owner: 'unbound' },
@@ -39,6 +40,7 @@ describe('formatBackground', () => {
 		expect(text).toBe(
 			[
 				'Loader: 1 run this launch, last 10 min ago, due in 20 min, idle.',
+				'Scheduled refresh: off: Background App Refresh is turned off for Discord.',
 				'Jobs: settings, mentions (a.plugin).',
 				'Last run: loader, 2 min ago, took 1.5 s.',
 				'  ok   settings (unbound) 3 ms',

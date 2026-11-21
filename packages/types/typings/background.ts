@@ -1,19 +1,40 @@
 /** Work the background refresh runs while Discord is in the background. */
 export type BackgroundJob = () => Promise<void> | void;
 
-/** How one job went in a run. */
-export type BackgroundJobResult = {
+/** How a job runs. */
+export type BackgroundJobOptions = {
+	/** Skip the job unless Discord is on Wi-Fi or ethernet without Low Data Mode or Data Saver. */
+	wifiOnly?: boolean;
+	/** How long the job may take, at most the 20 s default. */
+	timeoutMs?: number;
+};
+
+/** What every job result names. */
+type BackgroundJobBase = {
 	/** The job's name. */
 	name: string;
 	/** The plugin id that added it, or `unbound` for a built-in. */
 	owner: string;
-	/** Whether it finished without throwing or timing out. */
-	ok: boolean;
 	/** How long it ran. */
 	durationMs: number;
-	/** What failed, when it did. */
-	error?: string;
 };
+
+/** How one job went in a run: finished (or skipped, with why), or failed with what went wrong. */
+export type BackgroundJobResult = BackgroundJobBase &
+	(
+		| {
+				/** It finished without throwing or timing out, or was skipped. */
+				ok: true;
+				/** Why the job did not run, such as `not on Wi-Fi`. */
+				skipped?: string;
+		  }
+		| {
+				/** It threw or timed out. */
+				ok: false;
+				/** What failed. */
+				error: string;
+		  }
+	);
 
 /** One background refresh: what started it, when, and how each job went. */
 export type BackgroundRun = {
@@ -39,6 +60,8 @@ export type BackgroundGate = {
 	runs: number;
 	/** Whether one is running now. */
 	running: boolean;
+	/** How the platform runs refreshes while Discord is closed, or why it does not; missing on a loader from before it. */
+	scheduled?: string;
 };
 
 /** The registered jobs, the last run and, on a loader that reports it, the gate. */

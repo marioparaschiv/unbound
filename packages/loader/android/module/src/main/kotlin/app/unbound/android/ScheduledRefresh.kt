@@ -27,6 +27,7 @@ object ScheduledRefresh {
             register(application)
             schedule(application)
             installed = true
+            NativeBridge.nativeSetScheduledRefresh("every 6 h while Discord's process is alive (inexact alarm)")
         }
     }
 
@@ -37,6 +38,8 @@ object ScheduledRefresh {
         } else {
             context.registerReceiver(Receiver, filter)
         }
+        // A system broadcast, so it registers exported; it reaches only a running process.
+        context.registerReceiver(ChargeReceiver, IntentFilter(Intent.ACTION_POWER_CONNECTED))
     }
 
     private fun schedule(context: Context) {
@@ -61,10 +64,10 @@ object ScheduledRefresh {
         while (working() && now() < deadline) sleep(POLL_MS)
     }
 
-    private fun refresh(result: BroadcastReceiver.PendingResult) {
+    private fun refresh(result: BroadcastReceiver.PendingResult, start: () -> Boolean) {
         thread(name = "Unbound scheduled refresh") {
             try {
-                if (NativeBridge.nativeOnScheduledRefresh()) {
+                if (start()) {
                     waitWhileWorking(NativeBridge::nativeIsWorkingInBackground, SystemClock::elapsedRealtime, Thread::sleep)
                 }
             } catch (error: Throwable) {
@@ -78,7 +81,13 @@ object ScheduledRefresh {
     private object Receiver : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             Logger.info(LogCategory.DEFAULT, "The scheduled background refresh fired.")
-            refresh(goAsync())
+            refresh(goAsync(), NativeBridge::nativeOnScheduledRefresh)
+        }
+    }
+
+    private object ChargeReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            refresh(goAsync(), NativeBridge::nativeOnCharging)
         }
     }
 }
