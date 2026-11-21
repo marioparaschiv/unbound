@@ -52,6 +52,7 @@
 		"@rollup/plugin-commonjs": "^29.0.3",
 		"@rollup/plugin-json": "^6.1.0",
 		"@rollup/plugin-node-resolve": "^16.0.3",
+		"@swc/helpers": "^0.5.17",
 		"@unbound-app/debugger": "workspace:*",
 		"@unbound-app/debugger-protocol": "workspace:*",
 		"@unbound-app/rollup-plugin-hermes": "workspace:*",
