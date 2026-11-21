@@ -1,5 +1,73 @@
 # Changelog
 
+## [1.12.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.11.0...loader-v1.12.0) (2026-11-21)
+
+
+### Features
+
+* **loader:** batch iOS main-thread calls into one dispatch ([#1922](https://github.com/marioparaschiv/unbound/issues/1922)) ([fc952fe](https://github.com/marioparaschiv/unbound/commit/fc952fe2709faa0031ea702a9b1ccbd216242b60))
+* **loader:** collapse repeated JavaScript errors in the log ([#1956](https://github.com/marioparaschiv/unbound/issues/1956)) ([50a7509](https://github.com/marioparaschiv/unbound/commit/50a75098b5ad848ca084860ecc7a9d1a624fbdd4))
+* **loader:** decode the exception syndrome in native crash descriptions ([#2076](https://github.com/marioparaschiv/unbound/issues/2076)) ([867d5a1](https://github.com/marioparaschiv/unbound/commit/867d5a1e8119bf102014d0f2073dc7d474d303ea))
+* **loader:** explain scheduled refresh, add job options, run on charge ([#2071](https://github.com/marioparaschiv/unbound/issues/2071)) ([59c3ee5](https://github.com/marioparaschiv/unbound/commit/59c3ee5a663bdd997fa187f44de0dfbf8aee18a3))
+* **loader:** finish iOS update downloads in the background ([#1931](https://github.com/marioparaschiv/unbound/issues/1931)) ([4f529cf](https://github.com/marioparaschiv/unbound/commit/4f529cf2922ff122f329c42315c4fe2a3c880b2f))
+* **loader:** flag legacy Xposed and merged split APKs ([#1907](https://github.com/marioparaschiv/unbound/issues/1907)) ([8e16b61](https://github.com/marioparaschiv/unbound/commit/8e16b61237ac44b657d336982acd0cdf187fb23f))
+* **loader:** hash plugins into their digest caches in the background ([#2058](https://github.com/marioparaschiv/unbound/issues/2058)) ([7511089](https://github.com/marioparaschiv/unbound/commit/7511089720d2f7374247f4a95248368bed37911f))
+* **loader:** keep build IDs in Android tombstone frames ([#1952](https://github.com/marioparaschiv/unbound/issues/1952)) ([0bbeb50](https://github.com/marioparaschiv/unbound/commit/0bbeb50a4c86b6319717ac8594c1ff3e99d81b46))
+* **loader:** keep older logs compressed ([#1919](https://github.com/marioparaschiv/unbound/issues/1919)) ([a886a10](https://github.com/marioparaschiv/unbound/commit/a886a103c292de16da1fb9e315d97c68f0f67bc8))
+* **loader:** keep Unbound's caches out of iCloud backups ([#1930](https://github.com/marioparaschiv/unbound/issues/1930)) ([a3b1495](https://github.com/marioparaschiv/unbound/commit/a3b14954932b8ecc947cf5a0fdc303919783078c))
+* **loader:** list plugins' recent bridge calls in crashes ([#1913](https://github.com/marioparaschiv/unbound/issues/1913)) ([51bcf38](https://github.com/marioparaschiv/unbound/commit/51bcf38eb904ccb0bccc7179856b341ed5cc33d2))
+* **loader:** log UI worklets that block the UI thread ([#2115](https://github.com/marioparaschiv/unbound/issues/2115)) ([0dfe51f](https://github.com/marioparaschiv/unbound/commit/0dfe51f1c110929210de27db68ef61419a37f78b))
+* **loader:** mark IPv6-only networks and leftover mod data ([#1908](https://github.com/marioparaschiv/unbound/issues/1908)) ([728b70c](https://github.com/marioparaschiv/unbound/commit/728b70c0d4b1a1b80c1ebf94dd0e495487634332))
+* **loader:** name likely pointer authentication failures ([#1973](https://github.com/marioparaschiv/unbound/issues/1973)) ([557fafe](https://github.com/marioparaschiv/unbound/commit/557fafe809dd49cd980a700f0d7a66c46f9ab5c7))
+* **loader:** name plugins piling up main-thread calls ([#1898](https://github.com/marioparaschiv/unbound/issues/1898)) ([c94bd21](https://github.com/marioparaschiv/unbound/commit/c94bd21700f9c854cf2f30c2f263bf2290c79972))
+* **loader:** name the likely plugin behind a MetricKit hang ([#1950](https://github.com/marioparaschiv/unbound/issues/1950)) ([5f5606b](https://github.com/marioparaschiv/unbound/commit/5f5606b2e7ec6c5a12488ac4a32b0234aafd8210))
+* **loader:** name the team behind an enterprise certificate ([#2029](https://github.com/marioparaschiv/unbound/issues/2029)) ([8126cc6](https://github.com/marioparaschiv/unbound/commit/8126cc618b88a33ac14b9c4e6120fb6eb0a92c70))
+* **loader:** name the tweak package behind each injected library ([#2028](https://github.com/marioparaschiv/unbound/issues/2028)) ([8b46028](https://github.com/marioparaschiv/unbound/commit/8b460282fcd143a1a6e9e00c74707727aec75d1e))
+* **loader:** recognise PlayCover installs ([#1957](https://github.com/marioparaschiv/unbound/issues/1957)) ([a718087](https://github.com/marioparaschiv/unbound/commit/a718087a0ef55bbfc9b44581752350102d30c382))
+* **loader:** recognise Serotonin by its bootstrap ([#2051](https://github.com/marioparaschiv/unbound/issues/2051)) ([2a48773](https://github.com/marioparaschiv/unbound/commit/2a48773e49f8e8571b262902b15f9c8cda768599))
+* **loader:** record Hermes fatal errors in crash reports ([#1912](https://github.com/marioparaschiv/unbound/issues/1912)) ([ee7c0fa](https://github.com/marioparaschiv/unbound/commit/ee7c0fa6739a0c7ee6d83c093e46143f071cc8a0))
+* **loader:** record MetricKit disk-write reports ([#1951](https://github.com/marioparaschiv/unbound/issues/1951)) ([b2cc806](https://github.com/marioparaschiv/unbound/commit/b2cc8062459375c48949a27e2081f47602ef111f))
+* **loader:** refresh the bundle in the background when sideloaded ([#2052](https://github.com/marioparaschiv/unbound/issues/2052)) ([8df50dd](https://github.com/marioparaschiv/unbound/commit/8df50dd65ddbf1e344fbdc5d8fc1bffe2bd00b30))
+* **loader:** report the versions of injected Android modules ([#2046](https://github.com/marioparaschiv/unbound/issues/2046)) ([ed64736](https://github.com/marioparaschiv/unbound/commit/ed647362d33180010988f4d625d571d4f2f52ba5))
+* **loader:** run addon updates and client jobs in the background ([#2056](https://github.com/marioparaschiv/unbound/issues/2056)) ([5a9b86b](https://github.com/marioparaschiv/unbound/commit/5a9b86b79ad1d0dc51cc3383eadd8975227a01f6))
+* **loader:** run iOS hooks on one method in plugin order ([#1918](https://github.com/marioparaschiv/unbound/issues/1918)) ([d7e0e3e](https://github.com/marioparaschiv/unbound/commit/d7e0e3ef20f07f6c3ee732a0d2059eb19ebb7255))
+* **loader:** say when a failed update check hit a captive portal ([#1958](https://github.com/marioparaschiv/unbound/issues/1958)) ([ce20a9c](https://github.com/marioparaschiv/unbound/commit/ce20a9c7b243c33175cbe77d3443b41e01660947))
+* **loader:** space background refreshes out while nothing changes ([#2073](https://github.com/marioparaschiv/unbound/issues/2073)) ([2a56ecb](https://github.com/marioparaschiv/unbound/commit/2a56ecbfc8937d07e1853cf2278abb1a51589b43))
+* **loader:** stage addon installs and clean up leftover folders ([#2072](https://github.com/marioparaschiv/unbound/issues/2072)) ([1503fa0](https://github.com/marioparaschiv/unbound/commit/1503fa0f6c2b41eda922e599c37a63c572827de8))
+* **loader:** support CGVector, UIOffset and NSDirectionalEdgeInsets ([#2044](https://github.com/marioparaschiv/unbound/issues/2044)) ([dd50340](https://github.com/marioparaschiv/unbound/commit/dd5034078b7936005c358e4d36ac55f1e6d1b254))
+* **loader:** survive rejected list updates on iOS ([#1954](https://github.com/marioparaschiv/unbound/issues/1954)) ([800b3bf](https://github.com/marioparaschiv/unbound/commit/800b3bf485db06567d26e14eeeaba24e3901c70f))
+* **loader:** wait out the server's max-age before the next update check ([#2075](https://github.com/marioparaschiv/unbound/issues/2075)) ([0033995](https://github.com/marioparaschiv/unbound/commit/0033995bc7e4dc745a1d704167a7551f642e0bff))
+* **loader:** warn once when storage is full ([#1947](https://github.com/marioparaschiv/unbound/issues/1947)) ([af66a97](https://github.com/marioparaschiv/unbound/commit/af66a97b71c6ba5a909cc36de4b3b53ddade4a7b))
+
+
+### Bug Fixes
+
+* **loader:** detect a jailbreak from injected tweaks ([#1997](https://github.com/marioparaschiv/unbound/issues/1997)) ([b195c63](https://github.com/marioparaschiv/unbound/commit/b195c63c43db9eddbf88f4b6c50f3d7057ae0443))
+* **loader:** find the jailbreak root in core, roothide included ([#2001](https://github.com/marioparaschiv/unbound/issues/2001)) ([a55fac2](https://github.com/marioparaschiv/unbound/commit/a55fac257a9f59d3a55c3589fdb5d1554fadb1d4))
+* **loader:** format Kotlin with the pinned JDK ([#1944](https://github.com/marioparaschiv/unbound/issues/1944)) ([b4f7bbf](https://github.com/marioparaschiv/unbound/commit/b4f7bbf017f92dbb68f67bfdeb0f07ce8301425e))
+* **loader:** give camera devices without a name an empty one ([#2004](https://github.com/marioparaschiv/unbound/issues/2004)) ([3f101b0](https://github.com/marioparaschiv/unbound/commit/3f101b01f778f8587d1591b5f5808e6ffb9c32ab))
+* **loader:** hide the animated icon where it cannot animate ([#1996](https://github.com/marioparaschiv/unbound/issues/1996)) ([8388a2a](https://github.com/marioparaschiv/unbound/commit/8388a2a122fe771048431c185d16f01833a3ebe9))
+* **loader:** ignore time spent suspended in freeze reports ([#2134](https://github.com/marioparaschiv/unbound/issues/2134)) ([601b067](https://github.com/marioparaschiv/unbound/commit/601b067dbae55787e6e771b9138eb07b54b6a5d4))
+* **loader:** keep a new bundle when Discord's own code crashed ([#2003](https://github.com/marioparaschiv/unbound/issues/2003)) ([835b325](https://github.com/marioparaschiv/unbound/commit/835b325cd7b8347285ff37dbd75d8d1de23fb039))
+* **loader:** keep objects hooks return alive past their pool ([#1906](https://github.com/marioparaschiv/unbound/issues/1906)) ([06fe21b](https://github.com/marioparaschiv/unbound/commit/06fe21b4a19600085a99c03db13d6b915875e30a))
+* **loader:** keep the download banner up during the first download ([#2005](https://github.com/marioparaschiv/unbound/issues/2005)) ([3346c45](https://github.com/marioparaschiv/unbound/commit/3346c455e06ffa053c8313ebfecfbf2e798b4d4d))
+* **loader:** keep the loader alive while JS can still reach it ([#2111](https://github.com/marioparaschiv/unbound/issues/2111)) ([d82d773](https://github.com/marioparaschiv/unbound/commit/d82d7735cce0ad4f408d457979019cc3ecea852d))
+* **loader:** load the dev client when the debugger is on ([#2000](https://github.com/marioparaschiv/unbound/issues/2000)) ([95a205b](https://github.com/marioparaschiv/unbound/commit/95a205ba6479f5160cef00fa10a4f600e6969990))
+* **loader:** name only hooks still running when Discord crashes ([#2108](https://github.com/marioparaschiv/unbound/issues/2108)) ([e7ed2ff](https://github.com/marioparaschiv/unbound/commit/e7ed2ff62536f101cdd701b3378b93e1842e2012))
+* **loader:** name Swift traps and Mach exceptions in crash headlines ([#2061](https://github.com/marioparaschiv/unbound/issues/2061)) ([c941d79](https://github.com/marioparaschiv/unbound/commit/c941d7982c03c08085adb7f9a4aa976f8b3c9876))
+* **loader:** name the plugin when a native callback throws ([#1911](https://github.com/marioparaschiv/unbound/issues/1911)) ([6263e69](https://github.com/marioparaschiv/unbound/commit/6263e69da35915f7e57449b04d62846c53287f8a))
+* **loader:** never free a block's JS function after its runtime is gone ([#2118](https://github.com/marioparaschiv/unbound/issues/2118)) ([e30299f](https://github.com/marioparaschiv/unbound/commit/e30299fbfeab94c53f299e05eb15bef65650014a))
+* **loader:** overwrite an existing IPA in non-interactive builds ([#2057](https://github.com/marioparaschiv/unbound/issues/2057)) ([998df76](https://github.com/marioparaschiv/unbound/commit/998df76659e7f933a26750152bd8e0336e286d9c))
+* **loader:** pass and read Yoga's YGValue across the native bridge ([#2019](https://github.com/marioparaschiv/unbound/issues/2019)) ([cda81e3](https://github.com/marioparaschiv/unbound/commit/cda81e39d2566f53b22547ed1698ee712bc25856))
+* **loader:** queue icon picks and say why one failed ([#1999](https://github.com/marioparaschiv/unbound/issues/1999)) ([c697717](https://github.com/marioparaschiv/unbound/commit/c697717219739f53f1b03798ee1483dc49fc3d0a))
+* **loader:** restore the Logos directives in the list update guard ([#1955](https://github.com/marioparaschiv/unbound/issues/1955)) ([1be66cd](https://github.com/marioparaschiv/unbound/commit/1be66cd8be5182e035d7cd6a952a875dc8ec65fa))
+* **loader:** run a dev server's new bundle on the first reload ([#1967](https://github.com/marioparaschiv/unbound/issues/1967)) ([c1a7e0f](https://github.com/marioparaschiv/unbound/commit/c1a7e0f2e4ffe1c9b4ea63d049c2623ae5ca0dfd))
+* **loader:** say why an add-on file can't be read, and move it aside ([#1929](https://github.com/marioparaschiv/unbound/issues/1929)) ([2f2d644](https://github.com/marioparaschiv/unbound/commit/2f2d644d120cf1f97eed789ac111cd44563b75d5))
+* **loader:** say why Android raised an ANR and which threads were busy ([#2121](https://github.com/marioparaschiv/unbound/issues/2121)) ([fe9141e](https://github.com/marioparaschiv/unbound/commit/fe9141e88cdae3a05fca34e7cc72bdfc5f6d58bb))
+* **loader:** show native structs' name and value in JSON and logs ([#2017](https://github.com/marioparaschiv/unbound/issues/2017)) ([dd2974a](https://github.com/marioparaschiv/unbound/commit/dd2974a25ea91f6172a2aca97533ef80351c93f5))
+* **loader:** stop animating the app icon where iOS confirms changes ([#1995](https://github.com/marioparaschiv/unbound/issues/1995)) ([f79a39a](https://github.com/marioparaschiv/unbound/commit/f79a39ac31b3e618bb0afefa340b5a0fd9909239))
+* **loader:** symbolicate the crash issues the server opens ([#2132](https://github.com/marioparaschiv/unbound/issues/2132)) ([3a09c7e](https://github.com/marioparaschiv/unbound/commit/3a09c7e6f815cf021c8fa446b6492fb1dd13278b))
+
 ## [1.11.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.10.0...loader-v1.11.0) (2026-11-19)
 
 
