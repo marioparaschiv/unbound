@@ -255,7 +255,8 @@ static void nativeClearMainThreadStall(JNIEnv *, jclass)
     }
 }
 
-static jboolean nativeAdoptAnrTrace(JNIEnv *env, jclass, jbyteArray trace, jlong at)
+static jboolean nativeAdoptAnrTrace(JNIEnv *env, jclass, jbyteArray trace, jlong at,
+                                    jstring description)
 {
     if (!trace)
     {
@@ -269,7 +270,8 @@ static jboolean nativeAdoptAnrTrace(JNIEnv *env, jclass, jbyteArray trace, jlong
     std::string addon =
         loader ? loader::takeStallAddonBefore(loader->documents(), static_cast<int64_t>(at))
                : std::string();
-    std::optional<std::string> stack = loader::anrTraceStack(bytes, addon);
+    std::optional<std::string> stack = loader::anrTraceStack(
+        bytes, addon, description ? toStdString(env, description) : std::string());
     if (!stack || !loader::adoptPreviousNativeCrash(*stack))
     {
         return JNI_FALSE;

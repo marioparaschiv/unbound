@@ -1,5 +1,6 @@
 #include "LoaderTombstone.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <cstdio>
 #include <map>
@@ -339,47 +340,140 @@ static std::string trimmed(const std::string &line)
     return start == std::string::npos ? "" : line.substr(start, end - start + 1);
 }
 
-std::optional<std::string> anrTraceStack(const std::string &trace, const std::string &addonRecord)
-{
-    constexpr size_t kMaxFrames = 60;
-    std::string text;
-    size_t frames = 0;
-    bool inMain   = false;
-    size_t start  = 0;
-    while (start <= trace.size())
+namespace {
+    struct TraceThread {
+        std::string name;
+        std::vector<std::string> frames;
+    };
+
+    constexpr size_t kMaxMainFrames   = 60;
+    constexpr size_t kMaxOtherFrames  = 20;
+    constexpr size_t kMaxOtherThreads = 4;
+    constexpr size_t kMaxReasonLength = 300;
+
+    bool isTraceFrame(const std::string &body)
     {
-        size_t end = trace.find('\n', start);
-        std::string line =
-            trace.substr(start, end == std::string::npos ? std::string::npos : end - start);
-        start            = end == std::string::npos ? trace.size() + 1 : end + 1;
-        std::string body = trimmed(line);
-        if (!inMain)
-        {
-            inMain = body.starts_with("\"main\" ");
-            continue;
-        }
-
-        if (body.empty())
-        {
-            break;
-        }
-
-        bool frame = body.starts_with("at ") || body.starts_with("native: #")
-                     || body.starts_with("- waiting") || body.starts_with("- locked")
-                     || body.starts_with("- blocked");
-        if (frame && frames < kMaxFrames)
-        {
-            text += body + "\n";
-            frames++;
-        }
+        return body.starts_with("at ") || body.starts_with("native: #")
+               || body.starts_with("- waiting") || body.starts_with("- locked")
+               || body.starts_with("- blocked");
     }
 
-    if (frames == 0)
+    std::optional<std::string> threadName(const std::string &body)
+    {
+        if (!body.starts_with("\""))
+        {
+            return std::nullopt;
+        }
+
+        size_t close = body.find('"', 1);
+        if (close == std::string::npos)
+        {
+            return std::nullopt;
+        }
+
+        return body.substr(1, close - 1);
+    }
+
+    std::vector<TraceThread> traceThreads(const std::string &trace)
+    {
+        std::vector<TraceThread> threads;
+        bool open    = false;
+        size_t start = 0;
+        while (start <= trace.size())
+        {
+            size_t end = trace.find('\n', start);
+            std::string line =
+                trace.substr(start, end == std::string::npos ? std::string::npos : end - start);
+            start            = end == std::string::npos ? trace.size() + 1 : end + 1;
+            std::string body = trimmed(line);
+            if (std::optional<std::string> name = threadName(body))
+            {
+                threads.push_back({*name, {}});
+                open = true;
+                continue;
+            }
+
+            if (body.empty())
+            {
+                open = false;
+                continue;
+            }
+
+            if (open && isTraceFrame(body))
+            {
+                threads.back().frames.push_back(body);
+            }
+        }
+
+        return threads;
+    }
+
+    bool isJavaScriptThread(const std::string &name)
+    {
+        return name == "mqt_js" || name == "mqt_v_js" || name.find("hermes") != std::string::npos;
+    }
+
+    bool runsUnboundCode(const TraceThread &thread)
+    {
+        return std::any_of(thread.frames.begin(), thread.frames.end(),
+                           [](const std::string &frame) {
+                               return frame.find("libunbound") != std::string::npos
+                                      || frame.find("app.unbound") != std::string::npos;
+                           });
+    }
+
+    std::string framesText(const std::vector<std::string> &frames, size_t limit)
+    {
+        std::string text;
+        for (size_t index = 0; index < frames.size() && index < limit; index++)
+        {
+            text += frames[index] + "\n";
+        }
+
+        return text;
+    }
+
+    std::string reasonLine(std::string reason)
+    {
+        std::replace(reason.begin(), reason.end(), '\n', ' ');
+        reason = trimmed(reason);
+        if (reason.empty())
+        {
+            return std::string();
+        }
+
+        return "Reason " + reason.substr(0, kMaxReasonLength) + "\n";
+    }
+}
+
+std::optional<std::string> anrTraceStack(const std::string &trace, const std::string &addonRecord,
+                                         const std::string &reason)
+{
+    std::vector<TraceThread> threads = traceThreads(trace);
+    auto main = std::find_if(threads.begin(), threads.end(), [](const TraceThread &thread) {
+        return thread.name == "main";
+    });
+    if (main == threads.end() || main->frames.empty())
     {
         return std::nullopt;
     }
 
     std::string addon = addonRecord.empty() ? std::string() : "Addon " + addonRecord + "\n";
-    return "ANR in thread 1 (main), from Android's ANR trace\n" + addon + text;
+    std::string text  = "ANR in thread 1 (main), from Android's ANR trace\n" + reasonLine(reason)
+                        + addon + framesText(main->frames, kMaxMainFrames);
+    size_t others     = 0;
+    for (const TraceThread &thread : threads)
+    {
+        if (&thread == &*main || thread.frames.empty() || others == kMaxOtherThreads
+            || !(isJavaScriptThread(thread.name) || runsUnboundCode(thread)))
+        {
+            continue;
+        }
+
+        text += "Thread " + thread.name + "\n" + framesText(thread.frames, kMaxOtherFrames);
+        others++;
+    }
+
+    return text;
 }
 }

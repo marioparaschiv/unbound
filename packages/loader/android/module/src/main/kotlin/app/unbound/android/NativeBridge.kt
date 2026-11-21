@@ -84,7 +84,7 @@ object NativeBridge {
     external fun nativeAdoptTombstone(tombstone: ByteArray): Boolean
 
     @JvmStatic
-    external fun nativeAdoptAnrTrace(trace: ByteArray, at: Long): Boolean
+    external fun nativeAdoptAnrTrace(trace: ByteArray, at: Long, description: String?): Boolean
 
     @JvmStatic
     external fun nativeMarkMainThread()
@@ -242,7 +242,7 @@ object NativeBridge {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
         runCatching {
             val bytes = readTrace(exit) ?: return
-            if (nativeAdoptAnrTrace(bytes, exit.timestamp)) {
+            if (nativeAdoptAnrTrace(bytes, exit.timestamp, exit.description)) {
                 Logger.info(LogCategory.DEFAULT, "Read the previous ANR's main thread stack from Android's trace.")
             }
         }.onFailure { Logger.error(LogCategory.DEFAULT, "Failed to read Android's ANR trace", it) }
