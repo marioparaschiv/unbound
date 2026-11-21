@@ -288,21 +288,6 @@ jobs:
                   path: packages/loader/symbols/
                   retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
 
-            - name: Keep the symbols under the build's UUID
-              if: github.event_name != 'pull_request' && inputs.release
-              env:
-                  GH_TOKEN: ${{ github.token }}
-              run: |
-                  set -euo pipefail
-                  uuid=$(awk '$1 == "arm64" { print $2 }' symbols/uuids.txt)
-                  archive="unbound-ios-symbols-${uuid}.zip"
-                  (cd symbols && zip -qr "../${archive}" .)
-                  if ! gh release view native-symbols --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-                    gh release create native-symbols --repo "$GITHUB_REPOSITORY" --prerelease \
-                      --title "Native symbols" --notes "Symbols for every shipped Unbound.dylib, named by its UUID."
-                  fi
-                  gh release upload native-symbols "$archive" --repo "$GITHUB_REPOSITORY" --clobber
-
             - name: Upload rootless package
               id: upload-deb
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
