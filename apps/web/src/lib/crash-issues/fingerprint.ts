@@ -6,11 +6,23 @@ const JAVA_FRAME = /^#\d+\s+at\s+([^(]+)/;
 const JS_FRAME = /^\s*at\s+([^\s(]+)/;
 const OTHER_SECTIONS = /^(Registers|Thread) /;
 const MEMORY_FAULTS = new Set(['Signal 10', 'Signal 11']);
+const STRIPPED_APP_IMAGES = new Set(['Discord']);
+const REDACTED_SYMBOL = '<redacted>';
 
 function nativeFrame(line: string): string | undefined {
 	const match = NATIVE_FRAME.exec(line);
 
-	return match ? [match[1], match[2]].filter(Boolean).join(' ') : undefined;
+	if (!match) {
+		return undefined;
+	}
+
+	const [, image, symbol] = match;
+
+	if (!symbol || symbol === REDACTED_SYMBOL || STRIPPED_APP_IMAGES.has(image!)) {
+		return image;
+	}
+
+	return `${image} ${symbol}`;
 }
 
 function frameName(line: string): string | undefined {
@@ -57,8 +69,8 @@ export function crashHeadline(report: CrashReport): string {
 }
 
 /**
- * @description Names the frames that identify a crash: the top frames of its crashing thread by image and symbol,
- * without the addresses and offsets that change between builds.
+ * @description Names the frames that identify a crash: the top frames of its crashing thread by image and symbol, with
+ * Discord's guessed symbols, addresses, offsets and repeats dropped, since those change between builds.
  * @param stack The stack.
  * @returns Up to six frame names.
  */
@@ -69,6 +81,7 @@ export function crashFrames(stack: string | undefined): string[] {
 	return (end === -1 ? lines : lines.slice(0, end))
 		.map(frameName)
 		.filter((frame): frame is string => Boolean(frame))
+		.filter((frame, index, frames) => frame !== frames[index - 1])
 		.slice(0, TOP_FRAMES);
 }
 
