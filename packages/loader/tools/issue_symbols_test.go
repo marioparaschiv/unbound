@@ -216,3 +216,15 @@ func TestSkipsCrashesWithoutUnboundFramesOnTheCrashingThread(t *testing.T) {
 		t.Fatal("missed the crashing Unbound frame")
 	}
 }
+
+func TestLooksUpSymbolsByTheImageUUID(t *testing.T) {
+	crash := issueCrash{platform: "ios", image: imageIdentity{name: "Unbound.dylib", id: "40cd0a4e-e5f6-39e2-98ad-fc59d154dd96"}}
+
+	if got := candidateArchiveName(uuidSymbolsTag, crash); got != "unbound-ios-symbols-40CD0A4E-E5F6-39E2-98AD-FC59D154DD96.zip" {
+		t.Fatalf("archive %q", got)
+	}
+
+	if got := candidateArchiveName("discord-354.0-ios", crash); got != "unbound-ios-symbols.zip" {
+		t.Fatalf("archive %q", got)
+	}
+}

@@ -84,6 +84,10 @@ func runSymbolicateIssue(args []string) error {
 	}
 
 	candidates := symbolReleaseCandidates(releases, crash)
+	if crash.image.id != "" {
+		candidates = append([]string{uuidSymbolsTag}, candidates...)
+	}
+
 	if len(candidates) == 0 {
 		fmt.Printf("No release carries %s symbols for loader %s.\n", crash.platform, crash.version)
 		return nil
@@ -100,11 +104,11 @@ func runSymbolicateIssue(args []string) error {
 		return err
 	}
 
-	archive := symbolArchiveName(crash.platform)
-
 	var tag, output string
 
 	for index, candidate := range candidates {
+		archive := candidateArchiveName(candidate, crash)
+
 		target := filepath.Join(directory, strconv.Itoa(index))
 		if _, err := cli.run("release", "download", candidate, "--repo", *repository, "--pattern", archive, "--dir", target); err != nil {
 			continue
@@ -156,9 +160,8 @@ func runSymbolicateIssue(args []string) error {
 }
 
 const (
-	releasePageSize  = 100
-	maxReleasePages  = 5
-	enoughSymbolSets = maxSymbolCandidates
+	releasePageSize = 100
+	maxReleasePages = 5
 )
 
 func listSymbolReleases(cli ghCLI, repository, platform string) ([]symbolRelease, error) {
@@ -166,7 +169,7 @@ func listSymbolReleases(cli ghCLI, repository, platform string) ([]symbolRelease
 
 	var withSymbols []symbolRelease
 
-	for page := 1; page <= maxReleasePages && len(withSymbols) < enoughSymbolSets; page++ {
+	for page := 1; page <= maxReleasePages; page++ {
 		listing, err := cli.run("api", fmt.Sprintf("repos/%s/releases?per_page=%d&page=%d", repository, releasePageSize, page))
 		if err != nil {
 			return nil, err
@@ -324,11 +327,30 @@ func symbolArchiveName(platform string) string {
 	return "unbound-" + platform + "-symbols.zip"
 }
 
-const maxSymbolCandidates = 10
+const uuidSymbolsTag = "native-symbols"
+
+func candidateArchiveName(tag string, crash issueCrash) string {
+	if tag == uuidSymbolsTag {
+		return "unbound-" + crash.platform + "-symbols-" + strings.ToUpper(crash.image.id) + ".zip"
+	}
+
+	return symbolArchiveName(crash.platform)
+}
+
+const maxSymbolCandidates = 20
 
 func symbolReleaseCandidates(releases []symbolRelease, crash issueCrash) []string {
 	var candidates []string
-	if tag, ok := pickSymbolRelease(releases, crash); ok {
+
+	versioned := "app.unbound.ios_" + crash.version + "_iphoneos-arm64.deb"
+
+	for _, release := range releases {
+		if slices.ContainsFunc(release.Assets, func(asset releaseAsset) bool { return asset.Name == versioned }) {
+			candidates = append(candidates, release.TagName)
+		}
+	}
+
+	if tag, ok := pickSymbolRelease(releases, crash); ok && !slices.Contains(candidates, tag) {
 		candidates = append(candidates, tag)
 	}
 
