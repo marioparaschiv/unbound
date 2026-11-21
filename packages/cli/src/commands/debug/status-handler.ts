@@ -86,7 +86,9 @@ function readDeviceStatus({ unbound, plugins }: DevicePrelude): string {
 	}
 
 	const addons = [...(plugins?.addons.values() ?? [])];
-	const durations = plugins?.startDurations;
+	const running = new Set(addons.filter((addon) => addon.started).map((addon) => addon.id));
+	// Older clients keep a stopped plugin's start time, so only running plugins count.
+	const durations = [...(plugins?.startDurations ?? [])].filter(([id]) => running.has(id));
 	const counts = unbound.native.getNativeResources?.();
 	const report: DeviceStatusReport = {
 		started: addons.filter((addon) => addon.started).length,
@@ -99,8 +101,8 @@ function readDeviceStatus({ unbound, plugins }: DevicePrelude): string {
 					),
 				)
 			: null,
-		slowestStarts: [...(durations ?? [])].sort((left, right) => right[1] - left[1]).slice(0, 8),
-		startTotal: [...(durations?.values() ?? [])].reduce((total, ms) => total + ms, 0),
+		slowestStarts: [...durations].sort((left, right) => right[1] - left[1]).slice(0, 8),
+		startTotal: durations.reduce((total, [, ms]) => total + ms, 0),
 		updateUrl: String(unbound.storage.getBucket('unbound').get('loader.update.url', '')),
 		hookOwners: unbound.native.hookOwners?.() ?? [],
 	};
