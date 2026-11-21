@@ -143,6 +143,7 @@ describe('bundle flavours', () => {
 	test('keeps the developer modules in the dev bundle', () => {
 		expect(devModules.filter(isDeveloperModule).map(workspacePath).sort()).toEqual([
 			'packages/client/src/assets/builtin.dev.ts',
+			'packages/client/src/builtins/row-shape-check.dev.ts',
 			'packages/client/src/debugger/bridge-service.dev.ts',
 			'packages/client/src/debugger/builtin.dev.ts',
 			'packages/client/src/debugger/dev-native.dev.ts',

@@ -26,6 +26,7 @@ import { benchMark, benchSpan } from '~/core/bench-span';
 import toasts, { toastsSection } from '~/toasts/builtin';
 import discordSupport from '~/builtins/discord-support';
 import type { BuiltInEntry } from '~/builtins/registry';
+import rowValueGuard from '~/builtins/row-value-guard';
 import type { SectionEntry } from '~/settings/section';
 import errorBoundary from '~/builtins/error-boundary';
 import profileExpiry from '~/builtins/profile-expiry';
@@ -109,6 +110,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	['nativeConsent', nativeConsent],
 	['placeholderGuard', placeholderGuard],
 	['promiseRejections', promiseRejections],
+	['rowValueGuard', rowValueGuard],
 	['settings', createSettings(SECTIONS_IN_OVERVIEW_ORDER)],
 	['sponsorBadges', sponsorBadges],
 	['staffMode', staffMode],
