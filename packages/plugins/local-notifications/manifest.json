@@ -13,5 +13,23 @@
 		"min": "3.0.0"
 	},
 	"icon": "BellIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.objc.blocks",
+				"native.objc.classes",
+				"native.objc.hooks",
+				"native.objc.invoke",
+				"native.objc.invokeAsync"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "be7a6a8b525bf6c21811870ef697bfcd501ff8be4c63e35c151fffabc4d8f806f9460c6206a20a2c16f8e1157891889088fd5dd55cd15e4b7f88f2e88f4fb31b"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "pTpz9sUxGeiJFs0GbcmSP0R1ulreh+OXCg2euuUaXykVmo2dwmuj0hqY4fsQJ1bdna8F/2BOorbcqP5Eq70sCg=="
+	}
 }
