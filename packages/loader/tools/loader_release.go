@@ -261,7 +261,7 @@ func postLoaderRelease(ctx context.Context, config loaderReleasePublishConfig, c
 	}
 	defer response.Body.Close()
 
-	responseBody, err := io.ReadAll(io.LimitReader(response.Body, 16*1024))
+	responseBody, err := io.ReadAll(io.LimitReader(response.Body, maxLoaderReleaseResponse))
 	if err != nil {
 		return false, fmt.Errorf("read loader release API response: %w", err)
 	}
@@ -281,6 +281,8 @@ func postLoaderRelease(ctx context.Context, config loaderReleasePublishConfig, c
 
 	return true, nil
 }
+
+const maxLoaderReleaseResponse = 1 << 20
 
 func latestLoaderReleaseVersion(ctx context.Context, endpoint string, platform string, client *http.Client) (string, bool, error) {
 	parsed, err := url.Parse(endpoint)
@@ -312,7 +314,7 @@ func latestLoaderReleaseVersion(ctx context.Context, endpoint string, platform s
 	}
 	defer response.Body.Close()
 
-	responseBody, err := io.ReadAll(io.LimitReader(response.Body, 16*1024))
+	responseBody, err := io.ReadAll(io.LimitReader(response.Body, maxLoaderReleaseResponse))
 	if err != nil {
 		return "", false, fmt.Errorf("read latest loader release response: %w", err)
 	}

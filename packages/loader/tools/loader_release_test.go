@@ -328,3 +328,18 @@ func TestPublishLoaderReleasesDryRunPostsNothing(t *testing.T) {
 		t.Fatalf("published = %v, want both platforms listed", result.published)
 	}
 }
+
+func TestReadsALatestReleaseWithALongChangelog(t *testing.T) {
+	changelog := strings.Repeat("- a loader change worth a line in the changelog\n", 400)
+
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		body, _ := json.Marshal(map[string]any{"update": map[string]string{"version": "1.11.0", "changelog": changelog}})
+		_, _ = writer.Write(body)
+	}))
+	defer server.Close()
+
+	version, found, err := latestLoaderReleaseVersion(context.Background(), server.URL+"/api/v1/loader/releases", "ios", server.Client())
+	if err != nil || !found || version != "1.11.0" {
+		t.Fatalf("version %q, found %v, err %v", version, found, err)
+	}
+}
