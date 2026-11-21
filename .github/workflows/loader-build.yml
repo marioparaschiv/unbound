@@ -697,6 +697,38 @@ jobs:
             DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
             GPG_KEY: ${{ secrets.GPG_KEY }}
 
+    keep-symbols:
+        needs: [ios]
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && inputs.release_dry_run != true && needs.ios.result == 'success' && (inputs.release == true || inputs.loader_publish_only == true) }}
+        runs-on: ubuntu-26.04
+        continue-on-error: true
+        permissions:
+            contents: write
+            actions: read
+        defaults:
+            run:
+                working-directory: .
+        steps:
+            - name: Download iOS tweak symbols
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: tweak symbols
+                  path: symbols
+
+            - name: Keep the symbols under the build's UUID
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  set -euo pipefail
+                  uuid=$(awk '$1 == "arm64" { print $2 }' symbols/uuids.txt)
+                  archive="unbound-ios-symbols-${uuid}.zip"
+                  (cd symbols && zip -qr "../${archive}" .)
+                  if ! gh release view native-symbols --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+                    gh release create native-symbols --repo "$GITHUB_REPOSITORY" --prerelease \
+                      --title "Native symbols" --notes "Symbols for every shipped Unbound.dylib, named by its UUID."
+                  fi
+                  gh release upload native-symbols "$archive" --repo "$GITHUB_REPOSITORY" --clobber
+
     release:
         if: ${{ !cancelled() && inputs.release == true && inputs.android_channel == '' && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success') }}
         needs: [resolve-source, ios, android]
