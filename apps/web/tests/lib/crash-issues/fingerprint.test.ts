@@ -37,6 +37,30 @@ describe('crash fingerprints', () => {
 		]);
 	});
 
+	test("share one fingerprint across builds that guess Discord's symbols differently", () => {
+		const build = (symbol: string, depth: number) =>
+			[
+				'Signal 5',
+				...Array.from(
+					{ length: depth },
+					(_, index) => `#${index} 0x1 Discord + 0x${index}c ${symbol}`,
+				),
+				`#${depth} 0x2 UIKitCore + 0x3887b0 <redacted>`,
+				`#${depth + 1} 0x3 Discord + 0xa4db50 _ZN8facebook5react7Sizing`,
+				`#${depth + 2} 0x4 libdispatch.dylib + 0x2370`,
+			].join('\n');
+
+		expect(crashFrames(build('_ZN3fmt3v126detail', 4))).toEqual([
+			'Discord',
+			'UIKitCore',
+			'Discord',
+			'libdispatch.dylib',
+		]);
+		expect(crashFingerprint({ ...report, stack: build('_ZN3fmt3v126detail', 4) })).toBe(
+			crashFingerprint({ ...report, stack: build('_ZN8facebook5react9Markdown', 2) }),
+		);
+	});
+
 	test('stay put when other threads, registers or the signal flavour change', () => {
 		const withThreads = (stack: string, thread: string) =>
 			`${stack}\nRegisters\nx0 0x1\nThread 1\n#0 0x2 ${thread} + 0x10`;
