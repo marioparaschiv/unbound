@@ -48,14 +48,18 @@ export type KeepAlive = { stop(): void };
  */
 export function startKeepAlive({ objc }: NativeBridge): KeepAlive {
 	let player: NativeObjectHandle | null = null;
+	let starting: Promise<void> | null = null;
+	let stopped = false;
 
-	const play = () => {
-		objc.invoke(session(objc), 'setCategory:withOptions:error:', [
+	const play = async () => {
+		await objc.invokeAsync(session(objc), 'setCategory:withOptions:error:', [
 			'AVAudioSessionCategoryPlayback',
 			MIX_WITH_OTHERS,
 			null,
 		]);
-		objc.invoke(session(objc), 'setActive:error:', [true, null]);
+		await objc.invokeAsync(session(objc), 'setActive:error:', [true, null]);
+		if (stopped) return;
+
 		player = objc.create('AVAudioPlayer', 'initWithData:error:', [
 			objc.data(silentWav()),
 			null,
@@ -66,11 +70,21 @@ export function startKeepAlive({ objc }: NativeBridge): KeepAlive {
 	};
 
 	const ensurePlaying = () => {
+		if (starting || stopped) return;
+
 		try {
-			if (!player || !objc.invoke(player, 'isPlaying', [])) play();
+			if (player && objc.invoke(player, 'isPlaying', [])) return;
 		} catch (error) {
-			logger.error('Failed to restart the background keep-alive:', error);
+			logger.error('Failed to check the background keep-alive:', error);
 		}
+
+		starting = play()
+			.catch((error: unknown) =>
+				logger.error('Failed to restart the background keep-alive:', error),
+			)
+			.finally(() => {
+				starting = null;
+			});
 	};
 
 	const nudge = () => {
@@ -123,13 +137,14 @@ export function startKeepAlive({ objc }: NativeBridge): KeepAlive {
 		onInterruption,
 	]);
 
-	play();
+	ensurePlaying();
 
 	const check = setInterval(ensurePlaying, CHECK_MS);
 	const nudges = setInterval(nudge, NUDGE_MS);
 
 	return {
 		stop() {
+			stopped = true;
 			clearInterval(check);
 			clearInterval(nudges);
 

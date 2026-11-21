@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.2] - 2026-11-21
+
+### Fixed
+
+- Starting the background keep-alive no longer freezes Discord while iOS sets up the audio session.
+
 ## [1.1.1] - 2026-11-21
 
 ### Fixed
