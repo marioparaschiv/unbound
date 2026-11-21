@@ -513,17 +513,17 @@ public:
 
 std::shared_ptr<loader::Loader> UnboundLoader()
 {
-    static std::shared_ptr<loader::Loader> shared;
+    static auto *shared = new std::shared_ptr<loader::Loader>();
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         [FileSystem init];
-        shared = std::make_shared<loader::Loader>(
+        *shared = std::make_shared<loader::Loader>(
             loader::LoaderOptions{toStdString(FileSystem.documents), "iOS",
                                   toStdString([Utilities getCurrentDylibName])},
             std::make_shared<IOSLoaderHost>(), loader::makeNativePlatformProvider());
-        shared->start();
+        (*shared)->start();
     });
-    return shared;
+    return *shared;
 }
 
 static void prepareLoading(id instance)
