@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.31] - 2026-11-21
+
+### Fixed
+
+- On Android, bubbles start when Discord opens in the background, with no screen showing yet, instead of failing to start.
+
 ## [1.6.30] - 2026-11-19
 
 ### Fixed

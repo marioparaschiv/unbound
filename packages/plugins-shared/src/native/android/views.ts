@@ -63,6 +63,25 @@ export function currentActivity(java: ViewBridge): NativeJavaReference | null {
 }
 
 /**
+ * @description Reads Discord's Application, which exists from launch even while no activity is showing.
+ * @param java The plugin's Java bridge.
+ * @returns The Application, or `null` when Android has not created it yet.
+ */
+export function currentApplication(java: ViewBridge): NativeJavaReference | null {
+	const tracker = javaReference(
+		java.getField(java.getClass('app.unbound.android.ActivityTracker'), 'INSTANCE'),
+	);
+	const tracked = tracker ? javaReference(java.invoke(tracker, 'application', [])) : null;
+
+	return (
+		tracked ??
+		javaReference(
+			java.invoke(java.getClass('android.app.ActivityThread'), 'currentApplication', []),
+		)
+	);
+}
+
+/**
  * @description Reads the decor view of the activity the loader saw resume last.
  * @param java The plugin's Java bridge.
  * @returns The decor view, or `null` while no activity is resumed.
