@@ -294,6 +294,7 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 			}
 
 			this.releaseStaleHold(resolved.id);
+			this.followSource(resolved.id, update.manifestUrl);
 			this.emit('updated', resolved);
 			await this.retryAfterUpdate(resolved);
 
@@ -569,6 +570,17 @@ export abstract class Addons<I extends object> extends AddonSelection<I> {
 	 * @param id The addon's id.
 	 * @param url The install URL.
 	 */
+	/**
+	 * @description Points an addon installed from a URL at the version it updated to, so Sync shares that version.
+	 * @param id The addon's id.
+	 * @param url The new version's manifest URL.
+	 */
+	protected followSource(id: string, url: string): void {
+		if (this.getSources()[id]) {
+			this.recordSource(id, url);
+		}
+	}
+
 	recordSource(id: string, url: string): void {
 		this.sources.set(id, url);
 	}

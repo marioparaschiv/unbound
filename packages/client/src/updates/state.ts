@@ -16,6 +16,7 @@ import type { LoaderCheck } from '~/updates/loader-updates';
 import { moveRenamedAddons } from '~/addons/renames';
 import { getLoader } from '~/native/unbound-native';
 import { BUILD_CHANNEL } from '~/core/constants';
+import { runLimited } from '~/utils/run-limited';
 import { install } from '~/marketplace/api';
 import { Manager } from '~/addons/manager';
 
@@ -23,6 +24,8 @@ const logger = createLogger('Updater');
 
 /** How long a check stays `checking` at least, so its spinner never flips straight to the result. */
 const MIN_CHECK_MS = 500;
+
+const UPDATE_CONCURRENCY = 6;
 
 /** The last update check. `ready` and `error` keep when it finished, for the status line. */
 export type UpdatesState =
@@ -222,10 +225,10 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 			if (state.status !== 'ready') return;
 
 			// Read at apply time, so a version the user picked since the check stays held.
-			await Promise.all(
-				automaticUpdates(state.updates, (kind) => Manager.for(kind)).map((entry) =>
-					apply(entry.id),
-				),
+			await runLimited(
+				automaticUpdates(state.updates, (kind) => Manager.for(kind)),
+				UPDATE_CONCURRENCY,
+				(entry) => apply(entry.id),
 			);
 		},
 	};
