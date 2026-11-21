@@ -1,49 +1,57 @@
 import { isValidThumbHash } from '~/core/thumbhash';
+import type { RowValue } from '~/core/row-values';
 
-type Placeheld = { placeholder?: string | null };
+const MAX_DEPTH = 12;
+const PLACEHOLDER_KEY = 'placeholder';
 
-type RowEmbed = {
-	image?: Placeheld | null;
-	thumbnail?: Placeheld | null;
-	images?: Placeheld[] | null;
-};
+type Container = RowValue[] | { [key: string]: RowValue };
 
-/** The parts of a chat row's message that carry image placeholders. */
-export type RowMessage = {
-	id?: string;
-	attachments?: Placeheld[] | null;
-	embeds?: RowEmbed[] | null;
-};
+/** A chat row's message, whose attachments, embeds, components and forwarded snapshots carry image placeholders. */
+export type RowMessage = { id?: string } & { [key: string]: RowValue };
 
-function placeheld(message: RowMessage): Placeheld[] {
-	const embedded = (message.embeds ?? []).flatMap((embed) => [
-		embed.image,
-		embed.thumbnail,
-		...(embed.images ?? []),
-	]);
+function isContainer(value: RowValue): value is Container {
+	if (Array.isArray(value)) {
+		return true;
+	}
 
-	return [...(message.attachments ?? []), ...embedded].filter((item): item is Placeheld =>
-		Boolean(item),
-	);
+	if (typeof value !== 'object' || value === null) {
+		return false;
+	}
+
+	const prototype: object | null = Object.getPrototypeOf(value);
+
+	return prototype === Object.prototype || prototype === null;
 }
 
-/**
- * @description Removes the image placeholders a chat row carries that are not complete ThumbHashes, so Discord draws
- * those images without a preview instead of trapping in its native decoder.
- * @param message The row's message.
- * @returns How many placeholders it removed.
- */
-export function dropInvalidPlaceholders(message: RowMessage): number {
+function dropInside(value: Container, depth: number, seen: Set<Container>): number {
+	if (depth > MAX_DEPTH || seen.has(value)) {
+		return 0;
+	}
+
+	seen.add(value);
+
 	let dropped = 0;
 
-	for (const item of placeheld(message)) {
-		if (typeof item.placeholder === 'string' && !isValidThumbHash(item.placeholder)) {
-			item.placeholder = null;
+	for (const [key, child] of Object.entries(value)) {
+		if (key === PLACEHOLDER_KEY && typeof child === 'string' && !isValidThumbHash(child)) {
+			(value as { [key: string]: RowValue })[key] = null;
 			dropped++;
+		} else if (child !== undefined && isContainer(child)) {
+			dropped += dropInside(child, depth + 1, seen);
 		}
 	}
 
 	return dropped;
+}
+
+/**
+ * @description Removes every image placeholder in a chat row's message that is not a complete ThumbHash, wherever it
+ * sits, so Discord draws those images without a preview instead of trapping in its native decoder.
+ * @param message The row's message.
+ * @returns How many placeholders it removed.
+ */
+export function dropInvalidPlaceholders(message: RowMessage): number {
+	return dropInside(message, 0, new Set());
 }
 
 export default { dropInvalidPlaceholders };

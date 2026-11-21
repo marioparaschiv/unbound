@@ -16,10 +16,43 @@ describe('dropInvalidPlaceholders', () => {
 		};
 
 		expect(dropInvalidPlaceholders(message)).toBe(3);
-		expect(message.attachments?.map((item) => item.placeholder)).toEqual([VALID, null]);
-		expect(message.embeds?.[0]?.image?.placeholder).toBeNull();
-		expect(message.embeds?.[0]?.thumbnail?.placeholder).toBe(VALID);
-		expect(message.embeds?.[1]?.images?.map((item) => item.placeholder)).toEqual([null, null]);
+		expect(message).toEqual({
+			id: 'm1',
+			attachments: [{ placeholder: VALID }, { placeholder: null }],
+			embeds: [
+				{ image: { placeholder: null }, thumbnail: { placeholder: VALID } },
+				{ images: [{ placeholder: null }, { placeholder: null }] },
+			],
+		});
+	});
+
+	test('clears malformed placeholders in components and forwarded snapshots', () => {
+		const message: RowMessage = {
+			id: 'm3',
+			components: [
+				{
+					type: 17,
+					components: [
+						{ type: 11, media: { url: 'a', placeholder: 'PwAAAAAA' } },
+						{ type: 12, items: [{ media: { placeholder: VALID } }] },
+					],
+				},
+			],
+			messageSnapshots: [{ message: { attachments: [{ placeholder: 'AAAA' }] } }],
+			embeds: [{ video: { placeholder: 'AAAA' } }],
+		};
+
+		expect(dropInvalidPlaceholders(message)).toBe(3);
+		expect(JSON.stringify(message)).toContain(VALID);
+		expect(JSON.stringify(message)).not.toContain('PwAAAAAA');
+	});
+
+	test('stops at cycles', () => {
+		const message: RowMessage = { id: 'm4', attachments: [{ placeholder: 'AAAA' }] };
+
+		(message as { self?: RowMessage }).self = message;
+
+		expect(dropInvalidPlaceholders(message)).toBe(1);
 	});
 
 	test('leaves a message without images alone', () => {
