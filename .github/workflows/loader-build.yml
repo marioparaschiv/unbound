@@ -701,6 +701,7 @@ jobs:
         needs: [ios]
         if: ${{ !cancelled() && github.event_name != 'pull_request' && inputs.release_dry_run != true && needs.ios.result == 'success' && (inputs.release == true || inputs.loader_publish_only == true) }}
         runs-on: ubuntu-26.04
+        timeout-minutes: 10
         continue-on-error: true
         permissions:
             contents: write
