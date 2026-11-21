@@ -1,5 +1,6 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 
+import backgroundCommand from '~/commands/debug/background';
 import snapshotsCommand from '~/commands/device/snapshots';
 import installCommand from '~/commands/device/install';
 import devicePullCommand from '~/commands/device/pull';
@@ -133,6 +134,7 @@ export const debugGroup: CommandGroup = {
 				openCommand,
 				routeCommand,
 				rowsCommand,
+				backgroundCommand,
 				reportCommand,
 				bisectCommand,
 			],
