@@ -529,6 +529,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		state.context = undefined;
 		state.scope = undefined;
 		state.started = false;
+		this.startDurations.delete(resolved.id);
 
 		try {
 			beginNativeStop(context);
