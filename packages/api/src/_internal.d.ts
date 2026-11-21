@@ -734,6 +734,16 @@ export type BackgroundBlurViewComponentProps = Omit<
 	ref?: React$1.Ref<any>;
 	style?: React$1.ComponentProps<typeof RN.View>['style'];
 };
+/** The loader's spacing of background refreshes. */
+export type BackgroundGate = {
+	/** Milliseconds since the last refresh started, or since launch before the first. */
+	sinceLastMs: number;
+	intervalMs: number;
+	/** Milliseconds until the next background transition runs a refresh. */
+	dueInMs: number;
+	runs: number;
+	running: boolean;
+};
 /** The props of Discord's `Badge`, read from Discord 352's `design/components/Badge/native/Badge.native.tsx`. */
 export type BadgeProps = {
 	/** A built-in label, or `{ text }` for custom text. */

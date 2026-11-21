@@ -3,6 +3,7 @@
 /// <reference path="../ambient/image-modules.d.ts" />
 
 export * as assets from './assets';
+export * as background from './background';
 export * as builtins from './builtins';
 export * as commands from './commands';
 export * as dialogs from './dialogs';

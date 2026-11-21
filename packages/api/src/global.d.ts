@@ -66,6 +66,7 @@ export type {
 	BackgroundBlurFillWithPressProps,
 	BackgroundBlurViewComponentComponent,
 	BackgroundBlurViewComponentProps,
+	BackgroundGate,
 	BadgeProps,
 	BadgeVariant,
 	BaseIconButtonProps,
@@ -611,6 +612,8 @@ export interface UnboundLifecycle {
 export interface UnboundGlobal extends UnboundLifecycle {
 	/** The `assets` module, which plugins also import from `@unbound-app/api/assets`. */
 	assets: typeof import('./assets.d.ts');
+	/** The `background` module, which plugins also import from `@unbound-app/api/background`. */
+	background: typeof import('./background.d.ts');
 	/** The `builtins` module, which plugins also import from `@unbound-app/api/builtins`. */
 	builtins: typeof import('./builtins.d.ts');
 	/** The `commands` module, which plugins also import from `@unbound-app/api/commands`. */
