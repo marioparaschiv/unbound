@@ -81,7 +81,8 @@ function report(action: string) {
 export function drawAndroidBubbles({ java, ui }: AndroidNative) {
 	const found = rowViewIds(java);
 
-	if (!found) throw new Error('Failed to find the message row views: no activity is showing.');
+	if (!found)
+		throw new Error('Failed to find the message row views: Discord has no Application yet.');
 
 	const { ids, replyIcon, scale } = found;
 	const bind = messageBindMethod(java);

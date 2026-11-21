@@ -1,5 +1,5 @@
 import type { NativeJavaBridge } from '@unbound-app/api/native';
-import { currentActivity, resourceDensity } from '@unbound-plugins/shared/native/android/views';
+import { currentApplication, resourceDensity } from '@unbound-plugins/shared/native/android/views';
 import {
 	javaNumber,
 	javaReference,
@@ -34,13 +34,15 @@ const REPLY_ICON_DRAWABLE = 'ic_swipe_reply';
 /**
  * @description Looks up the resource id of each message row view once, so the UI thread finds them with `findViewById`.
  * @param java The plugin's Java bridge.
- * @returns The ids, the reply icon's drawable id, 0 when this build has none, and how many pixels make one point, or `undefined` while no activity is showing.
+ * @returns The ids, the reply icon's drawable id, 0 when this build has none, and how many pixels make one point, or `undefined` before Android created Discord's Application.
  */
 export function rowViewIds(
 	java: NativeJavaBridge,
 ): { ids: RowViewIds; replyIcon: number; scale: number } | undefined {
-	const activity = currentActivity(java);
-	const resources = activity ? javaReference(java.invoke(activity, 'getResources', [])) : null;
+	const application = currentApplication(java);
+	const resources = application
+		? javaReference(java.invoke(application, 'getResources', []))
+		: null;
 
 	if (!resources) return;
 

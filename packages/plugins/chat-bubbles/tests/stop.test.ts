@@ -158,7 +158,10 @@ describe('stopping the bubbles on Android', () => {
 			},
 		});
 		native.java.registerClass('app.unbound.android.ActivityTracker', {
-			methods: { currentActivity: () => native.java.create('android.app.Activity') },
+			methods: {
+				currentActivity: () => native.java.create('android.app.Activity'),
+				application: () => native.java.create('android.app.Activity'),
+			},
 			staticFields: { INSTANCE: native.java.create('app.unbound.android.ActivityTracker') },
 		});
 	});
