@@ -31,5 +31,23 @@ int main()
     assert(text.find("Hook DCDMessageTableViewCell -handlePan: {\"id\":\"unbound.hooky\"") == 0);
     assert(text.find("Hook DCDMessageTableViewCell -layoutSubviews") != std::string::npos);
     fclose(file);
+
+    {
+        loader::HookTrailMark finished;
+        finished.note(pan, slot);
+    }
+
+    loader::HookCall running[loader::kHookTrailLength];
+    assert(loader::crashingThreadHookCalls(running, loader::kHookTrailLength, true) == 2);
+    assert(running[0].hook == pan && running[1].hook == layout);
+    assert(loader::crashingThreadHookCalls(calls, loader::kHookTrailLength) == 3);
+
+    {
+        loader::HookTrailMark returned;
+        returned.note(layout, slot);
+        returned.note(pan, slot);
+    }
+
+    assert(loader::crashingThreadHookCalls(running, loader::kHookTrailLength, true) == 2);
     return 0;
 }

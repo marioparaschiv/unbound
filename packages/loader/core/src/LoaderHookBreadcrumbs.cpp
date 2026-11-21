@@ -53,7 +53,7 @@ uint32_t registerHookName(const std::string &name)
 bool writeCrashingHookLines(int descriptor)
 {
     HookCall calls[kHookTrailLength];
-    size_t count = crashingThreadHookCalls(calls, kHookTrailLength);
+    size_t count = crashingThreadHookCalls(calls, kHookTrailLength, true);
     if (descriptor < 0 || count == 0)
     {
         return false;
