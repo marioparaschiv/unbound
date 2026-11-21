@@ -14,7 +14,8 @@ export type CheckContext = {
 
 /** Parsed files kept across the runs of one `ubd check --watch` or one `ubd build`. */
 export type CheckCache = {
-	typescript: TypeScriptCache;
+	/** Missing for runs that check each addon once: its source files are keyed by path, so it grows with every addon. */
+	typescript?: TypeScriptCache;
 	parse: ParseCache;
 };
 
@@ -27,10 +28,11 @@ export type Check = {
 
 /**
  * @description Creates empty caches for a series of check runs.
+ * @param options `typescript: false` for runs that check each addon once, such as `ubd build`.
  * @returns The caches.
  */
-export function createCheckCache(): CheckCache {
-	return { typescript: createTypeScriptCache(), parse: new Map() };
+export function createCheckCache({ typescript = true } = {}): CheckCache {
+	return { ...(typescript ? { typescript: createTypeScriptCache() } : {}), parse: new Map() };
 }
 
 export default createCheckCache;
