@@ -1,7 +1,9 @@
 #include "LoaderFreezeWatchdog.h"
 
+#include <algorithm>
 #include <atomic>
 #include <condition_variable>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <nlohmann/json.hpp>
@@ -20,6 +22,8 @@ namespace loader {
 namespace jsi = facebook::jsi;
 
 using Clock = std::chrono::steady_clock;
+
+static constexpr int kOverdueSamplesPerTick = 4;
 
 struct FreezeWatchdog::State {
     std::string directory;
@@ -45,6 +49,29 @@ bool watchdogWasSuspended(int64_t previousTick, int64_t now, const FreezeWatchdo
     return previousTick != 0 && now - previousTick > (options.interval + options.threshold).count();
 }
 
+std::string dominantAddonRecord(const std::map<std::string, int> &samples, int total)
+{
+    std::string dominant;
+    int most = 0;
+    for (const auto &[record, count] : samples)
+    {
+        if (!record.empty() && count > most)
+        {
+            dominant = record;
+            most     = count;
+        }
+    }
+
+    return most * 2 > total ? dominant : std::string();
+}
+
+static std::chrono::milliseconds tickFor(const FreezeWatchdogOptions &options, bool overdue)
+{
+    return overdue
+               ? std::max(options.interval / kOverdueSamplesPerTick, std::chrono::milliseconds(1))
+               : options.interval;
+}
+
 static std::string frozenPath(const std::string &directory)
 {
     return joinPath(directory, AddonCrashGuard::kFrozenFile);
@@ -55,14 +82,16 @@ static void watch(const std::shared_ptr<FreezeWatchdog::State> &state)
     int64_t sentAt   = 0;
     int64_t lastTick = 0;
     bool reported    = false;
-    std::string frozenRecord;
+    bool overdue     = false;
+    std::map<std::string, int> samples;
+    int sampleCount = 0;
     FreezeReport current;
 
     while (true)
     {
         {
             std::unique_lock<std::mutex> lock(state->mutex);
-            state->wake.wait_for(lock, state->options.interval, [&] {
+            state->wake.wait_for(lock, tickFor(state->options, overdue), [&] {
                 return state->stopping;
             });
             if (state->stopping)
@@ -104,15 +133,30 @@ static void watch(const std::shared_ptr<FreezeWatchdog::State> &state)
                 }
             });
             sentAt                                    = posted ? now : 0;
+            overdue                                   = false;
+            samples.clear();
+            sampleCount = 0;
             continue;
         }
 
-        if (reported || now - sentAt < state->options.threshold.count())
+        if (reported)
         {
             continue;
         }
 
-        std::string record = addonRecord(addonOnThread(state->runtimeThread.load()));
+        if (now - sentAt >= state->options.interval.count())
+        {
+            overdue = true;
+            samples[addonRecord(addonOnThread(state->runtimeThread.load()))]++;
+            sampleCount++;
+        }
+
+        if (now - sentAt < state->options.threshold.count())
+        {
+            continue;
+        }
+
+        std::string record = dominantAddonRecord(samples, sampleCount);
         if (record.empty())
         {
             continue;
