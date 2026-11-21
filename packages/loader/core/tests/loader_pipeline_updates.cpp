@@ -200,6 +200,12 @@ void spacesRetriesWithJitter()
     assert(loader::retryAfterSeconds("120") == 120.0);
     assert(!loader::retryAfterSeconds("Wed, 21 Oct 2026 07:28:00 GMT"));
     assert(!loader::retryAfterSeconds(""));
+    assert(loader::maxAgeSeconds("max-age=600") == 600.0);
+    assert(loader::maxAgeSeconds("public, MAX-AGE=3600, must-revalidate") == 3600.0);
+    assert(loader::maxAgeSeconds("max-age=0, no-cache, no-store") == 0.0);
+    assert(!loader::maxAgeSeconds("s-maxage=60"));
+    assert(!loader::maxAgeSeconds("no-cache"));
+    assert(!loader::maxAgeSeconds(""));
 }
 }
 

@@ -111,6 +111,8 @@ download(const std::string &url, const std::string &destination,
         result.status     = static_cast<int>(response.statusCode);
         result.etag       = toStdString([response valueForHTTPHeaderField:@"etag"] ?: @"");
         result.retryAfter = toStdString([response valueForHTTPHeaderField:@"Retry-After"] ?: @"");
+        result.cacheControl =
+            toStdString([response valueForHTTPHeaderField:@"Cache-Control"] ?: @"");
         return result;
     }
 

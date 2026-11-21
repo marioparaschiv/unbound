@@ -1,9 +1,11 @@
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <functional>
 #include <future>
 #include <map>
+#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -21,6 +23,7 @@ constexpr double kManifestFetchTimeoutSeconds = 5.0;
 bool isAcceptedDownloadStatus(int status);
 // Seconds a Retry-After header asks to wait; HTTP dates and nonsense give nothing.
 std::optional<double> retryAfterSeconds(const std::string &header);
+std::optional<double> maxAgeSeconds(const std::string &cacheControl);
 
 // Why a bundle update failed, so a launch without a saved bundle can say what to do about it.
 enum class BundleUpdateFailure
@@ -59,6 +62,7 @@ class BundleUpdater
 {
 public:
     bool behindCaptivePortal() const;
+    double serverMaxAgeSeconds() const;
     BundleUpdater(std::string documents, SettingsStore &settings, TextFetcher fetchText,
                   FileDownloader download, BundleTrust trust = compiledBundleTrust());
 
@@ -163,5 +167,6 @@ private:
     TextFetcher fetchText_;
     FileDownloader download_;
     BundleTrust trust_;
+    std::shared_ptr<std::atomic<double>> serverMaxAge_ = std::make_shared<std::atomic<double>>(0);
 };
 }

@@ -12,6 +12,7 @@ struct DownloadResult {
     std::string etag;
     // The response's Retry-After header, if any.
     std::string retryAfter;
+    std::string cacheControl;
 };
 
 struct DownloadPolicy {
