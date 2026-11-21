@@ -20,6 +20,7 @@ import { findFile, sourceAlias } from './source-alias.ts';
 import { commandLocales } from './command-locales.ts';
 import { hermesBytecode } from './hermes-bytecode.ts';
 import { localeModule, locales } from './locales.ts';
+import { HERMES_SOURCE_ENV } from './hermes-env.ts';
 import { entryExports } from './entry-exports.ts';
 import { buildReport } from './build-report.ts';
 import { lazyModules } from './lazy-modules.ts';
@@ -27,6 +28,7 @@ import { localeHooks } from './locale-hooks.ts';
 import { readBuildEnv } from './build-env.ts';
 import { filterKeys } from './filter-keys.ts';
 import { outputOnly } from './output-only.ts';
+import { swcHelpers } from './swc-helpers.ts';
 import { svgImports } from './svg-assets.ts';
 import { shimImports } from './shims.ts';
 import { worklets } from './worklets.ts';
@@ -91,6 +93,7 @@ export function pluginConfig(
 		// Before every source transform, so its positions are the source file's.
 		commandLocales(pluginRoot),
 		sourceAlias(sourceRoot),
+		swcHelpers(),
 		nodeResolve(),
 		commonjs(),
 		json(),
@@ -101,7 +104,10 @@ export function pluginConfig(
 			tsconfig: false,
 			sourceMaps: true,
 			// swc applies `refresh` only in development mode.
+			env: HERMES_SOURCE_ENV,
+			// One copy of each helper per bundle instead of one per module.
 			jsc: {
+				externalHelpers: true,
 				transform: {
 					react: { refresh: hot && { emitFullSignatures: true }, development: hot },
 				},
