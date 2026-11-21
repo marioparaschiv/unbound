@@ -8,6 +8,8 @@
 #include <exception>
 #include <mutex>
 #include <thread>
+#include <utility>
+#include <vector>
 
 #include "LoaderLog.h"
 #include "LoaderThreadWarnings.h"
@@ -81,10 +83,28 @@ void RuntimeGenerationTracker::notify(uint64_t generation) const
     }
 }
 
+static void keepReplacedExecutor(std::shared_ptr<NativePluginExecutor> replaced)
+{
+    static auto *mutex = new std::mutex();
+    static auto *kept  = new std::vector<std::shared_ptr<NativePluginExecutor>>();
+    std::lock_guard<std::mutex> lock(*mutex);
+    kept->push_back(std::move(replaced));
+}
+
 void setExecutor(std::shared_ptr<NativePluginExecutor> value)
 {
-    std::lock_guard<std::mutex> lock(gStateMutex);
-    gExecutor = std::move(value);
+    std::shared_ptr<NativePluginExecutor> replaced;
+    bool replacing = false;
+    {
+        std::lock_guard<std::mutex> lock(gStateMutex);
+        replacing = gExecutor && value;
+        replaced  = std::exchange(gExecutor, std::move(value));
+    }
+
+    if (replacing)
+    {
+        keepReplacedExecutor(std::move(replaced));
+    }
 }
 
 std::shared_ptr<NativePluginExecutor> executor()
