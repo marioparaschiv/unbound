@@ -202,15 +202,24 @@ export function listenForActions(
 
 	if (!name) return false;
 
-	objc.hook(name, DELEGATE_SELECTOR, {
-		after: ({ args }) => {
-			const picked = readResponse(objc, args[1] as NativeObjectHandle);
+	try {
+		objc.hook(name, DELEGATE_SELECTOR, {
+			after: ({ args }) => {
+				const picked = readResponse(objc, args[1] as NativeObjectHandle);
 
-			if (picked && picked.action !== 'com.apple.UNNotificationDefaultActionIdentifier') {
-				onAction(picked);
-			}
-		},
-	});
+				if (picked && picked.action !== 'com.apple.UNNotificationDefaultActionIdentifier') {
+					onAction(picked);
+				}
+			},
+		});
+	} catch (error) {
+		logger.warn(
+			`Failed to hook ${name} ${DELEGATE_SELECTOR}, so notification actions are off:`,
+			error,
+		);
+
+		return false;
+	}
 
 	return true;
 }
