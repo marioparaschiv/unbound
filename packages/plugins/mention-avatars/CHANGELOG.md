@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1] - 2026-11-21
+
+### Fixed
+
+- Reading a mention's text attributes no longer waits on the main thread, which could freeze Discord for many seconds while the main thread waited on JavaScript.
+
 ## [1.2.0] - 2026-11-15
 
 ### Changed

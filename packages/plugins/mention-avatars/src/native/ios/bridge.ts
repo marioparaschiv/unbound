@@ -1,5 +1,5 @@
 import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/native';
-import { safeInvoke } from '@unbound-plugins/shared/native/ios/safe-invoke';
+import { safeCall, safeInvoke } from '@unbound-plugins/shared/native/ios/safe-invoke';
 
 export type Handle = NativeObjectHandle;
 export type Bridge = ReturnType<typeof createBridge>;
@@ -42,12 +42,8 @@ export function createBridge(objc: NativeObjCBridge) {
 	}
 
 	function attributes(text: Handle, index: number): TextAttributes | null {
-		return call(
-			text,
-			'attributesAtIndex:effectiveRange:',
-			index,
-			null,
-		) as TextAttributes | null;
+		return (safeCall(objc, text, 'attributesAtIndex:effectiveRange:', index, null) ??
+			null) as TextAttributes | null;
 	}
 
 	// Returns every class in order, or `null` when any is missing.
