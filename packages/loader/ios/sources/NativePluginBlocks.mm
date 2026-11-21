@@ -559,13 +559,45 @@ namespace {
         return callback;
     }
 
+    void keepFromDeadRuntime(std::shared_ptr<Function> function)
+    {
+        static auto *mutex = new std::mutex();
+        static auto *kept  = new std::vector<std::shared_ptr<Function>>();
+        std::lock_guard<std::mutex> lock(*mutex);
+        kept->push_back(std::move(function));
+    }
+
+    struct PendingFunctionRelease {
+        std::shared_ptr<Function> function;
+
+        ~PendingFunctionRelease()
+        {
+            if (function)
+            {
+                keepFromDeadRuntime(std::move(function));
+            }
+        }
+    };
+
     void releaseFunction(const std::shared_ptr<Callback> &callback)
     {
         std::shared_ptr<Function> function = std::move(callback->function);
-        if (function && callback->generation == loader::native::runtimeGeneration())
+        if (!function)
         {
-            executeRuntimeAsynchronously([function](Runtime &) {});
+            return;
         }
+
+        if (callback->generation != loader::native::runtimeGeneration())
+        {
+            keepFromDeadRuntime(std::move(function));
+            return;
+        }
+
+        auto pending      = std::make_shared<PendingFunctionRelease>();
+        pending->function = std::move(function);
+        executeRuntimeAsynchronously([pending](Runtime &) {
+            pending->function.reset();
+        });
     }
 
     void copyBlock(void *, const void *) {}
