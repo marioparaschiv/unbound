@@ -1,5 +1,6 @@
 import { createLogger } from '@unbound-app/logger';
 
+import { watchChatRows } from '~/diagnostics/chat-row-breadcrumbs';
 import { findByProps } from '~/metro/lookups';
 import { Dispatcher } from '~/flux/modules';
 import { after } from '~/patcher/api';
@@ -30,6 +31,7 @@ let saveTimer: ReturnType<typeof setTimeout> | undefined;
 let installed = false;
 let recording = false;
 let unpatchHelper: (() => void) | undefined;
+let stopWatchingChatRows: (() => void) | undefined;
 
 function lineOf({ time, text, count }: Entry): string {
 	return `${time} ${text}${count > 1 ? ` ×${count}` : ''}`.slice(0, LINE_LIMIT);
@@ -151,6 +153,11 @@ export function startBreadcrumbs(): void {
 	unpatchHelper = helper
 		? after(helper, 'addBreadcrumb', ({ args: [breadcrumb] }) => recordBreadcrumb(breadcrumb))
 		: undefined;
+	stopWatchingChatRows = watchChatRows((line) => {
+		if (recording) {
+			record(line);
+		}
+	});
 }
 
 /**
@@ -160,4 +167,6 @@ export function stopBreadcrumbs(): void {
 	recording = false;
 	unpatchHelper?.();
 	unpatchHelper = undefined;
+	stopWatchingChatRows?.();
+	stopWatchingChatRows = undefined;
 }
