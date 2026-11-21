@@ -274,22 +274,41 @@ static AddonSlot crashingThreadAddon()
     return addonOnThread(currentThreadKey());
 }
 
-void noteHookCall(uint32_t hook, AddonSlot addon)
+uint32_t noteHookCall(uint32_t hook, AddonSlot addon)
 {
     ThreadActivity *activity = claimThreadActivity();
     if (!activity)
     {
-        return;
+        return kNoHookCall;
     }
 
     uint32_t index = __atomic_load_n(&activity->nextHook, __ATOMIC_RELAXED);
     HookCall &call = activity->hooks[index % kHookTrailLength];
     __atomic_store_n(&call.hook, hook, __ATOMIC_RELAXED);
     __atomic_store_n(&call.addon, addon, __ATOMIC_RELAXED);
+    __atomic_store_n(&call.returned, 0, __ATOMIC_RELAXED);
     __atomic_store_n(&activity->nextHook, index + 1, __ATOMIC_RELEASE);
+    return index;
 }
 
-size_t crashingThreadHookCalls(HookCall *out, size_t capacity)
+void noteHookReturn(uint32_t call)
+{
+    ThreadActivity *activity = tClaim.entry;
+    if (!activity || call == kNoHookCall)
+    {
+        return;
+    }
+
+    uint32_t next = __atomic_load_n(&activity->nextHook, __ATOMIC_RELAXED);
+    if (next - call > kHookTrailLength)
+    {
+        return;
+    }
+
+    __atomic_store_n(&activity->hooks[call % kHookTrailLength].returned, 1, __ATOMIC_RELEASE);
+}
+
+size_t crashingThreadHookCalls(HookCall *out, size_t capacity, bool runningOnly)
 {
     uintptr_t thread = currentThreadKey();
     for (const ThreadActivity &activity : gThreads)
@@ -300,12 +319,20 @@ size_t crashingThreadHookCalls(HookCall *out, size_t capacity)
         }
 
         uint32_t next = __atomic_load_n(&activity.nextHook, __ATOMIC_ACQUIRE);
-        size_t count  = std::min<size_t>({next, kHookTrailLength, capacity});
-        for (size_t index = 0; index < count; index++)
+        size_t recent = std::min<size_t>(next, kHookTrailLength);
+        size_t count  = 0;
+        for (size_t index = 0; index < recent && count < capacity; index++)
         {
             const HookCall &call = activity.hooks[(next - 1 - index) % kHookTrailLength];
-            out[index]           = {__atomic_load_n(&call.hook, __ATOMIC_RELAXED),
-                                    __atomic_load_n(&call.addon, __ATOMIC_RELAXED)};
+            HookCall copy        = {__atomic_load_n(&call.hook, __ATOMIC_RELAXED),
+                                    __atomic_load_n(&call.addon, __ATOMIC_RELAXED),
+                                    __atomic_load_n(&call.returned, __ATOMIC_ACQUIRE)};
+            if (runningOnly && copy.returned)
+            {
+                continue;
+            }
+
+            out[count++] = copy;
         }
 
         return count;
@@ -392,6 +419,30 @@ size_t crashingAddonMessage(char *out, size_t capacity)
     std::memcpy(out + kPrefixLength, record.text, copied);
     out[kPrefixLength + copied] = '\0';
     return kPrefixLength + copied;
+}
+
+void HookTrailMark::note(uint32_t hook, AddonSlot addon)
+{
+    uint32_t call = noteHookCall(hook, addon);
+    if (call == kNoHookCall)
+    {
+        return;
+    }
+
+    if (count_ == 0)
+    {
+        first_ = call;
+    }
+
+    count_++;
+}
+
+HookTrailMark::~HookTrailMark()
+{
+    for (uint32_t offset = 0; offset < count_; offset++)
+    {
+        noteHookReturn(first_ + offset);
+    }
 }
 
 AddonScope::AddonScope(AddonSlot slot)

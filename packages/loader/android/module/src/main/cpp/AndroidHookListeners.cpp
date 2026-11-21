@@ -169,7 +169,8 @@ std::optional<std::string> dispatchHookEvent(const std::string &token, const std
         return std::nullopt;
     }
 
-    loader::noteHookCall(listener.breadcrumb, listener.addon);
+    loader::HookTrailMark trail;
+    trail.note(listener.breadcrumb, listener.addon);
     if (!listener.coalesce && !listener.inlineRuntime
         && !loader::native::admitHookEvent(std::hash<std::string>{}(token), listener.addon,
                                            [&token] {
