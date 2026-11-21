@@ -1,5 +1,43 @@
 # Changelog
 
+## [3.11.0](https://github.com/marioparaschiv/unbound/compare/api-v3.10.0...api-v3.11.0) (2026-11-21)
+
+
+### Features
+
+* **client:** let a patch run after every other patch on a method ([#2112](https://github.com/marioparaschiv/unbound/issues/2112)) ([343c3bb](https://github.com/marioparaschiv/unbound/commit/343c3bb302400c2885f08fcbcf6fab045bfa3b0f))
+* **client:** let plugins add background jobs ([#2059](https://github.com/marioparaschiv/unbound/issues/2059)) ([6e4172b](https://github.com/marioparaschiv/unbound/commit/6e4172b20b58d13542e6f57299610c18d7ef5f75))
+* **client:** let plugins redraw the open chat ([#1925](https://github.com/marioparaschiv/unbound/issues/1925)) ([d61dd7b](https://github.com/marioparaschiv/unbound/commit/d61dd7be91a1940af49395b158d2759b348a369b))
+* **client:** show who holds native hooks in ubd debug status ([#1965](https://github.com/marioparaschiv/unbound/issues/1965)) ([63612d9](https://github.com/marioparaschiv/unbound/commit/63612d94bd1030d430e36e2dbf444fece6d925bc))
+* **client:** tell plugins when memory runs low ([#1948](https://github.com/marioparaschiv/unbound/issues/1948)) ([8057e48](https://github.com/marioparaschiv/unbound/commit/8057e48fa9da3d2933be2c1e4b5ed2103497db3f))
+* **loader:** explain scheduled refresh, add job options, run on charge ([#2071](https://github.com/marioparaschiv/unbound/issues/2071)) ([59c3ee5](https://github.com/marioparaschiv/unbound/commit/59c3ee5a663bdd997fa187f44de0dfbf8aee18a3))
+* **loader:** name the tweak package behind each injected library ([#2028](https://github.com/marioparaschiv/unbound/issues/2028)) ([8b46028](https://github.com/marioparaschiv/unbound/commit/8b460282fcd143a1a6e9e00c74707727aec75d1e))
+* **loader:** report the versions of injected Android modules ([#2046](https://github.com/marioparaschiv/unbound/issues/2046)) ([ed64736](https://github.com/marioparaschiv/unbound/commit/ed647362d33180010988f4d625d571d4f2f52ba5))
+* **loader:** space background refreshes out while nothing changes ([#2073](https://github.com/marioparaschiv/unbound/issues/2073)) ([2a56ecb](https://github.com/marioparaschiv/unbound/commit/2a56ecbfc8937d07e1853cf2278abb1a51589b43))
+* **loader:** stage addon installs and clean up leftover folders ([#2072](https://github.com/marioparaschiv/unbound/issues/2072)) ([1503fa0](https://github.com/marioparaschiv/unbound/commit/1503fa0f6c2b41eda922e599c37a63c572827de8))
+
+
+### Bug Fixes
+
+* **api:** type the fetch scope global and unbreak CI ([#1894](https://github.com/marioparaschiv/unbound/issues/1894)) ([4fc58fd](https://github.com/marioparaschiv/unbound/commit/4fc58fd64192cae5cab76b09820bcae7438c15ab))
+* **ci:** get main's client, minimum-loader and CodeQL checks green ([#1968](https://github.com/marioparaschiv/unbound/issues/1968)) ([6d1a159](https://github.com/marioparaschiv/unbound/commit/6d1a159b2992b19512d5532ed4647cf6bce6a10b))
+* **client:** keep settings an older schema rejects ([#1883](https://github.com/marioparaschiv/unbound/issues/1883)) ([e10e7bb](https://github.com/marioparaschiv/unbound/commit/e10e7bb35ac3a6d31bc94621e24dba1c06281e4d))
+* **loader:** pass and read Yoga's YGValue across the native bridge ([#2019](https://github.com/marioparaschiv/unbound/issues/2019)) ([cda81e3](https://github.com/marioparaschiv/unbound/commit/cda81e39d2566f53b22547ed1698ee712bc25856))
+* **sdk-generator:** name the real generator in the SDK header ([#2041](https://github.com/marioparaschiv/unbound/issues/2041)) ([b277867](https://github.com/marioparaschiv/unbound/commit/b2778672e0f9e5c62d841049147e134da7700ef9))
+
+
+### Documentation
+
+* **types:** document the background API's types ([#2067](https://github.com/marioparaschiv/unbound/issues/2067)) ([8dbf80b](https://github.com/marioparaschiv/unbound/commit/8dbf80bead2cef672a230e4089b221a2f025a531))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 3.11.0
+    * @unbound-app/sdk-generator bumped to 1.0.10
+
 ## [3.10.0](https://github.com/marioparaschiv/unbound/compare/api-v3.9.0...api-v3.10.0) (2026-11-18)
 
 
