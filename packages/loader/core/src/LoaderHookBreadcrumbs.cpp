@@ -50,6 +50,17 @@ uint32_t registerHookName(const std::string &name)
     return gNameCount;
 }
 
+std::string hookName(uint32_t hook)
+{
+    if (hook == 0 || hook > __atomic_load_n(&gNameCount, __ATOMIC_ACQUIRE))
+    {
+        return std::string();
+    }
+
+    const HookName &name = gNames[hook - 1];
+    return std::string(name.text, __atomic_load_n(&name.length, __ATOMIC_ACQUIRE));
+}
+
 bool writeCrashingHookLines(int descriptor)
 {
     HookCall calls[kHookTrailLength];

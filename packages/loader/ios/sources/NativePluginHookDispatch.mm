@@ -30,6 +30,7 @@
 #import "NativePluginRuntime.h"
 #import "NativePluginThreading.h"
 #import "NativeRuntimeResources.h"
+#include "NativeUIWorkletStalls.h"
 
 using namespace facebook;
 using namespace facebook::jsi;
@@ -271,6 +272,12 @@ static void logDroppedHookCall(loader::AddonSlot addon, SEL selector, const std:
            format:@"%s", loader::threading::hookFailureMessage(addon, reason).c_str()];
 }
 
+static uint32_t hookBreadcrumb(const std::shared_ptr<HookState> &state)
+{
+    std::shared_ptr<HookDispatcher> dispatcher = state->dispatcher.lock();
+    return dispatcher ? dispatcher->breadcrumb : 0;
+}
+
 static bool hookRuntimeMatches(const std::shared_ptr<HookState> &state, Runtime &runtime)
 {
     auto runtimeResources = loader::native::runtimeResourceRegistry(runtime);
@@ -307,6 +314,7 @@ static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selecto
                 }
 
                 resources.drainDeferredReleases();
+                loader::native::UIWorkletTimer timer(state->addon, hookBreadcrumb(state));
                 callback(*state->inlineRuntime);
                 invoked = true;
             });
@@ -1015,6 +1023,7 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
                     }
 
                     resources.drainDeferredReleases();
+                    loader::native::UIWorkletTimer timer(state->addon, hookBreadcrumb(state));
                     afterWork(*state->inlineRuntime);
                 });
         }
@@ -1037,6 +1046,8 @@ void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *u
                             }
 
                             resources.drainDeferredReleases();
+                            loader::native::UIWorkletTimer timer(state->addon,
+                                                                 hookBreadcrumb(state));
                             afterWork(*state->inlineRuntime);
                         });
                 },
