@@ -35,6 +35,31 @@ func TestParsesTheCrashIssue(t *testing.T) {
 	}
 }
 
+const serverIssueBody = "Opened automatically from a crash report sent by a user who turned crash reporting on.\n\n" +
+	"| | |\n| --- | --- |\n| Kind | native-crash |\n| Platform | iOS |\n| Unbound | 3.10.0 |\n| Loader | 1.11.0 |\n\n" +
+	"### Message\n\n```text\nSIGSEGV\n```\n\n" +
+	"### Stack\n\n```text\nSignal 11\nImage Unbound.dylib 40CD0A4E-E5F6-39E2-98AD-FC59D154DD96\n#0 0x108da985c Unbound.dylib + 0x8585c _ZN6loader3ios17foreignHookOwnersEv\n```\n\n" +
+	"Report `01a1fe6b` · fingerprint `0fe10f5ddec81ac4`"
+
+func TestParsesTheServerCrashIssue(t *testing.T) {
+	crash, ok := parseIssueCrash(serverIssueBody)
+	if !ok || crash.platform != "ios" || crash.version != "1.11.0" {
+		t.Fatalf("parsed %+v, %v", crash, ok)
+	}
+
+	if crash.image.id != "40CD0A4E-E5F6-39E2-98AD-FC59D154DD96" {
+		t.Fatalf("image %+v", crash.image)
+	}
+
+	if !strings.HasPrefix(crash.stack, "Signal 11") {
+		t.Fatalf("stack section %q", crash.stack)
+	}
+
+	if strings.Contains(crash.stack, "fingerprint") {
+		t.Fatalf("stack section ran past the stack %q", crash.stack)
+	}
+}
+
 func TestPicksTheReleaseCarryingTheLoaderVersion(t *testing.T) {
 	releases := []symbolRelease{
 		{TagName: "newest", Assets: []releaseAsset{{Name: "app.unbound.ios_1.4.0_iphoneos-arm64.deb"}, {Name: "unbound-ios-symbols.zip"}}},
@@ -95,7 +120,7 @@ func TestNamesOnlyUnboundFrames(t *testing.T) {
 	}
 
 	comment := issueSymbolsComment("discord-355.0-ios", "1.3.0", output, crashHeadline(crash), "41")
-	if !strings.Contains(comment, "Crash: SIGSEGV in Chat Bubbles\nLooks like the same crash as #41.") {
+	if !strings.Contains(comment, "Crash: SIGSEGV in Chat Bubbles\nInnermost Unbound code: `loader::hook at packages/loader/core/src/Hook.cpp:42`\nLooks like the same crash as #41.") {
 		t.Fatalf("comment summary %q", comment)
 	}
 
@@ -145,5 +170,49 @@ func TestNamesTombstoneFramesByTheirLibraryPath(t *testing.T) {
 
 	if match := imageLinePattern.FindStringSubmatch(stack); match == nil || match[2] != "abcdef" {
 		t.Fatalf("image %q", match)
+	}
+}
+
+func TestKeepsOnlyThreadsWithUnboundFrames(t *testing.T) {
+	stack := "Signal 11\n#0 0x1 Discord + 0x10\nThread 1 app.unbound.native-log\n#0 0x2 Unbound.dylib + 0x20\nThread 2\n#0 0x3 libsystem_kernel.dylib + 0x30\n"
+
+	kept := threadsWithLoaderFrames(stack)
+	if !strings.Contains(kept, "Thread 1 app.unbound.native-log") || strings.Contains(kept, "Thread 2") {
+		t.Fatalf("kept %q", kept)
+	}
+
+	if !strings.HasPrefix(kept, "Signal 11\n#0 0x1 Discord + 0x10") {
+		t.Fatalf("lost the crashing thread %q", kept)
+	}
+}
+
+func TestNamesTheInnermostUnboundCodeOnTheCrashingThread(t *testing.T) {
+	symbolicated := "#0 0x1 Unbound.dylib + 0x10\n    facebook::jsi::Pointer::~Pointer() at packages/loader/vendor/react/jsi/jsi.h:833:13\n" +
+		"    (inlined by) loader::release() at packages/loader/ios/sources/Blocks.mm:562:5\n" +
+		"Thread 1\n#0 0x2 Unbound.dylib + 0x20\n    loader::log() at packages/loader/ios/sources/Log.mm:1\n"
+
+	if got := innermostLoaderSource(symbolicated); got != "loader::release() at packages/loader/ios/sources/Blocks.mm:562:5" {
+		t.Fatalf("innermost %q", got)
+	}
+
+	if got := innermostLoaderSource("Thread 1\n    loader::log() at packages/loader/ios/sources/Log.mm:1\n"); got != "" {
+		t.Fatalf("named another thread %q", got)
+	}
+}
+
+func TestShortensLibcxxHeaderPaths(t *testing.T) {
+	got := trimBuildRoot("/Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk/usr/include/c++/v1/__memory/shared_ptr.h")
+	if got != "libc++/__memory/shared_ptr.h" {
+		t.Fatalf("trimmed %q", got)
+	}
+}
+
+func TestSkipsCrashesWithoutUnboundFramesOnTheCrashingThread(t *testing.T) {
+	if crashingThreadHasLoaderFrames("Signal 5\n#0 0x1 Discord + 0x10\nThread 1\n#0 0x2 Unbound.dylib + 0x20\n") {
+		t.Fatal("a log thread frame counted as the crash")
+	}
+
+	if !crashingThreadHasLoaderFrames("Signal 11\n#0 0x1 Unbound.dylib + 0x10 loader::run\n") {
+		t.Fatal("missed the crashing Unbound frame")
 	}
 }

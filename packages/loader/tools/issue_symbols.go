@@ -17,8 +17,8 @@ import (
 
 var (
 	loaderStackFramePattern = regexp.MustCompile(`#(\d+)\s+0x[0-9a-fA-F]+\s+(?:\S*/)?(Unbound\.dylib|libunbound[^\s/]*\.so)\s+\+\s+0x([0-9a-fA-F]+)`)
-	issueLoaderPattern      = regexp.MustCompile(`loader (\d+\.\d+\.\d+)`)
-	issuePlatformPattern    = regexp.MustCompile(`\bon (iOS|Android)\b`)
+	issueLoaderPattern      = regexp.MustCompile(`(?:loader |\| Loader \| )(\d+\.\d+\.\d+)`)
+	issuePlatformPattern    = regexp.MustCompile(`(?:\bon |\| Platform \| )(iOS|Android)\b`)
 	imageLinePattern        = regexp.MustCompile(`(?m)^Image (\S+) ([0-9A-Fa-f-]+)$`)
 )
 
@@ -73,14 +73,14 @@ func runSymbolicateIssue(args []string) error {
 		return nil
 	}
 
-	listing, err := cli.run("api", "repos/"+*repository+"/releases?per_page=60")
-	if err != nil {
-		return err
+	if crash.platform == "ios" && !crashingThreadHasLoaderFrames(crash.stack) {
+		fmt.Println("The crashing thread has no Unbound frames; nothing to symbolicate.")
+		return nil
 	}
 
-	var releases []symbolRelease
-	if err := json.Unmarshal(listing, &releases); err != nil {
-		return fmt.Errorf("read releases: %w", err)
+	releases, err := listSymbolReleases(cli, *repository, crash.platform)
+	if err != nil {
+		return err
 	}
 
 	candidates := symbolReleaseCandidates(releases, crash)
@@ -153,6 +153,42 @@ func runSymbolicateIssue(args []string) error {
 	}
 
 	return err
+}
+
+const (
+	releasePageSize  = 100
+	maxReleasePages  = 5
+	enoughSymbolSets = maxSymbolCandidates
+)
+
+func listSymbolReleases(cli ghCLI, repository, platform string) ([]symbolRelease, error) {
+	archive := symbolArchiveName(platform)
+
+	var withSymbols []symbolRelease
+
+	for page := 1; page <= maxReleasePages && len(withSymbols) < enoughSymbolSets; page++ {
+		listing, err := cli.run("api", fmt.Sprintf("repos/%s/releases?per_page=%d&page=%d", repository, releasePageSize, page))
+		if err != nil {
+			return nil, err
+		}
+
+		var releases []symbolRelease
+		if err := json.Unmarshal(listing, &releases); err != nil {
+			return nil, fmt.Errorf("read releases: %w", err)
+		}
+
+		for _, release := range releases {
+			if slices.ContainsFunc(release.Assets, func(asset releaseAsset) bool { return asset.Name == archive }) {
+				withSymbols = append(withSymbols, release)
+			}
+		}
+
+		if len(releases) < releasePageSize {
+			break
+		}
+	}
+
+	return withSymbols, nil
 }
 
 var signalNames = map[string]map[int]string{
@@ -239,20 +275,49 @@ func parseIssueCrash(body string) (issueCrash, bool) {
 	return crash, true
 }
 
+var stackHeadings = []string{"### Native stack", "### Stack"}
+
 func nativeStackSection(body string) string {
-	start := strings.Index(body, "### Native stack")
-	if start < 0 {
-		return ""
+	for _, heading := range stackHeadings {
+		if start := strings.Index(body, heading+"\n"); start >= 0 {
+			return stackSectionAfter(body[start+len(heading):])
+		}
 	}
 
-	section := body[start+len("### Native stack"):]
+	return ""
+}
+
+func stackSectionAfter(section string) string {
 	if end := strings.Index(section, "\n### "); end >= 0 {
 		section = section[:end]
+	}
+
+	if fenced, ok := firstFencedBlock(section); ok {
+		return fenced
 	}
 
 	section = strings.ReplaceAll(section, "```", "")
 
 	return strings.Trim(section, "\r\n")
+}
+
+func firstFencedBlock(section string) (string, bool) {
+	start := strings.Index(section, "```")
+	if start < 0 {
+		return "", false
+	}
+
+	body := section[start+3:]
+	if newline := strings.Index(body, "\n"); newline >= 0 {
+		body = body[newline+1:]
+	}
+
+	end := strings.Index(body, "```")
+	if end < 0 {
+		return "", false
+	}
+
+	return strings.Trim(body[:end], "\r\n"), true
 }
 
 func symbolArchiveName(platform string) string {
@@ -351,9 +416,41 @@ func symbolicateIssueStack(crash issueCrash, archive string, symbolize symbolize
 		}
 	}
 
-	output, count, err := symbolicateLoaderStack(crash.stack, object, symbolize)
+	output, count, err := symbolicateLoaderStack(threadsWithLoaderFrames(crash.stack), object, symbolize)
 
 	return output, count, true, err
+}
+
+func threadsWithLoaderFrames(stack string) string {
+	sections := strings.Split(stack, "\nThread ")
+
+	kept := []string{sections[0]}
+	for _, section := range sections[1:] {
+		if loaderStackFramePattern.MatchString(section) {
+			kept = append(kept, section)
+		}
+	}
+
+	return strings.Join(kept, "\nThread ")
+}
+
+func crashingThreadHasLoaderFrames(stack string) bool {
+	crashing, _, _ := strings.Cut("\n"+stack, "\nThread ")
+
+	return loaderStackFramePattern.MatchString(crashing)
+}
+
+func innermostLoaderSource(symbolicated string) string {
+	crashing, _, _ := strings.Cut("\n"+symbolicated, "\nThread ")
+
+	for _, line := range strings.Split(crashing, "\n") {
+		place := strings.TrimPrefix(strings.TrimSpace(line), "(inlined by) ")
+		if strings.Contains(place, " at packages/") && !strings.Contains(place, "/vendor/") {
+			return place
+		}
+	}
+
+	return ""
 }
 
 func machOUUID(path string) (string, error) {
@@ -463,6 +560,10 @@ func issueSymbolsComment(tag, version, stack, headline, duplicate string) string
 	summary := ""
 	if headline != "" {
 		summary = "Crash: " + headline + "\n"
+	}
+
+	if source := innermostLoaderSource(stack); source != "" {
+		summary += "Innermost Unbound code: `" + source + "`\n"
 	}
 
 	if duplicate != "" {

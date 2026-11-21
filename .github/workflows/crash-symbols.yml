@@ -10,7 +10,7 @@ permissions:
 jobs:
     symbolicate:
         name: Name Unbound's native frames
-        if: github.event.issue.pull_request == null && (contains(github.event.issue.body, '### Native stack') || contains(github.event.issue.body, 'address at unbound:') || contains(github.event.issue.body, '| Addon |'))
+        if: github.event.issue.pull_request == null && (contains(github.event.issue.body, '### Native stack') || contains(github.event.issue.body, '### Stack') || contains(github.event.issue.body, 'address at unbound:') || contains(github.event.issue.body, '| Addon |'))
         runs-on: ubuntu-26.04
         timeout-minutes: 20
         permissions:
@@ -39,7 +39,7 @@ jobs:
                   fi
 
             - name: Comment the symbolicated stack
-              if: contains(github.event.issue.body, '### Native stack')
+              if: contains(github.event.issue.body, '### Native stack') || contains(github.event.issue.body, '### Stack')
               continue-on-error: true
               env:
                   GH_TOKEN: ${{ github.token }}
