@@ -5,6 +5,7 @@ import { ui } from '@unbound-app/api';
 import {
 	clearDeletedChannels,
 	deletedChannels,
+	isThread,
 	onDeletedChannelsChange,
 	type DeletedChannel,
 } from '~/lib/deleted-channels';
@@ -18,9 +19,11 @@ export function useDeletedChannels(): DeletedChannel[] {
 }
 
 function describe(channel: DeletedChannel): string {
-	const place = [channel.guildName || channel.guildId, channel.categoryName]
-		.filter(Boolean)
-		.join(' · ');
+	const parent =
+		isThread(channel) && channel.categoryName
+			? format('DELETED_THREAD_IN', { channel: channel.categoryName })
+			: channel.categoryName;
+	const place = [channel.guildName || channel.guildId, parent].filter(Boolean).join(' · ');
 	const when = format('DELETED_CHANNEL_AT', {
 		time: new Date(channel.deletedAt).toLocaleString(),
 	});

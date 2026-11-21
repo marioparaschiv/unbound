@@ -14,6 +14,17 @@ export type DeletedChannel = {
 
 type SavedChannels = { version: 1; channels: DeletedChannel[] };
 
+const THREAD_TYPES = new Set([10, 11, 12]);
+
+/**
+ * @description Says whether a deleted channel was a thread, whose `categoryName` is then its parent channel.
+ * @param channel The deleted channel.
+ * @returns Whether it was a thread.
+ */
+export function isThread(channel: DeletedChannel): boolean {
+	return THREAD_TYPES.has(channel.type);
+}
+
 const TEXT_FIELDS = ['id', 'name', 'guildId', 'guildName', 'categoryName', 'topic'] as const;
 
 let channels: DeletedChannel[] = [];

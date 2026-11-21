@@ -115,67 +115,59 @@ function DeletedChannelsRow() {
 	);
 }
 
+type SwitchSpec = [SwitchKey, string, string];
+
+function SwitchRows({ rows }: { rows: SwitchSpec[] }) {
+	return rows.map(([setting, label, subLabel]) => (
+		<SwitchRow key={setting} setting={setting} label={label} subLabel={subLabel} />
+	));
+}
+
 // A custom panel, so each ignore list is a page of users, channels or servers rather than typed ids.
 function SettingsPanel() {
 	return (
 		<ui.Page>
 			<ui.Section title={messages.PREFERENCES}>
-				<SwitchRow
-					setting='redText'
-					label={messages.RED_TEXT}
-					subLabel={messages.RED_TEXT_SUBTITLE}
-				/>
-				<SwitchRow
-					setting='deletedHighlight'
-					label={messages.DELETED_HIGHLIGHT}
-					subLabel={messages.DELETED_HIGHLIGHT_SUBTITLE}
+				<SwitchRows
+					rows={[
+						['redText', messages.RED_TEXT, messages.RED_TEXT_SUBTITLE],
+						[
+							'deletedHighlight',
+							messages.DELETED_HIGHLIGHT,
+							messages.DELETED_HIGHLIGHT_SUBTITLE,
+						],
+					]}
 				/>
 				<HighlightRows />
-				<SwitchRow
-					setting='deletedMarker'
-					label={messages.DELETED_MARKER}
-					subLabel={messages.DELETED_MARKER_SUBTITLE}
-				/>
-				<SwitchRow
-					setting='inlineEdits'
-					label={messages.INLINE_EDITS}
-					subLabel={messages.INLINE_EDITS_SUBTITLE}
+				<SwitchRows
+					rows={[
+						[
+							'deletedMarker',
+							messages.DELETED_MARKER,
+							messages.DELETED_MARKER_SUBTITLE,
+						],
+						['inlineEdits', messages.INLINE_EDITS, messages.INLINE_EDITS_SUBTITLE],
+					]}
 				/>
 				<EditedTextRow />
-				<SwitchRow
-					setting='logDeletes'
-					label={messages.LOG_DELETES}
-					subLabel={messages.LOG_DELETES_SUBTITLE}
-				/>
-				<SwitchRow
-					setting='logEdits'
-					label={messages.LOG_EDITS}
-					subLabel={messages.LOG_EDITS_SUBTITLE}
-				/>
-				<SwitchRow
-					setting='persistLog'
-					label={messages.PERSIST_LOG}
-					subLabel={messages.PERSIST_LOG_SUBTITLE}
-				/>
-				<SwitchRow
-					setting='logDeletedAttachments'
-					label={messages.LOG_DELETED_ATTACHMENTS}
-					subLabel={messages.LOG_DELETED_ATTACHMENTS_SUBTITLE}
-				/>
-				<SwitchRow
-					setting='logDeletedChannels'
-					label={messages.LOG_DELETED_CHANNELS}
-					subLabel={messages.LOG_DELETED_CHANNELS_SUBTITLE}
-				/>
-				<SwitchRow
-					setting='ignoreBots'
-					label={messages.IGNORE_BOTS}
-					subLabel={messages.IGNORE_BOTS_SUBTITLE}
-				/>
-				<SwitchRow
-					setting='ignoreSelf'
-					label={messages.IGNORE_SELF}
-					subLabel={messages.IGNORE_SELF_SUBTITLE}
+				<SwitchRows
+					rows={[
+						['logDeletes', messages.LOG_DELETES, messages.LOG_DELETES_SUBTITLE],
+						['logEdits', messages.LOG_EDITS, messages.LOG_EDITS_SUBTITLE],
+						['persistLog', messages.PERSIST_LOG, messages.PERSIST_LOG_SUBTITLE],
+						[
+							'logDeletedAttachments',
+							messages.LOG_DELETED_ATTACHMENTS,
+							messages.LOG_DELETED_ATTACHMENTS_SUBTITLE,
+						],
+						[
+							'logDeletedChannels',
+							messages.LOG_DELETED_CHANNELS,
+							messages.LOG_DELETED_CHANNELS_SUBTITLE,
+						],
+						['ignoreBots', messages.IGNORE_BOTS, messages.IGNORE_BOTS_SUBTITLE],
+						['ignoreSelf', messages.IGNORE_SELF, messages.IGNORE_SELF_SUBTITLE],
+					]}
 				/>
 			</ui.Section>
 			<ui.Section title={messages.DELETED_CHANNELS}>

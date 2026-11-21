@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.1] - 2026-11-21
+
+### Fixed
+
+- Deleted threads are logged in Deleted Channels too, with the channel they were in.
+
 ## [1.4.0] - 2026-11-21
 
 ### Added
