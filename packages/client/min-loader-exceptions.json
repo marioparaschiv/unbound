@@ -390,6 +390,16 @@
 			"file": "src/native/unbound-native.ts",
 			"error": "TS2339: Property 'getBackgroundRefresh' does not exist on type 'UnboundNativeBridge'.",
 			"reason": "Called optionally (getBackgroundRefresh?.()); older loaders report no gate."
+		},
+		{
+			"file": "src/native/folders.ts",
+			"error": "TS2339: Property 'replace' does not exist on type 'NativePlatformFiles'.",
+			"reason": "canReplaceFolders checks the method exists; older loaders write addons in place as before."
+		},
+		{
+			"file": "src/native/unbound-native.ts",
+			"error": "TS2339: Property 'removeOrphanedAddons' does not exist on type 'UnboundNativeBridge'.",
+			"reason": "removeOrphanedAddons checks the bridge member exists and resolves false on older loaders, which keep leftover folders."
 		}
 	]
 }

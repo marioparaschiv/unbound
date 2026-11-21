@@ -5185,6 +5185,8 @@ export type NativePlatformFiles = {
 	read?(path: string): string | undefined;
 	/** Replaces a text file atomically, by path relative to the Unbound folder; returns whether it was written. Older loaders lack it. */
 	write?(path: string, text: string): boolean;
+	/** Moves a fully written folder over another, both relative to the Unbound folder, putting the old one back on failure; returns whether it moved. Older loaders lack it. */
+	replace?(staging: string, target: string): boolean;
 };
 /** The fonts the loader can apply. */
 export type NativePlatformFonts = {

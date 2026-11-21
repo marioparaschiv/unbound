@@ -31,6 +31,9 @@ struct UnboundNativeProvider {
     // Hashes the installed plugins into their digest caches. Runs off the JS thread; returns
     // whether it read any plugin.
     std::function<bool()> warmAddonDigests;
+    // Removes staging leftovers and addon folders without a manifest. Runs off the JS thread;
+    // returns whether it removed any.
+    std::function<bool()> removeOrphanedAddons;
     // The background refresh's gate: when it last started, its interval and whether it runs.
     std::function<nlohmann::json()> getBackgroundRefresh;
     // Discord's first screen rendered; the loader counts the launch as healthy shortly after.

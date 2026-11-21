@@ -333,6 +333,11 @@ export type UnboundNativeBridge = {
 	 * Resolves whether it read any plugin. Missing on a loader from before it.
 	 */
 	warmAddonDigests?(): Promise<boolean>;
+	/**
+	 * Removes staging leftovers and addon folders without a manifest, last changed over a day ago, off the JS thread.
+	 * Resolves whether it removed any. Missing on a loader from before it.
+	 */
+	removeOrphanedAddons?(): Promise<boolean>;
 	/** Reads how the loader spaces background refreshes. Missing on a loader from before it. */
 	getBackgroundRefresh?(): BackgroundGate;
 	/**

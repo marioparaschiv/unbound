@@ -11,6 +11,11 @@ mock.module('@unbound-app/logger', () => ({
 mock.module('~/native/unbound-native', () => ({
 	setBackgroundRefresh: (next?: () => Promise<void>) => void (handler = next),
 	warmAddonDigests: async () => void calls.push('digests'),
+	removeOrphanedAddons: async () => void calls.push('orphans'),
+}));
+
+mock.module('~/account/api', () => ({
+	refresh: async () => void calls.push('session'),
 }));
 
 mock.module('~/storage/api', () => ({
@@ -40,13 +45,13 @@ const { afterAddons, stop } = await import('~/builtins/background-refresh');
 const { backgroundJobs } = await import('~/background/jobs');
 
 describe('background refresh', () => {
-	test('saves settings first, warms digests last and logs a failed job', async () => {
+	test('saves settings and the session first, upkeep last, and logs a failed job', async () => {
 		afterAddons();
 		await handler?.();
 
-		expect(calls[0]).toBe('settings');
-		expect(calls.at(-1)).toBe('digests');
-		expect(calls.slice(1, -1).sort()).toEqual(['catalog', 'crash issues', 'sync']);
+		expect(calls.slice(0, 2).sort()).toEqual(['session', 'settings']);
+		expect(calls.slice(-2).sort()).toEqual(['digests', 'orphans']);
+		expect(calls.slice(2, -2).sort()).toEqual(['catalog', 'crash issues', 'sync']);
 		expect(errors).toEqual(['Failed to run background job addon updates (unbound):']);
 	});
 

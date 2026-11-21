@@ -139,6 +139,20 @@ export async function warmAddonDigests(): Promise<boolean> {
 }
 
 /**
+ * @description Has the loader remove staging leftovers and addon folders without a manifest, off the JS thread.
+ * @returns Whether it removed any, `false` on a loader from before it.
+ */
+export async function removeOrphanedAddons(): Promise<boolean> {
+	const bridge = globalThis.UnboundNative;
+
+	if (!bridge?.removeOrphanedAddons) {
+		return false;
+	}
+
+	return bridge.removeOrphanedAddons();
+}
+
+/**
  * @description Reads how the loader spaces background refreshes.
  * @returns The gate, or `undefined` on a loader from before it.
  */
