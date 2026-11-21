@@ -40,6 +40,11 @@ static int64_t nowMilliseconds()
         .count();
 }
 
+bool watchdogWasSuspended(int64_t previousTick, int64_t now, const FreezeWatchdogOptions &options)
+{
+    return previousTick != 0 && now - previousTick > (options.interval + options.threshold).count();
+}
+
 static std::string frozenPath(const std::string &directory)
 {
     return joinPath(directory, AddonCrashGuard::kFrozenFile);
@@ -47,8 +52,9 @@ static std::string frozenPath(const std::string &directory)
 
 static void watch(const std::shared_ptr<FreezeWatchdog::State> &state)
 {
-    int64_t sentAt = 0;
-    bool reported  = false;
+    int64_t sentAt   = 0;
+    int64_t lastTick = 0;
+    bool reported    = false;
     std::string frozenRecord;
     FreezeReport current;
 
@@ -67,6 +73,12 @@ static void watch(const std::shared_ptr<FreezeWatchdog::State> &state)
 
         int64_t now      = nowMilliseconds();
         int64_t answered = state->answeredAt.load();
+        if (!reported && watchdogWasSuspended(lastTick, now, state->options))
+        {
+            sentAt = 0;
+        }
+
+        lastTick = now;
         if (sentAt == 0 || answered >= sentAt)
         {
             if (reported)
