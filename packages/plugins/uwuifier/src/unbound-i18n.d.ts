@@ -11,9 +11,9 @@ declare module '@unbound-app/i18n' {
 		readonly COMMAND_DESC: string;
 		/** What to say */
 		readonly COMMAND_TEXT_DESC: string;
-		/** Disable UwUifier */
+		/** Disable Uwuifier */
 		readonly DISABLE_UWU: string;
-		/** Enable UwUifier */
+		/** Enable Uwuifier */
 		readonly ENABLE_UWU: string;
 		/** Faces */
 		readonly FACES: string;
@@ -33,7 +33,7 @@ declare module '@unbound-app/i18n' {
 		readonly TOGGLED_OFF: string;
 		/** Your messages are sent in uwu speak. */
 		readonly TOGGLED_ON: string;
-		/** UwUifier */
+		/** Uwuifier */
 		readonly UWUIFIER: string;
 	};
 
