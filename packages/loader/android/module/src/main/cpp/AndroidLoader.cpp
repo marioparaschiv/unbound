@@ -4,7 +4,9 @@
 #include <atomic>
 #include <chrono>
 #include <filesystem>
+#include <mutex>
 #include <thread>
+#include <vector>
 
 #include "AndroidHotReload.h"
 #include "JniCall.h"
@@ -90,14 +92,24 @@ static jint milliseconds(double seconds)
     return static_cast<jint>(seconds * 1000);
 }
 
-static std::mutex gLoaderMutex;
-static std::shared_ptr<loader::Loader> gLoader;
-static std::shared_ptr<AndroidLoader> gHost;
+struct LoaderSlots {
+    std::mutex mutex;
+    std::shared_ptr<loader::Loader> loader;
+    std::shared_ptr<AndroidLoader> host;
+    std::vector<std::shared_ptr<loader::Loader>> replaced;
+};
+
+static LoaderSlots &loaderSlots()
+{
+    static auto *slots = new LoaderSlots();
+    return *slots;
+}
 
 std::shared_ptr<loader::Loader> currentLoader()
 {
-    std::lock_guard<std::mutex> lock(gLoaderMutex);
-    return gLoader;
+    LoaderSlots &slots = loaderSlots();
+    std::lock_guard<std::mutex> lock(slots.mutex);
+    return slots.loader;
 }
 
 static std::atomic_bool gDiscordVisible{false};
@@ -114,15 +126,22 @@ bool AndroidLoader::visibleNow()
 
 std::shared_ptr<AndroidLoader> currentHost()
 {
-    std::lock_guard<std::mutex> lock(gLoaderMutex);
-    return gHost;
+    LoaderSlots &slots = loaderSlots();
+    std::lock_guard<std::mutex> lock(slots.mutex);
+    return slots.host;
 }
 
 void setCurrentLoader(std::shared_ptr<loader::Loader> loader, std::shared_ptr<AndroidLoader> host)
 {
-    std::lock_guard<std::mutex> lock(gLoaderMutex);
-    gLoader = std::move(loader);
-    gHost   = std::move(host);
+    LoaderSlots &slots = loaderSlots();
+    std::lock_guard<std::mutex> lock(slots.mutex);
+    if (slots.loader && slots.loader != loader)
+    {
+        slots.replaced.push_back(std::move(slots.loader));
+    }
+
+    slots.loader = std::move(loader);
+    slots.host   = std::move(host);
 }
 
 AndroidLoader::AndroidLoader(LoaderConfiguration configuration, JavaCallbacks callbacks)
