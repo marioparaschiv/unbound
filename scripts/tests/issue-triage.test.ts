@@ -56,6 +56,12 @@ describe('issue triage', () => {
 		expect(triageIssue(vague, ['Bug']).needsDetails).toBe(true);
 		expect(triageIssue('just broken', ['Bug']).needsDetails).toBe(true);
 		expect(triageIssue('just an idea', ['Feature']).needsDetails).toBe(false);
+		expect(
+			triageIssue(
+				'Opened automatically from a crash report.\n\n| | |\n| --- | --- |\n| Unbound | 3.10.0 |\n| Loader | 1.10.0 |',
+				['Bug', 'Crash'],
+			).needsDetails,
+		).toBe(false);
 	});
 
 	test('labels the loader and the website from the area', () => {
