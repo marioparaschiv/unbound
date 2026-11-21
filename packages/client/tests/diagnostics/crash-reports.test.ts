@@ -354,6 +354,22 @@ describe('reportSystemHang', () => {
 		});
 	});
 
+	test('keeps a hang without Unbound code or a plugin out of reports', async () => {
+		await reportSystemHang({
+			...launch,
+			system: {
+				lastHang: {
+					at: 7_000,
+					ms: 2_000,
+					stack: 'Hang 2 sec\n#0 0x195b59910 libsystem_pthread.dylib + 0x90f\n#1 0x106785c24\n',
+				},
+			},
+		});
+
+		expect(sent).toHaveLength(0);
+		expect(settings.get('crash-reports.hangAt')).toBe(7_000);
+	});
+
 	test('does nothing without a hang', async () => {
 		await reportSystemHang(launch);
 
