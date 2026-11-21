@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Kan administrere beskeder eller smide ud/udelukke personer",
 	"TAG_VOICE_MODERATOR": "Tale-mod",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Kan administrere talechats",
+	"TAG_CHAT_MODERATOR": "Chat-mod",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Kan give folk timeout",
 	"APPEARANCE": "Udseende",
 	"COLORED_TAGS": "Farvede tags",
 	"COLORED_TAGS_SUBTITLE": "Giv hvert tag sin egen farve i stedet for standardstilen",

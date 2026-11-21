@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Može upravljati porukama ili izbacivati i zabranjivati članove",
 	"TAG_VOICE_MODERATOR": "VC mod",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Može upravljati glasovnim razgovorima",
+	"TAG_CHAT_MODERATOR": "Chat mod",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Može ljudima dati timeout",
 	"APPEARANCE": "Izgled",
 	"COLORED_TAGS": "Obojene oznake",
 	"COLORED_TAGS_SUBTITLE": "Daj svakoj oznaci vlastitu boju umjesto zadanog stila",

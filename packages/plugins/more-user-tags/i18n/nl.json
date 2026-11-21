@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Kan berichten beheren of mensen verwijderen/verbannen",
 	"TAG_VOICE_MODERATOR": "Spraakmod",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Kan spraakchats beheren",
+	"TAG_CHAT_MODERATOR": "Chatmod",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Kan mensen een time-out geven",
 	"APPEARANCE": "Weergave",
 	"COLORED_TAGS": "Gekleurde tags",
 	"COLORED_TAGS_SUBTITLE": "Geef elke tag een eigen kleur in plaats van de standaardstijl",

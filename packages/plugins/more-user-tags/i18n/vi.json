@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Có thể quản lý tin nhắn hoặc đuổi/cấm thành viên",
 	"TAG_VOICE_MODERATOR": "Mod thoại",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Có thể quản lý kênh thoại",
+	"TAG_CHAT_MODERATOR": "Mod trò chuyện",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Có thể tạm khóa người khác",
 	"APPEARANCE": "Giao diện",
 	"COLORED_TAGS": "Thẻ có màu",
 	"COLORED_TAGS_SUBTITLE": "Cho mỗi thẻ một màu riêng thay vì kiểu mặc định",

@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Kan hantera meddelanden eller sparka ut/banna personer",
 	"TAG_VOICE_MODERATOR": "Röstmod",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Kan hantera röstchattar",
+	"TAG_CHAT_MODERATOR": "Chattmod",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Kan ge folk timeout",
 	"APPEARANCE": "Utseende",
 	"COLORED_TAGS": "Färgade taggar",
 	"COLORED_TAGS_SUBTITLE": "Ge varje tagg en egen färg i stället för standardstilen",

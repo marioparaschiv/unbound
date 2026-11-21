@@ -29,6 +29,10 @@ declare module '@unbound-app/i18n' {
 		readonly TAG_VOICE_MODERATOR: string;
 		/** Can manage voice chats */
 		readonly TAG_VOICE_MODERATOR_SUBTITLE: string;
+		/** Chat Mod */
+		readonly TAG_CHAT_MODERATOR: string;
+		/** Can time people out */
+		readonly TAG_CHAT_MODERATOR_SUBTITLE: string;
 		/** Appearance */
 		readonly APPEARANCE: string;
 		/** Coloured Tags */

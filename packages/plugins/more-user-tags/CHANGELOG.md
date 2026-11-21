@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.0] - 2026-11-21
+
+### Added
+
+- A **Chat Mod** tag for members who can time people out, as on desktop.
+
 ## [1.3.10] - 2026-11-17
 
 ### Fixed

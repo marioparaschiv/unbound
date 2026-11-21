@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Voi hallita viestejä tai potkia ihmisiä ja antaa porttikieltoja",
 	"TAG_VOICE_MODERATOR": "Puhemoderaattori",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Voi hallita puhekeskusteluja",
+	"TAG_CHAT_MODERATOR": "Chat-mod",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Voi asettaa käyttäjiä aikalisälle",
 	"APPEARANCE": "Ulkoasu",
 	"COLORED_TAGS": "Väritetyt tunnisteet",
 	"COLORED_TAGS_SUBTITLE": "Anna jokaiselle tunnisteelle oma väri oletustyylin sijaan",

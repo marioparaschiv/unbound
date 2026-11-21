@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Can manage messages or kick/ban people",
 	"TAG_VOICE_MODERATOR": "VC Mod",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Can manage voice chats",
+	"TAG_CHAT_MODERATOR": "Chat Mod",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Can time people out",
 	"APPEARANCE": "Appearance",
 	"COLORED_TAGS": "Coloured Tags",
 	"COLORED_TAGS_SUBTITLE": "Give each tag its own colour instead of the default styling",

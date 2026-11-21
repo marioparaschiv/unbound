@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Dapat mengelola pesan atau mengeluarkan/memblokir orang",
 	"TAG_VOICE_MODERATOR": "Mod Suara",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Dapat mengelola obrolan suara",
+	"TAG_CHAT_MODERATOR": "Mod Obrolan",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Dapat memberi timeout kepada orang",
 	"APPEARANCE": "Tampilan",
 	"COLORED_TAGS": "Tag Berwarna",
 	"COLORED_TAGS_SUBTITLE": "Beri setiap tag warnanya sendiri alih-alih gaya bawaan",

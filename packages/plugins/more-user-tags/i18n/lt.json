@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Gali tvarkyti žinutes arba išmesti / uždrausti žmones",
 	"TAG_VOICE_MODERATOR": "Balso mod",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Gali tvarkyti balso pokalbius",
+	"TAG_CHAT_MODERATOR": "Pokalbių mod.",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Gali skirti laikiną nutildymą",
 	"APPEARANCE": "Išvaizda",
 	"COLORED_TAGS": "Spalvotos žymės",
 	"COLORED_TAGS_SUBTITLE": "Kiekvienai žymei suteikti savo spalvą vietoj numatytojo stiliaus",

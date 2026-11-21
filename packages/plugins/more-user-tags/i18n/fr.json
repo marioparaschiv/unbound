@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Peut gérer les messages, ou expulser et bannir des membres",
 	"TAG_VOICE_MODERATOR": "Modo vocal",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Peut gérer les salons vocaux",
+	"TAG_CHAT_MODERATOR": "Modo chat",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Peut exclure temporairement des membres",
 	"APPEARANCE": "Apparence",
 	"COLORED_TAGS": "Tags colorés",
 	"COLORED_TAGS_SUBTITLE": "Donner à chaque tag sa propre couleur au lieu du style par défaut",

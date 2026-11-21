@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Может управлять сообщениями, выгонять и банить участников",
 	"TAG_VOICE_MODERATOR": "Мод ГК",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Может управлять голосовыми чатами",
+	"TAG_CHAT_MODERATOR": "Мод чата",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Может отправлять людей в тайм-аут",
 	"APPEARANCE": "Внешний вид",
 	"COLORED_TAGS": "Цветные метки",
 	"COLORED_TAGS_SUBTITLE": "Свой цвет для каждой метки вместо стандартного оформления",

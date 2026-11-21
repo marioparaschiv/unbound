@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Μπορεί να διαχειρίζεται μηνύματα ή να αποβάλλει/αποκλείει άτομα",
 	"TAG_VOICE_MODERATOR": "Mod φωνής",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Μπορεί να διαχειρίζεται φωνητικές συνομιλίες",
+	"TAG_CHAT_MODERATOR": "Συντ. συνομιλίας",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Μπορεί να βάζει χρονικό αποκλεισμό σε άτομα",
 	"APPEARANCE": "Εμφάνιση",
 	"COLORED_TAGS": "Χρωματιστές ετικέτες",
 	"COLORED_TAGS_SUBTITLE": "Δώσε σε κάθε ετικέτα το δικό της χρώμα αντί για την προεπιλεγμένη μορφοποίηση",

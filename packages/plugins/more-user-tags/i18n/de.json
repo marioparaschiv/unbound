@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Kann Nachrichten verwalten oder Personen kicken/bannen",
 	"TAG_VOICE_MODERATOR": "Sprach-Mod",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Kann Sprachchats verwalten",
+	"TAG_CHAT_MODERATOR": "Chat-Mod",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Kann Leute stummschalten (Timeout)",
 	"APPEARANCE": "Darstellung",
 	"COLORED_TAGS": "Farbige Tags",
 	"COLORED_TAGS_SUBTITLE": "Gibt jedem Tag eine eigene Farbe statt des Standardstils",

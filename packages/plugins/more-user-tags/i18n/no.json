@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Kan administrere meldinger eller sparke ut/utestenge folk",
 	"TAG_VOICE_MODERATOR": "Talemod",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Kan administrere talechatter",
+	"TAG_CHAT_MODERATOR": "Chat-mod",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Kan gi folk timeout",
 	"APPEARANCE": "Utseende",
 	"COLORED_TAGS": "Fargede merkelapper",
 	"COLORED_TAGS_SUBTITLE": "Gi hver merkelapp sin egen farge i stedet for standardstilen",

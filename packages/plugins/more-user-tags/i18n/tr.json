@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Mesajları yönetebilir veya kişileri atabilir/yasaklayabilir",
 	"TAG_VOICE_MODERATOR": "Ses Moderatörü",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Sesli sohbetleri yönetebilir",
+	"TAG_CHAT_MODERATOR": "Sohbet Mod",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "İnsanlara zaman aşımı verebilir",
 	"APPEARANCE": "Görünüm",
 	"COLORED_TAGS": "Renkli Etiketler",
 	"COLORED_TAGS_SUBTITLE": "Varsayılan stil yerine her etikete kendi rengini ver",

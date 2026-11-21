@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Kezelheti az üzeneteket, vagy kirúghat és kitilthat tagokat",
 	"TAG_VOICE_MODERATOR": "Hang-mod",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Kezelheti a hangcsatornákat",
+	"TAG_CHAT_MODERATOR": "Chat mod",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Időkorlátot adhat másoknak",
 	"APPEARANCE": "Megjelenés",
 	"COLORED_TAGS": "Színes címkék",
 	"COLORED_TAGS_SUBTITLE": "Minden címke saját színt kap az alapértelmezett stílus helyett",

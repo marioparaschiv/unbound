@@ -12,6 +12,8 @@
 	"TAG_MODERATOR_SUBTITLE": "Pode gerenciar mensagens ou expulsar/banir pessoas",
 	"TAG_VOICE_MODERATOR": "Mod de voz",
 	"TAG_VOICE_MODERATOR_SUBTITLE": "Pode gerenciar chats de voz",
+	"TAG_CHAT_MODERATOR": "Mod de chat",
+	"TAG_CHAT_MODERATOR_SUBTITLE": "Pode castigar pessoas",
 	"APPEARANCE": "Aparência",
 	"COLORED_TAGS": "Tags coloridas",
 	"COLORED_TAGS_SUBTITLE": "Dá a cada tag sua própria cor em vez do estilo padrão",
