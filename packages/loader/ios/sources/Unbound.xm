@@ -32,6 +32,7 @@
 #import "SettingsCore.h"
 #import "SingleCopy.h"
 #import "Toolbox.h"
+#import "UncaughtExceptions.h"
 #import "UpdateBanner.h"
 #import "UpdaterCore.h"
 
@@ -409,6 +410,7 @@ public:
 
     void onBundleExecuted() override
     {
+        UnboundInstallUncaughtExceptionNote();
         [HotReload observe];
         dispatch_async(dispatch_get_main_queue(), ^{ applyPendingBrowserLogin(); });
     }

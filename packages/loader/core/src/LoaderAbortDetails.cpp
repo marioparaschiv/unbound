@@ -18,7 +18,7 @@
 namespace loader {
 static constexpr size_t kMaxAbortMessage         = 400;
 static std::terminate_handler gPreviousTerminate = nullptr;
-static std::atomic_bool gTerminateInstalled{false};
+static std::atomic_bool gTerminating{false};
 
 static std::string demangled(const char *name)
 {
@@ -54,6 +54,11 @@ std::string describeCurrentException()
 
 static void recordUncaughtCxxException()
 {
+    if (gTerminating.exchange(true))
+    {
+        std::abort();
+    }
+
     if (!uncaughtExceptionNoted())
     {
         std::string description = describeCurrentException();
@@ -73,7 +78,7 @@ static void recordUncaughtCxxException()
 
 void installTerminateHandler()
 {
-    if (gTerminateInstalled.exchange(true))
+    if (std::get_terminate() == recordUncaughtCxxException)
     {
         return;
     }
