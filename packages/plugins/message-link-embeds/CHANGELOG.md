@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.10] - 2026-11-21
+
+### Fixed
+
+- On Android, no longer crashes Discord in messages with bot components, where its view landed inside the components' container.
+
 ## [1.1.9] - 2026-11-19
 
 ### Fixed

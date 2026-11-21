@@ -74,6 +74,7 @@ export type State = {
 	settleQueue: Set<string>;
 	retryQueue: Set<string>;
 	observers: Map<string, NativeJavaReference>;
+	componentViewClasses: Map<string, boolean>;
 	proxies: Record<'preDraw' | 'attach' | 'layout' | 'settle' | 'retry', NativeJavaReference>;
 	objectClass: NativeJavaReference;
 	needsHost: NativeUICallback<[string]>;
@@ -269,6 +270,36 @@ export function isRecycler(state: State, view: NativeJavaReference): boolean {
 	'worklet';
 
 	return classNames(state.java, view).includes(RECYCLER_VIEW);
+}
+
+/**
+ * @description Tells whether a view is one of Discord's message component views, whose container treats every child
+ * as a component and casts it, so a host must never be added next to one. Remembers the answer per class.
+ * @param state The connection's state.
+ * @param view The view.
+ * @returns `true` when it is.
+ */
+export function isComponentView(state: State, view: NativeJavaReference): boolean {
+	'worklet';
+	const className = javaText(
+		state.java.invoke(javaReference(state.java.invoke(view, 'getClass', []))!, 'getName', []),
+	);
+	const known = className ? state.componentViewClasses.get(className) : undefined;
+
+	if (known !== undefined) return known;
+
+	let component = false;
+
+	try {
+		state.java.invoke(view, 'getComponentType', []);
+		component = true;
+	} catch {
+		component = false;
+	}
+
+	if (className) state.componentViewClasses.set(className, component);
+
+	return component;
 }
 
 /**

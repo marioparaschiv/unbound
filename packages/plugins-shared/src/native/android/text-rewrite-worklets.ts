@@ -246,6 +246,7 @@ export function installTextRewrites(
 		views: new Map(),
 		pendingShow: new Set(),
 		pendingLayout: new Set(),
+		componentViewClasses: new Map(),
 		settleQueue: new Set(),
 		retryQueue: new Set(),
 		observers: new Map(),
