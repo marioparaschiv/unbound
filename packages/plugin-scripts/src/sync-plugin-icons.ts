@@ -18,7 +18,7 @@ function readPluginIcons(): Set<string> {
 	return new Set(readPluginManifests(pluginsDir).map(({ manifest }) => pluginIcon(manifest)));
 }
 
-function findIconPath(icon: string, entries: Set<string>): string {
+function findIconPath(icon: string, entries: Set<string>): string | undefined {
 	for (const scale of iconScales) {
 		for (const root of iconRoots) {
 			const path = `${root}${icon}${scale}`;
@@ -26,7 +26,11 @@ function findIconPath(icon: string, entries: Set<string>): string {
 		}
 	}
 
-	throw new Error(`Could not find ${icon} in the loader IPA.`);
+	return undefined;
+}
+
+function hasCommittedIcon(icon: string): boolean {
+	return existsSync(resolve(iconsDir, `${icon}.png`));
 }
 
 function readIconFiles(archivePath: string, icons: Set<string>): Map<string, Buffer> {
@@ -39,6 +43,13 @@ function readIconFiles(archivePath: string, icons: Set<string>): Map<string, Buf
 
 	for (const icon of icons) {
 		const path = findIconPath(icon, entries);
+
+		if (!path) {
+			if (hasCommittedIcon(icon)) continue;
+
+			throw new Error(`Could not find ${icon} in the loader IPA or ${iconsDir}.`);
+		}
+
 		const contents = execFileSync('unzip', ['-p', archivePath, path], {
 			maxBuffer: 16 * 1024 * 1024,
 		});
