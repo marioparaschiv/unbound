@@ -253,12 +253,52 @@ static std::optional<std::string> addonName(const std::string &line)
     return std::nullopt;
 }
 
+// MetricKit reports Mach exceptions by number, as in "6 code 1".
+static std::string machExceptionName(int type)
+{
+    switch (type)
+    {
+        case 1:
+            return "EXC_BAD_ACCESS";
+        case 2:
+            return "EXC_BAD_INSTRUCTION";
+        case 3:
+            return "EXC_ARITHMETIC";
+        case 5:
+            return "EXC_SOFTWARE";
+        case 6:
+            return "EXC_BREAKPOINT";
+        case 10:
+            return "EXC_CRASH";
+        case 11:
+            return "EXC_RESOURCE";
+        case 12:
+            return "EXC_GUARD";
+        default:
+            return "Mach exception " + std::to_string(type);
+    }
+}
+
 static std::string exceptionName(const std::string &line)
 {
     std::string text = line.substr(std::string("Exception ").size());
-    size_t colon     = text.find(':');
+    if (!text.empty() && std::isdigit(static_cast<unsigned char>(text.front())))
+    {
+        return machExceptionName(std::atoi(text.c_str()));
+    }
+
+    size_t colon = text.find(':');
     return colon == std::string::npos ? text : text.substr(0, colon);
 }
+
+// A trap instruction: on Apple platforms almost always a Swift runtime check, such as a force
+// unwrap of nil or an index out of range, which carries no message in release builds.
+static constexpr const char *kTrapReason =
+#if defined(__APPLE__)
+    "Swift runtime check failed";
+#else
+    "trap instruction";
+#endif
 
 bool isLikelyPointerAuthFailure(uint64_t address)
 {
@@ -292,7 +332,12 @@ std::string nativeCrashHeadline(const std::string &stack)
     std::string headline = anr         ? "ANR (not responding)"
                            : exception ? exceptionName(lines.front())
                                        : signalName(std::atoi(lines.front().c_str() + 7));
-    if (!anr && !exception && lines.size() > 1 && lines[1].starts_with("Exception "))
+    bool trap            = !anr && !exception && std::atoi(lines.front().c_str() + 7) == SIGTRAP;
+    if (trap)
+    {
+        headline += std::string(" (") + kTrapReason + ")";
+    }
+    else if (!anr && !exception && lines.size() > 1 && lines[1].starts_with("Exception "))
     {
         headline += " (" + exceptionName(lines[1]) + ")";
     }

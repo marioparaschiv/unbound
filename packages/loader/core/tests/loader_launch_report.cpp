@@ -35,6 +35,17 @@ static void checkNativeCrashes()
     assert(nativeCrashHeadline("Exception java.lang.IllegalStateException: no view\n"
                                "Addon {\"id\":\"x\",\"name\":\"Chat Bubbles\"}\n#0 at a.b(c)\n")
            == "java.lang.IllegalStateException in Chat Bubbles");
+    assert(nativeCrashHeadline("Signal " + std::to_string(SIGTRAP)
+                               + "\nException 6 code 1\n#0 0x1 Discord + 0x10\n")
+           == "SIGTRAP (Swift runtime check failed)");
+    assert(nativeCrashHeadline("Signal " + std::to_string(SIGTRAP) + "\n#0 0x1\n")
+           == "SIGTRAP (Swift runtime check failed)");
+    assert(
+        nativeCrashHeadline("Signal " + std::to_string(SIGSEGV) + "\nException 1 code 2\n#0 0x1\n")
+        == "SIGSEGV (EXC_BAD_ACCESS)");
+    assert(nativeCrashHeadline("Signal " + std::to_string(SIGKILL) + "\nException 99 code 0\n")
+               .find("(Mach exception 99)")
+           != std::string::npos);
     assert(nativeCrashHeadline("").empty());
     assert(nativeCrashHeadline("garbage").empty());
     assert(describeNativeCrash(kStack).find("Addon Chat Bubbles\n") != std::string::npos);
