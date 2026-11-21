@@ -290,6 +290,13 @@ bool LoaderPipeline::onBackground()
     return isWorkingInBackground();
 }
 
+bool LoaderPipeline::onCharging()
+{
+    log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Started charging.");
+    refreshInBackgroundIfDue();
+    return isWorkingInBackground();
+}
+
 void LoaderPipeline::refreshInBackgroundIfDue()
 {
     std::optional<uint64_t> run = backgroundRefresh_.begin(nowMs());
@@ -307,6 +314,12 @@ void LoaderPipeline::refreshInBackgroundIfDue()
 bool LoaderPipeline::isCheckingForUpdate() const
 {
     return checking_.load();
+}
+
+void LoaderPipeline::setScheduledRefresh(std::string status)
+{
+    std::lock_guard lock(scheduledRefreshMutex_);
+    scheduledRefresh_ = std::move(status);
 }
 
 bool LoaderPipeline::isWorkingInBackground() const

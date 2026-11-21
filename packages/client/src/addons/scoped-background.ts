@@ -1,5 +1,6 @@
-import type { BackgroundJob } from '@unbound-app/types/background';
+import type { BackgroundJob, BackgroundJobOptions } from '@unbound-app/types/background';
 
+import { addBackgroundJob, DEFAULT_PHASE } from '~/background/jobs';
 import type { Subscriptions } from '~/addons/subscriptions';
 import * as background from '~/background/api';
 
@@ -14,8 +15,10 @@ export function scopeBackground(
 	owner: string,
 ): Omit<typeof background, 'default'> {
 	return {
-		add: (name: string, job: BackgroundJob) =>
-			subscriptions.add(background.add(name, job, owner)),
+		add: (name: string, job: BackgroundJob, options?: BackgroundJobOptions) =>
+			subscriptions.add(
+				addBackgroundJob({ ...options, name, owner, run: job, phase: DEFAULT_PHASE }),
+			),
 		run: background.run,
 		status: background.status,
 	};

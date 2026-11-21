@@ -11,10 +11,14 @@ declare function status$1(): BackgroundStatus;
  * jobs, a time limit and its own error log. A plugin's jobs are removed when it stops.
  * @param name The job's name, shown in `ubd debug background`.
  * @param job The work; a rejected promise or thrown error only fails this job.
- * @param owner Who added it; a plugin's scope fills in its id.
+ * @param options `wifiOnly` to skip it on cellular or metered connections, `timeoutMs` for a shorter limit.
  * @returns A function that removes the job.
  */
-export declare function add(name: string, job: BackgroundJob, owner?: string): () => void;
+export declare function add(
+	name: string,
+	job: BackgroundJob,
+	options?: BackgroundJobOptions,
+): () => void;
 /**
  * @description Runs every background job now, in the foreground, for checking them.
  * @returns How each job went.
@@ -22,19 +26,38 @@ export declare function add(name: string, job: BackgroundJob, owner?: string): (
 export declare function run(): Promise<BackgroundRun>;
 /** Work the background refresh runs while Discord is in the background. */
 export type BackgroundJob = () => Promise<void> | void;
-/** How one job went in a run. */
-export type BackgroundJobResult = {
+/** What every job result names. */
+export type BackgroundJobBase = {
 	/** The job's name. */
 	name: string;
 	/** The plugin id that added it, or `unbound` for a built-in. */
 	owner: string;
-	/** Whether it finished without throwing or timing out. */
-	ok: boolean;
 	/** How long it ran. */
 	durationMs: number;
-	/** What failed, when it did. */
-	error?: string;
 };
+/** How a job runs. */
+export type BackgroundJobOptions = {
+	/** Skip the job unless Discord is on Wi-Fi or ethernet without Low Data Mode or Data Saver. */
+	wifiOnly?: boolean;
+	/** How long the job may take, at most the 20 s default. */
+	timeoutMs?: number;
+};
+/** How one job went in a run: finished (or skipped, with why), or failed with what went wrong. */
+export type BackgroundJobResult = BackgroundJobBase &
+	(
+		| {
+				/** It finished without throwing or timing out, or was skipped. */
+				ok: true;
+				/** Why the job did not run, such as `not on Wi-Fi`. */
+				skipped?: string;
+		  }
+		| {
+				/** It threw or timed out. */
+				ok: false;
+				/** What failed. */
+				error: string;
+		  }
+	);
 /** One background refresh: what started it, when, and how each job went. */
 export type BackgroundRun = {
 	/** `loader` when Discord went to the background or the scheduled refresh fired; `manual` from `background.run()`. */

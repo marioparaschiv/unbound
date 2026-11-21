@@ -156,11 +156,17 @@ public:
     // if one waited for Wi-Fi.
     void onForeground();
     bool onBackground();
+    // The device started charging: runs the client's background refresh if it is due. Returns
+    // whether background work runs.
+    bool onCharging();
     void noteVisible();
     bool awaitingVisibility() const;
     bool isCheckingForUpdate() const;
     // Whether the update check or the client's background refresh still runs.
     bool isWorkingInBackground() const;
+    // How the platform schedules refreshes while Discord is closed, or why it does not, for
+    // `UnboundNative.getBackgroundRefresh`.
+    void setScheduledRefresh(std::string status);
 
     // Delays before retrying a failed update check, before jitter.
     static constexpr double kRetryDelaysSeconds[] = {30, 120, 600};
@@ -223,6 +229,8 @@ private:
                                              static_cast<int64_t>(kBackgroundCheckSeconds * 1000),
                                              kBackgroundRefreshLimitMs};
     void refreshInBackgroundIfDue();
+    mutable std::mutex scheduledRefreshMutex_;
+    std::string scheduledRefresh_;
     // When the last finished check found the running or staged bundle current; 0 after any other.
     std::atomic_int64_t currentAtMs_{0};
     std::atomic_int64_t runtimeCreatedMs_{0};

@@ -53,9 +53,11 @@ public:
     // Discord returned to the foreground: checks for a newer bundle if one is due.
     void onForeground();
     bool onBackground();
+    bool onCharging();
     void onVisible();
     bool isCheckingForUpdate() const;
     bool isWorkingInBackground() const;
+    void setScheduledRefresh(std::string status);
 
     SettingsStore &settings();
     BundleUpdater &updater();

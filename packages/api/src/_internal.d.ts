@@ -746,6 +746,8 @@ export type BackgroundGate = {
 	runs: number;
 	/** Whether one is running now. */
 	running: boolean;
+	/** How the platform runs refreshes while Discord is closed, or why it does not; missing on a loader from before it. */
+	scheduled?: string;
 };
 /** The props of Discord's `Badge`, read from Discord 352's `design/components/Badge/native/Badge.native.tsx`. */
 export type BadgeProps = {

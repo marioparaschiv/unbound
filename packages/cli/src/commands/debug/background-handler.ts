@@ -13,13 +13,22 @@ const RUN_TIMEOUT_MS = 90_000;
 
 const jobSchema = Type.Object({ name: Type.String(), owner: Type.String() });
 
-const resultSchema = Type.Object({
-	name: Type.String(),
-	owner: Type.String(),
-	ok: Type.Boolean(),
-	durationMs: Type.Number(),
-	error: Type.Optional(Type.String()),
-});
+const resultSchema = Type.Union([
+	Type.Object({
+		name: Type.String(),
+		owner: Type.String(),
+		durationMs: Type.Number(),
+		ok: Type.Literal(true),
+		skipped: Type.Optional(Type.String()),
+	}),
+	Type.Object({
+		name: Type.String(),
+		owner: Type.String(),
+		durationMs: Type.Number(),
+		ok: Type.Literal(false),
+		error: Type.String(),
+	}),
+]);
 
 const statusSchema = Type.Object({
 	jobs: Type.Array(jobSchema),
@@ -38,6 +47,7 @@ const statusSchema = Type.Object({
 			dueInMs: Type.Number(),
 			runs: Type.Number(),
 			running: Type.Boolean(),
+			scheduled: Type.Optional(Type.String()),
 		}),
 	),
 });

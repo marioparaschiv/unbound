@@ -270,9 +270,22 @@ bool Loader::isCheckingForUpdate() const
     return pipeline_ && pipeline_->isCheckingForUpdate();
 }
 
+bool Loader::onCharging()
+{
+    return pipeline_ && pipeline_->onCharging();
+}
+
 bool Loader::isWorkingInBackground() const
 {
     return pipeline_ && pipeline_->isWorkingInBackground();
+}
+
+void Loader::setScheduledRefresh(std::string status)
+{
+    if (pipeline_)
+    {
+        pipeline_->setScheduledRefresh(std::move(status));
+    }
 }
 
 SettingsStore &Loader::settings()

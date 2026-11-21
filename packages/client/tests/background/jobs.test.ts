@@ -49,8 +49,10 @@ describe('background jobs', () => {
 			['stuck', false],
 			['digests', true],
 		]);
-		expect(run.jobs.find((job) => job.name === 'broken')?.error).toBe('offline');
-		expect(run.jobs.find((job) => job.name === 'stuck')?.error).toBe('timed out after 0.02 s');
+		expect(run.jobs.find((job) => job.name === 'broken')).toMatchObject({ error: 'offline' });
+		expect(run.jobs.find((job) => job.name === 'stuck')).toMatchObject({
+			error: 'timed out after 0.02 s',
+		});
 		expect(lastBackgroundRun()).toBe(run);
 
 		for (const remove of removers) remove();
@@ -74,5 +76,38 @@ describe('background jobs', () => {
 
 		expect(await first).toBe(await second);
 		remove();
+	});
+
+	test('skips Wi-Fi jobs on cellular and caps a job at its own limit', async () => {
+		Object.assign(globalThis, {
+			NativePlatform: { device: { getState: () => ({ network: { type: 'cellular' } }) } },
+		});
+		const removers = [
+			addBackgroundJob({
+				name: 'catalog',
+				owner: 'unbound',
+				phase: 1,
+				wifiOnly: true,
+				run: () => {},
+			}),
+			addBackgroundJob({
+				name: 'quick',
+				owner: 'a.plugin',
+				phase: 1,
+				timeoutMs: 10,
+				run: () => new Promise(() => {}),
+			}),
+		];
+
+		const run = await runBackgroundJobs('manual', 1_000);
+
+		expect(run.jobs).toMatchObject([
+			{ name: 'catalog', ok: true, skipped: 'not on Wi-Fi' },
+			{ name: 'quick', ok: false, error: 'timed out after 0.01 s' },
+		]);
+
+		for (const remove of removers) remove();
+
+		Reflect.deleteProperty(globalThis, 'NativePlatform');
 	});
 });

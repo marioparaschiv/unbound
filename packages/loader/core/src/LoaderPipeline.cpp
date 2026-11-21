@@ -240,13 +240,20 @@ void LoaderPipeline::injectPreBundle(jsi::Runtime &runtime, const std::string &b
         };
         provider.getBackgroundRefresh = [this]() {
             BackgroundRefreshState state = backgroundRefresh_.state(pipeline_time::nowMs());
-            return nlohmann::json{
+            nlohmann::json gate{
                 {"sinceLastMs", state.sinceLastMs},
                 {"intervalMs", state.intervalMs},
                 {"dueInMs", std::max<int64_t>(0, state.intervalMs - state.sinceLastMs)},
                 {"runs", state.runs},
                 {"running", state.running},
             };
+            std::lock_guard lock(scheduledRefreshMutex_);
+            if (!scheduledRefresh_.empty())
+            {
+                gate["scheduled"] = scheduledRefresh_;
+            }
+
+            return gate;
         };
         installUnboundNative(runtime, std::move(provider));
     }
