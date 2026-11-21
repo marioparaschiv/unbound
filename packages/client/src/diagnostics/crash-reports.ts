@@ -20,7 +20,11 @@ import {
 	repeatsOf,
 	wasJustReported,
 } from '~/diagnostics/crash-repeats';
-import { nativeCrashAddon, nativeCrashFrame } from '~/diagnostics/crash-title';
+import {
+	isBackgroundWatchdogKill,
+	nativeCrashAddon,
+	nativeCrashFrame,
+} from '~/diagnostics/crash-title';
 import { getSetting, setSetting } from '~/settings/unbound';
 import { currentEnvironment } from '~/core/environment';
 import { getLoader } from '~/native/unbound-native';
@@ -246,7 +250,11 @@ export async function reportNativeCrash(launch = getLoader()?.launch): Promise<v
 
 	const signature = crashSignature({ kind: event.kind, message: newest.crash });
 
-	if (wasJustReported(signature) || !(await consentToReport(event))) {
+	if (
+		isBackgroundWatchdogKill(stack) ||
+		wasJustReported(signature) ||
+		!(await consentToReport(event))
+	) {
 		setSetting('crash-reports.nativeAt', newest.at);
 
 		return;

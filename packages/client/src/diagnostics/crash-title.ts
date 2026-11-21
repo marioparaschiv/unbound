@@ -4,6 +4,8 @@ const SYSTEM_ABORT_IMAGE =
 const NATIVE_CALL_FREEZE = /native call (?:invoke\((.+)\)|(.+?)) for (\d+) ms/;
 const ADDON_LINE = /^Addon (\{.*\})$/m;
 const HANG_LINE = /^Hang (.+)$/;
+const BACKGROUND_WATCHDOG = /^WatchdogVisibility: Background$/m;
+const WATCHDOG_CODE = /0x8badf00d/i;
 
 /** What froze Discord, read from a freeze's detail. */
 export type FreezeCause = { call: string; seconds: number };
@@ -85,4 +87,14 @@ export function freezeCause(detail: string): FreezeCause | undefined {
  */
 export function hangDuration(message: string): string | undefined {
 	return HANG_LINE.exec(message)?.[1];
+}
+
+/**
+ * @description Tells whether iOS's watchdog killed Discord in the background, which the system does to a busy or hot
+ * device and the user never sees.
+ * @param stack The native crash's stack.
+ * @returns Whether it was a background watchdog kill.
+ */
+export function isBackgroundWatchdogKill(stack: string): boolean {
+	return WATCHDOG_CODE.test(stack) && BACKGROUND_WATCHDOG.test(stack);
 }

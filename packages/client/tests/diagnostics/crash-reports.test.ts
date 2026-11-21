@@ -127,6 +127,19 @@ describe('reportNativeCrash', () => {
 		);
 	});
 
+	test('keeps a background watchdog kill out of reports', async () => {
+		settings.set('crash-reports', true);
+
+		await reportNativeCrash({
+			...launch,
+			crashStack:
+				'Signal 9\nException 10 code 0\nTermination <RBSTerminateContext| domain:10 code:0x8BADF00D>\nWatchdogVisibility: Background',
+		});
+
+		expect(sent).toHaveLength(0);
+		expect(settings.get('crash-reports.nativeAt')).toBe(1_000);
+	});
+
 	test('does not ask when crash reporting is on', async () => {
 		settings.set('crash-reports', true);
 
