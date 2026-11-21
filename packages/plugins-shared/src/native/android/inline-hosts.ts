@@ -48,8 +48,22 @@ function hostsFreely(java: InlineHostBridge, view: NativeJavaReference): boolean
 	);
 }
 
+async function isComponentView(
+	java: InlineHostBridge,
+	view: NativeJavaReference,
+): Promise<boolean> {
+	try {
+		await java.invokeAsync(view, 'getComponentType', []);
+
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 /**
- * @description Finds the nearest ancestor of a text view that can hold a free-floating child view, skipping recycler views.
+ * @description Finds the nearest ancestor of a text view that can hold a free-floating child view, skipping recycler
+ * views and the containers of Discord's message components, which cast every child to a component.
  * @param java The plugin's Java bridge.
  * @param textView The text view the reserved room is in.
  * @returns The ancestor and the text view's offset inside it, or `null` when none was found.
@@ -75,7 +89,7 @@ export async function hostContainer(
 
 		if (!parent) return null;
 
-		if (hostsFreely(java, parent)) {
+		if (hostsFreely(java, parent) && !(await isComponentView(java, current))) {
 			return { container: parent, offset: { x, y } };
 		}
 

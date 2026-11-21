@@ -4,6 +4,7 @@ import {
 	GONE,
 	invokeNumber,
 	isAttached,
+	isComponentView,
 	isRecycler,
 	keyOf,
 	MAX_ANCESTOR_DEPTH,
@@ -190,7 +191,7 @@ function container(state: State, view: NativeJavaReference): NativeJavaReference
 		if (!parent || !classNames(state.java, parent).includes('android.view.ViewGroup'))
 			return null;
 
-		if (!isRecycler(state, parent)) {
+		if (!isRecycler(state, parent) && !isComponentView(state, current)) {
 			return parent;
 		}
 
