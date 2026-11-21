@@ -24,7 +24,7 @@ export function stop() {
 }
 ```
 
-**The scope removes** patches, slash commands, timers, `metro.onModuleLoad` listeners, pending `onModuleLoaded` waits, patches still waiting for their module, `storage.onChange`, `flux.onAction`, `interceptAction` and `onStoreChange` listeners, `settings.registerSection` sections, `assets.onAssetRegistered` listeners, and UI-thread scopes. It sees only calls through `@unbound-app/api` imports; `window.unbound` bypasses it.
+**The scope removes** patches, slash commands, timers, `metro.onModuleLoad` listeners, pending `onModuleLoaded` waits, patches still waiting for their module, `storage.onChange`, `flux.onAction`, `interceptAction` and `onStoreChange` listeners, `settings.registerSection` sections, `assets.onAssetRegistered` listeners, `background.add` jobs, and UI-thread scopes. It sees only calls through `@unbound-app/api` imports; `window.unbound` bypasses it.
 
 **`stop` calls `patcher.unpatchAll()` first**, which removes only this plugin's patches, so a redraw after it (`UserStore.emitChange()`) draws without them. Keep no unpatch variables or cleanup arrays for patches. Then it undoes, in the order it matters, only what the scope cannot see, each through a named function (`stopSaving`, `clearLog`, `redrawOriginalText`):
 

@@ -3,7 +3,6 @@ import { describe, expect, mock, test } from 'bun:test';
 const calls: string[] = [];
 const errors: string[] = [];
 let handler: (() => Promise<void>) | undefined;
-let syncEnabled = true;
 
 mock.module('@unbound-app/logger', () => ({
 	createLogger: () => ({ error: (message: string) => void errors.push(message) }),
@@ -11,6 +10,7 @@ mock.module('@unbound-app/logger', () => ({
 
 mock.module('~/native/unbound-native', () => ({
 	setBackgroundRefresh: (next?: () => Promise<void>) => void (handler = next),
+	warmAddonDigests: async () => void calls.push('digests'),
 }));
 
 mock.module('~/storage/api', () => ({
@@ -24,7 +24,7 @@ mock.module('~/updates/update-in-background', () => ({
 }));
 
 mock.module('~/sync/api', () => ({
-	isEnabled: () => syncEnabled,
+	isEnabled: () => true,
 	now: async () => void calls.push('sync'),
 }));
 
@@ -37,28 +37,23 @@ mock.module('~/marketplace/state', () => ({
 }));
 
 const { afterAddons, stop } = await import('~/builtins/background-refresh');
+const { backgroundJobs } = await import('~/background/jobs');
 
 describe('background refresh', () => {
-	test('saves settings first and runs every job when one fails', async () => {
+	test('saves settings first, warms digests last and logs a failed job', async () => {
 		afterAddons();
 		await handler?.();
 
 		expect(calls[0]).toBe('settings');
-		expect(calls.slice(1).sort()).toEqual(['catalog', 'crash issues', 'sync']);
-		expect(errors).toEqual(['Failed to run background job addon updates:']);
+		expect(calls.at(-1)).toBe('digests');
+		expect(calls.slice(1, -1).sort()).toEqual(['catalog', 'crash issues', 'sync']);
+		expect(errors).toEqual(['Failed to run background job addon updates (unbound):']);
 	});
 
-	test('skips sync while it is off', async () => {
-		calls.length = 0;
-		syncEnabled = false;
-		await handler?.();
-
-		expect(calls).not.toContain('sync');
-	});
-
-	test('stop clears the handler', () => {
+	test('stop clears the handler and the built-in jobs', () => {
 		stop();
 
 		expect(handler).toBeUndefined();
+		expect(backgroundJobs()).toEqual([]);
 	});
 });

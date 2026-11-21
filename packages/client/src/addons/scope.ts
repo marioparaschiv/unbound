@@ -19,6 +19,7 @@ import type { ScopedCommands, ScopedI18n } from '~/addons/scoped-namespaces';
 import { createScopedFetch, type ScopedFetch } from '~/addons/network';
 import { createMessageResolver } from '~/i18n/message-resolver';
 import { manifestRegistrations } from '~/assets/plugin-assets';
+import { scopeBackground } from '~/addons/scoped-background';
 import { createScopedReact } from '~/hot-refresh/runtime';
 import { createPatcher } from '~/patcher/create-patcher';
 import { createTokenGuard } from '~/addons/token-gate';
@@ -62,6 +63,7 @@ export type AddonScope = {
 type ScopedNamespaces = Pick<AddonGlobals, 'patcher' | 'commands'> & {
 	metro: ReturnType<typeof scopeMetro>;
 	storage: ReturnType<typeof scopeStorage>;
+	background: ReturnType<typeof scopeBackground>;
 	flux: ReturnType<typeof scopeFlux>;
 	settings: ReturnType<typeof scopeSettings>;
 	assets: ReturnType<typeof scopeAssets>;
@@ -142,6 +144,7 @@ export function createAddonScope(addon: Addon<Plugin>, directory: string): Addon
 				commands: commands.namespace,
 				metro: scopeMetro(subscriptions, guardToken),
 				storage: scopeStorage(subscriptions, addon.id),
+				background: scopeBackground(subscriptions, addon.id),
 				flux: scopeFlux(subscriptions, addon.name, guardToken),
 				settings: scopeSettings(subscriptions),
 				assets,

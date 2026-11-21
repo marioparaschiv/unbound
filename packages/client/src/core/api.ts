@@ -1,4 +1,5 @@
 export * as marketplace from '~/marketplace/api';
+export * as background from '~/background/api';
 export * as iconPacks from '~/icon-packs/api';
 export * as ui from '~/ui/settings-kit/api';
 export * as builtins from '~/builtins/api';
