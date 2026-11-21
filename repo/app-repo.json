@@ -1,0 +1,236 @@
+{
+  "name": "Unbound App Repo",
+  "identifier": "app.unbound.ios.repo",
+  "iconURL": "https://builds.unbound.rip/repo/icon.png",
+  "apps": [
+    {
+      "name": "Unbound",
+      "bundleIdentifier": "com.hammerandchisel.discord",
+      "developerName": "Unbound Team",
+      "iconURL": "https://builds.unbound.rip/repo/icon.png",
+      "localizedDescription": "A client modification for Discord on mobile. Install plugins, themes, fonts, and icon packs on the official Discord app.",
+      "subtitle": "A client modification for Discord on mobile.",
+      "tintColor": "aa454d",
+      "category": "social",
+      "appPermissions": {
+        "entitlements": [
+          "application-identifier",
+          "aps-environment",
+          "com.apple.developer.associated-domains",
+          "com.apple.developer.avfoundation.multitasking-camera-access",
+          "com.apple.developer.declared-age-range",
+          "com.apple.developer.devicecheck.appattest-environment",
+          "com.apple.developer.kernel.increased-memory-limit",
+          "com.apple.developer.networking.carrier-constrained.appcategory",
+          "com.apple.developer.storekit.request-data",
+          "com.apple.developer.team-identifier",
+          "com.apple.developer.usernotifications.communication",
+          "com.apple.security.application-groups"
+        ],
+        "privacy": {
+          "NSBluetoothAlwaysUsageDescription": "To connect to your devices",
+          "NSBluetoothPeripheralUsageDescription": "To connect to your devices",
+          "NSCameraUsageDescription": "By allowing access to your camera, you can take pictures and others will be able to see you in voice and video calls.",
+          "NSContactsUsageDescription": "We can help you find people you know on Discord. Your contacts will be regularly sent to us so you can connect with friends. You can turn this off any time.",
+          "NSLocalNetworkUsageDescription": "Allow Discord access to your local network to find devices using the same internet connection.",
+          "NSLocationAlwaysAndWhenInUseUsageDescription": "To enable services that require location",
+          "NSLocationAlwaysUsageDescription": "To enable services that require location",
+          "NSLocationWhenInUseUsageDescription": "To enable services that require location",
+          "NSMicrophoneUsageDescription": "By allowing access to your microphone, you'll be able to talk in calls.",
+          "NSPhotoLibraryAddUsageDescription": "By allowing access to your library, you'll be able to download photos and videos.",
+          "NSPhotoLibraryUsageDescription": "By allowing us access to your photos, you will be able to upload images as an avatar, server icon, and more, and you can send photos and videos to your friends and communities.",
+          "NSUserTrackingUsageDescription": "Allowing tracking helps us show you Quests for games you play or are interested in. You can opt out anytime in your iOS settings.",
+          "NSSpeechRecognitionUsageDescription": "Unbound plugins turn voice messages into text."
+        }
+      },
+      "versions": [
+        {
+          "version": "354.0_1.11.0",
+          "buildVersion": "123054",
+          "date": "2026-11-19T02:42:51Z",
+          "size": 104175879,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-354.0-ios/Unbound.ipa",
+          "localizedDescription": "Discord 354.0 (123054) with Unbound loader 1.11.0.",
+          "minOSVersion": "16.0"
+        },
+        {
+          "version": "353.0_1.9.0",
+          "buildVersion": "122208",
+          "date": "2026-11-17T19:26:11Z",
+          "size": 104755102,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-353.0-ios/Unbound.ipa",
+          "localizedDescription": "Discord 353.0 (122208) with Unbound loader 1.9.0.",
+          "minOSVersion": "16.0"
+        }
+      ]
+    },
+    {
+      "name": "Unbound (TestFlight)",
+      "bundleIdentifier": "com.hammerandchisel.discord.testflight",
+      "developerName": "Unbound Team",
+      "beta": true,
+      "iconURL": "https://builds.unbound.rip/repo/icon.png",
+      "localizedDescription": "A client modification for Discord on mobile, built on Discord's TestFlight beta. Install plugins, themes, fonts, and icon packs on the official Discord app.",
+      "subtitle": "A client modification for Discord on mobile (TestFlight builds).",
+      "tintColor": "aa454d",
+      "category": "social",
+      "appPermissions": {
+        "entitlements": [
+          "application-identifier",
+          "aps-environment",
+          "beta-reports-active",
+          "com.apple.developer.associated-domains",
+          "com.apple.developer.avfoundation.multitasking-camera-access",
+          "com.apple.developer.declared-age-range",
+          "com.apple.developer.devicecheck.appattest-environment",
+          "com.apple.developer.kernel.increased-memory-limit",
+          "com.apple.developer.networking.carrier-constrained.appcategory",
+          "com.apple.developer.storekit.request-data",
+          "com.apple.developer.team-identifier",
+          "com.apple.developer.usernotifications.communication",
+          "com.apple.security.application-groups",
+          "get-task-allow"
+        ],
+        "privacy": {
+          "NSBluetoothAlwaysUsageDescription": "To connect to your devices",
+          "NSBluetoothPeripheralUsageDescription": "To connect to your devices",
+          "NSCameraUsageDescription": "By allowing access to your camera, you can take pictures and others will be able to see you in voice and video calls.",
+          "NSContactsUsageDescription": "We can help you find people you know on Discord. Your contacts will be regularly sent to us so you can connect with friends. You can turn this off any time.",
+          "NSLocalNetworkUsageDescription": "Allow Discord access to your local network to find devices using the same internet connection.",
+          "NSLocationAlwaysAndWhenInUseUsageDescription": "To enable services that require location",
+          "NSLocationAlwaysUsageDescription": "To enable services that require location",
+          "NSLocationWhenInUseUsageDescription": "To enable services that require location",
+          "NSMicrophoneUsageDescription": "By allowing access to your microphone, you'll be able to talk in calls.",
+          "NSPhotoLibraryAddUsageDescription": "By allowing access to your library, you'll be able to download photos and videos.",
+          "NSPhotoLibraryUsageDescription": "By allowing us access to your photos, you will be able to upload images as an avatar, server icon, and more, and you can send photos and videos to your friends and communities.",
+          "NSUserTrackingUsageDescription": "Allowing tracking helps us show you Quests for games you play or are interested in. You can opt out anytime in your iOS settings.",
+          "NSSpeechRecognitionUsageDescription": "Unbound plugins turn voice messages into text."
+        }
+      },
+      "versions": [
+        {
+          "version": "356.0_1.11.0",
+          "buildVersion": "124376",
+          "date": "2026-11-21T11:20:00Z",
+          "size": 109490146,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-356.0_124376-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Discord 356.0 (124376) with Unbound loader 1.11.0.",
+          "minOSVersion": "18.0"
+        },
+        {
+          "version": "356.0_1.11.0",
+          "buildVersion": "124353",
+          "date": "2026-11-20T20:33:27Z",
+          "size": 60736589,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-356.0_124353-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Discord 356.0 (124353) with Unbound loader 1.11.0.",
+          "minOSVersion": "18.0"
+        },
+        {
+          "version": "356.0_1.11.0",
+          "buildVersion": "124077",
+          "date": "2026-11-19T11:54:12Z",
+          "size": 62678421,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-356.0_124077-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Discord 356.0 (124077) with Unbound loader 1.11.0.",
+          "minOSVersion": "18.0"
+        },
+        {
+          "version": "356.0_1.11.0",
+          "buildVersion": "123787",
+          "date": "2026-11-19T02:58:22Z",
+          "size": 62909457,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-356.0_123787-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Discord 356.0 (123787) with Unbound loader 1.11.0.",
+          "minOSVersion": "18.0"
+        },
+        {
+          "version": "356.0_1.9.0",
+          "buildVersion": "123468",
+          "date": "2026-11-18T03:47:36Z",
+          "size": 65055518,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-356.0_123468-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Discord 356.0 (123468) with Unbound loader 1.9.0.",
+          "minOSVersion": "18.0"
+        },
+        {
+          "version": "356.0_1.8.0",
+          "buildVersion": "123283",
+          "date": "2026-11-16T17:38:16Z",
+          "size": 65351743,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-356.0_123283-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Discord 356.0 (123283) with Unbound loader 1.8.0.",
+          "minOSVersion": "18.0"
+        },
+        {
+          "version": "356.0_1.8.0",
+          "buildVersion": "123252",
+          "date": "2026-11-16T17:26:47Z",
+          "size": 65781739,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-356.0_123252-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Discord 356.0 (123252) with Unbound loader 1.8.0.",
+          "minOSVersion": "18.0"
+        },
+        {
+          "version": "355.0_1.7.1",
+          "buildVersion": "123251",
+          "date": "2026-11-15T13:47:21Z",
+          "size": 65682097,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-355.0_123251-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Discord 355.0 (123251) with Unbound loader 1.7.1.",
+          "minOSVersion": "18.0"
+        },
+        {
+          "version": "355.0_1.6.1",
+          "buildVersion": "123227",
+          "date": "2026-11-15T12:45:19Z",
+          "size": 65682506,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-355.0_123227-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Discord 355.0 (123227) with Unbound loader 1.6.1.",
+          "minOSVersion": "18.0"
+        },
+        {
+          "version": "355.0",
+          "date": "2026-11-13T18:24:04Z",
+          "size": 65579749,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-355.0_123057-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience.",
+          "buildVersion": "123057"
+        },
+        {
+          "version": "355.0",
+          "date": "2026-11-12T18:49:17Z",
+          "size": 68882573,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-355.0_122874-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience.",
+          "buildVersion": "122874"
+        },
+        {
+          "version": "355.0",
+          "date": "2026-11-10T15:30:44Z",
+          "size": 83368482,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-355.0_122459-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience.",
+          "buildVersion": "122459"
+        },
+        {
+          "version": "353.0_1.8.1",
+          "buildVersion": "122208",
+          "date": "2026-11-17T02:56:35Z",
+          "size": 101679966,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-353.0_122208-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Discord 353.0 (122208) with Unbound loader 1.8.1.",
+          "minOSVersion": "16.0"
+        },
+        {
+          "version": "353.0",
+          "date": "2026-11-04",
+          "size": 102789592,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/discord-353.0_119349-ios-testflight/Unbound.ipa",
+          "localizedDescription": "Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience.",
+          "buildVersion": "119349"
+        }
+      ]
+    }
+  ]
+}
