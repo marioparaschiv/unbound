@@ -178,6 +178,20 @@ export function patch(
 }
 
 /**
+ * @description Makes a callback that wraps a registered patch's callback count as that patch, so hot refresh still
+ * finds the patch after the wrapper replaces its callback.
+ * @param wrapper The new callback.
+ * @param wrapped The callback it wraps.
+ */
+export function aliasPatchCallback(wrapper: PatchCallback, wrapped: PatchCallback): void {
+	const live = lives.get(wrapped);
+
+	if (live) {
+		lives.set(wrapper, live);
+	}
+}
+
+/**
  * @description Records the removal of every registered patch a predicate picks, before possess removes them.
  * @param matches Picks the patches about to be removed.
  */
