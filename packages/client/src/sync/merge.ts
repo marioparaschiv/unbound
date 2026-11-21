@@ -8,9 +8,11 @@ import type {
 } from '@unbound-app/contracts/sync';
 
 /** A change merging made to the remote side that this device has to carry out. */
+/** Installs from `install.url`, or only records it as the source when already installed. */
+export type SyncInstallAction = { type: 'install'; kind: SyncKind; install: SyncInstall };
+
 export type SyncAction =
-	/** Installs from `install.url`, or only records it as the source when already installed. */
-	| { type: 'install'; kind: SyncKind; install: SyncInstall }
+	| SyncInstallAction
 	| { type: 'delete'; kind: SyncKind; id: string }
 	| { type: 'set-enabled'; kind: SyncKind; id: string; enabled: boolean }
 	| { type: 'apply'; kind: SyncKind; id: string | null }
