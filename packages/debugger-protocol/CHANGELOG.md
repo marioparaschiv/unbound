@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.3.0](https://github.com/marioparaschiv/unbound/compare/debugger-protocol-v2.2.4...debugger-protocol-v2.3.0) (2026-11-21)
+
+
+### Features
+
+* **debugger:** reuse a running bridge from the terminal REPL ([#1988](https://github.com/marioparaschiv/unbound/issues/1988)) ([6fc169c](https://github.com/marioparaschiv/unbound/commit/6fc169c8e7cce60dbc9d5af322927ecb53b9d177))
+
+
+### Bug Fixes
+
+* **debugger:** tell a suspended or backgrounded app from a hung one ([#2007](https://github.com/marioparaschiv/unbound/issues/2007)) ([f726415](https://github.com/marioparaschiv/unbound/commit/f72641543f12211f2cd63aa15923f5eb1b9aa57d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/types bumped to 1.9.0
+
 ## [2.2.4](https://github.com/marioparaschiv/unbound/compare/debugger-protocol-v2.2.3...debugger-protocol-v2.2.4) (2026-11-18)
 
 

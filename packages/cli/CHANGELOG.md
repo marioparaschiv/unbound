@@ -1,5 +1,51 @@
 # Changelog
 
+## [3.5.0](https://github.com/marioparaschiv/unbound/compare/cli-v3.4.0...cli-v3.5.0) (2026-11-21)
+
+
+### Features
+
+* **cli:** add --delay to ubd debug message ([#1945](https://github.com/marioparaschiv/unbound/issues/1945)) ([f22cca3](https://github.com/marioparaschiv/unbound/commit/f22cca36cc3965a7770f66cc17878f65ceaa1008))
+* **cli:** add ubd debug gesture ([#1876](https://github.com/marioparaschiv/unbound/issues/1876)) ([6778924](https://github.com/marioparaschiv/unbound/commit/6778924e1469ce1a1e1021565ef2a288b1cc0e2b))
+* **cli:** add ubd debug rows to print a message's chat row ([#2039](https://github.com/marioparaschiv/unbound/issues/2039)) ([3d319b2](https://github.com/marioparaschiv/unbound/commit/3d319b249b6913ebbee980e9f54cf75cfa8a659b))
+* **client:** show who holds native hooks in ubd debug status ([#1965](https://github.com/marioparaschiv/unbound/issues/1965)) ([63612d9](https://github.com/marioparaschiv/unbound/commit/63612d94bd1030d430e36e2dbf444fece6d925bc))
+* **cli:** flag worklets that call functions declared below them ([#1850](https://github.com/marioparaschiv/unbound/issues/1850)) ([44b4d98](https://github.com/marioparaschiv/unbound/commit/44b4d981819a2205cad7d7bb70b0e4bfbbd4c100))
+* **cli:** give ubd debug eval --native the Objective-C inspector ([#2043](https://github.com/marioparaschiv/unbound/issues/2043)) ([88ef948](https://github.com/marioparaschiv/unbound/commit/88ef948e89d270f51e70af9c295e5cf65df4c0ad))
+* **cli:** show and run the background jobs with ubd debug background ([#2060](https://github.com/marioparaschiv/unbound/issues/2060)) ([817a0de](https://github.com/marioparaschiv/unbound/commit/817a0de98ae531df8e9401c81b98179cf72d3b91))
+* **cli:** warn about UIKit on the JS thread and unscoped cleanup ([#1896](https://github.com/marioparaschiv/unbound/issues/1896)) ([2fb69be](https://github.com/marioparaschiv/unbound/commit/2fb69be1073cc03f64eefce2de01f728fedc5e90))
+* **cli:** warn when the dev server serves a stale client bundle ([#1939](https://github.com/marioparaschiv/unbound/issues/1939)) ([f223c53](https://github.com/marioparaschiv/unbound/commit/f223c53cfee6e518d36aa4ff480a8b9b77b89f84))
+* **debugger:** reuse a running bridge from the terminal REPL ([#1988](https://github.com/marioparaschiv/unbound/issues/1988)) ([6fc169c](https://github.com/marioparaschiv/unbound/commit/6fc169c8e7cce60dbc9d5af322927ecb53b9d177))
+* **loader:** explain scheduled refresh, add job options, run on charge ([#2071](https://github.com/marioparaschiv/unbound/issues/2071)) ([59c3ee5](https://github.com/marioparaschiv/unbound/commit/59c3ee5a663bdd997fa187f44de0dfbf8aee18a3))
+
+
+### Bug Fixes
+
+* **client:** forget a plugin's start time when it stops ([#2068](https://github.com/marioparaschiv/unbound/issues/2068)) ([32d1805](https://github.com/marioparaschiv/unbound/commit/32d180514917b525018f7a85c96df4b9ec836459))
+* **client:** warn when the dev server serves a stale bundle ([#2021](https://github.com/marioparaschiv/unbound/issues/2021)) ([f78f9c6](https://github.com/marioparaschiv/unbound/commit/f78f9c67d4ae38b632ee01972a01c96dc891a36e))
+* **cli:** follow a vphone's log without a jb-p1lot bridge ([#2008](https://github.com/marioparaschiv/unbound/issues/2008)) ([e9157d3](https://github.com/marioparaschiv/unbound/commit/e9157d340542e8ce98e4ae1951d84cb5482548d1))
+* **cli:** report an unmounted navigator from ubd debug route ([#2038](https://github.com/marioparaschiv/unbound/issues/2038)) ([06d1995](https://github.com/marioparaschiv/unbound/commit/06d1995b2eea46fe17685f9a02b02733e6b2d2a5))
+* **cli:** stop ubd build from caching TypeScript files per addon ([#2066](https://github.com/marioparaschiv/unbound/issues/2066)) ([73a9d06](https://github.com/marioparaschiv/unbound/commit/73a9d06e2dc7c6cea318557d2d765663db4457c6))
+* **debugger:** tell a suspended or backgrounded app from a hung one ([#2007](https://github.com/marioparaschiv/unbound/issues/2007)) ([f726415](https://github.com/marioparaschiv/unbound/commit/f72641543f12211f2cd63aa15923f5eb1b9aa57d))
+
+
+### Performance Improvements
+
+* **cli:** share swc helpers and target Hermes in plugin builds ([#2063](https://github.com/marioparaschiv/unbound/issues/2063)) ([18ebba4](https://github.com/marioparaschiv/unbound/commit/18ebba41dd9ca68db3a09c590cfc836da87afbb4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger bumped to 1.3.0
+    * @unbound-app/debugger-protocol bumped to 2.3.0
+  * devDependencies
+    * @unbound-app/api bumped to 3.11.0
+    * @unbound-app/contracts bumped to 2.10.0
+    * @unbound-app/types bumped to 1.9.0
+    * @unbound-app/utils bumped to 1.0.9
+    * @unbound-app/web bumped to 2.10.0
+
 ## [3.4.0](https://github.com/marioparaschiv/unbound/compare/cli-v3.3.2...cli-v3.4.0) (2026-11-18)
 
 
