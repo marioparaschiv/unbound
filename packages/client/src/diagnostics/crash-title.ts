@@ -5,7 +5,9 @@ const NATIVE_CALL_FREEZE = /native call (?:invoke\((.+)\)|(.+?)) for (\d+) ms/;
 const ADDON_LINE = /^Addon (\{.*\})$/m;
 const HANG_LINE = /^Hang (.+)$/;
 const BACKGROUND_WATCHDOG = /^WatchdogVisibility: Background$/m;
+const EXIT_WATCHDOG = /^WatchdogEvent: process-exit$/m;
 const WATCHDOG_CODE = /0x8badf00d/i;
+const UNREPORTED_VOIP_PUSH_CODE = /0xbaadca11/i;
 
 /** What froze Discord, read from a freeze's detail. */
 export type FreezeCause = { call: string; seconds: number };
@@ -90,11 +92,17 @@ export function hangDuration(message: string): string | undefined {
 }
 
 /**
- * @description Tells whether iOS's watchdog killed Discord in the background, which the system does to a busy or hot
- * device and the user never sees.
+ * @description Tells whether iOS killed Discord in a way the user never sees: the watchdog in the background or while
+ * quitting, or a VoIP push Discord did not hand to CallKit.
  * @param stack The native crash's stack.
- * @returns Whether it was a background watchdog kill.
+ * @returns Whether it was such a system kill.
  */
-export function isBackgroundWatchdogKill(stack: string): boolean {
-	return WATCHDOG_CODE.test(stack) && BACKGROUND_WATCHDOG.test(stack);
+export function isUnseenSystemKill(stack: string): boolean {
+	if (UNREPORTED_VOIP_PUSH_CODE.test(stack)) {
+		return true;
+	}
+
+	return (
+		WATCHDOG_CODE.test(stack) && (BACKGROUND_WATCHDOG.test(stack) || EXIT_WATCHDOG.test(stack))
+	);
 }
