@@ -593,7 +593,12 @@ object NativeBridge {
                 validator.delete()
             }
             val reported = if (resumed) HttpURLConnection.HTTP_OK else status
-            arrayOf(reported.toString(), connection.getHeaderField("etag") ?: "", connection.getHeaderField("Retry-After") ?: "")
+            arrayOf(
+                reported.toString(),
+                connection.getHeaderField("etag") ?: "",
+                connection.getHeaderField("Retry-After") ?: "",
+                connection.getHeaderField("Cache-Control") ?: "",
+            )
         } finally {
             deadline.cancel(false)
             connection.disconnect()

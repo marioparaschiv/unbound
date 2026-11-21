@@ -759,6 +759,13 @@ AndroidLoader::download(const std::string &url, const std::string &destination,
         env->DeleteLocalRef(retryAfter);
     }
 
+    if (env->GetArrayLength(response) >= 4)
+    {
+        auto cacheControl   = static_cast<jstring>(env->GetObjectArrayElement(response, 3));
+        result.cacheControl = cacheControl ? toStdString(env, cacheControl) : "";
+        env->DeleteLocalRef(cacheControl);
+    }
+
     env->DeleteLocalRef(status);
     env->DeleteLocalRef(etag);
     env->DeleteLocalRef(response);

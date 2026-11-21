@@ -224,6 +224,8 @@ private:
     std::atomic_bool frozen_{false};
     std::atomic_bool stuckOffered_{false};
     std::atomic_int64_t lastCheckMs_{0};
+    static constexpr double kMaxServerHoldSeconds = 6 * 60 * 60;
+    std::atomic_int64_t serverHoldUntilMs_{0};
     static constexpr int64_t kBackgroundRefreshLimitMs = 60 * 1000;
     BackgroundRefreshGate backgroundRefresh_{pipeline_time::nowMs(),
                                              static_cast<int64_t>(kBackgroundCheckSeconds * 1000),

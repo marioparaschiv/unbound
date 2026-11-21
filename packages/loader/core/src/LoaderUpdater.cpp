@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <filesystem>
+#include <regex>
 #include <stdexcept>
 
 #include "LoaderBundlePatch.h"
@@ -87,6 +88,11 @@ static std::string urlFileName(const std::string &url)
     std::string path = url.substr(0, url.find_first_of("?#"));
     size_t slash     = path.find_last_of('/');
     return slash == std::string::npos ? path : path.substr(slash + 1);
+}
+
+double BundleUpdater::serverMaxAgeSeconds() const
+{
+    return serverMaxAge_->load();
 }
 
 std::optional<std::string> BundleUpdater::fetch(const std::string &url) const
@@ -331,6 +337,18 @@ std::string bundleFailureNotice(BundleUpdateFailure failure, LoaderInstall insta
                 "Discord to try again, and report this to the developers if it keeps happening.");
 }
 
+std::optional<double> maxAgeSeconds(const std::string &cacheControl)
+{
+    static const std::regex kMaxAge(R"((?:^|[,\s])max-age\s*=\s*(\d+))", std::regex::icase);
+    std::smatch match;
+    if (!std::regex_search(cacheControl, match, kMaxAge))
+    {
+        return std::nullopt;
+    }
+
+    return std::stod(match[1].str());
+}
+
 std::optional<double> retryAfterSeconds(const std::string &header)
 {
     if (header.empty() || header.size() > 9
@@ -462,6 +480,8 @@ std::string BundleUpdater::downloadBundle(const std::string &preferredPath,
     {
         throw BundleUpdateError(BundleUpdateFailure::Network, "Could not download " + url);
     }
+
+    serverMaxAge_->store(maxAgeSeconds(response->cacheControl).value_or(0));
 
     if (!isAcceptedDownloadStatus(response->status))
     {

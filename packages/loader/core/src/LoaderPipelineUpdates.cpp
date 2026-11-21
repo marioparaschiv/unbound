@@ -84,6 +84,8 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
             downloaded = updater_.downloadBundle(savedPath, host_->resolveUpdateURL(),
                                                  host_->runtimeBytecodeVersion());
             preferences::setCheckedByLoader(settings_, loaderVersion());
+            double hold = std::min(updater_.serverMaxAgeSeconds(), kMaxServerHoldSeconds);
+            serverHoldUntilMs_.store(nowMs() + static_cast<int64_t>(hold * 1000));
             bool current = downloaded == savedPath || !fileExists(downloaded);
             currentAtMs_.store(current ? nowMs() : 0);
             recordUpdateCheck(epochMs(), current ? "current" : "downloaded");
@@ -266,7 +268,8 @@ bool LoaderPipeline::checkIfDue(const char *reason, double intervalSeconds)
     }
 
     int64_t last = lastCheckMs_.load();
-    bool due     = last != 0 && nowMs() - last >= static_cast<int64_t>(intervalSeconds * 1000);
+    bool due     = last != 0 && nowMs() - last >= static_cast<int64_t>(intervalSeconds * 1000)
+                   && nowMs() >= serverHoldUntilMs_.load();
     if (!due && !waitingForWifi_.load())
     {
         return false;
