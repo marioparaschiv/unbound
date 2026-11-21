@@ -9,6 +9,7 @@ export type Triage = {
 
 const NO_RESPONSE = '_No response_';
 const VERSION = /\d+\.\d+/;
+const VERSION_TABLE_ROW = /^\|\s*Unbound\s*\|\s*\d+\.\d+/m;
 
 const AREA_LABELS: [RegExp, string][] = [
 	[/^Loader\b/, 'Loader'],
@@ -72,7 +73,8 @@ export function triageIssue(body: string, labels: string[]): Triage {
 
 	return {
 		labels: wanted.filter((label) => !labels.includes(label)),
-		needsDetails: isBug && !VERSION.test(answers.Environment ?? ''),
+		needsDetails:
+			isBug && !VERSION.test(answers.Environment ?? '') && !VERSION_TABLE_ROW.test(body),
 	};
 }
 
