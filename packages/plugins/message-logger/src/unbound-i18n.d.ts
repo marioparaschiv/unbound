@@ -121,11 +121,11 @@ declare module '@unbound-app/i18n' {
 		readonly REMOVE: string;
 		/** Log deleted channels */
 		readonly LOG_DELETED_CHANNELS: string;
-		/** Keep a list of server channels deleted while Discord is open. */
+		/** Keep a list of server channels and threads deleted while Discord is open. */
 		readonly LOG_DELETED_CHANNELS_SUBTITLE: string;
 		/** Deleted Channels */
 		readonly DELETED_CHANNELS: string;
-		/** Server channels deleted while Discord was open, newest first. */
+		/** Server channels and threads deleted while Discord was open, newest first. */
 		readonly DELETED_CHANNELS_DESCRIPTION: string;
 		/** No channels deleted yet. */
 		readonly NO_DELETED_CHANNELS: string;
@@ -133,6 +133,8 @@ declare module '@unbound-app/i18n' {
 		readonly DELETED_CHANNEL_AT: string;
 		/** Clear Deleted Channels */
 		readonly CLEAR_DELETED_CHANNELS: string;
+		/** Thread in #{channel} */
+		readonly DELETED_THREAD_IN: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
@@ -140,6 +142,7 @@ declare module '@unbound-app/i18n' {
 		LOG_CLEARED: { count: number };
 		BEFORE_EDIT: { time: string | number };
 		DELETED_CHANNEL_AT: { time: string | number };
+		DELETED_THREAD_IN: { channel: string | number };
 	};
 
 	/** Each message in the user's locale, falling back to en-US. */

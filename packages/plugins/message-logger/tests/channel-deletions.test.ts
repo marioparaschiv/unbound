@@ -36,6 +36,23 @@ describe('a deleted channel', () => {
 		]);
 	});
 
+	test('logs a deleted thread with its parent channel', async () => {
+		await dispatch({
+			type: 'THREAD_DELETE',
+			channel: {
+				id: 't1',
+				name: 'release notes',
+				type: 11,
+				guild_id: 'g1',
+				parent_id: 'cat1',
+			},
+		});
+
+		expect(deletedChannels()).toMatchObject([
+			{ id: 't1', name: 'release notes', type: 11, categoryName: 'Text Channels' },
+		]);
+	});
+
 	test('is not logged when it is a closed DM', async () => {
 		await deleteChannel({ id: 'dm1', type: 1 });
 
