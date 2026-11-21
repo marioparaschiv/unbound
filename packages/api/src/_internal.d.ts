@@ -738,10 +738,13 @@ export type BackgroundBlurViewComponentProps = Omit<
 export type BackgroundGate = {
 	/** Milliseconds since the last refresh started, or since launch before the first. */
 	sinceLastMs: number;
+	/** The least time between two refreshes. */
 	intervalMs: number;
 	/** Milliseconds until the next background transition runs a refresh. */
 	dueInMs: number;
+	/** Refreshes this launch. */
 	runs: number;
+	/** Whether one is running now. */
 	running: boolean;
 };
 /** The props of Discord's `Badge`, read from Discord 352's `design/components/Badge/native/Badge.native.tsx`. */
