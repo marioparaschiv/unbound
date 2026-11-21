@@ -156,16 +156,11 @@ public:
     // if one waited for Wi-Fi.
     void onForeground();
     bool onBackground();
-    // The device started charging: runs the client's background refresh if it is due. Returns
-    // whether background work runs.
     bool onCharging();
     void noteVisible();
     bool awaitingVisibility() const;
     bool isCheckingForUpdate() const;
-    // Whether the update check or the client's background refresh still runs.
     bool isWorkingInBackground() const;
-    // How the platform schedules refreshes while Discord is closed, or why it does not, for
-    // `UnboundNative.getBackgroundRefresh`.
     void setScheduledRefresh(std::string status);
 
     // Delays before retrying a failed update check, before jitter.

@@ -52,7 +52,6 @@ const handler: CommandHandler<typeof buildCommand.schema> = async ({
 	}
 
 	const checks = buildChecks(declaredCapabilities);
-	// Each addon builds once, so nothing would reuse a TypeScript program, and its file cache grew by gigabytes over a workspace.
 	const cache = createCheckCache({ typescript: false });
 
 	// Each build is its own process, so a few run at once.

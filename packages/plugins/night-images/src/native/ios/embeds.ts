@@ -41,7 +41,6 @@ export function dimIosEmbeds(native: NativeBridge): () => Promise<void> {
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	let restyling = false;
 
-	// New messages lay out on their own; a restyle changes cells already on screen, so it redraws the chat.
 	function push() {
 		const redraw = restyling;
 
@@ -82,7 +81,6 @@ export function dimIosEmbeds(native: NativeBridge): () => Promise<void> {
 		stopTheme();
 		stopSettings();
 
-		// The restore runs before the scope goes, or disposing it would cancel the worklet mid-restore.
 		if (typeof native.ui.call === 'function') {
 			await native.ui
 				.call(restoreEmbedDimming)

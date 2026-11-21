@@ -105,7 +105,6 @@ export function pluginConfig(
 			sourceMaps: true,
 			// swc applies `refresh` only in development mode.
 			env: HERMES_SOURCE_ENV,
-			// One copy of each helper per bundle instead of one per module.
 			jsc: {
 				externalHelpers: true,
 				transform: {

@@ -28,13 +28,8 @@ struct UnboundNativeProvider {
     // Downloads the newer bundle for the next restart, honouring paused client updates. Runs off
     // the JS thread; returns whether one waits for the restart and throws what failed.
     std::function<bool()> updateBundle;
-    // Hashes the installed plugins into their digest caches. Runs off the JS thread; returns
-    // whether it read any plugin.
     std::function<bool()> warmAddonDigests;
-    // Removes staging leftovers and addon folders without a manifest. Runs off the JS thread;
-    // returns whether it removed any.
     std::function<bool()> removeOrphanedAddons;
-    // The background refresh's gate: when it last started, its interval and whether it runs.
     std::function<nlohmann::json()> getBackgroundRefresh;
     // Discord's first screen rendered; the loader counts the launch as healthy shortly after.
     std::function<void()> markRendered;
@@ -61,7 +56,5 @@ UnboundNativeProvider makeUnboundNativeProvider(const AddonState &addons,
 
 void installUnboundNative(facebook::jsi::Runtime &runtime, UnboundNativeProvider provider);
 
-// Runs the client's background refresh on the runtime thread and calls `settled` once its promise
-// settles, at once when the client registered none, or never when the runtime is gone.
 void runBackgroundRefresh(std::function<void(bool)> settled);
 }
