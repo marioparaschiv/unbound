@@ -38,7 +38,7 @@ Every function is on `patcher`, from `@unbound-app/api`. Each returns a function
 | `patcher.assign(parent, key, value)` | Sets a value, such as a list or constant on a module | | A function that puts the original back |
 | `patcher.unpatchAll()` | | | Removes every patch your plugin made, and puts back every value it assigned |
 
-`this` is the object the function was called on. The only option is `once: true`, which removes the patch after one run. Full signatures: [`patcher`](/docs/sdk/latest/patcher) in the SDK reference.
+`this` is the object the function was called on. Two options: `once: true` removes the patch after one run, and `last: true` runs it after every other patch of its kind on that function, including ones added later. Full signatures: [`patcher`](/docs/sdk/latest/patcher) in the SDK reference.
 
 ## Patch Kinds
 

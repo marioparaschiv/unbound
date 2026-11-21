@@ -4,19 +4,13 @@
  * including when a callback calls hooks.
  * This is the public surface behind `unbound.patcher` and `@unbound-app/api/patcher`.
  */
-import type {
-	AnyConstructor,
-	PatchCallback,
-	PatchOptions,
-	AnyFunction,
-	PatchParent,
-	PropOf,
-} from 'possess';
+import type { AnyConstructor, PatchCallback, AnyFunction, PatchParent, PropOf } from 'possess';
 import * as Possess from 'possess';
 
 import { patchWhenLoaded, pendingPatchCallers } from '~/patcher/apply';
 import { adoptReplacedMethods } from '~/patcher/replaced-methods';
 import { patch, recordRemovals } from '~/hot-refresh/live-patch';
+import type { UnboundPatchOptions } from '~/patcher/patch-order';
 import type { IsUntyped } from '~/patcher/is-untyped';
 import { createReactPatcher } from '~/patcher/react';
 import type { PatchPlace } from '~/patcher/react';
@@ -58,8 +52,9 @@ export type {
 	ReactPropsOf,
 	ReactSelfOf,
 } from '~/patcher/react';
-export type { PatchOptions, PatchParent, PropOf } from 'possess';
+export type { UnboundPatchOptions as PatchOptions } from '~/patcher/patch-order';
 export { assignValue as assign } from '~/patcher/assign';
+export type { PatchParent, PropOf } from 'possess';
 
 /**
  * The context a `before` callback receives.
@@ -137,7 +132,7 @@ function patchAt(
 	type: Possess.PatchType,
 	parent: PatchParent,
 	locate: (loaded: PatchParent) => PatchPlace,
-	options?: PatchOptions,
+	options?: UnboundPatchOptions,
 ) {
 	return patchWhenLoaded(parent, options?.caller, (target) => {
 		const place = locate(target);
@@ -168,13 +163,13 @@ export function before<M extends PatchParent, P extends PropOf<M>>(
 	parent: M,
 	method: P,
 	callback: BeforeCallback<ArgsOf<M[P]>, ResultOf<M[P]>, SelfOf<M, M[P]>>,
-	options?: PatchOptions,
+	options?: UnboundPatchOptions,
 ): () => void;
 export function before(
 	parent: PatchParent,
 	method: string,
 	callback: PatchCallback,
-	options?: PatchOptions,
+	options?: UnboundPatchOptions,
 ): () => void {
 	return patchAt(
 		Possess.PatchType.Before,
@@ -198,13 +193,13 @@ export function instead<M extends PatchParent, P extends PropOf<M>>(
 	parent: M,
 	method: P,
 	callback: InsteadCallback<ArgsOf<M[P]>, ResultOf<M[P]>, SelfOf<M, M[P]>>,
-	options?: PatchOptions,
+	options?: UnboundPatchOptions,
 ): () => void;
 export function instead(
 	parent: PatchParent,
 	method: string,
 	callback: PatchCallback,
-	options?: PatchOptions,
+	options?: UnboundPatchOptions,
 ): () => void {
 	return patchAt(
 		Possess.PatchType.Instead,
@@ -228,13 +223,13 @@ export function after<M extends PatchParent, P extends PropOf<M>>(
 	parent: M,
 	method: P,
 	callback: AfterCallback<ArgsOf<M[P]>, ResultOf<M[P]>, SelfOf<M, M[P]>>,
-	options?: PatchOptions,
+	options?: UnboundPatchOptions,
 ): () => void;
 export function after(
 	parent: PatchParent,
 	method: string,
 	callback: PatchCallback,
-	options?: PatchOptions,
+	options?: UnboundPatchOptions,
 ): () => void {
 	return patchAt(
 		Possess.PatchType.After,
