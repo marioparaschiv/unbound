@@ -10,7 +10,7 @@
 	],
 	"version": "1.0.2",
 	"unbound": {
-		"min": "3.0.0"
+		"min": "1.0.0"
 	},
 	"icon": "VideoIcon",
 	"main": "index.tsx"

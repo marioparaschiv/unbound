@@ -30,7 +30,7 @@
 	],
 	"version": "1.4.0",
 	"unbound": {
-		"min": "3.0.0"
+		"min": "1.0.0"
 	},
 	"icon": "UserPlusIcon",
 	"minNativeBridgeApi": "1.0.0",

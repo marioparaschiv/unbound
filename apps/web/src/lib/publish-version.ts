@@ -1,3 +1,4 @@
+import { minimumClientVersion } from '@unbound-app/contracts/client-version-reset';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { listAddonFiles } from '@unbound-app/contracts/addon-files';
 import { and, eq } from 'drizzle-orm';
@@ -96,7 +97,7 @@ function isRebuild(live: ClaimedVersion, source: AddonSource): boolean {
 }
 
 function toVersionRow(row: SubmissionRow, sha256: string, publishedAt: Date) {
-	const min = row.manifest.unbound?.min;
+	const min = minimumClientVersion(row.manifest.unbound?.min);
 
 	return {
 		addonId: row.addonId,

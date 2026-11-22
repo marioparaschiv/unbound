@@ -7,36 +7,31 @@
 		{ "type": "fix", "section": "Bug Fixes" },
 		{ "type": "perf", "section": "Performance Improvements" },
 		{ "type": "revert", "section": "Reverts" },
-		{ "type": "refactor", "section": "Code Refactoring" },
-		{ "type": "build", "section": "Build System" },
-		{ "type": "docs", "section": "Documentation" },
-		{ "type": "style", "section": "Styles" },
-		{ "type": "test", "section": "Tests" },
-		{ "type": "ci", "section": "Continuous Integration" },
+		{ "type": "refactor", "section": "Code Refactoring", "hidden": true },
+		{ "type": "build", "section": "Build System", "hidden": true },
+		{ "type": "docs", "section": "Documentation", "hidden": true },
+		{ "type": "style", "section": "Styles", "hidden": true },
+		{ "type": "test", "section": "Tests", "hidden": true },
+		{ "type": "ci", "section": "Continuous Integration", "hidden": true },
 		{ "type": "chore", "section": "Miscellaneous Chores", "hidden": true }
 	],
 	"packages": {
-		"packages/client": { "component": "client" },
-		"packages/api": { "component": "api" },
+		"packages/client": {
+			"component": "client",
+			"release-as": "1.0.0",
+			"exclude-paths": [
+				"packages/client/tests",
+				"packages/client/scripts/dev",
+				"packages/client/scripts/serve",
+				"packages/client/scripts/bench-android"
+			]
+		},
+		"packages/api": { "component": "api", "release-as": "1.0.0" },
 		"packages/cli": { "component": "cli" },
 		"packages/debugger": { "component": "debugger" },
 		"packages/debugger-protocol": { "component": "debugger-protocol" },
 		"packages/discord-types": { "component": "discord-types" },
-		"packages/contracts": {
-			"component": "contracts",
-			"draft": true,
-			"force-tag-creation": true
-		},
-		"packages/types": { "component": "types", "draft": true, "force-tag-creation": true },
-		"packages/utils": { "component": "utils", "draft": true, "force-tag-creation": true },
-		"packages/logger": { "component": "logger", "draft": true, "force-tag-creation": true },
 		"packages/rollup-plugin-hermes": { "component": "rollup-plugin-hermes" },
-		"apps/web": { "component": "web", "draft": true, "force-tag-creation": true },
-		"apps/sdk-generator": {
-			"component": "sdk-generator",
-			"draft": true,
-			"force-tag-creation": true
-		},
 		"apps/devtools": {
 			"component": "devtools",
 			"release-type": "simple",

@@ -1,6 +1,8 @@
+import { isPreResetVersion } from '@unbound-app/contracts/client-version-reset';
 import { CORE_BUCKET } from '@unbound-app/types/settings';
 import { AppState } from 'react-native';
 
+import { isStagedUpdateImportant, recordRunningBundle } from '~/updates/important-update';
 import { notifyClientUpdated, notifyStagedBundle, notifyUpdates } from '~/updates/notify';
 import { CLIENT_VERSION, Screens } from '~/core/constants';
 import { hasStagedBundle } from '~/native/unbound-native';
@@ -21,12 +23,25 @@ let stagedCheck: ReturnType<typeof setTimeout> | undefined;
 let appState: ReturnType<typeof AppState.addEventListener> | undefined;
 let unsubscribe: (() => void) | undefined;
 let stagedAnnounced = false;
+let stagedChecking = false;
 
-function announceStagedBundle() {
-	if (stagedAnnounced || !getSetting('updater.notify.client') || !hasStagedBundle()) return;
+// A staged bundle applies on the next launch anyway; only an important one is worth interrupting for.
+// A quiet answer is asked again on the next check, as a later build staged over it may be important.
+async function announceStagedBundle() {
+	if (stagedAnnounced || stagedChecking) return;
 
-	stagedAnnounced = true;
-	notifyStagedBundle();
+	if (!getSetting('updater.notify.client') || !hasStagedBundle()) return;
+
+	stagedChecking = true;
+
+	try {
+		if (await isStagedUpdateImportant()) {
+			stagedAnnounced = true;
+			notifyStagedBundle();
+		}
+	} finally {
+		stagedChecking = false;
+	}
 }
 
 async function update() {
@@ -50,9 +65,12 @@ function announceClient() {
 
 	getBucket(CORE_BUCKET).remove(LEGACY_LAST_CLIENT_VERSION);
 
+	// A pre-reset version (3.x) is older than every version after the reset, though it compares higher.
+	const reset = isPreResetVersion(previous) && !isPreResetVersion(CLIENT_VERSION);
+
 	// Keeps the newest version seen: the loader runs the previous bundle again when it discards an update that
 	// closed before it was healthy, and the retried update must not announce itself a second time.
-	if (previous && compareVersions(CLIENT_VERSION, previous) <= 0) return;
+	if (previous && !reset && compareVersions(CLIENT_VERSION, previous) <= 0) return;
 
 	if (getSetting('updater.notify.client')) {
 		notifyClientUpdated(previous, CLIENT_VERSION);
@@ -66,23 +84,24 @@ function announceClient() {
 
 /** Toasts a newly updated client, and offers a restart once the loader stages the next bundle. */
 export function start() {
+	recordRunningBundle();
 	announceClient();
 
 	// A check from the updates page can stage the next bundle well after launch.
 	unsubscribe = UpdatesStore.subscribe(({ state }) => {
 		if (state.status === 'ready' && state.client === 'staged') {
-			announceStagedBundle();
+			void announceStagedBundle();
 		}
 	});
 
-	stagedCheck = setTimeout(announceStagedBundle, STAGED_CHECK_DELAY);
+	stagedCheck = setTimeout(() => void announceStagedBundle(), STAGED_CHECK_DELAY);
 	appState = AppState.addEventListener('change', (state) => {
 		if (state !== 'active') return;
 
-		announceStagedBundle();
+		void announceStagedBundle();
 		// Returning to the foreground can start a loader update check, which takes a moment to download.
 		clearTimeout(stagedCheck);
-		stagedCheck = setTimeout(announceStagedBundle, STAGED_CHECK_DELAY);
+		stagedCheck = setTimeout(() => void announceStagedBundle(), STAGED_CHECK_DELAY);
 	});
 }
 

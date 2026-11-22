@@ -14,7 +14,7 @@
 	],
 	"version": "1.2.18",
 	"unbound": {
-		"min": "3.0.0"
+		"min": "1.0.0"
 	},
 	"icon": "TimerIcon",
 	"minNativeBridgeApi": "1.0.0",

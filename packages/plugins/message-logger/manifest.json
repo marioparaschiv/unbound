@@ -38,7 +38,7 @@
 	],
 	"version": "1.4.1",
 	"unbound": {
-		"min": "3.0.0"
+		"min": "1.0.0"
 	},
 	"icon": "EyeIcon",
 	"main": "index.tsx"

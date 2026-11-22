@@ -4,6 +4,7 @@ import type { Plugin } from 'rolldown';
 import { resolve } from 'node:path';
 
 import { BUNDLE_PATTERN, bundleHashes } from '../sign';
+import { contentHash } from '../content-hash';
 
 const logger = Logger.create('Build', 'Manifest');
 const root = resolve(__dirname, '..', '..', '..');
@@ -117,6 +118,10 @@ export function describeBytecodeMismatch(declared: number[], built: number[]): s
 export type ManifestOptions = {
 	/** The git revision the bundles were built from. */
 	revision: string;
+	/** The client version stamped into the bundles. */
+	clientVersion: string;
+	/** When the newest build users should restart for was made; clients toast only updates past it. */
+	importantAt?: string;
 	/** The bytecode versions `hermes.json` declares. */
 	declared: number[];
 	/** Whether a mismatch with `declared` only warns instead of failing the build. */
@@ -129,8 +134,8 @@ export type ManifestOptions = {
 
 /**
  * @description Writes `manifest.json` next to the bundles, listing the revision, channel, build time,
- * bytecode versions, oldest loader that runs them and each bundle's SHA-512.
- * @param options The build's revision, declared bytecode versions, leniency, channel and minimum loader.
+ * bytecode versions, oldest loader that runs them, each bundle's SHA-512 and the stamp-free content hash.
+ * @param options The build's revision, client version, declared bytecode versions, leniency, channel and minimum loader.
  * @returns Why the manifest was not written, or `null` once it is.
  */
 export function writeManifest(options: ManifestOptions): string | null {
@@ -155,6 +160,12 @@ export function writeManifest(options: ManifestOptions): string | null {
 		nativeBridge: parseNativeBridgeVersion(readFileSync(nativeBridgeVersionHeader, 'utf8')),
 		minLoaderVersion: options.minLoaderVersion,
 		sha512: bundleHashes(dist),
+		// CI compares it with the published manifest's and skips publishing a build that changes nothing users run.
+		contentHash: contentHash(dist, {
+			$$VERSION$$: options.revision,
+			$$CLIENT_VERSION$$: options.clientVersion,
+		}),
+		...(options.importantAt ? { importantAt: options.importantAt } : {}),
 	};
 
 	writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
@@ -166,6 +177,7 @@ export function writeManifest(options: ManifestOptions): string | null {
 /**
  * @description Writes `manifest.json` after every bundle, failing the build on a declared-version mismatch.
  * @param revision The git revision the bundle was built from.
+ * @param clientVersion The client version stamped into the bundle.
  * @param declared The bytecode versions `hermes.json` declares.
  * @param lenient Whether a mismatch with `declared` only warns instead of failing the build.
  * @param channel The channel the build is published to.
@@ -174,6 +186,7 @@ export function writeManifest(options: ManifestOptions): string | null {
  */
 export default function generateManifest(
 	revision: () => string,
+	clientVersion: () => string,
 	declared: number[],
 	lenient: boolean,
 	channel: string,
@@ -184,6 +197,7 @@ export default function generateManifest(
 		writeBundle() {
 			const problem = writeManifest({
 				revision: revision(),
+				clientVersion: clientVersion(),
 				declared,
 				lenient,
 				channel,

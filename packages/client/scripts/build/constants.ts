@@ -64,6 +64,9 @@ export const IS_DEV_BUILD = process.env.UNBOUND_DEV === '1' || process.argv.incl
 export const BUILD_CHANNEL =
 	process.env.UNBOUND_CHANNEL?.trim() || (IS_DEV_BUILD ? 'dev' : 'local');
 
+// CI sets it to when the newest important build was made, carried over from the published manifest.
+export const IMPORTANT_AT = process.env.UNBOUND_IMPORTANT_AT?.trim() || undefined;
+
 // The `serve` script's origin, baked in for locale tables and hot reload. Defaults to the LAN IP, as
 // a physical device can't reach `localhost` (that's the phone itself).
 export const DEV_SERVER_URL = IS_DEV_BUILD ? resolveDevServerUrl() : '';

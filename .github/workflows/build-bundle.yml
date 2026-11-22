@@ -6,6 +6,11 @@ name: Build Bundle
 # skipped, never overwritten. A bundle whose `minLoaderVersion` no published loader or Android release meets
 # fails before anything is published; loader-release-poll.yml runs this again once those releases ship.
 #
+# A build whose manifest `contentHash` matches the published one changes nothing users run, so it is not published.
+# Clients toast a staged update only when the manifest's `importantAt` is newer than the bundle they run: a commit
+# with an `Important-Update: <reason>` line in its message, or a manual run with `important`, moves it to now. The
+# line is matched anywhere, not as a git trailer: squash merges join commit bodies, which buries trailers mid-message.
+#
 # Configure in the repository settings:
 #   vars:    S3_ENDPOINT, S3_REGION, S3_PUBLIC_BUCKET
 #   secrets: S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY
@@ -13,6 +18,11 @@ name: Build Bundle
 
 on:
     workflow_dispatch:
+        inputs:
+            important:
+                description: Prompt users to restart for this build
+                type: boolean
+                default: false
     push:
         branches:
             - main
@@ -59,6 +69,39 @@ jobs:
                   revisions="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow build-bundle.yml --branch main --status success --limit 8 --json headSha --jq '[.[].headSha] | join(",")' || true)"
                   echo "revisions=$revisions" >> "$GITHUB_OUTPUT"
 
+            - name: Read the published manifest
+              id: published
+              env:
+                  IMPORTANT_INPUT: ${{ inputs.important }}
+              run: |
+                  set -euo pipefail
+                  manifest="$RUNNER_TEMP/published-manifest.json"
+                  curl --fail --silent --show-error --location --retry 3 https://builds.unbound.rip/manifest.json -o "$manifest" \
+                      || echo '{}' > "$manifest"
+                  revision="$(jq -r '.revision // ""' "$manifest")"
+
+                  # Every commit since the published build, or this one alone when that build's revision is unknown here.
+                  range=HEAD~1..HEAD
+                  if [ -n "$revision" ] && git rev-parse --quiet --verify "$revision^{commit}" > /dev/null; then
+                      range="$revision..HEAD"
+                  fi
+                  trailers="$(git log --format=%B "$range" -- | grep -E '^[*[:space:]]*Important-Update:[[:space:]]*[^[:space:]]' || true)"
+
+                  if [ "$IMPORTANT_INPUT" = true ] || [ -n "$trailers" ]; then
+                      important_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+                      echo "This build prompts users to restart." >> "$GITHUB_STEP_SUMMARY"
+                  else
+                      important_at="$(jq -r '.importantAt // ""' "$manifest")"
+                  fi
+
+                  # The content hash covers bytecode through its JavaScript, so compiler and build tooling changes always publish.
+                  tooling_changed="$(git diff --name-only "${range%%..*}" HEAD -- \
+                      packages/client/scripts/build packages/rollup-plugin-hermes/src packages/loader/core/src/LoaderBundlePatch.cpp)"
+
+                  echo "content-hash=$(jq -r '.contentHash // ""' "$manifest")" >> "$GITHUB_OUTPUT"
+                  echo "important-at=$important_at" >> "$GITHUB_OUTPUT"
+                  echo "tooling-changed=$([ -n "$tooling_changed" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
             - name: Build the loader's bundle patch checker
               run: packages/loader/core/tools/build-bundle-patch-check.sh "$RUNNER_TEMP/bundle_patch_check"
 
@@ -67,10 +110,27 @@ jobs:
               env:
                   TMPDIR: ${{ runner.temp }}
                   UNBOUND_CHANNEL: beta
+                  UNBOUND_IMPORTANT_AT: ${{ steps.published.outputs.important-at }}
                   UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}
                   UNBOUND_PATCH_BASE_URL: ${{ vars.CDN_URL && format('{0}/unbound/beta', vars.CDN_URL) || '' }}
                   UNBOUND_PATCH_REVISIONS: ${{ steps.patch-bases.outputs.revisions }}
                   UNBOUND_PATCH_VERIFIER: ${{ runner.temp }}/bundle_patch_check
+
+            - name: Check whether the build changes what users run
+              id: changed
+              env:
+                  PUBLISHED_HASH: ${{ steps.published.outputs.content-hash }}
+                  # A new hermesc or build tooling change can alter bytecode alone, which the content hash does not see.
+                  ALWAYS_PUBLISH: ${{ github.event_name != 'push' || steps.published.outputs.tooling-changed == 'true' }}
+              run: |
+                  set -euo pipefail
+                  built="$(jq -r '.contentHash' packages/client/dist/manifest.json)"
+                  if [ "$ALWAYS_PUBLISH" != true ] && [ -n "$PUBLISHED_HASH" ] && [ "$built" = "$PUBLISHED_HASH" ]; then
+                      echo "changed=false" >> "$GITHUB_OUTPUT"
+                      echo "The bundles match the published ones apart from their revision, so nothing is published." >> "$GITHUB_STEP_SUMMARY"
+                  else
+                      echo "changed=true" >> "$GITHUB_OUTPUT"
+                  fi
 
             - name: Check every bundle and the manifest are signed
               run: bun run --cwd packages/client verify-signatures
@@ -134,6 +194,7 @@ jobs:
                   if-no-files-found: error
 
             - name: Publish bundles to builds branch
+              if: steps.changed.outputs.changed == 'true'
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
@@ -171,7 +232,7 @@ jobs:
               run: echo "The public bucket is not configured (vars S3_ENDPOINT, S3_REGION, S3_PUBLIC_BUCKET; secrets S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY), so the bucket upload is skipped." >> "$GITHUB_STEP_SUMMARY"
 
             - name: Upload bundles to the public bucket
-              if: ${{ vars.S3_PUBLIC_BUCKET != '' }}
+              if: ${{ vars.S3_PUBLIC_BUCKET != '' && steps.changed.outputs.changed == 'true' }}
               run: bun run --cwd packages/client upload
               env:
                   UNBOUND_CHANNEL: beta
@@ -184,7 +245,7 @@ jobs:
 
             # Records the oldest loader this bundle runs on, so the update check tells older loaders to update.
             - name: Record the bundle's minimum loader
-              if: ${{ vars.UNBOUND_API_URL != '' }}
+              if: ${{ vars.UNBOUND_API_URL != '' && steps.changed.outputs.changed == 'true' }}
               env:
                   UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
                   UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}

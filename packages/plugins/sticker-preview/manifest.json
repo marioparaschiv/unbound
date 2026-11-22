@@ -14,7 +14,7 @@
 	],
 	"version": "1.0.5",
 	"unbound": {
-		"min": "3.0.0"
+		"min": "1.0.0"
 	},
 	"icon": "StickerIcon",
 	"main": "index.tsx"

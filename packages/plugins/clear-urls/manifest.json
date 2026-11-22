@@ -22,7 +22,7 @@
 	],
 	"version": "1.0.6",
 	"unbound": {
-		"min": "3.0.0"
+		"min": "1.0.0"
 	},
 	"icon": "LinkIcon",
 	"main": "index.tsx",
