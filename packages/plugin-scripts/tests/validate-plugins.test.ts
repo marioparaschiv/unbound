@@ -5,12 +5,13 @@ import { tmpdir } from 'node:os';
 import { expect, test } from 'bun:test';
 
 import {
+	validateAddonPageIcons,
 	validatePluginDirectory,
 	validatePluginFolder,
 	validatePluginDocs,
 	validateTextInputProps,
 } from '~/validate-plugins';
-import { PLUGINS_DIR } from '~/paths';
+import { NON_PLUGIN_ADDON_DIRS, PLUGINS_DIR } from '~/paths';
 
 const validManifest = {
 	id: 'unbound.example-plugin',
@@ -23,6 +24,26 @@ const validManifest = {
 
 test('every plugin folder follows the workspace convention', () => {
 	expect(validatePluginDirectory(PLUGINS_DIR)).toEqual([]);
+});
+
+test('every theme, font and icon pack uses known page icons', () => {
+	expect(NON_PLUGIN_ADDON_DIRS.flatMap(validateAddonPageIcons)).toEqual([]);
+});
+
+test('validateAddonPageIcons names the folder and the unknown shortcode', () => {
+	const directory = mkdtempSync(join(tmpdir(), 'addon-icons-'));
+
+	mkdirSync(join(directory, 'example-theme'));
+	writeFileSync(
+		join(directory, 'example-theme', 'ADDON.md'),
+		'- :sparkle: Ok.\n- :frame_with_picture: Bad.\n',
+	);
+
+	expect(validateAddonPageIcons(directory)).toEqual([
+		expect.stringContaining(
+			'example-theme: ADDON.md:2: :frame_with_picture: is not a page icon',
+		),
+	]);
 });
 
 const validChangelog =

@@ -9,7 +9,7 @@ import { findUnknownPageIcons } from '@unbound-app/contracts/addon-page-icons';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-import { PLUGINS_DIR } from './paths';
+import { NON_PLUGIN_ADDON_DIRS, PLUGINS_DIR } from './paths';
 
 const DISCORD_TEXT_INPUT = '<Discord.TextInput';
 const IGNORED_TEXT_INPUT_PROPS: Record<string, string> = {
@@ -210,8 +210,32 @@ export function validatePluginDirectory(pluginsDirectory: string): string[] {
 	return errors;
 }
 
+/**
+ * @description Checks the page icons of every ADDON.md one level under a theme, font or icon-pack directory.
+ * @param addonsDirectory The directory holding one addon per folder; a missing one has no addons.
+ * @returns One message per unknown shortcode, prefixed with its folder.
+ */
+export function validateAddonPageIcons(addonsDirectory: string): string[] {
+	if (!existsSync(addonsDirectory)) return [];
+
+	const errors: string[] = [];
+
+	for (const entry of readdirSync(addonsDirectory, { withFileTypes: true })) {
+		const addonPath = join(addonsDirectory, entry.name, 'ADDON.md');
+		if (!entry.isDirectory() || !existsSync(addonPath)) continue;
+
+		for (const error of validatePageIcons(readFileSync(addonPath, 'utf8')))
+			errors.push(`${entry.name}: ${error}`);
+	}
+
+	return errors;
+}
+
 export function main(): void {
-	const errors = validatePluginDirectory(PLUGINS_DIR);
+	const errors = [
+		...validatePluginDirectory(PLUGINS_DIR),
+		...NON_PLUGIN_ADDON_DIRS.flatMap(validateAddonPageIcons),
+	];
 	if (errors.length === 0) {
 		console.log('Plugin naming and manifest validation passed.');
 		return;
