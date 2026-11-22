@@ -7,7 +7,7 @@ import type {
 import type { ViewFrame, ViewNode } from '@unbound-app/debugger-protocol';
 
 import type { OutlineTarget, ViewLevel, ViewPage, ViewSource } from '~/debugger/view-finder.dev';
-import { asNumber, asText, onMainThread } from '~/debugger/objc-values.dev';
+import { asList, asNumber, asObject, asText, onMainThread } from '~/debugger/objc-values.dev';
 import { clipText, type PixelRect } from '~/debugger/view-node.dev';
 import { readIosDetails } from '~/debugger/view-details-ios.dev';
 
@@ -87,9 +87,7 @@ export function createIosViewSource(objc: LoaderObjCBridge): ViewSource {
 		const application = objc.getClass('UIApplication');
 		const shared = application ? objc.call(application, 'sharedApplication') : undefined;
 		const list = shared ? objc.call(shared as NativeObjectHandle, 'windows') : undefined;
-		const windows = (
-			list ? objc.array(list as NativeObjectHandle) : []
-		) as NativeObjectHandle[];
+		const windows = asList(objc, list).flatMap((window) => asObject(window) ?? []);
 		const visible = windows.filter((window) => objc.call(window, 'isHidden') !== true);
 		const page = visible.slice(offset, offset + limit);
 		const listed: Listed[] = [];
