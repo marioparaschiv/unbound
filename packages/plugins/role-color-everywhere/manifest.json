@@ -38,7 +38,7 @@
 	],
 	"version": "1.2.9",
 	"unbound": {
-		"min": "3.0.0"
+		"min": "1.0.0"
 	},
 	"icon": "PaintPaletteIcon",
 	"minNativeBridgeApi": "1.0.0",

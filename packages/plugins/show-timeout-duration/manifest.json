@@ -18,7 +18,7 @@
 	],
 	"version": "1.0.4",
 	"unbound": {
-		"min": "3.0.0"
+		"min": "1.0.0"
 	},
 	"icon": "TimerIcon",
 	"main": "index.tsx"

@@ -18,7 +18,7 @@
 	],
 	"version": "1.1.13",
 	"unbound": {
-		"min": "3.0.0"
+		"min": "1.0.0"
 	},
 	"icon": "UserSquareIcon",
 	"minNativeBridgeApi": "1.0.0",

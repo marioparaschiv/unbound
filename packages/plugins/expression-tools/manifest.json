@@ -27,7 +27,7 @@
 	"version": "1.0.9",
 	"permissions": ["account-token"],
 	"unbound": {
-		"min": "3.0.0"
+		"min": "1.0.0"
 	},
 	"icon": "ReactionIcon",
 	"main": "index.tsx",
