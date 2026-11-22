@@ -21,6 +21,8 @@ type AddonGroupHeaderProps = {
  * @description The Addons group's header row: the addon and update counts, opening or closing the rows the
  * page's list draws under it. It ends the group's card while closed.
  * Wrapped in a view: an open header draws its divider as a sibling, which the page's stack would space apart.
+ * Keyed by `expanded`: Discord's card clears a corner by leaving its radius undefined, which the native view
+ * ignores, so opening kept the rounded bottom; a fresh row draws square corners.
  */
 function AddonGroupHeader({ count, pending, expanded, onToggle }: AddonGroupHeaderProps) {
 	const { chevron } = useCollapseMotion(expanded);
@@ -29,6 +31,7 @@ function AddonGroupHeader({ count, pending, expanded, onToggle }: AddonGroupHead
 	return (
 		<View>
 			<Discord.TableRow
+				key={expanded ? 'open' : 'closed'}
 				label={messages.UNBOUND_UPDATES_ADDONS}
 				subLabel={
 					pending
