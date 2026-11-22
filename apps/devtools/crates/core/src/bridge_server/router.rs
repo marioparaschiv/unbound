@@ -13,6 +13,11 @@ use crate::bridge::{BridgeInfo, DeviceInfo};
 /// `REACT_DEVTOOLS_SHUTDOWN_EVENT` in the protocol.
 const REACT_DEVTOOLS_SHUTDOWN_EVENT: &str = "shutdown";
 
+const ACTIVE: &str = "active";
+const BACKGROUND: &str = "background";
+/// `APP_STATES` in the protocol.
+const APP_STATES: [&str; 3] = [ACTIVE, "inactive", BACKGROUND];
+
 pub(crate) type ConnId = u64;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -81,6 +86,10 @@ pub(crate) struct Router {
 	pending: HashMap<String, Pending>,
 	next_token: u64,
 	idle_token: u64,
+	/// The app state the device last reported in an `app-state` frame: one of [`APP_STATES`].
+	app_state: &'static str,
+	/// Whether the last device left while Discord was in the background.
+	left_in_background: bool,
 }
 
 impl Router {
@@ -100,6 +109,8 @@ impl Router {
 			pending: HashMap::new(),
 			next_token: 0,
 			idle_token: 0,
+			app_state: ACTIVE,
+			left_in_background: false,
 		};
 
 		router.arm_idle();
@@ -150,6 +161,8 @@ impl Router {
 			tx,
 			info: None,
 		});
+		self.app_state = ACTIVE;
+		self.left_in_background = false;
 		self.broadcast_status();
 	}
 
@@ -166,6 +179,7 @@ impl Router {
 
 		tracing::info!("Device disconnected");
 		self.device = None;
+		self.left_in_background = self.app_state == BACKGROUND;
 
 		for (id, pending) in std::mem::take(&mut self.pending) {
 			self.answer(
@@ -252,7 +266,12 @@ impl Router {
 		};
 
 		let Some(device) = &self.device else {
-			self.answer(conn, &request.failure(id, Failure::NoDevice));
+			let in_background = self.left_in_background;
+
+			self.answer(
+				conn,
+				&request.failure(id, Failure::NoDevice { in_background }),
+			);
 			return;
 		};
 
@@ -306,6 +325,13 @@ impl Router {
 
 				self.broadcast_status();
 			}
+			Some("app-state") => {
+				let state = frame["state"].as_str();
+
+				if let Some(known) = APP_STATES.into_iter().find(|known| Some(*known) == state) {
+					self.app_state = known;
+				}
+			}
 			Some("log") if is_log(frame) => {
 				for tx in self.controllers.values() {
 					let _ = tx.send(Outgoing::Text(text.to_owned()));
@@ -349,7 +375,12 @@ impl Router {
 		if let Some(pending) = self.pending.remove(id) {
 			self.answer(
 				pending.origin,
-				&pending.request.failure(id, Failure::TimedOut),
+				&pending.request.failure(
+					id,
+					Failure::TimedOut {
+						foreground: self.app_state == ACTIVE,
+					},
+				),
 			);
 		}
 	}
@@ -379,6 +410,9 @@ impl Router {
 				json!({ "type": "device-status", "connected": true, "device": info })
 			}
 			Some(_) => json!({ "type": "device-status", "connected": true }),
+			None if self.left_in_background => {
+				json!({ "type": "device-status", "connected": false, "inBackground": true })
+			}
 			None => json!({ "type": "device-status", "connected": false }),
 		}
 	}
