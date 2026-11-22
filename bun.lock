@@ -35,7 +35,7 @@
         "@opentelemetry/resources": "^3.0.0",
         "@opentelemetry/sdk-logs": "^3.0.0",
         "@sapphire/decorators": "^6.2.0",
-        "@sapphire/discord.js-utilities": "^7.3.3",
+        "@sapphire/discord.js-utilities": "^8.0.0",
         "@sapphire/framework": "^5.5.1",
         "@sapphire/pieces": "^4.4.1",
         "@sapphire/plugin-logger": "^4.1.0",
@@ -4606,11 +4606,11 @@
 
     "@sapphire/decorators": ["@sapphire/decorators@6.2.0", "", { "dependencies": { "tslib": "^2.8.1" } }, "sha512-st1DNDCNoZaZYz3fgCA99W87Bhe6XqM8y0G+Z9NBOBEqvOYkVNGcPMDrMiaZrPD9Z471k8fpLqJVUNSuWUx8Hg=="],
 
-    "@sapphire/discord-utilities": ["@sapphire/discord-utilities@3.5.0", "", { "dependencies": { "discord-api-types": "^0.38.1" } }, "sha512-H4SY5KTVDZrqA5QG7ob6etwqhdOb3TRSY2wv56f0tiobUdIr0irlrYvdmr8Kg/FRxWU+aiHDIISWGG5vBuxOGw=="],
+    "@sapphire/discord-utilities": ["@sapphire/discord-utilities@5.0.0", "", { "dependencies": { "discord-api-types": "^0.38.59" } }, "sha512-9W+Mx0oKs+yuDC5Y/Fm9zXsnbGzIHed/QPRUHo5MziarxFJUZ6ZRopiFKy3s6dfdspYweISJs3R7efmmoV3flw=="],
 
-    "@sapphire/discord.js-utilities": ["@sapphire/discord.js-utilities@7.3.3", "", { "dependencies": { "@sapphire/discord-utilities": "^3.5.0", "@sapphire/duration": "^1.2.0", "@sapphire/utilities": "^3.18.2", "tslib": "^2.8.1" } }, "sha512-WDj+zjWgNCUSvzYDD0wY3TVeTUseHq0Nhk0wVWxSDjY8z2gFEVcpY7wF8/fbTDWP44LUG5sUQ4haIrIj2OjmkQ=="],
+    "@sapphire/discord.js-utilities": ["@sapphire/discord.js-utilities@8.0.0", "", { "dependencies": { "@sapphire/discord-utilities": "^5.0.0", "@sapphire/duration": "^2.0.0", "@sapphire/utilities": "^4.0.0" }, "peerDependencies": { "discord.js": "*" } }, "sha512-1d7eiMqC2iQKDSOnsLHuDr3uqB3x3CUTGhCZtvIWDJgdP6Mesd+Ado1nQ5/FMpuFWsumP7Lojy246tA94PFSlg=="],
 
-    "@sapphire/duration": ["@sapphire/duration@1.2.0", "", {}, "sha512-LxjOAFXz81WmrI8XX9YaVcAZDjQj/1p78lZCvkAWZB1nphOwz/D0dU3CBejmhOWx5dO5CszTkLJMNR0xuCK+Zg=="],
+    "@sapphire/duration": ["@sapphire/duration@2.0.0", "", {}, "sha512-nkksFA1WSzdNcNoh05JCtwPcGbtU0lTZZGdbNgoEhX9xTC3svBEJJN881T+wFmB3RpnOONEcxp/6pv7el7dZyw=="],
 
     "@sapphire/framework": ["@sapphire/framework@5.5.1", "", { "dependencies": { "@discordjs/builders": "^1.13.0", "@sapphire/discord-utilities": "^4.0.0", "@sapphire/discord.js-utilities": "^7.3.3", "@sapphire/lexure": "^1.1.12", "@sapphire/pieces": "^4.4.1", "@sapphire/ratelimits": "^2.4.11", "@sapphire/result": "^2.8.0", "@sapphire/stopwatch": "^1.5.4", "@sapphire/utilities": "^3.18.2" } }, "sha512-UlEoj3XRjSyGJg1+kD43q5YHfmDDJ1fNN5Ws3OifvgMNhnOrrL1diTjU1ALfLrfUbPuBCJWD1ZfIj/i/J4K9eQ=="],
 
@@ -4634,7 +4634,7 @@
 
     "@sapphire/timestamp": ["@sapphire/timestamp@1.0.5", "", {}, "sha512-oNwWyNdbt5wm4aYZvlHl1+64U3g0xrFmRIHsnER7RgMxNnp/wmAE4yTK2oUHeadg3t4V9iYctPAQCF+aINke4g=="],
 
-    "@sapphire/utilities": ["@sapphire/utilities@3.18.3", "", {}, "sha512-Y57/O3lgdf13ezQ4C+KFZKINoQR+OOcQP200sG5imlwcHM7frqez6BwWHujyguodaZjRn7R8W4fMLp4ipDsBPw=="],
+    "@sapphire/utilities": ["@sapphire/utilities@4.0.0", "", {}, "sha512-GBM5Caqiw7amBxwbeuXc6asBAZkiRPexXxjN9zX6jD8glpGTvq5zjnDOzeTsNAWhsRpZOc+KeFoWURbImS2Yww=="],
 
     "@sec-ant/readable-stream": ["@sec-ant/readable-stream@0.4.1", "", {}, "sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg=="],
 
@@ -7172,6 +7172,14 @@
 
     "@sapphire/framework/@sapphire/discord-utilities": ["@sapphire/discord-utilities@4.0.0", "", { "dependencies": { "discord-api-types": "^0.38.30" } }, "sha512-QAvrKNHgswz+ZX48WqSYpRiRzQcugNXXB1C3fR1qbpTJGd7Ckr2OWyFK88TyOksi3U2isrk8sMriTcAgaIe7Qg=="],
 
+    "@sapphire/framework/@sapphire/discord.js-utilities": ["@sapphire/discord.js-utilities@7.3.3", "", { "dependencies": { "@sapphire/discord-utilities": "^3.5.0", "@sapphire/duration": "^1.2.0", "@sapphire/utilities": "^3.18.2", "tslib": "^2.8.1" } }, "sha512-WDj+zjWgNCUSvzYDD0wY3TVeTUseHq0Nhk0wVWxSDjY8z2gFEVcpY7wF8/fbTDWP44LUG5sUQ4haIrIj2OjmkQ=="],
+
+    "@sapphire/framework/@sapphire/utilities": ["@sapphire/utilities@3.18.3", "", {}, "sha512-Y57/O3lgdf13ezQ4C+KFZKINoQR+OOcQP200sG5imlwcHM7frqez6BwWHujyguodaZjRn7R8W4fMLp4ipDsBPw=="],
+
+    "@sapphire/pieces/@sapphire/utilities": ["@sapphire/utilities@3.18.3", "", {}, "sha512-Y57/O3lgdf13ezQ4C+KFZKINoQR+OOcQP200sG5imlwcHM7frqez6BwWHujyguodaZjRn7R8W4fMLp4ipDsBPw=="],
+
+    "@sapphire/plugin-subcommands/@sapphire/utilities": ["@sapphire/utilities@3.18.3", "", {}, "sha512-Y57/O3lgdf13ezQ4C+KFZKINoQR+OOcQP200sG5imlwcHM7frqez6BwWHujyguodaZjRn7R8W4fMLp4ipDsBPw=="],
+
     "@semantic-release/commit-analyzer/conventional-commits-parser": ["conventional-commits-parser@6.4.0", "", { "dependencies": { "@simple-libs/stream-utils": "^1.2.0", "meow": "^13.0.0" }, "bin": { "conventional-commits-parser": "dist/cli/index.js" } }, "sha512-tvRg7FIBNlyPzjdG8wWRlPHQJJHI7DylhtRGeU9Lq+JuoPh5BKpPRX83ZdLrvXuOSu5Eo/e7SzOQhU4Hd2Miuw=="],
 
     "@semantic-release/git/aggregate-error": ["aggregate-error@5.1.0", "", { "dependencies": { "clean-stack": "^5.2.0", "indent-string": "^5.0.0" } }, "sha512-1m4/ydbOGBbHTtBYa4/ISQcqfPdZAxQLzj71wM71T8lP4ktez8lcsVolvscrujQW4CJr/LJSzoZ6mcfnqzYQ3A=="],
@@ -7729,6 +7737,10 @@
     "@react-native/metro-config/metro-config/metro-core": ["metro-core@0.87.3", "", { "dependencies": { "flow-enums-runtime": "^0.0.6", "lodash.throttle": "^4.1.1", "metro-resolver": "0.87.3" } }, "sha512-9aleh7DWSQpyntLnDALf86LGIg3NgDST/HEmEeR51CuiHfrzIN08aCbe9y+OAqPzFUOzgUfYMVGfgQOIbitigA=="],
 
     "@react-native/metro-config/metro-runtime/@babel/runtime": ["@babel/runtime@7.29.14", "", {}, "sha512-Y5tqevQaUAZhhj82BpYMNC1ssvLQTVAfwKdm8iy8qwmhvC2/CpcAu8OC+QEtjM7pMk7knx83u1Qj8gzkicyelw=="],
+
+    "@sapphire/framework/@sapphire/discord.js-utilities/@sapphire/discord-utilities": ["@sapphire/discord-utilities@3.5.0", "", { "dependencies": { "discord-api-types": "^0.38.1" } }, "sha512-H4SY5KTVDZrqA5QG7ob6etwqhdOb3TRSY2wv56f0tiobUdIr0irlrYvdmr8Kg/FRxWU+aiHDIISWGG5vBuxOGw=="],
+
+    "@sapphire/framework/@sapphire/discord.js-utilities/@sapphire/duration": ["@sapphire/duration@1.2.0", "", {}, "sha512-LxjOAFXz81WmrI8XX9YaVcAZDjQj/1p78lZCvkAWZB1nphOwz/D0dU3CBejmhOWx5dO5CszTkLJMNR0xuCK+Zg=="],
 
     "@semantic-release/commit-analyzer/conventional-commits-parser/@simple-libs/stream-utils": ["@simple-libs/stream-utils@1.2.0", "", {}, "sha512-KxXvfapcixpz6rVEB6HPjOUZT22yN6v0vI0urQSk1L8MlEWPDFCZkhw2xmkyoTGYeFw7tWTZd7e3lVzRZRN/EA=="],
 
