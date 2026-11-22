@@ -1,3 +1,7 @@
+// Release builds open as a desktop app on Windows, without a console window; debug builds keep
+// one for logs.
+#![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
+
 mod agents;
 mod app;
 mod appearance;
@@ -20,6 +24,7 @@ mod metro;
 mod nav;
 mod nav_list;
 mod pairing;
+mod parent_console;
 mod popout;
 mod press;
 mod react_edit;
@@ -109,6 +114,8 @@ impl Cli {
 }
 
 fn main() -> anyhow::Result<()> {
+	// Before parsing, so `--help` and argument errors reach the terminal.
+	parent_console::attach();
 	let cli = Cli::parse();
 	tracing_subscriber::fmt()
 		.with_writer(std::io::stderr)

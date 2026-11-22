@@ -186,10 +186,16 @@ fn shell_command(program: &str, args: &[String]) -> Command {
 
 #[cfg(windows)]
 fn shell_command(program: &str, args: &[String]) -> Command {
-	// `cmd` resolves npm's `.cmd` shims, which a bare spawn does not.
+	// `cmd` resolves npm's `.cmd` shims, which a bare spawn does not. Without CREATE_NO_WINDOW,
+	// a console program started from the windowless app flashes a console window.
+	const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 	let mut command = Command::new("cmd");
 
-	command.arg("/C").arg(program).args(args);
+	command
+		.arg("/C")
+		.arg(program)
+		.args(args)
+		.creation_flags(CREATE_NO_WINDOW);
 	command
 }
 
