@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.12.0](https://github.com/marioparaschiv/unbound/compare/client-v3.11.2...client-v3.12.0) (2026-11-22)
+
+
+### Features
+
+* **devtools:** smooth sidebar press, Windows icon and exe name ([#2168](https://github.com/marioparaschiv/unbound/issues/2168)) ([5dc00c8](https://github.com/marioparaschiv/unbound/commit/5dc00c8df1d1e60d3250d81046fd8b4a31f5fbd2))
+
+
+### Styles
+
+* **client:** sort the surface guard import ([#2177](https://github.com/marioparaschiv/unbound/issues/2177)) ([a8ec4dc](https://github.com/marioparaschiv/unbound/commit/a8ec4dc520c0dfb7763651aff58017a80f5dba55))
+
 ## [3.11.2](https://github.com/marioparaschiv/unbound/compare/client-v3.11.1...client-v3.11.2) (2026-11-22)
 
 

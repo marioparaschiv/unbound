@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.6.0...devtools-v1.7.0) (2026-11-22)
+
+
+### Features
+
+* **devtools:** smooth sidebar press, Windows icon and exe name ([#2168](https://github.com/marioparaschiv/unbound/issues/2168)) ([5dc00c8](https://github.com/marioparaschiv/unbound/commit/5dc00c8df1d1e60d3250d81046fd8b4a31f5fbd2))
+
 ## [1.6.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.5.0...devtools-v1.6.0) (2026-11-17)
 
 
