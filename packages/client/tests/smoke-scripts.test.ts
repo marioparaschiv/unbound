@@ -34,6 +34,7 @@ mock.module('~/native/fs', () => ({
 function mockReactNative() {
 	mock.module('react-native', () => ({
 		Alert: { alert: () => undefined },
+		AppState: { addEventListener: () => ({ remove: () => undefined }) },
 		NativeModules: {},
 		Platform: { OS: 'android' },
 		TurboModuleRegistry: { get: () => undefined },
