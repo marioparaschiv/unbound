@@ -11,10 +11,10 @@ Install plugins, themes, fonts, and icon packs on the official Discord app, on b
 <br />
 
 [![Stars](https://img.shields.io/github/stars/marioparaschiv/unbound?style=for-the-badge&labelColor=0c0c0c&color=c03f4e)](https://github.com/marioparaschiv/unbound/stargazers)
-[![Discord](https://img.shields.io/discord/950850315601711176?style=for-the-badge&label=discord&labelColor=0c0c0c&color=c03f4e)](https://discord.gg/unbound)
+[![Discord](https://img.shields.io/discord/950850315601711176?style=for-the-badge&label=discord&labelColor=0c0c0c&color=c03f4e)](https://discord.gg/rMdzhWUaGT)
 [![License](https://img.shields.io/badge/license-GPL--3.0-c03f4e?style=for-the-badge&labelColor=0c0c0c)](./LICENSE)
 
-**[Documentation](https://unbound.rip/docs)** · [Install](https://unbound.rip/install) · [Discord](https://discord.gg/unbound)
+**[Documentation](https://unbound.rip/docs)** · [Install](https://unbound.rip/install) · [Discord](https://discord.gg/rMdzhWUaGT)
 
 </div>
 
