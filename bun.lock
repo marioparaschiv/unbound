@@ -158,7 +158,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "3.11.2",
+      "version": "3.12.0",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -172,7 +172,7 @@
     },
     "packages/cli": {
       "name": "@unbound-app/cli",
-      "version": "3.5.2",
+      "version": "3.5.3",
       "bin": {
         "ubd": "src/index.ts",
       },
@@ -231,7 +231,7 @@
     },
     "packages/client": {
       "name": "@unbound-app/client",
-      "version": "3.11.2",
+      "version": "3.12.0",
       "dependencies": {
         "@unbound-app/contracts": "workspace:*",
         "@unbound-app/debugger-protocol": "workspace:*",
