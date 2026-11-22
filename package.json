@@ -99,7 +99,7 @@
 		"oxfmt": "^0.79.0",
 		"oxlint": "^1.94.0",
 		"oxlint-tsgolint": "^7.0.2007",
-		"semantic-release": "^25.0.9",
+		"semantic-release": "^26.0.1",
 		"ts-morph": "^28.0.0",
 		"typescript": "catalog:"
 	},
