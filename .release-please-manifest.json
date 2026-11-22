@@ -12,5 +12,5 @@
 	"packages/rollup-plugin-hermes": "3.0.4",
 	"apps/web": "2.10.0",
 	"apps/sdk-generator": "1.0.10",
-	"apps/devtools": "1.8.0"
+	"apps/devtools": "1.8.1"
 }

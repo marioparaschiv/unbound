@@ -8805,7 +8805,7 @@ checksum = "eaea85b334db583fe3274d12b4cd1880032beab409c0d774be044d4480ab9a94"
 
 [[package]]
 name = "unbound-devtools"
-version = "1.8.0"
+version = "1.8.1"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -8831,7 +8831,7 @@ dependencies = [
 
 [[package]]
 name = "unbound-devtools-core"
-version = "1.8.0"
+version = "1.8.1"
 dependencies = [
  "anyhow",
  "axum",
@@ -8858,7 +8858,7 @@ dependencies = [
 
 [[package]]
 name = "unbound-devtools-repl"
-version = "1.8.0"
+version = "1.8.1"
 dependencies = [
  "anyhow",
  "dirs",

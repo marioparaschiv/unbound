@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/marioparaschiv/unbound/compare/devtools-v1.8.0...devtools-v1.8.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* **devtools:** jq search predicates, console empty state and follow ([#2190](https://github.com/marioparaschiv/unbound/issues/2190)) ([72373a9](https://github.com/marioparaschiv/unbound/commit/72373a99ddf0c159e1e9baf57dd75c946dddd77f))
+
 ## [1.8.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.7.1...devtools-v1.8.0) (2026-11-22)
 
 
