@@ -1,7 +1,7 @@
 import { flux, metro, patcher } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
 
-import { emojiLink, emojisIn, replaceEmojis, type FakeEmoji } from '~/lib/links';
+import { emojiLink, emojisIn, isOnlyEmojis, replaceEmojis, type FakeEmoji } from '~/lib/links';
 import { canUseEmoji } from '~/lib/premium';
 
 type OutgoingMessage = {
@@ -14,6 +14,11 @@ type EditedMessage = { content?: string };
 type KnownEmoji = { guildId?: string };
 
 type DisabledReasons = { PREMIUM_LOCKED?: number; DISALLOW_EXTERNAL?: number };
+
+/** Masks links unless the user keeps masking to text and the message is only emojis. */
+function hyperlinksFor(content: string): boolean {
+	return settings.hyperlinks && !(settings.hyperlinksInText && isOnlyEmojis(content));
+}
 
 /**
  * @description Lets the emoji picker and autocomplete offer emojis Discord locks behind Nitro or the external emoji
@@ -69,12 +74,13 @@ export function patchEmojiSending(): void {
 		if (!message?.content || !message.validNonShortcutEmojis?.length) return;
 
 		const channel = flux.getStore('Channel').getChannel(channelId);
+		const hyperlink = hyperlinksFor(message.content);
 
 		message.content = replaceEmojis(
 			message.content,
 			message.validNonShortcutEmojis,
 			(emoji) => canUseEmoji(emoji, channel),
-			(emoji) => emojiLink(emoji, settings.emojiSize, settings.hyperlinks),
+			(emoji) => emojiLink(emoji, settings.emojiSize, hyperlink),
 		);
 		message.validNonShortcutEmojis = message.validNonShortcutEmojis.filter((emoji) =>
 			canUseEmoji(emoji, channel),
@@ -101,12 +107,13 @@ export function patchEmojiEditing(): void {
 		if (!message?.content) return;
 
 		const channel = flux.getStore('Channel').getChannel(channelId);
+		const hyperlink = hyperlinksFor(message.content);
 
 		message.content = replaceEmojis(
 			message.content,
 			emojisIn(message.content).map(withGuild),
 			(emoji) => canUseEmoji(emoji, channel),
-			(emoji) => emojiLink(emoji, settings.emojiSize, settings.hyperlinks),
+			(emoji) => emojiLink(emoji, settings.emojiSize, hyperlink),
 		);
 	});
 }

@@ -175,6 +175,12 @@ declare module '@unbound-app/settings' {
 		 * Sends [name](link) instead of the bare link.
 		 */
 		hyperlinks: boolean;
+		/**
+		 * Plain links for emoji-only messages
+		 *
+		 * Skips [name](link) when a message is just emojis, so they show as images.
+		 */
+		hyperlinksInText: boolean;
 	};
 
 	/** Each setting and section by its dot-separated key. */
@@ -223,6 +229,12 @@ declare module '@unbound-app/settings' {
 		 * Sends [name](link) instead of the bare link.
 		 */
 		"hyperlinks": boolean;
+		/**
+		 * Plain links for emoji-only messages
+		 *
+		 * Skips [name](link) when a message is just emojis, so they show as images.
+		 */
+		"hyperlinksInText": boolean;
 	};
 
 	/** Every setting and section by its dot-separated key; buttons and notices are not settings. */
@@ -234,7 +246,7 @@ declare module '@unbound-app/settings' {
 	export type ActionName = never;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
-	export type BooleanSettingKey = "emojis" | "stickers" | "receiveEmojis" | "receiveStickers" | "streamQuality" | "hyperlinks";
+	export type BooleanSettingKey = "emojis" | "stickers" | "receiveEmojis" | "receiveStickers" | "streamQuality" | "hyperlinks" | "hyperlinksInText";
 
 	/** The plugin's settings. Assign a property, a section's too, to save it. */
 	export const settings: Settings;

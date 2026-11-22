@@ -7,6 +7,8 @@
 	"STICKER_SIZE": "Sticker size",
 	"HYPERLINKS": "Hide links behind names",
 	"HYPERLINKS_SUBTITLE": "Sends [name](link) instead of the bare link.",
+	"HYPERLINKS_IN_TEXT": "Plain links for emoji-only messages",
+	"HYPERLINKS_IN_TEXT_SUBTITLE": "Skips [name](link) when a message is just emojis, so they show as images.",
 	"RECEIVE_EMOJIS": "Show received fake emojis",
 	"RECEIVE_EMOJIS_SUBTITLE": "Turn emoji links sent with Fake Nitro, yours included, back into emojis.",
 	"RECEIVE_STICKERS": "Show received fake stickers",

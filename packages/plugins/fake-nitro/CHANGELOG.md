@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0] - 2026-11-22
+
+### Added
+
+- Plain links for emoji-only messages, on by default: a message that is just fake emojis sends their bare links, so they show as images, while emojis inside text stay hidden behind their names.
+
 ## [1.2.1] - 2026-11-17
 
 ### Fixed
