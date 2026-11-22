@@ -29,6 +29,8 @@ pub(crate) enum Role {
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum Outgoing {
 	Text(String),
+	/// An unsolicited pong, which a WebSocket peer ignores; the segment carries the TCP ACK at once.
+	Ack,
 	Close,
 }
 
@@ -240,11 +242,14 @@ impl Router {
 
 		if self.controllers.contains_key(&conn) {
 			self.route_controller_frame(conn, &frame, text);
-		} else if self
-			.device
-			.as_ref()
-			.is_some_and(|device| device.conn == conn)
-		{
+		} else if let Some(device) = self.device.as_ref().filter(|device| device.conn == conn) {
+			// Phones send with Nagle on, so an answer written while a log frame is unacknowledged
+			// waits out this host's delayed ACK (40-200 ms); acknowledging each frame at once while
+			// a request is out releases it after one round trip.
+			if !self.pending.is_empty() {
+				let _ = device.tx.send(Outgoing::Ack);
+			}
+
 			self.route_device_frame(&frame, text);
 		}
 	}

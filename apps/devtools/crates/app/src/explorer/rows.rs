@@ -6,6 +6,7 @@ use std::rc::Rc;
 
 use unbound_devtools_core::{ExplorerMember, ExplorerMemberKind};
 
+use super::fold::FoldKey;
 use super::{Explorer, Load};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -101,7 +102,8 @@ impl Explorer {
 		}
 		for (index, class) in object.chain.iter().enumerate() {
 			items.push(Item::Class { index });
-			if !self.expanded.contains(&class.name) {
+			let held = self.held_open(&FoldKey::Class(class.name.clone()));
+			if !self.expanded.contains(&class.name) && !held {
 				continue;
 			}
 			for kind in self.kinds_of(index) {
@@ -110,7 +112,8 @@ impl Explorer {
 					class: name.clone(),
 					kind,
 				});
-				if self.open.contains(&(name.clone(), kind)) {
+				let held = self.held_open(&FoldKey::Section(name.clone(), kind));
+				if self.open.contains(&(name.clone(), kind)) || held {
 					self.push_section(name, kind, &mut items);
 				}
 			}
@@ -157,6 +160,7 @@ impl Explorer {
 			}
 		}
 		self.items = Rc::new(items);
+		self.anchor_fold();
 		self.restore_scroll();
 	}
 

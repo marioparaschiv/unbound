@@ -1,10 +1,14 @@
 // The console's helper, installed as `globalThis.__unboundRepl`: runs an entry, keeps it as `$n`,
-// and answers with a bounded preview and the value's shape as a type, never the whole value.
+// and answers with a bounded preview and the value's shape as a type, never the whole value. Each
+// value the preview leaves folded (`{…}`, `[…]`) comes with its path from `$n`, which
+// `__unboundRepl.expand` previews in turn.
 (() => {
 	const DEPTH = 2;
 	const ENTRIES = 40;
 	const STRING = 160;
 	const PREVIEW_BUDGET = 16000;
+	// One `expand` answer stops previewing once it holds this much; the rest come on demand.
+	const EXPAND_BUDGET = 64000;
 	const TYPE_DEPTH = 2;
 	const TYPE_MEMBERS = 50;
 	const TYPE_BUDGET = 6000;
@@ -110,12 +114,18 @@
 		return seen.includes(value) ? '[Circular]' : undefined;
 	}
 
-	/** Entries to show, as `[label, value, separator]`, and how many there are in all. */
+	/**
+	 * Entries to show, as `[label, value, separator, step]`, and how many there are in all. A step
+	 * finds the entry again from its parent: `{ k }` a key, `{ m }` the nth Map value, `{ s }` the
+	 * nth Set item.
+	 */
 	function entriesOf(value) {
 		const entries = [];
 
 		if (Array.isArray(value)) {
-			for (const item of value.slice(0, ENTRIES)) entries.push(['', item, '']);
+			for (const [ix, item] of value.slice(0, ENTRIES).entries()) {
+				entries.push(['', item, '', { k: String(ix) }]);
+			}
 
 			return { entries, total: value.length, head: '', brackets: '[]' };
 		}
@@ -130,6 +140,7 @@
 					typeof mapKey === 'string' ? JSON.stringify(mapKey) : String(mapKey),
 					item,
 					' => ',
+					{ m: entries.length },
 				]);
 			}
 
@@ -142,7 +153,7 @@
 					break;
 				}
 
-				entries.push(['', item, '']);
+				entries.push(['', item, '', { s: entries.length }]);
 			}
 
 			return { entries, total: value.size, head: `Set(${value.size}) `, brackets: '[]' };
@@ -151,17 +162,47 @@
 		const keys = ownKeys(value);
 
 		for (const name of keys.slice(0, ENTRIES))
-			entries.push([key(name), read(value, name), ': ']);
+			entries.push([key(name), read(value, name), ': ', { k: name }]);
 
 		const name = className(value);
 
 		return { entries, total: keys.length, head: name ? `${name} ` : '', brackets: '{}' };
 	}
 
+	// The entry a step names, read without running getters twice.
+	function step(value, { k, m, s }) {
+		if (k !== undefined) {
+			return read(value, k);
+		}
+
+		const index = m ?? s;
+		let at = 0;
+
+		for (const item of m !== undefined ? value.values() : value) {
+			if (at++ === index) {
+				return item;
+			}
+		}
+
+		return undefined;
+	}
+
+	// The preview, and each value it folded as `{ line, start, end, path }`: its line, its UTF-16
+	// columns on that line, and the steps to it from the root.
 	function preview(root) {
 		let out = '';
 		let truncated = false;
+		let line = 0;
+		let lineStart = 0;
 		const seen = [];
+		const folds = [];
+		const path = [];
+
+		const newline = (text) => {
+			out += text;
+			line++;
+			lineStart = out.length;
+		};
 
 		function walk(value, depth, indent) {
 			if (typeof value === 'string') {
@@ -184,27 +225,35 @@
 
 			if (total === 0 || depth >= DEPTH) {
 				truncated ||= total > 0;
+				const start = out.length - lineStart;
+
 				out += head + open + (total > 0 ? '…' : '') + close;
+
+				if (total > 0) {
+					folds.push({ line, start, end: out.length - lineStart, path: [...path] });
+				}
 
 				return;
 			}
 
 			seen.push(value);
-			out += `${head}${open}\n`;
+			newline(`${head}${open}\n`);
 			const inner = `${indent}  `;
 			let shown = 0;
 
 			for (; shown < entries.length && out.length < PREVIEW_BUDGET; shown++) {
-				const [label, item, separator] = entries[shown];
+				const [label, item, separator, at] = entries[shown];
 
 				out += inner + label + separator;
+				path.push(at);
 				walk(item, depth + 1, inner);
-				out += ',\n';
+				path.pop();
+				newline(',\n');
 			}
 
 			if (shown < total) {
 				truncated = true;
-				out += `${inner}… ${total - shown} more\n`;
+				newline(`${inner}… ${total - shown} more\n`);
 			}
 
 			out += indent + close;
@@ -213,7 +262,7 @@
 
 		walk(root, 0, '');
 
-		return { text: out, truncated };
+		return { text: out, truncated, folds };
 	}
 
 	function shape(root) {
@@ -334,6 +383,7 @@
 			return JSON.stringify({
 				text: shown.text,
 				truncated: shown.truncated,
+				folds: shown.folds,
 				type: shape(value),
 			});
 		} catch (error) {
@@ -341,7 +391,31 @@
 		}
 	}
 
-	return (n, source) => {
+	// Previews the values at `paths` from `$n`, until the answer holds `EXPAND_BUDGET`; each one
+	// after that answers `null`, to be asked for again when it opens.
+	function expand(n, paths) {
+		let budget = EXPAND_BUDGET;
+
+		return JSON.stringify(
+			paths.map((steps) => {
+				if (budget <= 0) {
+					return null;
+				}
+
+				try {
+					const shown = preview(steps.reduce(step, globalThis[`$${n}`]));
+
+					budget -= shown.text.length;
+
+					return shown;
+				} catch (error) {
+					return { error: String(error) };
+				}
+			}),
+		);
+	}
+
+	function run(n, source) {
 		let value;
 
 		try {
@@ -357,5 +431,9 @@
 		}
 
 		return settle(n, value);
-	};
+	}
+
+	run.expand = expand;
+
+	return run;
 })();

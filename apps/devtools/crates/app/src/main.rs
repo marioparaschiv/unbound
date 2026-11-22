@@ -2,6 +2,7 @@
 // one for logs.
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
+mod accordion;
 mod agents;
 mod app;
 mod appearance;
@@ -28,6 +29,7 @@ mod parent_console;
 mod popout;
 mod press;
 mod react_edit;
+mod row_fold;
 mod scaled;
 mod search;
 mod segmented;
@@ -41,11 +43,13 @@ mod title_bar;
 mod toolbar;
 mod transition;
 mod tree;
+mod unfold;
 mod update;
 mod value_editor;
 mod values;
 mod view_finder;
 mod widgets;
+mod word_delete;
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::time::Duration;
@@ -194,6 +198,7 @@ fn run_gui(settings: Settings, config: Config, mcp_port: Option<u16>) {
 			app::bind_keys(cx);
 			shell::bind_keys(cx);
 			console::init(cx);
+			word_delete::bind_keys(cx);
 			let bounds = Bounds::centered(None, size(px(1360.), px(860.)), cx);
 			// The shell draws its own title bar (`title_bar.rs`), so the system's is hidden: macOS keeps
 			// its traffic lights over the bar, and Linux and Windows get client-side decorations.

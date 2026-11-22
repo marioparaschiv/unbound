@@ -4,6 +4,7 @@
 //! View Tree's details pane) owns an [`Explorer`] and draws it with
 //! [`Explorer::render`]; the host's own cards go above the sections.
 
+mod fold;
 mod history;
 mod load;
 mod render;
@@ -132,6 +133,8 @@ pub struct Explorer {
 	restore_scroll: Option<ListOffset>,
 	items: Rc<Vec<Item>>,
 	list: ListState,
+	/// The class or section opening or closing, and its items while they fold.
+	item_fold: Option<fold::ItemFold>,
 	/// Bumped on every navigation and reload; an answer for an older page is dropped.
 	epoch: u64,
 	/// Whether a device is on the debugger connection.
@@ -174,6 +177,7 @@ impl Explorer {
 			restore_scroll: None,
 			items: Rc::default(),
 			list,
+			item_fold: None,
 			epoch: 0,
 			connected: false,
 			filter_task: None,
@@ -269,6 +273,7 @@ impl Explorer {
 		self.open = view.open;
 		self.object = None;
 		self.fell_back = false;
+		self.item_fold = None;
 		self.list.reset(0);
 		self.items = Rc::default();
 		self.request_object(cx);
@@ -310,9 +315,15 @@ impl Explorer {
 	}
 
 	fn toggle_class<H: ExplorerHost>(&mut self, name: &str, cx: &mut Context<H>) {
-		if !self.expanded.remove(name) {
+		let open = !self.expanded.remove(name);
+		if open {
 			self.expanded.insert(name.to_owned());
 		}
+		self.fold(
+			fold::FoldKey::Class(name.to_owned()),
+			open,
+			cx.reduce_motion(),
+		);
 		self.rebuild();
 		self.schedule_values(cx);
 		cx.notify();
@@ -325,10 +336,13 @@ impl Explorer {
 		cx: &mut Context<H>,
 	) {
 		let key = (class.to_owned(), kind);
-		if !self.open.remove(&key) {
+		let open = !self.open.remove(&key);
+		if open {
 			self.open.insert(key);
 			self.ensure_section(class, kind, cx);
 		}
+		let folding = fold::FoldKey::Section(class.to_owned(), kind);
+		self.fold(folding, open, cx.reduce_motion());
 		self.rebuild();
 		self.schedule_values(cx);
 		cx.notify();

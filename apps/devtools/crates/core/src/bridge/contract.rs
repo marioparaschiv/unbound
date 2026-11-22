@@ -64,8 +64,7 @@ fn sends_the_protocols_eval_request() {
 		expected["code"].as_str().unwrap(),
 		expected["timeout"].as_u64().unwrap(),
 	);
-	let sent: Value = serde_json::from_str(request.to_text().expect("the request is text"))
-		.expect("the request is JSON");
+	let sent: Value = serde_json::from_str(&request).expect("the request is JSON");
 
 	assert_eq!(&sent, expected);
 }

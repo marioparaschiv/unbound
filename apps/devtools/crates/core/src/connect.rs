@@ -137,22 +137,36 @@ impl Devtools {
 		}
 	}
 
-	/// Evaluates JavaScript on device over the debugger connection's bridge, or the command line's
-	/// when there is none. Pairs with [`Self::store_as_global`].
+	/// Evaluates JavaScript on device over the debugger connection's open socket, or over a one-off
+	/// socket to the command line's bridge when it is not attached. Pairs with [`Self::store_as_global`].
 	pub async fn eval(&self, code: &str) -> anyhow::Result<String> {
-		let target = self.link_target().unwrap_or_else(|| self.default_target());
-		let address = self.resolve(&target).await?;
+		let outcome = match self.eval_on_link(code, EVAL_TIMEOUT_MS).await {
+			Some(outcome) => outcome.map_err(anyhow::Error::from),
+			None => {
+				let target = self.link_target().unwrap_or_else(|| self.default_target());
+				let address = self.resolve(&target).await?;
 
-		self.eval_at(address, code).await
+				self.eval_at(address, code).await?
+			}
+		};
+
+		self.settle_eval(outcome)
 	}
 
-	async fn eval_at(&self, address: SocketAddr, code: &str) -> anyhow::Result<String> {
+	async fn eval_at(
+		&self,
+		address: SocketAddr,
+		code: &str,
+	) -> anyhow::Result<anyhow::Result<bridge::EvalOutcome>> {
 		let code = code.to_owned();
-		let outcome = self
-			.on_runtime(async move { bridge::eval(address, &code, EVAL_TIMEOUT_MS).await })
-			.await
-			.map_err(|error| anyhow::anyhow!("bridge task failed: {error}"))?;
 
+		self.on_runtime(async move { bridge::eval(address, &code, EVAL_TIMEOUT_MS).await })
+			.await
+			.map_err(|error| anyhow::anyhow!("bridge task failed: {error}"))
+	}
+
+	/// Records what the eval says about the bridge, and returns its value or error.
+	fn settle_eval(&self, outcome: anyhow::Result<bridge::EvalOutcome>) -> anyhow::Result<String> {
 		let bridge_state = match &outcome {
 			Err(_) => BridgeState::Unreachable,
 			Ok(outcome) if outcome.device_connected => BridgeState::DeviceConnected,

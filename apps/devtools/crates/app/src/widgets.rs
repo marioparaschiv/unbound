@@ -16,15 +16,6 @@ pub fn icon(path: &'static str, size: gpui::Pixels, color: Token) -> Svg {
 		.text_color(theme::color(color))
 }
 
-pub fn chevron(expanded: bool) -> Svg {
-	let path = if expanded {
-		crate::assets::CHEVRON_DOWN
-	} else {
-		crate::assets::CHEVRON_RIGHT
-	};
-	icon(path, theme::CHEVRON, theme::TEXT_MUTED)
-}
-
 /// A chevron `turn` of the way from pointing right (0) to pointing down (1), for an open that animates.
 pub fn turning_chevron(turn: f32) -> Svg {
 	icon(
@@ -35,6 +26,35 @@ pub fn turning_chevron(turn: f32) -> Svg {
 	.with_transformation(gpui::Transformation::rotate(gpui::radians(
 		turn * std::f32::consts::FRAC_PI_2,
 	)))
+}
+
+/// How wide `text` draws in `font` at `size`.
+pub fn text_width(window: &Window, text: SharedString, font: gpui::Font, size: Pixels) -> f32 {
+	let run = gpui::TextRun {
+		len: text.len(),
+		font,
+		color: theme::hsla(theme::TEXT),
+		background_color: None,
+		underline: None,
+		strikethrough: None,
+	};
+	f32::from(
+		window
+			.text_system()
+			.shape_line(text, size, &[run], None)
+			.width(),
+	)
+}
+
+/// One character's width in the monospace font at the code text size.
+pub fn mono_char_width(window: &Window) -> f32 {
+	let sample = SharedString::new_static("0000000000");
+	text_width(
+		window,
+		sample,
+		gpui::font(theme::mono_font()),
+		theme::TEXT_MONO,
+	) / 10.
 }
 
 pub fn badge(text: impl Into<SharedString>, fg: Token) -> Div {

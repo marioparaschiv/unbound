@@ -6,10 +6,13 @@ use gpui::{AnyElement, Context, FontWeight, SharedString, Window, div, list, pre
 use gpui_component::input::Input;
 use unbound_devtools_core::{ExplorerErrorCode, ExplorerMemberKind, ExplorerTarget};
 
+use super::fold::FoldKey;
 use super::rows::Item;
 use super::{Explorer, ExplorerHost, Load};
 use crate::theme;
-use crate::widgets::{badge, chevron, field, hairline, icon, icon_button, panel_header, tooltip};
+use crate::widgets::{
+	badge, field, hairline, icon, icon_button, panel_header, tooltip, turning_chevron,
+};
 
 /// Each level of the chain indents by this much: classes, then sections, then members.
 pub(super) const LEVEL: f32 = 14.;
@@ -82,7 +85,7 @@ impl Explorer {
 					host.explorer().render_item(ix, window, cx)
 				};
 				// A list item sizes to its content; the rows span the pane.
-				div().w_full().child(item).into_any_element()
+				host.explorer().fold_item(ix, div().w_full().child(item))
 			}),
 		)
 		.flex_1()
@@ -314,6 +317,7 @@ impl Explorer {
 			return div().into_any_element();
 		};
 		let expanded = self.expanded.contains(&class.name);
+		let turn = self.turn(&FoldKey::Class(class.name.clone()), expanded);
 		let summary = self
 			.kinds_of(index)
 			.into_iter()
@@ -350,7 +354,7 @@ impl Explorer {
 					.w(px(theme::CHEVRON_SLOT))
 					.flex()
 					.justify_center()
-					.child(chevron(expanded)),
+					.child(turning_chevron(turn)),
 			)
 			.child(
 				div()
@@ -416,6 +420,7 @@ impl Explorer {
 		cx: &mut Context<H>,
 	) -> AnyElement {
 		let open = self.open.contains(&(class.to_owned(), kind));
+		let turn = self.turn(&FoldKey::Section(class.to_owned(), kind), open);
 		let declared = self
 			.object()
 			.and_then(|object| object.chain.iter().find(|item| item.name == class))
@@ -445,7 +450,7 @@ impl Explorer {
 					.w(px(theme::CHEVRON_SLOT))
 					.flex()
 					.justify_center()
-					.child(chevron(open)),
+					.child(turning_chevron(turn)),
 			)
 			.child(
 				div()

@@ -79,6 +79,9 @@ async fn serve_with(
 // tungstenite's handshake callback fixes its error type; the closure never returns one.
 #[allow(clippy::result_large_err)]
 async fn connection(stream: TcpStream, conn: ConnId, events: mpsc::UnboundedSender<Event>) {
+	// Nagle off, as Bun's bridge has it: a small frame sent while an earlier one is unacknowledged
+	// would otherwise wait out the peer's delayed ACK.
+	let _ = stream.set_nodelay(true);
 	let mut role = Role::Device;
 	let handshake =
 		tokio_tungstenite::accept_hdr_async(stream, |request: &Request, response: Response| {
@@ -114,6 +117,11 @@ async fn connection(stream: TcpStream, conn: ConnId, events: mpsc::UnboundedSend
 			outgoing = outbox.recv() => match outgoing {
 				Some(Outgoing::Text(text)) => {
 					if sink.send(Message::text(text)).await.is_err() {
+						break;
+					}
+				}
+				Some(Outgoing::Ack) => {
+					if sink.send(Message::Pong(Default::default())).await.is_err() {
 						break;
 					}
 				}

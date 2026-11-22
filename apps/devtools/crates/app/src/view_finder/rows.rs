@@ -11,7 +11,7 @@ use super::{Row, ViewFinder};
 use crate::indent_follow::guide_left;
 use crate::smooth_scroll::SmoothScroll;
 use crate::theme;
-use crate::widgets::{badge, chevron, panel_header};
+use crate::widgets::{badge, panel_header, turning_chevron};
 
 /// The list's padding above its first row.
 const LIST_TOP: f32 = 4.;
@@ -129,59 +129,69 @@ impl ViewFinder {
 		let shift = self.indent.shift();
 		range
 			.filter_map(|ix| {
-				let row = self.rows.get(ix)?;
-				let depth = row.depth();
-				match row {
-					Row::View { id, expanded, .. } => {
-						let node = self.nodes.get(id)?;
-						Some(self.render_view(ix, node, depth, shift, *expanded, cx))
-					}
-					Row::Note { text, error, .. } => Some(
-						note_row(
-							ix,
-							depth,
-							shift,
-							text.clone(),
-							if *error {
-								theme::ERROR
-							} else {
-								theme::TEXT_FAINT
-							},
-						)
+				let (ix, place) = self.fold.place(ix);
+				let row = self.render_row(ix, shift, cx)?;
+				Some(
+					place
+						.fit(div().w_full().child(row), theme::ROW_HEIGHT)
 						.into_any_element(),
-					),
-					Row::More {
-						parent,
-						text,
-						loading,
-						..
-					} => {
-						let row = note_row(
-							ix,
-							depth,
-							shift,
-							text.clone(),
-							if *loading {
-								theme::TEXT_FAINT
-							} else {
-								theme::ACCENT
-							},
-						);
-						let parent = parent.clone();
-						Some(
-							row.when(!*loading, |row| {
-								row.cursor_pointer()
-									.hover(|row| row.bg(theme::color(theme::HOVER)))
-									.on_click(cx.listener(move |this, _, _, cx| {
-										this.show_more(parent.clone(), cx);
-									}))
-							})
-							.into_any_element(),
-						)
-					}
-				}
+				)
 			})
 			.collect()
+	}
+
+	fn render_row(&self, ix: usize, shift: f32, cx: &mut Context<Self>) -> Option<AnyElement> {
+		let row = self.rows.get(ix)?;
+		let depth = row.depth();
+		match row {
+			Row::View { id, .. } => {
+				let node = self.nodes.get(id)?;
+				Some(self.render_view(ix, node, depth, shift, cx))
+			}
+			Row::Note { text, error, .. } => Some(
+				note_row(
+					ix,
+					depth,
+					shift,
+					text.clone(),
+					if *error {
+						theme::ERROR
+					} else {
+						theme::TEXT_FAINT
+					},
+				)
+				.into_any_element(),
+			),
+			Row::More {
+				parent,
+				text,
+				loading,
+				..
+			} => {
+				let row = note_row(
+					ix,
+					depth,
+					shift,
+					text.clone(),
+					if *loading {
+						theme::TEXT_FAINT
+					} else {
+						theme::ACCENT
+					},
+				);
+				let parent = parent.clone();
+				Some(
+					row.when(!*loading, |row| {
+						row.cursor_pointer()
+							.hover(|row| row.bg(theme::color(theme::HOVER)))
+							.on_click(cx.listener(move |this, _, _, cx| {
+								this.show_more(parent.clone(), cx);
+							}))
+					})
+					.into_any_element(),
+				)
+			}
+		}
 	}
 
 	fn render_view(
@@ -190,10 +200,10 @@ impl ViewFinder {
 		node: &ViewNode,
 		depth: u32,
 		shift: f32,
-		expanded: bool,
 		cx: &mut Context<Self>,
 	) -> AnyElement {
 		let id = node.id.clone();
+		let turn = self.fold.turn(&id, self.expanded.contains(&id));
 		let selected = self.selected.as_deref() == Some(id.as_str());
 		let has_children = node.child_count > 0;
 		row_shell(ix, depth, shift)
@@ -218,7 +228,7 @@ impl ViewFinder {
 					.justify_center()
 					.when(has_children, |slot| {
 						let id = id.clone();
-						slot.child(chevron(expanded)).on_mouse_down(
+						slot.child(turning_chevron(turn)).on_mouse_down(
 							MouseButton::Left,
 							cx.listener(move |this, _, _, cx| {
 								cx.stop_propagation();
@@ -270,6 +280,12 @@ impl ViewFinder {
 		window: &mut Window,
 		cx: &mut Context<Self>,
 	) -> impl IntoElement {
+		if self.fold.tick() {
+			self.rebuild_rows();
+		}
+		if self.fold.moving() {
+			window.request_animation_frame();
+		}
 		let rows = self.rows.clone();
 		self.indent.follow(
 			&self.scroll,
@@ -281,7 +297,7 @@ impl ViewFinder {
 		);
 		let list = uniform_list(
 			"views",
-			self.rows.len(),
+			self.fold.count(self.rows.len()),
 			cx.processor(|this, range: Range<usize>, _, cx| this.render_rows(range, cx)),
 		)
 		.track_scroll(&self.scroll)

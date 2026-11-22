@@ -24,6 +24,7 @@ use crate::explorer::{Entry, Explorer, ExplorerHost};
 use crate::indent_follow::IndentFollow;
 use crate::mcp_menu::McpButton;
 use crate::nav;
+use crate::row_fold::{RowFold, subtree};
 use crate::theme;
 use crate::widgets::{Raised, footer_bar, page_header, page_header_end, raised_button, tooltip};
 
@@ -66,7 +67,6 @@ enum Row {
 	View {
 		id: String,
 		depth: u32,
-		expanded: bool,
 	},
 	/// A child level that is loading or failed, under the view that asked for it.
 	Note {
@@ -97,6 +97,8 @@ pub struct ViewFinder {
 	children: HashMap<Option<String>, Children>,
 	expanded: HashSet<String>,
 	rows: Rc<Vec<Row>>,
+	/// The last view opened or closed, and its subtree while that folds.
+	fold: RowFold<String>,
 	selected: Option<String>,
 	/// Each selected view's properties, read again on every selection; kept to show while it rereads.
 	details: HashMap<String, Details>,
@@ -151,6 +153,7 @@ impl ViewFinder {
 			children: HashMap::new(),
 			expanded: HashSet::new(),
 			rows: Rc::default(),
+			fold: RowFold::default(),
 			selected: None,
 			details: HashMap::new(),
 			hovered: None,
@@ -210,6 +213,7 @@ impl ViewFinder {
 		self.nodes.clear();
 		self.children.clear();
 		self.expanded.clear();
+		self.fold.clear();
 		self.selected = None;
 		self.details.clear();
 		self.explorer.prelude_changed();
@@ -292,6 +296,10 @@ impl ViewFinder {
 				Children::Loaded(level)
 			}
 			(_, Ok(page)) => {
+				// A first page grows in under the view that asked for it.
+				if let Some(key) = parent.as_ref().filter(|key| self.expanded.contains(*key)) {
+					self.fold.reopen(key.clone(), cx.reduce_motion());
+				}
 				let ids = page.nodes.iter().map(|node| node.id.clone()).collect();
 				self.add_nodes(page.nodes);
 				Children::Loaded(Level {
@@ -348,7 +356,9 @@ impl ViewFinder {
 	}
 
 	fn toggle(&mut self, id: &str, cx: &mut Context<Self>) {
-		if self.expanded.remove(id) {
+		let open = !self.expanded.remove(id);
+		self.fold.toggle(id.to_owned(), open, cx.reduce_motion());
+		if !open {
 			self.rebuild_rows();
 			cx.notify();
 			return;
@@ -387,9 +397,16 @@ impl ViewFinder {
 		cx.notify();
 	}
 
+	/// Flattens the tree, keeping a closing view's subtree listed until its fold ends.
 	fn rebuild_rows(&mut self) {
 		let mut rows = Vec::new();
 		self.push_children(None, 0, &mut rows);
+		self.fold.anchor(|key| {
+			let anchor = rows
+				.iter()
+				.position(|row| matches!(row, Row::View { id, .. } if id == key))?;
+			Some(subtree(anchor, rows.len(), |ix| rows[ix].depth()))
+		});
 		self.rows = Rc::new(rows);
 	}
 
@@ -403,11 +420,11 @@ impl ViewFinder {
 			Some(Children::Failed(error)) => rows.push(note(error.clone().into(), true)),
 			Some(Children::Loaded(level)) => {
 				for id in &level.ids {
-					let expanded = self.expanded.contains(id);
+					let expanded = self.expanded.contains(id)
+						|| self.fold.held_open().is_some_and(|held| held == id);
 					rows.push(Row::View {
 						id: id.clone(),
 						depth,
-						expanded,
 					});
 					if expanded {
 						self.push_children(Some(id), depth + 1, rows);
@@ -510,6 +527,9 @@ fn device_connected(link: Option<&LinkStatus>) -> bool {
 
 impl Render for ViewFinder {
 	fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+		if self.explorer.tick_fold() {
+			window.request_animation_frame();
+		}
 		let listed = matches!(self.children.get(&None), Some(Children::Loaded(_)));
 		let body = if self.connected && listed {
 			div()

@@ -8,10 +8,10 @@ use std::rc::Rc;
 use gpui::{AnyElement, Context, Div, SharedString, Stateful, div, prelude::*, px};
 use unbound_devtools_core::{FilesPage, MetroError, MetroFile, MetroModule, MetroModuleStatus};
 
-use super::unfold::{Fold, Turn, refold};
 use super::{MetroBrowser, Row, cancelled};
 use crate::app::on_runtime;
 use crate::theme;
+use crate::unfold::{Fold, Turn, refold};
 use crate::widgets::{badge, turning_chevron};
 
 /// Each folder level indents by this much.

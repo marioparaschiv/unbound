@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use gpui::{Context, Task};
 use unbound_devtools_core::{ElementId, Hook, InspectedElement, Path, PathSegment, Value};
 
+use crate::accordion::Accordion;
 use crate::app::{Workspace, on_runtime};
 use crate::value_editor::Editor;
 
@@ -11,6 +12,8 @@ pub struct Inspection {
 	pub element: Option<InspectedElement>,
 	pub error: Option<String>,
 	pub expanded: HashSet<Path>,
+	/// The values opening or closing.
+	pub motion: Accordion<Path>,
 	pub loading: HashSet<Path>,
 	/// The one inline editor open in the inspector, if any.
 	pub editor: Option<Editor>,
@@ -24,6 +27,7 @@ impl Inspection {
 			element: None,
 			error: None,
 			expanded: HashSet::new(),
+			motion: Accordion::default(),
 			loading: HashSet::new(),
 			editor: None,
 			task: None,
@@ -240,11 +244,14 @@ impl Workspace {
 		let Some(inspection) = self.inspection.as_mut() else {
 			return;
 		};
+		let reduce_motion = cx.reduce_motion();
 		if inspection.expanded.remove(&path) {
+			inspection.motion.toggle(path, false, reduce_motion);
 			cx.notify();
 			return;
 		}
 		inspection.expanded.insert(path.clone());
+		inspection.motion.toggle(path.clone(), true, reduce_motion);
 		let id = inspection.id;
 		let hydrate = inspection
 			.element

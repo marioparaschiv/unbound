@@ -81,13 +81,16 @@ fn row_id(prefix: &str, path: &Path) -> SharedString {
 	format!("{prefix}{path:?}").into()
 }
 
-fn chevron(expandable: bool, expanded: bool) -> impl IntoElement {
+/// The chevron slot; `turn` runs from 0 (closed, pointing right) to 1 (open, pointing down).
+fn chevron(expandable: bool, turn: f32) -> impl IntoElement {
 	div()
 		.flex_none()
 		.w(px(theme::CHEVRON_SLOT))
 		.flex()
 		.justify_center()
-		.when(expandable, |slot| slot.child(widgets::chevron(expanded)))
+		.when(expandable, |slot| {
+			slot.child(widgets::turning_chevron(turn))
+		})
 }
 
 /// A value row inside an inspector card: inset 4px so its hover sits inside the card's rim, with
@@ -254,7 +257,9 @@ impl<'a> Rows<'a> {
 	) {
 		let allowed = permissions(self.element, &path);
 		let expandable = is_expandable(value, allowed.edit);
-		let expanded = expandable && self.inspection.expanded.contains(&path);
+		let open = expandable && self.inspection.expanded.contains(&path);
+		let shows = expandable && self.inspection.motion.shows(&path, open);
+		let turn = self.inspection.motion.progress(&path, open);
 		let Preview {
 			text,
 			color,
@@ -263,7 +268,7 @@ impl<'a> Rows<'a> {
 		let editable = allowed.edit && is_scalar(value);
 		// A click inside an open field must not reopen it or fold the row.
 		let editing = self.editing(&path, &EditKind::Value) || self.editing(&path, &EditKind::Name);
-		let mut row = base_row(&path, depth).child(chevron(expandable, expanded));
+		let mut row = base_row(&path, depth).child(chevron(expandable, turn));
 		if let Some(label) = label {
 			row = row
 				.child(self.label(label, &path, allowed, cx))
@@ -293,9 +298,23 @@ impl<'a> Rows<'a> {
 			}));
 		}
 		self.out.push(row.into_any_element());
-		if expanded {
-			self.push_children(value, &path, depth + 1, cx);
+		if shows {
+			self.push_folded(&path, |rows| {
+				rows.push_children(value, &path, depth + 1, cx)
+			});
 		}
+	}
+
+	/// The rows `fill` pushes, as one block that grows and shrinks as `path` opens and closes.
+	fn push_folded(&mut self, path: &Path, fill: impl FnOnce(&mut Self)) {
+		let outer = std::mem::take(&mut self.out);
+		fill(self);
+		let rows = std::mem::replace(&mut self.out, outer);
+		if rows.is_empty() {
+			return;
+		}
+		let block = div().flex().flex_col().children(rows);
+		self.out.push(self.inspection.motion.block(path, block));
 	}
 
 	fn push_children(
@@ -309,7 +328,7 @@ impl<'a> Rows<'a> {
 			if self.inspection.loading.contains(path) {
 				self.out.push(
 					base_row(&child(path, key("$loading")), depth)
-						.child(chevron(false, false))
+						.child(chevron(false, 0.))
 						.font_family(theme::ui_font())
 						.text_color(theme::color(theme::TEXT_FAINT))
 						.child("Loading…")
@@ -340,7 +359,7 @@ impl<'a> Rows<'a> {
 			.editor
 			.as_ref()
 			.and_then(|editor| (editor.path == *path).then_some(editor.kind.clone()));
-		let row = base_row(&child(path, key("$add")), depth).child(chevron(false, false));
+		let row = base_row(&child(path, key("$add")), depth).child(chevron(false, 0.));
 		let row = match pending {
 			Some(EditKind::NewKey | EditKind::NewItem) => row.child(self.field(cx)),
 			Some(EditKind::NewValue(name)) => row
@@ -386,7 +405,9 @@ impl<'a> Rows<'a> {
 		let value_path = child(&path, key("value"));
 		let allowed = permissions(self.element, &value_path);
 		let expandable = !hook.sub_hooks.is_empty() || is_expandable(&hook.value, allowed.edit);
-		let expanded = expandable && self.inspection.expanded.contains(&value_path);
+		let open = expandable && self.inspection.expanded.contains(&value_path);
+		let shows = expandable && self.inspection.motion.shows(&value_path, open);
+		let turn = self.inspection.motion.progress(&value_path, open);
 		let Preview {
 			text,
 			color,
@@ -404,7 +425,7 @@ impl<'a> Rows<'a> {
 			value_text(text, color, italic, editable).into_any_element()
 		};
 		let row = base_row(&path, depth)
-			.child(chevron(expandable, expanded))
+			.child(chevron(expandable, turn))
 			// The slot stays for a hook with no id (`useContext`), so every hook name starts on one line.
 			.child(
 				div()
@@ -445,15 +466,17 @@ impl<'a> Rows<'a> {
 				}))
 			});
 		self.out.push(row.into_any_element());
-		if !expanded {
+		if !shows {
 			return;
 		}
-		if is_expandable(&hook.value, allowed.edit) {
-			self.push_children(&hook.value, &value_path, depth + 1, cx);
-		}
-		for (ix, sub_hook) in hook.sub_hooks.iter().enumerate() {
-			let sub_path = child(&child(&path, key("subHooks")), PathSegment::Index(ix));
-			self.push_hook(sub_hook, sub_path, depth + 1, cx);
-		}
+		self.push_folded(&value_path.clone(), |rows| {
+			if is_expandable(&hook.value, allowed.edit) {
+				rows.push_children(&hook.value, &value_path, depth + 1, cx);
+			}
+			for (ix, sub_hook) in hook.sub_hooks.iter().enumerate() {
+				let sub_path = child(&child(&path, key("subHooks")), PathSegment::Index(ix));
+				rows.push_hook(sub_hook, sub_path, depth + 1, cx);
+			}
+		});
 	}
 }
