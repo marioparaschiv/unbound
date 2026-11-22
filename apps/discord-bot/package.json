@@ -17,7 +17,7 @@
 		"@opentelemetry/resources": "^3.0.0",
 		"@opentelemetry/sdk-logs": "^3.0.0",
 		"@sapphire/decorators": "^6.2.0",
-		"@sapphire/discord.js-utilities": "^7.3.3",
+		"@sapphire/discord.js-utilities": "^8.0.0",
 		"@sapphire/framework": "^5.5.1",
 		"@sapphire/pieces": "^4.4.1",
 		"@sapphire/plugin-logger": "^4.1.0",
