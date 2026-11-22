@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/marioparaschiv/unbound/compare/client-v1.1.0...client-v1.1.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* **client:** guard Fabric surface restarts via RN$SurfaceRegistry ([#2226](https://github.com/marioparaschiv/unbound/issues/2226)) ([1a6c72b](https://github.com/marioparaschiv/unbound/commit/1a6c72bb8b620c306e3c95e41b972fe31fd4c71e))
+
 ## [1.1.0](https://github.com/marioparaschiv/unbound/compare/client-v1.0.1...client-v1.1.0) (2026-11-22)
 
 
