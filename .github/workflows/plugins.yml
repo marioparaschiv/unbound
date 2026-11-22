@@ -1,10 +1,24 @@
 name: Plugins
 
+# Docs-only changes skip this; packages/plugins/README.md stays in because it is generated and checked.
 on:
     push:
         branches:
             - main
+        paths: &code
+            - '**'
+            - '!**/*.md'
+            - '!**/*.mdx'
+            - '!docs/**'
+            - '!LICENSE'
+            - '!CODEOWNERS'
+            - '!.github/ISSUE_TEMPLATE/**'
+            - '!.github/FUNDING.yml'
+            - '!apps/devtools/**'
+            - '!packages/loader/**'
+            - 'packages/plugins/README.md'
     pull_request:
+        paths: *code
 
 permissions:
     contents: read
