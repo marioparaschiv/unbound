@@ -129,6 +129,7 @@ toasts.show({ title: messages.COPIED, content: messages.COPIED_LINK, icon: 'Link
 | `duration` | Milliseconds before closing. `0` keeps it open. Default: the user's setting |
 | `id` | A later toast with the same `id` replaces this one |
 | `buttons` | Each with `content` and `onPress` |
+| `progress` | Fills the bar along the bottom, from `0` to `1`, and keeps the toast open. See [Progress](#progress) |
 
 `show` and every shorthand return a handle with `update` and `close`, for a toast still open:
 
@@ -143,6 +144,40 @@ const response = await fetch('https://example.com/latest.json');
 toast.update({ title: response.ok ? messages.UP_TO_DATE : messages.CHECK_FAILED });
 setTimeout(() => toast.close(), 3000);
 ```
+
+### Progress
+
+`progress` shows how far a long task has got, from `0` to `1`. The toast stays open while it is set. Each `update` animates the bar to the new value:
+
+```ts
+import { toasts } from '@unbound-app/api';
+
+import { messages } from '@unbound-app/i18n';
+
+declare const files: string[];
+declare function upload(file: string): Promise<void>;
+
+const toast = toasts.show({ title: messages.SYNCING, progress: 0 });
+
+for (const [index, file] of files.entries()) {
+	await upload(file);
+	toast.update({ progress: (index + 1) / files.length });
+}
+
+toast.update({
+	title: messages.SYNC_DONE,
+	content: messages.SYNC_DONE_BODY,
+	progress: undefined,
+	duration: 2000,
+});
+```
+
+| `update` with | What the bar does |
+| --- | --- |
+| `progress: n` | Moves to `n` |
+| `progress: undefined` | Fills, then empties over `duration` and closes the toast. Default: the user's setting |
+
+To remove it at once, such as after a failure, call `close`.
 
 ## Custom Dialogs
 

@@ -37,7 +37,7 @@ An addon kind that replaces Discord's icons.
 _Avoid_: Icons, icon theme
 
 **Font**:
-An addon kind that replaces the typeface Discord draws text with.
+An addon kind that replaces the typeface Discord draws text with. On the marketplace it is a font preset: applying it saves the preset and installs its fonts.
 _Avoid_: Face, font family
 
 **Built-in**:

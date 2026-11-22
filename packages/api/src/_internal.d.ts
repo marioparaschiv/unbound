@@ -6997,7 +6997,7 @@ export type ToastEntityProps = {
 };
 /** A handle returned when showing a toast, used to update or close it. */
 export type ToastHandle = {
-	/** Merges `options` into the shown toast. Does nothing once the toast is gone. */
+	/** Merges `options` into the shown toast, such as a new `progress`. Does nothing once the toast is gone. */
 	update: (options: Partial<ToastOptions>) => void;
 	/** Plays the toast's exit animation, then removes it. */
 	close: () => void;
@@ -7020,6 +7020,15 @@ export type ToastOptions = {
 	buttons?: ToastButton[];
 	/** Tints an image icon with the theme's icon colour. Defaults to `true`; set `false` for a coloured image. An element or component draws its own colour. */
 	tintedIcon?: boolean;
+	/**
+	 * Fills the bar along the bottom to this fraction, `0` to `1`, holding the toast open; each `update` animates to the
+	 * new fraction. Set it to `undefined` to fill the bar, then empty it over the `duration` and close.
+	 * @example
+	 * const toast = toasts.show({ title: 'Syncing', progress: 0 });
+	 * toast.update({ progress: 0.5 });
+	 * toast.update({ title: 'Synced', progress: undefined, duration: 2000 });
+	 */
+	progress?: number;
 };
 /**
  * Props of `Toast` (function). Exports: Toast.

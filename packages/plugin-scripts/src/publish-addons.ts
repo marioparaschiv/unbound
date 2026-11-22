@@ -35,8 +35,13 @@ import { isSubmodule } from './vendor-workspace';
 import { collectFiles, findCompiledBundles, type BuildFile } from './build-files';
 import { parsePluginSigningKey, PLUGIN_SIGNING_KEY_VARIABLE, bytecodeDigests } from './sign-plugin';
 
-/** The workspaces whose addons CI publishes: first-party plugins, themes and icon packs, the last a submodule. */
-const WORKSPACE_DIRS = ['packages/plugins', 'packages/themes', 'packages/icon-packs'];
+/** The workspaces whose addons CI publishes: first-party plugins, themes, font packs and icon packs, the last a submodule. */
+const WORKSPACE_DIRS = [
+	'packages/plugins',
+	'packages/themes',
+	'packages/fonts',
+	'packages/icon-packs',
+];
 const TAG_PREFIX = 'plugin-builds/';
 const FIELD = '\u001f';
 const RECORD = '\u001e';

@@ -28,6 +28,7 @@ mock.module('~/native/fs', () => ({
 }));
 
 const { downloadAddonFiles, writeAddonFiles } = await import('~/addons/files');
+const { watchDownload } = await import('~/addons/download-progress');
 const { default: sha256 } = await import('@unbound-app/utils/sha256');
 
 describe('writeAddonFiles', () => {
@@ -107,6 +108,8 @@ describe('downloadAddonFiles', () => {
 			Buffer.from('stale').toString('base64'),
 		);
 		const requests = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(changed));
+		const reports: number[][] = [];
+		const unwatch = watchDownload('unbound.pack', (done, total) => reports.push([done, total]));
 
 		const files = await downloadAddonFiles(
 			manifest,
@@ -114,6 +117,13 @@ describe('downloadAddonFiles', () => {
 			logger as never,
 			'Unbound/Icons/unbound.pack',
 		);
+
+		unwatch();
+
+		expect(reports).toEqual([
+			[1, 2],
+			[2, 2],
+		]);
 
 		expect(requests.mock.calls.map(([url]) => url)).toEqual([
 			`https://cdn.example/unbound.pack/assets/${sha256(changed)}.png`,
