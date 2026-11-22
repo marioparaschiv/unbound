@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0](https://github.com/marioparaschiv/unbound/compare/api-v1.0.1...api-v1.1.0) (2026-11-22)
+
+
+### Features
+
+* **client:** font packs and toast progress bars ([#2209](https://github.com/marioparaschiv/unbound/issues/2209)) ([31d3ee0](https://github.com/marioparaschiv/unbound/commit/31d3ee0227e011dd8614e7cd1eb8cab0335ebe5c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 1.1.0
+
 ## [1.0.1](https://github.com/marioparaschiv/unbound/compare/api-v1.0.0...api-v1.0.1) (2026-11-22)
 
 

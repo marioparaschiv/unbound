@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/marioparaschiv/unbound/compare/client-v1.0.1...client-v1.1.0) (2026-11-22)
+
+
+### Features
+
+* **client:** font packs and toast progress bars ([#2209](https://github.com/marioparaschiv/unbound/issues/2209)) ([31d3ee0](https://github.com/marioparaschiv/unbound/commit/31d3ee0227e011dd8614e7cd1eb8cab0335ebe5c))
+
+
+### Performance Improvements
+
+* **client:** virtualise the updates page's addon rows ([#2207](https://github.com/marioparaschiv/unbound/issues/2207)) ([3ce13f4](https://github.com/marioparaschiv/unbound/commit/3ce13f4ec116a4e550a55886e97f9b6c5a9a42bd))
+
 ## [1.0.1](https://github.com/marioparaschiv/unbound/compare/client-v1.0.0...client-v1.0.1) (2026-11-22)
 
 
