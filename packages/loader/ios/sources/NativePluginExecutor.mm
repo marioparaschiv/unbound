@@ -196,6 +196,7 @@ void retireNativePluginRuntimeExecutor(id instance)
     if (gRuntimeExecutorInstance == instance)
     {
         gRuntimeExecutorInstance = nil;
+        loader::native::retireRuntime();
     }
 }
 

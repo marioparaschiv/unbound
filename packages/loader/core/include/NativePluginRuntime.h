@@ -86,6 +86,7 @@ class RuntimeGenerationTracker
 {
 public:
     std::optional<uint64_t> advance(const void *runtime, bool alreadyRegistered = true);
+    uint64_t retire();
     uint64_t generation() const;
     void addListener(RuntimeGenerationListener listener);
     void notify(uint64_t generation) const;
@@ -101,6 +102,7 @@ void setExecutor(std::shared_ptr<NativePluginExecutor> executor);
 std::shared_ptr<NativePluginExecutor> executor();
 
 uint64_t registerRuntime(facebook::jsi::Runtime &runtime);
+void retireRuntime();
 uint64_t runtimeGeneration();
 void onRuntimeGenerationChanged(RuntimeGenerationListener listener);
 bool isRuntimeThread();
