@@ -431,7 +431,15 @@ async fn advertises_over_bonjour_until_it_exits() {
 	let browser = ServiceDaemon::new().expect("an mDNS browser");
 	let events = browser.browse(SERVICE).expect("browse");
 	let served = tokio::spawn(bridge_server::run(port, Some(Duration::from_secs(1))));
-	let mut controller = Peer::controller(SocketAddr::from(([127, 0, 0, 1], port)), "rust").await;
+	// `run` binds on its own task, so the first dials can beat it.
+	let bridge = SocketAddr::from(([127, 0, 0, 1], port));
+	for _ in 0..100 {
+		if TcpStream::connect(bridge).await.is_ok() {
+			break;
+		}
+		tokio::time::sleep(Duration::from_millis(20)).await;
+	}
+	let mut controller = Peer::controller(bridge, "rust").await;
 
 	assert_eq!(controller.next().await["type"], "device-status");
 
