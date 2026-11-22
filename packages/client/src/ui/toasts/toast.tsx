@@ -16,6 +16,9 @@ import ToastSurface from './toast-surface';
 import useStyles from './toast.style';
 import ToastIcon from './toast-icon';
 
+// Reanimated 3's stiffness and mass: Reanimated 4 raised both defaults, which made a damping of 11 wobble.
+const SPRING_CONFIG = { damping: 11, stiffness: 100, mass: 1 };
+
 type ToastProps = {
 	id: string;
 };
@@ -63,7 +66,7 @@ function Toast({ id }: ToastProps) {
 			if (closing || nativeEvent.layout.height === height.value) return;
 
 			height.value = animations
-				? withSpring(nativeEvent.layout.height, { damping: 11 })
+				? withSpring(nativeEvent.layout.height, SPRING_CONFIG)
 				: nativeEvent.layout.height;
 		},
 		[closing, animations, height],
