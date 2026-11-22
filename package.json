@@ -94,7 +94,7 @@
 		"dts-bundle-generator": "^9.5.1",
 		"eslint-plugin-jsdoc": "^65.4.5",
 		"eslint-plugin-perfectionist": "^5.13.0",
-		"eslint-plugin-unicorn": "^79.0.0",
+		"eslint-plugin-unicorn": "^80.0.0",
 		"lefthook": "^2.2.2",
 		"oxfmt": "^0.78.0",
 		"oxlint": "^1.93.0",
