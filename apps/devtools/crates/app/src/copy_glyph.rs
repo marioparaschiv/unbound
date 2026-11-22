@@ -58,8 +58,12 @@ pub fn tick_glyphs(id: &str, path: &'static str, size: f32, color: Token, showin
 						.to(if shown { 1. } else { 0. })
 						.from(rest),
 					move |svg, value: f32| {
-						svg.size(px(size * value.max(0.)))
+						let side = size * value.max(0.);
+						// gpui logs an error for every svg painted under one device pixel, which a
+						// gone glyph is on every frame; hidden, it skips painting.
+						svg.size(px(side))
 							.opacity(value.clamp(0., 1.))
+							.when(side < 1., |svg| svg.invisible())
 					},
 				),
 			)

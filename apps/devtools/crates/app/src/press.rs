@@ -2,8 +2,8 @@
 //! sinks onto its ledge when pressed, and overshoots a touch on release. Only translate and the
 //! ledge's depth change, so a press never moves the controls beside it. A flat control
 //! (`.press-flat`) shrinks its plate, the background drawn behind its content, to 0.96 about its
-//! centre. gpui has no transforms, so scaling text means re-laying it out at a fractional font
-//! size every frame, which wobbles; the content holds still while the plate presses.
+//! centre. Its content holds still, or with `flat_scaled` shrinks with the plate through a GPU
+//! scale ([`gpu_scaled`]), laid out once so text never shifts a pixel mid-press.
 
 use gpui::{
 	AnimationExt, AnyElement, App, Div, ElementId, Hsla, InteractiveElement, Interactivity,
@@ -11,6 +11,7 @@ use gpui::{
 	StatefulInteractiveElement, StyleRefinement, Styled, Window, div, px, relative,
 };
 
+use crate::gpu_scaled::gpu_scaled;
 use crate::theme;
 use crate::widgets::ledge_with_highlight;
 
@@ -23,11 +24,11 @@ pub(crate) const FLAT_SCALE: f32 = 0.96;
 
 /// Styles a flat control's plate: its background, border and corners, drawn at a scale.
 type Plate = Box<dyn FnOnce(Div, f32) -> Div>;
-
-/// What a press moves: a raised body on its ledge, or a flat control's plate.
+/// What a press moves: a raised body on its ledge, or a flat control's plate and, when
+/// `scale_content`, the content on it.
 enum Kind {
 	Ledge { ledge: Hsla, highlight: f32 },
-	Flat(Plate),
+	Flat { plate: Plate, scale_content: bool },
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 enum PressState {
@@ -45,8 +46,8 @@ impl PressState {
 			(Kind::Ledge { .. }, Self::Rest) => 0.,
 			(Kind::Ledge { .. }, Self::Hover) => -1.,
 			(Kind::Ledge { .. }, Self::Pressed) => f32::from(theme::LEDGE),
-			(Kind::Flat(_), Self::Rest | Self::Hover) => 1.,
-			(Kind::Flat(_), Self::Pressed) => FLAT_SCALE,
+			(Kind::Flat { .. }, Self::Rest | Self::Hover) => 1.,
+			(Kind::Flat { .. }, Self::Pressed) => FLAT_SCALE,
 		}
 	}
 }
@@ -89,12 +90,29 @@ impl Pressable {
 		body: Div,
 		plate: impl FnOnce(Div, f32) -> Div + 'static,
 	) -> Self {
+		Self::flat_with(id, body, Box::new(plate), false)
+	}
+
+	/// [`Pressable::flat`] whose content, its text and icons, shrinks with the plate, such as a
+	/// sidebar row.
+	pub fn flat_scaled(
+		id: impl Into<ElementId>,
+		body: Div,
+		plate: impl FnOnce(Div, f32) -> Div + 'static,
+	) -> Self {
+		Self::flat_with(id, body, Box::new(plate), true)
+	}
+
+	fn flat_with(id: impl Into<ElementId>, body: Div, plate: Plate, scale_content: bool) -> Self {
 		let id = id.into();
 		Self {
 			body: body.id(id.clone()),
 			id,
 			children: Vec::new(),
-			kind: Kind::Flat(Box::new(plate)),
+			kind: Kind::Flat {
+				plate,
+				scale_content,
+			},
 			enabled: true,
 		}
 	}
@@ -189,7 +207,10 @@ impl RenderOnce for Pressable {
 						.shadow(ledge_with_highlight(ledge, highlight, px(depth)))
 						.children(children)
 				}
-				Kind::Flat(plate) => {
+				Kind::Flat {
+					plate,
+					scale_content,
+				} => {
 					let inset = relative((1. - value) / 2.);
 					let shrunk = div()
 						.absolute()
@@ -197,9 +218,12 @@ impl RenderOnce for Pressable {
 						.bottom(inset)
 						.left(inset)
 						.right(inset);
-					body.relative()
-						.child(plate(shrunk, value))
-						.children(children)
+					let body = body.relative().child(plate(shrunk, value));
+					if scale_content {
+						body.child(gpu_scaled(div().size_full().children(children), value))
+					} else {
+						body.children(children)
+					}
 				}
 			},
 		)

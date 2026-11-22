@@ -263,7 +263,7 @@ impl SettingsDialog {
 		SmoothScroll::new("settings-sidebar-glide", &self.sidebar_scroll, sidebar)
 	}
 
-	/// A section's row; pressing shrinks its plate like the app's sidebar rows.
+	/// A section's row; pressing shrinks it, text and icon too, like the app's sidebar rows.
 	fn render_row(&self, section: Section, s: Scale, cx: &mut Context<Self>) -> impl IntoElement {
 		let active = section == self.section;
 		let (text, glyph) = if active {
@@ -301,7 +301,7 @@ impl SettingsDialog {
 			.child(icon(section.icon(), s.px(16.), glyph))
 			.child(div().min_w_0().truncate().child(section.label()));
 		let body = div().h(s.px(34.)).group(ROW_GROUP).cursor_pointer();
-		Pressable::flat(section.label(), body, plate)
+		Pressable::flat_scaled(section.label(), body, plate)
 			.child(content)
 			.on_click(cx.listener(move |this, _, _, cx| {
 				this.section = section;

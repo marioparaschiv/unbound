@@ -282,7 +282,7 @@ async fn fails_requests_when_the_device_leaves_or_times_out() {
 		device.next().await;
 		assert_eq!(
 			controller.next().await,
-			json!({ "type": "eval-result", "id": "slow", "ok": false, "error": "Evaluation timed out after 100ms.", "code": "timeout" }),
+			json!({ "type": "eval-result", "id": "slow", "ok": false, "error": "Evaluation timed out after 100ms. Discord is in the foreground, so its JS thread is busy or hung.", "code": "timeout" }),
 			"{name}"
 		);
 
@@ -299,6 +299,48 @@ async fn fails_requests_when_the_device_leaves_or_times_out() {
 		assert_eq!(
 			controller.next().await,
 			json!({ "type": "device-status", "connected": false }),
+			"{name}"
+		);
+	}
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn tells_a_suspended_or_backgrounded_app_from_a_hung_one() {
+	for (name, bridge, _ts) in bridges().await {
+		let mut device = Peer::device(bridge, name).await;
+		let mut controller = Peer::controller(bridge, name).await;
+
+		controller.next().await;
+		device
+			.send(&json!({ "type": "app-state", "state": "inactive" }))
+			.await;
+		controller
+			.send(&json!({ "type": "eval", "id": "paused", "code": "x", "timeout": 100 }))
+			.await;
+		device.next().await;
+		assert_eq!(
+			controller.next().await,
+			json!({ "type": "eval-result", "id": "paused", "ok": false, "error": "Evaluation timed out after 100ms. Discord is not in the foreground, so iOS may have suspended it; open Discord and retry.", "code": "timeout" }),
+			"{name}"
+		);
+
+		device
+			.send(&json!({ "type": "app-state", "state": "background" }))
+			.await;
+		// The app-state frame reaches the bridge before the close does.
+		tokio::time::sleep(Duration::from_millis(50)).await;
+		drop(device);
+		assert_eq!(
+			controller.next().await,
+			json!({ "type": "device-status", "connected": false, "inBackground": true }),
+			"{name}"
+		);
+		controller
+			.send(&json!({ "type": "eval", "id": "gone", "code": "x" }))
+			.await;
+		assert_eq!(
+			controller.next().await,
+			json!({ "type": "eval-result", "id": "gone", "ok": false, "error": "No device is connected to the debugger. Discord went to the background, which closes its debugger; open Discord to reconnect.", "code": "no-device" }),
 			"{name}"
 		);
 	}

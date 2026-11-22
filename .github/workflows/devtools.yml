@@ -230,11 +230,15 @@ jobs:
                   codesign --force --deep --sign - "$app"
                   tar -czf '${{ matrix.asset }}' "$app"
 
+            # Explorer and the taskbar show the file name, so the zip holds the app's name; build.rs
+            # embeds the icon.
             - name: Package binary (Windows)
               if: runner.os == 'Windows'
               shell: pwsh
               working-directory: apps/devtools/target/${{ matrix.target }}/release
-              run: Compress-Archive -Path unbound-devtools.exe -DestinationPath '${{ matrix.asset }}'
+              run: |
+                  Copy-Item unbound-devtools.exe 'Unbound DevTools.exe'
+                  Compress-Archive -LiteralPath 'Unbound DevTools.exe' -DestinationPath '${{ matrix.asset }}'
 
             - name: Upload binary
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9

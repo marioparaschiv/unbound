@@ -30,5 +30,8 @@ ureq.workspace = true
 sha2.workspace = true
 chrono.workspace = true
 
+[build-dependencies]
+embed-resource = "3"
+
 [dev-dependencies]
 gpui = { workspace = true, features = ["test-support"] }

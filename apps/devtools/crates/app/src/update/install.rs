@@ -14,8 +14,9 @@ use sha2::{Digest, Sha256};
 
 use super::api::{Update, agent};
 
+/// The executable's name in the release archive; CI renames the Windows build to its app name.
 #[cfg(windows)]
-const BINARY: &str = "unbound-devtools.exe";
+const BINARY: &str = "Unbound DevTools.exe";
 #[cfg(not(windows))]
 const BINARY: &str = "unbound-devtools";
 

@@ -16,6 +16,12 @@ const PUSH_TIMEOUT_MS: u64 = 60_000;
 const DEVICE_READ_TIMEOUT_MS: u64 = 15_000;
 
 const NO_DEVICE: &str = "No device is connected to the debugger.";
+/// `noDeviceError` in the protocol's session, once Discord left in the background.
+const NO_DEVICE_IN_BACKGROUND: &str = "No device is connected to the debugger. Discord went to the background, which closes its debugger; open Discord to reconnect.";
+/// `evalTimeoutError`'s reasons, by whether Discord is in the foreground.
+const HUNG: &str = "Discord is in the foreground, so its JS thread is busy or hung.";
+const SUSPENDED: &str =
+	"Discord is not in the foreground, so iOS may have suspended it; open Discord and retry.";
 
 const EXPLORER_REQUESTS: [&str; 4] = [
 	"explorer-object-request",
@@ -52,8 +58,14 @@ pub(crate) enum Request {
 /// Why the bridge answers a request itself.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Failure {
-	NoDevice,
-	TimedOut,
+	/// `in_background`: the last device left because Discord went to the background.
+	NoDevice {
+		in_background: bool,
+	},
+	/// `foreground`: Discord last reported itself active.
+	TimedOut {
+		foreground: bool,
+	},
 	DeviceLeft,
 }
 
@@ -113,19 +125,30 @@ impl Request {
 
 	/// The answer the bridge gives in the device's place.
 	pub(crate) fn failure(&self, id: &str, failure: Failure) -> Json {
-		let (error, code) = match (self, failure) {
-			(Self::Eval { .. } | Self::Push, Failure::NoDevice) => {
-				(NO_DEVICE.to_owned(), Some("no-device"))
+		let no_device = |in_background| {
+			if in_background {
+				NO_DEVICE_IN_BACKGROUND
+			} else {
+				NO_DEVICE
 			}
-			(Self::Eval { timeout_ms }, Failure::TimedOut) => (
-				format!("Evaluation timed out after {timeout_ms}ms."),
+			.to_owned()
+		};
+		let (error, code) = match (self, failure) {
+			(Self::Eval { .. } | Self::Push, Failure::NoDevice { in_background }) => {
+				(no_device(in_background), Some("no-device"))
+			}
+			(Self::Eval { timeout_ms }, Failure::TimedOut { foreground }) => (
+				format!(
+					"Evaluation timed out after {timeout_ms}ms. {}",
+					if foreground { HUNG } else { SUSPENDED }
+				),
 				Some("timeout"),
 			),
 			(Self::Eval { .. }, Failure::DeviceLeft) => (
 				"Device disconnected before the evaluation completed.".to_owned(),
 				Some("device-disconnected"),
 			),
-			(Self::Push, Failure::TimedOut) => (
+			(Self::Push, Failure::TimedOut { .. }) => (
 				format!("Push timed out after {PUSH_TIMEOUT_MS}ms."),
 				Some("timeout"),
 			),
@@ -133,8 +156,10 @@ impl Request {
 				"Device disconnected before the reload completed.".to_owned(),
 				Some("device-disconnected"),
 			),
-			(Self::Views | Self::ViewDetails, Failure::NoDevice) => (NO_DEVICE.to_owned(), None),
-			(Self::Views, Failure::TimedOut) => (
+			(Self::Views | Self::ViewDetails, Failure::NoDevice { in_background }) => {
+				(no_device(in_background), None)
+			}
+			(Self::Views, Failure::TimedOut { .. }) => (
 				format!("Listing views timed out after {DEVICE_READ_TIMEOUT_MS}ms."),
 				None,
 			),
@@ -142,7 +167,7 @@ impl Request {
 				"Device disconnected before the views were listed.".to_owned(),
 				None,
 			),
-			(Self::ViewDetails, Failure::TimedOut) => (
+			(Self::ViewDetails, Failure::TimedOut { .. }) => (
 				format!("Reading the view timed out after {DEVICE_READ_TIMEOUT_MS}ms."),
 				None,
 			),
@@ -150,10 +175,11 @@ impl Request {
 				"Device disconnected before the view was read.".to_owned(),
 				None,
 			),
-			(Self::Explorer(_) | Self::Metro(_), Failure::NoDevice) => {
+			// The explorer and Metro sessions keep the plain message.
+			(Self::Explorer(_) | Self::Metro(_), Failure::NoDevice { .. }) => {
 				(NO_DEVICE.to_owned(), Some("failed"))
 			}
-			(Self::Explorer(_), Failure::TimedOut) => (
+			(Self::Explorer(_), Failure::TimedOut { .. }) => (
 				format!("Exploring timed out after {DEVICE_READ_TIMEOUT_MS}ms."),
 				Some("failed"),
 			),
@@ -161,7 +187,7 @@ impl Request {
 				"Device disconnected before the explorer answered.".to_owned(),
 				Some("failed"),
 			),
-			(Self::Metro(_), Failure::TimedOut) => (
+			(Self::Metro(_), Failure::TimedOut { .. }) => (
 				format!("Metro timed out after {DEVICE_READ_TIMEOUT_MS}ms."),
 				Some("failed"),
 			),
