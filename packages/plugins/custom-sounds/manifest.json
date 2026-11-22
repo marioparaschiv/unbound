@@ -14,5 +14,32 @@
 	},
 	"icon": "VoiceNormalIcon",
 	"main": "index.tsx",
-	"replaces": ["unbound.join-sounds"]
+	"replaces": [
+		"unbound.join-sounds"
+	],
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.objc.classes",
+				"native.objc.invoke"
+			]
+		},
+		"android": {
+			"capabilities": [
+				"native.java.batch",
+				"native.java.classes",
+				"native.java.construct",
+				"native.java.fields",
+				"native.java.invoke",
+				"native.java.invokeAsync"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "adef22d46ece162397bfecc9e145bcdd5a2d29f30e8eac262e4020833059aea37186b2dab3f78b16b894754fb13d50881458e22cc20c05ba12aca5b15b29c593"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "nert4oRaUDKcEqu0PYSXpycd4vg4A3c89WnEUg9n3pI6qcDFWldRUNkhfKKTjJhVRgY0wbeUbU8c/sOVxrzqBA=="
+	}
 }
