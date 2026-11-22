@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.12.1](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.0...loader-v1.12.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* **loader:** ignore MetricKit crashes from other apps in the same host ([#2171](https://github.com/marioparaschiv/unbound/issues/2171)) ([30ad351](https://github.com/marioparaschiv/unbound/commit/30ad351a052fb893f83a6ab3a398386f8e613f68)), closes [#2153](https://github.com/marioparaschiv/unbound/issues/2153)
+* **loader:** read loader release responses past 16 KB ([#2160](https://github.com/marioparaschiv/unbound/issues/2160)) ([0d747ac](https://github.com/marioparaschiv/unbound/commit/0d747acd3310aedd96afabe6c6b6e82cbb4bf66d))
+
 ## [1.12.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.11.0...loader-v1.12.0) (2026-11-21)
 
 
