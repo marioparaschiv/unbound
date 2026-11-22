@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.11.2](https://github.com/marioparaschiv/unbound/compare/client-v3.11.1...client-v3.11.2) (2026-11-22)
+
+
+### Bug Fixes
+
+* **client:** fit chat row updates to the rows a view holds ([#2174](https://github.com/marioparaschiv/unbound/issues/2174)) ([f60f14b](https://github.com/marioparaschiv/unbound/commit/f60f14b6cf060483e23e4229e0c923e97e711451)), closes [#2139](https://github.com/marioparaschiv/unbound/issues/2139) [#2140](https://github.com/marioparaschiv/unbound/issues/2140) [#2141](https://github.com/marioparaschiv/unbound/issues/2141)
+* **client:** keep restarted plugin surfaces from failing ([#2173](https://github.com/marioparaschiv/unbound/issues/2173)) ([ecb8add](https://github.com/marioparaschiv/unbound/commit/ecb8add4b1b5e050f8cd165cc4678751feddfeee)), closes [#2164](https://github.com/marioparaschiv/unbound/issues/2164)
+
 ## [3.11.1](https://github.com/marioparaschiv/unbound/compare/client-v3.11.0...client-v3.11.1) (2026-11-22)
 
 
