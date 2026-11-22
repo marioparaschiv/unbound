@@ -1,4 +1,4 @@
-import { packDebugAltText } from '@unbound-app/contracts/debug-card-alt-text';
+import { DEBUG_ALT_LABEL, packDebugAltText } from '@unbound-app/contracts/debug-card-alt-text';
 import { parsePlist } from '@unbound-app/contracts/plist';
 import { describe, expect, test } from 'bun:test';
 import { MessageFlags } from 'discord.js';
@@ -62,6 +62,14 @@ describe('readDebugPayload', () => {
 		);
 
 		expect(payload).toMatchObject({ ...IOS, entitlements });
+	});
+
+	test('reads labelled alt text and cards packed before the label', () => {
+		const packed = packDebugAltText(IOS);
+
+		expect(packed.startsWith(DEBUG_ALT_LABEL)).toBe(true);
+		expect(readDebugPayload(packed)?.install).toBe(IOS.install);
+		expect(readDebugPayload(packed.slice(DEBUG_ALT_LABEL.length))?.install).toBe(IOS.install);
 	});
 
 	test('reads plain JSON alt text from cards drawn before packing', () => {
