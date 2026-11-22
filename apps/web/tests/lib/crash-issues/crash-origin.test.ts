@@ -75,6 +75,9 @@ describe('crashOrigin', () => {
 		expect(crashOrigin(ours)).toBe('addon');
 		expect(filesIssue(ours, 'addon')).toBe(true);
 		expect(filesIssue(theirs, 'addon')).toBe(false);
+		expect(
+			filesIssue({ ...ours, addon: { ...ours.addon, trust: 'unsigned' as const } }, 'addon'),
+		).toBe(false);
 		expect(unfiledReason(theirs, 'addon', true)).toBe('third-party');
 		expect(unfiledReason(ours, 'addon', true)).toBe('failed');
 		expect(unfiledReason(ours, 'addon', false)).toBe('unavailable');

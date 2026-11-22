@@ -131,7 +131,7 @@ export function crashOrigin(report: CrashReport): CrashOrigin {
 
 /**
  * @description Whether a crash goes on GitHub: every crash, from Unbound, Discord or the system, except one a
- * third-party addon caused, which belongs to that addon's author.
+ * third-party or unsigned addon caused, which belongs to that addon's author.
  * @param report The crash report.
  * @param origin Where the crash came from.
  * @returns Whether to open or join an issue for it.
@@ -143,6 +143,10 @@ export function filesIssue(report: CrashReport, origin: CrashOrigin): boolean {
 
 	if (origin !== 'addon') {
 		return true;
+	}
+
+	if (report.addon?.trust === 'unsigned') {
+		return false;
 	}
 
 	const addon = report.addon?.id ?? nativeCrashAddon(report.stack);
