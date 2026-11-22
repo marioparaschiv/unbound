@@ -23,6 +23,14 @@ function isContainer(value: RowValue): value is Container {
 	return prototype === Object.prototype || prototype === null;
 }
 
+function isComponent(value: Container): boolean {
+	return !Array.isArray(value) && typeof value.type === 'number';
+}
+
+function isImagePlaceholder(container: Container, key: string, child: RowValue): child is string {
+	return key === PLACEHOLDER_KEY && typeof child === 'string' && !isComponent(container);
+}
+
 function dropInside(value: Container, depth: number, seen: Set<Container>): number {
 	if (depth > MAX_DEPTH || seen.has(value)) {
 		return 0;
@@ -33,7 +41,7 @@ function dropInside(value: Container, depth: number, seen: Set<Container>): numb
 	let dropped = 0;
 
 	for (const [key, child] of Object.entries(value)) {
-		if (key === PLACEHOLDER_KEY && typeof child === 'string' && !isValidThumbHash(child)) {
+		if (isImagePlaceholder(value, key, child) && !isValidThumbHash(child)) {
 			(value as { [key: string]: RowValue })[key] = null;
 			dropped++;
 		} else if (child !== undefined && isContainer(child)) {
@@ -46,7 +54,7 @@ function dropInside(value: Container, depth: number, seen: Set<Container>): numb
 
 /**
  * @description Removes every image placeholder in a chat row's message that is not a complete ThumbHash, wherever it
- * sits, so Discord draws those images without a preview instead of trapping in its native decoder.
+ * sits outside a component's hint text, so Discord draws those images without a preview instead of trapping in its native decoder.
  * @param message The row's message.
  * @returns How many placeholders it removed.
  */

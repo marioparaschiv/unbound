@@ -47,6 +47,29 @@ describe('dropInvalidPlaceholders', () => {
 		expect(JSON.stringify(message)).not.toContain('PwAAAAAA');
 	});
 
+	test('keeps the hint text of select menus and other components', () => {
+		const message: RowMessage = {
+			id: 'm5',
+			components: [
+				{
+					type: 1,
+					components: [
+						{
+							type: 3,
+							placeholder: 'Choose a category to view its commands',
+							options: [],
+						},
+						{ type: 5, placeholder: 'Pick' },
+					],
+				},
+			],
+		};
+
+		expect(dropInvalidPlaceholders(message)).toBe(0);
+		expect(JSON.stringify(message)).toContain('Choose a category to view its commands');
+		expect(JSON.stringify(message)).toContain('"placeholder":"Pick"');
+	});
+
 	test('stops at cycles', () => {
 		const message: RowMessage = { id: 'm4', attachments: [{ placeholder: 'AAAA' }] };
 
