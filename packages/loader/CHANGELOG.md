@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.2](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.1...loader-v1.12.2) (2026-11-22)
+
+
+### Bug Fixes
+
+* **loader:** retire the JS runtime when React Native invalidates it ([#2186](https://github.com/marioparaschiv/unbound/issues/2186)) ([295e2d3](https://github.com/marioparaschiv/unbound/commit/295e2d3320baa819960569bf38200da658b8a9cf))
+
 ## [1.12.1](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.0...loader-v1.12.1) (2026-11-22)
 
 
