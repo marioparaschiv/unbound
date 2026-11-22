@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0](https://github.com/marioparaschiv/unbound/compare/client-v3.12.1...client-v1.0.0) (2026-11-22)
+
+
+### Features
+
+* **client:** reset to 1.0.0, publish only changed bundles ([#2193](https://github.com/marioparaschiv/unbound/issues/2193)) ([4144065](https://github.com/marioparaschiv/unbound/commit/41440656d365ff6ecc656d5b579c0f77a22f5c44))
+
 ## [3.12.1](https://github.com/marioparaschiv/unbound/compare/client-v3.12.0...client-v3.12.1) (2026-11-22)
 
 
