@@ -7,6 +7,12 @@ namespace loader {
 namespace {
     constexpr size_t kMaxFrames = 60;
 
+    MetricKitImageCheck &imageCheck()
+    {
+        static MetricKitImageCheck check;
+        return check;
+    }
+
     std::string hex(uint64_t value)
     {
         char buffer[24];
@@ -74,6 +80,17 @@ namespace {
     }
 }
 
+void setMetricKitImageCheck(MetricKitImageCheck check)
+{
+    imageCheck() = std::move(check);
+}
+
+static bool fromThisApp(const nlohmann::json &frame)
+{
+    std::string binary = textMember(frame, "binaryName");
+    return binary.empty() || !imageCheck() || imageCheck()(binary);
+}
+
 static std::optional<std::string> attributedFrames(const nlohmann::json &diagnostic)
 {
     const nlohmann::json *thread = diagnostic.is_object() ? crashingThread(diagnostic) : nullptr;
@@ -92,6 +109,11 @@ static std::optional<std::string> attributedFrames(const nlohmann::json &diagnos
     const nlohmann::json *frame = &roots->front();
     for (size_t index = 0; frame && frame->is_object() && index < kMaxFrames; index++)
     {
+        if (!fromThisApp(*frame))
+        {
+            return std::nullopt;
+        }
+
         text += frameLine(index, *frame);
         auto children = frame->find("subFrames");
         frame         = children != frame->end() && children->is_array() && !children->empty()
