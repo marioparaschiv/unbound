@@ -11,5 +11,9 @@
 	],
 	"version": "1.0.0",
 	"icon": "LettersIcon",
-	"main": "bundle.json"
+	"main": "bundle.json",
+	"signature": {
+		"version": 1,
+		"ed25519": "tsF/x7/HabuYFyAtvGZbNgeGjoMYlOusB63zEQHAM3I0EAsR1DjKRekQ47OXiGsjqsRwufPz9AyqzLUjDZKvAw=="
+	}
 }
