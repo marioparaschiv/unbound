@@ -19,6 +19,7 @@ import backgroundRefresh from '~/builtins/background-refresh';
 import imageSourceGuard from '~/builtins/image-source-guard';
 import gatewayReconnect from '~/builtins/gateway-reconnect';
 import placeholderGuard from '~/builtins/placeholder-guard';
+import surfaceGuard from '~/builtins/surface-guard';
 import updater, { updatesSection } from '~/updates/builtin';
 import { developerSection } from '~/settings/builtin.dev';
 import { themes as themeManager } from '~/themes/manager';
@@ -115,6 +116,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	['sponsorBadges', sponsorBadges],
 	['staffMode', staffMode],
 	['supportGate', supportGate],
+	['surfaceGuard', surfaceGuard],
 	['appIcons', appIcons],
 	['themes', themes],
 	['toasts', toasts],

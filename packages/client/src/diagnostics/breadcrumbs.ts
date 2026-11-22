@@ -128,12 +128,22 @@ export function recentBreadcrumbs(): string[] {
 	return entries.map(lineOf);
 }
 
+function recordRuntimeGeneration() {
+	const generation = (globalThis as { __unboundRuntimeGeneration?: unknown })
+		.__unboundRuntimeGeneration;
+
+	if (typeof generation === 'number' && generation > 1) {
+		record(`runtime: JavaScript reloaded, generation ${generation}`);
+	}
+}
+
 /**
  * @description Starts keeping breadcrumbs: every Flux action's type through one dispatcher interceptor, and Discord's
  * own breadcrumbs. They are saved every few seconds for the next launch's crash report.
  */
 export function startBreadcrumbs(): void {
 	recording = true;
+	recordRuntimeGeneration();
 
 	if (!installed) {
 		installed = true;
