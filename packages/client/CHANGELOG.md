@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/marioparaschiv/unbound/compare/client-v1.0.0...client-v1.0.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* **client:** restore the toast height spring's old feel ([#2202](https://github.com/marioparaschiv/unbound/issues/2202)) ([508e239](https://github.com/marioparaschiv/unbound/commit/508e2391ff0cef6e146f97c088b627177e1f5709))
+
 ## [1.0.0](https://github.com/marioparaschiv/unbound/compare/client-v3.12.1...client-v1.0.0) (2026-11-22)
 
 
