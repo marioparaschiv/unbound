@@ -1,12 +1,13 @@
 //! The Console page's layout: the entries that ran above, the editor below, and a footer saying
 //! whether types are ready.
 
-use gpui::{AnyElement, App, Context, FontWeight, IntoElement, Window, div, prelude::*, px};
+use gpui::{AnyElement, App, Context, IntoElement, Window, div, prelude::*, px};
 use gpui_component::input::{Editor, Enter, Escape, IndentInline, MoveDown, MoveUp};
 
 use super::assist::Assist;
 use super::output::Folds;
 use super::{Console, Entry, Outcome, TypesState, brackets, keys};
+use crate::empty_state::EmptyState;
 use crate::nav;
 use crate::theme;
 use crate::widgets::{
@@ -118,21 +119,15 @@ fn render_entry(entry: &mut Entry, folds: &Folds, cx: &mut Context<Console>) -> 
 }
 
 fn render_intro() -> AnyElement {
-	div()
-		.flex()
-		.flex_col()
-		.gap(px(6.))
-		.px(px(theme::GUTTER))
-		.py(px(16.))
-		.text_color(theme::color(theme::TEXT_MUTED))
+	EmptyState::new("icons/square-terminal.svg", "Run TypeScript on the Device")
+		.body("Type below and press Enter. Completions and errors come from Unbound's API types, and each result stays on the device as $1, $2, … for later entries.")
 		.child(
 			div()
-				.font_weight(FontWeight::MEDIUM)
-				.text_color(theme::color(theme::TEXT))
-				.child("Run TypeScript on the device"),
+				.text_center()
+				.text_size(theme::TEXT_SMALL)
+				.text_color(theme::color(theme::TEXT_FAINT))
+				.child("Shift+Enter adds a line · Cmd/Ctrl+Enter runs inside a block"),
 		)
-		.child("Enter runs the editor, or adds a line inside a block or while a bracket is open; Shift+Enter adds one and Cmd/Ctrl+Enter runs anyway. Completions, signatures and errors come from Unbound's API types, earlier entries and earlier results.")
-		.child("Each result stays on the device as $1, $2, …; only a short preview and its shape come back.")
 		.into_any_element()
 }
 
@@ -218,6 +213,10 @@ impl Render for Console {
 		self.motion.settle();
 		if self.motion.moving() {
 			window.request_animation_frame();
+		}
+		if self.follow_bottom {
+			self.scroll.scroll_to_bottom();
+			self.follow_bottom = self.motion.moving();
 		}
 		let char = mono_char_width(window);
 		let types = match &self.types {

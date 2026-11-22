@@ -65,6 +65,8 @@ Plain text matches component names. Text that starts with `.` or `jq:` runs a jq
 .. | objects | select(.kind == "memo" and .key != null)
 ```
 
+A program that fails over the tree or yields no ids runs as a predicate on each element instead, so `.kind == "memo" and .key != null` finds the same elements.
+
 ## Agents (MCP)
 
 The window serves MCP over streamable HTTP. An agent attached there shares your selection: `select` moves the window, and `selected` reads what you clicked. `unbound-devtools mcp` serves the same tools over stdio with no window.
