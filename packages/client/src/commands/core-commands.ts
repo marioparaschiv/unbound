@@ -4,7 +4,6 @@ import { createCommands, option } from '~/commands/api';
 import { findByProps } from '~/metro/lookups';
 import { Discord } from '~/metro/components';
 import { Screens } from '~/core/constants';
-import debug from '~/debugger/builtin.dev';
 import { getBucket } from '~/storage/api';
 import { reload } from '~/native/native';
 import { messages } from '~/i18n/api';
@@ -88,14 +87,8 @@ export function start() {
 						setSetting('debugger.address', address.trim());
 					}
 
+					// The debugger builtin listens to both settings, so it connects or disconnects itself.
 					setSetting('debugger.enabled', enabled);
-
-					// The debugger only listens for these settings while it runs, so restart it directly.
-					debug.stop();
-
-					if (enabled) {
-						debug.start();
-					}
 
 					const target = getSetting('debugger.address') || 'the default address';
 

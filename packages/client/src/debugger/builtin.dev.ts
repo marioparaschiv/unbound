@@ -61,7 +61,8 @@ const RELOAD_BATCH_MS = 4000;
 
 let ws: WebSocket | null = null;
 let sending = false;
-let stopped = false;
+// Until enabled, so an address edited while the debugger is off dials nothing.
+let stopped = true;
 let backgrounded = false;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 // Dials that failed since the last open; only the first of a run is logged, so retries stay quiet.
@@ -76,11 +77,31 @@ let prompt: { computer: string; handle: DialogHandle } | undefined;
 const declined = new Set<string>();
 
 const disposers = new Set<() => void>();
+// Lives from `start` to `stop`, outside `enable`/`disable`, so the switch turns the debugger back on.
+let stopListeningToSettings: (() => void) | undefined;
 
 const DEBUG_REPORT_GLOBAL = '__UNBOUND_DEBUG_REPORT__';
 
-/** Connects to the debugger bridge and streams logs, evals and pushes over it. */
+/** Listens to the debugger settings, and connects when the debugger is enabled. */
 export function start() {
+	stopListeningToSettings ??= listenToSettings();
+
+	if (getSetting('debugger.enabled')) {
+		enable();
+	}
+}
+
+/** Disconnects and stops listening to the debugger settings. Twin of {@link start}. */
+export function stop() {
+	disable();
+	stopListeningToSettings?.();
+	stopListeningToSettings = undefined;
+}
+
+// Connects to the debugger bridge and streams logs, evals and pushes over it.
+function enable() {
+	if (!stopped) return;
+
 	stopped = false;
 	Reflect.set(globalThis, DEBUG_REPORT_GLOBAL, readDebugReport);
 	installDevNative();
@@ -91,22 +112,17 @@ export function start() {
 		patchLoggingHook();
 	}
 
-	// start() is re-entered by the settings listener on toggle; the disposers already registered mean
-	// the subscriptions below are live, and stacking a second set would fire every toast twice.
-	if (!disposers.size) {
-		disposers.add(listenToAppState());
-		disposers.add(listenToSettings());
+	disposers.add(listenToAppState());
 
-		for (const dispose of listenToReloads()) disposers.add(dispose);
-	}
+	for (const dispose of listenToReloads()) disposers.add(dispose);
 
 	// The socket only carries data reliably once the app is interactive, so connect on AppState
 	// `active`. Attempt once now too, in case the app is already active and won't fire a transition.
 	connect();
 }
 
-/** Disconnects from the debugger bridge and removes every listener and patch. */
-export function stop() {
+// Disconnects from the debugger bridge and removes every listener and patch. Twin of enable().
+function disable() {
 	stopped = true;
 	Reflect.deleteProperty(globalThis, DEBUG_REPORT_GLOBAL);
 	removeDevNative();
@@ -123,14 +139,6 @@ export function stop() {
 	for (const dispose of disposers) dispose();
 
 	disposers.clear();
-}
-
-/**
- * @description Whether the debugger is enabled in settings.
- * @returns `true` when `debugger.enabled` is set.
- */
-export function shouldStart() {
-	return getSetting('debugger.enabled');
 }
 
 function connect(isReconnect = false) {
@@ -298,11 +306,11 @@ function closeSocket() {
 
 	if (!ws) return;
 
-	if (ws.readyState === WebSocket.OPEN) {
-		ws.close();
-	}
+	const socket = ws;
 
+	// Cleared first, so its handlers schedule nothing; a dial in flight is closed too, or it would open after `stop`.
 	ws = null;
+	socket.close();
 }
 
 function handleMessage(raw: string) {
@@ -637,22 +645,45 @@ function listenToSettings() {
 		(payload) => {
 			if (isSettingChange(payload, 'debugger.enabled')) {
 				if (payload.value) {
-					start();
+					enable();
 				} else {
-					stop();
+					disable();
 				}
 
 				return;
 			}
 
-			if (ws?.readyState !== WebSocket.OPEN) return;
-
-			Logger.info('Address changed, reconnecting...');
-			// The close handler clears `ws` and schedules the retry; dialling here would hit the
-			// `if (ws) return` guard, since `close()` doesn't clear the socket synchronously.
-			ws.close();
+			redial();
 		},
 	);
+}
+
+// Drops the socket in any state, a dial in flight or a retry included, and dials the new address at once.
+function redial() {
+	if (stopped) return;
+
+	Logger.info('Address changed, reconnecting...');
+	clearReconnectTimer();
+	stopDiscovery();
+
+	if (ws) {
+		const socket = ws;
+
+		// Cleared first, so the old socket's handlers ignore its close and schedule nothing.
+		ws = null;
+		endLogStream();
+		socket.close();
+		endSession();
+		resetExplorer();
+		resetMetro();
+	}
+
+	failedDials = 0;
+
+	// Coming back to `active` dials the new address.
+	if (!backgrounded) {
+		connect(true);
+	}
 }
 
 // Toast hot reloads on the device. This builtin only runs with the debugger enabled, so it is
@@ -698,4 +729,4 @@ function listenToReloads() {
 	];
 }
 
-export default { start, stop, shouldStart };
+export default { start, stop };
