@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.7.1...devtools-v1.8.0) (2026-11-22)
+
+
+### Features
+
+* **devtools:** open console values in place and delete one word ([#2182](https://github.com/marioparaschiv/unbound/issues/2182)) ([3e3ab64](https://github.com/marioparaschiv/unbound/commit/3e3ab641d6b49acba12a4e468a80fa0312a8cce3))
+
 ## [1.7.1](https://github.com/marioparaschiv/unbound/compare/devtools-v1.7.0...devtools-v1.7.1) (2026-11-22)
 
 
