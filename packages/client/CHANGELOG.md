@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/marioparaschiv/unbound/compare/client-v1.1.1...client-v1.1.2) (2026-11-22)
+
+
+### Bug Fixes
+
+* **client:** square the Addons header's bottom corners while open ([#2239](https://github.com/marioparaschiv/unbound/issues/2239)) ([496eb4f](https://github.com/marioparaschiv/unbound/commit/496eb4fb27bb4c3383acbb0b27cc6398ac423639))
+
 ## [1.1.1](https://github.com/marioparaschiv/unbound/compare/client-v1.1.0...client-v1.1.1) (2026-11-22)
 
 
