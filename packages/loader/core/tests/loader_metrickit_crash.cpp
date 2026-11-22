@@ -25,5 +25,19 @@ int main()
     assert(!loader::metricKitCrashStack(
                 nlohmann::json::parse(R"({"callStackTree": {"callStacks": []}})"))
                 .has_value());
+
+    loader::setMetricKitImageCheck([](const std::string &binary) {
+        return binary != "Spotify";
+    });
+    nlohmann::json foreign = nlohmann::json::parse(R"({
+        "diagnosticMetaData": {"signal": 9},
+        "callStackTree": {"callStacks": [{"threadAttributed": true, "callStackRootFrames": [{
+            "address": 1, "binaryName": "libswiftCore.dylib", "offsetIntoBinaryTextSegment": 1,
+            "subFrames": [{"address": 2, "binaryName": "Spotify", "offsetIntoBinaryTextSegment": 2}]
+        }]}]}
+    })");
+    assert(!loader::metricKitCrashStack(foreign).has_value());
+    assert(loader::metricKitCrashStack(crash).has_value());
+    loader::setMetricKitImageCheck(nullptr);
     return 0;
 }
