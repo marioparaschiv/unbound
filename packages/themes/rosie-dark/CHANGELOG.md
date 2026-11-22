@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1] - 2026-11-22
+
+### Fixed
+
+- The store page shows its icons instead of `:name:` text.
+
 ## [1.1.0] - 2026-11-14
 
 ### Added
