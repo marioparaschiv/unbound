@@ -54,14 +54,10 @@ async function cleanFile(
 	};
 }
 
+// Only photos attached with their metadata are announced; a removal happens silently.
 function announce(reports: PhotoReport[]) {
-	const removed = reports.filter((report) => report.removed).length;
-	const content = removed
-		? format('REMOVED', { count: removed })
-		: format('LOCATED', { count: reports.length });
-
 	toasts.show({
-		content,
+		content: format('LOCATED', { count: reports.length }),
 		icon: 'ImageIcon',
 		buttons: [
 			{
@@ -100,7 +96,9 @@ async function cleanAction(tools: PhotoTools, action: AddFilesAction, folder: st
 
 	void flux.dispatch({ ...action, files, unboundPhotoMetadata: true } as never);
 
-	if (reports.length) announce(reports);
+	const kept = reports.filter((report) => !report.removed);
+
+	if (kept.length) announce(kept);
 }
 
 /**
