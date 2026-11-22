@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.3](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.2...loader-v1.12.3) (2026-11-22)
+
+
+### Bug Fixes
+
+* **loader:** keep stopped plugin surfaces alive until layout settles ([#2229](https://github.com/marioparaschiv/unbound/issues/2229)) ([ab74190](https://github.com/marioparaschiv/unbound/commit/ab741908e57bccac062243531f92a05b2cf909bb))
+
 ## [1.12.2](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.1...loader-v1.12.2) (2026-11-22)
 
 
