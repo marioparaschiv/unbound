@@ -6,7 +6,7 @@ import { messages } from '@unbound-app/i18n';
 import { ui } from '@unbound-app/api';
 
 import { DEFAULT, EVENTS, EXTRA_SOUNDS, LINK, readMap, type SoundEvent } from '~/lib/sounds';
-import { activePlayer } from '~/lib/active-player';
+import { activePlayable, activePlayer } from '~/lib/active-player';
 import { playJoinSound } from '~/lib/join-sound';
 
 const JOIN_SOUNDS = [
@@ -144,7 +144,10 @@ function JoinRows() {
 					settings.volume = value;
 				}}
 			/>
-			<ui.Row label={messages.PREVIEW} onPress={() => playJoinSound(activePlayer())} />
+			<ui.Row
+				label={messages.PREVIEW}
+				onPress={() => playJoinSound(activePlayer(), activePlayable())}
+			/>
 		</ui.Section>
 	);
 }

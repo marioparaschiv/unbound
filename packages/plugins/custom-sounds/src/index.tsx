@@ -7,6 +7,7 @@ import { linkPlayer, type LinkPlayer } from '@unbound-plugins/shared/media/link-
 import { joinedUsers, type VoiceStateUpdate } from '~/lib/joins';
 import { playJoinSound } from '~/lib/join-sound';
 import { setActivePlayer } from '~/lib/active-player';
+import { playableSound } from '~/native/playable-sound';
 import { patchSounds } from '~/patches/sounds';
 import SettingsPanel from '~/settings';
 
@@ -17,12 +18,14 @@ type VoiceStateStore = {
 };
 
 let player: LinkPlayer | undefined;
+let playable: ((name: string) => boolean) | undefined;
 let stopListening: (() => void) | undefined;
 
 export function start(context: PluginContext) {
 	player = linkPlayer(context.native, context.tempPath);
-	setActivePlayer(player);
-	patchSounds(player);
+	playable = playableSound(context.native);
+	setActivePlayer(player, playable);
+	patchSounds(player, playable);
 
 	const VoiceStates = flux.getStore('VoiceState') as unknown as VoiceStateStore;
 	const SelectedChannels = flux.getStore('SelectedChannel');
@@ -38,7 +41,7 @@ export function start(context: PluginContext) {
 				Users?.getCurrentUser?.()?.id,
 			);
 
-			if (joined.length) playJoinSound(player);
+			if (joined.length) playJoinSound(player, playable);
 		} catch (error) {
 			logger.error('Failed to check a voice state update for joins:', error);
 		}
@@ -53,5 +56,6 @@ export function stop() {
 	patcher.unpatchAll();
 	player?.dispose();
 	player = undefined;
+	playable = undefined;
 	setActivePlayer(undefined);
 }
