@@ -17,7 +17,7 @@ import {
 	uiColorToHex,
 	type PropertyDraft,
 } from '~/debugger/view-properties.dev';
-import { asFlag, asNumber, asObject, asStruct, asText } from '~/debugger/objc-values.dev';
+import { asFlag, asList, asNumber, asObject, asStruct, asText } from '~/debugger/objc-values.dev';
 
 const VIEW_SELECTORS = [
 	'frame',
@@ -275,8 +275,7 @@ export async function readIosDetails(
 	}
 
 	function state() {
-		const recognizers = asObject(read('gestureRecognizers'));
-		const names = (recognizers ? objc.array(recognizers) : []).flatMap((item) => {
+		const names = asList(objc, read('gestureRecognizers')).flatMap((item) => {
 			const recognizer = asObject(item);
 
 			return recognizer ? (objc.className(recognizer) ?? []) : [];
