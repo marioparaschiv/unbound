@@ -17,6 +17,8 @@ import {
 	gitRevision,
 	I18N_BASE_URL,
 	CLIENT_VERSION,
+	clientVersion,
+	IMPORTANT_AT,
 	DEV_SERVER_URL,
 	IGNORED_WARNINGS,
 	DEBUGGER_ADDRESS,
@@ -180,6 +182,7 @@ function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 				? [
 						generateManifest(
 							gitRevision,
+							clientVersion,
 							bytecodeVersions,
 							IS_DEV_BUILD,
 							BUILD_CHANNEL,
@@ -293,6 +296,8 @@ async function build() {
 
 		const problem = writeManifest({
 			revision: gitRevision(),
+			clientVersion: CLIENT_VERSION,
+			importantAt: IMPORTANT_AT,
 			declared: bytecodeVersions,
 			lenient: IS_DEV_BUILD,
 			channel: BUILD_CHANNEL,

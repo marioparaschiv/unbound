@@ -10,6 +10,7 @@ Rules describe the code as written. When a rule and a neighbouring file disagree
 - Shared lint rules and commitlint come from `@marioparaschiv/oxc-config`; repo rules live in `scripts/oxlint/` with fixture tests.
 - Run `bun run typecheck` before finishing. Client: `bun run client:test` (each file needs its own module registry, so plain `bun test` fails). Plugins: `bun run plugins:test`, `plugins:validate`. Native loaders (`packages/loader`, Go): `bun run loader:test`, `loader:validate`.
 - Commit as `type(scope): subject`, scope = package or app.
+- Add an `Important-Update: <reason>` line to the commit body when a client change should prompt users to restart now: it fixes a crash, freeze, data loss or security hole, or repairs a feature broken by a Discord update. Leave it out of new features, polish and refactors; those apply quietly on the next launch. Skip it when unsure: a false alarm trains users to ignore the toast.
 - Raise `minLoaderVersion` in `packages/client/package.json` only when the release bundle cannot work on an older loader. Each raise holds every user's bundle updates until they reinstall the app, so a `*.dev.ts` or single-platform feature checks the loader at runtime instead.
 
 Test: `turn-check` is clean and `bun run typecheck` passes.
