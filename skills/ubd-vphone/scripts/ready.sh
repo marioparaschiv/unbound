@@ -27,9 +27,9 @@ last_fetch() {
 	grep -ao '([0-9:]*) GET /unbound\.[0-9]*\.bundle' "$log" 2>/dev/null | tail -n 1
 }
 
-# The same hash the dev server sends as the bundle's ETag (packages/client/scripts/serve/hot-reload.ts).
+# The bundle's ETag as the dev server sends it (packages/client/scripts/serve/hot-reload.ts).
 served_etag() {
-	bun -e 'console.log(Bun.hash(require("fs").readFileSync(process.argv[1])).toString(16))' "$dist/unbound.js" 2>/dev/null
+	curl -sfI "http://localhost:$UNBOUND_DEV_PORT/unbound.js" | grep -io 'etag: "[0-9a-f]*"' | grep -o '[0-9a-f]\{8,\}'
 }
 
 # Compares content, not fetch times: an app already running the current build, or a restart that rebuilt it
