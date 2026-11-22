@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 import type { InstalledEntry, PendingUpdate } from '~/updates/addon-updates';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
@@ -20,6 +22,8 @@ type UpdateRowProps = {
 	checking: boolean;
 	/** Whether the Marketplace lists it; an unlisted addon never updates. */
 	listed: boolean;
+	/** Whether it is the group's last row, which rounds the card's bottom. */
+	end: boolean;
 };
 
 function describe(
@@ -45,9 +49,10 @@ function describe(
 
 /**
  * @description One installed addon: its version and whether it is current, paused, unlisted or has an
- * update. Pressing a listed one opens its update, version and pause actions.
+ * update. Pressing a listed one opens its update, version and pause actions. Outside a `TableRowGroup`, as the
+ * page's virtualised list lays it out, the row draws its own divider and card corners.
  */
-function UpdateRow({ entry, update, checked, checking, listed }: UpdateRowProps) {
+function UpdateRow({ entry, update, checked, checking, listed, end }: UpdateRowProps) {
 	const navigation = Discord.useNavigation();
 	const manager = Manager.for(entry.kind);
 	const held = manager.getHeldVersion(entry.id) !== void 0;
@@ -87,6 +92,7 @@ function UpdateRow({ entry, update, checked, checking, listed }: UpdateRowProps)
 			subLabelLineClamp={1}
 			icon={<Discord.TableRowIcon source={icon} />}
 			trailing={trailing()}
+			end={end}
 			onPress={
 				listed || update
 					? () => openAddonActions({ entry, update, openChangelog })
@@ -96,4 +102,5 @@ function UpdateRow({ entry, update, checked, checking, listed }: UpdateRowProps)
 	);
 }
 
-export default UpdateRow;
+// Memoised so a page re-render, which every store update causes, skips rows whose props held.
+export default memo(UpdateRow);
