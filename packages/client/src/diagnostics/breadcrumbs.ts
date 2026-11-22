@@ -1,6 +1,6 @@
 import { createLogger } from '@unbound-app/logger';
 
-import { watchChatRows } from '~/diagnostics/chat-row-breadcrumbs';
+import { guardChatRows } from '~/diagnostics/chat-row-guard';
 import { findByProps } from '~/metro/lookups';
 import { Dispatcher } from '~/flux/modules';
 import { after } from '~/patcher/api';
@@ -153,7 +153,7 @@ export function startBreadcrumbs(): void {
 	unpatchHelper = helper
 		? after(helper, 'addBreadcrumb', ({ args: [breadcrumb] }) => recordBreadcrumb(breadcrumb))
 		: undefined;
-	stopWatchingChatRows = watchChatRows((line) => {
+	stopWatchingChatRows = guardChatRows((line) => {
 		if (recording) {
 			record(line);
 		}
