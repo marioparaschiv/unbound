@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/marioparaschiv/unbound/compare/devtools-v1.7.0...devtools-v1.7.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* **devtools:** press sidebar text without scaling artifacts ([#2179](https://github.com/marioparaschiv/unbound/issues/2179)) ([904a5a2](https://github.com/marioparaschiv/unbound/commit/904a5a28e00d5f2b7744b82b5c483e0c755e1816))
+
 ## [1.7.0](https://github.com/marioparaschiv/unbound/compare/devtools-v1.6.0...devtools-v1.7.0) (2026-11-22)
 
 
