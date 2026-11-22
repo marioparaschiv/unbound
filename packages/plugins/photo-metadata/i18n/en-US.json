@@ -3,7 +3,6 @@
 	"REMOVE_LOCATION_SUBTITLE": "Removes the metadata of photos that record where they were taken before they are attached.",
 	"REMOVE_ALL": "Remove all metadata",
 	"REMOVE_ALL_SUBTITLE": "Also removes the camera, date and software from every photo you attach.",
-	"REMOVED": "Removed metadata from {count} photos.",
 	"LOCATED": "{count} photos you attached record where they were taken.",
 	"DETAILS": "Details",
 	"DETAILS_TITLE": "Photo metadata",

@@ -11,8 +11,6 @@ declare module '@unbound-app/i18n' {
 		readonly REMOVE_ALL: string;
 		/** Also removes the camera, date and software from every photo you attach. */
 		readonly REMOVE_ALL_SUBTITLE: string;
-		/** Removed metadata from {count} photos. */
-		readonly REMOVED: string;
 		/** {count} photos you attached record where they were taken. */
 		readonly LOCATED: string;
 		/** Details */
@@ -37,7 +35,6 @@ declare module '@unbound-app/i18n' {
 
 	/** The placeholder values each message that has placeholders takes. */
 	export type FormatVars = {
-		REMOVED: { count: string | number };
 		LOCATED: { count: string | number };
 		LOCATION: { value: string | number };
 		CAMERA: { value: string | number };
