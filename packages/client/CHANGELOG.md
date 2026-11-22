@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.12.1](https://github.com/marioparaschiv/unbound/compare/client-v3.12.0...client-v3.12.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* **client:** keep select menu hint text in chat rows ([#2184](https://github.com/marioparaschiv/unbound/issues/2184)) ([038031f](https://github.com/marioparaschiv/unbound/commit/038031f651f394dfc08fb0ca294e96276d9b6b7f))
+
 ## [3.12.0](https://github.com/marioparaschiv/unbound/compare/client-v3.11.2...client-v3.12.0) (2026-11-22)
 
 
