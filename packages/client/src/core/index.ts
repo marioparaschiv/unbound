@@ -32,6 +32,7 @@ import errorBoundary from '~/builtins/error-boundary';
 import profileExpiry from '~/builtins/profile-expiry';
 import sponsorBadges from '~/builtins/sponsor-badges';
 import { assetsSection } from '~/assets/builtin.dev';
+import surfaceGuard from '~/builtins/surface-guard';
 import coreCommands from '~/commands/core-commands';
 import hotRefresh from '~/hot-refresh/builtin.dev';
 import { pluginsSection } from '~/plugins/builtin';
@@ -115,6 +116,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	['sponsorBadges', sponsorBadges],
 	['staffMode', staffMode],
 	['supportGate', supportGate],
+	['surfaceGuard', surfaceGuard],
 	['appIcons', appIcons],
 	['themes', themes],
 	['toasts', toasts],

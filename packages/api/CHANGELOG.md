@@ -1,5 +1,33 @@
 # Changelog
 
+## [3.11.2](https://github.com/marioparaschiv/unbound/compare/api-v3.11.1...api-v3.11.2) (2026-11-22)
+
+
+### Miscellaneous Chores
+
+* **api:** Synchronize client versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 3.11.2
+
+## [3.11.1](https://github.com/marioparaschiv/unbound/compare/api-v3.11.0...api-v3.11.1) (2026-11-22)
+
+
+### Miscellaneous Chores
+
+* **api:** Synchronize client versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 3.11.1
+
 ## [3.11.0](https://github.com/marioparaschiv/unbound/compare/api-v3.10.0...api-v3.11.0) (2026-11-21)
 
 

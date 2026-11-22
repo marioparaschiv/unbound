@@ -1,7 +1,7 @@
 {
-	"packages/client": "3.11.0",
-	"packages/api": "3.11.0",
-	"packages/cli": "3.5.0",
+	"packages/client": "3.11.2",
+	"packages/api": "3.11.2",
+	"packages/cli": "3.5.2",
 	"packages/debugger": "1.3.0",
 	"packages/debugger-protocol": "2.3.0",
 	"packages/discord-types": "0.2.0",

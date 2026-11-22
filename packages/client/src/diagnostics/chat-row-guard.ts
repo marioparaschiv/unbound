@@ -1,10 +1,11 @@
 import {
+	fitRowUpdate,
 	rowUpdateBreadcrumb,
 	summariseRowUpdate,
 	type ChangedRow,
 } from '~/diagnostics/chat-row-updates';
 import { findByProps } from '~/metro/lookups';
-import { after } from '~/patcher/api';
+import { after, before } from '~/patcher/api';
 
 type RowUpdate = { rows?: ChangedRow[]; forceReload?: boolean };
 
@@ -34,12 +35,12 @@ function tracked(view: ChatView): TrackedView {
 }
 
 /**
- * @description Records every update Discord sends to its native chat views in the crash breadcrumbs, with whether its
- * indices fit the rows the view holds, so a report of Discord's native row trap shows how the two drifted apart.
+ * @description Tracks every update Discord sends to its native chat views and fits one whose indices run past the rows
+ * the view holds, which Discord's native chat would otherwise trap on, recording each in the crash breadcrumbs.
  * @param record Keeps one breadcrumb line.
- * @returns A function that stops recording, or `undefined` when Discord moved its chat helpers.
+ * @returns A function that stops guarding, or `undefined` when Discord moved its chat helpers.
  */
-export function watchChatRows(record: (line: string) => void): (() => void) | undefined {
+export function guardChatRows(record: (line: string) => void): (() => void) | undefined {
 	const utils = findByProps('updateRows', 'clearRows', 'fadeIn') as NativeChatUtils | undefined;
 
 	if (!utils) {
@@ -55,7 +56,7 @@ export function watchChatRows(record: (line: string) => void): (() => void) | un
 		record(`chat rows: view ${entry.id} cleared`);
 	});
 
-	const unpatchUpdate = after(utils, 'updateRows', ({ args: [view, update] }) => {
+	const unpatchUpdate = before(utils, 'updateRows', ({ args: [view, update] }) => {
 		const rows = update?.rows;
 
 		if (typeof view !== 'object' || view === null || !Array.isArray(rows)) return;
@@ -63,6 +64,16 @@ export function watchChatRows(record: (line: string) => void): (() => void) | un
 		const entry = tracked(view);
 		const full = Boolean(update.forceReload);
 		const summary = summariseRowUpdate(rows, entry.rows, full);
+		const held = full ? 0 : entry.rows;
+
+		if (summary.fits === false && held !== undefined) {
+			const fitted = fitRowUpdate(rows, held);
+
+			entry.rows = summariseRowUpdate(fitted, held, false).rowsAfter;
+			record(rowUpdateBreadcrumb(entry.id, summary, full, true));
+
+			return [view, { ...update, rows: fitted }];
+		}
 
 		entry.rows = summary.rowsAfter;
 		record(rowUpdateBreadcrumb(entry.id, summary, full));
@@ -74,4 +85,4 @@ export function watchChatRows(record: (line: string) => void): (() => void) | un
 	};
 }
 
-export default { watchChatRows };
+export default { guardChatRows };

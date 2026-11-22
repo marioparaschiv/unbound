@@ -11,8 +11,13 @@ import type {
 /** The most steps the Objective-C bridge runs in one `objc.batch`. */
 const BATCH_STEPS = 64;
 
+// Reads the field rather than testing `in`: a native handle answers `in` with true for every key.
 function isReference(value: unknown): value is NativeBatchReference {
-	return typeof value === 'object' && value !== null && '$nativeBatchResult' in value;
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		typeof (value as Partial<NativeBatchReference>).$nativeBatchResult === 'number'
+	);
 }
 
 /**
@@ -66,6 +71,22 @@ export function asObject(value: NativeObjCResult): NativeObjectHandle | undefine
 }
 
 /**
+ * @description Reads an `NSArray` result, which the bridge returns as a JS array or, from older loaders, a handle.
+ * @param objc The Objective-C bridge.
+ * @param value The result.
+ * @returns The elements, or `[]` when the result is not an array.
+ */
+export function asList(objc: LoaderObjCBridge, value: NativeObjCResult): NativeObjCResult[] {
+	if (Array.isArray(value)) {
+		return value;
+	}
+
+	const handle = asObject(value);
+
+	return handle ? objc.array(handle) : [];
+}
+
+/**
  * @description Reads a struct result's fields, such as a `CGRect`'s `origin` and `size`.
  * @param value The result.
  * @returns The fields, or `undefined` when the result is not a struct.
@@ -106,4 +127,4 @@ export async function onMainThread(
 	return results;
 }
 
-export default { asNumber, asFlag, asText, asObject, asStruct, onMainThread };
+export default { asNumber, asFlag, asText, asObject, asList, asStruct, onMainThread };

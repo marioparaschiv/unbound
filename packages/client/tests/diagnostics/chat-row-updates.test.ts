@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 
-import { rowUpdateBreadcrumb, summariseRowUpdate } from '~/diagnostics/chat-row-updates';
+import {
+	fitRowUpdate,
+	rowUpdateBreadcrumb,
+	summariseRowUpdate,
+} from '~/diagnostics/chat-row-updates';
 
 const INSERT = 1;
 const UPDATE = 2;
@@ -51,7 +55,45 @@ describe('summariseRowUpdate', () => {
 	});
 });
 
+describe('fitRowUpdate', () => {
+	test('keeps an update that fits', () => {
+		const rows = [
+			{ changeType: REMOVE, index: 0 },
+			{ changeType: UPDATE, index: 2 },
+			{ changeType: INSERT, index: 3 },
+		];
+
+		expect(fitRowUpdate(rows, 3)).toEqual(rows);
+	});
+
+	test('drops changes to rows the view does not hold and lands late inserts at the end', () => {
+		const fitted = fitRowUpdate(
+			[
+				{ changeType: UPDATE, index: 5 },
+				{ changeType: REMOVE, index: 3 },
+				{ changeType: INSERT, index: 9 },
+				{ changeType: UPDATE, index: 1 },
+			],
+			3,
+		);
+
+		expect(fitted).toEqual([
+			{ changeType: INSERT, index: 3 },
+			{ changeType: UPDATE, index: 1 },
+		]);
+		expect(summariseRowUpdate(fitted, 3, false).fits).toBe(true);
+	});
+});
+
 describe('rowUpdateBreadcrumb', () => {
+	test('marks an update the guard fitted', () => {
+		const summary = summariseRowUpdate([{ changeType: UPDATE, index: 5 }], 3, false);
+
+		expect(rowUpdateBreadcrumb(2, summary, false, true)).toBe(
+			'chat rows: view 2 +0 ~1 -0, top index 5, rows 3 DOES NOT FIT, fitted',
+		);
+	});
+
 	test('names the view, the counts and a mismatch', () => {
 		const summary = summariseRowUpdate([{ changeType: UPDATE, index: 5 }], 3, false);
 

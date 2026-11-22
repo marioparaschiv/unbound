@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.5.2](https://github.com/marioparaschiv/unbound/compare/cli-v3.5.1...cli-v3.5.2) (2026-11-22)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/api bumped to 3.11.2
+
+## [3.5.1](https://github.com/marioparaschiv/unbound/compare/cli-v3.5.0...cli-v3.5.1) (2026-11-22)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/api bumped to 3.11.1
+
 ## [3.5.0](https://github.com/marioparaschiv/unbound/compare/cli-v3.4.0...cli-v3.5.0) (2026-11-21)
 
 
