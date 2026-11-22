@@ -98,9 +98,11 @@ jobs:
                   tooling_changed="$(git diff --name-only "${range%%..*}" HEAD -- \
                       packages/client/scripts/build packages/rollup-plugin-hermes/src packages/loader/core/src/LoaderBundlePatch.cpp)"
 
-                  echo "content-hash=$(jq -r '.contentHash // ""' "$manifest")" >> "$GITHUB_OUTPUT"
-                  echo "important-at=$important_at" >> "$GITHUB_OUTPUT"
-                  echo "tooling-changed=$([ -n "$tooling_changed" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+                  {
+                      echo "content-hash=$(jq -r '.contentHash // ""' "$manifest")"
+                      echo "important-at=$important_at"
+                      echo "tooling-changed=$([ -n "$tooling_changed" ] && echo true || echo false)"
+                  } >> "$GITHUB_OUTPUT"
 
             - name: Build the loader's bundle patch checker
               run: packages/loader/core/tools/build-bundle-patch-check.sh "$RUNNER_TEMP/bundle_patch_check"
