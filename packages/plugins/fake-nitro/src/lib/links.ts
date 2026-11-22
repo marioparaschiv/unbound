@@ -61,6 +61,15 @@ export function emojisIn(content: string): FakeEmoji[] {
 }
 
 /**
+ * @description Tests whether a message's text holds nothing but custom emojis.
+ * @param content The message text.
+ * @returns Whether the text is only custom emojis and whitespace.
+ */
+export function isOnlyEmojis(content: string): boolean {
+	return /^(?:\s*<a?:[^:>]+:\d{17,20}>)+\s*$/.test(content);
+}
+
+/**
  * @description Replaces each emoji the sender cannot use with a link to its image.
  * @param content The message text.
  * @param emojis The custom emojis the text uses.

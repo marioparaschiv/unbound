@@ -31,4 +31,10 @@ export default defineSettings({
 		title: 'HYPERLINKS',
 		subtitle: 'HYPERLINKS_SUBTITLE',
 	}),
+	hyperlinksInText: setting.boolean({
+		default: true,
+		title: 'HYPERLINKS_IN_TEXT',
+		subtitle: 'HYPERLINKS_IN_TEXT_SUBTITLE',
+		visibleWhen: 'hyperlinks',
+	}),
 });

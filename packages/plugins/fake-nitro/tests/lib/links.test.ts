@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { emojiLink, emojisIn, replaceEmojis, stickerLink } from '~/lib/links';
+import { emojiLink, emojisIn, isOnlyEmojis, replaceEmojis, stickerLink } from '~/lib/links';
 
 const odin = { id: '123', name: 'Odin', animated: false };
 const dance = { id: '456', name: 'Dance', animated: true };
@@ -48,5 +48,11 @@ describe('emojis in text', () => {
 
 	test('skips plain text and unicode emojis', () => {
 		expect(emojisIn('plain :smile: 😀')).toEqual([]);
+	});
+
+	test('tells a message of only emojis from one with text', () => {
+		expect(isOnlyEmojis(' <a:wave:123456789012345678> <:ok:223456789012345678> ')).toBe(true);
+		expect(isOnlyEmojis('hi <:ok:223456789012345678>')).toBe(false);
+		expect(isOnlyEmojis('')).toBe(false);
 	});
 });

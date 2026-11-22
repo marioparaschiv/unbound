@@ -19,6 +19,10 @@ declare module '@unbound-app/i18n' {
 		readonly HYPERLINKS: string;
 		/** Sends [name](link) instead of the bare link. */
 		readonly HYPERLINKS_SUBTITLE: string;
+		/** Plain links for emoji-only messages */
+		readonly HYPERLINKS_IN_TEXT: string;
+		/** Skips [name](link) when a message is just emojis, so they show as images. */
+		readonly HYPERLINKS_IN_TEXT_SUBTITLE: string;
 		/** Show received fake emojis */
 		readonly RECEIVE_EMOJIS: string;
 		/** Turn emoji links sent with Fake Nitro, yours included, back into emojis. */
