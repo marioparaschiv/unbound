@@ -1,11 +1,13 @@
 //! The Logs page: the device's log lines live as they arrive, filtered by source
 //! (All, Unbound, JS, React Native, Native) and sorted by when the device wrote them, oldest or
 //! newest first. With auto-scroll on it stays pinned to the newest line; off, it keeps the reader's
-//! place.
+//! place. A line whose message runs past its row opens to show all of it.
 
+mod lines;
 mod rows;
 
-use std::collections::VecDeque;
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::rc::Rc;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -14,6 +16,8 @@ use gpui::{
 	prelude::*, px,
 };
 use gpui_component::switch::Switch;
+use lines::{LineMap, Opened, wrap};
+use rows::Columns;
 use unbound_devtools_core::{
 	Devtools, LOG_CAPACITY, LogEntry, LogOrder, LogView, insert_by_time, sort_by_time,
 };
@@ -22,6 +26,7 @@ use crate::empty::SETUP_STEPS;
 use crate::empty_state::EmptyState;
 use crate::mcp_menu::McpButton;
 use crate::nav;
+use crate::row_fold::RowFold;
 use crate::segmented::segmented;
 use crate::theme;
 use crate::widgets::{Raised, footer_bar, page_header, page_header_end, raised_button, tooltip};
@@ -44,6 +49,15 @@ pub struct LogsPage {
 	/// Whether the debugger connection has a device on it.
 	connected: bool,
 	scroll: UniformListScrollHandle,
+	/// The lines opened to their whole message, by `seq`.
+	expanded: HashSet<u64>,
+	/// The last line opened or closed, and its message while that folds.
+	fold: RowFold<u64>,
+	/// Where every shown line and open message line sits, laid out each frame.
+	map: LineMap,
+	columns: Columns,
+	/// Each open message wrapped, and the width it was wrapped to.
+	wrapped: HashMap<u64, (usize, Rc<[SharedString]>)>,
 	mcp: Entity<McpButton>,
 	_watch: [gpui::Task<()>; 2],
 }
@@ -88,6 +102,11 @@ impl LogsPage {
 			order: LogOrder::default(),
 			auto_scroll: true,
 			scroll: UniformListScrollHandle::new(),
+			expanded: HashSet::new(),
+			fold: RowFold::default(),
+			map: LineMap::default(),
+			columns: Columns::default(),
+			wrapped: HashMap::new(),
 			mcp,
 			_watch: [lines, status],
 		};
@@ -174,7 +193,67 @@ impl LogsPage {
 		self.devtools.clear_logs();
 		self.entries.clear();
 		self.rows.clear();
+		self.expanded.clear();
+		self.fold.clear();
 		cx.notify();
+	}
+
+	/// Opens a line to its whole message, or closes it.
+	fn toggle(&mut self, seq: u64, cx: &mut Context<Self>) {
+		let open = !self.expanded.remove(&seq);
+		if open {
+			self.expanded.insert(seq);
+		}
+		self.fold.toggle(seq, open, cx.reduce_motion());
+		cx.notify();
+	}
+
+	/// Measures the columns and places the open messages for this frame.
+	fn layout_lines(&mut self, window: &Window) {
+		self.fold.tick();
+		let mut sources = Vec::new();
+		for entry in &self.rows {
+			let source = entry.line.source();
+			if !sources.contains(&source) {
+				sources.push(source);
+			}
+			if sources.len() == 4 {
+				break;
+			}
+		}
+		self.columns = Columns::measure(window, &sources, crate::app::page_width(window));
+		let held = self.fold.held_open().copied();
+		let mut opened = Vec::new();
+		if !self.expanded.is_empty() || held.is_some() {
+			let len = self.rows.len();
+			for at in 0..len {
+				let entry = &self.rows[self.order.row(at, len)];
+				let seq = entry.seq;
+				if !self.expanded.contains(&seq) && held != Some(seq) {
+					continue;
+				}
+				let width = self.columns.wrap;
+				let (wrapped, lines) = self
+					.wrapped
+					.entry(seq)
+					.or_insert_with(|| (width, wrap(&entry.line.message, width).into()));
+				if *wrapped != width {
+					*wrapped = width;
+					*lines = wrap(&entry.line.message, width).into();
+				}
+				opened.push(Opened {
+					at,
+					seq,
+					level: entry.line.level,
+					lines: lines.clone(),
+				});
+			}
+		}
+		self.wrapped
+			.retain(|seq, _| opened.iter().any(|opened| opened.seq == *seq));
+		self.map = LineMap::new(self.rows.len(), opened);
+		let map = &self.map;
+		self.fold.anchor(|seq| map.block(*seq));
 	}
 
 	fn render_filters(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -255,7 +334,7 @@ impl LogsPage {
 		let note = (count > 0).then(|| {
 			let noun = if count == 1 { "line" } else { "lines" };
 			format!(
-				"{} of {count} {noun} shown. Click a line to copy it.",
+				"{} of {count} {noun} shown. Click a long line to open it.",
 				self.rows.len()
 			)
 		});
@@ -276,7 +355,11 @@ fn device_connected(devtools: &Devtools) -> bool {
 }
 
 impl Render for LogsPage {
-	fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+	fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+		self.layout_lines(window);
+		if self.fold.moving() {
+			window.request_animation_frame();
+		}
 		let any = !self.entries.is_empty();
 		let body = if self.rows.is_empty() {
 			self.render_state()

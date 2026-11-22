@@ -10,7 +10,6 @@ mod pane;
 mod reveal;
 mod search;
 mod tree;
-mod unfold;
 
 use std::rc::Rc;
 use std::time::Duration;
@@ -25,12 +24,12 @@ use unbound_devtools_core::{
 use crate::app::on_runtime;
 use crate::mcp_menu::McpButton;
 use crate::smooth_scroll::GlideTo;
+use crate::unfold::{Fold, Turn, refold};
 use files::Files;
 use load_all::LoadAll;
 use reveal::{Flash, Reveal};
 use search::KeySearch;
 use tree::{Fetch, Node, Path, Row as TreeRow};
-use unfold::{Fold, Turn, refold};
 
 const CHANGE_COALESCING_FRAME: Duration = Duration::from_millis(16);
 const FILTER_DEBOUNCE: Duration = Duration::from_millis(150);

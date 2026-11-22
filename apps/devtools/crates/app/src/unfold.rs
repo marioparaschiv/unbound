@@ -1,14 +1,15 @@
 //! The motion when a folder or value opens or closes: its chevron turns, and the block of rows under
 //! it grows or shrinks in height, pushing the rows below along. The list is uniform, so a fold shows
 //! its block a row at a time, crops the last one shown and lifts every row after it by the rest.
-//! Toggling a row again mid-way turns its chevron and block back from where they are.
+//! Toggling a row again mid-way turns its chevron and block back from where they are. Shared by every
+//! tree and accordion in the app, so they all open on the same curve.
 
 use std::collections::HashSet;
 use std::hash::Hash;
 use std::ops::Range;
 use std::time::Duration;
 
-use gpui::{Div, Pixels, Styled};
+use gpui::{Pixels, Styled};
 
 use crate::smooth_scroll::ease_out_expo;
 use crate::transition::{Timing, Transition};
@@ -20,7 +21,7 @@ const TURN: Timing = Timing {
 	ease: ease_out_expo,
 };
 /// How long a block takes to grow or shrink.
-const FOLD: Timing = Timing {
+pub(crate) const FOLD: Timing = Timing {
 	open: Duration::from_millis(280),
 	close: Duration::from_millis(280),
 	ease: ease_out_expo,
@@ -29,7 +30,7 @@ const FOLD: Timing = Timing {
 const FOLDED: usize = 32;
 
 /// A chevron turning after its row opened or closed.
-pub(super) struct Turn<K> {
+pub(crate) struct Turn<K> {
 	key: K,
 	motion: Transition,
 }
@@ -56,7 +57,7 @@ impl<K: PartialEq> Turn<K> {
 
 /// How a row on screen sits while its list folds.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(super) enum Place {
+pub(crate) enum Place {
 	Whole,
 	/// The last row of the block shown, cropped to this share of its height.
 	Cropped(f32),
@@ -66,7 +67,7 @@ pub(super) enum Place {
 
 impl Place {
 	/// `row`, a list item `height` tall, cropped or lifted to where the fold has it.
-	pub fn fit(self, row: Div, height: Pixels) -> Div {
+	pub fn fit<E: Styled>(self, row: E, height: Pixels) -> E {
 		match self {
 			Self::Whole => row,
 			Self::Cropped(share) => row.h(height * share).overflow_hidden(),
@@ -77,7 +78,7 @@ impl Place {
 
 /// A block of rows growing in after its row opened, or shrinking away after it closed. The list
 /// holds every row of the block until the fold ends.
-pub(super) struct Fold {
+pub(crate) struct Fold {
 	block: Range<usize>,
 	motion: Transition,
 	/// How many rows of the block show, the last one in part. Sampled once a frame by `tick`, so
@@ -88,7 +89,7 @@ pub(super) struct Fold {
 /// @description The fold from rows keyed `old` to rows keyed `new`, turning a running fold of the same block back.
 /// @param previous The fold in flight, if any.
 /// @returns The fold, and whether the list takes `new` now; a close keeps `old` until its fold ends.
-pub(super) fn refold<K: Eq + Hash>(
+pub(crate) fn refold<K: Eq + Hash>(
 	old: &[Option<K>],
 	new: &[Option<K>],
 	previous: Option<Fold>,
@@ -129,9 +130,13 @@ impl Fold {
 			}
 		}
 		let block = block?;
-		let mut motion = previous
-			.filter(|fold| fold.block == block)
-			.map_or_else(|| Transition::toward(open), |fold| fold.motion);
+		let previous = previous.filter(|fold| fold.block == block);
+		Some(Self::over(block, open, previous))
+	}
+
+	/// The fold of `block` toward `open`; from where `previous` is when it folded the same rows.
+	pub fn over(block: Range<usize>, open: bool, previous: Option<&Self>) -> Self {
+		let mut motion = previous.map_or_else(|| Transition::toward(open), |fold| fold.motion);
 		motion.set(open, FOLD);
 		let mut fold = Self {
 			block,
@@ -139,7 +144,13 @@ impl Fold {
 			shown: 0.,
 		};
 		fold.tick();
-		Some(fold)
+		fold
+	}
+
+	/// Moves the fold onto `block` after its list was rebuilt, keeping how far it has gone.
+	pub fn rebase(&mut self, block: Range<usize>) {
+		self.block = block;
+		self.tick();
 	}
 
 	/// Samples how far the fold has gone, for the frame about to draw.

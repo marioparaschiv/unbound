@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use gpui::{AnyElement, Context, FontWeight, SharedString, Window, div, prelude::*, px};
 use unbound_devtools_core::{ElementKind, InspectedElement, Path, Value};
 
@@ -5,7 +7,9 @@ use crate::app::Workspace;
 use crate::inspection::{Inspection, key};
 use crate::smooth_scroll::SmoothScroll;
 use crate::values::Rows;
-use crate::widgets::{badge, chevron, hairline, icon, icon_button, panel_header, tooltip};
+use crate::widgets::{
+	badge, hairline, icon, icon_button, panel_header, text_tooltip, tooltip, turning_chevron,
+};
 use crate::{assets, theme};
 
 /// The gap around and between the section cards.
@@ -73,9 +77,18 @@ fn component_chip(name: SharedString, kind: ElementKind) -> gpui::Div {
 impl Workspace {
 	pub fn render_inspector(
 		&mut self,
-		window: &Window,
+		window: &mut Window,
 		cx: &mut Context<Self>,
 	) -> impl IntoElement {
+		self.section_motion.settle();
+		let mut moving = self.section_motion.moving();
+		if let Some(inspection) = &mut self.inspection {
+			inspection.motion.settle();
+			moving |= inspection.motion.moving();
+		}
+		if moving {
+			window.request_animation_frame();
+		}
 		let panel = div()
 			.w(px(self.inspector_width(window)))
 			.flex_none()
@@ -125,13 +138,18 @@ impl Workspace {
 		};
 		panel_header()
 			.gap(px(6.))
+			// The name gives way first, and shows whole in a tooltip as soon as it is hovered.
 			.child(
 				div()
-					.flex_none()
+					.id("inspector-name")
+					.flex_shrink(1.)
+					.min_w_0()
 					.max_w(px(200.))
 					.truncate()
 					.text_size(theme::TEXT_TITLE)
 					.font_weight(FontWeight::SEMIBOLD)
+					.tooltip(text_tooltip(name.clone()))
+					.tooltip_show_delay(Duration::ZERO)
 					.child(name),
 			)
 			.child(badge(element.kind.label(), theme::TEXT_SECONDARY))
@@ -225,6 +243,8 @@ impl Workspace {
 			return None;
 		}
 		let folded = self.folded_sections.contains(title);
+		let turn = self.section_motion.progress(&title, !folded);
+		let shows = self.section_motion.shows(&title, !folded);
 		let header = div()
 			.id(title)
 			.flex_none()
@@ -241,7 +261,7 @@ impl Workspace {
 					.w(px(theme::CHEVRON_SLOT))
 					.flex()
 					.justify_center()
-					.child(chevron(!folded)),
+					.child(turning_chevron(turn)),
 			)
 			.child(
 				div()
@@ -259,9 +279,11 @@ impl Workspace {
 					.child(count.to_string()),
 			)
 			.on_click(cx.listener(move |this, _, _, cx| {
-				if !this.folded_sections.remove(title) {
+				let open = this.folded_sections.remove(title);
+				if !open {
 					this.folded_sections.insert(title);
 				}
+				this.section_motion.toggle(title, open, cx.reduce_motion());
 				cx.notify();
 			}));
 		Some(
@@ -275,15 +297,18 @@ impl Workspace {
 				.border_1()
 				.border_color(hairline())
 				.child(header)
-				.when(!folded, |card| {
+				.when(shows, |card| {
 					card.child(
-						div()
-							.flex()
-							.flex_col()
-							.py(px(4.))
-							.border_t_1()
-							.border_color(hairline())
-							.children(body),
+						self.section_motion.block(
+							&title,
+							div()
+								.flex()
+								.flex_col()
+								.py(px(4.))
+								.border_t_1()
+								.border_color(hairline())
+								.children(body),
+						),
 					)
 				})
 				.into_any_element(),

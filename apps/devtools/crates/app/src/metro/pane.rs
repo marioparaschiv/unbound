@@ -15,13 +15,13 @@ use unbound_devtools_core::{
 
 use super::reveal::{TREE_PAD, flicker, hop};
 use super::tree::{Fetch, Node, Path, Row as TreeRow};
-use super::unfold::Place;
 use super::{Exports, MetroBrowser, Picked};
 use crate::empty::no_device;
 use crate::explorer::link_button;
 use crate::nav;
 use crate::smooth_scroll::SmoothScroll;
 use crate::theme::{self, Token};
+use crate::unfold::Place;
 use crate::widgets::{
 	Raised, badge, footer_bar, page_header, panel_header, raised_button, text_tooltip,
 	turning_chevron,

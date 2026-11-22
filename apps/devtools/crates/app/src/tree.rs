@@ -1,21 +1,23 @@
 use std::ops::Range;
 
 use gpui::{
-	AnyElement, ClickEvent, Context, MouseButton, Pixels, SharedString, TextRun, Window, div, font,
-	prelude::*, px, uniform_list,
+	AnyElement, ClickEvent, Context, MouseButton, SharedString, Stateful, Window, div, prelude::*,
+	px, uniform_list,
 };
 use unbound_devtools_core::{Element, ElementKind, Row};
 
 use crate::app::Workspace;
 use crate::indent_follow::guide_left;
 use crate::smooth_scroll::SmoothScroll;
-use crate::widgets::{badge, chevron, icon, icon_button, panel_header, tooltip};
+use crate::widgets::{badge, icon, icon_button, panel_header, tooltip, turning_chevron};
 use crate::{assets, theme};
 
 /// The list's padding above its first row.
 const LIST_TOP: f32 = 4.;
 const CRUMB_PADDING: f32 = 4.;
 const CRUMB_GAP: f32 = 2.;
+/// Breadcrumbs: their bar's sideways scroll.
+const CRUMB_BAR: &str = "crumbs";
 
 fn name_spans(element: &Element, matched: bool) -> gpui::Div {
 	let name_color = if element.kind == ElementKind::Host {
@@ -54,23 +56,6 @@ fn name_spans(element: &Element, matched: bool) -> gpui::Div {
 		.child(div().text_color(theme::color(theme::TEXT_FAINT)).child(">"))
 }
 
-fn ui_text_width(window: &Window, text: &str, size: Pixels) -> f32 {
-	let run = TextRun {
-		len: text.len(),
-		font: font(theme::ui_font()),
-		color: theme::hsla(theme::TEXT),
-		background_color: None,
-		underline: None,
-		strikethrough: None,
-	};
-	f32::from(
-		window
-			.text_system()
-			.shape_line(SharedString::from(text.to_owned()), size, &[run], None)
-			.width(),
-	)
-}
-
 impl Workspace {
 	fn render_rows(
 		&self,
@@ -83,9 +68,11 @@ impl Workspace {
 		let shift = self.indent.shift();
 		range
 			.filter_map(|ix| {
+				let (ix, place) = self.fold.place(ix);
 				let row = *self.rows.get(ix)?;
 				let element = store.get(row.id)?;
-				Some(self.render_row(ix, row, element, shift, focused, cx))
+				let drawn = self.render_row(ix, row, element, shift, focused, cx);
+				Some(place.fit(drawn, theme::ROW_HEIGHT).into_any_element())
 			})
 			.collect()
 	}
@@ -98,8 +85,9 @@ impl Workspace {
 		shift: f32,
 		focused: bool,
 		cx: &mut Context<Self>,
-	) -> AnyElement {
+	) -> Stateful<gpui::Div> {
 		let id = row.id;
+		let turn = self.fold.turn(&id, !self.collapsed.contains(&id));
 		let selected = self.synced_selection == Some(id);
 		let matched = self.search.set.contains(&id);
 		let indent = (row.depth as f32 - shift) * theme::INDENT;
@@ -151,7 +139,7 @@ impl Workspace {
 					.items_center()
 					.justify_center()
 					.when(row.has_children, |slot| {
-						slot.child(chevron(row.expanded)).on_mouse_down(
+						slot.child(turning_chevron(turn)).on_mouse_down(
 							MouseButton::Left,
 							cx.listener(move |this, _, _, cx| {
 								cx.stop_propagation();
@@ -180,15 +168,11 @@ impl Workspace {
 				}
 				this.select(Some(id), cx);
 			}))
-			.into_any_element()
 	}
 
-	fn render_breadcrumbs(
-		&self,
-		width: f32,
-		window: &Window,
-		cx: &mut Context<Self>,
-	) -> impl IntoElement {
+	/// The selection's ancestry, root first, in a bar that scrolls sideways (trackpad, or Shift and
+	/// the wheel) and lands on the selection whenever it changes.
+	fn render_breadcrumbs(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
 		let store = self.devtools.store();
 		let mut chain: Vec<&Element> = Vec::new();
 		if let Some(selected) = self.synced_selection.and_then(|id| store.get(id)) {
@@ -199,24 +183,14 @@ impl Workspace {
 					.filter(|element| element.kind != ElementKind::Root),
 			);
 		}
-		let separator = f32::from(theme::CHEVRON) + 2. * CRUMB_GAP;
-		let mut budget = width - 2. * theme::INSET;
-		let mut shown = 0;
-		for (ix, element) in chain.iter().enumerate() {
-			let cost = ui_text_width(window, &element.name, theme::TEXT_SMALL)
-				+ 2. * CRUMB_PADDING
-				+ if ix > 0 { separator } else { 0. };
-			let reserve = if ix + 1 < chain.len() { separator } else { 0. };
-			if cost + reserve > budget && shown > 0 {
-				break;
-			}
-			budget -= cost;
-			shown += 1;
-		}
-		let truncated = shown < chain.len();
-		chain.truncate(shown);
 		chain.reverse();
 		let last = chain.len().saturating_sub(1);
+		if self.crumbs_for != self.synced_selection {
+			self.crumbs_for = self.synced_selection;
+			// Crumbs alternate with separators, so the selection is the last child.
+			self.crumb_scroll.scroll_to_item(2 * last);
+		}
+		let empty = chain.is_empty();
 		let crumbs = chain.into_iter().enumerate().flat_map(|(ix, element)| {
 			let id = element.id;
 			let current = ix == last;
@@ -239,33 +213,44 @@ impl Workspace {
 				.child(element.name.to_string())
 				.on_click(cx.listener(move |this, _, _, cx| this.select(Some(id), cx)))
 				.into_any_element();
-			let separator = (ix > 0 || truncated).then(|| {
+			let separator = (ix > 0).then(|| {
 				icon(assets::CHEVRON_RIGHT, theme::CHEVRON, theme::TEXT_FAINT).into_any_element()
 			});
 			separator.into_iter().chain(Some(crumb))
 		});
+		let crumbs: Vec<AnyElement> = crumbs.collect();
+		drop(store);
 		div()
 			.flex_none()
 			.h(theme::BREADCRUMB_HEIGHT)
 			.flex()
-			.items_center()
-			.gap(px(CRUMB_GAP))
-			.px(px(theme::INSET))
-			.overflow_hidden()
-			.whitespace_nowrap()
 			.border_t_1()
 			.border_color(theme::color(theme::BORDER))
 			.bg(theme::color(theme::PANEL))
-			.text_size(theme::TEXT_SMALL)
-			.when(last == 0 && shown == 0, |bar| {
-				bar.child(
-					div()
-						.px(px(CRUMB_PADDING))
-						.text_color(theme::color(theme::TEXT_FAINT))
-						.child("No Selection"),
-				)
-			})
-			.children(crumbs)
+			.child(
+				div()
+					.id(CRUMB_BAR)
+					.flex_1()
+					.min_w_0()
+					.h_full()
+					.flex()
+					.items_center()
+					.gap(px(CRUMB_GAP))
+					.px(px(theme::INSET))
+					.overflow_x_scroll()
+					.track_scroll(&self.crumb_scroll)
+					.whitespace_nowrap()
+					.text_size(theme::TEXT_SMALL)
+					.when(empty, |bar| {
+						bar.child(
+							div()
+								.px(px(CRUMB_PADDING))
+								.text_color(theme::color(theme::TEXT_FAINT))
+								.child("No Selection"),
+						)
+					})
+					.children(crumbs),
+			)
 	}
 
 	fn render_tree_header(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -295,7 +280,12 @@ impl Workspace {
 		window: &mut Window,
 		cx: &mut Context<Self>,
 	) -> impl IntoElement {
-		let width = crate::app::page_width(window) - self.inspector_width(window) - 1.;
+		if self.fold.tick() {
+			self.rebuild_rows();
+		}
+		if self.fold.moving() {
+			window.request_animation_frame();
+		}
 		let rows = self.rows.clone();
 		self.indent.follow(
 			&self.scroll,
@@ -307,7 +297,7 @@ impl Workspace {
 		);
 		let list = uniform_list(
 			"tree",
-			self.rows.len(),
+			self.fold.count(self.rows.len()),
 			cx.processor(|this, range: Range<usize>, window, cx| {
 				this.render_rows(range, window, cx)
 			}),
@@ -336,6 +326,6 @@ impl Workspace {
 					.flex_col()
 					.child(SmoothScroll::new("tree-glide", &self.scroll, list)),
 			)
-			.child(self.render_breadcrumbs(width, window, cx))
+			.child(self.render_breadcrumbs(cx))
 	}
 }

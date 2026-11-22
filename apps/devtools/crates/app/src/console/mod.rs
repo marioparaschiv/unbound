@@ -9,11 +9,13 @@ mod brackets;
 mod highlight;
 mod keys;
 mod lines;
+mod output;
 mod recall;
 mod signature;
 mod types;
 mod view;
 
+use std::collections::HashSet;
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
@@ -23,12 +25,15 @@ use gpui_component::input::{
 	AutoClosingPair, EditorState, InputEvent, RangeDecoration, RangeDecorationCollection, RopeExt,
 	SyntaxContext, set_language_config,
 };
+use serde_json::Value;
 use unbound_devtools_core::Devtools;
 use unbound_devtools_repl::{checker, device, transpile};
 
 use self::assist::Assist;
 use self::highlight::Highlighted;
+use self::output::{Content, Output};
 use self::recall::Recall;
+use crate::accordion::Accordion;
 use crate::app::on_runtime;
 use crate::mcp_menu::McpButton;
 use crate::theme;
@@ -50,7 +55,7 @@ pub fn init(cx: &mut App) {
 
 pub enum Outcome {
 	Running,
-	Value { text: Highlighted, truncated: bool },
+	Value { output: Output, truncated: bool },
 	Error(SharedString),
 }
 
@@ -77,6 +82,10 @@ pub struct Console {
 	assist: Entity<Assist>,
 	entries: Vec<Entry>,
 	next: u32,
+	/// The folded values opened in place, by fold id.
+	open: HashSet<u64>,
+	motion: Accordion<u64>,
+	next_fold: u64,
 	/// Whether the device has the helper, so requests can call it by name.
 	helper_installed: bool,
 	/// Entries that ran, as typed, for the checker's history.
@@ -105,6 +114,15 @@ async fn eval(devtools: &Devtools, code: String) -> Result<String, String> {
 	})
 	.await
 	.unwrap_or_else(|| Err("The eval was cancelled.".to_owned()))
+}
+
+/// The output of entry `n`, while it shows a value.
+fn output_of(entries: &mut [Entry], n: u32) -> Option<&mut Output> {
+	let entry = entries.iter_mut().find(|entry| entry.n == n)?;
+	match &mut entry.outcome {
+		Outcome::Value { output, .. } => Some(output),
+		_ => None,
+	}
 }
 
 /// Runs entry `n`, sending the helper only when the device lacks it.
@@ -175,6 +193,9 @@ impl Console {
 			assist,
 			entries: Vec::new(),
 			next: 1,
+			open: HashSet::new(),
+			motion: Accordion::default(),
+			next_fold: 0,
 			helper_installed: false,
 			history: String::new(),
 			results: String::new(),
@@ -256,13 +277,15 @@ impl Console {
 		self.helper_installed |= outcome.is_ok();
 		match outcome.and_then(|reply| device::parse(&reply)) {
 			Ok(preview) => {
-				entry.outcome = Outcome::Value {
-					text: Highlighted::new(preview.text),
-					truncated: preview.truncated,
-				};
+				let declaration = device::declaration(n, &preview.ty);
+				let truncated = preview.truncated;
+				let mut output = Output::new(preview, &[], &mut self.next_fold);
+				let unread = output.take_unread();
+				entry.outcome = Outcome::Value { output, truncated };
+				self.expand(n, unread, cx);
 				self.history.push_str(code);
 				self.history.push_str("\n;\n");
-				self.results.push_str(&device::declaration(n, &preview.ty));
+				self.results.push_str(&declaration);
 				let (history, results) = (self.history.clone(), self.results.clone());
 				cx.background_spawn(async move {
 					if let Ok(checker) = checker::shared() {
@@ -341,8 +364,99 @@ impl Console {
 		self.bracket_frames.set(frames, cx);
 	}
 
+	/// Reads the previews of `folds` in `$n` in one round trip. An open fold that arrives grows in,
+	/// and its own folds are read next, so a click one level down finds them ready.
+	fn expand(&mut self, n: u32, folds: Vec<(u64, Rc<[Value]>)>, cx: &mut Context<Self>) {
+		if folds.is_empty() {
+			return;
+		}
+		let paths: Vec<&[Value]> = folds.iter().map(|(_, path)| &path[..]).collect();
+		let code = device::expand_request(n, &paths);
+		let devtools = self.devtools.clone();
+		cx.spawn(async move |this, cx| {
+			let reply = eval(&devtools, code).await;
+			this.update(cx, |this, cx| this.expanded(n, folds, reply, cx))
+				.ok();
+		})
+		.detach();
+	}
+
+	fn expanded(
+		&mut self,
+		n: u32,
+		folds: Vec<(u64, Rc<[Value]>)>,
+		reply: Result<String, String>,
+		cx: &mut Context<Self>,
+	) {
+		let answers = reply.and_then(|reply| device::parse_expansions(&reply));
+		let reduce = cx.reduce_motion();
+		let mut next_fold = self.next_fold;
+		let mut grown = Vec::new();
+		let mut unread = Vec::new();
+		let open = &self.open;
+		let Some(output) = output_of(&mut self.entries, n) else {
+			return;
+		};
+		for (ix, (id, path)) in folds.into_iter().enumerate() {
+			let Some(fold) = output.find(id) else {
+				continue;
+			};
+			fold.content = match &answers {
+				Err(error) => Content::Failed(error.clone().into()),
+				Ok(items) => match items.get(ix).cloned().flatten() {
+					Some(Ok(preview)) => {
+						Content::Ready(Output::new(preview, &path, &mut next_fold))
+					}
+					Some(Err(error)) => Content::Failed(error.into()),
+					// Past the answer's budget: read again when opened.
+					None => Content::Unread,
+				},
+			};
+			if open.contains(&id) {
+				grown.push(id);
+				if let Content::Ready(inner) = &mut fold.content {
+					unread.extend(inner.take_unread());
+				}
+			}
+		}
+		self.next_fold = next_fold;
+		for id in grown {
+			self.motion.toggle(id, true, reduce);
+		}
+		self.expand(n, unread, cx);
+		cx.notify();
+	}
+
+	/// Opens or closes fold `id` in entry `n`, reading its preview first when it has none yet.
+	pub(super) fn toggle_fold(&mut self, n: u32, id: u64, cx: &mut Context<Self>) {
+		let opening = !self.open.remove(&id);
+		if opening {
+			self.open.insert(id);
+		}
+		let reduce = cx.reduce_motion();
+		let Some(fold) = output_of(&mut self.entries, n).and_then(|output| output.find(id)) else {
+			return;
+		};
+		let mut fetch = Vec::new();
+		match &mut fold.content {
+			Content::Unread | Content::Failed(_) if opening => {
+				fold.content = Content::Loading;
+				fetch.push((id, fold.path.clone()));
+			}
+			Content::Ready(inner) if opening => fetch = inner.take_unread(),
+			_ => {}
+		}
+		// A fold still loading grows in once its preview arrives.
+		if !matches!(fold.content, Content::Loading) {
+			self.motion.toggle(id, opening, reduce);
+		}
+		self.expand(n, fetch, cx);
+		cx.notify();
+	}
+
 	pub fn clear(&mut self, cx: &mut Context<Self>) {
 		self.entries.clear();
+		self.open.clear();
 		cx.notify();
 	}
 

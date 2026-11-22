@@ -11,6 +11,7 @@ pub mod bridge;
 pub mod bridge_server;
 mod connect;
 mod device_address;
+mod eval;
 pub mod explorer;
 pub mod inspect;
 mod link;

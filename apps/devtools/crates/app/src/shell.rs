@@ -19,7 +19,7 @@ use crate::nav_list::{NavGroup, NavRow, action_row};
 use crate::settings_dialog::{self, Closed, SettingsDialog};
 use crate::title_bar::{self, title_bar};
 use crate::view_finder::ViewFinder;
-use crate::{appearance, settings, theme, update};
+use crate::{appearance, settings, theme, update, word_delete};
 
 actions!(shell, [OpenSettings]);
 
@@ -261,7 +261,7 @@ impl Render for Shell {
 			Page::Console => self.console.clone().into_any_element(),
 		};
 		let framed = title_bar::is_drawn(window);
-		div()
+		word_delete::handle(div())
 			.relative()
 			.size_full()
 			.flex()

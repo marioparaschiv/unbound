@@ -1,5 +1,6 @@
 //! The Console editor's keys beyond gpui-component's: whole-line edits, comment toggling, asking
 //! for completions or the signature, and word moves with Alt on Linux and Windows as on macOS.
+//! Word deletes are `crate::word_delete`'s.
 
 use std::ops::Range;
 
@@ -7,8 +8,7 @@ use gpui::{App, Context, KeyBinding, Window, actions};
 use gpui_component::input::ShowCompletions;
 #[cfg(not(target_os = "macos"))]
 use gpui_component::input::{
-	DeleteToNextWordEnd, DeleteToPreviousWordStart, MoveToNextWord, MoveToPreviousWord,
-	SelectToNextWordEnd, SelectToPreviousWordStart,
+	MoveToNextWord, MoveToPreviousWord, SelectToNextWordEnd, SelectToPreviousWordStart,
 };
 
 use super::Console;
@@ -63,8 +63,6 @@ pub fn bind_keys(cx: &mut App) {
 			KeyBinding::new("alt-right", MoveToNextWord, input),
 			KeyBinding::new("alt-shift-left", SelectToPreviousWordStart, input),
 			KeyBinding::new("alt-shift-right", SelectToNextWordEnd, input),
-			KeyBinding::new("alt-backspace", DeleteToPreviousWordStart, input),
-			KeyBinding::new("alt-delete", DeleteToNextWordEnd, input),
 		]);
 	}
 }

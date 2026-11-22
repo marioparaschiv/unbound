@@ -1,8 +1,8 @@
 //! A controller client for the Unbound debugger bridge (`packages/debugger`), mirroring
 //! `@unbound-app/debugger-protocol`'s `ControllerClient`: dial `ws://<bridge>/?mcp`, send
 //! `{type:"eval", id, code, timeout?}`, match the `eval-result` by id. [`eval`] opens one
-//! short-lived socket per call; the debugger connection (`link.rs`) keeps its own open and carries
-//! React DevTools and the view finder over it.
+//! short-lived socket per call, for when there is no debugger connection; the debugger connection
+//! (`link.rs`) keeps its own open and carries evals, React DevTools and the view finder over it.
 
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -13,7 +13,7 @@ use serde_json::json;
 use tokio::net::TcpStream;
 use tokio::time;
 use tokio_tungstenite::tungstenite::Message;
-use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, connect_async};
+use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, connect_async_with_config};
 
 use crate::explorer::{
 	ExplorerErrorCode, ExplorerImage, ExplorerMember, ExplorerObject, ExplorerValue,
@@ -250,7 +250,8 @@ const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
 const STATUS_WAIT: Duration = Duration::from_millis(1500);
 pub(crate) const REPLY_GRACE_MS: u64 = 2000;
 
-/// Opens a controller socket to the bridge at `bridge`.
+/// Opens a controller socket to the bridge at `bridge`, with Nagle off: a small request sent while
+/// an earlier frame is unacknowledged would otherwise wait out the bridge's delayed ACK.
 pub(crate) async fn dial(bridge: SocketAddr) -> Result<Socket, BridgeError> {
 	let unreachable = |reason: String| BridgeError::Unreachable {
 		addr: bridge,
@@ -258,7 +259,11 @@ pub(crate) async fn dial(bridge: SocketAddr) -> Result<Socket, BridgeError> {
 	};
 	let (socket, _) = time::timeout(
 		CONNECT_TIMEOUT,
-		connect_async(format!("ws://{bridge}/?{CONTROLLER_ENDPOINT_MARKER}")),
+		connect_async_with_config(
+			format!("ws://{bridge}/?{CONTROLLER_ENDPOINT_MARKER}"),
+			None,
+			true,
+		),
 	)
 	.await
 	.map_err(|_| unreachable("timed out".to_owned()))?
@@ -268,10 +273,8 @@ pub(crate) async fn dial(bridge: SocketAddr) -> Result<Socket, BridgeError> {
 }
 
 /// An `eval` request frame; the reply is the `eval-result` with the same `id`.
-pub(crate) fn eval_request(id: &str, code: &str, timeout_ms: u64) -> Message {
-	Message::text(
-		json!({ "type": "eval", "id": id, "code": code, "timeout": timeout_ms }).to_string(),
-	)
+pub(crate) fn eval_request(id: &str, code: &str, timeout_ms: u64) -> String {
+	json!({ "type": "eval", "id": id, "code": code, "timeout": timeout_ms }).to_string()
 }
 
 pub async fn eval(bridge: SocketAddr, code: &str, timeout_ms: u64) -> anyhow::Result<EvalOutcome> {
@@ -294,7 +297,9 @@ pub async fn eval(bridge: SocketAddr, code: &str, timeout_ms: u64) -> anyhow::Re
 	}
 
 	let id = uuid::Uuid::new_v4().to_string();
-	socket.send(eval_request(&id, code, timeout_ms)).await?;
+	socket
+		.send(Message::text(eval_request(&id, code, timeout_ms)))
+		.await?;
 
 	let reply = async {
 		while let Some(frame) = next_frame(&mut socket).await {

@@ -431,7 +431,15 @@ async fn advertises_over_bonjour_until_it_exits() {
 	let browser = ServiceDaemon::new().expect("an mDNS browser");
 	let events = browser.browse(SERVICE).expect("browse");
 	let served = tokio::spawn(bridge_server::run(port, Some(Duration::from_secs(1))));
-	let mut controller = Peer::controller(SocketAddr::from(([127, 0, 0, 1], port)), "rust").await;
+	// `run` binds on its own task, so the first dials can beat it.
+	let bridge = SocketAddr::from(([127, 0, 0, 1], port));
+	for _ in 0..100 {
+		if TcpStream::connect(bridge).await.is_ok() {
+			break;
+		}
+		tokio::time::sleep(Duration::from_millis(20)).await;
+	}
+	let mut controller = Peer::controller(bridge, "rust").await;
 
 	assert_eq!(controller.next().await["type"], "device-status");
 
@@ -486,4 +494,39 @@ async fn advertises_over_bonjour_until_it_exits() {
 
 	assert!(removed.is_ok(), "the advertisement is withdrawn");
 	let _ = browser.shutdown();
+}
+
+/// The next control frame the device gets, skipping text.
+async fn next_pong(device: &mut Peer) -> bool {
+	let wait = async {
+		while let Some(Ok(message)) = device.socket.next().await {
+			if message.is_pong() {
+				return true;
+			}
+		}
+		false
+	};
+
+	tokio::time::timeout(QUIET, wait).await.unwrap_or(false)
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn acknowledges_device_frames_at_once_while_a_request_is_out() {
+	let listener = TcpListener::bind("127.0.0.1:0").await.expect("a free port");
+	let bridge = listener.local_addr().expect("addr");
+	tokio::spawn(bridge_server::serve(listener, None));
+	let mut device = Peer::device(bridge, "rust").await;
+	let mut controller = Peer::controller(bridge, "rust").await;
+	let log = json!({ "type": "log", "level": 1, "message": "noise" });
+
+	controller.next().await;
+	device.send(&log).await;
+	assert!(!next_pong(&mut device).await, "no request is out");
+
+	controller
+		.send(&json!({ "type": "eval", "id": "e1", "code": "1" }))
+		.await;
+	assert_eq!(device.next().await["type"], "eval");
+	device.send(&log).await;
+	assert!(next_pong(&mut device).await, "the log is acknowledged");
 }

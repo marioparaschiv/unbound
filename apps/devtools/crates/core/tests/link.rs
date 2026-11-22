@@ -28,7 +28,8 @@ fn config_dir() {
 
 /// Accepts controllers forever: announces a device, reports each frame a controller sends, and
 /// answers every `react-devtools` frame with `reply`, every `views-request` with one view of a level of
-/// three, and every `view-details-request` with one section.
+/// three, every `view-details-request` with one section, and every `eval` with the number of the
+/// connection it came on, counting from 1.
 async fn fake_bridge(reply: Json) -> (SocketAddr, mpsc::UnboundedReceiver<Json>) {
 	let listener = TcpListener::bind("127.0.0.1:0")
 		.await
@@ -37,7 +38,9 @@ async fn fake_bridge(reply: Json) -> (SocketAddr, mpsc::UnboundedReceiver<Json>)
 	let (frame_tx, frame_rx) = mpsc::unbounded_channel();
 
 	tokio::spawn(async move {
+		let mut conn = 0;
 		while let Ok((stream, _)) = listener.accept().await {
+			conn += 1;
 			let reply = reply.clone();
 			let frame_tx = frame_tx.clone();
 			tokio::spawn(async move {
@@ -61,6 +64,12 @@ async fn fake_bridge(reply: Json) -> (SocketAddr, mpsc::UnboundedReceiver<Json>)
 					let frame: Json = serde_json::from_str(&text).expect("JSON frame");
 					let answer = match frame["type"].as_str() {
 						Some("react-devtools") => Some(reply.clone()),
+						Some("eval") => Some(json!({
+							"type": "eval-result",
+							"id": frame["id"],
+							"ok": true,
+							"value": conn.to_string(),
+						})),
 						Some("views-request") => Some(json!({
 							"type": "views-result",
 							"id": frame["id"],
@@ -278,6 +287,27 @@ async fn a_link_lists_and_highlights_native_views() {
 		.await
 		.expect("the highlight arrives");
 	assert_eq!(highlight, json!({ "type": "view-highlight", "node": "0" }));
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn evals_ride_the_open_link() {
+	let (bridge_addr, _frames) = fake_bridge(json!({})).await;
+	let devtools = session();
+
+	link(&devtools, bridge_addr);
+	link_until(&devtools, |link| {
+		matches!(link.state, BridgeState::DeviceConnected)
+	})
+	.await;
+
+	for _ in 0..2 {
+		let value = devtools.eval("1").await.expect("the device answers");
+		assert_eq!(value, "1", "the eval came on the link's connection");
+	}
+	assert!(matches!(
+		devtools.status().bridge,
+		BridgeState::DeviceConnected
+	));
 }
 
 #[tokio::test(flavor = "multi_thread")]

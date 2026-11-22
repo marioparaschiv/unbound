@@ -5,10 +5,13 @@ use gpui::{AnyElement, App, Context, FontWeight, IntoElement, Window, div, prelu
 use gpui_component::input::{Editor, Enter, Escape, IndentInline, MoveDown, MoveUp};
 
 use super::assist::Assist;
+use super::output::Folds;
 use super::{Console, Entry, Outcome, TypesState, brackets, keys};
 use crate::nav;
 use crate::theme;
-use crate::widgets::{Raised, footer_bar, page_header, page_header_end, raised_button, tooltip};
+use crate::widgets::{
+	Raised, footer_bar, mono_char_width, page_header, page_header_end, raised_button, tooltip,
+};
 
 const EDITOR_HEIGHT: f32 = 148.;
 
@@ -20,7 +23,7 @@ fn size_label(bytes: usize) -> String {
 	}
 }
 
-fn render_entry(entry: &mut Entry, cx: &App) -> AnyElement {
+fn render_entry(entry: &mut Entry, folds: &Folds, cx: &mut Context<Console>) -> AnyElement {
 	let meta = match entry.outcome {
 		Outcome::Running => format!("${} · running", entry.n),
 		_ => format!(
@@ -32,7 +35,14 @@ fn render_entry(entry: &mut Entry, cx: &App) -> AnyElement {
 	};
 	let (result, tone) = match &mut entry.outcome {
 		Outcome::Running => ("…".into_any_element(), theme::TEXT_FAINT),
-		Outcome::Value { text, .. } => (text.styled(cx).into_any_element(), theme::TEXT),
+		Outcome::Value { output, .. } => (
+			div()
+				.flex()
+				.flex_col()
+				.children(output.render(folds, cx))
+				.into_any_element(),
+			theme::TEXT,
+		),
 		Outcome::Error(error) => (error.clone().into_any_element(), theme::ERROR),
 	};
 	let truncated = matches!(
@@ -100,7 +110,7 @@ fn render_entry(entry: &mut Entry, cx: &App) -> AnyElement {
 					.text_size(theme::TEXT_SMALL)
 					.text_color(theme::color(theme::WARNING))
 					.child(
-						"Preview trimmed on the device; the full value stays there as the $ name above.",
+						"Preview trimmed; open a folded value to read it from the device, where the full value stays as the $ name above.",
 					),
 			)
 		})
@@ -204,7 +214,12 @@ impl Console {
 }
 
 impl Render for Console {
-	fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+	fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+		self.motion.settle();
+		if self.motion.moving() {
+			window.request_animation_frame();
+		}
+		let char = mono_char_width(window);
 		let types = match &self.types {
 			TypesState::Loading => "Loading types…".into(),
 			TypesState::Ready => "Typed against @unbound-app/api · tsrs".into(),
@@ -220,7 +235,26 @@ impl Render for Console {
 			.flex()
 			.flex_col()
 			.when(!has_entries, |output| output.child(render_intro()))
-			.children(self.entries.iter_mut().map(|entry| render_entry(entry, cx)));
+			.children({
+				let Self {
+					entries,
+					open,
+					motion,
+					..
+				} = self;
+				entries
+					.iter_mut()
+					.map(|entry| {
+						let folds = Folds {
+							n: entry.n,
+							open,
+							motion,
+							char,
+						};
+						render_entry(entry, &folds, cx)
+					})
+					.collect::<Vec<_>>()
+			});
 		div()
 			.size_full()
 			.flex()

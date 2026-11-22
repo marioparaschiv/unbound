@@ -10,9 +10,11 @@ use gpui::{
 };
 use unbound_devtools_core::{Devtools, ElementId, Row, Status};
 
+use crate::accordion::Accordion;
 use crate::indent_follow::IndentFollow;
 use crate::inspection::Inspection;
 use crate::mcp_menu::McpButton;
+use crate::row_fold::{RowFold, subtree};
 use crate::search::Search;
 use crate::theme;
 use gpui_component::input::{InputEvent, InputState};
@@ -69,7 +71,12 @@ pub struct Workspace {
 	pub tree_focus: FocusHandle,
 	pub collapsed: HashSet<ElementId>,
 	pub rows: Rc<Vec<Row>>,
+	/// The last row opened or closed, and its subtree while that folds.
+	pub fold: RowFold<ElementId>,
 	pub scroll: UniformListScrollHandle,
+	/// The breadcrumb bar's sideways scroll, and the selection it last scrolled to.
+	pub crumb_scroll: ScrollHandle,
+	pub crumbs_for: Option<ElementId>,
 	/// How far the tree's rows shift left to keep the deep ones on screen.
 	pub indent: IndentFollow,
 	pub synced_selection: Option<ElementId>,
@@ -77,6 +84,8 @@ pub struct Workspace {
 	pub search_input: Entity<InputState>,
 	pub inspection: Option<Inspection>,
 	pub folded_sections: HashSet<&'static str>,
+	/// The section cards opening or closing.
+	pub section_motion: Accordion<&'static str>,
 	pub inspector_scroll: ScrollHandle,
 	pub inspector_width: f32,
 	pub resizing: bool,
@@ -134,13 +143,17 @@ impl Workspace {
 			tree_focus,
 			collapsed: HashSet::new(),
 			rows: Rc::default(),
+			fold: RowFold::default(),
 			scroll: UniformListScrollHandle::new(),
+			crumb_scroll: ScrollHandle::new(),
+			crumbs_for: None,
 			indent: IndentFollow::default(),
 			synced_selection: None,
 			search: Search::default(),
 			search_input,
 			inspection: None,
 			folded_sections: HashSet::new(),
+			section_motion: Accordion::default(),
 			inspector_scroll: ScrollHandle::new(),
 			inspector_width: theme::INSPECTOR_DEFAULT,
 			resizing: false,
@@ -162,6 +175,7 @@ impl Workspace {
 		if was_host != self.status.show_host_components {
 			// The backend remounts with new ids, so per-id view state is stale.
 			self.collapsed.clear();
+			self.fold.clear();
 		}
 		self.rebuild_rows();
 		self.sync_selection(cx);
@@ -178,8 +192,24 @@ impl Workspace {
 		cx.notify();
 	}
 
+	/// Flattens the tree, keeping a closing row's subtree listed until its fold ends.
 	pub fn rebuild_rows(&mut self) {
-		self.rows = Rc::new(self.devtools.store().rows(&self.collapsed));
+		let rows = {
+			let store = self.devtools.store();
+			match self.fold.held_open() {
+				Some(id) if self.collapsed.contains(id) => {
+					let mut collapsed = self.collapsed.clone();
+					collapsed.remove(id);
+					store.rows(&collapsed)
+				}
+				_ => store.rows(&self.collapsed),
+			}
+		};
+		self.fold.anchor(|id| {
+			let anchor = rows.iter().position(|row| row.id == *id)?;
+			Some(subtree(anchor, rows.len(), |ix| rows[ix].depth))
+		});
+		self.rows = Rc::new(rows);
 	}
 
 	pub fn row_index(&self, id: ElementId) -> Option<usize> {
@@ -234,9 +264,11 @@ impl Workspace {
 	}
 
 	pub fn toggle(&mut self, id: ElementId, cx: &mut Context<Self>) {
-		if !self.collapsed.remove(&id) {
+		let open = self.collapsed.remove(&id);
+		if !open {
 			self.collapsed.insert(id);
 		}
+		self.fold.toggle(id, open, cx.reduce_motion());
 		self.rebuild_rows();
 		cx.notify();
 	}
@@ -281,7 +313,7 @@ impl Workspace {
 		let Some((_, row)) = self.selected_row() else {
 			return;
 		};
-		if row.has_children && row.expanded {
+		if row.has_children && !self.collapsed.contains(&row.id) {
 			self.toggle(row.id, cx);
 			return;
 		}
@@ -302,7 +334,7 @@ impl Workspace {
 		if !row.has_children {
 			return;
 		}
-		if !row.expanded {
+		if self.collapsed.contains(&row.id) {
 			self.toggle(row.id, cx);
 			return;
 		}

@@ -13,7 +13,7 @@ use parking_lot::{Mutex, RwLock, RwLockReadGuard};
 use serde::Serialize;
 use tokio::sync::{mpsc, oneshot, watch};
 
-use crate::bridge::Launcher;
+use crate::bridge::{EvalOutcome, Launcher};
 use crate::explorer::ExplorerOutcome;
 use crate::inspect::InspectedElement;
 use crate::link::{Link, LinkStatus};
@@ -138,6 +138,7 @@ pub(crate) struct Inner {
 	pub(crate) views: Mutex<HashMap<String, oneshot::Sender<ViewsReply>>>,
 	pub(crate) explorer: Mutex<HashMap<String, oneshot::Sender<ExplorerOutcome>>>,
 	pub(crate) metro: Mutex<HashMap<String, oneshot::Sender<MetroOutcome>>>,
+	pub(crate) evals: Mutex<HashMap<String, oneshot::Sender<EvalOutcome>>>,
 	pub(crate) next_generation: AtomicU64,
 	next_request: AtomicU64,
 	pub(crate) presets_write: Mutex<()>,
@@ -238,6 +239,7 @@ impl Devtools {
 			views: Mutex::new(HashMap::new()),
 			explorer: Mutex::new(HashMap::new()),
 			metro: Mutex::new(HashMap::new()),
+			evals: Mutex::new(HashMap::new()),
 			next_generation: AtomicU64::new(0),
 			next_request: AtomicU64::new(0),
 			presets_write: Mutex::new(()),
