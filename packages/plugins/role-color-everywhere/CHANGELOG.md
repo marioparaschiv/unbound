@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.9] - 2026-11-22
+
+### Fixed
+
+- Typing with a keyboard that composes text, such as Japanese, Korean or dictation, no longer crashes Discord while a mention is being coloured.
+
 ## [1.2.8] - 2026-11-17
 
 ### Fixed
