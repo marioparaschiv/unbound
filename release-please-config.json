@@ -27,14 +27,11 @@
 			]
 		},
 		"packages/api": { "component": "api", "release-as": "1.0.0" },
-		"packages/cli": { "component": "cli", "release-as": "1.0.0" },
+		"packages/cli": { "component": "cli" },
 		"packages/debugger": { "component": "debugger" },
 		"packages/debugger-protocol": { "component": "debugger-protocol" },
 		"packages/discord-types": { "component": "discord-types" },
-		"packages/rollup-plugin-hermes": {
-			"component": "rollup-plugin-hermes",
-			"release-as": "1.0.0"
-		},
+		"packages/rollup-plugin-hermes": { "component": "rollup-plugin-hermes" },
 		"apps/devtools": {
 			"component": "devtools",
 			"release-type": "simple",
