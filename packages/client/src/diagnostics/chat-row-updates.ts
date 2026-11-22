@@ -67,22 +67,57 @@ export function summariseRowUpdate(
 	};
 }
 
+function isChange(row: ChangedRow): boolean {
+	return row.changeType === UPDATE || row.changeType === REMOVE;
+}
+
+/**
+ * @description Fits a row update to the rows a native view holds: an insert past the end lands at the end, and an
+ * update or removal of a row the view does not hold is dropped, so Discord's native chat never indexes past its rows.
+ * @param rows The changed rows Discord sent.
+ * @param held The rows the view held before.
+ * @returns The rows to send instead.
+ */
+export function fitRowUpdate(rows: ChangedRow[], held: number): ChangedRow[] {
+	let slots = held;
+	const fitted: ChangedRow[] = [];
+
+	for (const row of rows) {
+		const index = typeof row.index === 'number' ? row.index : -1;
+
+		if (isChange(row)) {
+			if (index >= 0 && index < slots) {
+				fitted.push(row);
+			}
+
+			continue;
+		}
+
+		fitted.push(index > slots || index < 0 ? { ...row, index: slots } : row);
+		slots++;
+	}
+
+	return fitted;
+}
+
 /**
  * @description Formats a row update for the crash breadcrumbs.
  * @param view The native view's number.
  * @param summary The update's summary.
  * @param full Whether it replaced every row.
+ * @param fitted Whether the guard fitted it to the rows the view holds.
  * @returns One breadcrumb line.
  */
 export function rowUpdateBreadcrumb(
 	view: number,
 	summary: RowUpdateSummary,
 	full: boolean,
+	fitted = false,
 ): string {
 	const counts = `+${summary.inserts} ~${summary.updates} -${summary.removes}`;
-	const fit = summary.fits === false ? ' DOES NOT FIT' : '';
+	const fit = summary.fits === false ? (fitted ? ' DOES NOT FIT, fitted' : ' DOES NOT FIT') : '';
 
 	return `chat rows: view ${view}${full ? ' reload' : ''} ${counts}, top index ${summary.highestIndex}, rows ${summary.rowsAfter ?? '?'}${fit}`;
 }
 
-export default { summariseRowUpdate, rowUpdateBreadcrumb };
+export default { summariseRowUpdate, fitRowUpdate, rowUpdateBreadcrumb };
