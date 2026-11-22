@@ -127,7 +127,7 @@ fn row_body(
 	text: theme::Token,
 	glyph: theme::Token,
 ) -> Pressable {
-	// A press shrinks the plate about its centre like the web's `scale`; text and icon hold still.
+	// A press shrinks the plate about its centre like the web's `scale`; text and icon shrink with it on the GPU.
 	let plate = move |plate: gpui::Div, scale: f32| {
 		plate.rounded(theme::RADIUS_ITEM * scale).map(|plate| {
 			if active {
@@ -158,5 +158,5 @@ fn row_body(
 		.child(icon(path, px(ICON), glyph))
 		.child(div().flex_1().min_w_0().truncate().child(label));
 	let body = div().h(px(ROW_HEIGHT)).group(ROW_GROUP).cursor_pointer();
-	Pressable::flat(id, body, plate).child(content)
+	Pressable::flat_scaled(id, body, plate).child(content)
 }

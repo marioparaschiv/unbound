@@ -9,6 +9,7 @@ mod easing;
 mod empty;
 mod empty_state;
 mod explorer;
+mod gpu_scaled;
 mod indent_follow;
 mod inspection;
 mod inspector;

@@ -69,6 +69,20 @@ gpui_platform = { package = "gpui-fast-platform", version = "0.1.14", features =
 	"wayland",
 ] }
 
+# gpui-fast 0.1.14 plus `Window::with_sprite_transformation`, which presses the sidebar's text on
+# the GPU. Source: unbound-app/gpui-fast branch unbound/v0.1.14-sprite-transform; this rev is its
+# generated crates.io packages. All nine are patched so the backends share one gpui-fast.
+[patch.crates-io]
+gpui-fast = { git = "https://github.com/unbound-app/gpui-fast", rev = "0fcdd4434503cb3c729574af968ef608c84b4b17" }
+gpui-fast-macros = { git = "https://github.com/unbound-app/gpui-fast", rev = "0fcdd4434503cb3c729574af968ef608c84b4b17" }
+gpui-fast-apple = { git = "https://github.com/unbound-app/gpui-fast", rev = "0fcdd4434503cb3c729574af968ef608c84b4b17" }
+gpui-fast-wgpu = { git = "https://github.com/unbound-app/gpui-fast", rev = "0fcdd4434503cb3c729574af968ef608c84b4b17" }
+gpui-fast-macos = { git = "https://github.com/unbound-app/gpui-fast", rev = "0fcdd4434503cb3c729574af968ef608c84b4b17" }
+gpui-fast-linux = { git = "https://github.com/unbound-app/gpui-fast", rev = "0fcdd4434503cb3c729574af968ef608c84b4b17" }
+gpui-fast-windows = { git = "https://github.com/unbound-app/gpui-fast", rev = "0fcdd4434503cb3c729574af968ef608c84b4b17" }
+gpui-fast-web = { git = "https://github.com/unbound-app/gpui-fast", rev = "0fcdd4434503cb3c729574af968ef608c84b4b17" }
+gpui-fast-platform = { git = "https://github.com/unbound-app/gpui-fast", rev = "0fcdd4434503cb3c729574af968ef608c84b4b17" }
+
 [profile.release]
 lto = "thin"
 codegen-units = 4
