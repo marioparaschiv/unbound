@@ -10,5 +10,9 @@
 	],
 	"version": "1.1.1",
 	"icon": "PaintPaletteIcon",
-	"main": "bundle.json"
+	"main": "bundle.json",
+	"signature": {
+		"version": 1,
+		"ed25519": "/f2jIGR6abf+5TfTYlfyM/Oc2PaLlOMEsjIsL/1kuUM8TSV7Hlboatv7P5zkXPV4oY0WuQAwiNEtaKj+qHPPAQ=="
+	}
 }
