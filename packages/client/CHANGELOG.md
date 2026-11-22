@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.11.1](https://github.com/marioparaschiv/unbound/compare/client-v3.11.0...client-v3.11.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* **client:** list iOS views in the devtools view tree ([#2169](https://github.com/marioparaschiv/unbound/issues/2169)) ([cce9444](https://github.com/marioparaschiv/unbound/commit/cce9444a2586bec24a3259161ce0ee5a1203d830))
+
 ## [3.11.0](https://github.com/marioparaschiv/unbound/compare/client-v3.10.0...client-v3.11.0) (2026-11-21)
 
 
