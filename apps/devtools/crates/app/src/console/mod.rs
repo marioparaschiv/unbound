@@ -19,7 +19,7 @@ use std::collections::HashSet;
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
-use gpui::{App, AppContext, Context, Entity, ScrollHandle, SharedString, Task, Window};
+use gpui::{App, AppContext, Context, Entity, ScrollHandle, SharedString, Task, Window, px};
 use gpui_component::input::language_config::LanguageConfig;
 use gpui_component::input::{
 	AutoClosingPair, EditorState, InputEvent, RangeDecoration, RangeDecorationCollection, RopeExt,
@@ -98,6 +98,8 @@ pub struct Console {
 	framed: Option<(usize, usize)>,
 	types: TypesState,
 	scroll: ScrollHandle,
+	/// A fold opened while the output sat at its bottom, so the output keeps to the bottom as it grows.
+	follow_bottom: bool,
 	mcp: Entity<McpButton>,
 	running: Option<Task<()>>,
 	checking: Option<Task<()>>,
@@ -204,6 +206,7 @@ impl Console {
 			framed: None,
 			types: TypesState::Loading,
 			scroll: ScrollHandle::new(),
+			follow_bottom: false,
 			mcp,
 			running: None,
 			checking: None,
@@ -420,6 +423,7 @@ impl Console {
 			}
 		}
 		self.next_fold = next_fold;
+		self.follow_bottom |= !grown.is_empty() && self.at_bottom();
 		for id in grown {
 			self.motion.toggle(id, true, reduce);
 		}
@@ -449,9 +453,15 @@ impl Console {
 		// A fold still loading grows in once its preview arrives.
 		if !matches!(fold.content, Content::Loading) {
 			self.motion.toggle(id, opening, reduce);
+			self.follow_bottom |= opening && self.at_bottom();
 		}
 		self.expand(n, fetch, cx);
 		cx.notify();
+	}
+
+	/// Whether the output shows its last line, or fits without scrolling.
+	fn at_bottom(&self) -> bool {
+		-self.scroll.offset().y >= self.scroll.max_offset().y - px(2.)
 	}
 
 	pub fn clear(&mut self, cx: &mut Context<Self>) {

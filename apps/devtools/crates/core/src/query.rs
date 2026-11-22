@@ -259,6 +259,71 @@ pub fn run_jq_on_tree<T: Send>(
 	results.pop().unwrap_or_else(|| Ok(Vec::new()))
 }
 
+/// Element ids a search-box jq `program` picks out of `tree` (from [`tree_json`]), in output order.
+/// It runs first over the whole tree, keeping outputs that are ids or carry an `id`; when that
+/// errors or yields only other values, it runs as a predicate over each element instead, so
+/// `.name == "View"` works as well as `.. | objects | select(.name == "View")`.
+///
+/// # Errors
+///
+/// When the program does not compile, or fails as a predicate after failing over the tree.
+pub fn jq_element_ids(tree: Json, program: &str) -> Result<Vec<ElementId>, String> {
+	on_jq_thread(move || {
+		let whole = JqFilter::compile(program)?.run(tree.clone());
+
+		if let Ok(outputs) = &whole {
+			let ids: Vec<i64> = outputs.iter().filter_map(output_id).collect();
+
+			if !ids.is_empty() || outputs.is_empty() {
+				return Ok(unique_ids(ids));
+			}
+		}
+
+		let predicate = format!(
+			"[.. | objects | select(has(\"kind\") and has(\"children\")) | select(({program})) | .id]"
+		);
+		let outputs = JqFilter::compile(&predicate)?.run(tree)?;
+
+		Ok(unique_ids(
+			outputs
+				.iter()
+				.flat_map(|output| output.as_array().into_iter().flatten())
+				.filter_map(Json::as_i64)
+				.collect(),
+		))
+	})
+}
+
+fn output_id(output: &Json) -> Option<i64> {
+	match output {
+		Json::Number(n) => n.as_i64(),
+		Json::Object(object) => object.get("id").and_then(Json::as_i64),
+		_ => None,
+	}
+}
+
+fn unique_ids(ids: Vec<i64>) -> Vec<ElementId> {
+	let mut seen = std::collections::HashSet::new();
+
+	ids.into_iter()
+		.filter(|id| seen.insert(*id))
+		.map(ElementId)
+		.collect()
+}
+
+/// Runs `work` on a thread with [`JQ_STACK_BYTES`] of stack, so deep trees and their drops fit.
+fn on_jq_thread<T: Send>(work: impl FnOnce() -> Result<T, String> + Send) -> Result<T, String> {
+	std::thread::scope(|scope| {
+		std::thread::Builder::new()
+			.name("jq".into())
+			.stack_size(JQ_STACK_BYTES)
+			.spawn_scoped(scope, work)
+			.map_err(|error| format!("cannot start the jq thread: {error}"))?
+			.join()
+			.map_err(|_| "the jq thread panicked".to_owned())?
+	})
+}
+
 /// The jq thread's stack. jaq's evaluator, its JSON reader and writer, and dropping a nested
 /// [`Json`] all recurse once per tree level, and Discord's tree overflowed a default 2 MiB stack.
 /// Pages are committed only as touched, so this reserves address space, not memory.
@@ -269,21 +334,13 @@ fn run_jq_deep<T: Send>(
 	inputs: Vec<Json>,
 	each: impl Fn(Result<Vec<Json>, String>) -> T + Sync,
 ) -> Result<Vec<T>, String> {
-	std::thread::scope(|scope| {
-		std::thread::Builder::new()
-			.name("jq".into())
-			.stack_size(JQ_STACK_BYTES)
-			.spawn_scoped(scope, || {
-				let filter = JqFilter::compile(program)?;
+	on_jq_thread(|| {
+		let filter = JqFilter::compile(program)?;
 
-				Ok(inputs
-					.into_iter()
-					.map(|input| each(filter.run(input)))
-					.collect())
-			})
-			.map_err(|error| format!("cannot start the jq thread: {error}"))?
-			.join()
-			.map_err(|_| "the jq thread panicked".to_owned())?
+		Ok(inputs
+			.into_iter()
+			.map(|input| each(filter.run(input)))
+			.collect())
 	})
 }
 

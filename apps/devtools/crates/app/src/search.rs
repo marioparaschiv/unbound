@@ -2,8 +2,7 @@ use std::collections::HashSet;
 use std::time::Duration;
 
 use gpui::{Context, Task};
-use serde_json::Value as Json;
-use unbound_devtools_core::query::{find, run_jq_on_tree};
+use unbound_devtools_core::query::{find, jq_element_ids, tree_json};
 use unbound_devtools_core::{Devtools, ElementId, FindQuery, NameMatch};
 
 use crate::app::Workspace;
@@ -139,16 +138,18 @@ impl Workspace {
 }
 
 fn jq_matches(devtools: &Devtools, program: &str) -> Result<Vec<ElementId>, String> {
-	let outputs = run_jq_on_tree(devtools, None, program, |output| match output {
-		Json::Number(n) => n.as_i64(),
-		Json::Object(object) => object.get("id").and_then(Json::as_i64),
-		_ => None,
-	})?;
-	let mut seen = HashSet::new();
-	Ok(outputs
-		.into_iter()
-		.flatten()
-		.map(ElementId)
-		.filter(|id| seen.insert(*id))
-		.collect())
+	let tree = tree_json(&devtools.store(), None, None);
+
+	jq_element_ids(tree, program).map_err(|error| one_line(&error))
+}
+
+/// jq errors quote the value they failed on, which can be a whole subtree; the banner has one line.
+fn one_line(error: &str) -> String {
+	const MAX_CHARS: usize = 160;
+	let line = error.lines().next().unwrap_or_default();
+
+	match line.char_indices().nth(MAX_CHARS) {
+		Some((cut, _)) => format!("{}…", &line[..cut]),
+		None => line.to_owned(),
+	}
 }

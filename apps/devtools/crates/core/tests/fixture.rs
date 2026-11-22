@@ -198,6 +198,29 @@ fn tree_text_outlines_with_ids_kinds_and_limits() {
 }
 
 #[test]
+fn search_jq_takes_a_whole_program_or_a_predicate() {
+	let store = replayed_store();
+	let ids = |program: &str| {
+		query::jq_element_ids(query::tree_json(&store, None, None), program)
+			.map(|ids| ids.into_iter().map(|id| id.0).collect::<Vec<_>>())
+	};
+	let rows = Ok(vec![18, 21, 24]);
+
+	assert_eq!(ids(r#".. | objects | select(.name == "MessageRow")"#), rows);
+	assert_eq!(
+		ids(r#".. | objects | select(.name == "MessageRow") | .id"#),
+		rows
+	);
+	assert_eq!(ids(r#".name == "MessageRow""#), rows);
+	assert_eq!(ids(r#".kind == "memo" and .key != null"#), rows);
+	assert_eq!(
+		ids(r#".. | objects | select(.name == "Nothing")"#),
+		Ok(vec![])
+	);
+	assert!(ids(".name ==").is_err());
+}
+
+#[test]
 fn jq_runs_over_the_tree_json() {
 	let store = replayed_store();
 	let tree = query::tree_json(&store, None, None);
