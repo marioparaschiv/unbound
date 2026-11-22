@@ -147,7 +147,7 @@ describe('debug card', () => {
 		const alt = debugAltText(info);
 		const parsed = JSON.parse(altJson(info));
 
-		expect(alt.startsWith('ubd1:')).toBe(true);
+		expect(alt.startsWith('UNBOUND_DEBUG_COMPRESSED:ubd1:')).toBe(true);
 		expect(alt.length).toBeLessThan(JSON.stringify(parsed).length / 2);
 
 		expect(parsed).toMatchObject({

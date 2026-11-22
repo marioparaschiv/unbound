@@ -8,6 +8,9 @@ export type DebugAltPayload = Record<string, PlistValue>;
 /** Marks packed alt text and its format; a new dictionary needs a new version, or old cards stop decoding. */
 export const DEBUG_ALT_PREFIX = 'ubd1:';
 
+/** Leads packed alt text so readers see the CJK characters are encoded data; cards packed before it still decode. */
+export const DEBUG_ALT_LABEL = 'UNBOUND_DEBUG_COMPRESSED:';
+
 const BITS = 15;
 const MASK = (1 << BITS) - 1;
 
@@ -140,7 +143,7 @@ function fromChar(code: number): number | undefined {
  */
 export function packDebugAltText(payload: DebugAltPayload): string {
 	const bytes = deflateRawSync(JSON.stringify(payload), { level: 9, dictionary: DICTIONARY });
-	let text = DEBUG_ALT_PREFIX;
+	let text = DEBUG_ALT_LABEL + DEBUG_ALT_PREFIX;
 	let bits = 0;
 	let held = 0;
 
@@ -162,10 +165,12 @@ export function packDebugAltText(payload: DebugAltPayload): string {
 
 /**
  * @description Unpacks alt text `packDebugAltText` wrote.
- * @param text An image's alt text.
+ * @param alt An image's alt text.
  * @returns The report's JSON text for the caller to parse, or `undefined` when the text is not a packed report.
  */
-export function unpackDebugAltText(text: string): string | undefined {
+export function unpackDebugAltText(alt: string): string | undefined {
+	const text = alt.startsWith(DEBUG_ALT_LABEL) ? alt.slice(DEBUG_ALT_LABEL.length) : alt;
+
 	if (!text.startsWith(DEBUG_ALT_PREFIX)) {
 		return undefined;
 	}
@@ -200,4 +205,4 @@ export function unpackDebugAltText(text: string): string | undefined {
 	}
 }
 
-export default { DEBUG_ALT_PREFIX, packDebugAltText, unpackDebugAltText };
+export default { DEBUG_ALT_LABEL, DEBUG_ALT_PREFIX, packDebugAltText, unpackDebugAltText };
