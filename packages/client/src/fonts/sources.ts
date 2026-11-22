@@ -1,4 +1,9 @@
-import type { UnboundFontPreset, UnboundFontSource } from '@unbound-app/types';
+import type {
+	Font,
+	UnboundFontPreset,
+	UnboundFontSource,
+	UnboundFontVariant,
+} from '@unbound-app/types';
 import type { JsonValue } from '@unbound-app/contracts/sync';
 
 /** The providers a source names, in the order `@unbound-app/contracts/fonts` lists them. */
@@ -28,6 +33,13 @@ export type SourceOrigin = {
 export type PresetCopy = {
 	text: string;
 	dropped: string[];
+};
+
+/** One download a preset needs: a provider font, and the one face of it to install, or every face. */
+export type FontDownload = {
+	input: string;
+	family: string;
+	variant?: UnboundFontVariant;
 };
 
 /** What preset text a paste accepts before the loader validates it: a name and an overrides object. */
@@ -80,6 +92,67 @@ export function sourceLink(source: UnboundFontSource): string | undefined {
 		default:
 			return undefined;
 	}
+}
+
+/**
+ * @description Builds what `fonts.install` takes to install a source again, as the loader does when it applies a preset.
+ * @param source The source.
+ * @returns A Google family name, a provider link or a file link, or `undefined` for a local font.
+ */
+export function sourceInput(source: UnboundFontSource): string | undefined {
+	const origin = sourceOrigin(source);
+
+	return origin?.provider === 'google' ? origin.id : sourceLink(source);
+}
+
+/**
+ * @description Lists the downloads applying a preset needs, one per face it pins, skipping faces already installed.
+ * @param overrides The preset's overrides.
+ * @param installed The installed faces.
+ * @returns The downloads, without repeats.
+ */
+export function presetDownloads(
+	overrides: Record<string, UnboundFontSource>,
+	installed: Font[],
+): FontDownload[] {
+	const downloads = new Map<string, FontDownload>();
+
+	for (const source of Object.values(overrides)) {
+		const origin = sourceOrigin(source);
+		const input = sourceInput(source);
+
+		if (!origin || !input) {
+			continue;
+		}
+
+		const variant =
+			source.weight === undefined
+				? undefined
+				: { weight: source.weight, style: source.style ?? 'normal' };
+		const has = installed.some((font) => {
+			const from = sourceOrigin(font.source);
+
+			return (
+				from?.provider === origin.provider &&
+				from.id === origin.id &&
+				(!variant || (font.weight === variant.weight && font.style === variant.style))
+			);
+		});
+
+		if (has) {
+			continue;
+		}
+
+		const face = variant ? `${variant.weight}-${variant.style}` : '*';
+
+		downloads.set(`${origin.provider}:${origin.id}:${face}`, {
+			input,
+			family: origin.id,
+			variant,
+		});
+	}
+
+	return [...downloads.values()];
 }
 
 /**

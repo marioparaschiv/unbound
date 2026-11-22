@@ -9,6 +9,8 @@ import { ASSET_SCALES, getAssetPath } from '@unbound-app/contracts/addon-assets'
 import toError from '@unbound-app/utils/to-error';
 import noop from '@unbound-app/utils/noop';
 
+import { createDownloadToast, type DownloadToast } from '~/icon-packs/download-toast';
+import { reportDownload, watchDownload } from '~/addons/download-progress';
 import { safeRelativePath, isSafeIconPackMain } from '~/addons/paths';
 import { indexedIcons, listedIcons } from '~/icon-packs/pack-icons';
 import type { Addon, AddonResolveable } from '~/addons/addon';
@@ -506,14 +508,20 @@ export class Icons extends Addons<Plugin> {
 
 	/**
 	 * @description Installs an icon pack. GitHub manifests download the repo's image tree into the pack
-	 * folder; other manifests fall back to the shared bundle install.
+	 * folder; other manifests fall back to the shared bundle install. A toast fills as the images download.
 	 * @param url The manifest URL.
 	 * @param digest The SHA-256 a bundle-based pack's bundle must have, when the release lists one.
 	 * @returns The loaded pack addon, or `undefined` on failure.
 	 */
 	async install(url: string, digest?: string): Promise<Addon | undefined> {
+		let toast: DownloadToast | undefined;
+		let unwatch = noop;
+
 		try {
 			const parsed = await this.fetchManifest(url);
+
+			toast = createDownloadToast(parsed);
+			unwatch = watchDownload(parsed.id, toast.progress);
 
 			const declared: unknown = Reflect.get(parsed, 'source');
 			const manifest: IconPackManifest = {
@@ -530,7 +538,11 @@ export class Icons extends Addons<Plugin> {
 			};
 
 			if (manifest.source !== 'github') {
-				return super.install(url, digest);
+				const addon = await super.install(url, digest);
+
+				toast.finish(Boolean(addon));
+
+				return addon;
 			}
 
 			await this.downloadTree(manifest);
@@ -539,12 +551,19 @@ export class Icons extends Addons<Plugin> {
 
 			this.load(manifest.name, manifest);
 
-			return this.installed(manifest.id, url);
+			const addon = this.installed(manifest.id, url);
+
+			toast.finish(Boolean(addon));
+
+			return addon;
 		} catch (error) {
+			toast?.finish(false);
 			this.logger.error('Failed to install icon pack:', error);
 			this.emit('install-error', toError(error));
 
 			return undefined;
+		} finally {
+			unwatch();
 		}
 	}
 
@@ -592,6 +611,7 @@ export class Icons extends Addons<Plugin> {
 
 					await downloadFile(raw, `${this.directoryOf(manifest.id)}/${relative}`);
 					written.push(relative);
+					reportDownload(manifest.id, written.length, blobs.length);
 				}),
 			);
 		}

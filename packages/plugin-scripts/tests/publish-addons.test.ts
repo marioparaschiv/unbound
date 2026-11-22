@@ -382,6 +382,41 @@ test('publishes a static theme from the themes workspace beside the plugins', as
 	);
 });
 
+test('publishes a font pack from the fonts workspace beside the plugins', async () => {
+	write('packages/fonts/unbound.config.json', '{ "addons": ["*"] }\n');
+	write(
+		'packages/fonts/epsilon/manifest.json',
+		`${JSON.stringify({
+			id: 'unbound.epsilon',
+			type: 'font',
+			name: 'epsilon',
+			description: 'The epsilon font pack.',
+			authors: [{ name: 'adrian', id: '1' }],
+			version: '1.0.0',
+			main: 'bundle.json',
+		})}\n`,
+	);
+	write('packages/fonts/epsilon/bundle.json', '{ "name": "epsilon", "overrides": {} }\n');
+
+	const head = commit('feat(epsilon): add the font pack');
+
+	state.published = new Map([
+		['unbound.alpha', { version: '1.0.0', commitSha: null }],
+		['unbound.beta', { version: '1.1.0', commitSha: null }],
+		['unbound.gamma', { version: '1.0.0', commitSha: null }],
+	]);
+	state.calls = [];
+
+	const result = await run();
+	const tag = `plugin-builds/${head}`;
+	const build = state.calls[0]?.body.commitSha ?? '';
+
+	expect(result.exitCode).toBe(0);
+	expect(state.calls.map((call) => call.body)).toEqual([
+		{ repository: REPOSITORY, path: 'packages/fonts/epsilon', ref: tag, commitSha: build },
+	]);
+});
+
 function png(width: number, height: number): Uint8Array {
 	const bytes = new Uint8Array(33);
 	const view = new DataView(bytes.buffer);
@@ -438,6 +473,7 @@ test('publishes an icon pack from a submodule workspace, copying its files into 
 		['unbound.alpha', { version: '1.0.0', commitSha: null }],
 		['unbound.beta', { version: '1.1.0', commitSha: null }],
 		['unbound.gamma', { version: '1.0.0', commitSha: null }],
+		['unbound.epsilon', { version: '1.0.0', commitSha: null }],
 	]);
 	state.calls = [];
 

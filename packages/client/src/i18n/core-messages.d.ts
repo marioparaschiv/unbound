@@ -90,6 +90,9 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_FONTS_PRESET_APPLIED: { name: string | number };
 		UNBOUND_FONTS_PRESET_APPLIED_PARTIAL: { name: string | number; unavailable: string | number; skipped: string | number };
 		UNBOUND_FONTS_PRESET_FONTS: { count: number };
+		UNBOUND_FONTS_PACK_DOWNLOADING: { family: string | number; done: string | number; total: string | number };
+		UNBOUND_ICON_PACK_DOWNLOADING: { done: string | number; total: string | number };
+		UNBOUND_ICON_PACK_INSTALLED: { name: string | number };
 		UNBOUND_FONTS_AXES_HINT: { family: string | number };
 		UNBOUND_FONTS_WEIGHT_ITALIC: { weight: string | number };
 		UNBOUND_THEME_EDITED_COUNT: { edited: string | number };

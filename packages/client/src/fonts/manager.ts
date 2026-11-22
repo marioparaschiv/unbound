@@ -8,16 +8,28 @@ import type {
 	UnboundResolvedFont,
 } from '@unbound-app/types';
 import type { AddonVersion, ListedAddon } from '@unbound-app/contracts/addons';
+import type { ToastHandle } from '@unbound-app/types/toasts';
 import { CORE_BUCKET } from '@unbound-app/types/settings';
 import toError from '@unbound-app/utils/to-error';
 
-import { presetCopy, sourceLink, sourceOrigin, type PastedPreset } from '~/fonts/sources';
+import {
+	presetCopy,
+	presetDownloads,
+	readPastedPreset,
+	sourceLink,
+	type FontDownload,
+	type PastedPreset,
+} from '~/fonts/sources';
 import { groupSlots, groupTargets, type FontSlot, type FontTarget } from '~/fonts/slots';
+import { showPresetApplied } from '~/fonts/show-preset-applied';
 import { getNativeFonts } from '~/native/unbound-native';
+import { downloadBundle } from '~/addons/download';
 import { Manager } from '~/addons/manager';
 import { API_URL } from '~/core/constants';
 import { Constants } from '~/metro/common';
 import { getBucket } from '~/storage/api';
+import { format } from '~/i18n/api';
+import { show } from '~/toasts/api';
 
 type FontsEvents = {
 	changed: () => void;
@@ -452,26 +464,54 @@ export class Fonts extends Manager<Font, FontsEvents> {
 	}
 
 	/**
-	 * @description Reads whether a listed font is installed: a face installed from its file.
-	 * @param listed The listed font.
-	 * @returns The listed version when a face came from its file, otherwise `undefined`.
+	 * @description A listed font pack is never installed: each tap applies it again, so the marketplace always offers Apply.
+	 * @param _listed The listed font pack.
+	 * @returns Always `undefined`.
 	 */
-	getInstalledVersion(listed: ListedAddon): string | undefined {
-		const url = listed.latestVersion.bundleUrl;
-		const installed = this.getAddons().some((font) => sourceOrigin(font.source)?.id === url);
-
-		return installed ? listed.latestVersion.version : undefined;
+	getInstalledVersion(_listed: ListedAddon): string | undefined {
+		return undefined;
 	}
 
 	/**
-	 * @description Installs a listed font from its file; fonts carry no manifest, no version to hold and
-	 * no on state, so they apply from Design.
-	 * @param _listed The listed font.
-	 * @param version The version whose file to install.
-	 * @returns Whether the install succeeded.
+	 * @description Applies a listed font pack: downloads its fonts one face at a time under a progress toast, saves its
+	 * bundle, a preset, under the pack's name, replacing an earlier save, then applies it and toasts the result.
+	 * @param listed The listed font pack.
+	 * @param version The version whose bundle to apply.
+	 * @returns Whether the preset applied.
 	 */
-	async installListed(_listed: Pick<ListedAddon, 'id'>, version: AddonVersion): Promise<boolean> {
-		return Boolean(await this.install(version.bundleUrl));
+	async installListed(listed: Pick<ListedAddon, 'id'>, version: AddonVersion): Promise<boolean> {
+		const { name } = version.manifest;
+		const id = `font-pack:${listed.id}`;
+		const toast = show({ id, title: name, icon: 'DownloadIcon', duration: 0, progress: 0 });
+
+		try {
+			const pack = readPastedPreset(await downloadBundle(version.bundleUrl));
+
+			if (!pack) {
+				throw new Error('Its bundle is not a font preset.');
+			}
+
+			await this.downloadFaces(presetDownloads(pack.overrides, this.getAddons()), toast);
+
+			const saved = this.getPresets().find((preset) => preset.name === name);
+			const preset = await this.bridge().savePreset({
+				...(saved && { id: saved.id }),
+				name,
+				overrides: pack.overrides,
+			});
+			const result = await this.bridge().applyPreset(preset.id);
+
+			this.refresh();
+			showPresetApplied(name, result, id);
+
+			return true;
+		} catch (error) {
+			toast.close();
+			this.logger.error(`Failed to apply font pack ${listed.id}:`, error);
+			this.errors.set(listed.id, toError(error));
+
+			return false;
+		}
 	}
 
 	/**
@@ -483,6 +523,31 @@ export class Fonts extends Manager<Font, FontsEvents> {
 		this.on('changed', listener);
 
 		return () => void this.off('changed', listener);
+	}
+
+	// One face per install, so the toast moves with each; a face that fails is left for `applyPreset` to report.
+	private async downloadFaces(downloads: FontDownload[], toast: ToastHandle) {
+		for (const [done, download] of downloads.entries()) {
+			toast.update({
+				content: format('UNBOUND_FONTS_PACK_DOWNLOADING', {
+					family: download.family,
+					done: done + 1,
+					total: downloads.length,
+				}),
+				progress: done / downloads.length,
+			});
+
+			try {
+				await this.bridge().install(
+					download.input,
+					download.variant ? [download.variant] : undefined,
+				);
+			} catch (error) {
+				this.logger.error(`Failed to install font ${download.input}:`, error);
+			}
+		}
+
+		toast.update({ progress: 1 });
 	}
 
 	// Callers reach this only from the UI, which shows an update prompt when the bridge is missing.

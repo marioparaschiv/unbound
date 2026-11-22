@@ -56,10 +56,17 @@ const ACTIONS: Record<InstallStatus, StatusAction> = {
 	installed: { label: () => messages.UNBOUND_INSTALLED, variant: 'secondary' },
 };
 
+// A font pack is never installed; each tap applies it as a preset again.
+const APPLY: StatusAction = {
+	label: () => messages.UNBOUND_FONTS_PRESET_APPLY,
+	variant: 'primary',
+	offer: (version) => format('UNBOUND_INSTALL_VERSION', { version }),
+};
+
 /**
  * @description Drives a listed addon's Install, Update or Installed button, judged against the installed
  * copy. A tap installs the newest version this client runs, or opens the installed copy's settings page once
- * installed; holding offers it or a picker of every version, except for fonts. An addon limited to another platform
+ * installed; holding offers it or a picker of every version, except for fonts, which offer Apply. An addon limited to another platform
  * says so instead of installing.
  * @param kind The manager the addon belongs to.
  * @param addon The listed addon.
@@ -78,7 +85,9 @@ function useInstallAction(kind: AddonKind, addon: ListedAddon): InstallAction {
 				label: () => format('UNBOUND_ONLY_ON_PLATFORM', { platform: platformName }),
 				variant: 'secondary' as const,
 			}
-		: ACTIONS[pending ?? status];
+		: kind === 'font'
+			? APPLY
+			: ACTIONS[pending ?? status];
 	const updatable = installsFromManifest(kind) && !platformName ? kind : undefined;
 
 	async function run(install: () => Promise<boolean>): Promise<boolean> {

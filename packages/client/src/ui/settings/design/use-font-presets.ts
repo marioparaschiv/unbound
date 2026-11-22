@@ -1,5 +1,6 @@
 import type { UnboundFontPreset } from '@unbound-app/types';
 
+import { showPresetApplied } from '~/fonts/show-preset-applied';
 import { readPastedPreset } from '~/fonts/sources';
 import { Manager } from '~/addons/manager';
 import { Clipboard } from '~/metro/common';
@@ -68,19 +69,7 @@ function useFontPresets() {
 			return;
 		}
 
-		const partial = result.unavailable.length > 0 || result.skipped.length > 0;
-
-		show({
-			title: preset.name,
-			content: partial
-				? format('UNBOUND_FONTS_PRESET_APPLIED_PARTIAL', {
-						name: preset.name,
-						unavailable: result.unavailable.length,
-						skipped: result.skipped.length,
-					})
-				: format('UNBOUND_FONTS_PRESET_APPLIED', { name: preset.name }),
-			icon: partial ? 'WarningIcon' : 'CircleCheckIcon',
-		});
+		showPresetApplied(preset.name, result);
 	}
 
 	function copy(preset: UnboundFontPreset) {

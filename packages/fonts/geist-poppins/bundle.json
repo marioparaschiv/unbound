@@ -1,0 +1,28 @@
+{
+	"name": "Geist & Poppins",
+	"overrides": {
+		"ABCGintoDiscordNord-BlackItalic": {
+			"google": "Poppins",
+			"style": "italic",
+			"weight": 900
+		},
+		"ABCGintoDiscordNord-Bold": { "google": "Poppins", "style": "normal", "weight": 700 },
+		"ABCGintoDiscordNord-BoldItalic": { "google": "Poppins", "style": "italic", "weight": 700 },
+		"ABCGintoNord-ExtraBold": { "google": "Poppins", "style": "normal", "weight": 800 },
+		"ABCGintoNord-ExtraBoldItalic": { "google": "Poppins", "style": "italic", "weight": 800 },
+		"NotoSans-Bold": { "google": "Geist", "style": "normal", "weight": 700 },
+		"NotoSans-ExtraBold": { "google": "Geist", "style": "normal", "weight": 800 },
+		"NotoSans-Medium": { "google": "Geist", "style": "normal", "weight": 500 },
+		"NotoSans-MediumItalic": { "google": "Geist", "style": "italic", "weight": 500 },
+		"NotoSans-Normal": { "google": "Geist", "style": "normal", "weight": 400 },
+		"NotoSans-NormalItalic": { "google": "Geist", "style": "italic", "weight": 400 },
+		"NotoSans-Semibold": { "google": "Geist", "style": "normal", "weight": 600 },
+		"ggsans-Bold": { "google": "Geist", "style": "normal", "weight": 700 },
+		"ggsans-ExtraBold": { "google": "Geist", "style": "normal", "weight": 800 },
+		"ggsans-Medium": { "google": "Geist", "style": "normal", "weight": 500 },
+		"ggsans-MediumItalic": { "google": "Geist", "style": "italic", "weight": 500 },
+		"ggsans-Normal": { "google": "Geist", "style": "normal", "weight": 400 },
+		"ggsans-NormalItalic": { "google": "Geist", "style": "italic", "weight": 400 },
+		"ggsans-Semibold": { "google": "Geist", "style": "normal", "weight": 600 }
+	}
+}

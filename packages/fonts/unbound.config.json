@@ -1,0 +1,4 @@
+{
+	"$schema": "https://docs.unbound.rip/schemas/config.json",
+	"addons": ["*"]
+}

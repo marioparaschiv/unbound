@@ -47,6 +47,7 @@ function Toast({ id }: ToastProps) {
 		closing,
 		animations,
 		duration,
+		tracking,
 		leave,
 		properties: { height, width },
 	} = useToastState(options ?? { id });
@@ -119,7 +120,7 @@ function Toast({ id }: ToastProps) {
 							))}
 						</View>
 					) : null}
-					{duration > 0 ? (
+					{duration > 0 || tracking ? (
 						<Animated.View style={[styles.progressBar, { width }, styles.bar]} />
 					) : null}
 				</ToastSurface>

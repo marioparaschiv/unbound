@@ -7,6 +7,7 @@ import type { createLogger } from '@unbound-app/logger';
 import type { AddonManifest } from '@unbound-app/types';
 import sha256 from '@unbound-app/utils/sha256';
 
+import { reportDownload } from '~/addons/download-progress';
 import fs from '~/native/fs';
 
 /** The extra files of an addon, base64-encoded, by path relative to its manifest. */
@@ -54,7 +55,8 @@ async function fetchFile(url: string, file: AddonFile, directory?: string): Prom
 /**
  * @description Fetches every extra file the manifest lists, in parallel, from beside the bundle, reusing the
  * installed copy of each file whose SHA-256 still matches, so an update downloads only the files it changed.
- * A file that fails is logged and left out, so the addon still installs without it.
+ * A file that fails is logged and left out, so the addon still installs without it. Each settled file goes to
+ * `reportDownload`.
  * @param manifest The addon's manifest.
  * @param bundleUrl The bundle's URL; each file's path is relative to the folder holding the manifest.
  * @param logger The manager's logger.
@@ -69,8 +71,13 @@ export async function downloadAddonFiles(
 ): Promise<AddonFiles> {
 	const listed = listAddonFiles(manifest);
 	const base = bundleUrl.slice(0, bundleUrl.length - manifest.main.length);
+	let settled = 0;
 	const results = await Promise.allSettled(
-		listed.map((file) => fetchFile(`${base}${file.path}`, file, directory)),
+		listed.map((file) =>
+			fetchFile(`${base}${file.path}`, file, directory).finally(() =>
+				reportDownload(manifest.id, ++settled, listed.length),
+			),
+		),
 	);
 	const files: AddonFiles = {};
 

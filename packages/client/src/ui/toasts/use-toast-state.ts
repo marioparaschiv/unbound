@@ -1,12 +1,13 @@
 import {
 	type WithTimingConfig,
 	useSharedValue,
+	withSequence,
 	withTiming,
 	Easing,
 	runOnJS,
 } from 'react-native-reanimated';
 import type { InternalToastOptions } from '@unbound-app/types/toasts';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Dimensions } from 'react-native';
 
 import { useUnboundSettings } from '~/settings/unbound';
@@ -27,13 +28,17 @@ function useToastState(options: InternalToastOptions) {
 	const settings = useUnboundSettings(({ key }) => key?.startsWith('toasts'));
 	const animations = settings.get('toasts.animations');
 	const duration = toastDuration(options.duration, settings.get('toasts.duration'));
+	// A toast showing progress holds open; clearing its progress starts the countdown.
+	const tracking = options.progress !== undefined;
+	const fullWidth = Dimensions.get('window').width * 0.9;
 
 	const opacity = useSharedValue(0);
 	const marginVertical = useSharedValue(0);
 	const scale = useSharedValue(0.75);
 	const height = useSharedValue(0);
 	const translateY = useSharedValue(0);
-	const width = useSharedValue(Dimensions.get('window').width * 0.9);
+	const width = useSharedValue(tracking ? 0 : fullWidth);
+	const tracked = useRef(tracking);
 
 	function leave() {
 		setClosing(true);
@@ -68,13 +73,40 @@ function useToastState(options: InternalToastOptions) {
 			scale.value = 1;
 			marginVertical.value = 5;
 		}
-
-		if (duration !== 0) {
-			width.value = withTiming(0, { duration, easing: Easing.linear }, () => {
-				runOnJS(leave)();
-			});
-		}
 	}, []);
+
+	useEffect(() => {
+		const handoff = tracked.current && animations;
+
+		tracked.current = tracking;
+
+		if (tracking || duration === 0) return;
+
+		// A countdown cut short by new progress finishes unfinished and must not close the toast.
+		const countdown = withTiming(0, { duration, easing: Easing.linear }, (finished) => {
+			if (finished) {
+				runOnJS(leave)();
+			}
+		});
+
+		if (!handoff) {
+			width.value = fullWidth;
+			width.value = countdown;
+
+			return;
+		}
+
+		// Finished progress fills the bar, then empties it over the close duration.
+		width.value = withSequence(withTiming(fullWidth, MOUNT_CHANGE_CONFIG), countdown);
+	}, [duration, tracking]);
+
+	useEffect(() => {
+		if (!tracking) return;
+
+		const target = Math.min(1, Math.max(0, options.progress ?? 0)) * fullWidth;
+
+		width.value = animations ? withTiming(target, MOUNT_CHANGE_CONFIG) : target;
+	}, [options.progress]);
 
 	useEffect(() => {
 		if (leaving) {
@@ -104,6 +136,7 @@ function useToastState(options: InternalToastOptions) {
 		properties: { height, width },
 		animations,
 		duration,
+		tracking,
 		leave,
 		closing,
 	};

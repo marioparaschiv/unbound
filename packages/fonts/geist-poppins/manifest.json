@@ -1,0 +1,15 @@
+{
+	"id": "unbound.geist-poppins",
+	"type": "font",
+	"name": "Geist & Poppins",
+	"description": "Geist for messages and body text, Poppins for headings.",
+	"authors": [
+		{
+			"name": "eternal",
+			"id": "263689920210534400"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "LettersIcon",
+	"main": "bundle.json"
+}
