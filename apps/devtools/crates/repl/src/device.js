@@ -1,7 +1,5 @@
-// The console's helper, installed as `globalThis.__unboundRepl`: runs an entry, keeps it as `$n`,
-// and answers with a bounded preview and the value's shape as a type, never the whole value. Each
-// value the preview leaves folded (`{…}`, `[…]`) comes with its path from `$n`, which
-// `__unboundRepl.expand` previews in turn.
+// `globalThis.__unboundRepl`: runs an entry as `$n`, answering with a bounded preview and its type.
+// Each folded value comes with its path from `$n`, which `expand` previews in turn.
 (() => {
 	const DEPTH = 2;
 	const ENTRIES = 40;
@@ -115,9 +113,8 @@
 	}
 
 	/**
-	 * Entries to show, as `[label, value, separator, step]`, and how many there are in all. A step
-	 * finds the entry again from its parent: `{ k }` a key, `{ m }` the nth Map value, `{ s }` the
-	 * nth Set item.
+	 * Entries to show, as `[label, value, separator, step]`, and how many there are in all.
+	 * A step finds an entry from its parent: `{ k }` a key, `{ m }` the nth Map value, `{ s }` the nth Set item.
 	 */
 	function entriesOf(value) {
 		const entries = [];
@@ -198,11 +195,11 @@
 		const folds = [];
 		const path = [];
 
-		const newline = (text) => {
+		function newline(text) {
 			out += text;
 			line++;
 			lineStart = out.length;
-		};
+		}
 
 		function walk(value, depth, indent) {
 			if (typeof value === 'string') {
