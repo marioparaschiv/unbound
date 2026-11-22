@@ -120,17 +120,24 @@ function paintRuns(
 	painted: NativeObjectHandle,
 	runs: ColorRun[],
 	location: number,
+	textLength: number,
 ) {
 	'worklet';
 	let position = location;
 
 	for (const run of runs) {
+		const length = Math.min(run.length, textLength - position);
+
+		if (length <= 0) {
+			return;
+		}
+
 		const color = uiColor(current, run.color);
 
 		if (color) {
 			const range = current.objc.struct('NSRange', {
 				location: position,
-				length: run.length,
+				length,
 			});
 
 			current.objc.call(painted, 'addAttribute:value:range:', 'NSColor', color, range);
@@ -140,11 +147,22 @@ function paintRuns(
 	}
 }
 
+function isComposing(objc: NativeObjCBridge, view: NativeObjectHandle): boolean {
+	'worklet';
+	const textView = objc.invoke(view, 'textView', []) as NativeObjectHandle | null;
+
+	return Boolean(textView && objc.invoke(textView, 'markedTextRange', []));
+}
+
 function paint(current: ComposerState, view: NativeObjectHandle) {
 	'worklet';
 	const { objc, mentions } = current;
 
 	if (current.updating || !mentions.names.length || !objc.invoke(view, 'window', [])) {
+		return;
+	}
+
+	if (isComposing(objc, view)) {
 		return;
 	}
 
@@ -187,7 +205,7 @@ function paint(current: ComposerState, view: NativeObjectHandle) {
 			continue;
 		}
 
-		paintRuns(current, painted, runs, at);
+		paintRuns(current, painted, runs, at, text.length);
 		at += name.length;
 		changed = true;
 	}
