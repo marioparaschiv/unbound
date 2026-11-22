@@ -5,6 +5,7 @@ import type {
 	UpdatesResponse,
 	VersionChangelog,
 } from '@unbound-app/contracts/updates';
+import { currentClientVersion } from '@unbound-app/contracts/client-version-reset';
 import { getArtifactKeys, getCdnUrl } from '@unbound-app/contracts/version-layout';
 import { and, desc, eq, gt, inArray, isNotNull, lte, or, sql } from 'drizzle-orm';
 import { MAX_UPDATE_CHANGELOGS } from '@unbound-app/contracts/updates';
@@ -42,7 +43,10 @@ export function newestCompatibleVersions(ctx: AppContext, request: UpdatesReques
 					addonVersion.addonId,
 					request.addons.map((installed) => installed.id),
 				),
-				lte(addonVersion.minClientKey, toVersionKey(request.clientVersion)),
+				lte(
+					addonVersion.minClientKey,
+					toVersionKey(currentClientVersion(request.clientVersion)),
+				),
 				isLiveVersion(),
 				isListedAddon(),
 			),

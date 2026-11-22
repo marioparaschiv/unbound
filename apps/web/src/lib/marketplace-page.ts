@@ -1,3 +1,4 @@
+import { minimumClientVersion } from '@unbound-app/contracts/client-version-reset';
 import type { RepositoryDetails, SourcePin } from '@unbound-app/contracts/source';
 import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import type { AddonVersion } from '@unbound-app/contracts/addons';
@@ -191,7 +192,7 @@ export async function loadAddonPage(
 		...toMarketplaceAddon({ id, ...top.addon }, top.version, resolve),
 		createdAt: published?.createdAt ?? top.version.publishedAt,
 		platforms: resolvePlatforms(manifest),
-		minClientVersion: manifest.unbound?.min ?? null,
+		minClientVersion: minimumClientVersion(manifest.unbound?.min) ?? null,
 		versions: versions.map(({ manifest: _manifest, ...version }) => version),
 		source: top.source,
 		tags,

@@ -37,8 +37,15 @@ beforeAll(async () => {
 	await seedVersion(ctx, ownerId, manifest('up.newer', '1.2.0'));
 
 	await seedApprovedAddon(ctx, ownerId, manifest('up.compat', '1.0.0'));
-	await seedVersion(ctx, ownerId, manifest('up.compat', '1.1.0', { unbound: { min: '2.0.0' } }));
-	await seedVersion(ctx, ownerId, manifest('up.compat', '2.0.0', { unbound: { min: '3.0.0' } }));
+	await seedVersion(ctx, ownerId, manifest('up.compat', '1.1.0', { unbound: { min: '1.5.0' } }));
+	await seedVersion(ctx, ownerId, manifest('up.compat', '2.0.0', { unbound: { min: '1.8.0' } }));
+
+	await seedApprovedAddon(ctx, ownerId, manifest('up.pre-reset', '1.0.0'));
+	await seedVersion(
+		ctx,
+		ownerId,
+		manifest('up.pre-reset', '1.1.0', { unbound: { min: '3.0.0' } }),
+	);
 
 	await seedApprovedAddon(ctx, ownerId, manifest('up.current', '1.0.0'));
 
@@ -157,7 +164,7 @@ describe('POST /api/v1/updates', () => {
 		}
 
 		expect(await versions('up.newer', '1.1.0')).toEqual(['1.10.0', '1.2.0']);
-		expect(await versions('up.compat', '1.0.0', '2.5.0')).toEqual(['1.1.0']);
+		expect(await versions('up.compat', '1.0.0', '1.6.0')).toEqual(['1.1.0']);
 		expect(await versions('up.many', '1.0.0')).toEqual(
 			Array.from(
 				{ length: MAX_UPDATE_CHANGELOGS },
@@ -170,9 +177,19 @@ describe('POST /api/v1/updates', () => {
 		const request = (clientVersion: string) =>
 			updatesFor({ clientVersion, addons: [{ id: 'up.compat', version: '1.0.0' }] });
 
-		expect((await request('1.9.0')).map((update) => update.version)).toEqual([]);
-		expect((await request('2.5.0')).map((update) => update.version)).toEqual(['1.1.0']);
-		expect((await request('3.0.0')).map((update) => update.version)).toEqual(['2.0.0']);
+		expect((await request('1.4.0')).map((update) => update.version)).toEqual([]);
+		expect((await request('1.6.0')).map((update) => update.version)).toEqual(['1.1.0']);
+		expect((await request('1.9.0')).map((update) => update.version)).toEqual(['2.0.0']);
+	});
+
+	test('reads a pre-reset client as 1.0.0 and a pre-reset minimum as none', async () => {
+		const request = (id: string, clientVersion: string) =>
+			updatesFor({ clientVersion, addons: [{ id, version: '1.0.0' }] });
+
+		expect((await request('up.compat', '3.12.1')).map((update) => update.version)).toEqual([]);
+		expect((await request('up.pre-reset', '1.0.0')).map((update) => update.version)).toEqual([
+			'1.1.0',
+		]);
 	});
 
 	test('omits up-to-date, ahead, unknown, delisted and unapproved addons', async () => {
@@ -240,7 +257,7 @@ describe('POST /api/v1/updates', () => {
 
 describe('findUpdates', () => {
 	const request: UpdatesRequest = {
-		clientVersion: '2.0.0',
+		clientVersion: '1.6.0',
 		addons: [
 			{ id: 'up.newer', version: '1.0.0' },
 			{ id: 'up.compat', version: '1.0.0' },
@@ -274,7 +291,7 @@ describe('findUpdates', () => {
 
 	test('offers a version rebuilt in place only to clients whose bundle differs', async () => {
 		const [live] = await newestCompatibleVersions(ctx, {
-			clientVersion: '2.0.0',
+			clientVersion: '1.6.0',
 			addons: [{ id: 'up.current', version: '1.0.0' }],
 		});
 		const stale = '0'.repeat(64);
@@ -282,13 +299,13 @@ describe('findUpdates', () => {
 		expect(live?.sha256).toMatch(/^[\da-f]{64}$/);
 		expect(
 			await findUpdates(ctx, {
-				clientVersion: '2.0.0',
+				clientVersion: '1.6.0',
 				addons: [{ id: 'up.current', version: '1.0.0', sha256: live?.sha256 }],
 			}),
 		).toEqual({ updates: [], renamed: [], withdrawn: [] });
 
 		const { updates } = await findUpdates(ctx, {
-			clientVersion: '2.0.0',
+			clientVersion: '1.6.0',
 			addons: [{ id: 'up.current', version: '1.0.0', sha256: stale }],
 		});
 
@@ -306,7 +323,7 @@ describe('findUpdates', () => {
 
 		try {
 			const { updates } = await findUpdates(ctx, {
-				clientVersion: '2.0.0',
+				clientVersion: '1.6.0',
 				addons: [
 					{ id: 'up.rolledback', version: '1.2.0' },
 					{ id: 'up.current', version: '1.0.0' },
@@ -330,7 +347,7 @@ describe('findUpdates', () => {
 	test('skips withdrawn versions in updates and their changelogs', async () => {
 		const request = (version: string) =>
 			findUpdates(ctx, {
-				clientVersion: '2.0.0',
+				clientVersion: '1.6.0',
 				addons: [{ id: 'up.rolledback', version }],
 			});
 
@@ -345,7 +362,7 @@ describe('findUpdates', () => {
 
 	test('tells a withdrawn install from a newer version and a rebuild', async () => {
 		const { updates } = await findUpdates(ctx, {
-			clientVersion: '2.0.0',
+			clientVersion: '1.6.0',
 			addons: [
 				{ id: 'up.fixed', version: '1.1.0' },
 				{ id: 'up.rolledback', version: '1.2.0' },
@@ -362,7 +379,7 @@ describe('findUpdates', () => {
 		]);
 
 		const { updates: fromLive } = await findUpdates(ctx, {
-			clientVersion: '2.0.0',
+			clientVersion: '1.6.0',
 			addons: [{ id: 'up.fixed', version: '1.0.0' }],
 		});
 
@@ -373,7 +390,7 @@ describe('findUpdates', () => {
 
 	test('names the listed addon that replaces an installed id the store no longer lists', async () => {
 		const { renamed } = await findUpdates(ctx, {
-			clientVersion: '2.0.0',
+			clientVersion: '1.6.0',
 			addons: [
 				{ id: 'up.retired', version: '1.0.4' },
 				{ id: 'up.current', version: '1.0.0' },
