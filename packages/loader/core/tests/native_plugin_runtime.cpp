@@ -78,6 +78,10 @@ int main()
 
     assert(tracker.advance(&first) == 3u);
     assert(tracker.generation() == 3);
-    assert(tracker.advance(&first, false) == 4u);
+
+    assert(tracker.retire() == 4u);
+    assert(tracker.generation() == 4);
+    assert(tracker.advance(&first) == 5u);
+    assert(tracker.advance(&first, false) == 6u);
     assert(!tracker.advance(&first, true));
 }

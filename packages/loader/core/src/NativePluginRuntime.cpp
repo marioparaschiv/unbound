@@ -46,6 +46,12 @@ std::optional<uint64_t> RuntimeGenerationTracker::advance(const void *runtime,
     return generation_.fetch_add(1) + 1;
 }
 
+uint64_t RuntimeGenerationTracker::retire()
+{
+    runtime_ = nullptr;
+    return generation_.fetch_add(1) + 1;
+}
+
 uint64_t RuntimeGenerationTracker::generation() const
 {
     return generation_.load();
@@ -141,6 +147,18 @@ uint64_t registerRuntime(jsi::Runtime &runtime)
     }
 
     return generation;
+}
+
+void retireRuntime()
+{
+    std::lock_guard<std::mutex> lock(gStateMutex);
+    if (!gRuntime)
+    {
+        return;
+    }
+
+    gGenerations.retire();
+    gRuntime = nullptr;
 }
 
 uint64_t runtimeGeneration()
