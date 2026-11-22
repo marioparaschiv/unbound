@@ -7,8 +7,8 @@ import { MANIFEST_FILE, SIGNATURE_SUFFIX } from './sign';
 // The manifest records the hash, patches are made from it, and source maps never ship.
 const SKIPPED_DIRECTORIES = ['patches'];
 const SKIPPED_SUFFIXES = ['.map', SIGNATURE_SUFFIX];
-// Bytecode embeds its source's hash and lays strings out by content, so a new revision moves every byte. It is
-// covered by the JavaScript shipped beside it, which it was compiled from; CI publishes compiler changes itself.
+// Bytecode embeds its source's hash, so every revision changes it. The JavaScript it was compiled from covers it;
+// CI publishes compiler changes itself.
 const BYTECODE = /\.\d+\.bundle$/;
 
 function shippedFiles(dir: string, prefix = ''): string[] {
@@ -18,7 +18,9 @@ function shippedFiles(dir: string, prefix = ''): string[] {
 		const path = prefix ? `${prefix}/${entry.name}` : entry.name;
 
 		if (entry.isDirectory()) {
-			if (!SKIPPED_DIRECTORIES.includes(path)) files.push(...shippedFiles(dir, path));
+			if (!SKIPPED_DIRECTORIES.includes(path)) {
+				files.push(...shippedFiles(dir, path));
+			}
 		} else if (
 			path !== MANIFEST_FILE &&
 			!BYTECODE.test(path) &&

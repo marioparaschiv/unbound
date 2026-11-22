@@ -53,7 +53,9 @@ export function isImportantSince(manifest: PublishedManifest, runningSince: numb
  * @returns Whether to prompt; `false` when the manifest could not be read.
  */
 export async function isStagedUpdateImportant(fetcher: typeof fetch = fetch): Promise<boolean> {
-	if (BUILD_CHANNEL !== PUBLISHED_CHANNEL) return true;
+	if (BUILD_CHANNEL !== PUBLISHED_CHANNEL) {
+		return true;
+	}
 
 	try {
 		const response = await fetcher(PUBLISHED_MANIFEST_URL);
