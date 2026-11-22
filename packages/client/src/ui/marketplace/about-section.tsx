@@ -1,3 +1,4 @@
+import { minimumClientVersion } from '@unbound-app/contracts/client-version-reset';
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 import { View } from 'react-native';
 
@@ -24,7 +25,7 @@ const PLATFORM_LABELS: Record<string, string> = { ios: 'iOS', android: 'Android'
 function AboutSection({ addon }: AboutSectionProps) {
 	const styles = useStyles();
 	const { manifest, publishedAt, bundleSize, source } = addon.latestVersion;
-	const min = manifest.unbound?.min;
+	const min = minimumClientVersion(manifest.unbound?.min);
 	const platforms = manifest.platforms ? Object.keys(manifest.platforms) : ['ios', 'android'];
 	const facts = [
 		[messages.UNBOUND_STORE_PAGE_UPDATED_LABEL, formatListingDate(publishedAt)],

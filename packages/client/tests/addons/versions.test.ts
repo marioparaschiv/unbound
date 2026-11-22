@@ -83,10 +83,10 @@ describe('toVersionChoices', () => {
 	});
 
 	test('rules out versions that need a newer client, so latest is the newest it can run', () => {
-		const versions = [version('3.0.0', '2.0.0'), version('2.0.0', '1.5.0'), version('1.0.0')];
+		const versions = [version('3.0.0', '1.9.0'), version('2.0.0', '1.5.0'), version('1.0.0')];
 
 		expect(summarize(versions, undefined, '1.5.0')).toEqual([
-			['3.0.0', 'incompatible', '2.0.0'],
+			['3.0.0', 'incompatible', '1.9.0'],
 			['2.0.0', 'available', true, false],
 			['1.0.0', 'available', false, true],
 		]);
@@ -140,29 +140,35 @@ describe('pickInstallVersion', () => {
 	});
 
 	test('falls back to the newest version this client runs when the latest needs a newer one', async () => {
-		const versions = [version('3.0.0', '3.0.0'), version('2.0.0', '2.5.0'), version('1.0.0')];
+		const versions = [version('3.0.0', '1.9.0'), version('2.0.0', '1.6.0'), version('1.0.0')];
 
-		expect(await pick(versions, undefined, '2.2.0')).toEqual({ result: '1.0.0', requests: 1 });
-		expect(await pick(versions, undefined, '2.5.0')).toEqual({ result: '2.0.0', requests: 1 });
+		expect(await pick(versions, undefined, '1.4.0')).toEqual({ result: '1.0.0', requests: 1 });
+		expect(await pick(versions, undefined, '1.6.0')).toEqual({ result: '2.0.0', requests: 1 });
 	});
 
 	test('names the client the latest needs when no version runs here', async () => {
-		const versions = [version('2.0.0', '3.0.0'), version('1.0.0', '3.0.0')];
+		const versions = [version('2.0.0', '1.9.0'), version('1.0.0', '1.9.0')];
 
-		expect(await pick(versions, undefined, '2.2.0')).toEqual({
-			result: { type: 'incompatible', requires: '3.0.0' },
+		expect(await pick(versions, undefined, '1.4.0')).toEqual({
+			result: { type: 'incompatible', requires: '1.9.0' },
 			requests: 1,
 		});
 	});
 
 	test('names the client the latest needs when the newest runnable is not newer than the installed', async () => {
-		const versions = [version('2.0.0', '3.0.0'), version('1.0.0')];
+		const versions = [version('2.0.0', '1.9.0'), version('1.0.0')];
 
-		expect(await pick(versions, '1.0.0', '2.2.0')).toEqual({
-			result: { type: 'incompatible', requires: '3.0.0' },
+		expect(await pick(versions, '1.0.0', '1.4.0')).toEqual({
+			result: { type: 'incompatible', requires: '1.9.0' },
 			requests: 1,
 		});
-		expect(await pick(versions, '0.9.0', '2.2.0')).toEqual({ result: '1.0.0', requests: 1 });
+		expect(await pick(versions, '0.9.0', '1.4.0')).toEqual({ result: '1.0.0', requests: 1 });
+	});
+
+	test('installs a version whose minimum is from before the reset, which every client meets', async () => {
+		const versions = [version('2.0.0', '3.0.0'), version('1.0.0')];
+
+		expect(await pick(versions, undefined, '1.0.0')).toEqual({ result: '2.0.0', requests: 0 });
 	});
 });
 

@@ -1,3 +1,4 @@
+import { minimumClientVersion } from '@unbound-app/contracts/client-version-reset';
 import type { AddonVersion, ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonRelease } from '@unbound-app/contracts/updates';
 
@@ -44,7 +45,7 @@ export async function fetchAddonVersions(
 }
 
 function requiredClient(version: AddonVersion, clientVersion: string): string | undefined {
-	const min = version.manifest.unbound?.min;
+	const min = minimumClientVersion(version.manifest.unbound?.min);
 
 	return min && compareVersions(min, clientVersion) > 0 ? min : undefined;
 }

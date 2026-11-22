@@ -1,3 +1,4 @@
+import { minimumClientVersion } from '@unbound-app/contracts/client-version-reset';
 import type { AddonVersion } from '@unbound-app/contracts/addons';
 
 import { compareVersions } from '~/core/versions';
@@ -17,7 +18,7 @@ export function rollbackVersion(
 	clientVersion: string,
 ): AddonVersion | undefined {
 	return versions.find((version) => {
-		const min = version.manifest.unbound?.min;
+		const min = minimumClientVersion(version.manifest.unbound?.min);
 
 		return (
 			compareVersions(version.version, crashed) < 0 &&
