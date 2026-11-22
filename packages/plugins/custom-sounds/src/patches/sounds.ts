@@ -2,6 +2,7 @@ import { settings } from '@unbound-app/settings';
 import { metro, patcher } from '@unbound-app/api';
 
 import type { LinkPlayer } from '@unbound-plugins/shared/media/link-player';
+import type { PlayableSound } from '~/lib/active-player';
 import { overrideFor, readMap } from '~/lib/sounds';
 
 type Sound = { name: string; _volume?: number };
@@ -17,10 +18,10 @@ function overrideOf(sound: Sound) {
 	return overrideFor(name, readMap(settings.choices), readMap(settings.links));
 }
 
-function swapName(sound: Sound) {
+function swapName(sound: Sound, playable: PlayableSound) {
 	const original = originalNames.get(sound) ?? sound.name;
 	const override = overrideFor(original, readMap(settings.choices), readMap(settings.links));
-	const name = override?.kind === 'sound' ? override.name : original;
+	const name = override?.kind === 'sound' && playable(override.name) ? override.name : original;
 
 	if (name === sound.name) return;
 
@@ -50,9 +51,10 @@ function playLink(player: LinkPlayer, sound: Sound, url: string, loop: boolean) 
  * @description Replaces the sounds Discord plays with another of its sounds or a file from a link, by patching
  * `MobileAudioSound`. A sound Discord already loaded switches the next time Discord creates it.
  * @param player Plays the files from links.
+ * @param playable Whether Discord can play one of its sounds in another's place; Android crashes on compressed ones.
  * @returns Whether `MobileAudioSound` was found.
  */
-export function patchSounds(player: LinkPlayer): boolean {
+export function patchSounds(player: LinkPlayer, playable: PlayableSound): boolean {
 	const module = metro.findByProps('MobileAudioSound') as
 		| { MobileAudioSound?: SoundClass }
 		| undefined;
@@ -64,14 +66,14 @@ export function patchSounds(player: LinkPlayer): boolean {
 		return false;
 	}
 
-	patcher.before(proto, 'ensureSound', ({ this: sound }) => swapName(sound));
+	patcher.before(proto, 'ensureSound', ({ this: sound }) => swapName(sound, playable));
 
 	for (const method of ['play', 'loop', 'playWithListener'] as const) {
 		patcher.instead(proto, method, ({ this: sound, args, original }) => {
 			const override = overrideOf(sound);
 
 			if (override?.kind !== 'link') {
-				swapName(sound);
+				swapName(sound, playable);
 
 				return original(...args);
 			}

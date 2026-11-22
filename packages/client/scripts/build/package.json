@@ -18,8 +18,8 @@
 		"@types/bun": "catalog:",
 		"@unbound-app/rollup-plugin-hermes": "workspace:*",
 		"react-devtools-core": "8.0.0",
-		"rolldown": "^1.3.2",
-		"rollup-plugin-swc3": "^0.12.1"
+		"rolldown": "^1.3.3",
+		"rollup-plugin-swc3": "^0.12.2"
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"

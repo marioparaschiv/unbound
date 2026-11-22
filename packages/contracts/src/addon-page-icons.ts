@@ -178,7 +178,8 @@ const NAMES = new Set<string>(ADDON_PAGE_ICON_NAMES);
 const FENCE = /^\s*(?:```|~~~)/;
 const CODE_SPAN = /`[^`\n]*`/g;
 // Starts with a letter so times and ratios such as `10:30:45` are not read as shortcodes.
-const SHORTCODE = /:(?=([a-z][a-z0-9]*(?:-[a-z0-9]+)*):)/g;
+// Accepts `_` so emoji names such as `:speech_balloon:`, which no renderer draws, are reported too.
+const SHORTCODE = /:(?=([a-z][a-z0-9]*(?:[-_][a-z0-9]+)*):)/g;
 
 /**
  * @description Finds `:name:` shortcodes outside code that name no page icon, which the store would show as text.

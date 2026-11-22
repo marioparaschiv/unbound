@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/client",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"private": true,
 	"author": {
 		"name": "Mario P.",
@@ -26,7 +26,7 @@
 		"@unbound-app/types": "workspace:*",
 		"@unbound-app/utils": "workspace:*",
 		"@unbound-app/web": "workspace:*",
-		"fflate": "0.8.2",
+		"fflate": "0.8.3",
 		"possess": "catalog:",
 		"zustand": "^5.1.0"
 	},
@@ -38,7 +38,7 @@
 		"react": "catalog:react",
 		"react-native": "catalog:react",
 		"react-native-gesture-handler": "^3.5.0",
-		"react-native-reanimated": "^4.2.1"
+		"react-native-reanimated": "^4.8.0"
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"

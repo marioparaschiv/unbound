@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
-import { DEBUG_ALT_PREFIX, packDebugAltText, unpackDebugAltText } from '~/debug-card-alt-text';
+import {
+	DEBUG_ALT_LABEL,
+	DEBUG_ALT_PREFIX,
+	packDebugAltText,
+	unpackDebugAltText,
+} from '~/debug-card-alt-text';
 
 const report = {
 	unbound: '3.1.0',
@@ -25,7 +30,7 @@ describe('packDebugAltText', () => {
 	test('packs a large plist far under the JSON length, in BMP characters only', () => {
 		const packed = packDebugAltText(report);
 
-		expect(packed.startsWith(DEBUG_ALT_PREFIX)).toBe(true);
+		expect(packed.startsWith(DEBUG_ALT_LABEL + DEBUG_ALT_PREFIX)).toBe(true);
 		expect(packed.length).toBeLessThan(JSON.stringify(report).length / 10);
 		// No surrogates: every character is in the BMP and counts once.
 		expect(/[\uD800-\uDFFF]/.test(packed)).toBe(false);
@@ -41,6 +46,12 @@ describe('packDebugAltText', () => {
 });
 
 describe('unpackDebugAltText', () => {
+	test('reads text packed before the label was added', () => {
+		const unlabelled = packDebugAltText(report).slice(DEBUG_ALT_LABEL.length);
+
+		expect(unpackDebugAltText(unlabelled)).toBe(JSON.stringify(report));
+	});
+
 	test('rejects text that is not packed', () => {
 		expect(unpackDebugAltText('{"unbound":"3.1.0"}')).toBeUndefined();
 		expect(unpackDebugAltText(`${DEBUG_ALT_PREFIX}abc`)).toBeUndefined();

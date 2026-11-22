@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.1] - 2026-11-22
+
+### Fixed
+
+- Discord no longer crashes on Android when a sound is swapped for one Discord cannot open there, such as Mute; it keeps Discord's own sound instead.
+
 ## [1.0.0] - 2026-11-16
 
 ### Added

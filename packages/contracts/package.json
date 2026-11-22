@@ -17,7 +17,7 @@
 	},
 	"dependencies": {
 		"@unbound-app/types": "workspace:*",
-		"marked": "^18.2.0",
+		"marked": "^18.2.1",
 		"picomatch": "^4.0.7",
 		"typebox": "^1.4.7",
 		"yaml": "^2.9.1"

@@ -1,6 +1,6 @@
 export type ContentNode = { type: string; content?: unknown };
 
-const DEBUG_PAYLOAD = /^ubd\d+:/;
+const DEBUG_PAYLOAD = /^(?:UNBOUND_DEBUG_COMPRESSED:)?ubd\d+:/;
 const MAX_LENGTH = 500;
 
 /**

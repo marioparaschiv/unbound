@@ -4,7 +4,15 @@ import { readableDescriptions, withAltText } from '~/lib/alt-text';
 
 describe('readableDescriptions', () => {
 	test('skips empty ones and debug card payloads', () => {
-		expect(readableDescriptions([' a cat ', null, '', 'ubd1:abc'])).toEqual(['a cat']);
+		expect(
+			readableDescriptions([
+				' a cat ',
+				null,
+				'',
+				'ubd1:abc',
+				'UNBOUND_DEBUG_COMPRESSED:ubd1:abc',
+			]),
+		).toEqual(['a cat']);
 	});
 });
 

@@ -4,11 +4,13 @@ import { findUnknownPageIcons } from '~/addon-page-icons';
 
 describe('findUnknownPageIcons', () => {
 	test('reports unknown shortcodes with their line', () => {
-		const markdown = '## :gear: Settings\n\n- :forward: Faster.\n- :hand-pointer: Long-press.';
+		const markdown =
+			'## :gear: Settings\n\n- :forward: Faster.\n- :hand-pointer: Long-press.\n- :speech_balloon: Emoji.';
 
 		expect(findUnknownPageIcons(markdown)).toEqual([
 			{ name: 'forward', line: 3 },
 			{ name: 'hand-pointer', line: 4 },
+			{ name: 'speech_balloon', line: 5 },
 		]);
 	});
 
