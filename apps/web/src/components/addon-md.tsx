@@ -75,7 +75,7 @@ function AddonMd({ source, pin, mediaBase, page, renderIcon }: AddonMdProps) {
 		return <Markdown source={body} pin={pin} renderIcon={renderIcon} />;
 	}
 
-	const banner = media.get(page.frontmatter.banner);
+	const banner = page.frontmatter.banner ? media.get(page.frontmatter.banner) : undefined;
 	const gallery = page.frontmatter.media
 		.map((entry) => toGalleryEntry(entry, media))
 		.filter((entry) => entry !== undefined);

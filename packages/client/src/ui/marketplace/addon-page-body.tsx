@@ -50,7 +50,7 @@ function AddonPageBody({ resource, name }: AddonPageBodyProps) {
 
 	const page = state.value;
 	const frontmatter = page.measured?.frontmatter;
-	const banner = frontmatter ? findPageMedia(page, frontmatter.banner) : undefined;
+	const banner = frontmatter?.banner ? findPageMedia(page, frontmatter.banner) : undefined;
 
 	return (
 		<>

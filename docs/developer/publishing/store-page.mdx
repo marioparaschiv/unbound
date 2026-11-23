@@ -48,8 +48,8 @@ Hello World logs a greeting every time you send a message.
 
 YAML between two `---` lines, parsed with [`yaml`](https://eemeli.org/yaml/). A duplicate key, an unknown key, `title` or `description` fails the build.
 
-<ParamField path='banner' type='string' required>
-	Image across the top. Exactly **3:1**, at least **1200x400**.
+<ParamField path='banner' type='string'>
+	Image across the top. Exactly **3:1**, at least **1200x400**. Leave it out to open the page on the gallery.
 </ParamField>
 <ParamField path='media' type='PageMedia[]' default='[]'>
 	The gallery, in order. Up to 20 entries, each between **9:16** and **21:9**. An entry has `image` or `video`, never both.
