@@ -1,0 +1,2 @@
+CREATE INDEX "addon_listed_installs_idx" ON "addon" ("installs","id") WHERE "delisted_at" is null;--> statement-breakpoint
+CREATE INDEX "addon_listed_type_installs_idx" ON "addon" ("type","installs","id") WHERE "delisted_at" is null;

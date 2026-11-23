@@ -3,7 +3,7 @@ import type { LoaderFnContext } from '@tanstack/react-router';
 import { infiniteQueryOptions } from '@tanstack/react-query';
 import type { QueryClient } from '@tanstack/react-query';
 
-import { sortOrder, splitList, type MarketplaceSearch } from '~/lib/addon-filters';
+import { DEFAULT_SORT, sortOrder, splitList, type MarketplaceSearch } from '~/lib/addon-filters';
 import { pickedAuthorsQuery } from '~/queries/marketplace/authors';
 import { featuredQuery } from '~/queries/marketplace/featured';
 import { fetchMarketplacePage } from '~/lib/marketplace';
@@ -26,7 +26,8 @@ export function listingQuery(type: AddonType, search: MarketplaceSearch) {
 				data: {
 					...search,
 					type,
-					order: sortOrder(search.sort ?? 'name'),
+					sort: search.sort ?? DEFAULT_SORT,
+					order: sortOrder(search.sort ?? DEFAULT_SORT),
 					cursor: pageParam || undefined,
 				},
 				signal,

@@ -26,7 +26,7 @@ import { user } from './auth';
 // Index predicates are stored in the schema verbatim, so the statuses are inlined rather than bound.
 const OPEN_STATUSES = `(${OPEN_SUBMISSION_STATUSES.map((status) => `'${status}'`).join(', ')})`;
 
-const LISTING_SORTS = ['name', 'createdAt', 'updatedAt'] as const;
+const LISTING_SORTS = ['name', 'createdAt', 'updatedAt', 'installs'] as const;
 
 /**
  * An approved addon. The row is created when its first listing is approved; until then a pending listing submission holds the id.
