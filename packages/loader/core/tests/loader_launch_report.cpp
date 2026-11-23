@@ -12,6 +12,14 @@ static const std::string kStack = "Signal " + std::to_string(SIGSEGV)
                                   + "\nAddon {\"id\":\"chat-bubbles\",\"name\":\"Chat Bubbles\"}\n"
                                     "#0 0x1 Unbound.dylib + 0x10\n";
 
+// Mirrors kTrapReason: Apple builds name Swift's trap, other platforms the instruction.
+static const std::string kTrapHeadline =
+#if defined(__APPLE__)
+    "SIGTRAP (Swift runtime check failed)";
+#else
+    "SIGTRAP (trap instruction)";
+#endif
+
 static void checkNativeCrashes()
 {
     assert(nativeCrashHeadline(kStack) == "SIGSEGV in Chat Bubbles");
@@ -37,9 +45,9 @@ static void checkNativeCrashes()
            == "java.lang.IllegalStateException in Chat Bubbles");
     assert(nativeCrashHeadline("Signal " + std::to_string(SIGTRAP)
                                + "\nException 6 code 1\n#0 0x1 Discord + 0x10\n")
-           == "SIGTRAP (Swift runtime check failed)");
+           == kTrapHeadline);
     assert(nativeCrashHeadline("Signal " + std::to_string(SIGTRAP) + "\n#0 0x1\n")
-           == "SIGTRAP (Swift runtime check failed)");
+           == kTrapHeadline);
     assert(
         nativeCrashHeadline("Signal " + std::to_string(SIGSEGV) + "\nException 1 code 2\n#0 0x1\n")
         == "SIGSEGV (EXC_BAD_ACCESS)");
