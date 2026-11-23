@@ -6,9 +6,13 @@
 		{
 			"name": "kmmiio99o",
 			"id": "879393496627306587"
+		},
+		{
+			"name": "eternal",
+			"id": "263689920210534400"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"icon": "PaintPaletteIcon",
 	"main": "bundle.json"
 }

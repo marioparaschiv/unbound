@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.3] - 2026-11-23
+
+### Changed
+
+- Credits eternal, who ported it to Unbound.
+
 ## [1.1.2] - 2026-11-23
 
 ### Added
