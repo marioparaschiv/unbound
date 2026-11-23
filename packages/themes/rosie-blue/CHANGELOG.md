@@ -1,0 +1,7 @@
+# Changelog
+
+## [1.0.0] - 2026-11-23
+
+### Added
+
+- Initial release, ported from mudrhiod.rosieblue 1.0.3 for Valenced.

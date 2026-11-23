@@ -1,0 +1,240 @@
+{
+	"type": "darker",
+	"background": {
+		"url": "https://raw.githubusercontent.com/marioparaschiv/unbound/main/assets/themes/rosie-blue.jpg",
+		"blur": 0,
+		"opacity": 1
+	},
+	"semantic": {
+		"BACKGROUND_BRAND": {
+			"type": "color",
+			"value": "#738dba"
+		},
+		"BACKGROUND_CODE": {
+			"type": "color",
+			"value": "#24232b"
+		},
+		"BACKGROUND_MOD_MUTED": {
+			"type": "color",
+			"value": "#444664"
+		},
+		"BACKGROUND_MOD_NORMAL": {
+			"type": "color",
+			"value": "#363749"
+		},
+		"BACKGROUND_MOD_STRONG": {
+			"type": "color",
+			"value": "#363749"
+		},
+		"BACKGROUND_MOD_SUBTLE": {
+			"type": "color",
+			"value": "#ffffff05"
+		},
+		"BACKGROUND_SURFACE_HIGH": {
+			"type": "color",
+			"value": "#24232b"
+		},
+		"BACKGROUND_SURFACE_HIGHEST": {
+			"type": "color",
+			"value": "#212027"
+		},
+		"BADGE_PRIMARY_TEXT": {
+			"type": "color",
+			"value": "#24232b"
+		},
+		"CARD_MUTED_BG": {
+			"type": "color",
+			"value": "#26252b"
+		},
+		"CARD_SECONDARY_BACKGROUND_DEFAULT": {
+			"type": "color",
+			"value": "#272830"
+		},
+		"CHANNEL_BACKGROUND_DEFAULT": {
+			"type": "color",
+			"value": "#24232b"
+		},
+		"CHAT_INPUT_SEND_BUTTON_ICON_ACTIVE_TINT": {
+			"type": "color",
+			"value": "#24232b"
+		},
+		"CHECKBOX_BACKGROUND_SELECTED_DEFAULT": {
+			"type": "color",
+			"value": "#738dba"
+		},
+		"CHECKBOX_ICON_ACTIVE": {
+			"type": "color",
+			"value": "#1c1b22"
+		},
+		"CONTROL_CONNECTED_TEXT_DEFAULT": {
+			"type": "color",
+			"value": "#24232b"
+		},
+		"CONTROL_CRITICAL_PRIMARY_TEXT_DEFAULT": {
+			"type": "color",
+			"value": "#24232b"
+		},
+		"CONTROL_PRIMARY_BACKGROUND_ACTIVE": {
+			"type": "color",
+			"value": "#5272a7"
+		},
+		"CONTROL_PRIMARY_BACKGROUND_DEFAULT": {
+			"type": "color",
+			"value": "#738dba"
+		},
+		"CONTROL_PRIMARY_TEXT_DEFAULT": {
+			"type": "color",
+			"value": "#24232b"
+		},
+		"CONTROL_SECONDARY_BACKGROUND_ACTIVE": {
+			"type": "color",
+			"value": "#24232f"
+		},
+		"CONTROL_SECONDARY_BACKGROUND_DEFAULT": {
+			"type": "color",
+			"value": "#3b394b"
+		},
+		"CONTROL_SECONDARY_BORDER_ACTIVE": {
+			"type": "color",
+			"value": "#31303b"
+		},
+		"CONTROL_SECONDARY_BORDER_DEFAULT": {
+			"type": "color",
+			"value": "#494758"
+		},
+		"EMBED_BACKGROUND": {
+			"type": "color",
+			"value": "#2b2833"
+		},
+		"INPUT_BACKGROUND_DEFAULT": {
+			"type": "color",
+			"value": "#16151b"
+		},
+		"INPUT_BORDER_ACTIVE": {
+			"type": "color",
+			"value": "#b5bdff"
+		},
+		"INPUT_ICON_DEFAULT": {
+			"type": "color",
+			"value": "#929ce7"
+		},
+		"INPUT_PLACEHOLDER_TEXT_DEFAULT": {
+			"type": "color",
+			"value": "#929ce7"
+		},
+		"INTERACTIVE_TEXT_DEFAULT": {
+			"type": "color",
+			"value": "#dcdde5"
+		},
+		"MESSAGES_ITEM_CHANNEL_TEXT_DEFAULT": {
+			"type": "color",
+			"value": "#dcdde5"
+		},
+		"MESSAGE_MENTIONED_BACKGROUND_DEFAULT": {
+			"type": "color",
+			"value": "#97b9f417"
+		},
+		"MOBILE_CHANNEL_ITEM_BACKGROUND_SELECTED": {
+			"type": "color",
+			"value": "#444664"
+		},
+		"MOBILE_EMOJI_BUTTON_BACKGROUND": {
+			"type": "color",
+			"value": "#26252b"
+		},
+		"MOBILE_GUILDBAR_ICON_BACKGROUND_DEFAULT": {
+			"type": "color",
+			"value": "#24232b"
+		},
+		"MOBILE_SEGMENTED_CONTROL_BACKGROUND": {
+			"type": "color",
+			"value": "#16151b"
+		},
+		"MOBILE_SEGMENTED_CONTROL_INDICATOR_BACKGROUND": {
+			"type": "color",
+			"value": "#25262e"
+		},
+		"PANEL_BG": {
+			"type": "color",
+			"value": "#24232b"
+		},
+		"REDESIGN_INPUT_CONTROL_SELECTED": {
+			"type": "color",
+			"value": "#738dba"
+		},
+		"STANDALONE_CHANNEL_CONTENT_BACKGROUND": {
+			"type": "color",
+			"value": "#24232b"
+		},
+		"SWITCH_BACKGROUND_DEFAULT": {
+			"type": "color",
+			"value": "#8a8ebf"
+		},
+		"SWITCH_BACKGROUND_SELECTED_DEFAULT": {
+			"type": "color",
+			"value": "#738dba"
+		},
+		"SWITCH_THUMB_BACKGROUND_DEFAULT": {
+			"type": "color",
+			"value": "#24232b"
+		},
+		"SWITCH_THUMB_BACKGROUND_SELECTED_DEFAULT": {
+			"type": "color",
+			"value": "#24232b"
+		},
+		"SWITCH_THUMB_ICON_ACTIVE": {
+			"type": "color",
+			"value": "#738dba"
+		},
+		"SWITCH_THUMB_ICON_DEFAULT": {
+			"type": "color",
+			"value": "#8a8ebf"
+		},
+		"TABLEROW_BACKGROUND_DEFAULT": {
+			"type": "color",
+			"value": "#24232b"
+		},
+		"TEXT_BRAND": {
+			"type": "color",
+			"value": "#83a1d4"
+		},
+		"TEXT_DEFAULT": {
+			"type": "color",
+			"value": "#dcdde5"
+		},
+		"TEXT_LINK": {
+			"type": "color",
+			"value": "#91a4ff"
+		},
+		"TEXT_MUTED": {
+			"type": "color",
+			"value": "#929ce7"
+		},
+		"TEXT_OVERLAY_LIGHT": {
+			"type": "color",
+			"value": "#24232b"
+		},
+		"TEXT_STRONG": {
+			"type": "color",
+			"value": "#ffffff"
+		},
+		"TEXT_SUBTLE": {
+			"type": "color",
+			"value": "#dbdee1"
+		}
+	},
+	"raw": {
+		"BLURPLE_19": "#9ec1ff",
+		"BLURPLE_50": "#b5bdff",
+		"NEUTRAL_2": "#ffffff",
+		"NEUTRAL_23": "#c6c8ce",
+		"NEUTRAL_29": "#c6c8ce",
+		"NEUTRAL_35": "#848494",
+		"NEUTRAL_55": "#bbc4f8",
+		"NEUTRAL_73": "#212028",
+		"NEUTRAL_79": "#1c1b22",
+		"NEUTRAL_86": "#1c1b22",
+		"NEUTRAL_92": "#202028",
+		"OPACITY_16": "#b5bdff"
+	}
+}

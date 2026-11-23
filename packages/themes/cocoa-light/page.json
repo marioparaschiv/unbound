@@ -1,0 +1,53 @@
+{
+	"frontmatter": {
+		"banner": "media/banner.jpg",
+		"media": [
+			{
+				"image": "media/channels.jpg",
+				"alt": "Cocoa Light on a server's channel list."
+			},
+			{
+				"image": "media/chat.jpg",
+				"alt": "Cocoa Light in a direct message, with replies, reactions, code, a file and a voice message."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Cocoa Light on Discord's settings page."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/banner.jpg",
+			"kind": "image",
+			"width": 1500,
+			"height": 500,
+			"thumbhash": "KggOAoBwa3eGeGiIz5ui9kk=",
+			"bytes": 70007
+		},
+		{
+			"path": "media/channels.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "MggKBAAFZ4dHh4doiGgCKTWQZQ==",
+			"bytes": 77649
+		},
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "NAgKBAAGeIdXmHhIiFfVhnB0CQ==",
+			"bytes": 117096
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "NQgKBAAHWIg3mIZIiFe5f5v6uA==",
+			"bytes": 72972
+		}
+	]
+}

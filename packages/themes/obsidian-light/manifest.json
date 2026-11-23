@@ -1,0 +1,14 @@
+{
+	"id": "benjii.obsidian-light",
+	"name": "Obsidian Light",
+	"description": "Crisp white with hairline borders and quiet silver accents.",
+	"authors": [
+		{
+			"name": "Benjii",
+			"id": "463702169443368970"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

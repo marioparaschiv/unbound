@@ -1,0 +1,14 @@
+{
+	"id": "satou.mari",
+	"name": "Mari",
+	"description": "Violet surfaces, blue accents, coral links. Simple and readable.",
+	"authors": [
+		{
+			"name": "Satou",
+			"id": "1530541600936038597"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

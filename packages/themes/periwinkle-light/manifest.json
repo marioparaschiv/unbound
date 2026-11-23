@@ -1,0 +1,14 @@
+{
+	"id": "dxckie.periwinkle-light",
+	"name": "Periwinkle Light",
+	"description": "A light take on Periwinkle.",
+	"authors": [
+		{
+			"name": "dxckie",
+			"id": "772390964471791630"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

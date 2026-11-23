@@ -1,0 +1,53 @@
+{
+	"frontmatter": {
+		"banner": "media/banner.jpg",
+		"media": [
+			{
+				"image": "media/channels.jpg",
+				"alt": "Ame-chan Red on a server's channel list."
+			},
+			{
+				"image": "media/chat.jpg",
+				"alt": "Ame-chan Red in a direct message, with replies, reactions, code, a file and a voice message."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Ame-chan Red on Discord's settings page."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/banner.jpg",
+			"kind": "image",
+			"width": 1500,
+			"height": 500,
+			"thumbhash": "SigGAoKLdGqadwhk+YgFbXc=",
+			"bytes": 71191
+		},
+		{
+			"path": "media/channels.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "BigCBAIv1avaiVQ2NUcAREhghw==",
+			"bytes": 69845
+		},
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "SkgGBAIbdXcIp4dYZ0fkigCuJw==",
+			"bytes": 123160
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "CCgCBAALNYcoh3VXl1gMcoAwBw==",
+			"bytes": 62821
+		}
+	]
+}

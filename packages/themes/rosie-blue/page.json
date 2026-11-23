@@ -1,0 +1,53 @@
+{
+	"frontmatter": {
+		"banner": "media/banner.jpg",
+		"media": [
+			{
+				"image": "media/channels.jpg",
+				"alt": "Rosie Blue on a server's channel list."
+			},
+			{
+				"image": "media/chat.jpg",
+				"alt": "Rosie Blue in a direct message, with replies, reactions, code, a file and a voice message."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Rosie Blue on Discord's settings page."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/banner.jpg",
+			"kind": "image",
+			"width": 1500,
+			"height": 500,
+			"thumbhash": "ygcGCoCKV2ebZwh0v5r03Ts=",
+			"bytes": 64760
+		},
+		{
+			"path": "media/channels.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "yQcCBAAM9Yl5qWcWVjfUYAxC5g==",
+			"bytes": 68995
+		},
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "ygcCBAANtXcYlodYpzj3mZGGCA==",
+			"bytes": 106747
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "yQcCBAAMNYcoh3Znt2j4cKhHDA==",
+			"bytes": 62768
+		}
+	]
+}

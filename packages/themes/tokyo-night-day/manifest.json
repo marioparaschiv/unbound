@@ -1,0 +1,14 @@
+{
+	"id": "benjii.tokyo-night-day",
+	"name": "Tokyo Night Day",
+	"description": "Tokyo Night Day: the light variant.",
+	"authors": [
+		{
+			"name": "Benjii",
+			"id": "463702169443368970"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

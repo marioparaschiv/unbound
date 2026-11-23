@@ -1,0 +1,53 @@
+{
+	"frontmatter": {
+		"banner": "media/banner.jpg",
+		"media": [
+			{
+				"image": "media/channels.jpg",
+				"alt": "Sakura on a server's channel list."
+			},
+			{
+				"image": "media/chat.jpg",
+				"alt": "Sakura in a direct message, with replies, reactions, code, a file and a voice message."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Sakura on Discord's settings page."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/banner.jpg",
+			"kind": "image",
+			"width": 1500,
+			"height": 500,
+			"thumbhash": "ywcGCoCpU2ibVghVz4lGT1Y=",
+			"bytes": 65525
+		},
+		{
+			"path": "media/channels.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "iAcCBAAN1aq5iWQ2Rkf3ZytQ1g==",
+			"bytes": 69629
+		},
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "zQcGDAAolnYIqIVpiGimd0B4Bg==",
+			"bytes": 121513
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "iQcCBAALNYcoh3VYl1j5e8wDCA==",
+			"bytes": 62348
+		}
+	]
+}

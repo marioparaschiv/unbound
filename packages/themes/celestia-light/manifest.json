@@ -1,0 +1,14 @@
+{
+	"id": "benjii.celestia-light",
+	"name": "Celestia Light",
+	"description": "A peach dawn take on Celestia.",
+	"authors": [
+		{
+			"name": "Benjii",
+			"id": "463702169443368970"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

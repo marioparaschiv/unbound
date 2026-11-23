@@ -1,0 +1,14 @@
+{
+	"id": "purple.darkened-amethyst",
+	"name": "Darkened Amethyst",
+	"description": "True black with purple accents.",
+	"authors": [
+		{
+			"name": "Purple_Ξye™",
+			"id": "646535537334812682"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

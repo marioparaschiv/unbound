@@ -1,0 +1,53 @@
+{
+	"frontmatter": {
+		"banner": "media/banner.jpg",
+		"media": [
+			{
+				"image": "media/channels.jpg",
+				"alt": "Rose Light on a server's channel list."
+			},
+			{
+				"image": "media/chat.jpg",
+				"alt": "Rose Light in a direct message, with replies, reactions, code, a file and a voice message."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Rose Light on Discord's settings page."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/banner.jpg",
+			"kind": "image",
+			"width": 1500,
+			"height": 500,
+			"thumbhash": "6wcOAoBwa3eGeGiI36lk80k=",
+			"bytes": 68781
+		},
+		{
+			"path": "media/channels.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "8xcKBAAGZ4dHh4hoiGhgcWywZA==",
+			"bytes": 78104
+		},
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "9QcKBAAGeIdXmHhIeFfoiHAwSQ==",
+			"bytes": 116770
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "9QcKBAAHaIg3mIZIeFdncLT6tw==",
+			"bytes": 73719
+		}
+	]
+}

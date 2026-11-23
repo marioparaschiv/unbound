@@ -1,0 +1,14 @@
+{
+	"id": "satou.ame-chan-pixel",
+	"name": "Ame-chan Pixel",
+	"description": "Charcoal with raspberry pink, from the pixel-window art.",
+	"authors": [
+		{
+			"name": "Satou",
+			"id": "1530541600936038597"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

@@ -1,0 +1,53 @@
+{
+	"frontmatter": {
+		"banner": "media/banner.jpg",
+		"media": [
+			{
+				"image": "media/channels.jpg",
+				"alt": "Catppuccin Macchiato on a server's channel list."
+			},
+			{
+				"image": "media/chat.jpg",
+				"alt": "Catppuccin Macchiato in a direct message, with replies, reactions, code, a file and a voice message."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Catppuccin Macchiato on Discord's settings page."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/banner.jpg",
+			"kind": "image",
+			"width": 1500,
+			"height": 500,
+			"thumbhash": "iwcGCoCpZ2iaZwhkr4r2uko=",
+			"bytes": 66453
+		},
+		{
+			"path": "media/channels.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "ifcBBAALxZqJmWU2Vkf5dxtG9Q==",
+			"bytes": 70510
+		},
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "jPcBBAAMtXgYlodoh0j5lrRHCQ==",
+			"bytes": 105210
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "SvcBBAAKNZcoh3Vnp1j2jL7PuA==",
+			"bytes": 61203
+		}
+	]
+}

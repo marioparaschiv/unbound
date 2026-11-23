@@ -1,0 +1,53 @@
+{
+	"frontmatter": {
+		"banner": "media/banner.jpg",
+		"media": [
+			{
+				"image": "media/channels.jpg",
+				"alt": "Periwinkle on a server's channel list."
+			},
+			{
+				"image": "media/chat.jpg",
+				"alt": "Periwinkle in a direct message, with replies, reactions, code, a file and a voice message."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Periwinkle on Discord's settings page."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/banner.jpg",
+			"kind": "image",
+			"width": 1500,
+			"height": 500,
+			"thumbhash": "SQcGEoCbRmibZwhkn4rW7xw=",
+			"bytes": 64738
+		},
+		{
+			"path": "media/channels.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "BgcCDAAP1bvqiVImJTf5eBpQlg==",
+			"bytes": 69746
+		},
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "CAcCDAANlHgYlodYpzj5hpWECA==",
+			"bytes": 108203
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "yAYCDAALJZcYh3VYl1j3e66gWg==",
+			"bytes": 61478
+		}
+	]
+}

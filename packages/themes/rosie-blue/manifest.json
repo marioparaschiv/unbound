@@ -1,0 +1,14 @@
+{
+	"id": "mudrhiod.rosie-blue",
+	"name": "Rosie Blue",
+	"description": "A blue take on the Rosie themes.",
+	"authors": [
+		{
+			"name": "Mudrhiod",
+			"id": "807170846497570848"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

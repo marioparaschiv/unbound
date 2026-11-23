@@ -1,0 +1,14 @@
+{
+	"id": "benjii.everforest-soft",
+	"name": "Everforest Soft",
+	"description": "Warm forest greens on lighter, gentler backgrounds.",
+	"authors": [
+		{
+			"name": "Benjii",
+			"id": "463702169443368970"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

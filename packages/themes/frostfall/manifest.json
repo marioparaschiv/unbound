@@ -1,0 +1,14 @@
+{
+	"id": "benjii.frostfall",
+	"name": "Frostfall",
+	"description": "Near-black surfaces with frosted white accents over falling snow.",
+	"authors": [
+		{
+			"name": "Benjii",
+			"id": "463702169443368970"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

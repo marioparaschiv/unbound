@@ -1,0 +1,14 @@
+{
+	"id": "benjii.sakura",
+	"name": "Sakura",
+	"description": "A calm indigo night with sakura pastels.",
+	"authors": [
+		{
+			"name": "Benjii",
+			"id": "463702169443368970"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

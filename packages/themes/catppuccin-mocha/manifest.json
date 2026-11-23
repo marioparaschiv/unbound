@@ -1,0 +1,14 @@
+{
+	"id": "benjii.catppuccin-mocha",
+	"name": "Catppuccin Mocha",
+	"description": "Catppuccin Mocha, the original and darkest flavour.",
+	"authors": [
+		{
+			"name": "Benjii",
+			"id": "463702169443368970"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

@@ -1,0 +1,14 @@
+{
+	"id": "benjii.celestia",
+	"name": "Celestia",
+	"description": "Plum and coral over an anime sunset beneath a ringed planet.",
+	"authors": [
+		{
+			"name": "Benjii",
+			"id": "463702169443368970"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}
