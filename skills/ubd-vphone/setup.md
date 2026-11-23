@@ -39,8 +39,8 @@ Check: `scripts/vphone pid` prints Discord's pid or `not running`. Exit 2 names 
 ## From nothing
 
 1. **IPA**: `scripts/fetch-ipa com.hammerandchisel.discord appstore` (`--list` shows cached builds) prints `ok <path>`. A build dkrypt has not decrypted: `POST /v1/decrypts {bundleId, version?}`, poll `GET /v1/jobs/{id}`, then fetch.
-2. **Relax ATS** so the loader's plain-HTTP fetch works: `python3 scripts/patch-ats.py <in.ipa> <out.ipa>`.
-3. **Install** it: copy it to the vphone's Mac, then `scripts/vphone install_ipa path=<mac path>`.
+2. **Relax ATS** so the loader's plain-HTTP fetch works: `python3 scripts/patch-ats.py <in.ipa> <out.ipa>`. dkrypt IPAs lack `PlugIns/OpenInDiscord.appex`, so the loader shows "Missing Safari Extension" on every launch: copy that folder in from the release `Unbound.ipa` (`loader-latest`).
+3. **Install** it. `install_ipa` reads the Mac's disk, reached only through the device: `scp` the IPA to `vphone:/private/var/tmp/`, `vphone shell command='cp /private/var/tmp/<f> /rootfs/private/var/tmp/'`, `vphone pull path=/private/var/tmp/<f> to=/tmp/<f>`, then `vphone install_ipa path=/tmp/<f>`. The first launch can hang identifying to the gateway and show a stale cached profile; relaunch.
 4. **Loader**: in `packages/loader/ios`, `make clean package DEBUG=1` (a release build shows "SECURITY WARNING" and skips React Native), then `install_tweak` (device.md). Check: Discord shows the wrench button and a "DEVELOPMENT BUILD" banner.
 5. **Provision**: `scripts/provision` copies UnboundResources into Discord.app and sets the loader and debugger keys, then relaunches. Rerun after every IPA install.
 6. **Log in** only if logged out. The account is the user's, so ask for credentials; type one character per call and check the password with the eye toggle. Dismiss prompts with "Ask App Not to Track", "Maybe Later", "Continue".
