@@ -87,7 +87,7 @@ export async function readPage(dir: string, limits: MediaLimits): Promise<PageRe
 	if (split.frontmatter === void 0) {
 		issues.push(
 			warning(
-				`${ADDON_PAGE_FILENAME} has no frontmatter, so the store shows no banner or gallery and no ${MEASURED_PAGE_FILENAME} is written; add a banner.`,
+				`${ADDON_PAGE_FILENAME} has no frontmatter, so the store shows no banner or gallery and no ${MEASURED_PAGE_FILENAME} is written; add a banner or media.`,
 			),
 		);
 	} else if (parsed.success) {

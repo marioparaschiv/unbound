@@ -18,7 +18,9 @@ export function listPageMediaPaths(
 	const paths = new Set<string>();
 
 	if (frontmatter) {
-		paths.add(frontmatter.banner);
+		if (frontmatter.banner) {
+			paths.add(frontmatter.banner);
+		}
 
 		for (const entry of frontmatter.media) {
 			if ('image' in entry) {
