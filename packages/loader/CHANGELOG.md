@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.4](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.3...loader-v1.12.4) (2026-11-23)
+
+
+### Bug Fixes
+
+* **loader:** fix a reload freeze and a native callback crash ([#2246](https://github.com/marioparaschiv/unbound/issues/2246)) ([267c6e1](https://github.com/marioparaschiv/unbound/commit/267c6e11c3136598d991db2e6262790e64f5758c))
+
 ## [1.12.3](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.2...loader-v1.12.3) (2026-11-22)
 
 
