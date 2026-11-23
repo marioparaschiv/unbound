@@ -3,7 +3,6 @@ package app.unbound.android
 import android.app.Activity
 import android.app.Application
 import android.content.pm.ApplicationInfo
-import android.content.res.AssetManager
 import android.os.Build
 import android.os.Process
 import io.github.libxposed.api.XposedInterface.ExceptionMode
@@ -12,7 +11,6 @@ import io.github.libxposed.api.XposedModuleInterface.PackageReadyParam
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
-import java.lang.reflect.Method
 import java.util.zip.ZipFile
 
 class Unbound : XposedModule() {
@@ -20,7 +18,6 @@ class Unbound : XposedModule() {
         const val DISCORD_PACKAGE = "com.discord"
         private const val NATIVE_LIBRARY = "libunbound.so"
         private const val REACT_INSTANCE = "com.facebook.react.runtime.ReactInstance"
-        private const val BUNDLE_LOADER = "com.facebook.react.bridge.JSBundleLoader"
         private const val BOOTSTRAP_DIRECTORY = "assets/js/"
         private const val STARTUP_CACHE = "code_cache/unbound-startup-cache"
         private const val DISCORD_APK_FACTS = "discordAPK"
@@ -203,43 +200,33 @@ class Unbound : XposedModule() {
 
     private fun hookBundleLoading(classLoader: ClassLoader) {
         val reactInstance = classLoader.loadClass(REACT_INSTANCE)
-        val loaders = bundleLoaders(reactInstance, classLoader)
+        val loaders = ReactBundleLoaders.find(reactInstance, classLoader)
         check(loaders.isNotEmpty()) { "ReactInstance has no bundle loader to hook" }
 
         for (loader in loaders) {
             hook(loader)
                 .setExceptionMode(ExceptionMode.PROTECTIVE)
                 .intercept { chain ->
+                    val instance = ReactBundleLoaders.instance(loader, chain.thisObject, chain.args.firstOrNull())
+                        ?: error("${loader.name} has no ReactInstance receiver")
+                    check(reactInstance.isInstance(instance)) { "${loader.name} has no ReactInstance receiver" }
                     Logger.info(
                         LogCategory.RUNTIME,
-                        "Loading ReactInstance ${System.identityHashCode(chain.thisObject)} through ${loader.name}",
+                        "Loading ReactInstance ${System.identityHashCode(instance)} through ${loader.name}",
                     )
-                    ReactRuntime.attach(chain.thisObject)
+                    ReactRuntime.attach(instance)
                     NativeBridge.nativeOnLoadJSBundle()
                     NativeBridge.runBundleBeforeDiscord()
                     val result = chain.proceed()
                     Logger.info(
                         LogCategory.RUNTIME,
-                        "ReactInstance ${System.identityHashCode(chain.thisObject)} ${loader.name} returned",
+                        "ReactInstance ${System.identityHashCode(instance)} ${loader.name} returned",
                     )
                     result
                 }
         }
 
         Logger.info(LogCategory.DEFAULT, "Hooked ReactInstance.${loaders.joinToString(", ReactInstance.") { it.name }}.")
-    }
-
-    private fun bundleLoaders(reactInstance: Class<*>, classLoader: ClassLoader): List<Method> {
-        val bundleLoader = runCatching { classLoader.loadClass(BUNDLE_LOADER) }.getOrNull()
-        val loadJSBundle = bundleLoader?.let { reactInstance.legacyMethod("loadJSBundle", it) }
-        if (loadJSBundle != null) return listOf(loadJSBundle)
-
-        return listOfNotNull(
-            runCatching {
-                reactInstance.getDeclaredMethod("loadJSBundleFromAssets", AssetManager::class.java, String::class.java)
-            }.getOrNull(),
-            runCatching { reactInstance.getDeclaredMethod("loadJSBundleFromFile", String::class.java, String::class.java) }.getOrNull(),
-        )
     }
 
     /** Discord's main bundle bytecode version and whether its APK carries Unbound's icon, from one look at the APK. */
