@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/channels.jpg",
+				"alt": "Ame-chan Red Light on a server's channel list."
+			},
+			{
+				"image": "media/chat.jpg",
+				"alt": "Ame-chan Red Light in a direct message, with replies, reactions, code, a file and a voice message."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Ame-chan Red Light on Discord's settings page."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/channels.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "MxgKBAAFZ4dHh4hoiGgiB1bAJA==",
+			"bytes": 78478
+		},
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "bygKBAIGeId4iHlXiFfziBCPJw==",
+			"bytes": 128862
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "NQgKBAIHaIg3mIZIeFepf6v6tw==",
+			"bytes": 73962
+		}
+	]
+}

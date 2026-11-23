@@ -1,0 +1,14 @@
+{
+	"id": "satou.aubrey",
+	"name": "Aubrey",
+	"description": "Plum surfaces, pink accents, mint links. Simple and readable.",
+	"authors": [
+		{
+			"name": "Satou",
+			"id": "1530541600936038597"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

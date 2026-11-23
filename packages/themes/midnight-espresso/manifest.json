@@ -1,0 +1,22 @@
+{
+	"id": "vodka.midnight-espresso",
+	"name": "Midnight Espresso",
+	"description": "Original theme made by kanned (karto) for AliucordKT, ported to Vendetta by Vodka Martini.",
+	"authors": [
+		{
+			"name": "komette",
+			"id": "555686162153472000"
+		},
+		{
+			"name": "Vodka Martini",
+			"id": "1068030255455015013"
+		},
+		{
+			"name": "Rosie",
+			"id": "1356936317501571214"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

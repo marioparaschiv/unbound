@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/channels.jpg",
+				"alt": "Ame-chan Light on a server's channel list."
+			},
+			{
+				"image": "media/chat.jpg",
+				"alt": "Ame-chan Light in a direct message, with replies, reactions, code, a file and a voice message."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Ame-chan Light on Discord's settings page."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/channels.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "swcKBAAGZ4dHh4hoiGiAgS6gVQ==",
+			"bytes": 78503
+		},
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "7wcKBAAHeId4h3lYiFjTb4JXCA==",
+			"bytes": 126219
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "9QcKBAAHaIg3mIZIeFd4cMT7pw==",
+			"bytes": 73698
+		}
+	]
+}

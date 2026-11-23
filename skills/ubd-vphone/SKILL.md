@@ -29,6 +29,7 @@ Anything wrong: `scripts/doctor.sh --fix`. `scripts/relaunch` handles terminate 
 | `unbound-log`                                                 | The current run's `unbound.log`: deduplicated errors and warnings without network noise, then the last lines; `--all` for every line, `--native` for `native.log` |
 | `ubd <cmd>`                                                   | The repo CLI against this machine's bridge: `eval`, `reload`, `mcp open`, `mcp route`, `push <plugin>`                                                            |
 | `ready.sh [--fresh]`                                          | Blocks until Unbound runs (`--fresh`: this checkout's build)                                                                                                      |
+| `theme-shots.ts`                                              | Store screenshots of every theme package: channel list, settings and a DM, at 1290x2796                                                                           |
 | `up.sh`, `fetch-ipa`, `patch-ats.py`                          | Servers in tmux; IPAs from dkrypt; ATS patch for a fresh IPA                                                                                                      |
 | `ios27 <preflight\|create\|autolock-off\|app-group\|install>` | An iOS 27 vphone from vphone-cli: Mullvad DNS and disk preflight, cached IPSWs, auto-lock off, app group, bounded install                                         |
 

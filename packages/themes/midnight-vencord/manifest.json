@@ -1,0 +1,14 @@
+{
+	"id": "kmmiio.midnight-vencord",
+	"name": "Midnight Vencord",
+	"description": "A Gruvbox-inspired midnight dark theme.",
+	"authors": [
+		{
+			"name": "kmmiio99o",
+			"id": "879393496627306587"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

@@ -1,0 +1,14 @@
+{
+	"id": "satou.ame-chan",
+	"name": "Ame-chan",
+	"description": "Plum surfaces, cherry-red accents, gold links. Simple and readable.",
+	"authors": [
+		{
+			"name": "Satou",
+			"id": "1530541600936038597"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

@@ -1,0 +1,14 @@
+{
+	"id": "benjii.everforest-medium-light",
+	"name": "Everforest Medium Light",
+	"description": "Everforest on parchment, at the default contrast.",
+	"authors": [
+		{
+			"name": "Benjii",
+			"id": "463702169443368970"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

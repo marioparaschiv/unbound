@@ -1,0 +1,14 @@
+{
+	"id": "satou.ame-chan-glitch-light",
+	"name": "Ame-chan Glitch Light",
+	"description": "A light take on Ame-chan Glitch.",
+	"authors": [
+		{
+			"name": "Satou",
+			"id": "1530541600936038597"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

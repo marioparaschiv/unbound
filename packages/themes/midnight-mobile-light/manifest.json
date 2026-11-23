@@ -1,0 +1,14 @@
+{
+	"id": "dariuss.midnight-mobile-light",
+	"name": "Midnight Mobile Light",
+	"description": "A light take on Midnight Mobile.",
+	"authors": [
+		{
+			"name": "dariussbezy",
+			"id": "908767091522420817"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

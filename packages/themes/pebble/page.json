@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/channels.jpg",
+				"alt": "Pebble on a server's channel list."
+			},
+			{
+				"image": "media/chat.jpg",
+				"alt": "Pebble in a direct message, with replies, reactions, code, a file and a voice message."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Pebble on Discord's settings page."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/channels.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "ixcGBAAItYlpmWY3Z1f8Zy5gdw==",
+			"bytes": 67928
+		},
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "jBcGBAAMtXcYlodoh0j4lXTVBw==",
+			"bytes": 104183
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "xwcCBAAMJYcoh3Z3x2j5fHxQWQ==",
+			"bytes": 59227
+		}
+	]
+}

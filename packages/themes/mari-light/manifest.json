@@ -1,0 +1,14 @@
+{
+	"id": "satou.mari-light",
+	"name": "Mari Light",
+	"description": "A light take on Mari.",
+	"authors": [
+		{
+			"name": "Satou",
+			"id": "1530541600936038597"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

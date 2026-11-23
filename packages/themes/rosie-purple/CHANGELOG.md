@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.2] - 2026-11-23
+
+### Added
+
+- Screenshots on the store page.
+
 ## [1.1.1] - 2026-11-22
 
 ### Fixed

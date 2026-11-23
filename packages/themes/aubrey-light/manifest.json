@@ -1,0 +1,14 @@
+{
+	"id": "satou.aubrey-light",
+	"name": "Aubrey Light",
+	"description": "A light take on Aubrey.",
+	"authors": [
+		{
+			"name": "Satou",
+			"id": "1530541600936038597"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

@@ -1,0 +1,18 @@
+{
+	"id": "vodka.lavender-heaven",
+	"name": "Lavender Heaven",
+	"description": "A state of serene calmness.",
+	"authors": [
+		{
+			"name": "Vodka Martini",
+			"id": "1068030255455015013"
+		},
+		{
+			"name": "Rosie",
+			"id": "1356936317501571214"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

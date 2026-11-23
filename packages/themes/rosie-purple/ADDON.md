@@ -1,3 +1,13 @@
+---
+media:
+    - image: media/channels.jpg
+      alt: Rosie Purple on a server's channel list.
+    - image: media/chat.jpg
+      alt: Rosie Purple in a direct message, with replies, reactions, code, a file and a voice message.
+    - image: media/settings.jpg
+      alt: Rosie Purple on Discord's settings page.
+---
+
 ## :sparkle: What it does
 
 - :palette: Dark purple-grey backgrounds with lilac headings and accents.

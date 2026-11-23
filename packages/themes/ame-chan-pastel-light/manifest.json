@@ -1,0 +1,14 @@
+{
+	"id": "satou.ame-chan-pastel-light",
+	"name": "Ame-chan Pastel Light",
+	"description": "A light take on Ame-chan Pastel.",
+	"authors": [
+		{
+			"name": "Satou",
+			"id": "1530541600936038597"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

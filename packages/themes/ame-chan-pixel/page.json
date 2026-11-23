@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/channels.jpg",
+				"alt": "Ame-chan Pixel on a server's channel list."
+			},
+			{
+				"image": "media/chat.jpg",
+				"alt": "Ame-chan Pixel in a direct message, with replies, reactions, code, a file and a voice message."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Ame-chan Pixel on Discord's settings page."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/channels.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "xgcCBAAf1avqiVI2JTdQRDlw1w==",
+			"bytes": 69184
+		},
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "yAcGBAAMhYgXlodot0fHmYB0CA==",
+			"bytes": 134083
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "yAcCBAALJYcoh3VXl1j6e9wFBw==",
+			"bytes": 61371
+		}
+	]
+}

@@ -1,0 +1,14 @@
+{
+	"id": "benjii.everforest-hard-light",
+	"name": "Everforest Hard Light",
+	"description": "Everforest on parchment, with crisper contrast.",
+	"authors": [
+		{
+			"name": "Benjii",
+			"id": "463702169443368970"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

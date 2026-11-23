@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/channels.jpg",
+				"alt": "Ame-chan Glitch on a server's channel list."
+			},
+			{
+				"image": "media/chat.jpg",
+				"alt": "Ame-chan Glitch in a direct message, with replies, reactions, code, a file and a voice message."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Ame-chan Glitch on Discord's settings page."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/channels.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "hxcCBAIN1avaiVM2Njf3Vjpghw==",
+			"bytes": 70700
+		},
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "yycCBAANZXcXlpJalij4mYHIBw==",
+			"bytes": 125335
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "iScCBAALNYcoh3VYl0j5fJ0wFw==",
+			"bytes": 62668
+		}
+	]
+}

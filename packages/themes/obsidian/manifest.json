@@ -1,0 +1,14 @@
+{
+	"id": "benjii.obsidian",
+	"name": "Obsidian",
+	"description": "Pure black for OLED screens, with hairline borders and quiet silver accents.",
+	"authors": [
+		{
+			"name": "Benjii",
+			"id": "463702169443368970"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

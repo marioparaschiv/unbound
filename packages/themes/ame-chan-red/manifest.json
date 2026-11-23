@@ -1,0 +1,14 @@
+{
+	"id": "satou.ame-chan-red",
+	"name": "Ame-chan Red",
+	"description": "Deep wine, crimson and rose.",
+	"authors": [
+		{
+			"name": "Satou",
+			"id": "1530541600936038597"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

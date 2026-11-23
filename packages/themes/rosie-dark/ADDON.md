@@ -1,3 +1,13 @@
+---
+media:
+    - image: media/channels.jpg
+      alt: Rosie Dark on a server's channel list.
+    - image: media/chat.jpg
+      alt: Rosie Dark in a direct message, with replies, reactions, code, a file and a voice message.
+    - image: media/settings.jpg
+      alt: Rosie Dark on Discord's settings page.
+---
+
 ## :sparkle: What it does
 
 - :palette: Near-black backgrounds with soft pink headings and accents.

@@ -1,0 +1,14 @@
+{
+	"id": "benjii.frostfall-light",
+	"name": "Frostfall Light",
+	"description": "A bright snow day take on Frostfall.",
+	"authors": [
+		{
+			"name": "Benjii",
+			"id": "463702169443368970"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

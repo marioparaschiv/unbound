@@ -1,0 +1,14 @@
+{
+	"id": "dxckie.rose",
+	"name": "Rose",
+	"description": "Deep plum surfaces with a rose accent.",
+	"authors": [
+		{
+			"name": "dxckie",
+			"id": "772390964471791630"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

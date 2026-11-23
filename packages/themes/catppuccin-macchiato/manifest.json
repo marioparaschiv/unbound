@@ -1,0 +1,14 @@
+{
+	"id": "benjii.catppuccin-macchiato",
+	"name": "Catppuccin Macchiato",
+	"description": "Catppuccin Macchiato, medium contrast with gentle colours.",
+	"authors": [
+		{
+			"name": "Benjii",
+			"id": "463702169443368970"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}

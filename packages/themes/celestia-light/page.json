@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/channels.jpg",
+				"alt": "Celestia Light on a server's channel list."
+			},
+			{
+				"image": "media/chat.jpg",
+				"alt": "Celestia Light in a direct message, with replies, reactions, code, a file and a voice message."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Celestia Light on Discord's settings page."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/channels.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "cxgKBAAGZ4dHh4hoiGgCRkSQRQ==",
+			"bytes": 78742
+		},
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "KigKBAIHaIiIh3xnqGeXcXAGGA==",
+			"bytes": 145467
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "NRgKBAAHaIg3mIZIeFeZf5r5pw==",
+			"bytes": 73783
+		}
+	]
+}

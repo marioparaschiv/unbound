@@ -1,0 +1,14 @@
+{
+	"id": "dariuss.midnight-mobile",
+	"name": "Midnight Mobile",
+	"description": "Navy panels and blue accents over the original Midnight wallpaper.",
+	"authors": [
+		{
+			"name": "dariussbezy",
+			"id": "908767091522420817"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"main": "bundle.json"
+}
