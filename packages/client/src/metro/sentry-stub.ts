@@ -46,7 +46,7 @@ function createErrorBoundary(): ComponentType<ErrorBoundaryProps> {
 	}
 
 	ErrorBoundary = class SentryErrorBoundary extends (
-		React.Component<ErrorBoundaryProps, ErrorBoundaryState>
+		(React.Component<ErrorBoundaryProps, ErrorBoundaryState>)
 	) {
 		state: ErrorBoundaryState = { error: undefined };
 

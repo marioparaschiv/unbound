@@ -382,9 +382,8 @@ async function hotBuild(onUpdate: (update: HotUpdate) => void) {
 			],
 			experimental: {
 				devMode: {
+					// Rolldown's own runtime is never injected (rolldown#11776): its classes don't compile with hermesc.
 					implement: readFileSync(join(__dirname, 'dev-runtime.js'), 'utf8'),
-					// Its classes don't compile with hermesc; dev-runtime.js implements the same surface.
-					skipCommonRuntimeInjection: true,
 				},
 			},
 		},

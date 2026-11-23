@@ -674,6 +674,12 @@ namespace {
         std::uint64_t generation = 0;
     };
 
+    struct PendingJSCall {
+        std::shared_ptr<JSCallback> callback;
+        std::vector<std::vector<std::uint8_t>> arguments;
+        std::vector<std::uint8_t> output;
+    };
+
     CallbackResult runJavaScript(const std::shared_ptr<JSCallback> &callback,
                                  const CallbackRegisters &registers)
     {
@@ -683,25 +689,30 @@ namespace {
             return resultFrom(callback->result, output);
         }
 
-        std::size_t x = 0;
-        std::size_t d = 0;
-        std::vector<std::vector<std::uint8_t>> arguments;
+        // The JavaScript thread can still run this after the wait times out and this frame is
+        // gone, so the work owns everything it touches.
+        auto call      = std::make_shared<PendingJSCall>();
+        call->callback = callback;
+        call->output   = output;
+        std::size_t x  = 0;
+        std::size_t d  = 0;
         for (const Slot &slot : callback->slots)
         {
-            arguments.push_back(argumentBytes(slot, registers, x, d));
+            call->arguments.push_back(argumentBytes(slot, registers, x, d));
         }
 
-        native::executeRuntimeSynchronously([&](jsi::Runtime &runtime) {
+        bool completed = native::executeRuntimeSynchronously([call](jsi::Runtime &runtime) {
+            const std::shared_ptr<JSCallback> &callback = call->callback;
             if (callback->generation != native::runtimeGeneration())
             {
                 return;
             }
 
             std::vector<jsi::Value> values;
-            for (std::size_t index = 0; index < arguments.size(); index++)
+            for (std::size_t index = 0; index < call->arguments.size(); index++)
             {
                 values.push_back(readValue(runtime, callback->signature.arguments[index],
-                                           arguments[index].data()));
+                                           call->arguments[index].data()));
             }
 
             jsi::Value returned = callback->function->call(
@@ -709,10 +720,11 @@ namespace {
             if (callback->signature.result.kind != Kind::Void)
             {
                 ArgumentStorage storage;
-                writeValue(runtime, returned, callback->signature.result, output.data(), storage);
+                writeValue(runtime, returned, callback->signature.result, call->output.data(),
+                           storage);
             }
         });
-        return resultFrom(callback->result, output);
+        return resultFrom(callback->result, completed ? call->output : output);
     }
 
     void *pointerArgument(jsi::Runtime &runtime, const jsi::Value &value, const char *method)
