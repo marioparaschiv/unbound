@@ -307,6 +307,13 @@ namespace {
         }
     }
 
+    struct PendingCall {
+        std::shared_ptr<Callback> callback;
+        uint64_t self = 0;
+        std::vector<std::vector<uint8_t>> arguments;
+        std::vector<uint8_t> result;
+    };
+
     std::vector<uint8_t> runCallback(const std::shared_ptr<Callback> &callback,
                                      const Registers &registers, size_t leading)
     {
@@ -317,33 +324,39 @@ namespace {
             return result;
         }
 
-        size_t x = leading;
-        size_t d = 0;
-        std::vector<std::vector<uint8_t>> arguments;
+        // The JavaScript thread can still run this after the wait times out and this frame is
+        // gone, so the work owns everything it touches.
+        auto call      = std::make_shared<PendingCall>();
+        call->callback = callback;
+        call->self     = registers.x[0];
+        call->result   = result;
+        size_t x       = leading;
+        size_t d       = 0;
         for (const Slot &slot : callback->slots)
         {
-            arguments.push_back(readArgument(slot, registers, x, d));
+            call->arguments.push_back(readArgument(slot, registers, x, d));
         }
 
-        bool completed = executeRuntimeSynchronously([&](Runtime &runtime) {
+        bool completed = executeRuntimeSynchronously([call](Runtime &runtime) {
+            const std::shared_ptr<Callback> &callback = call->callback;
             if (callback->generation != loader::native::runtimeGeneration())
             {
                 return;
             }
 
             std::vector<Value> values;
-            values.reserve(arguments.size() + 1);
+            values.reserve(call->arguments.size() + 1);
             if (callback->receivesSelf)
             {
                 values.push_back(
                     loader::ffi::readValue(runtime, loader::ffi::resolveType("object"),
-                                           reinterpret_cast<const uint8_t *>(&registers.x[0])));
+                                           reinterpret_cast<const uint8_t *>(&call->self)));
             }
 
-            for (size_t index = 0; index < arguments.size(); index++)
+            for (size_t index = 0; index < call->arguments.size(); index++)
             {
                 values.push_back(loader::ffi::readValue(
-                    runtime, callback->signature.arguments[index], arguments[index].data()));
+                    runtime, callback->signature.arguments[index], call->arguments[index].data()));
             }
 
             Value returned = callback->function->call(
@@ -354,9 +367,9 @@ namespace {
             }
 
             loader::ffi::ArgumentStorage storage;
-            loader::ffi::writeValue(runtime, returned, callback->signature.result, result.data(),
-                                    storage);
-            keepReturnedObject(callback->signature.result, result.data());
+            loader::ffi::writeValue(runtime, returned, callback->signature.result,
+                                    call->result.data(), storage);
+            keepReturnedObject(callback->signature.result, call->result.data());
         });
         if (!completed)
         {
@@ -364,9 +377,10 @@ namespace {
                 warning:LOG_CATEGORY_PLUGINS
                  format:@"Skipped the native callback %s: the JavaScript thread did not answer.",
                         callback->label.c_str()];
+            return result;
         }
 
-        return result;
+        return call->result;
     }
 
     std::vector<uint8_t> safelyRun(const std::shared_ptr<Callback> &callback,
