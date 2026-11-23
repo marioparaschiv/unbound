@@ -1,3 +1,14 @@
+---
+banner: media/banner.jpg
+media:
+    - image: media/channels.jpg
+      alt: Rosie Pink on a server's channel list.
+    - image: media/chat.jpg
+      alt: Rosie Pink in a direct message, with replies, reactions, code, a file and a voice message.
+    - image: media/settings.jpg
+      alt: Rosie Pink on Discord's settings page.
+---
+
 ## :sparkle: What it does
 
 - :palette: Dusky pink-grey backgrounds with soft pink headings and accents.

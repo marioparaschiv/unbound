@@ -1,0 +1,53 @@
+{
+	"frontmatter": {
+		"banner": "media/banner.jpg",
+		"media": [
+			{
+				"image": "media/channels.jpg",
+				"alt": "Rosie Pink on a server's channel list."
+			},
+			{
+				"image": "media/chat.jpg",
+				"alt": "Rosie Pink in a direct message, with replies, reactions, code, a file and a voice message."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Rosie Pink on Discord's settings page."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/banner.jpg",
+			"kind": "image",
+			"width": 1500,
+			"height": 500,
+			"thumbhash": "CwgGCoCJR2eaZwhkv5sEmDo=",
+			"bytes": 63917
+		},
+		{
+			"path": "media/channels.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "yhcCBAAN1Yp5mWYmVkeAQ0xgdg==",
+			"bytes": 71263
+		},
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "yxcGBAALlngXlodYl0fYiYCiCA==",
+			"bytes": 107606
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 900,
+			"height": 1600,
+			"thumbhash": "ywcCBAALNZcoh3Vnp1j2iXwgGA==",
+			"bytes": 60589
+		}
+	]
+}
