@@ -6,9 +6,13 @@
 		{
 			"name": "Mudrhiod",
 			"id": "807170846497570848"
+		},
+		{
+			"name": "eternal",
+			"id": "263689920210534400"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"icon": "PaintPaletteIcon",
 	"main": "bundle.json"
 }
