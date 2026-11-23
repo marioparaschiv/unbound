@@ -1,5 +1,4 @@
 ---
-banner: media/banner.jpg
 media:
     - image: media/channels.jpg
       alt: Rose Light on a server's channel list.

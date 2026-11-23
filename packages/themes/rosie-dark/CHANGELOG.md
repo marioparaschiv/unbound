@@ -4,7 +4,7 @@
 
 ### Added
 
-- Screenshots and a banner on the store page.
+- Screenshots on the store page.
 
 ## [1.1.1] - 2026-11-22
 

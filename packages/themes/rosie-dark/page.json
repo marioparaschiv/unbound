@@ -1,6 +1,5 @@
 {
 	"frontmatter": {
-		"banner": "media/banner.jpg",
 		"media": [
 			{
 				"image": "media/channels.jpg",
@@ -17,14 +16,6 @@
 		]
 	},
 	"media": [
-		{
-			"path": "media/banner.jpg",
-			"kind": "image",
-			"width": 1500,
-			"height": 500,
-			"thumbhash": "BwgGCoCcVmibZghjv5qk6A0=",
-			"bytes": 65916
-		},
 		{
 			"path": "media/channels.jpg",
 			"kind": "image",
