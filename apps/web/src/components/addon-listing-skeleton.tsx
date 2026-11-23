@@ -15,9 +15,9 @@ type AddonListingSkeletonProps = {
 // Fills three rows of the widest grid, so the first screen is covered before the results land.
 const SKELETON_CARDS = 9;
 
-// The filter bar's buttons as wide as their labels: Filter (with its key hint), sort by Name, Create and Submit.
+// The filter bar's buttons as wide as their labels: Filter (with its key hint), sort by Popular, Create and Submit.
 const FILTER_BUTTON_WIDTH = 'sm:w-[125px]';
-const SORT_BUTTON_WIDTH = 'sm:w-24';
+const SORT_BUTTON_WIDTH = 'sm:w-[117px]';
 const ACTION_BUTTON_WIDTH = 'sm:w-[106px]';
 
 /**

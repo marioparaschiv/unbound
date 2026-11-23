@@ -89,6 +89,8 @@ beforeAll(async () => {
 	await seedApprovedAddon(onDay(2), ownerId, manifest('list.delta', '1.0.0', { name: 'Delta' }));
 	await ctx.db.update(addon).set({ delistedAt: new Date() }).where(eq(addon.id, 'list.delta'));
 	await seedSubmission(ctx, ownerId, manifest('list.pending', '1.0.0', { name: 'Pending' }));
+	await ctx.db.update(addon).set({ installs: 7 }).where(eq(addon.id, 'list.charlie'));
+	await ctx.db.update(addon).set({ installs: 3 }).where(eq(addon.id, 'list.bravo'));
 });
 
 function list(query: ListAddonsQuery) {
@@ -138,6 +140,7 @@ describe('listing', () => {
 		['created', 'desc', ['list.echo', 'list.charlie', 'list.bravo', 'list.alpha', 'list.able']],
 		['updated', 'asc', ['list.able', 'list.bravo', 'list.charlie', 'list.echo', 'list.alpha']],
 		['updated', 'desc', ['list.alpha', 'list.echo', 'list.charlie', 'list.bravo', 'list.able']],
+		['popular', 'desc', ['list.charlie', 'list.bravo', 'list.echo', 'list.alpha', 'list.able']],
 	])('pages by %s %s without skipping or repeating ties', async (sort, order, expected) => {
 		expect(await ids({ sort, order })).toEqual(expected);
 	});
@@ -214,6 +217,8 @@ describe('listing', () => {
 		{ type: 'plugin', sort: 'name', order: 'desc' },
 		{ type: 'theme', sort: 'created' },
 		{ type: 'plugin', sort: 'updated', q: 'a' },
+		{ sort: 'popular', order: 'desc' },
+		{ type: 'theme', sort: 'popular', order: 'desc' },
 	])('reads %o in index order without sorting', async (query) => {
 		const { nextCursor } = await list(query);
 		const sql = queryListedAddons(ctx, { ...query, cursor: nextCursor ?? undefined }).toSQL();

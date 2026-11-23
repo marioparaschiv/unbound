@@ -87,10 +87,14 @@ export const UPDATED_WINDOWS: FilterOption[] = [
 
 /** The Sort menu's rows, in menu order. */
 export const SORT_OPTIONS: SortDefinition[] = [
+	{ value: 'popular', label: 'Popular', order: 'desc' },
 	{ value: 'name', label: 'Name', order: 'asc' },
 	{ value: 'created', label: 'Release Date', order: 'desc' },
 	{ value: 'updated', label: 'Recently Updated', order: 'desc' },
 ];
+
+/** The listing's sort when the URL names none, kept out of the URL so the bare path is canonical. */
+export const DEFAULT_SORT: AddonSort = 'popular';
 
 /**
  * @description Splits a comma-separated filter list, dropping repeats.
@@ -291,6 +295,7 @@ export default {
 	FIELD_ORDER,
 	UPDATED_WINDOWS,
 	SORT_OPTIONS,
+	DEFAULT_SORT,
 	splitList,
 	tagOptions,
 	authorOptions,
