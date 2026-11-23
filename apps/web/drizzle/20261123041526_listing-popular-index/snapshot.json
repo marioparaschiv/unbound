@@ -1,0 +1,125 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "4e2cd1e8-9f99-4b52-957d-641916057e76",
+  "prevIds": [
+    "34e818dd-b81c-4ac5-8410-4bd92ff58328"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "addon",
+        "addon_listed_installs_idx"
+      ],
+      "writes": [
+        "s|idx|public.addon_listed_installs_idx",
+        "n|idx|public.addon_listed_installs_idx",
+        "e|idx|public.addon_listed_installs_idx",
+        "n|rel|public.addon_listed_installs_idx"
+      ],
+      "reads": [
+        "n|tbl|public.addon",
+        "n|sch|public",
+        "n|col|public.addon.installs",
+        "n|col|public.addon.id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "addon",
+        "addon_listed_type_installs_idx"
+      ],
+      "writes": [
+        "s|idx|public.addon_listed_type_installs_idx",
+        "n|idx|public.addon_listed_type_installs_idx",
+        "e|idx|public.addon_listed_type_installs_idx",
+        "n|rel|public.addon_listed_type_installs_idx"
+      ],
+      "reads": [
+        "n|tbl|public.addon",
+        "n|sch|public",
+        "n|col|public.addon.type",
+        "n|col|public.addon.installs",
+        "n|col|public.addon.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "addon",
+        "name": "addon_listed_installs_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "installs",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"delisted_at\" is null",
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "addon",
+        "name": "addon_listed_type_installs_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "type",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "installs",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": "\"delisted_at\" is null",
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    }
+  ]
+}

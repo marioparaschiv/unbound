@@ -95,12 +95,14 @@ const SORT_COLUMNS = {
 	name: 'name',
 	created: 'createdAt',
 	updated: 'updatedAt',
+	popular: 'installs',
 } as const satisfies Record<AddonSort, keyof AddonRow>;
 
 const CURSOR_SCHEMAS = {
 	name: Type.Tuple([Type.String(), addonIdSchema]),
 	created: Type.Tuple([cursorTime, addonIdSchema]),
 	updated: Type.Tuple([cursorTime, addonIdSchema]),
+	popular: Type.Tuple([Type.Integer({ minimum: 0 }), addonIdSchema]),
 } satisfies Record<AddonSort, TSchema>;
 
 /** The `addon.pinned_fields` bit of each summary field a staff edit can own. */

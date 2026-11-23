@@ -56,8 +56,8 @@ export const addonResponseSchema = Type.Object({
 
 export const addonTypeSchema = Type.Enum(ADDON_KINDS);
 
-/** `created` is when the addon was first approved, `updated` when its newest version was. */
-export const addonSortSchema = Type.Enum(['name', 'created', 'updated']);
+/** `created` is when the addon was first approved, `updated` when its newest version was, `popular` by marketplace installs. */
+export const addonSortSchema = Type.Enum(['name', 'created', 'updated', 'popular']);
 
 export const sortOrderSchema = Type.Enum(['asc', 'desc']);
 

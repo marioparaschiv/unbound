@@ -7,6 +7,13 @@ import debounce from '@unbound-app/utils/debounce';
 import { toast } from 'sonner';
 
 import {
+	filtersFromSearch,
+	searchFromFilters,
+	DEFAULT_SORT,
+	type AddonFilter,
+	type MarketplaceSearch,
+} from '~/lib/addon-filters';
+import {
 	Empty,
 	EmptyContent,
 	EmptyDescription,
@@ -14,12 +21,6 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from '~/components/ui/empty';
-import {
-	filtersFromSearch,
-	searchFromFilters,
-	type AddonFilter,
-	type MarketplaceSearch,
-} from '~/lib/addon-filters';
 import {
 	LISTING_COPY,
 	LISTING_GRID_STYLE,
@@ -224,7 +225,7 @@ function AddonListing({ type, search }: AddonListingProps) {
 
 	function changeSort(sort: AddonSort) {
 		// The default stays out of the URL so the bare path is the canonical first page.
-		onSearchChange({ ...search, sort: sort === 'name' ? undefined : sort });
+		onSearchChange({ ...search, sort: sort === DEFAULT_SORT ? undefined : sort });
 	}
 
 	return (
@@ -241,7 +242,7 @@ function AddonListing({ type, search }: AddonListingProps) {
 					placeholder={`Search ${copy.title}...`}
 					actions={
 						<>
-							<SortMenu value={search.sort ?? 'name'} onChange={changeSort} />
+							<SortMenu value={search.sort ?? DEFAULT_SORT} onChange={changeSort} />
 							{type === 'theme' ? <CreateThemeButton /> : null}
 							<SubmitButton />
 						</>

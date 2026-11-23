@@ -48,7 +48,7 @@ export const PUBLIC_OPERATIONS = {
 		parameters: {
 			type: 'Only addons of this type.',
 			q: 'Search text, matched in the name or description.',
-			sort: 'Defaults to `name`. Ties sort by id.',
+			sort: 'Defaults to `name`. `popular` sorts by marketplace installs. Ties sort by id.',
 			order: 'Defaults to `asc`.',
 			tags: 'Comma-separated tag ids, combined by `tagMatch`.',
 			tagMatch: 'Defaults to `any`.',
