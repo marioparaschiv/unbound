@@ -141,7 +141,9 @@ export function measuredPageIssues(page: MeasuredPage): SchemaIssue[] {
 		return media;
 	}
 
-	const banner = find(page.frontmatter.banner, '/frontmatter/banner');
+	const banner = page.frontmatter.banner
+		? find(page.frontmatter.banner, '/frontmatter/banner')
+		: undefined;
 
 	if (banner && !isBannerAspect(banner)) {
 		issues.push({
@@ -177,7 +179,9 @@ export function measuredPageIssues(page: MeasuredPage): SchemaIssue[] {
  * @returns Whether every path matches its kind.
  */
 function usesMatchingKinds(page: MeasuredPage): boolean {
-	if (getMediaKind(page.frontmatter.banner) !== 'image') {
+	const { banner } = page.frontmatter;
+
+	if (banner !== undefined && getMediaKind(banner) !== 'image') {
 		return false;
 	}
 

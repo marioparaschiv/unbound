@@ -75,7 +75,7 @@ export const pageMediaSchema = Type.Union([
 /** The YAML frontmatter of ADDON.md. The title and description come from the manifest, so neither is allowed. */
 export const addonPageFrontmatterSchema = Type.Object(
 	{
-		banner: imagePathSchema,
+		banner: Type.Optional(imagePathSchema),
 		media: Type.Array(pageMediaSchema, { maxItems: 20, default: [] }),
 	},
 	{ additionalProperties: false },

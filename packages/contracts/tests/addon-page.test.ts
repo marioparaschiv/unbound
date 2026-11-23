@@ -122,13 +122,10 @@ describe('addonPageSchema', () => {
 });
 
 describe('addonPageFrontmatterSchema', () => {
-	test('rejects a missing banner', () => {
-		const parsed = safeParse(addonPageFrontmatterSchema, { media: frontmatter.media });
-
-		expect(parsed.success).toBe(false);
-		expect(
-			parsed.success ? [] : parsed.error.issues.map((issue) => issuePath(issue.path)),
-		).toEqual(['banner']);
+	test('accepts a gallery without a banner', () => {
+		expect(parse(addonPageFrontmatterSchema, { media: frontmatter.media })).toEqual({
+			media: frontmatter.media,
+		});
 	});
 
 	test('defaults media to an empty gallery', () => {
@@ -284,13 +281,12 @@ describe('parseAddonPage', () => {
 		});
 	});
 
-	test('refuses a page without a banner', () => {
-		for (const source of ['Just a body.', '---\nmedia: []\n---\nBody']) {
-			const parsed = parseAddonPage(source);
-
-			expect({ source, success: parsed.success }).toEqual({ source, success: false });
-			expect(parsed.success ? '' : parsed.error).toContain('banner');
-		}
+	test('reads a page without a banner', () => {
+		expect(parseAddonPage('---\nmedia: []\n---\nBody')).toEqual({
+			success: true,
+			frontmatter: { media: [] },
+			body: 'Body',
+		});
 	});
 
 	test('refuses invalid YAML and duplicate keys', () => {
