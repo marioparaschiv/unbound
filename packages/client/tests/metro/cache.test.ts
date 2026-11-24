@@ -46,6 +46,7 @@ test('stages each changed cache field once per burst, with the info a later laun
 	expect(saved.info).toEqual({
 		cacheVersion: CACHE_VERSION,
 		buildNumber: BUILD,
+		otaBuild: '',
 		moduleCount: ids.length,
 	});
 	expect(Object.keys(saved.assets as object)).toHaveLength(2900);
