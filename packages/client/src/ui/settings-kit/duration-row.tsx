@@ -71,20 +71,24 @@ function DurationRow({
 				disabled={disabled}
 				onChange={(amount) => onChange(Math.round(amount * scale))}
 			/>
-			<View style={styles.unit}>
-				<View style={styles.unitRow}>
-					<SegmentedRow
-						label={messages.UNBOUND_UNIT}
-						value={unit}
-						options={units.map((each) => ({
-							value: each,
-							label: messages[UNIT_LABELS[each]],
-						}))}
-						disabled={disabled}
-						onChange={(next) => setUnit(units.find((each) => each === next) ?? unit)}
-					/>
+			{units.length > 1 ? (
+				<View style={styles.unit}>
+					<View style={styles.unitRow}>
+						<SegmentedRow
+							label={messages.UNBOUND_UNIT}
+							value={unit}
+							options={units.map((each) => ({
+								value: each,
+								label: messages[UNIT_LABELS[each]],
+							}))}
+							disabled={disabled}
+							onChange={(next) =>
+								setUnit(units.find((each) => each === next) ?? unit)
+							}
+						/>
+					</View>
 				</View>
-			</View>
+			) : null}
 		</>
 	);
 }
