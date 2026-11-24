@@ -70,6 +70,7 @@
 		"typebox": "^1.4.7"
 	},
 	"devDependencies": {
+		"@swc/core": "^1.16.22",
 		"@types/bun": "latest",
 		"@unbound-app/api": "workspace:*",
 		"@unbound-app/client-build": "workspace:*",

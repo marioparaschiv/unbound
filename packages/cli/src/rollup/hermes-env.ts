@@ -1,7 +1,6 @@
 /**
- * The language level Discord's Hermes compiles from source: the client's `.swcrc` env, ES6 and later features kept.
- * Parameters are lowered because Hermes in recent Discord builds (checked on 356) resolves an async arrow with a destructured, default
- * or rest parameter to `undefined` when it returns before its first `await`.
+ * The language level Discord's Hermes compiles from source, the client's `.swcrc` env; parameters are lowered
+ * because Hermes loses the return value of async arrows with destructured, default or rest parameters.
  */
 export const HERMES_SOURCE_ENV = {
 	targets: 'fully supports es6',
