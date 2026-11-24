@@ -1,5 +1,7 @@
 import { flux, metro, patcher, plugins } from '@unbound-app/api';
 
+import { decideSend } from './send-decision';
+
 type MessageReference = { channel_id?: string; message_id?: string } | null;
 
 export type SendMessageOptions = {
@@ -92,7 +94,8 @@ export function restoreSend([channelId, message, , options]: SendArgs): void {
 /**
  * @description Asks `guard` about every message before Discord sends it, by patching `sendMessage` on Discord's message
  * actions. A send the guard refuses goes back into the chat input with `restoreSend`. A GIF picker selection passes
- * straight through while GIF Paste is on, since that plugin pastes it into the input instead of sending it.
+ * straight through while GIF Paste is on, since that plugin pastes it into the input instead of sending it. A guard
+ * that throws lets the send through, so a broken guard never loses a message.
  * @param feature The feature's name, for the warning when Discord moved its message actions.
  * @param guard Decides whether each send goes out; it may change the message's content first.
  */
@@ -108,7 +111,7 @@ export function guardSends(feature: string, guard: SendGuard): void {
 	patcher.instead(MessageActions, 'sendMessage', async ({ args, original, this: self }) => {
 		if (!isSendArgs(args) || isPastedGif(args)) return original.apply(self, args);
 
-		if (await guard(args)) return original.apply(self, args);
+		if ((await decideSend(feature, guard, args)) === 'send') return original.apply(self, args);
 
 		restoreSend(args);
 	});

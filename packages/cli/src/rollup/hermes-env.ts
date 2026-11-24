@@ -1,7 +1,14 @@
-/** The language level Discord's Hermes compiles from source: the client's `.swcrc` env, ES6 and later features kept. */
+/**
+ * The language level Discord's Hermes compiles from source, the client's `.swcrc` env; parameters are lowered
+ * because Hermes loses the return value of async arrows with destructured, default or rest parameters.
+ */
 export const HERMES_SOURCE_ENV = {
 	targets: 'fully supports es6',
-	include: ['transform-block-scoping', 'transform-async-generator-functions'],
+	include: [
+		'transform-block-scoping',
+		'transform-async-generator-functions',
+		'transform-parameters',
+	],
 	exclude: [
 		'transform-async-to-generator',
 		'transform-class-properties',
@@ -9,7 +16,6 @@ export const HERMES_SOURCE_ENV = {
 		'transform-class-static-block',
 		'transform-private-property-in-object',
 		'transform-typeof-symbol',
-		'transform-parameters',
 		'transform-template-literals',
 		'transform-exponentiation-operator',
 		'transform-named-capturing-groups-regex',

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.3] - 2026-11-24
+
+### Fixed
+
+- Works again on recent Discord builds, where part of it silently stopped.
+
 ## [1.2.2] - 2026-11-24
 
 ### Fixed
