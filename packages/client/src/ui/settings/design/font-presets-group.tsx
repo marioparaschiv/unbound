@@ -1,3 +1,6 @@
+// Reads manager or settings state during render, which the React Compiler would cache past its changes.
+'use no memo';
+
 import type { UnboundFontPreset } from '@unbound-app/types';
 
 import { openInputDialog } from '~/ui/settings-kit/input-dialog';

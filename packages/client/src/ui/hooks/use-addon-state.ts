@@ -1,3 +1,6 @@
+// Reads manager or settings state during render, which the React Compiler would cache past its changes.
+'use no memo';
+
 import useRecordChanges from '~/ui/hooks/use-record-changes';
 import type { UpdatableKind } from '~/addons/manager-of';
 import { Manager } from '~/addons/manager';

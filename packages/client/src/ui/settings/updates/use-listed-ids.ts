@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { useStore } from 'zustand';
 
 import MarketplaceStore from '~/marketplace/state';
 
@@ -7,7 +8,7 @@ import MarketplaceStore from '~/marketplace/state';
  * @returns The listed ids, or `undefined` until a catalog is available.
  */
 function useListedIds(): Set<string> | undefined {
-	const state = MarketplaceStore((store) => store.state);
+	const state = useStore(MarketplaceStore, (store) => store.state);
 
 	useEffect(() => {
 		void MarketplaceStore.getState().load();

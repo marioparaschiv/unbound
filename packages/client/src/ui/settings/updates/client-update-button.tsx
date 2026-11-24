@@ -1,4 +1,5 @@
 import { createLogger } from '@unbound-app/logger';
+import { useStore } from 'zustand';
 
 import { CLIENT_UPDATE_ID } from '~/updates/client-update';
 import { Discord } from '~/metro/components';
@@ -22,8 +23,8 @@ function restart() {
  * fails, then restarts into it.
  */
 function ClientUpdateButton({ staged }: ClientUpdateButtonProps) {
-	const status = UpdatesStore((state) => state.applying[CLIENT_UPDATE_ID]);
-	const applyClient = UpdatesStore((state) => state.applyClient);
+	const status = useStore(UpdatesStore, (state) => state.applying[CLIENT_UPDATE_ID]);
+	const applyClient = useStore(UpdatesStore, (state) => state.applyClient);
 
 	if (staged) {
 		return (

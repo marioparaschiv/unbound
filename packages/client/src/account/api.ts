@@ -3,9 +3,9 @@ import { ApiRequestError } from '@unbound-app/web/client';
 import { createLogger } from '@unbound-app/logger';
 import toError from '@unbound-app/utils/to-error';
 
+import { getBucket, useBucket, type Bucket } from '~/storage/api';
 import { authorizeWithDiscord } from '~/account/discord-oauth';
 import { createUnboundClient } from '~/account/client';
-import { getBucket, useBucket } from '~/storage/api';
 import { EventEmitter } from '~/core/event-emitter';
 import type { ApiRequest } from '~/account/client';
 import type { Account } from '~/account/account';
@@ -41,9 +41,9 @@ const Events = new EventEmitter<EventMap>();
 export const on = Events.on.bind(Events);
 export const off = Events.off.bind(Events);
 
-function readSession(): Session | undefined {
+function readSession(from: Bucket = bucket): Session | undefined {
 	// Written by `signIn` from the server's answer, so it is read back as stored.
-	return bucket.get<Session | null>('session', null) ?? undefined;
+	return from.get<Session | null>('session', null) ?? undefined;
 }
 
 function toAccount(user: Caller): Account {
@@ -79,9 +79,10 @@ export function getAccount(): Account | undefined {
  * @returns The signed-in account, or `undefined`.
  */
 export function useAccount(): Account | undefined {
-	useBucket(ACCOUNT_BUCKET);
+	// Read through the hook's Bucket, a new object after each change, so a memoised read re-runs.
+	const user = readSession(useBucket(ACCOUNT_BUCKET))?.user;
 
-	return getAccount();
+	return user ? toAccount(user) : undefined;
 }
 
 /**

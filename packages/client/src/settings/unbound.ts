@@ -119,10 +119,16 @@ export function isSettingChange(payload: SettingsPayload, key: UnboundSettingKey
 /**
  * @description React hook that re-renders on matching changes to the core Bucket.
  * @param predicate Optional filter deciding which changes trigger a re-render.
- * @returns The typed core setting accessors.
+ * @returns The typed core setting accessors. `get` reads through the hook's Bucket, which is a new object after each
+ * matching change, so the React Compiler re-runs reads it memoised.
  */
 export function useUnboundSettings(predicate?: (payload: SettingsPayload) => PredicateResult) {
-	useBucket(CORE_BUCKET, predicate);
+	const bucket = useBucket(CORE_BUCKET, predicate);
 
-	return { get: getSetting, set: setSetting, toggle: toggleSetting };
+	return {
+		get: <K extends UnboundSettingKey>(key: K): Widen<UnboundSettings[K]> =>
+			bucket.get(key, DEFAULTS[key]),
+		set: setSetting,
+		toggle: toggleSetting,
+	};
 }

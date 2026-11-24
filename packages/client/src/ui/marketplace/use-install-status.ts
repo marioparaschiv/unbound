@@ -1,3 +1,6 @@
+// Reads manager or settings state during render, which the React Compiler would cache past its changes.
+'use no memo';
+
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonKind } from '@unbound-app/types/addons';
 import { useEffect } from 'react';

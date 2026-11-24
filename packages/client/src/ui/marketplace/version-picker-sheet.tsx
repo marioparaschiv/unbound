@@ -1,3 +1,6 @@
+// Reads manager or settings state during render, which the React Compiler would cache past its changes.
+'use no memo';
+
 import { fetchAddonVersions, toVersionChoices } from '~/addons/versions';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { AvailableChoice } from '~/addons/versions';
