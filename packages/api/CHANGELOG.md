@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.2.0](https://github.com/marioparaschiv/unbound/compare/api-v1.1.2...api-v1.2.0) (2026-11-24)
+
+
+### Bug Fixes
+
+* **plugins:** match Discord's sheets and rows in 50 plugins ([#2261](https://github.com/marioparaschiv/unbound/issues/2261)) ([ef3e401](https://github.com/marioparaschiv/unbound/commit/ef3e4016c84e201e5a66e2e1b5084aef359780e3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 1.2.0
+
 ## [1.1.2](https://github.com/marioparaschiv/unbound/compare/api-v1.1.1...api-v1.1.2) (2026-11-22)
 
 
