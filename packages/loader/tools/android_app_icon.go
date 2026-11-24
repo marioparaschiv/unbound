@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
+	"slices"
 )
 
 const androidAppIconMarker = "assets/unbound/app-icon.json"
@@ -40,8 +42,6 @@ func patchDiscordAppIcon(apkPath, iconPath string) error {
 		return fmt.Errorf("read Unbound Android app icon: %w", err)
 	}
 
-	iconEntries := discordIconEntries()
-
 	archive, err := zip.OpenReader(apkPath)
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func patchDiscordAppIcon(apkPath, iconPath string) error {
 		return err
 	}
 
-	seen := make(map[string]bool, len(iconEntries))
+	seen := make(map[string]bool, len(discordIconVariants))
 	markerSeen := false
 
 	var writeErr error
@@ -78,8 +78,9 @@ func patchDiscordAppIcon(apkPath, iconPath string) error {
 			continue
 		}
 
-		if _, replace := iconEntries[entry.Name]; replace {
-			seen[entry.Name] = true
+		if variant, replace := discordIconVariant(entry.Name); replace {
+			seen[variant] = true
+
 			if err := writeAndroidIconEntry(writer, entry.FileHeader, icon); err != nil {
 				writeErr = err
 				break
@@ -107,9 +108,9 @@ func patchDiscordAppIcon(apkPath, iconPath string) error {
 	}
 
 	if writeErr == nil {
-		for name := range iconEntries {
-			if !seen[name] {
-				writeErr = fmt.Errorf("Discord base APK is missing launcher icon resource %s", name)
+		for _, variant := range discordIconVariants {
+			if !seen[variant] {
+				writeErr = fmt.Errorf("Discord base APK has no %s launcher icon at any density", variant)
 				break
 			}
 		}
@@ -165,14 +166,15 @@ func writeAndroidIconEntry(writer *zip.Writer, original zip.FileHeader, content 
 	return err
 }
 
-func discordIconEntries() map[string]struct{} {
-	entries := make(map[string]struct{}, 15)
+var discordIconVariants = []string{"brand_inverted", "brand_inverted_foreground", "brand_inverted_round"}
 
-	for _, density := range []string{"mdpi", "hdpi", "xhdpi", "xxhdpi", "xxxhdpi"} {
-		for _, variant := range []string{"brand_inverted", "brand_inverted_foreground", "brand_inverted_round"} {
-			entries["res/mipmap-"+density+"-v4/"+variant+".webp"] = struct{}{}
-		}
+var discordIconPath = regexp.MustCompile(`^res/mipmap-[a-z]+dpi-v4/([a-z_]+)\.webp$`)
+
+func discordIconVariant(name string) (string, bool) {
+	match := discordIconPath.FindStringSubmatch(name)
+	if match == nil || !slices.Contains(discordIconVariants, match[1]) {
+		return "", false
 	}
 
-	return entries
+	return match[1], true
 }
