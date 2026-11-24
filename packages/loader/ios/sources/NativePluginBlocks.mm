@@ -80,6 +80,7 @@ namespace {
         bool floatReturn  = false;
         bool receivesSelf = false;
         std::shared_ptr<Function> function;
+        std::mutex functionLock;
         uint64_t generation = 0;
         std::string encoding;
         std::string label;
@@ -314,12 +315,19 @@ namespace {
         std::vector<uint8_t> result;
     };
 
+    std::shared_ptr<Function> currentFunction(const std::shared_ptr<Callback> &callback)
+    {
+        std::lock_guard<std::mutex> guard(callback->functionLock);
+        return callback->function;
+    }
+
     std::vector<uint8_t> runCallback(const std::shared_ptr<Callback> &callback,
                                      const Registers &registers, size_t leading)
     {
         std::vector<uint8_t> result(
             std::max<size_t>(callback->result.size, kMaximumFloatSlots * sizeof(double)));
-        if (!callback->function || callback->generation != loader::native::runtimeGeneration())
+        if (!currentFunction(callback)
+            || callback->generation != loader::native::runtimeGeneration())
         {
             return result;
         }
@@ -339,7 +347,8 @@ namespace {
 
         bool completed = executeRuntimeSynchronously([call](Runtime &runtime) {
             const std::shared_ptr<Callback> &callback = call->callback;
-            if (callback->generation != loader::native::runtimeGeneration())
+            std::shared_ptr<Function> function        = currentFunction(callback);
+            if (!function || callback->generation != loader::native::runtimeGeneration())
             {
                 return;
             }
@@ -359,8 +368,8 @@ namespace {
                     runtime, callback->signature.arguments[index], call->arguments[index].data()));
             }
 
-            Value returned = callback->function->call(
-                runtime, static_cast<const Value *>(values.data()), values.size());
+            Value returned =
+                function->call(runtime, static_cast<const Value *>(values.data()), values.size());
             if (callback->signature.result.kind == loader::ffi::Kind::Void)
             {
                 return;
@@ -595,7 +604,12 @@ namespace {
 
     void releaseFunction(const std::shared_ptr<Callback> &callback)
     {
-        std::shared_ptr<Function> function = std::move(callback->function);
+        std::shared_ptr<Function> function;
+        {
+            std::lock_guard<std::mutex> guard(callback->functionLock);
+            function = std::move(callback->function);
+        }
+
         if (!function)
         {
             return;
