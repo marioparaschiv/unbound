@@ -44,6 +44,19 @@ describe('onMessageRow', () => {
 		expect(seen).toEqual([['m1', { animate: false }, 'm1']]);
 	});
 
+	test('hands an after handler the whole row data, so it can set row-wide fields', () => {
+		onMessageRow<Message>({
+			after: ({ rowData }) => {
+				if (rowData) rowData.backgroundHighlight = { backgroundColor: 1, gutterColor: 2 };
+			},
+		});
+
+		expect(rowModule.generateMessageRowData({ message: { id: 'm1' } })).toMatchObject({
+			message: { id: 'm1' },
+			backgroundHighlight: { backgroundColor: 1, gutterColor: 2 },
+		});
+	});
+
 	test('lets an after handler change the row in place', () => {
 		onMessageRow<Message, MessageRow & { id?: string; label?: string }>({
 			after: ({ row }) => {

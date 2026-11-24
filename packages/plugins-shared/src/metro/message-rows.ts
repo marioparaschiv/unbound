@@ -27,6 +27,15 @@ export type MessageRow = {
 	timestampAccessibilityLabel?: string;
 };
 
+/** The tint and side bar Discord draws behind a row, such as for a mention, as ARGB colours. */
+export type RowHighlight = { backgroundColor?: number; gutterColor?: number };
+
+/** The whole row data the builder returns: the row under `message`, beside row-wide fields. */
+export type ChatRowData<R extends MessageRow> = {
+	message?: R | null;
+	backgroundHighlight?: RowHighlight | null;
+};
+
 /** A row option's value, such as `true` for `animateEmoji` or a message id for `animatingStickerMessageId`. */
 export type RowOption = string | number | boolean | null | undefined;
 
@@ -48,6 +57,8 @@ export type MessageRowCall<M extends RowMessage> = {
 /** A row Discord just built. */
 export type BuiltMessageRow<M extends RowMessage, R extends MessageRow> = MessageRowCall<M> & {
 	row: R | undefined;
+	/** The row data holding `row`, for row-wide fields such as `backgroundHighlight`. */
+	rowData: ChatRowData<R> | undefined;
 };
 
 /** What a `before` handler builds the row from instead; a missing field keeps Discord's. */
@@ -116,7 +127,11 @@ export function onMessageRow<M extends RowMessage = RowMessage, R extends Messag
 			patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
 				const [input, options] = args;
 
-				after({ ...rowCall<M>(input, options), row: result?.message ?? undefined });
+				after({
+					...rowCall<M>(input, options),
+					row: result?.message ?? undefined,
+					rowData: result ?? undefined,
+				});
 			}),
 		);
 	}
