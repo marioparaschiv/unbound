@@ -26,5 +26,10 @@ test('resolves gesture handling without the removed createNativeWrapper export',
 test('has a shim for every library in the list', async () => {
 	const { default: libraries } = await import('~/core/shim-libraries.json');
 
-	expect(Object.keys(shims)).toEqual(['react', 'react-native', ...Object.keys(libraries)]);
+	expect(Object.keys(shims)).toEqual([
+		'react',
+		'react/compiler-runtime',
+		'react-native',
+		...Object.keys(libraries),
+	]);
 });
