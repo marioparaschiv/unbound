@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/fluent-animated.jpg
+      alt: Emoji Packs with Microsoft's animated Fluent pack, the default, in the same chat.
+    - image: media/noto.jpg
+      alt: Emoji Packs with Google's Noto emoji in the same chat.
+    - image: media/settings.jpg
+      alt: Emoji Packs' settings with the Fluent and Noto packs, animated or still.
 ---
 
 ## :sparkle: What it does

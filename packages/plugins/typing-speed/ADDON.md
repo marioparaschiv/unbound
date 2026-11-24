@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/live.jpg
+      alt: Typing Speed's WPM pill above the message box while a message is typed.
 ---
 
 ## :sparkle: What it does

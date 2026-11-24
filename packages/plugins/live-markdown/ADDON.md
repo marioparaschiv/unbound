@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/draft.jpg
+      alt: Live Markdown styling bold, italics, strikethrough and code in the message box as you type.
 ---
 
 ## :sparkle: What it does

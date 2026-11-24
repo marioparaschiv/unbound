@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/tester.jpg
+      alt: Text Replace's rule tester rewriting an example message with the saved rules.
+    - image: media/text-rules.jpg
+      alt: Text Replace's Text rule list, expanding abbreviations like idk and brb.
 ---
 
 ## :sparkle: What it does

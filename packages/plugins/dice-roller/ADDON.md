@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/rolls.jpg
+      alt: Dice Roller's /roll results, showing every die, dropped dice struck through, and the total.
+    - image: media/command.jpg
+      alt: Dice Roller's /roll command in the slash-command list.
 ---
 
 ## :sparkle: What it does

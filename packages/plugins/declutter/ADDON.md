@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/chat.jpg
+      alt: Declutter removing the call, video, gift, voice message and empty send buttons from a direct message.
+    - image: media/profile.jpg
+      alt: "After: Declutter hiding eternal's avatar decoration, profile effect, badges and other profile extras."
+    - image: media/settings.jpg
+      alt: Declutter's settings, with a switch for each button, upsell and profile decoration it can hide.
 ---
 
 ## :sparkle: What it does

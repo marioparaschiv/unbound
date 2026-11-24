@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/highlighted.jpg
+      alt: Keyword Notify highlighting messages that contain your keywords like mentions in the Unbound server's chat.
+    - image: media/settings.jpg
+      alt: Keyword Notify's settings with a keyword list, matching options and ignore lists.
 ---
 
 ## :sparkle: What it does

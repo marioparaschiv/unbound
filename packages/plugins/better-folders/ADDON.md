@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Better Folders' settings for closing other folders and hiding server icons on closed folders.
 ---
 
 ## :sparkle: What it does

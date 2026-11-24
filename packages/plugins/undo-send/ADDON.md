@@ -1,7 +1,3 @@
----
-banner: media/banner.png
----
-
 ## :sparkle: What it does
 
 - :timer: Each message you send waits a few seconds on your phone before it goes out, with a toast that counts down.

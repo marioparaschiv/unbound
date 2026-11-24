@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/sheet.jpg
+      alt: View Raw's sheet showing a message's content and its data as JSON.
+    - image: media/row.jpg
+      alt: View Raw's row in a message's long-press menu.
 ---
 
 ## :sparkle: What it does

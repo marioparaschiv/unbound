@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/preview.jpg
+      alt: Preview Message's preview card showing a draft rendered as a message, with its link preview.
+    - image: media/button.jpg
+      alt: Preview Message's eye button in the chat input next to a typed draft.
 ---
 
 ## :sparkle: What it does

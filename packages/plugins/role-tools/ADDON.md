@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/role-menu.jpg
+      alt: Role Tools' menu on a long-pressed profile role, with Copy Role Color and View Members.
 ---
 
 ## :sparkle: What it does

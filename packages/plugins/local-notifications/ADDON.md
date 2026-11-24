@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Local Notifications' settings for when it runs, direct message alerts and message previews.
 ---
 
 ## :sparkle: What it does

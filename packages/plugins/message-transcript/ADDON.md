@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/menu.jpg
+      alt: Message Transcript's Select Messages option in a message's long-press menu.
+    - image: media/select.jpg
+      alt: Message Transcript's Select Messages sheet with a run of four messages ticked, ready to copy as a transcript.
 ---
 
 ## :sparkle: What it does

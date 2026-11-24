@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/board.jpg
+      alt: A Minesweeper board of spoiler tiles sent with /minesweeper, with a patch of safe tiles already uncovered.
 ---
 
 ## :sparkle: What it does

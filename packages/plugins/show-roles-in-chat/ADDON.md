@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/default.jpg
+      alt: Show Roles In Chat's role tags beside names in the Unbound server's chat.
 ---
 
 ## :sparkle: What it does

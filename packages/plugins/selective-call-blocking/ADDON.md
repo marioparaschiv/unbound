@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Selective Call Blocking's lists of users and group DMs whose calls don't ring.
 ---
 
 ## :sparkle: What it does

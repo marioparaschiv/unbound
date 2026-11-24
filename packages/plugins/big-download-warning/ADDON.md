@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/warning.jpg
+      alt: Big Download Warning asking before opening a 148 MB video on mobile data.
 ---
 
 ## :sparkle: What it does

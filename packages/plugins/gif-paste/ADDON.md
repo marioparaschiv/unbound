@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/link-in-input.jpg
+      alt: GIF Paste puts the picked GIF's link in the chat input so a message can be typed after it.
 ---
 
 ## :sparkle: What it does

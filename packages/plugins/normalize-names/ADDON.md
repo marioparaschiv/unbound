@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/plain-names.jpg
+      alt: Normalize Names showing fancy Unicode display names like 𝓼𝓪𝓶𝓶𝔂 and ｋａｉ ｗａｖｅｓ as plain letters above their messages and in a reply preview.
 ---
 
 ## :sparkle: What it does

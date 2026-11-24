@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/hide-row.jpg
+      alt: Hide Servers' Hide Server row in a server's long-press menu.
+    - image: media/settings.jpg
+      alt: Hide Servers' settings listing the hidden servers, each with a button to unhide it.
 ---
 
 ## :sparkle: What it does

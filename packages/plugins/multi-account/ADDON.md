@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/switcher.jpg
+      alt: Multi Account unlocks Discord's Manage Accounts screen in the mobile app, where you add and switch between accounts.
 ---
 
 ## :sparkle: What it does

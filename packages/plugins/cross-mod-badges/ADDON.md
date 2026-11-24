@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/profile.jpg
+      alt: Cross Mod Badges adding badges from other client mods after Discord's own on a profile.
+    - image: media/badge-details.jpg
+      alt: Cross Mod Badges' details for a badge, naming the client mod it comes from.
 ---
 
 ## :sparkle: What it does

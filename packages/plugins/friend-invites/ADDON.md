@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/created.jpg
+      alt: Friend Invites' reply with a new friend invite link, when it expires and its maximum uses.
+    - image: media/command.jpg
+      alt: Friend Invites' /friend-invites command with its create, view and revoke subcommands in the autocomplete.
 ---
 
 ## :sparkle: What it does

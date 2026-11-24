@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/menu.jpg
+      alt: Message Menu Editor's long-press menu with Copy Message Link moved to the top and Reply, Forward and Pin Message hidden.
+    - image: media/settings.jpg
+      alt: Message Menu Editor's settings, where you drag long-press menu options into order and switch off the ones to hide.
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/inline.jpg
+      alt: Translate showing an English translation under a German message, with its language codes.
+    - image: media/row.jpg
+      alt: Translate's Translate row in the long-press menu of a message in Spanish.
+    - image: media/settings.jpg
+      alt: "Translate's settings: translation service, source and target languages, and where translations show."
 ---
 
 ## :sparkle: What it does

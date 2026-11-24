@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/sheet.jpg
+      alt: "Emoji Mosaic's sheet: the photo, its emoji grid, the column count, the name prefix and the server to upload to."
+    - image: media/row.jpg
+      alt: Emoji Mosaic's Make Emoji Mosaic row in the long-press menu of a photo message.
 ---
 
 ## :sparkle: What it does

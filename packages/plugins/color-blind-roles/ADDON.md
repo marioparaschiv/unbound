@@ -1,5 +1,13 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/deuteranopia.jpg
+      alt: Color Blind Roles shifting red, green and orange role colours in a server chat so they stay apart for deuteranopia.
+    - image: media/original.jpg
+      alt: The same chat with Color Blind Roles at strength 0, showing the original red, green and orange role colours.
+    - image: media/tritanopia.jpg
+      alt: Color Blind Roles adjusting role colors for tritanopia.
+    - image: media/settings.jpg
+      alt: "Color Blind Roles' settings: color vision type, strength and role mentions."
 ---
 
 ## :sparkle: What it does

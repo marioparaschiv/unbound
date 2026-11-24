@@ -1,7 +1,3 @@
----
-banner: media/banner.png
----
-
 ## :sparkle: What it does
 
 - :trash: **Delete Message** deletes straight away, without asking "Are you sure?" first.

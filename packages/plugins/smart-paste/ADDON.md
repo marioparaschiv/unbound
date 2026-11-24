@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/formats.jpg
+      alt: Smart Paste offering copied text as plain text, a code block, a quote or a text file.
+    - image: media/code-block.jpg
+      alt: Smart Paste putting copied text into the chat input as a fenced code block.
+    - image: media/link.jpg
+      alt: Smart Paste offering a copied link without a preview.
 ---
 
 ## :sparkle: What it does

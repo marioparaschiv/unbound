@@ -1,7 +1,3 @@
----
-banner: media/banner.png
----
-
 ## :sparkle: What it does
 
 - :magnifier: Search messages with `embedType:`, `embedProvider:`, `repliedToMessageId:`, `repliedToUserId:`, `mentionsRoleId:`, `mentionEveryone:`, `includeNsfw:`, `commandId:`, `commandName:` and `slop:`.

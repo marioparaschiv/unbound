@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/panel.jpg
+      alt: Plugin Shortcut Panel's sheet with a pinned plugin toggle and pinned commands, opened from its chat input button.
+    - image: media/edit.jpg
+      alt: Plugin Shortcut Panel in edit mode, picking which plugins and commands to pin.
 ---
 
 ## :sparkle: What it does

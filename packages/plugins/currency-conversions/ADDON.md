@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/euros.jpg
+      alt: Currency Conversions adding approximate euro amounts next to prices in a chat.
+    - image: media/yen.jpg
+      alt: Currency Conversions converting the same prices to Japanese yen.
+    - image: media/settings.jpg
+      alt: Currency Conversions' settings, choosing the currency to convert to.
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/picker.jpg
+      alt: GIF Collections' Reactions, Science and Space collection tiles under Favorites in the GIF picker.
+    - image: media/add-sheet.jpg
+      alt: GIF Collections' Add to Collection sheet, with a GIF's collections ticked and a New collection row.
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/server-bar.jpg
+      alt: Read All Notifications' checkmark button under Messages at the top of the server list.
 ---
 
 ## :sparkle: What it does

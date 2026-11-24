@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/readings.jpg
+      alt: Pinyin showing tone-marked pinyin under Chinese messages in a direct message.
 ---
 
 ## :sparkle: What it does

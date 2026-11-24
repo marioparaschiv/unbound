@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/member-permissions.jpg
+      alt: Permissions Viewer listing each permission a member has and the role that grants it.
+    - image: media/profile-button.jpg
+      alt: Permissions Viewer's View Permissions button under the roles card on a server profile.
+    - image: media/settings.jpg
+      alt: Permissions Viewer's settings for the permissions sort order and the roles card button.
 ---
 
 ## :sparkle: What it does

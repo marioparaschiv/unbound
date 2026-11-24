@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/song-info.jpg
+      alt: Music File Cards showing an MP3's title, artist, album and cover art.
+    - image: media/menu.jpg
+      alt: Music File Cards' Show song info option in the long-press menu of a message with an MP3 file.
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/unsuppress.jpg
+      alt: Unsuppress Embeds' row in the long-press menu of a message whose link embed was removed.
+    - image: media/suppress.jpg
+      alt: Unsuppress Embeds' Suppress Embeds row on a message that shows a link embed.
 ---
 
 ## :sparkle: What it does

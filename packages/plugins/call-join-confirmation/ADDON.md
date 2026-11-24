@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/call.jpg
+      alt: Call Join Confirmation asking before starting a call in a direct message.
+    - image: media/settings.jpg
+      alt: Call Join Confirmation's settings for asking before voice channels and calls.
 ---
 
 ## :sparkle: What it does

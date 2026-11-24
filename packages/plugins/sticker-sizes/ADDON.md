@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/default.jpg
+      alt: Sticker Sizes showing stickers in chat at its default 75% size.
+    - image: media/large.jpg
+      alt: Sticker Sizes with stickers enlarged to 150%.
+    - image: media/small.jpg
+      alt: Sticker Sizes with stickers shrunk to 50%, so they take less room in chat.
 ---
 
 ## :sparkle: What it does

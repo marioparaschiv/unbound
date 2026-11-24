@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/corrected.jpg
+      alt: Sed Corrections editing your last message in place instead of sending a new one.
+    - image: media/draft.jpg
+      alt: 'Sed Corrections: typing s/teh/the/g to fix a typo in your last message.'
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/sheet.jpg
+      alt: Spell With Reactions previewing the letter reactions for a typed word before adding them.
+    - image: media/row.jpg
+      alt: Spell With Reactions' row in a message's long-press menu.
 ---
 
 ## :sparkle: What it does

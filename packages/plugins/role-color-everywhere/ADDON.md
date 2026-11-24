@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/mentions.jpg
+      alt: Role Color Everywhere colouring @mentions with the mentioned member's role colour in the Unbound server's chat.
+    - image: media/message-color.jpg
+      alt: Role Color Everywhere tinting each message's text with its author's role colour.
+    - image: media/settings.jpg
+      alt: Role Color Everywhere's settings, with a switch for each place names and mentions get coloured.
 ---
 
 ## :sparkle: What it does

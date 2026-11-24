@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Song Link Converter's choice of the music service that Spotify, Apple Music, YouTube Music and Deezer links open in.
 ---
 
 ## :sparkle: What it does

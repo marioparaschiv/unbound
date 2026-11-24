@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/fen-board.jpg
+      alt: Chess Boards drawing a board under a message with a FEN position.
+    - image: media/black-to-move.jpg
+      alt: Chess Boards showing a position in a code block from black's side, since black is to move.
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/picker.jpg
+      alt: File Size On Picker showing each photo's and video's size on the chat's media picker.
 ---
 
 ## :sparkle: What it does

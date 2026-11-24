@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/reviews.jpg
+      alt: ReviewDB's sheet listing reviews people left on eternal's profile.
+    - image: media/profile-section.jpg
+      alt: ReviewDB's Reviews section on a user's profile.
+    - image: media/settings.jpg
+      alt: ReviewDB's settings for signing in, notifications and hiding reviews.
 ---
 
 ## :sparkle: What it does

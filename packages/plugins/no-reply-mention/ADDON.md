@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/reply-mention-off.jpg
+      alt: No Reply Mention starting a reply to eternal with the mention toggle already off.
+    - image: media/settings.jpg
+      alt: No Reply Mention's settings with eternal on the exceptions list and Only Ping Listed Users on.
 ---
 
 ## :sparkle: What it does

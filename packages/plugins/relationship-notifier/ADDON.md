@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: "Relationship Notifier's settings for which removals to report: friends, friend requests, servers and group chats."
 ---
 
 ## :sparkle: What it does

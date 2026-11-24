@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Font Fallback's settings, with a font choice for each writing system from Latin to Hangeul.
 ---
 
 ## :sparkle: What it does

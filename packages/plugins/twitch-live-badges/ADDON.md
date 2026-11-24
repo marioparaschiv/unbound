@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/live.jpg
+      alt: Twitch Live Badges marking Twitch link embeds as live with their uptime, or offline.
 ---
 
 ## :sparkle: What it does

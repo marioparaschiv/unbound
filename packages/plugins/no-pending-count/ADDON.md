@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: No Pending Count's settings, with switches to hide the friend request and message request counts.
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: "One Ping Per DM's settings: which DMs to affect and whether mentions and @everyone still ping."
 ---
 
 ## :sparkle: What it does

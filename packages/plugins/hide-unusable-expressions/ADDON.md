@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/emoji-picker.jpg
+      alt: With Hide Unusable Expressions on, the emoji picker goes straight from Frequently Used to emojis you can send, with no locked server packs or Nitro banner.
+    - image: media/off.jpg
+      alt: "For comparison, the same emoji picker with the plugin's emoji setting off: locked server packs and a Nitro banner fill the list."
+    - image: media/settings.jpg
+      alt: Hide Unusable Expressions' settings for hiding unusable emojis and stickers.
 ---
 
 ## :sparkle: What it does

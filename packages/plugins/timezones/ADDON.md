@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/profile.jpg
+      alt: Timezones showing a user's local time under their name on their profile.
+    - image: media/messages.jpg
+      alt: Timezones adding a friend's local time after the timestamp of their messages.
+    - image: media/settings.jpg
+      alt: "Timezones' settings: where the local time shows, the clock format and TimezoneDB lookups."
 ---
 
 ## :sparkle: What it does

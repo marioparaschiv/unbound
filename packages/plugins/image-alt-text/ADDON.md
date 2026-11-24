@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/alt-line.jpg
+      alt: Image Alt Text showing an image's description as an italic line under the photo in a direct message.
 ---
 
 ## :sparkle: What it does

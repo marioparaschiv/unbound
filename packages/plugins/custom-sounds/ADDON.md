@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Custom Sounds' settings, picking a replacement for each of Discord's sounds and friend join sounds.
 ---
 
 ## :sparkle: What it does
