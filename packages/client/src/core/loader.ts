@@ -4,8 +4,8 @@ import { afterFirstFrame, watchFirstFrame } from '~/core/first-frame';
 import { captureMetro, setModuleStubs } from '~/metro/capture';
 import { resolveModuleStub } from '~/metro/module-stubs';
 import { markRendered } from '~/native/unbound-native';
-import { benchMark } from '~/core/bench-span';
 import { surfacePrefix } from '~/core/app-surfaces';
+import { benchMark } from '~/core/bench-span';
 
 // `window` is referenced throughout the client but the host only defines it later in its own
 // bundle, so alias it to the global object up front.
@@ -131,9 +131,8 @@ async function runReady(onReady: () => void | Promise<void>): Promise<boolean> {
 }
 
 /**
- * Intercepts the native → JS entry points of an un-run app (the old architecture's batched bridge,
- * the New Architecture's app registry and Fabric's restarts of plugin surfaces). Held calls replay in
- * {@link resumeDeferred}.
+ * Holds the native → JS entry points of an un-run app (bridge, app registry, Fabric's plugin-surface
+ * restarts) until {@link resumeDeferred} replays them.
  */
 function holdNativeCalls() {
 	const bridge = window.__fbBatchedBridge;
