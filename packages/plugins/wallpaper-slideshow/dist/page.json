@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/wallpaper.jpg",
+				"alt": "Wallpaper Slideshow showing a picture from its list as the chat background."
+			},
+			{
+				"image": "media/next.jpg",
+				"alt": "Wallpaper Slideshow after moving on to the next wallpaper in the list."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Wallpaper Slideshow's settings: the wallpaper links, how often they change, shuffle and Next wallpaper."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/wallpaper.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "UNcJEwR6aTh4gHFYbEbPZ/U=",
+			"bytes": 674455
+		},
+		{
+			"path": "media/next.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "kfcJCwCaeBd3gHRol6CLCLk=",
+			"bytes": 544380
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xgcGAwB6iAd3h3O34j0PvjI=",
+			"bytes": 263953
+		}
+	]
+}

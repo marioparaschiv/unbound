@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/tester.jpg",
+				"alt": "Text Replace's rule tester rewriting an example message with the saved rules."
+			},
+			{
+				"image": "media/text-rules.jpg",
+				"alt": "Text Replace's Text rule list, expanding abbreviations like idk and brb."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/tester.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwBtdAhnhohTeZ+vZgo=",
+			"bytes": 237259
+		},
+		{
+			"path": "media/text-rules.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwBthid3cHNsl3y/NQo=",
+			"bytes": 229669
+		}
+	]
+}

@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/default.jpg",
+				"alt": "Show Roles In Chat's role tags beside names in the Unbound server's chat."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/default.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "BAgGAwBvl3iFhGd3j2z2qXk=",
+			"bytes": 408336
+		}
+	]
+}

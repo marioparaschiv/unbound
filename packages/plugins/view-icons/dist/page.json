@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/profile-rows.jpg",
+				"alt": "View Icons' View Avatar and View Banner items in a user profile's overflow menu."
+			},
+			{
+				"image": "media/avatar.jpg",
+				"alt": "View Icons opening a user's avatar at full size."
+			},
+			{
+				"image": "media/server-rows.jpg",
+				"alt": "View Icons' View Server Icon row in the Unbound server's long-press sheet."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/profile-rows.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wgcCAwBSXyaao3h4eYtv9bc=",
+			"bytes": 183230
+		},
+		{
+			"path": "media/avatar.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "yvcNCwKPdwhziIi3IGYLYoc=",
+			"bytes": 263725
+		},
+		{
+			"path": "media/server-rows.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wvcBAwA8nTa2UHea8VB/cGk=",
+			"bytes": 177339
+		}
+	]
+}

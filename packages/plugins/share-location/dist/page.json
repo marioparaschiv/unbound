@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/button.jpg",
+				"alt": "Share Location's button in the chat input, which adds a map link to where you are."
+			},
+			{
+				"image": "media/link.jpg",
+				"alt": "A Google Maps link to your location, added to a message by Share Location."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/button.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwCPd3WFk1XIh2+Q9kg=",
+			"bytes": 322069
+		},
+		{
+			"path": "media/link.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwCPeZd1hmVDto+I+pg=",
+			"bytes": 359787
+		}
+	]
+}

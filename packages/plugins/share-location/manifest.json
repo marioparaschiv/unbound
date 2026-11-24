@@ -14,5 +14,23 @@
 	},
 	"icon": "GlobeEarthIcon",
 	"minNativeBridgeApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.objc.classDefinition",
+				"native.objc.classes",
+				"native.objc.invoke",
+				"native.objc.invokeAsync"
+			]
+		},
+		"android": {}
+	},
+	"bytecode": {
+		"98": "0d119bf87f5cedb5c37da85eb19e16fe4579b75c84e3a066d27fa410301aec01e90bf8fbb8f78548670c45dc5c2ca60253cd0e0ef43592cf97e7c66974f0b071"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "BYmjQzwFpnv91xgM2/DbK3emQyW8oUDLpPB5HSxpAuzFp+q/0OXD70ByiMr7NhsUmiIwWYTSiM8gwiqwwYugDg=="
+	}
 }

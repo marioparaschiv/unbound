@@ -17,5 +17,31 @@
 		"min": "1.0.0"
 	},
 	"icon": "HeadphonesIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.objc.classes",
+				"native.objc.invoke"
+			]
+		},
+		"android": {
+			"capabilities": [
+				"native.java.batch",
+				"native.java.classes",
+				"native.java.construct",
+				"native.java.fields",
+				"native.java.hooks",
+				"native.java.invoke",
+				"native.java.invokeAsync"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "4823f9ff346264ce2497d88bf24588553bccd9a8939a93a9a71cdbdc765d4776c267cf66b21bd27ec822fee98b1f99bd89dd4ab15130c4af497237ce8e30c16a"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "E2P/1onJrcBTIWs8ZJ6zB3sfrX9Pu6qP6QWR4qAY5qUByKX7lYP6r+a9s6uaHdueCUqQSOrc4qzOVDHN4qQJDQ=="
+	}
 }

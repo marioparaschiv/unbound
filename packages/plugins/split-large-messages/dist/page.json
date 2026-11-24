@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/parts.jpg",
+				"alt": "Split Large Messages sending a draft over the length limit as several messages in order, with the code block reopened in each part."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/parts.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwA/pXqpRCiKtkyfR/k=",
+			"bytes": 383510
+		}
+	]
+}

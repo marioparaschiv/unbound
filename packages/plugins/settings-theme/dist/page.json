@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/settings.jpg",
+				"alt": "Settings Theme showing the app theme behind User Settings."
+			},
+			{
+				"image": "media/less-dim.jpg",
+				"alt": "Settings Theme with the theme dimmed less, so more of it shows through."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "EvcFAwCZf8mXjI3NeXOfCNc=",
+			"bytes": 204955
+		},
+		{
+			"path": "media/less-dim.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "XOYFCwCYf5mYiYqaiXSfOPc=",
+			"bytes": 200214
+		}
+	]
+}

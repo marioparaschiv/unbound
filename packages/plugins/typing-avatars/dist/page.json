@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/dm.jpg",
+				"alt": "Typing Avatars showing a friend's avatar beside the typing indicator in a direct message."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/dm.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwB/aHZ2hGbIwoqA9zk=",
+			"bytes": 338667
+		}
+	]
+}

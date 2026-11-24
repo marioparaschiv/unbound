@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/toggle.jpg",
+				"alt": "Silent Message Toggle's bell button in the chat input, turned on so the next message skips notifications."
+			},
+			{
+				"image": "media/sent.jpg",
+				"alt": "A message sent silently with Silent Message Toggle, marked with Discord's silent icon."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/toggle.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwBviYZ1lFa5h1qg5gc=",
+			"bytes": 343105
+		},
+		{
+			"path": "media/sent.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCPeHd2hWWllJ+W95o=",
+			"bytes": 312753
+		}
+	]
+}

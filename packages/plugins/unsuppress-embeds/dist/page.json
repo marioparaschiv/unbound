@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/unsuppress.jpg",
+				"alt": "Unsuppress Embeds' row in the long-press menu of a message whose link embed was removed."
+			},
+			{
+				"image": "media/suppress.jpg",
+				"alt": "Unsuppress Embeds' Suppress Embeds row on a message that shows a link embed."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/unsuppress.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwB8cgiGdXVnmWrPB5Q=",
+			"bytes": 191062
+		},
+		{
+			"path": "media/suppress.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwB7cgiGdXVniWnPB6Q=",
+			"bytes": 191229
+		}
+	]
+}

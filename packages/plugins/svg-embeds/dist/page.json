@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/svg.jpg",
+				"alt": "Image Embeds showing SVG attachments as pictures in chat instead of files."
+			},
+			{
+				"image": "media/avif.jpg",
+				"alt": "Image Embeds showing an AVIF photo inline in chat."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/svg.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "UhgOCwQkgDipipCfBXtkYGg=",
+			"bytes": 404565
+		},
+		{
+			"path": "media/avif.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "C/gJCwALdAnGjXlmF4YgUfs=",
+			"bytes": 400061
+		}
+	]
+}

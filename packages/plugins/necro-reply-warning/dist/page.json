@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/warning.jpg",
+				"alt": "Necro Reply Warning asks before replying to a message that is over a year old."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/warning.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "w/cFCwBodwiXeH43mHmPmfg=",
+			"bytes": 162929
+		}
+	]
+}

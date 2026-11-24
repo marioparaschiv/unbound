@@ -1,0 +1,56 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/backticks.jpg",
+				"alt": "Send Timestamps turning a backticked time into a timestamp that shows in each reader's time zone."
+			},
+			{
+				"image": "media/picker.jpg",
+				"alt": "Send Timestamps' clock button in the chat input opening a date and time picker."
+			},
+			{
+				"image": "media/styles.jpg",
+				"alt": "Send Timestamps listing every timestamp style as it will read, to insert or copy."
+			},
+			{
+				"image": "media/command.jpg",
+				"alt": "Send Timestamps' /timestamp command in the slash command list."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/backticks.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCPeJZ1lVUkeG+396k=",
+			"bytes": 340763
+		},
+		{
+			"path": "media/picker.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wgcCAwBpgLl3eIR6h4/lsz8=",
+			"bytes": 208873
+		},
+		{
+			"path": "media/styles.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcGAwB5hwh3d4aWiHmPdgk=",
+			"bytes": 236294
+		},
+		{
+			"path": "media/command.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCPh6d1lVYFeG/Z+Oc=",
+			"bytes": 324903
+		}
+	]
+}

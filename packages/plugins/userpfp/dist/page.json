@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/chat.jpg",
+				"alt": "UserPFP showing the community avatars people set on UserPFP next to their messages."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCveJZ2l2hng4/MvPU=",
+			"bytes": 292897
+		}
+	]
+}

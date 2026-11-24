@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/player.jpg",
+				"alt": "Voice Message Tools' speed and download controls in the voice message player."
+			},
+			{
+				"image": "media/faster.jpg",
+				"alt": "Voice Message Tools playing voice messages at 1.5× speed."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Voice Message Tools' settings: playback speed and sending or showing audio files as voice messages."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/player.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCPeJd2h2dXgp+c5vs=",
+			"bytes": 304099
+		},
+		{
+			"path": "media/faster.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCPeJd2iGdXgp+c5vs=",
+			"bytes": 306097
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcGAwB4jQd4g3dmTqT/VQk=",
+			"bytes": 266412
+		}
+	]
+}

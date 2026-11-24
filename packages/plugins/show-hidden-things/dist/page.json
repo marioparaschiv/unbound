@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/timeout-icon.jpg",
+				"alt": "Show Hidden Things' timeout icon beside a timed-out member's name in the Unbound server's chat."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/timeout-icon.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCfhZd1hVd3b03zqXk=",
+			"bytes": 355674
+		}
+	]
+}

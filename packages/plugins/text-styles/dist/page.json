@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/styles.jpg",
+				"alt": "Text Styles' mock, upside down, small caps and zalgo output sent in a direct message."
+			},
+			{
+				"image": "media/command.jpg",
+				"alt": "Text Styles' /mock command in the slash command list."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/styles.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCfeZd2mGhWlI99+Pg=",
+			"bytes": 307860
+		},
+		{
+			"path": "media/command.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwB/h4Z0k2SViG/E+Jc=",
+			"bytes": 307186
+		}
+	]
+}

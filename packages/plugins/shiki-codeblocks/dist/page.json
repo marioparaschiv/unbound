@@ -1,0 +1,56 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/dark-plus.jpg",
+				"alt": "Shiki Codeblocks' syntax-coloured code cards with line numbers and language headers, in the default Dark Plus theme."
+			},
+			{
+				"image": "media/catppuccin.jpg",
+				"alt": "Shiki Codeblocks with the Catppuccin Mocha theme and coloured language icons."
+			},
+			{
+				"image": "media/github-light.jpg",
+				"alt": "Shiki Codeblocks with the GitHub Light theme."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Shiki Codeblocks' settings: theme, custom theme URL, language icons, card opacity and long lines."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/dark-plus.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xfcBAwBcoyqYeToKsDSVbPc=",
+			"bytes": 315991
+		},
+		{
+			"path": "media/catppuccin.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcGCwBboymYeUoKyWxPCHY=",
+			"bytes": 323696
+		},
+		{
+			"path": "media/github-light.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "1AcSAwBGkgmZenoLwBOEABQ=",
+			"bytes": 332608
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xgcCAwBbcwd4c2Cpp4yPA1g=",
+			"bytes": 253840
+		}
+	]
+}

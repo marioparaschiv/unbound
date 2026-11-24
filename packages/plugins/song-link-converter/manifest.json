@@ -13,5 +13,12 @@
 		"min": "1.0.0"
 	},
 	"icon": "MusicIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "09346b5b2f81acba7c087cb1ae18ff3fedbd98897a2f9cb54659e6a88424cb50016fd8f491448dfc7c3af1b3b8c9b5cd2f8c94b7f188ed9da26b404ffae4bc27"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "JanpwRT44i7xLHI78nG6Q7j1SsDC/aUeQdacFH2FRUCBjLzoh/J1vzmSiHU4o/hmMNcUfIBSzSbKYy67I5ieCw=="
+	}
 }

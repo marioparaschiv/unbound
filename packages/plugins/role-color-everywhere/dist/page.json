@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/mentions.jpg",
+				"alt": "Role Color Everywhere colouring @mentions with the mentioned member's role colour in the Unbound server's chat."
+			},
+			{
+				"image": "media/message-color.jpg",
+				"alt": "Role Color Everywhere tinting each message's text with its author's role colour."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Role Color Everywhere's settings, with a switch for each place names and mentions get coloured."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/mentions.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwCfhZZ1hldobz30iWc=",
+			"bytes": 379443
+		},
+		{
+			"path": "media/message-color.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "AwgCAwCPlpd1dGh2f2z1mJk=",
+			"bytes": 410369
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xgcGCwCWiQdoaHZ2Pnj/U4U=",
+			"bytes": 274386
+		}
+	]
+}

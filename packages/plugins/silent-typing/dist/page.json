@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/toggle.jpg",
+				"alt": "Silent Typing's eye button in the chat input, crossed out so nobody sees that you are typing."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/toggle.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwBvh4Z0kmbYl2ug9yg=",
+			"bytes": 336838
+		}
+	]
+}

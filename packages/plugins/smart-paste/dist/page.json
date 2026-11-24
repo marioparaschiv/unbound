@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/formats.jpg",
+				"alt": "Smart Paste offering copied text as plain text, a code block, a quote or a text file."
+			},
+			{
+				"image": "media/code-block.jpg",
+				"alt": "Smart Paste putting copied text into the chat input as a fenced code block."
+			},
+			{
+				"image": "media/link.jpg",
+				"alt": "Smart Paste offering a copied link without a preview."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/formats.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wgcGAwB5cLiId3V6h3+kBrs=",
+			"bytes": 182484
+		},
+		{
+			"path": "media/code-block.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCCwCPkch1lmU8d2+Ztvc=",
+			"bytes": 292766
+		},
+		{
+			"path": "media/link.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wgcCAwB5cNh4doZrl3+yBYs=",
+			"bytes": 200995
+		}
+	]
+}

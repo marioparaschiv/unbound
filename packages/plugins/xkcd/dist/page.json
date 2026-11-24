@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/comic.jpg",
+				"alt": "Xkcd Browser's sheet showing comic 927 with its title, date, alt text and navigation buttons."
+			},
+			{
+				"image": "media/command.jpg",
+				"alt": "Xkcd Browser's /xkcd command, which opens a comic by number, the latest, a random one or a title search."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/comic.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "zwcWAwB4dgiIeH1Xh3+EBrg=",
+			"bytes": 307302
+		},
+		{
+			"path": "media/command.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwCPh4Z0k2WViG/E+Jc=",
+			"bytes": 302580
+		}
+	]
+}

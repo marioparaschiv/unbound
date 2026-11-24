@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/code-diff.jpg",
+				"alt": "Edit Diff Preview showing removed code struck through in red and added code in green before an edit is saved."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Edit Diff Preview's settings: the length that triggers a preview and always previewing code."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/code-diff.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xPcFCwBYhQiXfHbmqH6Pmfc=",
+			"bytes": 198297
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwB5n1docHKGTZHf9gg=",
+			"bytes": 163047
+		}
+	]
+}
