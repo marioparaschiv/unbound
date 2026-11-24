@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-24
+
+### Changed
+
+- Badges use Discord's own badge styles, so they match your theme. Type badges are now grey.
+
 ## [1.1.1] - 2026-11-17
 
 ### Changed

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-24
+
+### Changed
+
+- The command form uses standard settings rows: name and description fields, a multiline Response, an Attach media row and a red Delete row.
+
 ## [1.1.0] - 2026-11-13
 
 ### Changed

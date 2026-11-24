@@ -4,5 +4,6 @@
 	"OUTPUT_TITLE": "{language} · išėjimo kodas {code}",
 	"OUTPUT_BODY": "{output}",
 	"NO_OUTPUT": "(nėra išvesties)",
-	"RUN_FAILED": "Nepavyko įvykdyti kodo"
+	"RUN_FAILED": "Nepavyko įvykdyti kodo",
+	"CLOSE": "Uždaryti"
 }

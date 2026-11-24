@@ -2,11 +2,14 @@ import { openSheet } from '@unbound-plugins/shared/action-sheets/open-sheet';
 import { ActivityIndicator, ScrollView, View } from 'react-native';
 import { Discord } from '@unbound-app/api/metro/components';
 import { messages } from '@unbound-app/i18n';
+import { ui } from '@unbound-app/api';
 import { useEffect, useState } from 'react';
 
 import type { FontAttachment } from '~/lib/font-file';
 import type { FontHost } from '@unbound-plugins/shared/native/fonts/font-host';
 import { loadFont, type LoadedFont } from '~/lib/load-font';
+
+import useStyles from '~/components/font-sheet.style';
 
 const SIZES = [16, 28, 44];
 
@@ -28,6 +31,7 @@ function problemText(problem: Exclude<LoadedFont, { family: string }>['problem']
 }
 
 function FontPreview({ font, sample, host, folder }: PreviewProps) {
+	const styles = useStyles();
 	const [loaded, setLoaded] = useState<LoadedFont>();
 
 	useEffect(() => {
@@ -41,7 +45,7 @@ function FontPreview({ font, sample, host, folder }: PreviewProps) {
 	}, [font.url]);
 
 	return (
-		<View style={{ gap: 8 }}>
+		<View style={styles.preview}>
 			<Discord.Text variant='text-sm/semibold' color='text-muted'>
 				{font.filename}
 			</Discord.Text>
@@ -69,18 +73,21 @@ function FontPreview({ font, sample, host, folder }: PreviewProps) {
 }
 
 function FontSheet({ fonts, host, folder }: FontSheetProps) {
+	const styles = useStyles();
 	const [sample, setSample] = useState<string>(messages.SAMPLE);
 
 	return (
 		<Discord.ActionSheet>
-			<ScrollView contentContainerStyle={{ gap: 16, padding: 16 }}>
-				<Discord.Text variant='heading-lg/semibold'>{messages.TITLE}</Discord.Text>
-				<Discord.TextInput
-					description={messages.SAMPLE_HELP}
-					autoCorrect={false}
-					value={sample}
-					onChange={setSample}
-				/>
+			<Discord.BottomSheetTitleHeader title={messages.TITLE} />
+			<ScrollView contentContainerStyle={styles.body}>
+				<ui.Section>
+					<ui.InputRow
+						label={messages.SAMPLE_LABEL}
+						subLabel={messages.SAMPLE_HELP}
+						value={sample}
+						onChange={setSample}
+					/>
+				</ui.Section>
 				{fonts.map((font) => (
 					<FontPreview
 						key={font.url}

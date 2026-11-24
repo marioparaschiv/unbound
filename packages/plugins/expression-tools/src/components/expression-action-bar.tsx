@@ -1,5 +1,6 @@
 import { messages } from '@unbound-app/i18n';
-import { Discord } from '@unbound-app/api/metro/components';
+import { getActionSheetRow } from '@unbound-plugins/shared/action-sheets/action-sheet-row';
+import { assets } from '@unbound-app/api';
 import { View } from 'react-native';
 import { useState } from 'react';
 
@@ -15,25 +16,24 @@ type ExpressionActionBarProps = {
 	sheetKey: string;
 };
 
-type BarButtonProps = {
+type BarRowProps = {
 	label: string;
+	icon: string;
 	onPress: () => void;
 	disabled?: boolean;
 };
 
-function BarButton({ label, onPress, disabled = false }: BarButtonProps) {
-	const styles = useStyles();
+function BarRow({ label, icon, onPress, disabled = false }: BarRowProps) {
+	const ActionSheetRow = getActionSheetRow();
+	const source = assets.getIdByName(icon);
 
 	return (
-		<View style={styles.button}>
-			<Discord.Button
-				text={label}
-				variant='secondary'
-				size='sm'
-				disabled={disabled}
-				onPress={onPress}
-			/>
-		</View>
+		<ActionSheetRow
+			label={label}
+			icon={source ? <ActionSheetRow.Icon source={source} /> : undefined}
+			disabled={disabled}
+			onPress={onPress}
+		/>
 	);
 }
 
@@ -44,6 +44,7 @@ function ExpressionActionBar({ expression, sheetKey }: ExpressionActionBarProps)
 	const [updatingFavorite, setUpdatingFavorite] = useState(false);
 
 	const styles = useStyles();
+	const ActionSheetRow = getActionSheetRow();
 
 	function close() {
 		closeExpressionSheet(expression, sheetKey);
@@ -51,44 +52,50 @@ function ExpressionActionBar({ expression, sheetKey }: ExpressionActionBarProps)
 
 	return (
 		<View style={styles.bar}>
-			<BarButton
-				label={messages.COPY_URL}
-				onPress={() => {
-					close();
-					copyText(getExpressionLink(expression), messages.URL_COPIED);
-				}}
-			/>
-			{expression.kind === 'emoji' ? (
-				<BarButton
-					label={messages.COPY_MARKUP}
+			<ActionSheetRow.Group>
+				<BarRow
+					label={messages.COPY_URL}
+					icon='LinkIcon'
 					onPress={() => {
 						close();
-						copyText(getEmojiMarkup(expression), messages.MARKUP_COPIED);
+						copyText(getExpressionLink(expression), messages.URL_COPIED);
 					}}
 				/>
-			) : (
-				<BarButton
-					label={favorite ? messages.UNFAVORITE : messages.FAVORITE}
-					disabled={updatingFavorite}
-					onPress={() => {
-						if (updatingFavorite) return;
+				{expression.kind === 'emoji' ? (
+					<BarRow
+						label={messages.COPY_MARKUP}
+						icon='CopyIcon'
+						onPress={() => {
+							close();
+							copyText(getEmojiMarkup(expression), messages.MARKUP_COPIED);
+						}}
+					/>
+				) : (
+					<BarRow
+						label={favorite ? messages.UNFAVORITE : messages.FAVORITE}
+						icon={favorite ? 'StarIcon' : 'StarOutlineIcon'}
+						disabled={updatingFavorite}
+						onPress={() => {
+							if (updatingFavorite) return;
 
+							close();
+							setUpdatingFavorite(true);
+							void setFavoriteSticker(expression, !favorite)
+								.then(() => setFavorite((value) => !value))
+								.catch(notifyError)
+								.finally(() => setUpdatingFavorite(false));
+						}}
+					/>
+				)}
+				<BarRow
+					label={messages.CLONE}
+					icon='ServerIcon'
+					onPress={() => {
 						close();
-						setUpdatingFavorite(true);
-						void setFavoriteSticker(expression, !favorite)
-							.then(() => setFavorite((value) => !value))
-							.catch(notifyError)
-							.finally(() => setUpdatingFavorite(false));
+						openCloneSheet(expression);
 					}}
 				/>
-			)}
-			<BarButton
-				label={messages.CLONE}
-				onPress={() => {
-					close();
-					openCloneSheet(expression);
-				}}
-			/>
+			</ActionSheetRow.Group>
 		</View>
 	);
 }

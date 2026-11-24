@@ -4,5 +4,6 @@
 	"OUTPUT_TITLE": "{language} · 結束碼 {code}",
 	"OUTPUT_BODY": "{output}",
 	"NO_OUTPUT": "（無輸出）",
-	"RUN_FAILED": "無法執行程式碼"
+	"RUN_FAILED": "無法執行程式碼",
+	"CLOSE": "關閉"
 }

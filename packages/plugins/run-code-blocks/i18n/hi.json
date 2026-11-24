@@ -4,5 +4,6 @@
 	"OUTPUT_TITLE": "{language} · एग्ज़िट {code}",
 	"OUTPUT_BODY": "{output}",
 	"NO_OUTPUT": "(कोई आउटपुट नहीं)",
-	"RUN_FAILED": "कोड नहीं चल सका"
+	"RUN_FAILED": "कोड नहीं चल सका",
+	"CLOSE": "बंद करें"
 }

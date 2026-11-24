@@ -1,10 +1,11 @@
-import { dialogs, flux, metro, patcher } from '@unbound-app/api';
+import { openSheet } from '@unbound-plugins/shared/action-sheets/open-sheet';
 import { Discord } from '@unbound-app/api/metro/components';
-import { format, messages } from '@unbound-app/i18n';
+import { flux, metro, patcher } from '@unbound-app/api';
 import { cloneElement, isValidElement, type ReactElement } from 'react';
+import { format } from '@unbound-app/i18n';
 import { Pressable, View } from 'react-native';
 
-import GroupList from '~/components/group-list';
+import GroupsSheet from '~/components/groups-sheet';
 import { mutualGroups, type GroupChannel, type MutualGroup } from '~/lib/groups';
 
 type MutualsProps = {
@@ -20,22 +21,10 @@ type UserStore = {
 	getCurrentUser(): { id: string } | undefined;
 };
 
-function openGroups(groups: MutualGroup[]): void {
-	const Router = metro.findByProps('transitionToChannel');
+const GROUPS_SHEET = 'unbound-mutual-group-dms';
 
-	dialogs.showDialog({
-		title: messages.MUTUAL_GROUP_DMS_TITLE,
-		content: ({ dismiss }) => (
-			<GroupList
-				groups={groups}
-				onOpen={(channelId) => {
-					dismiss();
-					Router?.transitionToChannel?.(channelId);
-				}}
-			/>
-		),
-		cancel: true,
-	});
+function openGroups(groups: MutualGroup[]): void {
+	openSheet(GROUPS_SHEET, GroupsSheet, { groups });
 }
 
 type SectionElement = ReactElement<{ style?: unknown; accessibilityRole?: string }>;

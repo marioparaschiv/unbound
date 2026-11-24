@@ -43,6 +43,8 @@ declare module '@unbound-app/i18n' {
 		readonly FAILED: string;
 		/** GIFs are limited to {seconds} seconds. */
 		readonly TOO_LONG: string;
+		/** Enter a number of seconds, such as 1.5. */
+		readonly NOT_SECONDS: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

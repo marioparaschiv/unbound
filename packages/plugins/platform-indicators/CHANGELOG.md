@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-24
+
+### Changed
+
+- The name suffix names the platforms in words, such as "Desktop, Mobile", instead of symbols.
+
 ## [1.0.3] - 2026-11-19
 
 ### Fixed

@@ -9,6 +9,8 @@ declare module '@unbound-app/i18n' {
 		readonly TITLE: string;
 		/** The quick brown fox jumps over the lazy dog 0123456789 */
 		readonly SAMPLE: string;
+		/** Sample text */
+		readonly SAMPLE_LABEL: string;
 		/** Type your own sample text. */
 		readonly SAMPLE_HELP: string;
 		/** WOFF2 fonts can't be previewed. TTF, OTF and WOFF work. */

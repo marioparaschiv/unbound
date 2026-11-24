@@ -36,14 +36,6 @@ export const MESSAGE_LOCALES: readonly string[] = [
 
 export type Platform = 'desktop' | 'mobile' | 'web' | 'embedded' | 'vr';
 
-export const PLATFORM_GLYPHS: Record<Platform, string> = {
-	desktop: '🖥️',
-	mobile: '📱',
-	web: '🌐',
-	embedded: '🎮',
-	vr: '🥽',
-};
-
 export type PlatformIconShape = {
 	path: string;
 	viewBox: string;

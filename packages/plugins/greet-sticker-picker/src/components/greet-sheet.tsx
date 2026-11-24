@@ -21,8 +21,8 @@ function GreetSheet({ stickers, onPick }: GreetSheetProps) {
 
 	return (
 		<Discord.ActionSheet>
+			<Discord.BottomSheetTitleHeader title={messages.TITLE} />
 			<View style={styles.content}>
-				<Discord.Text variant='heading-md/semibold'>{messages.TITLE}</Discord.Text>
 				<View style={styles.grid}>
 					{stickers.map((sticker) => (
 						<Pressable

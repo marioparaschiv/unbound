@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.0] - 2026-11-24
+
+### Changed
+
+- The settings list the rules first, then the tester and sharing. The tester stays open, Add rule rows have a plus icon, and the repeated title is gone.
+
+### Removed
+
+- The Paste JSON field and Import pasted button. Copy the JSON and use Import clipboard instead.
+
 ## [1.0.5] - 2026-11-11
 
 ### Changed

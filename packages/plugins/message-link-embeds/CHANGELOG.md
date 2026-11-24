@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.11] - 2026-11-24
+
+### Fixed
+
+- Linked messages with media and buttons show in full instead of being cut off.
+
 ## [1.1.10] - 2026-11-21
 
 ### Fixed

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-24
+
+### Changed
+
+- The sheet uses Discord's sheet header and settings rows: a Start field, a Length stepper, Size and Crop pickers, a Caption field and one Make GIF button.
+
 ## [1.0.2] - 2026-11-16
 
 ### Changed

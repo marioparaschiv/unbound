@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-24
+
+### Changed
+
+- The paste formats open in an action sheet with an icon per format, like Discord's own menus, instead of a dialog of buttons.
+
 ## [1.0.4] - 2026-11-18
 
 ### Changed

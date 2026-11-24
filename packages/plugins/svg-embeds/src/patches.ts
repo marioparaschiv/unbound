@@ -107,7 +107,7 @@ async function draw(native: NativeBridge, url: string, vector: boolean): Promise
 
 		if (!source) {
 			setEntry(url, { state: 'failed' });
-			waiting.delete(url);
+			redrawWaiting(url);
 
 			return;
 		}
@@ -118,13 +118,11 @@ async function draw(native: NativeBridge, url: string, vector: boolean): Promise
 			: await decodeImage(native, source, png);
 
 		setEntry(url, raster ? { state: 'ready', png, ...raster } : { state: 'failed' });
-
-		if (raster) redrawWaiting(url);
-		else waiting.delete(url);
+		redrawWaiting(url);
 	} catch (error) {
 		logger.error(`Failed to draw the image ${url}:`, error);
 		setEntry(url, { state: 'failed' });
-		waiting.delete(url);
+		redrawWaiting(url);
 	}
 }
 
@@ -134,8 +132,15 @@ function isDrawable(attachment: Attachment): boolean {
 	return isSvg(attachment) || Boolean(format && canDecode(format, platformName()));
 }
 
+// Discord draws an attachment with a size as an image it cannot decode, an empty box; without one it is a file card.
+function asFile({ width: _width, height: _height, ...attachment }: Attachment): Attachment {
+	return { ...attachment, content_type: 'application/octet-stream' };
+}
+
 function asImage(attachment: Attachment): Attachment {
 	const entry = attachment.url ? entryFor(attachment.url) : undefined;
+
+	if (entry?.state === 'failed') return asFile(attachment);
 
 	if (entry?.state !== 'ready') return attachment;
 

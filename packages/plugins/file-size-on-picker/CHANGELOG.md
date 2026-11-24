@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.10] - 2026-11-24
+
+### Fixed
+
+- The size label uses Discord's text style, so it stays readable on every theme.
+
 ## [1.0.9] - 2026-11-11
 
 ### Changed

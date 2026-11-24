@@ -85,14 +85,10 @@ export default function DefinitionSheet({ word }: DefinitionSheetProps) {
 
 	return (
 		<Discord.ActionSheet>
-			<View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 2 }}>
-				<Discord.Text variant='heading-xl/bold'>{entry?.word ?? word}</Discord.Text>
-				{entry?.phonetic ? (
-					<Discord.Text variant='text-md/normal' color='text-muted'>
-						{entry.phonetic}
-					</Discord.Text>
-				) : null}
-			</View>
+			<Discord.BottomSheetTitleHeader
+				title={entry?.word ?? word}
+				subtitle={entry?.phonetic || undefined}
+			/>
 			{lookup.state === 'loading' ? (
 				<Discord.Text variant='text-md/normal' color='text-muted' style={{ padding: 16 }}>
 					{messages.LOADING}

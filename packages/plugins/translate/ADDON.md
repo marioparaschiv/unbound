@@ -14,8 +14,8 @@ banner: media/banner.png
 
 - :server: **Translation Service** picks where translations go. **Automatic** (the default) uses Unbound's service once you connect Discord, and until then Google, falling back to MyMemory if Google fails.
 - :user-key: **Connect Discord account** signs you in to Unbound's service. Only Automatic and Unbound show it.
-- :magnifier: **Source Language** is the language you translate from. `auto` by default, which detects it.
-- :language: **Target Language** is the language you translate into. `en` (English) by default.
+- :magnifier: **Source Language** is the language you translate from. **Auto detect** by default.
+- :language: **Target Language** is the language you translate into. **English** by default.
 - :eye: **Show Translations** picks where translations go: copied and in a toast (the default), or in the message, under its text until you pick **Show Original**.
 
 Both language rows search a list of 35 languages.

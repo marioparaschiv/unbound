@@ -7,6 +7,7 @@ import { useState } from 'react';
 
 import { spell, type Spelling } from '~/lib/letters';
 import { addReactions } from '~/lib/react';
+import ReactionPreview from '~/components/reaction-preview';
 
 type Target = { channelId: string; messageId: string; taken: string[] };
 
@@ -30,7 +31,6 @@ function problem(spelling: Spelling): string | undefined {
 function SpellSheet({ channelId, messageId, taken, onClose }: SpellSheetProps) {
 	const [word, setWord] = useState('');
 	const spelling = spell(word, new Set(taken));
-	const preview = spelling.ok ? spelling.emoji.join(' ') : problem(spelling);
 
 	async function react() {
 		if (!spelling.ok) return;
@@ -54,9 +54,13 @@ function SpellSheet({ channelId, messageId, taken, onClose }: SpellSheetProps) {
 					value={word}
 					onChange={setWord}
 				/>
-				{word.trim() ? (
-					<Discord.Text variant='text-md/medium'>{preview}</Discord.Text>
-				) : null}
+				{!word.trim() ? null : spelling.ok ? (
+					<ReactionPreview emoji={spelling.emoji} />
+				) : (
+					<Discord.Text variant='text-sm/medium' color='text-feedback-critical'>
+						{problem(spelling)}
+					</Discord.Text>
+				)}
 				<Discord.Button
 					text={messages.REACT}
 					disabled={!spelling.ok}

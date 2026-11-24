@@ -38,19 +38,10 @@ export default function FollowUpsSheet({ onClose }: FollowUpsSheetProps) {
 
 	return (
 		<Discord.ActionSheet>
-			<Discord.Text
-				variant='heading-lg/semibold'
-				style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 }}
-			>
-				{messages.TITLE}
-			</Discord.Text>
-			<Discord.Text
-				variant='text-sm/medium'
-				color='text-muted'
-				style={{ paddingHorizontal: 16, paddingBottom: 12 }}
-			>
-				{list.length ? messages.HINT : messages.EMPTY}
-			</Discord.Text>
+			<Discord.BottomSheetTitleHeader
+				title={messages.TITLE}
+				subtitle={list.length ? messages.HINT : messages.EMPTY}
+			/>
 			{list.length ? (
 				<ActionSheetRow.Group>
 					{list.map((entry) => (

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.0] - 2026-11-24
+
+### Changed
+
+- The language rows in the settings show the language's name, such as "English", instead of its code.
+
 ## [1.3.0] - 2026-11-18
 
 ### Added

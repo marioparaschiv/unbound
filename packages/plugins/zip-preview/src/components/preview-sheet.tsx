@@ -1,12 +1,13 @@
+import { getActionSheetRow } from '@unbound-plugins/shared/action-sheets/action-sheet-row';
 import { openSheet } from '@unbound-plugins/shared/action-sheets/open-sheet';
-import { Discord } from '@unbound-app/api/metro/components';
+import { BottomSheets, Discord, GorhomSheet } from '@unbound-app/api/metro/components';
 import { format, messages } from '@unbound-app/i18n';
-import { ScrollView, View } from 'react-native';
+import { assets } from '@unbound-app/api';
 import { useEffect, useState } from 'react';
 
 import { formatSize, listZip, type ZipEntry } from '~/lib/zip';
-
-const MAX_HEIGHT = 520;
+import { entryIcon, sharedRoot } from '~/lib/entries';
+import useStyles from '~/components/preview-sheet.style';
 
 type Target = { name: string; url: string };
 
@@ -30,38 +31,32 @@ async function load(url: string): Promise<Loaded> {
 }
 
 function EntryList({ entries }: { entries: ZipEntry[] }) {
-	if (!entries.length)
-		return <Discord.Text variant='text-md/normal'>{messages.EMPTY_ZIP}</Discord.Text>;
+	const ActionSheetRow = getActionSheetRow();
+	const root = sharedRoot(entries);
 
 	return (
-		<View style={{ gap: 8 }}>
-			<Discord.Text variant='text-sm/medium' color='text-muted'>
-				{format('FILE_COUNT', { count: entries.length })}
-			</Discord.Text>
-			<ScrollView style={{ maxHeight: MAX_HEIGHT }} nestedScrollEnabled>
-				{entries.map((entry, index) => (
-					<View
+		<ActionSheetRow.Group hasIcons>
+			{entries.map((entry, index) => {
+				const icon = assets.getIdByName(entryIcon(entry.name));
+
+				return (
+					<ActionSheetRow
 						key={`${entry.name}-${index}`}
-						style={{ flexDirection: 'row', gap: 12, paddingVertical: 4 }}
-					>
-						<Discord.Text
-							variant='text-sm/normal'
-							style={{ flex: 1 }}
-							numberOfLines={2}
-						>
-							{entry.name}
-						</Discord.Text>
-						<Discord.Text variant='text-sm/normal' color='text-muted'>
-							{formatSize(entry.size)}
-						</Discord.Text>
-					</View>
-				))}
-			</ScrollView>
-		</View>
+						label={entry.name.slice(root.length)}
+						labelLineClamp={1}
+						icon={icon ? <ActionSheetRow.Icon source={icon} /> : undefined}
+						trailing={<Discord.TableRow.TrailingText text={formatSize(entry.size)} />}
+					/>
+				);
+			})}
+		</ActionSheetRow.Group>
 	);
 }
 
 function PreviewSheet({ name, url }: PreviewSheetProps) {
+	const styles = useStyles();
+	const { ActionSheet, BottomSheetTitleHeader } = BottomSheets;
+	const { BottomSheetScrollView: ScrollView } = GorhomSheet;
 	const [loaded, setLoaded] = useState<Loaded>({ state: 'loading' });
 
 	useEffect(() => {
@@ -81,20 +76,30 @@ function PreviewSheet({ name, url }: PreviewSheetProps) {
 	}, [url, name]);
 
 	return (
-		<Discord.ActionSheet>
-			<View style={{ gap: 12, padding: 16 }}>
-				<Discord.Text variant='heading-lg/semibold' numberOfLines={2}>
-					{name}
-				</Discord.Text>
-				{loaded.state === 'loading' ? (
-					<Discord.Text variant='text-md/normal'>{messages.LOADING}</Discord.Text>
-				) : null}
-				{loaded.state === 'failed' ? (
-					<Discord.Text variant='text-md/normal'>{loaded.message}</Discord.Text>
-				) : null}
-				{loaded.state === 'listed' ? <EntryList entries={loaded.entries} /> : null}
-			</View>
-		</Discord.ActionSheet>
+		<ActionSheet scrollable>
+			<BottomSheetTitleHeader
+				title={name}
+				subtitle={
+					loaded.state === 'listed'
+						? format('FILE_COUNT', { count: loaded.entries.length })
+						: undefined
+				}
+			/>
+			{/* A `scrollable` sheet scrolls only a bottom-sheet scroll view, which hands the drag between list and sheet. */}
+			<ScrollView contentContainerStyle={styles.body}>
+				{loaded.state === 'listed' && loaded.entries.length ? (
+					<EntryList entries={loaded.entries} />
+				) : (
+					<Discord.Text variant='text-md/medium' color='text-muted' style={styles.note}>
+						{loaded.state === 'loading'
+							? messages.LOADING
+							: loaded.state === 'failed'
+								? loaded.message
+								: messages.EMPTY_ZIP}
+					</Discord.Text>
+				)}
+			</ScrollView>
+		</ActionSheet>
 	);
 }
 

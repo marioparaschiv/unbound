@@ -1,5 +1,8 @@
 {
 	"PREFERENCES": "Preferences",
+	"LOGGING": "Logging",
+	"DELETED_MESSAGES": "Deleted Messages",
+	"EDITED_MESSAGES": "Edited Messages",
 	"RED_TEXT": "Red text",
 	"RED_TEXT_SUBTITLE": "Show the text of deleted messages in red.",
 	"DELETED_HIGHLIGHT": "Highlight deleted messages",

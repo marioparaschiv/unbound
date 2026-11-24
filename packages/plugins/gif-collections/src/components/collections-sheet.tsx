@@ -3,11 +3,10 @@ import { openSheet } from '@unbound-plugins/shared/action-sheets/open-sheet';
 import { Discord } from '@unbound-app/api/metro/components';
 import { assets, dialogs, toasts } from '@unbound-app/api';
 import { format, messages } from '@unbound-app/i18n';
-import { View } from 'react-native';
-import { useState } from 'react';
 
 import { createCollection, deleteCollection, holds, toggleGif, type Gif } from '~/lib/collections';
 import { getCollections, saveCollections, useCollections } from '~/lib/store';
+import { openNewCollectionDialog } from '~/components/new-collection-dialog';
 
 type CollectionsSheetProps = { gif: Gif; onClose: () => void };
 
@@ -32,26 +31,23 @@ async function confirmDelete(name: string) {
 
 function CollectionsSheet({ gif, onClose }: CollectionsSheetProps) {
 	const collections = useCollections();
-	const [name, setName] = useState('');
 	const ActionSheetRow = getActionSheetRow();
 	const checkIcon = assets.getIdByName('CheckmarkLargeIcon');
 	const folderIcon = assets.getIdByName('FolderIcon');
+	const plusIcon = assets.getIdByName('FolderPlusIcon');
 
-	function create() {
+	function create(name: string) {
 		saveCollections(createCollection(getCollections(), name, gif));
 		toasts.success('ADDED_TO', { name: name.trim() });
-		setName('');
 		onClose();
 	}
 
 	return (
 		<Discord.ActionSheet>
-			<Discord.Text
-				variant='heading-lg/semibold'
-				style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 }}
-			>
-				{messages.ADD_TO_COLLECTION}
-			</Discord.Text>
+			<Discord.BottomSheetTitleHeader
+				title={messages.ADD_TO_COLLECTION}
+				subtitle={collections.length ? messages.HOLD_TO_DELETE : messages.NO_COLLECTIONS}
+			/>
 			<ActionSheetRow.Group>
 				{collections.map((collection) => (
 					<ActionSheetRow
@@ -68,33 +64,12 @@ function CollectionsSheet({ gif, onClose }: CollectionsSheetProps) {
 						onLongPress={() => void confirmDelete(collection.name)}
 					/>
 				))}
-				{collections.length ? null : (
-					<ActionSheetRow label={messages.NO_COLLECTIONS} onPress={() => undefined} />
-				)}
+				<ActionSheetRow
+					label={messages.NEW_COLLECTION}
+					icon={plusIcon ? <ActionSheetRow.Icon source={plusIcon} /> : undefined}
+					onPress={() => openNewCollectionDialog(create)}
+				/>
 			</ActionSheetRow.Group>
-			<View style={{ flexDirection: 'row', gap: 8, padding: 16, alignItems: 'center' }}>
-				<View style={{ flex: 1 }}>
-					<Discord.TextField
-						size='md'
-						value={name}
-						onChange={setName}
-						isClearable
-						isRound
-						placeholder={messages.NEW_COLLECTION}
-						onSubmitEditing={create}
-					/>
-				</View>
-				<Discord.Button text={messages.CREATE} disabled={!name.trim()} onPress={create} />
-			</View>
-			{collections.length ? (
-				<Discord.Text
-					variant='text-xs/medium'
-					color='text-muted'
-					style={{ paddingHorizontal: 16, paddingBottom: 12 }}
-				>
-					{messages.HOLD_TO_DELETE}
-				</Discord.Text>
-			) : null}
 		</Discord.ActionSheet>
 	);
 }

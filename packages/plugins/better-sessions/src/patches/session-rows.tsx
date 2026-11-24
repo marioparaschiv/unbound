@@ -3,7 +3,6 @@ import { metro, patcher, utils } from '@unbound-app/api';
 import { cloneElement, isValidElement, useReducer, type ReactElement, type ReactNode } from 'react';
 import { View } from 'react-native';
 
-import NewTag from '~/components/new-tag';
 import { openRenameSheet } from '~/components/rename-sheet';
 import { isNew, lastUsed, type Session } from '~/lib/sessions';
 import { rememberSessions, seenSessions, sessionNames } from '~/lib/store';
@@ -35,7 +34,7 @@ function sessionRow(row: ReactElement<RowProps>, session: Session, rerender: () 
 		label: (
 			<View style={styles.label}>
 				{label}
-				{isNewToUser(session) ? <NewTag /> : null}
+				{isNewToUser(session) ? <Discord.Badge type='new' /> : null}
 			</View>
 		),
 		subLabel: (

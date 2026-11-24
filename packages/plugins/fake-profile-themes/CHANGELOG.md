@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1] - 2026-11-24
+
+### Fixed
+
+- The effect picker lists every profile effect, not only the one you already own.
+
 ## [1.1.0] - 2026-11-14
 
 ### Added

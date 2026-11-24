@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3] - 2026-11-24
+
+### Fixed
+
+- The chat input is fully round instead of only slightly rounded.
+
 ## [1.0.2] - 2026-11-17
 
 ### Fixed

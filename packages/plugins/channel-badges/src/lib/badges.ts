@@ -1,14 +1,7 @@
-/** A badge's label key and colour. */
-/** A Discord semantic colour, so the badge follows the theme. */
-export type BadgeColor =
-	| 'BACKGROUND_BRAND'
-	| 'STATUS_POSITIVE'
-	| 'STATUS_WARNING'
-	| 'STATUS_DANGER'
-	| 'INTERACTIVE_MUTED'
-	| 'BACKGROUND_MOD_STRONG';
+import type { BadgeVariant } from '@unbound-app/api/global';
 
-export type Badge = { label: BadgeLabel; color: BadgeColor };
+/** A badge's label key and Discord `Badge` colour; grey when it has none. */
+export type Badge = { label: BadgeLabel; variant?: BadgeVariant };
 
 /** The i18n key of a badge's label. */
 export type BadgeLabel =
@@ -46,22 +39,22 @@ export type BadgeOptions = {
 	oneBadge: boolean;
 };
 
-const NSFW: Badge = { label: 'BADGE_NSFW', color: 'STATUS_DANGER' };
-const LOCKED: Badge = { label: 'BADGE_LOCKED', color: 'INTERACTIVE_MUTED' };
-const PRIVATE: Badge = { label: 'BADGE_PRIVATE', color: 'BACKGROUND_MOD_STRONG' };
-const RULES: Badge = { label: 'BADGE_RULES', color: 'BACKGROUND_BRAND' };
+const NSFW: Badge = { label: 'BADGE_NSFW', variant: 'notification' };
+const LOCKED: Badge = { label: 'BADGE_LOCKED' };
+const PRIVATE: Badge = { label: 'BADGE_PRIVATE', variant: 'secondary' };
+const RULES: Badge = { label: 'BADGE_RULES', variant: 'primary' };
 
 const TYPE_BADGES: Partial<Record<number, Badge>> = {
-	0: { label: 'BADGE_TEXT', color: 'BACKGROUND_BRAND' },
-	2: { label: 'BADGE_VOICE', color: 'STATUS_POSITIVE' },
-	5: { label: 'BADGE_ANNOUNCEMENT', color: 'STATUS_WARNING' },
-	10: { label: 'BADGE_THREAD', color: 'BACKGROUND_BRAND' },
-	11: { label: 'BADGE_THREAD', color: 'BACKGROUND_BRAND' },
-	12: { label: 'BADGE_PRIVATE_THREAD', color: 'BACKGROUND_BRAND' },
-	13: { label: 'BADGE_STAGE', color: 'BACKGROUND_BRAND' },
-	14: { label: 'BADGE_DIRECTORY', color: 'STATUS_WARNING' },
-	15: { label: 'BADGE_FORUM', color: 'BACKGROUND_BRAND' },
-	16: { label: 'BADGE_MEDIA', color: 'BACKGROUND_BRAND' },
+	0: { label: 'BADGE_TEXT', variant: 'secondary' },
+	2: { label: 'BADGE_VOICE', variant: 'secondary' },
+	5: { label: 'BADGE_ANNOUNCEMENT', variant: 'secondary' },
+	10: { label: 'BADGE_THREAD', variant: 'secondary' },
+	11: { label: 'BADGE_THREAD', variant: 'secondary' },
+	12: { label: 'BADGE_PRIVATE_THREAD', variant: 'secondary' },
+	13: { label: 'BADGE_STAGE', variant: 'secondary' },
+	14: { label: 'BADGE_DIRECTORY', variant: 'secondary' },
+	15: { label: 'BADGE_FORUM', variant: 'secondary' },
+	16: { label: 'BADGE_MEDIA', variant: 'secondary' },
 };
 
 /**

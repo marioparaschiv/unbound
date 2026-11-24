@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.2.0] - 2026-11-24
+
+### Changed
+
+- The blocked users sheet lists each user with their avatar and an Unblock button, under Discord's sheet header.
+
 ## [2.1.1] - 2026-11-14
 
 ### Fixed

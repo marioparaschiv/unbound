@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.3] - 2026-11-24
+
+### Fixed
+
+- Hidden keywords is a standard multiline settings row, with its help text under it and nothing clipped.
+
 ## [1.2.2] - 2026-11-22
 
 ### Fixed

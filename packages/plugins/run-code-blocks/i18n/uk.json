@@ -4,5 +4,6 @@
 	"OUTPUT_TITLE": "{language} · код виходу {code}",
 	"OUTPUT_BODY": "{output}",
 	"NO_OUTPUT": "(немає виводу)",
-	"RUN_FAILED": "Не вдалося запустити код"
+	"RUN_FAILED": "Не вдалося запустити код",
+	"CLOSE": "Закрити"
 }

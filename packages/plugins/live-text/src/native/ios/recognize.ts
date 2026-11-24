@@ -1,4 +1,5 @@
 import type { NativeBridge, NativeObjectHandle } from '@unbound-app/api/native';
+import { toBase64 } from '@unbound-plugins/shared/media/gif/base64';
 
 const ACCURATE = 0;
 const result = (index: number) => ({ $nativeBatchResult: index });
@@ -15,30 +16,36 @@ function isHandle(value: unknown): value is NativeObjectHandle {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+// Downloads in JS: NSData's own URL loader blocks the calling thread and is refused by hosts that reject its user agent.
+async function downloadBase64(url: string): Promise<string> {
+	const response = await fetch(url);
+
+	if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+	return toBase64(new Uint8Array(await response.arrayBuffer()));
+}
+
 /**
- * @description Reads the text in an image with Vision's text recognizer, loading the image natively.
+ * @description Reads the text in an image with Vision's text recognizer.
  * @param native The plugin's native bridge.
  * @param url The image's address.
  * @returns The recognized lines, top to bottom.
  */
 export async function recognizeOnIOS({ objc }: NativeBridge, url: string): Promise<string[]> {
+	const base64 = await downloadBase64(url);
+	const data = objc.alloc('NSData');
 	const handler = objc.alloc('VNImageRequestHandler');
 	const request = objc.alloc('VNRecognizeTextRequest');
 	const results = await objc.batch([
-		{ target: classHandle(objc, 'NSURL'), selector: 'URLWithString:', args: [url] },
-		{
-			target: classHandle(objc, 'NSData'),
-			selector: 'dataWithContentsOfURL:',
-			args: [result(0)],
-		},
+		{ target: data, selector: 'initWithBase64EncodedString:options:', args: [base64, 0] },
 		{ target: classHandle(objc, 'NSDictionary'), selector: 'dictionary', args: [] },
-		{ target: handler, selector: 'initWithData:options:', args: [result(1), result(2)] },
+		{ target: handler, selector: 'initWithData:options:', args: [result(0), result(1)] },
 		{ target: request, selector: 'init', args: [] },
-		{ target: result(4), selector: 'setRecognitionLevel:', args: [ACCURATE] },
-		{ target: result(4), selector: 'setUsesLanguageCorrection:', args: [true] },
-		{ target: classHandle(objc, 'NSArray'), selector: 'arrayWithObject:', args: [result(4)] },
-		{ target: result(3), selector: 'performRequests:error:', args: [result(7), null] },
-		{ target: result(4), selector: 'results', args: [] },
+		{ target: result(3), selector: 'setRecognitionLevel:', args: [ACCURATE] },
+		{ target: result(3), selector: 'setUsesLanguageCorrection:', args: [true] },
+		{ target: classHandle(objc, 'NSArray'), selector: 'arrayWithObject:', args: [result(3)] },
+		{ target: result(2), selector: 'performRequests:error:', args: [result(6), null] },
+		{ target: result(3), selector: 'results', args: [] },
 	]);
 	const observations = results.at(-1);
 

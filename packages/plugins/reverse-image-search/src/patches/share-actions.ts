@@ -1,8 +1,11 @@
-import { dialogs, metro, patcher } from '@unbound-app/api';
+import { Discord } from '@unbound-app/api/metro/components';
+import { metro, patcher } from '@unbound-app/api';
 import { format, messages } from '@unbound-app/i18n';
 import { settings } from '@unbound-app/settings';
 
 import { ENGINES, imageUrlOf, searchUrl, type Engine } from '~/lib/engines';
+
+const MENU_KEY = 'unbound-reverse-image-search';
 
 type ShareAction = { IconComponent?: unknown; label: string; action: () => void };
 
@@ -35,14 +38,13 @@ function search(imageUrl: string): void {
 		return;
 	}
 
-	dialogs.showDialog({
-		title: messages.SEARCH_IMAGE,
-		buttons: (Object.keys(ENGINES) as Engine[]).map((engine) => ({
+	Discord.showSimpleActionSheet({
+		key: MENU_KEY,
+		header: { title: messages.SEARCH_IMAGE },
+		options: (Object.keys(ENGINES) as Engine[]).map((engine) => ({
 			label: ENGINE_LABELS[engine](),
-			variant: 'secondary',
 			onPress: () => open(engine, imageUrl),
 		})),
-		cancel: true,
 	});
 }
 

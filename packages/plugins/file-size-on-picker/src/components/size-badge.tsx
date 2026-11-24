@@ -1,5 +1,5 @@
-import { metro } from '@unbound-app/api';
-import { Text, View } from 'react-native';
+import { Discord } from '@unbound-app/api/metro/components';
+import { View } from 'react-native';
 
 import { BADGE_INSET } from '~/lib/constants';
 
@@ -13,6 +13,7 @@ function SizeBadge({ label, left }: SizeBadgeProps) {
 		<View
 			pointerEvents='none'
 			style={{
+				// A scrim over the photo, the same in every theme, as Discord's video-duration pill draws it.
 				backgroundColor: '#1e1f2280',
 				borderRadius: 4,
 				left,
@@ -22,16 +23,9 @@ function SizeBadge({ label, left }: SizeBadgeProps) {
 				top: BADGE_INSET,
 			}}
 		>
-			<Text
-				style={{
-					color: 'white',
-					fontFamily: metro.common.Constants.Fonts.PRIMARY_BOLD,
-					fontSize: 10,
-					includeFontPadding: false,
-				}}
-			>
+			<Discord.Text variant='text-xxs/semibold' color='text-overlay-light'>
 				{label}
-			</Text>
+			</Discord.Text>
 		</View>
 	);
 }

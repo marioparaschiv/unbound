@@ -35,8 +35,12 @@ function TimestampStylesSheet({
 
 	return (
 		<Discord.ActionSheet startExpanded>
+			<Discord.BottomSheetTitleHeader
+				title={messages.PICKER_BUTTON}
+				subtitle={messages.STYLES_TITLE}
+			/>
 			<ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-				<Discord.TableRowGroup title={messages.STYLES_TITLE}>
+				<Discord.TableRowGroup>
 					{TIMESTAMP_STYLES.map((style) => {
 						const markup = timestamp(moment, style);
 						const name = messages[STYLE_NAMES[style]];

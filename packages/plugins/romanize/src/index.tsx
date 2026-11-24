@@ -7,6 +7,7 @@ import type { PluginContext } from '@unbound-app/api/native';
 import { assets, dialogs, metro, patcher, toasts } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
 
+import OriginalText from '~/components/original-text';
 import { romanizeHangul } from '~/lib/revised-romanization';
 import { needsRomanizing } from '~/lib/scripts';
 
@@ -23,6 +24,7 @@ async function showRomanized(context: PluginContext, text: string) {
 		dialogs.showDialog({
 			title: messages.TITLE,
 			body: latin,
+			content: () => <OriginalText text={text} />,
 			buttons: [
 				{
 					label: messages.COPY,

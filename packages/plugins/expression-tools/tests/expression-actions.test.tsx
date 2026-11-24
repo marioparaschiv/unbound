@@ -54,9 +54,9 @@ async function openSheet(key: string, module: ReturnType<typeof createSheet>, pr
 }
 
 function press(view: ReturnType<typeof render>, label: string) {
-	const button = view.findAll('Button').find((node) => node.props.text === label);
+	const button = view.findAll('ActionSheetRow').find((node) => node.props.label === label);
 
-	if (!button) throw new Error(`No ${label} button`);
+	if (!button) throw new Error(`No ${label} row`);
 
 	view.act(() => button.props.onPress?.(Object.create(null)));
 }
@@ -96,7 +96,7 @@ describe('the emoji sheet', () => {
 	test('offers Copy URL, Copy markup and Clone', async () => {
 		const view = await openSheet('EmojiDetailActionSheet', createSheet(), emoji);
 
-		expect(view.findAll('Button').map((node) => node.props.text)).toEqual([
+		expect(view.findAll('ActionSheetRow').map((node) => node.props.label)).toEqual([
 			'Copy URL',
 			'Copy markup',
 			'Clone',
@@ -137,13 +137,17 @@ describe('the sticker sheet', () => {
 		await settle();
 
 		expect(toasts.shown).toMatchObject([{ content: 'wave added to favorites.' }]);
-		expect(view.findAll('Button').map((node) => node.props.text)).toContain('Unfavorite');
+		expect(view.findAll('ActionSheetRow').map((node) => node.props.label)).toContain(
+			'Unfavorite',
+		);
 	});
 
-	test('adds the buttons to the sheet a message opens, which skips openLazy', () => {
+	test('adds the rows to the sheet a message opens, which skips openLazy', () => {
 		const view = render(createElement(stickerSheet.default, sticker));
 
-		expect(view.findAll('Button').map((node) => node.props.text)).toContain('Favorite');
+		expect(view.findAll('ActionSheetRow').map((node) => node.props.label)).toContain(
+			'Favorite',
+		);
 	});
 });
 
@@ -159,7 +163,7 @@ describe('starting', () => {
 		expect(logs.entries.filter(({ level }) => level !== 'info')).toEqual([]);
 	});
 
-	test('keeps the emoji sheet buttons when the sticker sheet cannot be patched', async () => {
+	test('keeps the emoji sheet rows when the sticker sheet cannot be patched', async () => {
 		const sheet = stickerSheet.default;
 
 		stickerSheet.default = 'not a component' as never;
@@ -168,7 +172,7 @@ describe('starting', () => {
 
 		const view = await openSheet('EmojiDetailActionSheet', createSheet(), emoji);
 
-		expect(view.findAll('Button')).toHaveLength(3);
+		expect(view.findAll('ActionSheetRow')).toHaveLength(3);
 		expect(logs.entries).toContainEqual({
 			level: 'warn',
 			args: [
@@ -177,11 +181,11 @@ describe('starting', () => {
 		});
 	});
 
-	test('draws the buttons again after the plugin stops and starts', async () => {
+	test('draws the rows again after the plugin stops and starts', async () => {
 		await restart();
 
 		const view = await openSheet('EmojiDetailActionSheet', createSheet(), emoji);
 
-		expect(view.findAll('Button')).toHaveLength(3);
+		expect(view.findAll('ActionSheetRow')).toHaveLength(3);
 	});
 });

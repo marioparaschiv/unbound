@@ -1,13 +1,18 @@
 import { openSheet } from '@unbound-plugins/shared/action-sheets/open-sheet';
-import { ActivityIndicator, Image, Pressable, View } from 'react-native';
-import { Discord } from '@unbound-app/api/metro/components';
+import EntityRow from '@unbound-plugins/shared/entities/entity-row';
+import { BottomSheets, Discord, GorhomSheet } from '@unbound-app/api/metro/components';
+import { ActivityIndicator } from 'react-native';
 import { messages } from '@unbound-app/i18n';
 import { useEffect, useState } from 'react';
 
+import useStyles from '~/components/blocked-users-sheet.style';
 import { getBlockedUsers, setUserBlocked } from '~/lib/api';
 import type { ReviewDBUser } from '~/lib/entities';
 
 function BlockedUsersSheet() {
+	const styles = useStyles();
+	const { ActionSheet, BottomSheetTitleHeader } = BottomSheets;
+	const { BottomSheetScrollView: ScrollView } = GorhomSheet;
 	const [users, setUsers] = useState<ReviewDBUser[] | null>(null);
 	const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -29,60 +34,46 @@ function BlockedUsersSheet() {
 	}
 
 	return (
-		<Discord.ActionSheet>
-			<Discord.Text
-				variant='heading-lg/semibold'
-				style={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8 }}
-			>
-				{messages.BLOCKED_USERS}
-			</Discord.Text>
+		<ActionSheet scrollable>
+			<BottomSheetTitleHeader title={messages.BLOCKED_USERS} />
+			<ScrollView contentContainerStyle={styles.body}>
+				{users === null ? <ActivityIndicator style={styles.note} /> : null}
 
-			<View>
-				{users === null ? (
-					<View style={{ padding: 12, alignItems: 'center' }}>
-						<ActivityIndicator />
-					</View>
+				{users?.length ? (
+					<Discord.TableRowGroup hasIcons>
+						{users.map((user) => (
+							<EntityRow
+								key={user.discordID}
+								entity={{
+									kind: 'user',
+									id: user.discordID,
+									name: user.username,
+									image: user.profilePhoto,
+								}}
+								id={user.discordID}
+								unknownLabel={user.discordID}
+								trailing={
+									<Discord.Button
+										text={messages.UNBLOCK}
+										variant='destructive'
+										size='sm'
+										loading={busyId === user.discordID}
+										disabled={Boolean(busyId)}
+										onPress={() => void unblock(user.discordID)}
+									/>
+								}
+							/>
+						))}
+					</Discord.TableRowGroup>
 				) : null}
 
 				{users?.length === 0 ? (
-					<Discord.Text style={{ padding: 12 }} color='text-muted'>
+					<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.note}>
 						{messages.NO_BLOCKED_USERS}
 					</Discord.Text>
 				) : null}
-
-				{users?.map((user) => (
-					<Discord.Card
-						key={user.discordID}
-						variant='secondary'
-						border='subtle'
-						radius={8}
-						style={{
-							flexDirection: 'row',
-							alignItems: 'center',
-							gap: 10,
-							paddingVertical: 8,
-							paddingHorizontal: 12,
-							marginBottom: 8,
-							marginHorizontal: 12,
-						}}
-					>
-						<Image
-							source={{ uri: user.profilePhoto }}
-							style={{ width: 28, height: 28, borderRadius: 14 }}
-						/>
-						<Discord.Text style={{ flex: 1 }}>{user.username}</Discord.Text>
-						<Pressable
-							disabled={busyId === user.discordID}
-							onPress={() => void unblock(user.discordID)}
-						>
-							<Discord.Text variant='text-sm/semibold' color='text-danger'>
-								{messages.UNBLOCK}
-							</Discord.Text>
-						</Pressable>
-					</Discord.Card>
-				))}
-			</View>
-		</Discord.ActionSheet>
+			</ScrollView>
+		</ActionSheet>
 	);
 }
 

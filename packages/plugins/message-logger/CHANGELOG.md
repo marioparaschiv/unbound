@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0] - 2026-11-24
+
+### Changed
+
+- The settings are grouped into Logging, Deleted Messages, Edited Messages and Ignored.
+- The edit history sheet lists each earlier version as a row with when it was edited.
+
 ## [1.4.1] - 2026-11-21
 
 ### Fixed

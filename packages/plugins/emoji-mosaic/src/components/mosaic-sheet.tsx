@@ -11,6 +11,8 @@ import { cleanPrefix, cutTiles, gridFor, mosaicText, MAX_COLUMNS, TILE } from '~
 import { uploadTargets, uploadTiles } from '~/lib/upload';
 import { readImagePixels } from '~/native/pixels';
 
+import useStyles from '~/components/mosaic-sheet.style';
+
 export type MosaicImage = { url: string; width: number; height: number; filename: string };
 
 type Target = { channelId: string; image: MosaicImage; bridge: NativeBridge; folder: string };
@@ -42,6 +44,7 @@ function insertMosaic(channelId: string, text: string) {
 }
 
 function MosaicSheet({ channelId, image, bridge, folder, onClose }: MosaicSheetProps) {
+	const styles = useStyles();
 	const here = flux.getStore('Channel').getChannel(channelId)?.guild_id ?? undefined;
 	const targets = useMemo(() => uploadTargets(here), [here]);
 	const [columns, setColumns] = useState(3);
@@ -83,37 +86,43 @@ function MosaicSheet({ channelId, image, bridge, folder, onClose }: MosaicSheetP
 
 	return (
 		<Discord.ActionSheet>
-			<ScrollView style={{ maxHeight: 640 }} contentContainerStyle={{ gap: 12, padding: 16 }}>
-				<Discord.Text variant='heading-lg/semibold'>{messages.TITLE}</Discord.Text>
-				<Image
-					source={{ uri: image.url }}
-					resizeMode='contain'
-					style={{ width: '100%', height: 160, borderRadius: 8 }}
-				/>
-				<Discord.Text variant='text-md/medium'>
-					{format('GRID', { columns: grid.columns, rows: grid.rows, count })}
-				</Discord.Text>
-				<View style={{ flexDirection: 'row', gap: 8 }}>
-					<Discord.Button
-						text='−'
-						variant='secondary'
-						disabled={columns <= 1}
-						onPress={() => setColumns(columns - 1)}
+			<Discord.BottomSheetTitleHeader
+				title={messages.TITLE}
+				subtitle={format('GRID', { columns: grid.columns, rows: grid.rows, count })}
+			/>
+			<ScrollView style={styles.scroll} contentContainerStyle={styles.body}>
+				<Image source={{ uri: image.url }} resizeMode='contain' style={styles.image} />
+				<ui.Section>
+					<ui.StepperRow
+						label={messages.COLUMNS}
+						value={columns}
+						minimum={1}
+						maximum={MAX_COLUMNS}
+						onChange={setColumns}
 					/>
-					<Discord.Button
-						text='+'
-						variant='secondary'
-						disabled={columns >= MAX_COLUMNS}
-						onPress={() => setColumns(columns + 1)}
+					<ui.InputRow
+						label={messages.PREFIX}
+						subLabel={messages.PREFIX_HELP}
+						value={prefix}
+						onChange={setPrefix}
 					/>
-				</View>
-				<Discord.TextInput
-					description={messages.PREFIX_HELP}
-					autoCorrect={false}
-					autoCapitalize='none'
-					value={prefix}
-					onChange={setPrefix}
-				/>
+				</ui.Section>
+				{targets.length ? (
+					<ui.RadioRow
+						title={messages.SERVER}
+						value={guildId ?? ''}
+						options={targets.map((option) => ({
+							value: option.id,
+							label: option.name,
+							subLabel: format('FREE', { free: option.free }),
+						}))}
+						onChange={setGuildId}
+					/>
+				) : (
+					<Discord.Text variant='text-md/medium' color='text-muted'>
+						{messages.NO_SERVERS}
+					</Discord.Text>
+				)}
 				{target && count > target.free ? (
 					<Discord.Text variant='text-sm/medium' color='text-danger'>
 						{format('TOO_MANY', { count, free: target.free })}
@@ -126,31 +135,12 @@ function MosaicSheet({ channelId, image, bridge, folder, onClose }: MosaicSheetP
 						onPress={() => void build()}
 					/>
 				) : (
-					<View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+					<View style={styles.progress}>
 						<ActivityIndicator />
 						<Discord.Text variant='text-md/medium'>
 							{format('PROGRESS', { done: progress, count })}
 						</Discord.Text>
 					</View>
-				)}
-				{targets.length ? (
-					<ui.Section title={messages.SERVER}>
-						{targets.map((option) => (
-							<ui.Row
-								key={option.id}
-								label={option.name}
-								subLabel={format('FREE', { free: option.free })}
-								trailing={
-									option.id === guildId ? (
-										<Discord.Text variant='text-md/semibold'>✓</Discord.Text>
-									) : null
-								}
-								onPress={() => setGuildId(option.id)}
-							/>
-						))}
-					</ui.Section>
-				) : (
-					<Discord.Text variant='text-md/medium'>{messages.NO_SERVERS}</Discord.Text>
 				)}
 			</ScrollView>
 		</Discord.ActionSheet>

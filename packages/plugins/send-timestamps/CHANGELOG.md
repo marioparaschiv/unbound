@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0] - 2026-11-24
+
+### Changed
+
+- The timestamp sheet uses Discord's sheet header: Pick a timestamp, then Tap a style to insert it.
+
 ## [1.2.4] - 2026-11-18
 
 ### Changed

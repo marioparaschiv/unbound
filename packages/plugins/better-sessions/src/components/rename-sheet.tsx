@@ -24,8 +24,8 @@ function RenameSheet({ session, onRenamed }: RenameSheetProps) {
 
 	return (
 		<Discord.ActionSheet>
+			<Discord.BottomSheetTitleHeader title={messages.RENAME_TITLE} />
 			<View style={styles.content}>
-				<Discord.Text variant='heading-md/semibold'>{messages.RENAME_TITLE}</Discord.Text>
 				<Discord.TextField
 					value={name}
 					onChange={setName}

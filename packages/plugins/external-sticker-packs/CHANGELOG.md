@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-24
+
+### Changed
+
+- The sheet uses Discord's sheet header and a standard Add a pack field. Each pack has a trash button that asks before removing it.
+
 ## [1.0.1] - 2026-11-18
 
 ### Changed

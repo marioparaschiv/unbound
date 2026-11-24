@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-24
+
+### Changed
+
+- The sheet uses Discord's sheet header, and each "Attachment N of M" heading sits on its row group.
+
 ## [1.0.0] - 2026-11-16
 
 ### Added

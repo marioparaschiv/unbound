@@ -28,28 +28,37 @@ function readAll(markAsRead: MarkAsRead): void {
 }
 
 function readAllButton(
-	favorites: ReactElement<GuildsBarItemProps>,
+	messagesItem: ReactElement<GuildsBarItemProps>,
 	markAsRead: MarkAsRead,
 	Icon: unknown,
 ) {
-	return cloneElement(favorites, {
+	// The Messages item's badge and its cutout belong to unread DMs, so the copy drops both.
+	return cloneElement(messagesItem, {
 		key: 'read-all-notifications',
 		selected: false,
 		unread: false,
 		label: messages.READ_ALL,
 		accessibilityActions: [],
+		cutouts: undefined,
+		externalChildren: null,
 		expandedChildren: null,
 		config: { onPress: () => readAll(markAsRead), onLongPress: () => readAll(markAsRead) },
-		children: createElement(Icon as 'svg', { color: favorites.props.children?.props.color }),
+		// Messages tints its icon white while DMs are open; Read All is never selected, so it keeps the default tint.
+		children: createElement(Icon as 'svg', {
+			color:
+				metro.common.Theme.colors.MOBILE_GUILDBAR_ICON_DEFAULT ??
+				messagesItem.props.children?.props.color,
+		}),
 	} as Partial<GuildsBarItemProps>);
 }
 
 /**
- * @description Adds a Read All button under Favorites in the server list, styled by cloning Discord's own Favorites item.
+ * @description Adds a Read All button under Messages at the top of the server list, styled by cloning Discord's own
+ * Messages item. Messages always renders; Favorites, the old anchor, renders nothing for accounts without favorites.
  */
 export function patchGuildsBar(): void {
-	const Favorites = metro.findByFilePath(
-		'modules/guilds_bar/native/GuildsBarFavorites.tsx',
+	const MessagesItem = metro.findByFilePath(
+		'modules/guilds_bar/native/GuildsBarMessages.tsx',
 	)?.default;
 	const markGuildsAsRead = metro.findByProps('markChannelsAsRead')?.default;
 	const markAsRead: MarkAsRead | undefined =
@@ -58,15 +67,15 @@ export function patchGuildsBar(): void {
 			: undefined;
 	const Icon = metro.findByProps('CheckmarkLargeIcon')?.CheckmarkLargeIcon;
 
-	if (typeof Favorites?.type !== 'function' || !markAsRead || !Icon) {
+	if (typeof MessagesItem?.type !== 'function' || !markAsRead || !Icon) {
 		logger.warn(
-			'Read All skipped: Discord moved GuildsBarFavorites, markChannelsAsRead or CheckmarkLargeIcon.',
+			'Read All skipped: Discord moved GuildsBarMessages, markChannelsAsRead or CheckmarkLargeIcon.',
 		);
 
 		return;
 	}
 
-	patcher.react.after(Favorites, 'type', ({ result }) =>
+	patcher.react.after(MessagesItem, 'type', ({ result }) =>
 		isValidElement<GuildsBarItemProps>(result)
 			? createElement(Fragment, null, result, readAllButton(result, markAsRead, Icon))
 			: result,

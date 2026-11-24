@@ -4,5 +4,6 @@
 	"OUTPUT_TITLE": "{language} · salida {code}",
 	"OUTPUT_BODY": "{output}",
 	"NO_OUTPUT": "(sin salida)",
-	"RUN_FAILED": "No se pudo ejecutar el código"
+	"RUN_FAILED": "No se pudo ejecutar el código",
+	"CLOSE": "Cerrar"
 }

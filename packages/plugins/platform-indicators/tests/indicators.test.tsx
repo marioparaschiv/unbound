@@ -124,7 +124,7 @@ describe('messages', () => {
 
 	test('end the timestamp with the author’s platforms', () => {
 		expect(rowData.generateMessageRowData({ message }).message).toMatchObject({
-			timestamp: 'Today at 12:00 • 🖥️📱',
+			timestamp: 'Today at 12:00 • Desktop, Mobile',
 			timestampAccessibilityLabel: 'Today at 12:00 • Online on Desktop and Mobile',
 		});
 	});

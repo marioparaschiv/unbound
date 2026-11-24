@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-24
+
+### Changed
+
+- The transcript page lists passages, Stop and Copy as Discord settings rows; the passage playing shows a speaker icon.
+
 ## [1.1.0] - 2026-11-16
 
 ### Added

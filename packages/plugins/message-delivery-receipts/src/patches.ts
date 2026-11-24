@@ -9,6 +9,11 @@ type UserStore = { getCurrentUser(): { id: string } | undefined };
 
 type ReceiptRow = { content?: unknown };
 
+// Default and reply messages; pins, joins and other system messages you caused are not yours to mark.
+function isUserMessage(message: RowMessage): boolean {
+	return message.type === 0 || message.type === 19;
+}
+
 /**
  * @description Marks your messages as sending, failed or acknowledged by Discord's server, as small text right
  * after their content. Hooks `generateMessageRowData` after it runs.
@@ -21,7 +26,12 @@ export function patchMessageRows(): void {
 		after({ message, row }) {
 			const receiptRow = row as ReceiptRow | undefined;
 
-			if (!message || !receiptRow || message.author?.id !== Users.getCurrentUser()?.id)
+			if (
+				!message ||
+				!receiptRow ||
+				!isUserMessage(message) ||
+				message.author?.id !== Users.getCurrentUser()?.id
+			)
 				return;
 
 			const receipt = receiptOf(message, { sentHere, allMessages: settings.allMessages });

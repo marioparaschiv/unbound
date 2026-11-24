@@ -1,4 +1,4 @@
-import type { FluxGuildMember } from '@unbound-app/api/flux';
+import type { FluxGuildMember, FluxUserProfile } from '@unbound-app/api/flux';
 
 import { GuildMemberStore, UserProfileStore, UserStore, type IconUtils } from '~/lib/modules';
 import type { OpenedSheet } from '~/lib/opened-sheet';
@@ -22,6 +22,11 @@ export type Guild = {
 export type Channel = {
 	id: string;
 	icon?: string | null;
+};
+
+// Discord's profile record carries the account banner hash; the shared type omits it.
+type Profile = FluxUserProfile & {
+	banner?: string | null;
 };
 
 type Member = FluxGuildMember & {
@@ -71,10 +76,11 @@ export function getUserTargets(icons: Icons, userId: string, guildId?: string): 
 
 	if (!user) return [];
 
-	const profile =
-		(guildId ? UserProfileStore.getGuildMemberProfile(userId, guildId) : null) ??
-		UserProfileStore.getUserProfile(userId);
+	// The account-wide profile: a server profile's own banner hash would point getUserBannerURL at a missing file.
+	const profile: Profile | undefined = UserProfileStore.getUserProfile(userId);
 	const merged = profile ? { ...user, ...profile } : user;
+	// Read, not spread: a record's fields may sit behind getters a spread skips.
+	const banner: string | null | undefined = profile?.banner ?? user.banner;
 	const member: Member | null = guildId ? GuildMemberStore.getMember(guildId, userId) : null;
 	const memberAvatar = member?.avatar;
 	const serverAvatar =
@@ -89,7 +95,11 @@ export function getUserTargets(icons: Icons, userId: string, guildId?: string): 
 
 	return toTargets([
 		{ kind: 'avatar', url: icons.getUserAvatarURL(merged, true), size: AVATAR_SIZE },
-		{ kind: 'banner', url: icons.getUserBannerURL(merged, true), size: BANNER_SIZE },
+		{
+			kind: 'banner',
+			url: icons.getUserBannerURL({ id: userId, banner, canAnimate: true }),
+			size: BANNER_SIZE,
+		},
 		{ kind: 'serverAvatar', url: serverAvatar, size: AVATAR_SIZE },
 	]);
 }

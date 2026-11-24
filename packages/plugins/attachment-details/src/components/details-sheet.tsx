@@ -30,17 +30,8 @@ function AttachmentSection({
 	const link = assets.getIdByName('LinkIcon');
 
 	return (
-		<View style={{ gap: 8, paddingBottom: 16 }}>
-			{heading ? (
-				<Discord.Text
-					variant='text-sm/semibold'
-					color='text-muted'
-					style={{ paddingHorizontal: 16 }}
-				>
-					{heading}
-				</Discord.Text>
-			) : null}
-			<ActionSheetRow.Group>
+		<View style={{ paddingBottom: 16 }}>
+			<ActionSheetRow.Group title={heading}>
 				{detailsOf(attachment).map((detail) => (
 					<ActionSheetRow
 						key={detail.key}
@@ -71,12 +62,7 @@ function AttachmentSection({
 export default function DetailsSheet({ attachments }: DetailsSheetProps) {
 	return (
 		<Discord.ActionSheet>
-			<Discord.Text
-				variant='heading-lg/semibold'
-				style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 }}
-			>
-				{messages.TITLE}
-			</Discord.Text>
+			<Discord.BottomSheetTitleHeader title={messages.TITLE} />
 			{attachments.map((attachment, index) => (
 				<AttachmentSection
 					key={attachment.url ?? index}

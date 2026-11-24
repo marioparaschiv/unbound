@@ -5,6 +5,7 @@ import { connectDiscord } from '~/lib/login';
 import { useState } from 'react';
 import { ui } from '@unbound-app/api';
 import { servicesToTry } from '~/lib/providers';
+import { languageNameFor } from '~/lib/languages';
 
 /**
  * @description The plugin's settings screen: sign in to the translate service, pick the source and target languages, and choose where translations show.
@@ -80,7 +81,7 @@ export function SettingsPanel() {
 			<ui.Section title={messages.LANGUAGES}>
 				<ui.Row
 					label={messages.SOURCE_LANGUAGE}
-					subLabel={sourceLanguage}
+					subLabel={languageNameFor(sourceLanguage)}
 					arrow
 					disabled={needsAccount}
 					onPress={() =>
@@ -94,7 +95,7 @@ export function SettingsPanel() {
 				/>
 				<ui.Row
 					label={messages.TARGET_LANGUAGE}
-					subLabel={targetLanguage}
+					subLabel={languageNameFor(targetLanguage)}
 					arrow
 					disabled={needsAccount}
 					onPress={() =>

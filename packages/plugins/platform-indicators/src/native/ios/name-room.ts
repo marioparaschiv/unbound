@@ -3,7 +3,7 @@ import type { NativeBridge } from '@unbound-app/api/native';
 import { installNameRoom, restoreTimestamps } from '~/native/ios/worklets';
 
 /**
- * @description Keeps message names readable when platform symbols lengthen the timestamp beside them.
+ * @description Keeps message names readable when platform names lengthen the timestamp beside them.
  * @param native The plugin's native bridge.
  * @returns A function that removes the hook and restores the timestamps it changed.
  */

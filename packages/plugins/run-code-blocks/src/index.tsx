@@ -5,6 +5,7 @@ import { findElement } from '@unbound-plugins/shared/react/find-element';
 import { assets, dialogs, metro, patcher, toasts } from '@unbound-app/api';
 import { format, messages } from '@unbound-app/i18n';
 
+import OutputView from '~/components/output-view';
 import { runCode } from '~/lib/compiler-explorer';
 import { runnableBlocks, type CodeBlock } from '~/lib/code-blocks';
 
@@ -16,10 +17,12 @@ async function run(block: CodeBlock) {
 	try {
 		const { output, exitCode } = await runCode(block.language, block.code);
 
-		await dialogs.alert('OUTPUT_TITLE', {
-			titleVars: { language: block.language, code: String(exitCode) },
-			body: 'OUTPUT_BODY',
-			bodyVars: { output: output || messages.NO_OUTPUT },
+		const text = format('OUTPUT_BODY', { output: output || messages.NO_OUTPUT });
+
+		dialogs.showDialog({
+			title: format('OUTPUT_TITLE', { language: block.language, code: String(exitCode) }),
+			content: () => <OutputView output={text} />,
+			buttons: [{ label: messages.CLOSE }],
 		});
 	} catch (error) {
 		toasts.show({ id: 'run-code-blocks', title: messages.RUN_FAILED, content: String(error) });

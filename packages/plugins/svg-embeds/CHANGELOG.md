@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1] - 2026-11-24
+
+### Fixed
+
+- An image that can't be drawn shows as a file instead of an empty box.
+
 ## [1.2.0] - 2026-11-17
 
 ### Added

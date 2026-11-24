@@ -1,15 +1,16 @@
 import { openSheet } from '@unbound-plugins/shared/action-sheets/open-sheet';
 import { Image, Pressable, ScrollView, View } from 'react-native';
 import { Discord } from '@unbound-app/api/metro/components';
-import { messages } from '@unbound-app/i18n';
-import { toasts } from '@unbound-app/api';
+import { format, messages } from '@unbound-app/i18n';
+import { assets, dialogs, toasts, ui } from '@unbound-app/api';
 import { useState } from 'react';
 
 import { fetchPack, packId, stickerUrl, type Pack, type Sticker } from '~/lib/line';
 import { removePack, savedPacks, savePack } from '~/lib/packs';
 import { attachSticker } from '~/lib/send';
 
-const STICKER_SIZE = 76;
+import useStyles from '~/components/sticker-sheet.style';
+
 const LANGUAGE = Intl.DateTimeFormat().resolvedOptions().locale.replace('-', '_');
 
 type SheetProps = { channelId: string; folder: string; onClose: () => void };
@@ -17,29 +18,26 @@ type SheetProps = { channelId: string; folder: string; onClose: () => void };
 type PackGridProps = { pack: Pack; onPick: (sticker: Sticker) => void; onRemove: () => void };
 
 function PackGrid({ pack, onPick, onRemove }: PackGridProps) {
+	const styles = useStyles();
+
 	return (
-		<View style={{ gap: 8 }}>
-			<View
-				style={{
-					flexDirection: 'row',
-					alignItems: 'center',
-					justifyContent: 'space-between',
-				}}
-			>
-				<Discord.Text variant='text-md/semibold'>{pack.title}</Discord.Text>
-				<Discord.Button
+		<View style={styles.pack}>
+			<View style={styles.packHeader}>
+				<Discord.TableRowGroupTitle title={pack.title} style={styles.packTitle} />
+				<Discord.IconButton
 					size='sm'
 					variant='secondary'
-					text={messages.REMOVE}
+					icon={assets.getIdByName('TrashIcon')}
+					accessibilityLabel={format('REMOVE_LABEL', { title: pack.title })}
 					onPress={onRemove}
 				/>
 			</View>
-			<View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+			<View style={styles.grid}>
 				{pack.stickers.map((sticker) => (
 					<Pressable key={sticker.id} onPress={() => onPick(sticker)}>
 						<Image
 							source={{ uri: stickerUrl(sticker.id) }}
-							style={{ width: STICKER_SIZE, height: STICKER_SIZE }}
+							style={styles.sticker}
 							resizeMode='contain'
 						/>
 					</Pressable>
@@ -51,10 +49,10 @@ function PackGrid({ pack, onPick, onRemove }: PackGridProps) {
 
 function StickerSheet({ channelId, folder, onClose }: SheetProps) {
 	const [packs, setPacks] = useState(savedPacks);
-	const [link, setLink] = useState('');
+	const styles = useStyles();
 	const [loading, setLoading] = useState(false);
 
-	async function add() {
+	async function add(link: string) {
 		const id = packId(link);
 
 		if (!id) {
@@ -70,7 +68,6 @@ function StickerSheet({ channelId, folder, onClose }: SheetProps) {
 
 			savePack(pack);
 			setPacks(savedPacks());
-			setLink('');
 			toasts.success('ADDED', { title: pack.title });
 		} catch (error) {
 			logger.error(`Failed to load LINE pack ${id}:`, error);
@@ -82,8 +79,16 @@ function StickerSheet({ channelId, folder, onClose }: SheetProps) {
 		}
 	}
 
-	function remove(id: string) {
-		removePack(id);
+	async function remove(pack: Pack) {
+		const confirmed = await dialogs.confirm('REMOVE_TITLE', {
+			titleVars: { title: pack.title },
+			confirm: 'REMOVE',
+			destructive: true,
+		});
+
+		if (!confirmed) return;
+
+		removePack(pack.id);
 		setPacks(savedPacks());
 	}
 
@@ -95,32 +100,32 @@ function StickerSheet({ channelId, folder, onClose }: SheetProps) {
 
 	return (
 		<Discord.ActionSheet>
-			<ScrollView contentContainerStyle={{ gap: 16, padding: 16 }}>
-				<Discord.Text variant='heading-lg/semibold'>{messages.TITLE}</Discord.Text>
-				<Discord.TextInput
-					description={messages.LINK_HELP}
-					autoCorrect={false}
-					autoCapitalize='none'
-					value={link}
-					onChange={setLink}
-				/>
-				<Discord.Button
-					text={messages.ADD}
-					loading={loading}
-					disabled={!link.trim() || loading}
-					onPress={() => void add()}
-				/>
+			<Discord.BottomSheetTitleHeader title={messages.TITLE} />
+			<ScrollView contentContainerStyle={styles.body}>
+				<ui.Section>
+					<ui.InputRow
+						label={loading ? messages.ADDING : messages.ADD_PACK}
+						subLabel={messages.LINK_HELP}
+						placeholder={messages.LINK_PLACEHOLDER}
+						keyboardType='url'
+						value=''
+						disabled={loading}
+						onChange={(text) => void add(text)}
+					/>
+				</ui.Section>
 				{packs.length ? (
 					packs.map((pack) => (
 						<PackGrid
 							key={pack.id}
 							pack={pack}
 							onPick={(sticker) => void pick(sticker)}
-							onRemove={() => remove(pack.id)}
+							onRemove={() => void remove(pack)}
 						/>
 					))
 				) : (
-					<Discord.Text variant='text-sm/medium'>{messages.EMPTY}</Discord.Text>
+					<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.empty}>
+						{messages.EMPTY}
+					</Discord.Text>
 				)}
 			</ScrollView>
 		</Discord.ActionSheet>

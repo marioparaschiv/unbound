@@ -43,11 +43,11 @@ declare module '@unbound-app/i18n' {
 		readonly OPERATION_FAILED: string;
 		/** Clone to a server */
 		readonly CLONE_TO_SERVER: string;
-		/** NAME */
+		/** Name */
 		readonly NAME: string;
 		/** Expression name */
 		readonly EXPRESSION_NAME_PLACEHOLDER: string;
-		/** YOUR SERVERS */
+		/** Your servers */
 		readonly YOUR_SERVERS: string;
 		/** Search servers */
 		readonly SEARCH_SERVERS: string;

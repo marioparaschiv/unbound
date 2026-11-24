@@ -147,4 +147,23 @@ export function shouldPreview(
 	);
 }
 
-export default { diffWords, collapseSame, shouldPreview };
+/**
+ * @description Whether a message holds a code block.
+ * @param text The message.
+ * @returns `true` when it has a ``` fence.
+ */
+export function hasCode(text: string): boolean {
+	return text.includes('```');
+}
+
+/**
+ * @description Removes code-block fences, so a diff of code shows only the code: whole fence lines (with their language)
+ * go, and so do fences inline with code.
+ * @param text The message.
+ * @returns The message without its fences.
+ */
+export function stripFences(text: string): string {
+	return text.replace(/^```[\w+#.-]*[ \t]*$\n?/gm, '').replaceAll('```', '');
+}
+
+export default { diffWords, collapseSame, shouldPreview, hasCode, stripFences };

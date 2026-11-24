@@ -142,7 +142,7 @@ declare module '@unbound-app/settings' {
 		 *
 		 * How fast voice messages and audio files play.
 		 */
-		speed: "1" | "2" | "0.75" | "1.5";
+		speed: "0.75" | "1.0" | "1.5" | "2.0";
 		/**
 		 * Remember speed per chat
 		 *
@@ -176,7 +176,7 @@ declare module '@unbound-app/settings' {
 		 *
 		 * How fast voice messages and audio files play.
 		 */
-		"speed": "1" | "2" | "0.75" | "1.5";
+		"speed": "0.75" | "1.0" | "1.5" | "2.0";
 		/**
 		 * Remember speed per chat
 		 *

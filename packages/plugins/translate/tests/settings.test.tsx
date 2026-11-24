@@ -58,7 +58,10 @@ describe('the settings panel', () => {
 		const [connect, source, target] = rows();
 
 		expect(connect?.props.label).toBe('Reconnect Discord account');
-		expect([source?.props.subLabel, target?.props.subLabel]).toEqual(['auto', 'en']);
+		expect([source?.props.subLabel, target?.props.subLabel]).toEqual([
+			'Auto detect',
+			'English',
+		]);
 		expect([source?.props.disabled, target?.props.disabled]).toEqual([false, false]);
 	});
 

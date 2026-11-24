@@ -25,13 +25,16 @@ export function displayName(username: string): string {
 /**
  * @description Turns a message row into a compact one: no avatar, header or timestamp line, and the author's name in
  * bold before the content. Discord draws a header only for rows with an avatar and timestamp.
+ * Attachment-only rows carry no content and get the name alone.
  * @param message The row's message, changed in place.
  * @param withName Whether to put the name before this message.
  * @param name The author's name to show; Discord's follow-up rows carry only the handle.
  * @returns Whether the row changed.
  */
 export function compactMessage(message: CompactMessage, withName: boolean, name?: string): boolean {
-	if (!message.username || !Array.isArray(message.content)) return false;
+	const content = message.content ?? [];
+
+	if (!message.username || !Array.isArray(content)) return false;
 
 	name ||= displayName(message.username);
 
@@ -43,8 +46,7 @@ export function compactMessage(message: CompactMessage, withName: boolean, name?
 	if (withName) {
 		message.content = [
 			{ type: 'strong', content: [{ type: 'text', content: name }] },
-			{ type: 'text', content: '  ' },
-			...message.content,
+			...(content.length ? [{ type: 'text', content: '  ' }, ...content] : []),
 		];
 	}
 
