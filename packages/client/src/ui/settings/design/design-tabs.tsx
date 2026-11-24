@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import noop from '@unbound-app/utils/noop';
 
@@ -61,7 +61,14 @@ function DesignTabs({ renderPage, initialTab = 'theme', onTabChange = noop }: De
 	const styles = useStyles();
 	const headerHeight = HeaderElements.useHeaderHeight();
 	const [tabsHeight, setTabsHeight] = useState(0);
+	const tabs = useRef<View>(null);
 	const page = usePageWidth();
+
+	// Fabric measures synchronously here, so the pages' first painted frame already insets past the tabs; waiting for
+	// onLayout painted them under the tabs for a frame, then shifted them down.
+	useLayoutEffect(() => {
+		tabs.current?.measure((_x, _y, _width, height) => setTabsHeight(height));
+	}, []);
 
 	const items = useMemo(
 		() =>
@@ -91,6 +98,7 @@ function DesignTabs({ renderPage, initialTab = 'theme', onTabChange = noop }: De
 				</View>
 			</HeaderElements.HeaderHeightContext.Provider>
 			<View
+				ref={tabs}
 				onLayout={(event) => setTabsHeight(event.nativeEvent.layout.height)}
 				style={[styles.tabs, { top: headerHeight }]}
 			>
