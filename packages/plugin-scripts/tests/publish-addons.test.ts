@@ -79,6 +79,10 @@ function writePlugin(dir: string, version: string) {
 	write(`packages/plugins/${dir}/package.json`, '{ "scripts": { "build": "rollup" } }\n');
 	write(`packages/plugins/${dir}/dist/index.js`, `export default '${dir} ${version}';\n`);
 	write(
+		`packages/plugins/${dir}/dist/page.json`,
+		'{ "frontmatter": { "media": [] }, "media": [] }\n',
+	);
+	write(
 		`packages/plugins/${dir}/dist/manifest.json`,
 		`${JSON.stringify({
 			id: `unbound.${dir}`,
@@ -237,6 +241,10 @@ test('a first run pushes the build tag and publishes every selected plugin', asy
 	expect(betaLog).toBe(`# Changelog\n\n## [1.0.0] - ${date}\n\n### Fixed\n\n- Stop the crash`);
 	expect(git(work, 'show', `${build}:packages/plugins/beta/dist/index.js`)).toBe(
 		"export default 'beta 1.0.0';",
+	);
+	// The measured store page ships beside the bundle, or the server publishes no gallery.
+	expect(git(work, 'show', `${build}:packages/plugins/beta/dist/page.json`)).toBe(
+		'{ "frontmatter": { "media": [] }, "media": [] }',
 	);
 	expect(git(work, 'rev-parse', 'HEAD')).toBe(head);
 	expect(git(work, 'status', '--porcelain')).toBe('');

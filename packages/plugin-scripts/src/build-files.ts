@@ -23,6 +23,9 @@ export type ReleasedAddon = {
 
 const GENERATED_MANIFEST_FIELDS = ['platforms', 'capabilities'] as const;
 
+// The measured store page `ubd build` writes beside the bundle; without it the server publishes no banner or gallery.
+const MEASURED_PAGE_FILENAME = 'page.json';
+
 /**
  * @description Builds the manifest to publish: the source manifest with the platforms and Capabilities `ubd build` generated into `dist/manifest.json`, which the source never holds.
  * @param root The repository root.
@@ -81,8 +84,12 @@ function bundleFiles(root: string, plugin: LocalPlugin, key?: KeyObject): BuildF
 	}
 
 	const contents = readFileSync(join(root, bundle));
+	const page = `${dirname(bundle)}/${MEASURED_PAGE_FILENAME}`;
+	const pageFiles = existsSync(join(root, page))
+		? [{ path: page, contents: readFileSync(join(root, page)) }]
+		: [];
 
-	if (!key) return [{ path: bundle, contents }];
+	if (!key) return [{ path: bundle, contents }, ...pageFiles];
 
 	const compiled = findCompiledBundles(root, bundle);
 	const digests = bytecodeDigests(
@@ -99,6 +106,7 @@ function bundleFiles(root: string, plugin: LocalPlugin, key?: KeyObject): BuildF
 				withSignature(publishedManifest(root, directory), signature, digests),
 			),
 		},
+		...pageFiles,
 	];
 }
 
@@ -138,7 +146,7 @@ function vendoredFiles(root: string, releases: ReleasedAddon[]): BuildFile[] {
 
 /**
  * @description Lists every file a build commit adds for its releases: a submodule workspace's files, each bundle or
- * built icon pack, the signed manifests when a key is given, and each changelog.
+ * built icon pack with its measured store page, the signed manifests when a key is given, and each changelog.
  * @param root The repository root.
  * @param releases The addons the build publishes.
  * @param key The signing key, when bundles are signed.
