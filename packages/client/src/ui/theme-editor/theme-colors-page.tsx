@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { useStore } from 'zustand';
 
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
@@ -28,7 +29,7 @@ type ThemeColorsPageProps = {
 function ThemeColorsPage({ route }: ThemeColorsPageProps) {
 	const navigation = Discord.useNavigation();
 	const { group, token } = route.params ?? {};
-	const draft = ThemeStore((state) => state.preview);
+	const draft = useStore(ThemeStore, (state) => state.preview);
 	const scroll = useEditorScreen({
 		screen: Screens.ThemeColors,
 		params: group ? (token ? { group, token } : { group }) : undefined,

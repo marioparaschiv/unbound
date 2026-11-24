@@ -1,8 +1,12 @@
+// Reads manager or settings state during render, which the React Compiler would cache past its changes.
+'use no memo';
+
 import { pickFeatured } from '@unbound-app/contracts/featured-addons';
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 import { memo, useContext, useMemo, useState } from 'react';
 import type { AddonKind } from '@unbound-app/types/addons';
 import { RefreshControl, View } from 'react-native';
+import { useStore } from 'zustand';
 
 import { countActiveFilters, filterCatalog } from '~/marketplace/filters';
 import { queryCatalog } from '~/marketplace/catalog';
@@ -39,7 +43,7 @@ const keyOf = (addon: ListedAddon) => addon.id;
  */
 function MarketplaceList({ kind }: MarketplaceListProps) {
 	const styles = useStyles();
-	const state = MarketplaceStore((store) => store.state);
+	const state = useStore(MarketplaceStore, (store) => store.state);
 	const { search, filters } = useContext(BrowseContext);
 	// Only a pull shows the spinner, so the background refresh on open doesn't shift the list.
 	const [pulling, setPulling] = useState(false);

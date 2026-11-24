@@ -1,5 +1,6 @@
 import { createLogger } from '@unbound-app/logger';
 import { Image } from 'react-native';
+import { useStore } from 'zustand';
 import { useMemo } from 'react';
 
 import { isPickedChatBackground, pickChatBackground } from '~/themes/pick-chat-background';
@@ -36,7 +37,7 @@ function formatPercent(fraction: number): string {
 function ChatTab() {
 	const styles = useStyles();
 	const settings = useUnboundSettings(({ key }) => key?.startsWith('chat-background.'));
-	const recommended = ThemeStore((state) => Boolean(state.data?.background));
+	const recommended = useStore(ThemeStore, (state) => Boolean(state.data?.background));
 	const source = settings.get('chat-background.source');
 	const url = settings.get('chat-background.url');
 	const picked = isPickedChatBackground(url);

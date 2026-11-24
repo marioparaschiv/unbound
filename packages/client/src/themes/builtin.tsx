@@ -1,5 +1,6 @@
 import { cloneElement, isValidElement, type ReactNode } from 'react';
 import { createLogger } from '@unbound-app/logger';
+import { useStore } from 'zustand';
 
 import { byFilePath, byFluxStore, byProps } from '~/metro/filters';
 import { clearGuardUnderlay } from '~/themes/clear-guard-underlay';
@@ -114,7 +115,7 @@ function drawChatBackground(mdl: ChatViewModule) {
 // run on every render whichever way the background flips.
 function hideInputShadow(mdl: InputScrimModule) {
 	Patcher.after(mdl, 'ChatInputScrimGradient', ({ result }) => {
-		const hasBackground = ThemeStore((state) => Boolean(state.background));
+		const hasBackground = useStore(ThemeStore, (state) => Boolean(state.background));
 
 		return hasBackground ? null : result;
 	});
@@ -180,9 +181,9 @@ function tagExperiments(experiments: string[] = noExperiments, id: string) {
 // The chat background and each draft change recolour too, so they tag it as well.
 function tagThemeContext(mdl: ThemeContextModule) {
 	Patcher.before(mdl, 'RootThemeContextProvider', ({ args }) => {
-		const id = ThemeStore((state) => state.applied);
-		const draft = ThemeStore((state) => (state.preview ? state.revision : 0));
-		const background = ThemeStore((state) => state.background);
+		const id = useStore(ThemeStore, (state) => state.applied);
+		const draft = useStore(ThemeStore, (state) => (state.preview ? state.revision : 0));
+		const background = useStore(ThemeStore, (state) => state.background);
 		const [props] = args;
 		const tag = [
 			id,
@@ -200,7 +201,10 @@ function tagThemeContext(mdl: ThemeContextModule) {
 
 // Shown while a theme edit is open and no editor screen is, so the user can return to it from anywhere.
 function ThemeEditorButtonSlot() {
-	const shown = ThemeEditorStore((state) => state.session !== null && state.mounted === 0);
+	const shown = useStore(
+		ThemeEditorStore,
+		(state) => state.session !== null && state.mounted === 0,
+	);
 
 	if (!shown) return null;
 

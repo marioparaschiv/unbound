@@ -1,4 +1,5 @@
 import { createLogger } from '@unbound-app/logger';
+import { useStore } from 'zustand';
 
 import {
 	canInstallHomeScreenIcon,
@@ -129,13 +130,13 @@ function patchUtils(utils: MetroExport) {
 
 	// iOS reads `UIApplication.alternateIconName`, which can lag the change, so the applied id wins this launch.
 	Patcher.after(utils, 'useCurrentAppIcon', ({ result }) => {
-		const current = AppIconStore((state) => state.current);
+		const current = useStore(AppIconStore, (state) => state.current);
 
 		return current ?? result;
 	});
 
 	Patcher.after(utils, 'useAppIcons', ({ result }) => {
-		const current = AppIconStore((state) => state.current);
+		const current = useStore(AppIconStore, (state) => state.current);
 
 		return current && result && typeof result === 'object'
 			? { ...result, currentAppIcon: current }
@@ -226,7 +227,7 @@ function patchRow(row: MetroExport) {
 
 function patchRows(rows: MetroExport) {
 	Patcher.after(rows, 'default', ({ result }) => {
-		const icons = AppIconStore((state) => state.icons)
+		const icons = useStore(AppIconStore, (state) => state.icons)
 			.map(toDiscordAppIcon)
 			.sort((a, b) => unboundIconRank(a) - unboundIconRank(b));
 		const leading = canAddCustomIcon() ? [addTile()] : [];

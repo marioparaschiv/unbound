@@ -1,3 +1,5 @@
+import { useStore } from 'zustand';
+
 import ThemeEditorStore from '~/themes/editor-state';
 import { Discord } from '~/metro/components';
 import { messages } from '~/i18n/api';
@@ -15,9 +17,9 @@ type EditorActionsProps = {
  */
 function EditorActions({ saving, onSave }: EditorActionsProps) {
 	const styles = useStyles();
-	const canUndo = ThemeEditorStore((state) => state.past.length > 0);
-	const canRedo = ThemeEditorStore((state) => state.future.length > 0);
-	const named = ThemeEditorStore((state) => Boolean(state.session?.name.trim()));
+	const canUndo = useStore(ThemeEditorStore, (state) => state.past.length > 0);
+	const canRedo = useStore(ThemeEditorStore, (state) => state.future.length > 0);
+	const named = useStore(ThemeEditorStore, (state) => Boolean(state.session?.name.trim()));
 
 	return (
 		<Discord.Stack direction='horizontal' spacing={16} align='center' style={styles.actions}>

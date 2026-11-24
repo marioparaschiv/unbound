@@ -37,6 +37,7 @@ import globals, { shimmedModules } from './plugins/globals';
 import hermesVersions from './plugins/hermes-versions';
 import releaseModules from './plugins/release-modules';
 import bench, { benchConfig } from './plugins/bench';
+import reactCompiler from './plugins/react-compiler';
 import staticAssets from './plugins/static-assets';
 import { bytecodeVersions } from './hermes.json';
 import stampBuild from './plugins/stamp-build';
@@ -137,9 +138,18 @@ function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 		],
 
 		plugins: [
-			globals(shimmedModules(['react', 'react-native', ...Object.keys(libraries)])),
+			globals(
+				shimmedModules([
+					'react',
+					'react/compiler-runtime',
+					'react-native',
+					...Object.keys(libraries),
+				]),
+			),
 			// A local dev build keeps every module; the default release bundle swaps in the lean twins.
 			releaseModules(devTools ? {} : RELEASE_MODULES),
+			// Before the worklets transform, which rewrites the hook callbacks the compiler reads.
+			reactCompiler(IS_DEV_BUILD),
 			worklets(),
 			...(benchmark ? [bench(root, benchmark)] : []),
 			...(IS_DEV_BUILD ? [stampBuild()] : []),

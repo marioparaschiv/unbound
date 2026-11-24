@@ -1,3 +1,6 @@
+// Reads manager or settings state during render, which the React Compiler would cache past its changes.
+'use no memo';
+
 import type { CrashOrigin } from '@unbound-app/contracts/crash-reports';
 
 import type { CrashIssueLink, CrashRecord } from '~/diagnostics/crash-history';

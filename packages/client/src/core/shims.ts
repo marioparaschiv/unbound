@@ -15,6 +15,17 @@ const shims: Record<string, MetroExport> = {
 	 * @description Resolves `react-native` to Discord's React Native from the warmup globals.
 	 * @returns Discord's React Native module.
 	 */
+	/**
+	 * @description Resolves the React Compiler's memo cache runtime, which React 19 carries on its module.
+	 * @returns Discord's React compiler runtime.
+	 */
+	get 'react/compiler-runtime'() {
+		return Reflect.get(globalThis.React, '__COMPILER_RUNTIME');
+	},
+	/**
+	 * @description Resolves `react-native` to Discord's React Native from the warmup globals.
+	 * @returns Discord's React Native module.
+	 */
 	get 'react-native'() {
 		return globalThis.ReactNative;
 	},

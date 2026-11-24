@@ -172,21 +172,22 @@ export function define(schema: SettingsSchema, name?: string): DefinedSettings {
  * @description React hook that re-renders the component whenever a matching change occurs in the Bucket.
  * @param name The Bucket to subscribe to.
  * @param predicate Optional filter deciding which changes trigger a re-render.
- * @returns The Bucket, with every operation bound to `name`.
+ * @returns The Bucket, with every operation bound to `name`. Each matching change returns a new object, so the
+ * React Compiler re-runs the reads it memoised on the last one.
  */
 export function useBucket(name: string, predicate?: SettingsPredicate): Bucket {
-	const [, forceUpdate] = useState({});
+	const [bucket, setBucket] = useState(() => getBucket(name));
 
 	useEffect(
 		() =>
 			onChange(
 				(payload) => payload.store === name && (!predicate || predicate(payload)),
-				() => forceUpdate({}),
+				() => setBucket(getBucket(name)),
 			),
 		[],
 	);
 
-	return getBucket(name);
+	return bucket;
 }
 
 /**

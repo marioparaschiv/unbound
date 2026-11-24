@@ -1,4 +1,5 @@
 import { cloneElement, isValidElement, type ReactNode } from 'react';
+import { useStore } from 'zustand';
 
 import { createPatcher } from '~/patcher/create-patcher';
 import { onModuleLoaded } from '~/metro/wait';
@@ -51,7 +52,7 @@ function withoutUnderlay(node: ReactNode): ReactNode {
 // The store hook runs on every render, whether or not a background shows.
 function dropUnderlay(mdl: GuardModule) {
 	Patcher.after(mdl, 'ChatInputGuardContainer', ({ result }) => {
-		const background = ThemeStore((state) => state.background);
+		const background = useStore(ThemeStore, (state) => state.background);
 
 		return background ? withoutUnderlay(result) : result;
 	});

@@ -1,5 +1,5 @@
 import { ADDON_KINDS } from '@unbound-app/types/addons';
-import { useEffect, useMemo, useReducer } from 'react';
+import { useEffect, useState } from 'react';
 
 import { installsFromManifest } from '~/addons/installs-from-manifest';
 import { onRecordChange } from '~/ui/hooks/use-record-changes';
@@ -8,18 +8,29 @@ import { Manager } from '~/addons/manager';
 
 const KINDS = ADDON_KINDS.filter(installsFromManifest);
 
+function listAll(): InstalledEntry[] {
+	return KINDS.flatMap((kind) => Manager.for(kind).listInstalled()).sort((a, b) =>
+		a.name.localeCompare(b.name),
+	);
+}
+
 /**
  * @description Lists every installed addon the updater checks, re-listing when one is installed,
  * updated or removed, or its updates are paused or resumed.
  * @returns The addons, sorted by name; the same array until one of those changes.
  */
 function useInstalledAddons(): InstalledEntry[] {
-	const [revision, bump] = useReducer((n: number) => n + 1, 0);
+	// Listed once per change, not per render: the page re-renders on every store update while it loads.
+	const [addons, setAddons] = useState(listAll);
 
 	useEffect(() => {
+		function handler() {
+			setAddons(listAll());
+		}
+
 		const offs = KINDS.flatMap((kind) => [
-			Manager.for(kind).onInstalledChange(bump),
-			onRecordChange(kind, ['held'], bump),
+			Manager.for(kind).onInstalledChange(handler),
+			onRecordChange(kind, ['held'], handler),
 		]);
 
 		return () => {
@@ -27,14 +38,7 @@ function useInstalledAddons(): InstalledEntry[] {
 		};
 	}, []);
 
-	// Listed once per change, not per render: the page re-renders on every store update while it loads.
-	return useMemo(
-		() =>
-			KINDS.flatMap((kind) => Manager.for(kind).listInstalled()).sort((a, b) =>
-				a.name.localeCompare(b.name),
-			),
-		[revision],
-	);
+	return addons;
 }
 
 export default useInstalledAddons;

@@ -1,5 +1,6 @@
 import type { AddonKind } from '@unbound-app/types/addons';
 import { ScrollView } from 'react-native';
+import { useStore } from 'zustand';
 import { useMemo } from 'react';
 
 import { DEFAULT_FILTERS, listAuthors, listTags } from '~/marketplace/filters';
@@ -30,7 +31,7 @@ type Chip = {
  */
 function FilterChips({ kind, filters, onChange }: FilterChipsProps) {
 	const styles = useStyles();
-	const state = MarketplaceStore((store) => store.state);
+	const state = useStore(MarketplaceStore, (store) => store.state);
 	const options = useMemo(
 		() => (state.status === 'ready' ? listAuthors(state.catalog.addons, kind) : []),
 		[state, kind],

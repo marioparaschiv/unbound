@@ -1,5 +1,6 @@
 import { Image, View } from 'react-native';
 import type { ReactNode } from 'react';
+import { useStore } from 'zustand';
 
 import { SafeAreaContext } from '~/metro/components';
 import ThemeStore from '~/themes/state';
@@ -18,7 +19,7 @@ type ChatBackdropProps = {
  */
 function ChatBackdrop({ children }: ChatBackdropProps) {
 	const styles = useStyles();
-	const background = ThemeStore((state) => state.background);
+	const background = useStore(ThemeStore, (state) => state.background);
 	const { bottom } = SafeAreaContext.useSafeAreaInsets();
 
 	return (

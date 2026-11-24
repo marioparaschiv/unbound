@@ -1,3 +1,6 @@
+// Calls Discord's connected picker inline for its hooks, which the React Compiler would cache and skip.
+'use no memo';
+
 import {
 	createElement,
 	useCallback,
