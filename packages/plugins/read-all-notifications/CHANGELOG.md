@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4] - 2026-11-24
+
+### Fixed
+
+- Selecting or dragging a server picks the one you touched again; the Read All button had shifted every row below it by one.
+
 ## [1.0.3] - 2026-11-24
 
 ### Fixed

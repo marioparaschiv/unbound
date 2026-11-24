@@ -4,6 +4,7 @@ import { format, messages } from '@unbound-app/i18n';
 import { cloneElement, createElement, Fragment, isValidElement, type ReactElement } from 'react';
 
 import { type GuildReadState, unreadGuilds } from '~/lib/unread-guilds';
+import { type ItemSize, withReadAllRow } from '~/lib/row-sizes';
 
 type GuildsBarItemProps = {
 	children?: ReactElement<{ color?: string }>;
@@ -66,14 +67,36 @@ export function patchGuildsBar(): void {
 			? (guildIds) => markGuildsAsRead(guildIds)
 			: undefined;
 	const Icon = metro.findByProps('CheckmarkLargeIcon')?.CheckmarkLargeIcon;
+	const GuildsBarProps = metro.findByFilePath(
+		'modules/guilds_bar/native/hooks/useGuildsBarProps.tsx',
+	);
+	const messagesSection = metro.findByFilePath('modules/guilds_bar/native/GuildsBarConstants.tsx')
+		?.FastListRenderSections?.MESSAGES;
 
-	if (typeof MessagesItem?.type !== 'function' || !markAsRead || !Icon) {
+	if (
+		typeof MessagesItem?.type !== 'function' ||
+		!markAsRead ||
+		!Icon ||
+		typeof GuildsBarProps?.default !== 'function' ||
+		typeof messagesSection !== 'number'
+	) {
 		logger.warn(
-			'Read All skipped: Discord moved GuildsBarMessages, markChannelsAsRead or CheckmarkLargeIcon.',
+			'Read All skipped: Discord moved GuildsBarMessages, useGuildsBarProps, markChannelsAsRead or CheckmarkLargeIcon.',
 		);
 
 		return;
 	}
+
+	const sized = new WeakMap<ItemSize, ItemSize>();
+
+	patcher.after(GuildsBarProps, 'default', ({ result }) =>
+		result?.listDataProps
+			? {
+					...result,
+					listDataProps: withReadAllRow(result.listDataProps, messagesSection, sized),
+				}
+			: result,
+	);
 
 	patcher.react.after(MessagesItem, 'type', ({ result }) =>
 		isValidElement<GuildsBarItemProps>(result)
