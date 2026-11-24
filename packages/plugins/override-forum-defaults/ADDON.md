@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/gallery.jpg
+      alt: Override Forum Defaults opening the Unbound server's themes forum in the Gallery layout, with post images large.
+    - image: media/list.jpg
+      alt: Override Forum Defaults opening the Unbound server's themes forum in the List layout, sorted by recent activity.
+    - image: media/settings.jpg
+      alt: Override Forum Defaults' settings for the default forum layout and sort order.
 ---
 
 ## :sparkle: What it does

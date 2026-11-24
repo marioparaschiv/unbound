@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Always Trust's settings for skipping the leaving-Discord link check and the dangerous-download warning.
 ---
 
 ## :sparkle: What it does

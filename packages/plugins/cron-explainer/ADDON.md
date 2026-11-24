@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/explanation.jpg
+      alt: Cron Explainer explaining 30 9 * * MON-FRI and listing its next runs in Europe/Berlin.
+    - image: media/command.jpg
+      alt: Cron Explainer's /cron command in the slash-command list.
 ---
 
 ## :sparkle: What it does

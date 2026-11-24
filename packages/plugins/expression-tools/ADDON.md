@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/emoji-sheet.jpg
+      alt: Expression Tools' Copy URL, Copy markup and Clone rows on a custom emoji's sheet.
+    - image: media/clone.jpg
+      alt: Expression Tools' Clone sheet for copying an emoji to one of your servers, with its name and server search.
 ---
 
 ## :sparkle: What it does

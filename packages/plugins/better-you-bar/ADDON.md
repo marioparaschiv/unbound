@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/you-bar.jpg
+      alt: Better You Bar's Favorites and Settings buttons beside the notifications bell in the You bar under the channel list.
+    - image: media/settings.jpg
+      alt: Better You Bar's settings for the Favorites and Settings buttons and keeping favorites past the limit.
 ---
 
 ## :sparkle: What it does

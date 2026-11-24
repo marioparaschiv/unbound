@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/row.jpg
+      alt: Flashing Media Warning's Check for Flashing row in the long-press menu of a GIF message.
+    - image: media/report.jpg
+      alt: "Flashing Media Warning's report: a brightness timeline and frame-by-frame view of a GIF."
 ---
 
 ## :sparkle: What it does

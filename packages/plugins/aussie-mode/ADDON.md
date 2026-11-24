@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/chat.jpg
+      alt: Aussie Mode turning all of Discord upside down in a direct message.
 ---
 
 ## :sparkle: What it does

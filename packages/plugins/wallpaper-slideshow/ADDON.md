@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/wallpaper.jpg
+      alt: Wallpaper Slideshow showing a picture from its list as the chat background.
+    - image: media/next.jpg
+      alt: Wallpaper Slideshow after moving on to the next wallpaper in the list.
+    - image: media/settings.jpg
+      alt: "Wallpaper Slideshow's settings: the wallpaper links, how often they change, shuffle and Next wallpaper."
 ---
 
 ## :sparkle: What it does

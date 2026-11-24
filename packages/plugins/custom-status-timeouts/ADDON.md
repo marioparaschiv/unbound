@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/clear-after.jpg
+      alt: Custom Status Timeouts adding 15 minutes, 3 days and a week to the custom status Clear after list.
+    - image: media/settings.jpg
+      alt: Custom Status Timeouts' settings, a list of durations like 15m, 8h, 3d.
 ---
 
 ## :sparkle: What it does

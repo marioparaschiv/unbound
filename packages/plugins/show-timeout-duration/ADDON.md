@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/remaining.jpg
+      alt: Show Timeout Duration adding the time left on a member's timeout to their message timestamps.
 ---
 
 ## :sparkle: What it does

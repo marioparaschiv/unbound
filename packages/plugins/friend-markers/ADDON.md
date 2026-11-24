@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/markers.jpg
+      alt: Friend Markers' Friend label beside a friend's name in the Unbound server's chat.
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/symbols.jpg
+      alt: Math Notation showing TeX in messages as readable symbols, while a price like $5 stays as written.
 ---
 
 ## :sparkle: What it does

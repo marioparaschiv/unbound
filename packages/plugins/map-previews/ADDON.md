@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/maps.jpg
+      alt: Map Previews adding small pinned maps under messages with a Google Maps link and with plain coordinates.
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/counter.jpg
+      alt: Character Counter showing the draft's length out of Discord's 2000-character limit just above the message box.
+    - image: media/brand-color.jpg
+      alt: Character Counter with color thresholds off, drawn in Discord's brand color.
 ---
 
 ## :sparkle: What it does

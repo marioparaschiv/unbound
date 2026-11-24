@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/messages.jpg
+      alt: Platform Indicators showing each author's platforms after the message timestamp.
+    - image: media/profile.jpg
+      alt: Platform Indicators showing eternal's desktop and mobile icons, coloured by status, on their profile.
+    - image: media/settings.jpg
+      alt: Platform Indicators' settings for where icons show and the mobile status shape.
 ---
 
 ## :sparkle: What it does

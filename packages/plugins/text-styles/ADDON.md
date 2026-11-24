@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/styles.jpg
+      alt: Text Styles' mock, upside down, small caps and zalgo output sent in a direct message.
+    - image: media/command.jpg
+      alt: Text Styles' /mock command in the slash command list.
 ---
 
 ## :sparkle: What it does

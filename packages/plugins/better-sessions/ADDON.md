@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/devices.jpg
+      alt: 'Better Sessions in Settings > Devices: a named session, exact last-used times and a NEW badge on a device that signed in today.'
+    - image: media/rename.jpg
+      alt: Better Sessions' sheet for naming a session, opened by tapping it in Settings > Devices.
 ---
 
 ## :sparkle: What it does

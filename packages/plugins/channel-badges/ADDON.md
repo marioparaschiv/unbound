@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/type-badges.jpg
+      alt: Channel Badges with type badges on, labelling each channel as Text, News or Forum next to its Locked and Rules badges.
+    - image: media/channel-list.jpg
+      alt: Channel Badges labelling locked and rules channels in the Unbound server's channel list.
+    - image: media/settings.jpg
+      alt: Channel Badges' settings, with a switch for each badge.
 ---
 
 ## :sparkle: What it does

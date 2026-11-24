@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/button.jpg
+      alt: Calculator's button in the chat input while the draft is a calculation.
+    - image: media/result.jpg
+      alt: Calculator's dialog offering to insert the result, 73.47, or the full calculation.
 ---
 
 ## :sparkle: What it does

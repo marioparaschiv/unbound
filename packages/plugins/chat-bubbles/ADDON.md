@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/fit.jpg
+      alt: Chat Bubbles' default Fit to message layout in a direct message.
+    - image: media/cards.jpg
+      alt: Chat Bubbles with the Full-width cards layout.
+    - image: media/settings.jpg
+      alt: Chat Bubbles' settings, with a live preview and style presets.
 ---
 
 ## :sparkle: What it does

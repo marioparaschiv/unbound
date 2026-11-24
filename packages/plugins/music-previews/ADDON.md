@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/spotify.jpg
+      alt: Music Previews adds a 30-second preview player to a Spotify song embed in a direct message.
 ---
 
 ## :sparkle: What it does

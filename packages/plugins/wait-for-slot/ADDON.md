@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/command.jpg
+      alt: Wait For Slot's /wait-for-slot command, which joins a full voice channel as soon as someone leaves.
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/details.jpg
+      alt: Attachment Details listing each attachment's file name, type, size, dimensions and alt text.
+    - image: media/menu.jpg
+      alt: Attachment Details' row in the long-press menu of a message with attachments.
 ---
 
 ## :sparkle: What it does

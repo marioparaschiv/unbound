@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/command.jpg
+      alt: Kaomoji's /blush command in the slash-command autocomplete.
+    - image: media/messages.jpg
+      alt: Messages sent with Kaomoji's commands, each ending in its kaomoji.
 ---
 
 ## :sparkle: What it does

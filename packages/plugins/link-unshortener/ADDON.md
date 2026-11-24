@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/row.jpg
+      alt: Link Unshortener's Unshorten Link option in the long-press menu of a bit.ly link.
+    - image: media/real-link.jpg
+      alt: Link Unshortener's page showing where a bit.ly link really goes, with Open and Copy buttons.
 ---
 
 ## :sparkle: What it does

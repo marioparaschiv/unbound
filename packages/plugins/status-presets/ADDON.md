@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/presets.jpg
+      alt: Status Presets' Presets group on the Set your status screen, with four saved statuses.
 ---
 
 ## :sparkle: What it does

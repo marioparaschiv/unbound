@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/profile.jpg
+      alt: Decor showing a user's Decor avatar decoration on their profile.
+    - image: media/chat.jpg
+      alt: Decor showing a user's Decor avatar decoration next to their messages in chat.
 ---
 
 ## :sparkle: What it does

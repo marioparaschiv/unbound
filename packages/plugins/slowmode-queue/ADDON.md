@@ -1,7 +1,3 @@
----
-banner: media/banner.png
----
-
 ## :sparkle: What it does
 
 - :hourglass: While slowmode is cooling down, the send button keeps working. Your message waits and sends itself the moment the cooldown ends.

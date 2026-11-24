@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/menu.jpg
+      alt: Live Text's Copy Text option in the image viewer's menu for a photo of a menu.
 ---
 
 ## :sparkle: What it does

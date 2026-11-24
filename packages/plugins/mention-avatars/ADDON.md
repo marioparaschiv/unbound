@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/mentions.jpg
+      alt: Mention Avatars shows user avatars and role icons inside mentions in the Unbound server's chat.
+    - image: media/no-at.jpg
+      alt: Mention Avatars with the @ symbol hidden, so each mention shows only the avatar and name.
 ---
 
 ## :sparkle: What it does

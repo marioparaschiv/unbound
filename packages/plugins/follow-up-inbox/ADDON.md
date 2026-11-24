@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/list.jpg
+      alt: Follow-Up Inbox's list of messages still waiting for an answer.
+    - image: media/row.jpg
+      alt: Follow-Up Inbox's Follow Up Later and Follow-Ups rows in a message's long-press menu.
 ---
 
 ## :sparkle: What it does

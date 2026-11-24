@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/timeout-icon.jpg
+      alt: Show Hidden Things' timeout icon beside a timed-out member's name in the Unbound server's chat.
 ---
 
 ## :sparkle: What it does

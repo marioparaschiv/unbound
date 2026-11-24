@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/return-button.jpg
+      alt: Reply Jump Back's return button after jumping from a reply to the message it answers.
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/receipts.jpg
+      alt: Message Delivery Receipts marks your messages with a tick once Discord has them, and a clock while one is still sending.
+    - image: media/failed.jpg
+      alt: Message Delivery Receipts marks a message that failed to send with a warning sign.
 ---
 
 ## :sparkle: What it does

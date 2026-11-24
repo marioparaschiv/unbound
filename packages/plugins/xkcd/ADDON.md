@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/comic.jpg
+      alt: Xkcd Browser's sheet showing comic 927 with its title, date, alt text and navigation buttons.
+    - image: media/command.jpg
+      alt: Xkcd Browser's /xkcd command, which opens a comic by number, the latest, a random one or a title search.
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/menu.jpg
+      alt: Add Attachments' row in the long-press menu of your own message, for adding photos to a message you already sent.
 ---
 
 ## :sparkle: What it does

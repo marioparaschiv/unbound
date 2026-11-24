@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/profile.jpg
+      alt: Avatar Radius drawing a profile avatar as a rounded square with a 16-point corner radius.
+    - image: media/chat.jpg
+      alt: Avatar Radius drawing chat avatars as rounded squares with a 14-point corner radius.
+    - image: media/chat-square.jpg
+      alt: Avatar Radius with a corner radius of 0, giving square avatars.
 ---
 
 ## :sparkle: What it does

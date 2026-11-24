@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/game.jpg
+      alt: DOOM's shareware episode running inside Discord with on-screen controls.
+    - image: media/settings.jpg
+      alt: DOOM's settings page with its Play DOOM button.
+    - image: media/command.jpg
+      alt: DOOM's /doom command in the slash-command autocomplete of a direct message.
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/avatars-and-dots.jpg
+      alt: Channel Typing Indicators showing avatars and animated dots beside channels where people are typing.
+    - image: media/dots-only.jpg
+      alt: Channel Typing Indicators set to animated dots only.
+    - image: media/settings.jpg
+      alt: Channel Typing Indicators' settings, with filters and the appearance picker.
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/indicators.jpg
+      alt: Message Latency marks messages that took seconds or minutes to send with signal-bar icons beside the name.
+    - image: media/settings.jpg
+      alt: "Message Latency's settings: delay threshold, milliseconds, ignoring your own messages and legacy Android detection."
 ---
 
 ## :sparkle: What it does

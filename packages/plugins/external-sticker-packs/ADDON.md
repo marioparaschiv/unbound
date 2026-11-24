@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/picker.jpg
+      alt: External Sticker Packs' picker with two LINE sticker packs, opened from the chat input's sticker button.
+    - image: media/sent.jpg
+      alt: A LINE sticker sent as an image with External Sticker Packs, beside the chat input's sticker button.
 ---
 
 ## :sparkle: What it does

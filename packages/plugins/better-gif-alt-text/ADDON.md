@@ -1,7 +1,3 @@
----
-banner: media/banner.png
----
-
 ## :sparkle: What it does
 
 - :eye: VoiceOver and TalkBack read a GIF's tags or file name, such as 'GIF - cat dance', instead of just 'GIF'.

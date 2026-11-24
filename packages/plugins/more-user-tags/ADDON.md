@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/tags.jpg
+      alt: More User Tags adds Owner, Admin, Mod and Webhook tags beside names in the Unbound server's chat.
+    - image: media/settings.jpg
+      alt: "More User Tags' settings: which tags to show and how to color them."
 ---
 
 ## :sparkle: What it does

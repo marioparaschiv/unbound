@@ -1,5 +1,13 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/server-list.jpg
+      alt: Round Corners making server icons round again, with the selected server as a rounded square.
+    - image: media/chat.jpg
+      alt: Round Corners' pill-shaped message box and round chat bar buttons in a direct message.
+    - image: media/round-selected.jpg
+      alt: Round Corners with the selected server drawn round like every other server.
+    - image: media/settings.jpg
+      alt: Round Corners' settings, with a switch for each part of Discord it rounds.
 ---
 
 ## :sparkle: What it does

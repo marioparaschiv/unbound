@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/media-viewer.jpg
+      alt: AirPlay's button in the media viewer header while watching a video attachment.
 ---
 
 ## :sparkle: What it does

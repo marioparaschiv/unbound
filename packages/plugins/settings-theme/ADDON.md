@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Settings Theme showing the app theme behind User Settings.
+    - image: media/less-dim.jpg
+      alt: Settings Theme with the theme dimmed less, so more of it shows through.
 ---
 
 ## :sparkle: What it does

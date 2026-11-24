@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/menu-row.jpg
+      alt: Copy Command Mentions adding Copy Command Mention to the long-press menu of a bot's slash-command reply.
 ---
 
 ## :sparkle: What it does

@@ -1,7 +1,3 @@
----
-banner: media/banner.png
----
-
 ## :sparkle: What it does
 
 - :eye-slash: Your chats stay out of the app switcher: iOS shows a blur, Android a blank preview.

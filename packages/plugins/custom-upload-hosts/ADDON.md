@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Custom Upload Hosts' settings, choosing Catbox, Litterbox or a custom host and when files go there.
+    - image: media/custom-host.jpg
+      alt: Custom Upload Hosts pointed at a custom host, with its upload address, form field and response format.
 ---
 
 ## :sparkle: What it does

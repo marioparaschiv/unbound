@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/share-menu.jpg
+      alt: Copy Image adding a Copy Image item to the media viewer's menu.
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,13 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/default.jpg
+      alt: Show Me Your Name adding each author's username after their display name in chat.
+    - image: media/username-first.jpg
+      alt: Show Me Your Name with the username first and the display name in brackets.
+    - image: media/replies.jpg
+      alt: Show Me Your Name also applied to the names in reply previews.
+    - image: media/settings.jpg
+      alt: "Show Me Your Name's settings: display mode, friend nicknames, global names and replies."
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/korean.jpg
+      alt: Romanize showing a Korean message in Latin letters, with a button to copy it.
+    - image: media/russian.jpg
+      alt: Romanize reading a Russian message in Latin letters.
+    - image: media/row.jpg
+      alt: Romanize's row in the long-press menu of a message written in Korean.
 ---
 
 ## :sparkle: What it does

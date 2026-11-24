@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/channel-header.jpg
+      alt: Clean Channel Names showing #development-chat as "development chat" in the chat header.
+    - image: media/channel-list.jpg
+      alt: Clean Channel Names showing the Unbound server's channels as plain words, with spaces instead of dashes.
+    - image: media/settings.jpg
+      alt: Clean Channel Names' settings, with dashes as spaces and channels that keep their original names.
 ---
 
 ## :sparkle: What it does

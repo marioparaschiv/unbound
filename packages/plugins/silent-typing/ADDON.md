@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/toggle.jpg
+      alt: Silent Typing's eye button in the chat input, crossed out so nobody sees that you are typing.
 ---
 
 ## :sparkle: What it does

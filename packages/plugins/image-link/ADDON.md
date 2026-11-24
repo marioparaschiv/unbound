@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/link-kept.jpg
+      alt: Image Link keeping the link text above an embedded image that was sent as a bare link.
 ---
 
 ## :sparkle: What it does

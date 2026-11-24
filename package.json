@@ -72,7 +72,6 @@
 		"plugins:lint": "bun run --filter @unbound-app/plugins --filter @unbound-plugins/shared --filter @unbound-app/plugin-scripts lint",
 		"plugins:typecheck": "bun packages/plugin-scripts/src/typecheck-plugins.ts",
 		"plugins:build": "cd packages/plugins && bun run build",
-		"plugins:banners": "bun packages/plugin-scripts/src/generate-plugin-banners.ts",
 		"plugins:readme": "bun packages/plugin-scripts/src/generate-plugins-readme.ts && bun packages/plugin-scripts/src/generate-issue-templates.ts",
 		"plugins:issue-templates": "bun packages/plugin-scripts/src/generate-issue-templates.ts",
 		"plugins:sync-icons": "bun packages/plugin-scripts/src/sync-plugin-icons.ts",

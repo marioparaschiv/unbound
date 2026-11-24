@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/tenor.jpg
+      alt: GIF Provider Switcher showing Tenor's trending GIFs in Discord's GIF picker, with the provider button by the search field.
+    - image: media/giphy.jpg
+      alt: GIF Provider Switcher set to Giphy, with Giphy's results for a search in the GIF picker.
+    - image: media/settings.jpg
+      alt: GIF Provider Switcher's settings for choosing Tenor, Giphy or Klipy.
 ---
 
 ## :sparkle: What it does

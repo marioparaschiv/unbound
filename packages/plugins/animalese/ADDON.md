@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: "Animalese's settings: voice, letter length, volume, letters per message and quiet time for messages read aloud."
 ---
 
 ## :sparkle: What it does

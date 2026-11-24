@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/button.jpg
+      alt: Share Location's button in the chat input, which adds a map link to where you are.
+    - image: media/link.jpg
+      alt: A Google Maps link to your location, added to a message by Share Location.
 ---
 
 ## :sparkle: What it does

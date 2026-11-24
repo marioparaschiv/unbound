@@ -91,9 +91,8 @@ function checkPlugin(slug: string): void {
 	run(['bun', 'run', 'plugins:validate']);
 }
 
-function refreshAssets(slug: string): void {
+function refreshAssets(): void {
 	run(['bun', 'run', 'plugins:sync-icons']);
-	run(['bun', 'run', 'plugins:banners', slug]);
 	run(['bun', 'run', 'plugins:readme']);
 }
 
@@ -162,7 +161,7 @@ function readRequest(argv: string[]): ReleaseRequest {
 }
 
 /**
- * @description Releases one plugin in one go: checks it, syncs icons, draws its banner and the README, then commits
+ * @description Releases one plugin in one go: checks it, syncs icons, writes the README, then commits
  * on a branch, opens a pull request and squash-merges it.
  * @param argv The command-line arguments.
  */
@@ -176,7 +175,7 @@ export function releasePlugin(argv: string[]): void {
 
 	ensureReleasable();
 	checkPlugin(request.slug);
-	refreshAssets(request.slug);
+	refreshAssets();
 	ship(request);
 }
 

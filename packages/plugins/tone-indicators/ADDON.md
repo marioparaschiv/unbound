@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/explained.jpg
+      alt: Tone Indicators turning tone tags like /j and /srs into pills that spell out their meaning.
+    - image: media/tags-only.jpg
+      alt: Tone Indicators with Spell out meanings off, showing only the tags as pills.
+    - image: media/settings.jpg
+      alt: Tone Indicators' settings with a custom tag added.
 ---
 
 ## :sparkle: What it does

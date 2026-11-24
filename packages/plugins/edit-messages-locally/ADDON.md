@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/row.jpg
+      alt: Edit Messages Locally's Edit Locally row in a message's long-press menu.
+    - image: media/dialog.jpg
+      alt: 'Before: Edit Messages Locally''s dialog rewriting eternal''s "yeah, sending them tonight" on this device only.'
+    - image: media/edited.jpg
+      alt: "After: the same chat with eternal's message showing the local edit, which only you see."
 ---
 
 ## :sparkle: What it does

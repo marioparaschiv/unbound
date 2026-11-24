@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/preview.jpg
+      alt: Font Attachment Preview's sheet showing each attached font at three sizes.
+    - image: media/row.jpg
+      alt: Font Attachment Preview's Preview Font row in the long-press menu of a message with font files.
 ---
 
 ## :sparkle: What it does

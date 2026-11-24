@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/chat.jpg
+      alt: Uwuifier turning sent messages into uwu speak, with its toggle in the chat input.
+    - image: media/command.jpg
+      alt: Uwuifier's /uwu command, which sends one message in uwu speak.
+    - image: media/settings.jpg
+      alt: "Uwuifier's settings: Persist State, Auto Disable, Stutter and Faces."
 ---
 
 ## :sparkle: What it does

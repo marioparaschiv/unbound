@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/parts.jpg
+      alt: Split Large Messages sending a draft over the length limit as several messages in order, with the code block reopened in each part.
 ---
 
 ## :sparkle: What it does

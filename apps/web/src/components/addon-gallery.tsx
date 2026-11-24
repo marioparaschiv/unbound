@@ -32,7 +32,7 @@ function isUnderFade(thumbnail: HTMLElement, row: HTMLElement): boolean {
 }
 
 /**
- * @description Shows a store page's gallery as one row that pans sideways, by touch, trackpad or a mouse
+ * @description Shows a store page's gallery as one row, centred while it fits, that pans sideways by touch, trackpad or a mouse
  * drag, its edges fading while there is more past them. An entry opens in a lightbox that grows
  * out of its thumbnail, and closing shrinks it back into the thumbnail of the entry last shown.
  * @param props The gallery's resolved entries, in frontmatter order.
@@ -115,7 +115,7 @@ function AddonGallery({ entries }: AddonGalleryProps) {
 			>
 				<ul
 					aria-label='Gallery'
-					className='flex [--gap:--spacing(3)] gap-(--gap) drag-scroll-room'
+					className='flex justify-center-safe [--gap:--spacing(3)] gap-(--gap) drag-scroll-room'
 				>
 					{entries.map((entry, index) => (
 						<li

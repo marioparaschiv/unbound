@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/profile.jpg
+      alt: Valid User opening the profile behind an @unknown-user mention instead of Discord's no-access notice.
 ---
 
 ## :sparkle: What it does

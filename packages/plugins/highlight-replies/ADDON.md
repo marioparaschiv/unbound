@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/reply.jpg
+      alt: Highlight Replies gives a reply to your message the mention highlight, even though the reply didn't ping you.
 ---
 
 ## :sparkle: What it does

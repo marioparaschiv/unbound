@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/results.jpg
+      alt: Poll Results showing a poll's standings before you vote, with Go back to vote below.
 ---
 
 ## :sparkle: What it does

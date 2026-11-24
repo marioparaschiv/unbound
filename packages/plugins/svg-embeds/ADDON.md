@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/svg.jpg
+      alt: Image Embeds showing SVG attachments as pictures in chat instead of files.
+    - image: media/avif.jpg
+      alt: Image Embeds showing an AVIF photo inline in chat.
 ---
 
 ## :sparkle: What it does

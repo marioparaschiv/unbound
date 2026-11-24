@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/menu.jpg
+      alt: Background Remover's Remove Background row in the long-press menu of a photo.
+    - image: media/cutout.jpg
+      alt: Background Remover's transparent cutout of the photo, opened from the message being written.
 ---
 
 ## :sparkle: What it does

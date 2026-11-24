@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Blur NSFW's settings for blurring attachments and embedded media.
 ---
 
 ## :sparkle: What it does

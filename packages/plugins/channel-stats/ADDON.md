@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/stats.jpg
+      alt: "Channel Stats' reply, shown only to you, summing up a chat: who talks most, the busiest hours and messages per day."
+    - image: media/command.jpg
+      alt: Channel Stats' /channelstats command in the slash-command list.
 ---
 
 ## :sparkle: What it does

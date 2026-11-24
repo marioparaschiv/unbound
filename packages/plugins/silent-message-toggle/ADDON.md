@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/toggle.jpg
+      alt: Silent Message Toggle's bell button in the chat input, turned on so the next message skips notifications.
+    - image: media/sent.jpg
+      alt: A message sent silently with Silent Message Toggle, marked with Discord's silent icon.
 ---
 
 ## :sparkle: What it does

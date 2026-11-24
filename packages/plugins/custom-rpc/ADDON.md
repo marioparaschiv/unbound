@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/profile.jpg
+      alt: Custom RPC showing a Rich Presence the user wrote themselves on their profile.
+    - image: media/settings.jpg
+      alt: "Custom RPC's settings: name, activity type, details, state, timer, images and buttons."
 ---
 
 ## :sparkle: What it does

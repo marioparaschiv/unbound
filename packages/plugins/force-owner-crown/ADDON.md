@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/crown.jpg
+      alt: Force Owner Crown's Server Owner crown beside the owner's name in the Unbound server's chat.
 ---
 
 ## :sparkle: What it does

@@ -377,7 +377,6 @@
       "name": "@unbound-app/plugin-scripts",
       "devDependencies": {
         "@mdx-js/mdx": "^3.1.1",
-        "@resvg/resvg-js": "^2.6.2",
         "@types/bun": "catalog:",
         "@types/react": "catalog:react",
         "@unbound-app/api": "workspace:*",

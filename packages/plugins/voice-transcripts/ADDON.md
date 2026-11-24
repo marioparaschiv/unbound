@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/row.jpg
+      alt: Voice Transcripts' Transcribe row in a voice message's long-press menu.
+    - image: media/transcript.jpg
+      alt: "Voice Transcripts' transcript page: timed passages of a voice message to tap and play from, with Stop and Copy."
 ---
 
 ## :sparkle: What it does

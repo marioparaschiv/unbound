@@ -1,7 +1,3 @@
----
-banner: media/banner.png
----
-
 ## :sparkle: What it does
 
 - :msg: The reaction emoji picker stays open after you pick an emoji, so several reactions go on in one visit.

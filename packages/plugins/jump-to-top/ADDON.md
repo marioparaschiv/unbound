@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/button.jpg
+      alt: Jump To Top's up arrow above Discord's jump-to-present arrow while scrolled back in a direct message.
+    - image: media/channel-row.jpg
+      alt: Jump To Top's Jump to top row in a channel's long-press menu.
 ---
 
 ## :sparkle: What it does

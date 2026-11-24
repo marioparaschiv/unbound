@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/profile.jpg
+      alt: Friends Since's Friends Since date on a friend's profile.
 ---
 
 ## :sparkle: What it does

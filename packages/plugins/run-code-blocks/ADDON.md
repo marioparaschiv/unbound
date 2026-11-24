@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/output.jpg
+      alt: Run Code Blocks showing what the Python code printed and its exit code.
+    - image: media/row.jpg
+      alt: Run Code Blocks' Run python code row in the long-press menu of a message with a Python code block.
 ---
 
 ## :sparkle: What it does

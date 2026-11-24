@@ -1,5 +1,13 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/backticks.jpg
+      alt: Send Timestamps turning a backticked time into a timestamp that shows in each reader's time zone.
+    - image: media/picker.jpg
+      alt: Send Timestamps' clock button in the chat input opening a date and time picker.
+    - image: media/styles.jpg
+      alt: Send Timestamps listing every timestamp style as it will read, to insert or copy.
+    - image: media/command.jpg
+      alt: Send Timestamps' /timestamp command in the slash command list.
 ---
 
 ## :sparkle: What it does
