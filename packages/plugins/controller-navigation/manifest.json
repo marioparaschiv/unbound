@@ -13,5 +13,20 @@
 		"min": "1.0.0"
 	},
 	"icon": "KeyboardIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"android": {
+			"capabilities": [
+				"native.java.hooks",
+				"native.java.invoke"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "a2bbd6d8ec9f78c12f775195ccbc2170766dcf1c9cf1d4ef5aa181bb52fdf2bdd145bc20ec2de3255f5dd36b5c1a12b476feaab565a1b5c7ecbc3309606a26a1"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "0p1l1Ng+pM3fFqbxvDnc8wK7EiO9MBYHBgh15gimWc4e4FL/o7mZ2b/y3EAOumn8Dbwblgq00EDbKRxR5B/dBw=="
+	}
 }

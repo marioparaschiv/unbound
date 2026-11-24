@@ -13,5 +13,22 @@
 		"min": "1.0.0"
 	},
 	"icon": "VideoIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.objc.blocks",
+				"native.objc.classes",
+				"native.objc.invoke"
+			]
+		},
+		"android": {}
+	},
+	"bytecode": {
+		"98": "6036a28d12c5aa9570e371327b53a3eaf1675b93c5533907242068733cb8b104393278bdcc044cc8f7d34215b3c2ba858a70a04dd9b4fc2a5309cf01e1d26764"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "BuJ5fz7fXVwAOcZsV89Gj85t+/PlkD6WoGAzBaDsjyn/pVnOh6KIB7QKUzcmCR2cGrURJJCAqaQgP3ROQLqCDQ=="
+	}
 }

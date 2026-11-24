@@ -26,5 +26,15 @@
 	},
 	"icon": "EyeSlashIcon",
 	"main": "index.tsx",
-	"replaces": ["unbound.hide-buttons", "unbound.hide-gift-button"]
+	"replaces": [
+		"unbound.hide-buttons",
+		"unbound.hide-gift-button"
+	],
+	"bytecode": {
+		"98": "e25b633111a0400073212c3b2bace821c114c0fb9be38149ea53a143006f881e5574402d35b530f0ef53a11407a9462f897fd2d8dd4c88e4ae6f365702e38a1f"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "nm3QpZnLW65552uchojCqaVFHHhCeCz4LLjjLk6Pi0FyzReW4uI1SHRauv62bLsKdOIgS5jtFXp0lsQOHVddBw=="
+	}
 }

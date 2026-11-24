@@ -17,5 +17,12 @@
 		"min": "1.0.0"
 	},
 	"icon": "GifIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "2ebb867d24ff0616d0bae4a66c937d6d00da747b980b5976f489b9a7596c8ef6c776152b4ea1de1ba85d058d23ba385e772c6c6dc50e0ab3de79e2be67a8a81e"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "aYwlCf+XNOguCfzzCuiBVDc1ushbcxAVOMSvRj8rhElxTvuAskvbzOHwvGwoahGp90gbFY7IRt4e9gnk3E92DQ=="
+	}
 }

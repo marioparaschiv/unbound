@@ -21,5 +21,12 @@
 		"min": "1.0.0"
 	},
 	"icon": "MicrophoneIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "6a523eae211ad43772bfb7c6f4c1564c4f0208a92f8353d8bf289a525a9744a5013a472963bd0ce23c077302a9e2aec7a740ebbfb347a83c9dbf630fdb08459a"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "qs0s4QXQNqlYxeJj9nIrXfWp9UyItMmOzPW6WXrUhdPkZb5VK4x+jVqKImGq82ow61rFZpHP5loPIiOfGsX/AQ=="
+	}
 }

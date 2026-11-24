@@ -30,5 +30,12 @@
 	},
 	"icon": "ic_swipe_reply_24px",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"bytecode": {
+		"98": "7f61e806071df5ef71209b3918fd38d93e0991aeeb9d39be3a4d55979c2bb98bb4482e42230ce4c2883542c843b559830dcfd073333cdbbdb8cc19ebacc27ea3"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "IN2zxkb/gXUmf2yckz2qUBLlbJPCxdHOQrg5+eXihV1ROoRFuAN8nY3Mp0UMpi3nuKoMli/W0MjNjKij39nuBg=="
+	}
 }

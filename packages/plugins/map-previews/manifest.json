@@ -13,5 +13,12 @@
 		"min": "1.0.0"
 	},
 	"icon": "GlobeEarthIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"bytecode": {
+		"98": "2fe97f15e4e1a0c9a05346d9e530b3a4b14e27dd7e7d9a59c68735ea8341694f05f656eaf597e0dd91e6f1ddc6abd0ae11e2d3037112207b95743979fa836834"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "q0slI68XP1ZzoZfsyXcWnNSGucmCtijsflMaNDmYrh3G8Sg+YgDtjHj8g46pbdKu6vgVRDJXzbOKkq64FznXCw=="
+	}
 }

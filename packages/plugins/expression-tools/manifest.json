@@ -25,11 +25,20 @@
 		}
 	],
 	"version": "1.1.1",
-	"permissions": ["account-token"],
+	"permissions": [
+		"account-token"
+	],
 	"unbound": {
 		"min": "1.0.0"
 	},
 	"icon": "ReactionIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"bytecode": {
+		"98": "95fac479a3bb618696fd9511538deec41ce08ae2df424ac28542c5c76717da3e69e3b63d83aec1f568495b7825be8861ae8c4cfa9c7525fc39ab41a03066285a"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "F/AmYmO0aOhSXWUvbFCwZ/R+ITRV9v1UBeKOfI4vbCaDdr9T+Pz4z9KRxuonYGNxEsCRPBFD2Kx7l49jjSRdCw=="
+	}
 }
