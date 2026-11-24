@@ -34,6 +34,10 @@ declare global {
 		runApplication(appKey: string, appParameters: RNAppParameters, displayMode?: number): void;
 	};
 
+	/**
+	 * Fabric's surface registry, which restarts surfaces such as plugin surfaces.
+	 * @internal
+	 */
 	type RNSurfaceRegistry = {
 		renderSurface: (appKey: string, ...rest: unknown[]) => void;
 	};
