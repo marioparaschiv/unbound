@@ -55,7 +55,7 @@ async function start({ profile = () => <View />, isMobileOnline = true, ui = fak
 	});
 	metro.register({ colors: { STATUS_ONLINE: 'x' }, internal: {} });
 	metro.register({ getLanguages: () => [], getSystemLocale: () => 'en-US', intl: {} });
-	metro.register({ Svg: View, Path: View });
+	metro.register({ Svg: View, Path: View, SvgXml: View });
 	metro.register(rowModule, USER_ROW_PATH);
 	metro.register({ default: profile }, PROFILE_PATH);
 	metro.register({ generateMessageRowData: () => ({ message: {} }) });

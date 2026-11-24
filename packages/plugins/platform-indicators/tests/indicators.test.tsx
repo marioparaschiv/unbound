@@ -43,7 +43,7 @@ beforeEach(async () => {
 	discord.intl.currentLocale = 'en-US';
 	metro.register({ colors: { STATUS_ONLINE: 'x' }, internal: {} });
 	metro.register(discord);
-	metro.register({ Svg: View, Path: View });
+	metro.register({ Svg: View, Path: View, SvgXml: View });
 	metro.register(userRow, USER_ROW_PATH);
 	metro.register(profile, PROFILE_PATH);
 	metro.register(rowData);
