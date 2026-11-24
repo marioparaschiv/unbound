@@ -124,7 +124,8 @@ function FlashSheet({ media, bridge, folder }: FlashSheetProps) {
 			<Discord.BottomSheetTitleHeader title={media.name} />
 			<View style={styles.body}>
 				<Discord.InlineNotice
-					type={report.flagged ? 'warning' : 'positive'}
+					// Android builds style only info, warning and critical notices; 'positive' crashes the sheet.
+					type={report.flagged ? 'warning' : 'info'}
 					message={verdict(report)}
 				/>
 				<Timeline report={report} index={index} />
