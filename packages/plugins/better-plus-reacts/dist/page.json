@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/typing.jpg",
+				"alt": "Typing ++ and the fire emoji's name with Better Plus Reacts to react to the second-last message."
+			},
+			{
+				"image": "media/reacted.jpg",
+				"alt": "The second-last message reacted to with a fire emoji by Better Plus Reacts."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/typing.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwBviYZ1lFaplmug5wg=",
+			"bytes": 342200
+		},
+		{
+			"path": "media/reacted.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwBveXdllGbYwouw+Tg=",
+			"bytes": 332107
+		}
+	]
+}

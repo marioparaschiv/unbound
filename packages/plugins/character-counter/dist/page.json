@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/counter.jpg",
+				"alt": "Character Counter showing the draft's length out of Discord's 2000-character limit just above the message box."
+			},
+			{
+				"image": "media/brand-color.jpg",
+				"alt": "Character Counter with color thresholds off, drawn in Discord's brand color."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/counter.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwB9hbd1hWUHeG+H9+g=",
+			"bytes": 362139
+		},
+		{
+			"path": "media/brand-color.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwB/hqZ1k2U0eG+W96g=",
+			"bytes": 334580
+		}
+	]
+}

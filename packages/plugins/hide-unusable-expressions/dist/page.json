@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/emoji-picker.jpg",
+				"alt": "With Hide Unusable Expressions on, the emoji picker goes straight from Frequently Used to emojis you can send, with no locked server packs or Nitro banner."
+			},
+			{
+				"image": "media/off.jpg",
+				"alt": "For comparison, the same emoji picker with the plugin's emoji setting off: locked server packs and a Nitro banner fill the list."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Hide Unusable Expressions' settings for hiding unusable emojis and stickers."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/emoji-picker.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "iQgGEwJ4ggh4eXZaeXOQKAc=",
+			"bytes": 530788
+		},
+		{
+			"path": "media/off.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "yhcGAwJ5gAeHioVbAMhSBRk=",
+			"bytes": 462369
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCHf4d3g4FzP9H4xiw=",
+			"bytes": 156292
+		}
+	]
+}

@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/command.jpg",
+				"alt": "Follow Voice User's /follow command in the slash-command autocomplete."
+			},
+			{
+				"image": "media/following.jpg",
+				"alt": "Follow Voice User confirming it is following a friend in voice."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Follow Voice User's settings: follow only while in voice, and leave when they leave."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/command.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCfiKZ0llYUeG+4+eY=",
+			"bytes": 317058
+		},
+		{
+			"path": "media/following.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwCfZ6Z1hlQllZ94+Kk=",
+			"bytes": 324226
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwB4j4d3coF0T9D39hs=",
+			"bytes": 147041
+		}
+	]
+}

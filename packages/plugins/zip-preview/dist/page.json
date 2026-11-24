@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/files.jpg",
+				"alt": "Zip Preview listing every file inside a zip archive with its size, without saving it."
+			},
+			{
+				"image": "media/row.jpg",
+				"alt": "Zip Preview's Show Files row in the long-press menu of a message with a zip archive."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/files.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwB5cGeHinh2h3+YBmk=",
+			"bytes": 210662
+		},
+		{
+			"path": "media/row.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwBrYAiHhINniI/9pS4=",
+			"bytes": 206960
+		}
+	]
+}

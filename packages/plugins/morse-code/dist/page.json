@@ -1,0 +1,56 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/command.jpg",
+				"alt": "Morse Code's /morse command in the slash-command autocomplete."
+			},
+			{
+				"image": "media/menu.jpg",
+				"alt": "Morse Code's Decode Morse and Play Morse options in a Morse message's long-press menu."
+			},
+			{
+				"image": "media/decoded.jpg",
+				"alt": "Morse Code decoding a Morse message into plain text."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Morse Code's settings: play Morse as sound, vibration or both, and its speed."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/command.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwCPh4Z0k2WViG/E+Jc=",
+			"bytes": 301639
+		},
+		{
+			"path": "media/menu.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwB7YBiGdXOImI9vIgc=",
+			"bytes": 185572
+		},
+		{
+			"path": "media/decoded.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wvcFCwBodwinin8kmHmPqfg=",
+			"bytes": 111705
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwBpjkaHYHOHhWK/xwg=",
+			"bytes": 158610
+		}
+	]
+}

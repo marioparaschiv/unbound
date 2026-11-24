@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/profile.jpg",
+				"alt": "Valid User opening the profile behind an @unknown-user mention instead of Discord's no-access notice."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/profile.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wvcFCwBpdwiXeX81l4mPqvg=",
+			"bytes": 205068
+		}
+	]
+}

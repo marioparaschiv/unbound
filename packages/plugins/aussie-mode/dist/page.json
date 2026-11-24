@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/chat.jpg",
+				"alt": "Aussie Mode turning all of Discord upside down in a direct message."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCQaZh5ipZMm4CLCNg=",
+			"bytes": 326620
+		}
+	]
+}

@@ -1,0 +1,56 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/dearrowed.jpg",
+				"alt": "DeArrow replacing a clickbait YouTube embed's title and thumbnail with community-voted ones."
+			},
+			{
+				"image": "media/original.jpg",
+				"alt": "The same YouTube embed with DeArrow by default off, showing the original clickbait title and thumbnail."
+			},
+			{
+				"image": "media/menu-toggle.jpg",
+				"alt": "DeArrow's Show Original Embed row in a message's long-press menu."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "DeArrow's settings: what to replace, dearrow by default and the menu toggle."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/dearrowed.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "CPgJCwJXkymZb3aUxoCuS/g=",
+			"bytes": 359538
+		},
+		{
+			"path": "media/original.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xgcGAwJHoVmIX5HIZolfA7o=",
+			"bytes": 358336
+		},
+		{
+			"path": "media/menu-toggle.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwBsYBiHdXJ3iI/t9U4=",
+			"bytes": 200257
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCXjAhog2pYTYX/lQc=",
+			"bytes": 170402
+		}
+	]
+}

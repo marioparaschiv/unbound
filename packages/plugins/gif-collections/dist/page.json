@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/picker.jpg",
+				"alt": "GIF Collections' Reactions, Science and Space collection tiles under Favorites in the GIF picker."
+			},
+			{
+				"image": "media/add-sheet.jpg",
+				"alt": "GIF Collections' Add to Collection sheet, with a GIF's collections ticked and a New collection row."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/picker.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "CQgGAwCHcEZ3o5j0eICVB3g=",
+			"bytes": 352557
+		},
+		{
+			"path": "media/add-sheet.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwB7ggeGe2eViI6/ZQo=",
+			"bytes": 140288
+		}
+	]
+}

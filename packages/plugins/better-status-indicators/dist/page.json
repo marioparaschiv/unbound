@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/profile-thick.jpg",
+				"alt": "Better Status Indicators with a thicker ring and Discord's status dot kept."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Better Status Indicators' settings for the status dot, ring thickness and offline rings."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/profile-thick.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "yAcKEwR3f3d3dYVmaImP9cg=",
+			"bytes": 381883
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwBpj0Z3YHOIhVC/xwg=",
+			"bytes": 171443
+		}
+	]
+}

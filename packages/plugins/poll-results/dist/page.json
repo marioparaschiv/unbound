@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/results.jpg",
+				"alt": "Poll Results showing a poll's standings before you vote, with Go back to vote below."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/results.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwAMowu3bGl2+Ab1GAU=",
+			"bytes": 256948
+		}
+	]
+}

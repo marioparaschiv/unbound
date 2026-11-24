@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/dimmed.jpg",
+				"alt": "Night Images dimming a bright white photo in a dark chat while a dark night photo above it stays as it was."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Night Images' settings: when to dim, night hours, brightness threshold and how much to dim."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/dimmed.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "yPcJAwBYkjmIb4S2gGY5Kfg=",
+			"bytes": 280658
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xgcCAwBbYBl3iHVYhKxvBXk=",
+			"bytes": 246882
+		}
+	]
+}

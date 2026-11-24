@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/call.jpg",
+				"alt": "Call Join Confirmation asking before starting a call in a direct message."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Call Join Confirmation's settings for asking before voice channels and calls."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/call.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "w/cFCwBoeAeXiH8omHiPmfg=",
+			"bytes": 115973
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCGf4h3g5FjP9H3xjw=",
+			"bytes": 138558
+		}
+	]
+}

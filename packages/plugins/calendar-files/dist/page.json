@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/event.jpg",
+				"alt": "Calendar Files previewing a calendar invite with an Add to Calendar button."
+			},
+			{
+				"image": "media/menu.jpg",
+				"alt": "Calendar Files' Show calendar event row in the long-press menu of a message with an .ics invite."
+			},
+			{
+				"image": "media/command.jpg",
+				"alt": "Calendar Files' /event command in the slash-command list."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/event.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "w/cFCwBYhwiYiX4mmIifmfk=",
+			"bytes": 137592
+		},
+		{
+			"path": "media/menu.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwB5cFiIiXpniI+2Nwk=",
+			"bytes": 212006
+		},
+		{
+			"path": "media/command.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCPmKZ1lVYFeG/Z+Og=",
+			"bytes": 324769
+		}
+	]
+}

@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/quick-look.jpg",
+				"alt": "PDF Viewer opening a PDF attachment from a direct message in iOS Quick Look."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/quick-look.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwCPeId1lWSFpJ+H+Jk=",
+			"bytes": 300589
+		}
+	]
+}

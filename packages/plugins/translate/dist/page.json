@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/inline.jpg",
+				"alt": "Translate showing an English translation under a German message, with its language codes."
+			},
+			{
+				"image": "media/row.jpg",
+				"alt": "Translate's Translate row in the long-press menu of a message in Spanish."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Translate's settings: translation service, source and target languages, and where translations show."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/inline.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwB/iYdlhWREpZ+p96s=",
+			"bytes": 354541
+		},
+		{
+			"path": "media/row.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwB8YBh3hXJmiI/9tT4=",
+			"bytes": 197996
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwCPczdmgXB4TX/NFAo=",
+			"bytes": 266747
+		}
+	]
+}

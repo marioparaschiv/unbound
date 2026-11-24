@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/before.jpg",
+				"alt": "A DM before Client Side Block hides anything: spam from Alex and a spoiler sit between the real messages."
+			},
+			{
+				"image": "media/after.jpg",
+				"alt": "The same DM with Client Side Block hiding Alex and the keyword \"spoiler\": only the real conversation is left."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Client Side Block's settings, with hidden users, hidden keywords and switches for ignored users and replies."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/before.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "w/cFAwCvd3Zll2d2gGY4SPY=",
+			"bytes": 310066
+		},
+		{
+			"path": "media/after.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCPeYZ2hWYzpY+L+Ng=",
+			"bytes": 321012
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwCImgdoZnllW3i/8zU=",
+			"bytes": 206067
+		}
+	]
+}

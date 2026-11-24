@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/created.jpg",
+				"alt": "Friend Invites' reply with a new friend invite link, when it expires and its maximum uses."
+			},
+			{
+				"image": "media/command.jpg",
+				"alt": "Friend Invites' /friend-invites command with its create, view and revoke subcommands in the autocomplete."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/created.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwCfd6d2imVIlI97+Nk=",
+			"bytes": 335573
+		},
+		{
+			"path": "media/command.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwCPhbd1mWQZiF/5fPI=",
+			"bytes": 357864
+		}
+	]
+}

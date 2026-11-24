@@ -1,0 +1,56 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/default.jpg",
+				"alt": "Show Me Your Name adding each author's username after their display name in chat."
+			},
+			{
+				"image": "media/username-first.jpg",
+				"alt": "Show Me Your Name with the username first and the display name in brackets."
+			},
+			{
+				"image": "media/replies.jpg",
+				"alt": "Show Me Your Name also applied to the names in reply previews."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Show Me Your Name's settings: display mode, friend nicknames, global names and replies."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/default.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCfhYaGhleHXzz0dpg=",
+			"bytes": 387480
+		},
+		{
+			"path": "media/username-first.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCfhoaGhleHXz30dpc=",
+			"bytes": 387938
+		},
+		{
+			"path": "media/replies.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCfdYeGhleHXzz0dpg=",
+			"bytes": 391057
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcGAwCJiQd3d3iWa4fvRgU=",
+			"bytes": 230121
+		}
+	]
+}

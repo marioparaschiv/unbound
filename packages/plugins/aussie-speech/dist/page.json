@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/messages.jpg",
+				"alt": "Aussie Speech: plain English typed in the message box, and earlier messages it sent rewritten into Aussie English."
+			},
+			{
+				"image": "media/toggle.jpg",
+				"alt": "Aussie Speech's toggle in the chat input, on, while a plain-English message is written."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Aussie Speech's settings for keeping the toggle on in every channel or turning it off after one message."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/messages.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwCfeJd1mGY1lY+M+Og=",
+			"bytes": 343655
+		},
+		{
+			"path": "media/toggle.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwBvh4ZkklXJl1yg9yg=",
+			"bytes": 345426
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCIf2h3cYGVT9D61ws=",
+			"bytes": 148322
+		}
+	]
+}

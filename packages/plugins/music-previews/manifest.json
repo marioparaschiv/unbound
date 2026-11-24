@@ -17,5 +17,12 @@
 		"min": "1.0.0"
 	},
 	"icon": "PlayIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "c3bf13777c72138333b9c9802b42de85445647a3a7dfa6a809cb4da8d38dbd0d056c78311e27fc54e1119efd163008e4b421a86e5bbd9c124ca1e7911d38bda5"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "WXb/bfNtwEtihybRbyUappBbFwkdSBlJIr2ioGjSug7WIaJKnCMIgLkWnUNkmJ/NOcT44WDIEmsZhYZ90q3ICQ=="
+	}
 }

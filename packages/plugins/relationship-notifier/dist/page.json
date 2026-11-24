@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/settings.jpg",
+				"alt": "Relationship Notifier's settings for which removals to report: friends, friend requests, servers and group chats."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcGAwCWfAhok4h3P6P+ZDg=",
+			"bytes": 226533
+		}
+	]
+}

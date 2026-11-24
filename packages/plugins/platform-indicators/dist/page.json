@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/messages.jpg",
+				"alt": "Platform Indicators showing each author's platforms after the message timestamp."
+			},
+			{
+				"image": "media/profile.jpg",
+				"alt": "Platform Indicators showing eternal's desktop and mobile icons, coloured by status, on their profile."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Platform Indicators' settings for where icons show and the mobile status shape."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/messages.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCfeZZ2l1dFlI+N9/o=",
+			"bytes": 334548
+		},
+		{
+			"path": "media/profile.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "R/cJGwJ2b2d3doVWiYO/d/k=",
+			"bytes": 313460
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCWfihpkIV3L7P9ckw=",
+			"bytes": 181790
+		}
+	]
+}

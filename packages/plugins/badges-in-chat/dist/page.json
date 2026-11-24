@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/chat.jpg",
+				"alt": "Badges In Chat showing each person's profile badge next to their name in a direct message."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwCPaJd2l1ZFc5+K99g=",
+			"bytes": 333501
+		}
+	]
+}

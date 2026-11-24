@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/presets.jpg",
+				"alt": "Status Presets' Presets group on the Set your status screen, with four saved statuses."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/presets.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xfcFAwBIfbVndYAxuICEClg=",
+			"bytes": 211833
+		}
+	]
+}

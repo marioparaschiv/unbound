@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/preview.jpg",
+				"alt": "Preview Message's preview card showing a draft rendered as a message, with its link preview."
+			},
+			{
+				"image": "media/button.jpg",
+				"alt": "Preview Message's eye button in the chat input next to a typed draft."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/preview.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xPcFAwBJhwineX1lmXuPqvc=",
+			"bytes": 319273
+		},
+		{
+			"path": "media/button.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCPdad0k1RVd2+F95g=",
+			"bytes": 326426
+		}
+	]
+}

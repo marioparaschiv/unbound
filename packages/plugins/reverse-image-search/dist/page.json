@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/engines.jpg",
+				"alt": "Reverse Image Search asking which engine to search the image with."
+			},
+			{
+				"image": "media/menu.jpg",
+				"alt": "Reverse Image Search's Search image item in the media viewer's menu."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Reverse Image Search's settings with the search engine row set to ask each time."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/engines.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xPcFAwB4cCiIh3mMd3t/N/c=",
+			"bytes": 138582
+		},
+		{
+			"path": "media/menu.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "w/cFCwBmaweHlKp3enaPePY=",
+			"bytes": 245278
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwBZn5ZohHFCzbf/500=",
+			"bytes": 113577
+		}
+	]
+}

@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/settings.jpg",
+				"alt": "Selective Call Blocking's lists of users and group DMs whose calls don't ring."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwBqn0Z3YXV4l3WP9ig=",
+			"bytes": 155193
+		}
+	]
+}

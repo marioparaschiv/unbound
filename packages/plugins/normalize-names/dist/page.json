@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/plain-names.jpg",
+				"alt": "Normalize Names showing fancy Unicode display names like 𝓼𝓪𝓶𝓶𝔂 and ｋａｉ ｗａｖｅｓ as plain letters above their messages and in a reply preview."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/plain-names.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCfdnd1mGiIYY5Ptfk=",
+			"bytes": 307743
+		}
+	]
+}

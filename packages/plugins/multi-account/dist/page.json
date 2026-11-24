@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/switcher.jpg",
+				"alt": "Multi Account unlocks Discord's Manage Accounts screen in the mobile app, where you add and switch between accounts."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/switcher.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wfcBAwCJn+iIfGp4VWATBFI=",
+			"bytes": 102373
+		}
+	]
+}

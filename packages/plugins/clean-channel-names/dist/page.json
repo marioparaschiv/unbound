@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/channel-header.jpg",
+				"alt": "Clean Channel Names showing"
+			},
+			{
+				"image": "media/channel-list.jpg",
+				"alt": "Clean Channel Names showing the Unbound server's channels as plain words, with spaces instead of dashes."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Clean Channel Names' settings, with dashes as spaces and channels that keep their original names."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/channel-header.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwAdkCeVX4hxVU9LQQk=",
+			"bytes": 363249
+		},
+		{
+			"path": "media/channel-list.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wvcBAwCfnNiIVGVjIEQJceY=",
+			"bytes": 218780
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwB4j2d3cYNmTcCb9Ek=",
+			"bytes": 157425
+		}
+	]
+}

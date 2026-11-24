@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/profile.jpg",
+				"alt": "Custom RPC showing a Rich Presence the user wrote themselves on their profile."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Custom RPC's settings: name, activity type, details, state, timer, images and buttons."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/profile.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "h/cJCwB4j3eHdIQih3J/B5c=",
+			"bytes": 169166
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwCLghZncndgbG+tEgc=",
+			"bytes": 211039
+		}
+	]
+}

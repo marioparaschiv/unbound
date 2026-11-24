@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/fen-board.jpg",
+				"alt": "Chess Boards drawing a board under a message with a FEN position."
+			},
+			{
+				"image": "media/black-to-move.jpg",
+				"alt": "Chess Boards showing a position in a code block from black's side, since black is to move."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/fen-board.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "ThgOEwRGkgmZb3d3VYNgNQg=",
+			"bytes": 356995
+		},
+		{
+			"path": "media/black-to-move.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "jxgOGwRWkwiZbnh2VYNQNQg=",
+			"bytes": 282789
+		}
+	]
+}

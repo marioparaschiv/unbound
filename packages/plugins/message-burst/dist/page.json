@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/merged.jpg",
+				"alt": "Message Burst joins three quick follow-ups into one edited message in a direct message."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Message Burst's settings: burst length, merging into messages with attachments, and joining with a space."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/merged.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCPaYd1hmVTpI+K+Mg=",
+			"bytes": 333862
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwB5jjd3cGSImHK/twc=",
+			"bytes": 183887
+		}
+	]
+}

@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/settings.jpg",
+				"alt": "Music Rich Presence's settings, with the Last.fm scrobbler, username, API key and activity name options."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwBtYgd2h4aYiZ2PBAg=",
+			"bytes": 277760
+		}
+	]
+}

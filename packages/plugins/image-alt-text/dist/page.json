@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/alt-line.jpg",
+				"alt": "Image Alt Text showing an image's description as an italic line under the photo in a direct message."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/alt-line.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "CggKCwILcyrGjHh4GXSQMBc=",
+			"bytes": 350052
+		}
+	]
+}

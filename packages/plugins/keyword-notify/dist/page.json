@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/highlighted.jpg",
+				"alt": "Keyword Notify highlighting messages that contain your keywords like mentions in the Unbound server's chat."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Keyword Notify's settings with a keyword list, matching options and ignore lists."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/highlighted.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "BAgGAwCvdHZ1mFaHf53xt00=",
+			"bytes": 367348
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwCndAZZZ5NXej8N3lI=",
+			"bytes": 213476
+		}
+	]
+}

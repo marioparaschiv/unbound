@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/share-menu.jpg",
+				"alt": "Copy Image adding a Copy Image item to the media viewer's menu."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/share-menu.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "w/cFCwBmWweHlKp3e3aPePY=",
+			"bytes": 242905
+		}
+	]
+}

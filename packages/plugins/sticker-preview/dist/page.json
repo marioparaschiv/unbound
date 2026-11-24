@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/staged-with-text.jpg",
+				"alt": "Sticker Preview holding a picked sticker above the chat input while a message is typed to go with it."
+			},
+			{
+				"image": "media/staged.jpg",
+				"alt": "Sticker Preview showing a sticker waiting above the message box instead of being sent right away."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/staged-with-text.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCtlqSElGQFsb87a+8=",
+			"bytes": 343757
+		},
+		{
+			"path": "media/staged.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwCPhnWFkmWleG+09ms=",
+			"bytes": 332295
+		}
+	]
+}

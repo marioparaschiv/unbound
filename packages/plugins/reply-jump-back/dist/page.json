@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/return-button.jpg",
+				"alt": "Reply Jump Back's return button after jumping from a reply to the message it answers."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/return-button.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwC/d4dlh2h3dJ+kZ/o=",
+			"bytes": 321439
+		}
+	]
+}

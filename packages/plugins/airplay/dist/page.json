@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/media-viewer.jpg",
+				"alt": "AirPlay's button in the media viewer header while watching a video attachment."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/media-viewer.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "w/cFAwDLj6l5cYTGMFJZVPk=",
+			"bytes": 197947
+		}
+	]
+}

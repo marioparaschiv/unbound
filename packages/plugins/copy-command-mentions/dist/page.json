@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/menu-row.jpg",
+				"alt": "Copy Command Mentions adding Copy Command Mention to the long-press menu of a bot's slash-command reply."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/menu-row.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwB8cgiGdnNXmHu/B4Q=",
+			"bytes": 192535
+		}
+	]
+}

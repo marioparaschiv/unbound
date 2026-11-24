@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/stats.jpg",
+				"alt": "Channel Stats' reply, shown only to you, summing up a chat: who talks most, the busiest hours and messages per day."
+			},
+			{
+				"image": "media/command.jpg",
+				"alt": "Channel Stats' /channelstats command in the slash-command list."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/stats.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "AwgGAwB/loh1dVeHf370yVo=",
+			"bytes": 414960
+		},
+		{
+			"path": "media/command.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCPh6Z0lVQ0eG+2+cY=",
+			"bytes": 332159
+		}
+	]
+}

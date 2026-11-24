@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/you-bar.jpg",
+				"alt": "Better You Bar's Favorites and Settings buttons beside the notifications bell in the You bar under the channel list."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Better You Bar's settings for the Favorites and Settings buttons and keeping favorites past the limit."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/you-bar.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wvcBAwCvm9iIRViGIFUJYdY=",
+			"bytes": 208128
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCHf2h3gYGFT9D4tgo=",
+			"bytes": 177325
+		}
+	]
+}

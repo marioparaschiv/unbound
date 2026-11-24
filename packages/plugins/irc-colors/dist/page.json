@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/colors.jpg",
+				"alt": "IRC Colors giving every author in the Unbound server's chat their own name color."
+			},
+			{
+				"image": "media/only-without-role-color.jpg",
+				"alt": "IRC Colors with Only users without a role color on, keeping role colors and coloring everyone else."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "IRC Colors' settings for lightness, saturation, seed and where colors apply."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/colors.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "AwgGAwCvdoZ1lmeHj4+294w=",
+			"bytes": 353576
+		},
+		{
+			"path": "media/only-without-role-color.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCvdoZ1lmeHf3/32Hs=",
+			"bytes": 348966
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcGAwB4fQd3god2tmCveAY=",
+			"bytes": 186967
+		}
+	]
+}

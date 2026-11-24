@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/green.jpg",
+				"alt": "Greentext drawing lines that start with > in imageboard green in a direct message."
+			},
+			{
+				"image": "media/custom-color.jpg",
+				"alt": "Greentext with a custom orange color picked in its settings."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/green.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "AwgGAwCveId2hnp4ZW5f2fg=",
+			"bytes": 278753
+		},
+		{
+			"path": "media/custom-color.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "AwgGAwCfeId2hnl4ZW7vc/M=",
+			"bytes": 286276
+		}
+	]
+}

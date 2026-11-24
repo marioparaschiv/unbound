@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/default.jpg",
+				"alt": "Custom Timestamps writing today's message times as HH:mm and older ones with the full date."
+			},
+			{
+				"image": "media/twelve-hour.jpg",
+				"alt": "Custom Timestamps with a 12-hour format for today and a weekday and date for older messages."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Custom Timestamps' settings, with the patterns for today and for older messages."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/default.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCfZoZ2hmiZkGl9Svc=",
+			"bytes": 286719
+		},
+		{
+			"path": "media/twelve-hour.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCfZoZ2hmiZoGl9Svc=",
+			"bytes": 294597
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwBpj4Znc3F0vJDO+Do=",
+			"bytes": 134077
+		}
+	]
+}

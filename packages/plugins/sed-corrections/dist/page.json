@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/corrected.jpg",
+				"alt": "Sed Corrections editing your last message in place instead of sending a new one."
+			},
+			{
+				"image": "media/draft.jpg",
+				"alt": "Sed Corrections: typing s/teh/the/g to fix a typo in your last message."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/corrected.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCPaIZ2hWWFpJ+X+Kk=",
+			"bytes": 321501
+		},
+		{
+			"path": "media/draft.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwCPd3Z1k1XIh2+Q9kg=",
+			"bytes": 320562
+		}
+	]
+}

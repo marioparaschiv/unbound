@@ -1,0 +1,56 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/after-time.jpg",
+				"alt": "PronounDB showing each author's pronouns after the time in message headers."
+			},
+			{
+				"image": "media/pill.jpg",
+				"alt": "PronounDB with the Pill style, showing pronouns as tags beside names."
+			},
+			{
+				"image": "media/custom-pill.jpg",
+				"alt": "PronounDB with the Custom pill style in pink."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "PronounDB's settings for pronoun format, source, style and showing your own."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/after-time.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCfeId2mGhmgo9u5vk=",
+			"bytes": 310215
+		},
+		{
+			"path": "media/pill.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwCPd4d2mWdnkI9e5/k=",
+			"bytes": 321357
+		},
+		{
+			"path": "media/custom-pill.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwCPd4d2mWhnko/+c3Y=",
+			"bytes": 321527
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcGAwCIiAd3eYeUXXj/RRQ=",
+			"bytes": 177921
+		}
+	]
+}

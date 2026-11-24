@@ -17,5 +17,12 @@
 		"min": "1.0.0"
 	},
 	"icon": "ChatDotsIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "9487e0f1d5ff271087d410238fd7e4e329c8900e9e4ea71300680e55de2cf2c1a1ae2085e1f2c26696354192f136e594c71a4186c89ee3b7c53c49f3632f45f9"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "klM9az+/6InOZFu9FFJOzNXZYh+pESwRJlHrtiKCLCE73NiyoJR7NcfO/3+Oe0CskDohzs8I8ACGVnrgH0nVBw=="
+	}
 }

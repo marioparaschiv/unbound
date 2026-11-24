@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/clear-after.jpg",
+				"alt": "Custom Status Timeouts adding 15 minutes, 3 days and a week to the custom status Clear after list."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Custom Status Timeouts' settings, a list of durations like 15m, 8h, 3d."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/clear-after.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwBpcHeHinZkiX+JB3c=",
+			"bytes": 193897
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwBpj5ZodGJjzrDP+Fo=",
+			"bytes": 132457
+		}
+	]
+}

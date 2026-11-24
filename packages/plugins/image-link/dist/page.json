@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/link-kept.jpg",
+				"alt": "Image Link keeping the link text above an embedded image that was sent as a bare link."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/link-kept.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "BwgGCwBHkimYX4a0kqBYCbk=",
+			"bytes": 575911
+		}
+	]
+}

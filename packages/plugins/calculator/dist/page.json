@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/button.jpg",
+				"alt": "Calculator's button in the chat input while the draft is a calculation."
+			},
+			{
+				"image": "media/result.jpg",
+				"alt": "Calculator's dialog offering to insert the result, 73.47, or the full calculation."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/button.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwBviYZ1lGa5l2ug5wg=",
+			"bytes": 343920
+		},
+		{
+			"path": "media/result.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "w/cFCwBYeAeniH44mHePifg=",
+			"bytes": 135161
+		}
+	]
+}

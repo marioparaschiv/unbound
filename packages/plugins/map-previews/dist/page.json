@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/maps.jpg",
+				"alt": "Map Previews adding small pinned maps under messages with a Google Maps link and with plain coordinates."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/maps.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "E/gNAwBFkBmZbXgLU3JQq/g=",
+			"bytes": 516356
+		}
+	]
+}

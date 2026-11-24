@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/picker.jpg",
+				"alt": "File Size On Picker showing each photo's and video's size on the chat's media picker."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/picker.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwA+kJtFd4R8sG88nfU=",
+			"bytes": 280328
+		}
+	]
+}

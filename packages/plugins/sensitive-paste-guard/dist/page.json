@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/dialog.jpg",
+				"alt": "Sensitive Paste Guard asking before a message with a GitHub token goes out."
+			},
+			{
+				"image": "media/redacted.jpg",
+				"alt": "Sensitive Paste Guard's Redact and send, which replaces the secret with [redacted]."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/dialog.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGCwJodwiXeH5GmHePZgg=",
+			"bytes": 173890
+		},
+		{
+			"path": "media/redacted.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCPeId1hWVjpJ+J+Lg=",
+			"bytes": 332024
+		}
+	]
+}

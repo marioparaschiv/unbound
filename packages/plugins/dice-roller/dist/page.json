@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/rolls.jpg",
+				"alt": "Dice Roller's /roll results, showing every die, dropped dice struck through, and the total."
+			},
+			{
+				"image": "media/command.jpg",
+				"alt": "Dice Roller's /roll command in the slash-command list."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/rolls.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwCfeJd2h2ZFhI9s9+k=",
+			"bytes": 336096
+		},
+		{
+			"path": "media/command.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwB/l4Z0k2SWeG+095c=",
+			"bytes": 313889
+		}
+	]
+}

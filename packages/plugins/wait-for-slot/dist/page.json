@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/command.jpg",
+				"alt": "Wait For Slot's /wait-for-slot command, which joins a full voice channel as soon as someone leaves."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/command.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCPdaZ0lFRWiG/1+9M=",
+			"bytes": 331835
+		}
+	]
+}

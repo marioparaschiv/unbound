@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/dm.jpg",
+				"alt": "Message Colors turns hex, rgb() and hsl() colors in a direct message into pills tinted with each color."
+			},
+			{
+				"image": "media/palette.jpg",
+				"alt": "Message Colors showing a shared theme palette as colored pills in the Unbound server's development chat."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/dm.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwCfeZd2iGdGg48997s=",
+			"bytes": 346936
+		},
+		{
+			"path": "media/palette.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwBehzS4oEWcQgRIlQc=",
+			"bytes": 397553
+		}
+	]
+}

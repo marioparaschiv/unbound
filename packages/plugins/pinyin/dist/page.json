@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/readings.jpg",
+				"alt": "Pinyin showing tone-marked pinyin under Chinese messages in a direct message."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/readings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCPd4h2mGh4hH9+5/g=",
+			"bytes": 313570
+		}
+	]
+}

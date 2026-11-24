@@ -1,0 +1,56 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/deuteranopia.jpg",
+				"alt": "Color Blind Roles shifting red, green and orange role colours in a server chat so they stay apart for deuteranopia."
+			},
+			{
+				"image": "media/original.jpg",
+				"alt": "The same chat with Color Blind Roles at strength 0, showing the original red, green and orange role colours."
+			},
+			{
+				"image": "media/tritanopia.jpg",
+				"alt": "Color Blind Roles adjusting role colors for tritanopia."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Color Blind Roles' settings: color vision type, strength and role mentions."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/deuteranopia.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "BAgGAwCfl3iFd2h2j1ryijg=",
+			"bytes": 373056
+		},
+		{
+			"path": "media/original.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "BAgGAwCfl3h1d2h2j1ryiTc=",
+			"bytes": 373027
+		},
+		{
+			"path": "media/tritanopia.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwCfl3iFd2h2n0vyijg=",
+			"bytes": 377194
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcGAwCIiwdodWlmeXf/hgU=",
+			"bytes": 189356
+		}
+	]
+}

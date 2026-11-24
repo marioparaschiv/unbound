@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/profile.jpg",
+				"alt": "Cross Mod Badges adding badges from other client mods after Discord's own on a profile."
+			},
+			{
+				"image": "media/badge-details.jpg",
+				"alt": "Cross Mod Badges' details for a badge, naming the client mod it comes from."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/profile.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "AwgGCwKKf6dVXGqLZm9/9uc=",
+			"bytes": 215585
+		},
+		{
+			"path": "media/badge-details.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wQcCAwBKnfZodWdztFC19Ko=",
+			"bytes": 113940
+		}
+	]
+}

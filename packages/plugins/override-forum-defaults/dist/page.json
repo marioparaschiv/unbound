@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/gallery.jpg",
+				"alt": "Override Forum Defaults opening the Unbound server's themes forum in the Gallery layout, with post images large."
+			},
+			{
+				"image": "media/list.jpg",
+				"alt": "Override Forum Defaults opening the Unbound server's themes forum in the List layout, sorted by recent activity."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Override Forum Defaults' settings for the default forum layout and sort order."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/gallery.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xgcGAwBpgJiHdHx1PC+jQKM=",
+			"bytes": 361199
+		},
+		{
+			"path": "media/list.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "h/cFCwBogFiXeH1iiWyPdvY=",
+			"bytes": 286315
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwB6jwdmcohHXJO/lwc=",
+			"bytes": 164496
+		}
+	]
+}

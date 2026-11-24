@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/mistakes.jpg",
+				"alt": "Grammar Check listing LanguageTool's spelling and grammar fixes for a draft, with a Fix all button."
+			},
+			{
+				"image": "media/button.jpg",
+				"alt": "Grammar Check's Check grammar button in the chat input next to a draft."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/mistakes.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xPcFCwBYeAeYh31omHePefg=",
+			"bytes": 180934
+		},
+		{
+			"path": "media/button.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwBvd4ZkkmbJl1vA9Sg=",
+			"bytes": 346463
+		}
+	]
+}

@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/chat.jpg",
+				"alt": "Declutter removing the call, video, gift, voice message and empty send buttons from a direct message."
+			},
+			{
+				"image": "media/profile.jpg",
+				"alt": "After: Declutter hiding eternal's avatar decoration, profile effect, badges and other profile extras."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Declutter's settings, with a switch for each button, upsell and profile decoration it can hide."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCPaHd2hWWFpJ+X+Kk=",
+			"bytes": 315284
+		},
+		{
+			"path": "media/profile.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wfcBAwDfmipkWVeLQkc/gvY=",
+			"bytes": 165428
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xwcCAwCZcBd3cYSEbvq+Ahk=",
+			"bytes": 367259
+		}
+	]
+}

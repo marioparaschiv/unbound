@@ -14,5 +14,22 @@
 	},
 	"icon": "ChatDotsIcon",
 	"minNativeBridgeApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {},
+		"android": {
+			"capabilities": [
+				"native.java.classes",
+				"native.java.construct",
+				"native.java.invoke"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "b8387202539a24343df09c1bb83d710664a19d10b52f1e9a36f406fdde93baea547855678f77d88f7fe27d0f06195ec24711cff459d2132dd04dec0289123386"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "3anCyc4eUbi8KP9U5fPNThE2voYtaACrY8kBR8ZvOo7HhK/xSxEMb9ga3VkGae7dDF8R9KQEMy0EvSjE37fnAQ=="
+	}
 }

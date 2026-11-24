@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/explained.jpg",
+				"alt": "Tone Indicators turning tone tags like /j and /srs into pills that spell out their meaning."
+			},
+			{
+				"image": "media/tags-only.jpg",
+				"alt": "Tone Indicators with Spell out meanings off, showing only the tags as pills."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Tone Indicators' settings with a custom tag added."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/explained.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwCfd5dmiGdXlH+O2Pg=",
+			"bytes": 330295
+		},
+		{
+			"path": "media/tags-only.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCfeJd2mGhnk3+O6Pg=",
+			"bytes": 314311
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCHfxh3gYdYqrApvQU=",
+			"bytes": 164248
+		}
+	]
+}

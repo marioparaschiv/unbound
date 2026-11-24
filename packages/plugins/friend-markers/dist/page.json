@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/markers.jpg",
+				"alt": "Friend Markers' Friend label beside a friend's name in the Unbound server's chat."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/markers.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCfhod1hVeHjn/0uVo=",
+			"bytes": 364031
+		}
+	]
+}

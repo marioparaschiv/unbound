@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/default.jpg",
+				"alt": "Sticker Sizes showing stickers in chat at its default 75% size."
+			},
+			{
+				"image": "media/large.jpg",
+				"alt": "Sticker Sizes with stickers enlarged to 150%."
+			},
+			{
+				"image": "media/small.jpg",
+				"alt": "Sticker Sizes with stickers shrunk to 50%, so they take less room in chat."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/default.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "AwgGAwB/d1iEmIqlXFPgNQU=",
+			"bytes": 238031
+		},
+		{
+			"path": "media/large.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "BQgGCwIbmye2cHqLOYqgogg=",
+			"bytes": 219397
+		},
+		{
+			"path": "media/small.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "AwgGAwCPeod1mGl0qT/9mLU=",
+			"bytes": 269248
+		}
+	]
+}

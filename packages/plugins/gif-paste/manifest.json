@@ -18,5 +18,12 @@
 	},
 	"icon": "GifIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"bytecode": {
+		"98": "046b33e4fe192f401fae02cfd8e97727d217c36cfd2998ddbfdfbad333279a2ace0b1b8fa673886626de4747e10df4c3fb42837e4800d9e17d6b040a8ea49a96"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "DyaZK7PPra0TNAVeD5O3pembaZ6wYb6i/s0vyhBBNLAyTWleq/jeDJmEGdVVQtg0dgaKJ8/INZKOVhjtUV2SBg=="
+	}
 }

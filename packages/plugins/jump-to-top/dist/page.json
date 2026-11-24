@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/button.jpg",
+				"alt": "Jump To Top's up arrow above Discord's jump-to-present arrow while scrolled back in a direct message."
+			},
+			{
+				"image": "media/channel-row.jpg",
+				"alt": "Jump To Top's Jump to top row in a channel's long-press menu."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/button.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwAbVQTZsiaYPDrwMyU=",
+			"bytes": 462085
+		},
+		{
+			"path": "media/channel-row.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwB7cBiHZ2ibmY/8nkw=",
+			"bytes": 194156
+		}
+	]
+}

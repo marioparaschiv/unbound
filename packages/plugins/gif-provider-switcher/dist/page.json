@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/tenor.jpg",
+				"alt": "GIF Provider Switcher showing Tenor's trending GIFs in Discord's GIF picker, with the provider button by the search field."
+			},
+			{
+				"image": "media/giphy.jpg",
+				"alt": "GIF Provider Switcher set to Giphy, with Giphy's results for a search in the GIF picker."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "GIF Provider Switcher's settings for choosing Tenor, Giphy or Klipy."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/tenor.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "CQgGAwKGkDhmhoVNhZVgRgo=",
+			"bytes": 344071
+		},
+		{
+			"path": "media/giphy.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "CAgKCwKKcPeIY4p1dZVvFvk=",
+			"bytes": 345180
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwB5j1d3cXSYbaDOxwk=",
+			"bytes": 136413
+		}
+	]
+}

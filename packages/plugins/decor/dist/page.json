@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/profile.jpg",
+				"alt": "Decor showing a user's Decor avatar decoration on their profile."
+			},
+			{
+				"image": "media/chat.jpg",
+				"alt": "Decor showing a user's Decor avatar decoration next to their messages in chat."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/profile.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "DSkKCwB4fLd3hIMgZ3+dV/o=",
+			"bytes": 337564
+		},
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwB/aId1hmRktY+4+sY=",
+			"bytes": 338681
+		}
+	]
+}

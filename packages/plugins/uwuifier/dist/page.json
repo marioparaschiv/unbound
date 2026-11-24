@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/chat.jpg",
+				"alt": "Uwuifier turning sent messages into uwu speak, with its toggle in the chat input."
+			},
+			{
+				"image": "media/command.jpg",
+				"alt": "Uwuifier's /uwu command, which sends one message in uwu speak."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Uwuifier's settings: Persist State, Auto Disable, Stutter and Faces."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwCviKZ1l1c1d2+K99g=",
+			"bytes": 322980
+		},
+		{
+			"path": "media/command.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwCPh4Z0k2WViG/E+Jc=",
+			"bytes": 300823
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCHfShogHWaTpTvpgk=",
+			"bytes": 181026
+		}
+	]
+}

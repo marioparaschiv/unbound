@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/menu.jpg",
+				"alt": "Add Attachments' row in the long-press menu of your own message, for adding photos to a message you already sent."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/menu.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwB8cgiGdnNmmHu/B4Q=",
+			"bytes": 188307
+		}
+	]
+}

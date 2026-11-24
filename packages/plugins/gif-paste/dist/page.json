@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/link-in-input.jpg",
+				"alt": "GIF Paste puts the picked GIF's link in the chat input so a message can be typed after it."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/link-in-input.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwBvh4ZkkmbJl1ug9yg=",
+			"bytes": 350138
+		}
+	]
+}

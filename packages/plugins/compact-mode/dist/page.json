@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/server-chat.jpg",
+				"alt": "Compact Mode in the Unbound server's chat: no avatars or headers, each name in bold before the message."
+			},
+			{
+				"image": "media/dm.jpg",
+				"alt": "Compact Mode in a direct message, with the author's name on every line."
+			},
+			{
+				"image": "media/first-of-group.jpg",
+				"alt": "Compact Mode with the name only on the first message of each group."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/server-chat.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "hvcFCwAcepi2iHcDiHFwBxY=",
+			"bytes": 334688
+		},
+		{
+			"path": "media/dm.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwAfg3qXiGi3wHtva/c=",
+			"bytes": 351635
+		},
+		{
+			"path": "media/first-of-group.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwAfh5mXiGl1w36fyPk=",
+			"bytes": 366873
+		}
+	]
+}

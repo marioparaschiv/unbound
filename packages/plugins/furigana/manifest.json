@@ -13,5 +13,23 @@
 		"min": "1.0.0"
 	},
 	"icon": "LanguageIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.ffi.call",
+				"native.ffi.symbols",
+				"native.objc.classes",
+				"native.objc.invoke",
+				"native.objc.invokeAsync"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "4d84458e4344eee0f9d612ee76c45fa418794dc2edbabbe6aba5f74a70d203a68453f150b7bd0e48095dba9b243064b7e0b21c011ffbf2e0c66549b6f29b62c6"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "Pu+ws1Xu5JA1aY191eXHOYAVx55R3qTzVEA2vsbIXe+yyO/HloPsdcPW4fsjzsE0Mfbh1FZVrL9x96Yg0kThCQ=="
+	}
 }

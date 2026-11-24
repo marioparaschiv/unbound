@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/row.jpg",
+				"alt": "Edit Messages Locally's Edit Locally row in a message's long-press menu."
+			},
+			{
+				"image": "media/dialog.jpg",
+				"alt": "Before: Edit Messages Locally's dialog rewriting eternal's \"yeah, sending them tonight\" on this device only."
+			},
+			{
+				"image": "media/edited.jpg",
+				"alt": "After: the same chat with eternal's message showing the local edit, which only you see."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/row.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwB7YBiHhYJmiI+99ns=",
+			"bytes": 197110
+		},
+		{
+			"path": "media/dialog.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "w/cFCwBYdgiYe3nDmIp/yfc=",
+			"bytes": 165191
+		},
+		{
+			"path": "media/edited.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCPeZZ2hmU0lJ9699g=",
+			"bytes": 328784
+		}
+	]
+}

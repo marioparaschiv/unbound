@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/board.jpg",
+				"alt": "A Minesweeper board of spoiler tiles sent with /minesweeper, with a patch of safe tiles already uncovered."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/board.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xPcFAwBfY3l1rFSpob8c+bw=",
+			"bytes": 292974
+		}
+	]
+}

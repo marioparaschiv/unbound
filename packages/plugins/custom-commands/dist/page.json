@@ -1,0 +1,56 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/autocomplete.jpg",
+				"alt": "A saved command from Custom Commands in Discord's slash-command list."
+			},
+			{
+				"image": "media/response.jpg",
+				"alt": "The message a Custom Commands command sends, with its argument filled in."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Custom Commands' settings, listing saved slash commands and a button to create one."
+			},
+			{
+				"image": "media/command-page.jpg",
+				"alt": "Editing a saved command in Custom Commands: name, description, response with an argument, and media."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/autocomplete.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwB/hpZ0kmVkeG+l96g=",
+			"bytes": 323034
+		},
+		{
+			"path": "media/response.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCPeJd2hmYldn+M9/g=",
+			"bytes": 342787
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwBqnidncHd6h3Zv9yY=",
+			"bytes": 153310
+		},
+		{
+			"path": "media/command-page.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "hfcFEwB4iQeHd4wkiHivqPY=",
+			"bytes": 163375
+		}
+	]
+}

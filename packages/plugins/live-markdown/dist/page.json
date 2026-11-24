@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/draft.jpg",
+				"alt": "Live Markdown styling bold, italics, strikethrough and code in the message box as you type."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/draft.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwBviJZ1k2epl2ug5wg=",
+			"bytes": 351203
+		}
+	]
+}

@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/settings.jpg",
+				"alt": "Chat Gestures' settings, picking what a double tap, a triple tap and a swipe do on a message."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwBpjwd3cId4qXOvmAc=",
+			"bytes": 189998
+		}
+	]
+}

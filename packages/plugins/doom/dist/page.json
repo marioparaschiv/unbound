@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/game.jpg",
+				"alt": "DOOM's shareware episode running inside Discord with on-screen controls."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "DOOM's settings page with its Play DOOM button."
+			},
+			{
+				"image": "media/command.jpg",
+				"alt": "DOOM's /doom command in the slash-command autocomplete of a direct message."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/game.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "BwgGCwJYjBeIcHd6aIqQlAg=",
+			"bytes": 339088
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwB5n6d4dWFRl3aP9qg=",
+			"bytes": 108290
+		},
+		{
+			"path": "media/command.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCfiaZ0l2c0d2+Z6PY=",
+			"bytes": 313638
+		}
+	]
+}

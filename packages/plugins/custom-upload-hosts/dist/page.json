@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/settings.jpg",
+				"alt": "Custom Upload Hosts' settings, choosing Catbox, Litterbox or a custom host and when files go there."
+			},
+			{
+				"image": "media/custom-host.jpg",
+				"alt": "Custom Upload Hosts pointed at a custom host, with its upload address, form field and response format."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwB5iQd3eHWmaofvJgQ=",
+			"bytes": 238306
+		},
+		{
+			"path": "media/custom-host.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xgcCAwB9YDZndWWna3+vAyg=",
+			"bytes": 280025
+		}
+	]
+}

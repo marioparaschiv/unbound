@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/member-permissions.jpg",
+				"alt": "Permissions Viewer listing each permission a member has and the role that grants it."
+			},
+			{
+				"image": "media/profile-button.jpg",
+				"alt": "Permissions Viewer's View Permissions button under the roles card on a server profile."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Permissions Viewer's settings for the permissions sort order and the roles card button."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/member-permissions.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xgcCAwBacCmHcnV1uX/9UxQ=",
+			"bytes": 253767
+		},
+		{
+			"path": "media/profile-button.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcGEwJ4f5Zmd3dniYaPx/g=",
+			"bytes": 307133
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwB4jzdocHWJT6Lvpgk=",
+			"bytes": 176540
+		}
+	]
+}

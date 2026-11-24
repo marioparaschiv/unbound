@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/settings.jpg",
+				"alt": "Fake Profile Themes' settings: primary and accent colors, a profile effect and the bio code to copy."
+			},
+			{
+				"image": "media/effects.jpg",
+				"alt": "Fake Profile Themes' sheet for picking one of Discord's profile effects."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwCIfwhnkZVkP8F9mgY=",
+			"bytes": 221108
+		},
+		{
+			"path": "media/effects.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xgcGAwB2cFh6bHeVgMjYDNI=",
+			"bytes": 318854
+		}
+	]
+}

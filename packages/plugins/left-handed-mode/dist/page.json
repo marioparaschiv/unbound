@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/mirrored-input.jpg",
+				"alt": "Left Handed Mode mirroring the chat input so send and emoji sit on the left and the attachment button on the right."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/mirrored-input.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwCPZ5Z2hWVUc79297k=",
+			"bytes": 325089
+		}
+	]
+}

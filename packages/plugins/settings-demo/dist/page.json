@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/settings.jpg",
+				"alt": "Settings Demo's generated panel with switches, sliders, steppers and inputs."
+			},
+			{
+				"image": "media/settings-more.jpg",
+				"alt": "Settings Demo's panel further down, with choices, lists, a danger button and colour pickers."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xgcCAwBqcweGhINqZ5iPBFg=",
+			"bytes": 202690
+		},
+		{
+			"path": "media/settings-more.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwBreVdnc2BUulnvCKM=",
+			"bytes": 171716
+		}
+	]
+}

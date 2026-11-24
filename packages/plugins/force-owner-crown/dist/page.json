@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/crown.jpg",
+				"alt": "Force Owner Crown's Server Owner crown beside the owner's name in the Unbound server's chat."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/crown.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "AwgGAwCfh4d1hVeGf371uWo=",
+			"bytes": 380123
+		}
+	]
+}

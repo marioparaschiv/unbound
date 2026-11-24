@@ -21,5 +21,12 @@
 		"min": "1.0.0"
 	},
 	"icon": "SuperReactionIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "ef9c23c1523e22dfc63429ccd1dce8033b2c603f4b681c988a9a653f9246f3597ac8eeb235bd3ad47b304e23683ac564bd80e58cb119f85aff887cffedbeb828"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "LyXeP9QrBLtbelxwAhEERzNE9aJBQkTiER273B9yFDRWddsQHNvanR8BmWXoa0Fd7vV1aNTUF0th2vsh2Qq3AQ=="
+	}
 }

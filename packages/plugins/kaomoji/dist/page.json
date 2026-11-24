@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/command.jpg",
+				"alt": "Kaomoji's /blush command in the slash-command autocomplete."
+			},
+			{
+				"image": "media/messages.jpg",
+				"alt": "Messages sent with Kaomoji's commands, each ending in its kaomoji."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/command.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwB/h4d0k2SWiG/E+Jc=",
+			"bytes": 310764
+		},
+		{
+			"path": "media/messages.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "w/cFAwCvd3ZllmiYgHhbOvg=",
+			"bytes": 286582
+		}
+	]
+}

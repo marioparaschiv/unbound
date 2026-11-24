@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/menu.jpg",
+				"alt": "Message Menu Editor's long-press menu with Copy Message Link moved to the top and Reply, Forward and Pin Message hidden."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Message Menu Editor's settings, where you drag long-press menu options into order and switch off the ones to hide."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/menu.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwB5cGiIeXl4iH+2Nwg=",
+			"bytes": 223862
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xwcCCwDwhAZZlZNIP3n6cWc=",
+			"bytes": 247704
+		}
+	]
+}

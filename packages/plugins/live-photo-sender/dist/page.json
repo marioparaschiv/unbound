@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/settings.jpg",
+				"alt": "Live Photo Sender's setting for sending Live Photos as a still, a video or a GIF, or asking each time."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwB5jydncHZ4e5O/pwg=",
+			"bytes": 144270
+		}
+	]
+}

@@ -21,5 +21,12 @@
 		"min": "1.0.0"
 	},
 	"icon": "ShieldUserIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "ecc9b4cc6fa5514125fc596f03213ff5f0b1a3a42829a08ab6a2f99084b7556e3aec7616e3edf58191dfeef7b4fcb993912c8cd6b167db6a3c999d1299216edb"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "Xp/3YuMfiwA3p+7dvemwOxoa54OV06j4YaJCpXvmT7E/i9WBrCGlGegM5cQbDKNRo9YsIf3/va1uKa6taIlsDA=="
+	}
 }
