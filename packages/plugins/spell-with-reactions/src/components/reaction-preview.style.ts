@@ -1,7 +1,7 @@
 import { Discord } from '@unbound-app/api/metro/components';
 import { metro } from '@unbound-app/api';
 
-export const EMOJI_SIZE = 18;
+const EMOJI_SIZE = 18;
 
 // A factory, so the theme is read when the sheet renders rather than when the plugin loads.
 export default Discord.createStyles(() => {
@@ -20,7 +20,6 @@ export default Discord.createStyles(() => {
 			minWidth: 38,
 			paddingHorizontal: 8,
 		},
-		emoji: { fontSize: EMOJI_SIZE - 2, lineHeight: EMOJI_SIZE + 2 },
 		image: { height: EMOJI_SIZE, width: EMOJI_SIZE },
 	};
 });

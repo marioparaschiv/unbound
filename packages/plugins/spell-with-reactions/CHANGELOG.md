@@ -4,7 +4,7 @@
 
 ### Changed
 
-- The sheet previews each reaction in its own pill, and says in red why a word can't be spelled.
+- The sheet has a title bar like Discord's own sheets, previews each reaction in its own pill, and says in red why a word can't be spelled.
 
 ## [1.0.1] - 2026-11-17
 

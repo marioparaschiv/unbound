@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "文字取代",
-	"PLUGIN_TAGLINE": "在你傳送訊息前自動改寫訊息內容。",
-	"TRY_YOUR_RULES": "試用你的規則",
-	"TEST_YOUR_RULES": "測試你的規則",
 	"EXAMPLE_MESSAGE": "範例訊息",
 	"EXAMPLE_PLACEHOLDER": "輸入訊息以進行測試",
 	"RESULT": "結果",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "以可攜式 JSON 匯出或匯入兩份規則清單。",
 	"EXPORT_AND_SHARE": "匯出並分享",
 	"IMPORT_CLIPBOARD": "從剪貼簿匯入",
-	"PASTE_JSON": "貼上 JSON",
-	"PASTE_JSON_PLACEHOLDER": "在此貼上匯出的文字取代 JSON",
-	"IMPORT_PASTED": "匯入貼上的內容",
 	"RULESET_IMPORTED": "已匯入規則集。",
 	"IMPORT_FAILED": "無法匯入規則集。",
 	"CLIPBOARD_HAS_NO_RULESET": "你的剪貼簿中沒有規則集。",

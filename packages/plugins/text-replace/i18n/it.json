@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Text Replace",
-	"PLUGIN_TAGLINE": "Riscrivi automaticamente i messaggi prima di inviarli.",
-	"TRY_YOUR_RULES": "Prova le tue regole",
-	"TEST_YOUR_RULES": "Testa le tue regole",
 	"EXAMPLE_MESSAGE": "Messaggio di esempio",
 	"EXAMPLE_PLACEHOLDER": "Scrivi un messaggio da testare",
 	"RESULT": "Risultato",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Esporta o importa entrambi gli elenchi di regole come JSON portabile.",
 	"EXPORT_AND_SHARE": "Esporta e condividi",
 	"IMPORT_CLIPBOARD": "Importa dagli appunti",
-	"PASTE_JSON": "Incolla JSON",
-	"PASTE_JSON_PLACEHOLDER": "Incolla qui il JSON esportato da Text Replace",
-	"IMPORT_PASTED": "Importa testo incollato",
 	"RULESET_IMPORTED": "Set di regole importato.",
 	"IMPORT_FAILED": "Impossibile importare il set di regole.",
 	"CLIPBOARD_HAS_NO_RULESET": "Gli appunti non contengono un set di regole.",

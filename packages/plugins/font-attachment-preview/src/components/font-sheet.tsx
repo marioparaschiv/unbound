@@ -1,6 +1,6 @@
 import { openSheet } from '@unbound-plugins/shared/action-sheets/open-sheet';
-import { ActivityIndicator, ScrollView, View } from 'react-native';
-import { Discord } from '@unbound-app/api/metro/components';
+import { BottomSheets, Discord, GorhomSheet } from '@unbound-app/api/metro/components';
+import { ActivityIndicator, View } from 'react-native';
 import { messages } from '@unbound-app/i18n';
 import { ui } from '@unbound-app/api';
 import { useEffect, useState } from 'react';
@@ -74,12 +74,14 @@ function FontPreview({ font, sample, host, folder }: PreviewProps) {
 
 function FontSheet({ fonts, host, folder }: FontSheetProps) {
 	const styles = useStyles();
+	const { ActionSheet, BottomSheetTitleHeader } = BottomSheets;
+	const { BottomSheetScrollView: ScrollView } = GorhomSheet;
 	const [sample, setSample] = useState<string>(messages.SAMPLE);
 
 	return (
-		<Discord.ActionSheet>
-			<Discord.BottomSheetTitleHeader title={messages.TITLE} />
-			<ScrollView contentContainerStyle={styles.body}>
+		<ActionSheet scrollable>
+			<BottomSheetTitleHeader title={messages.TITLE} />
+			<ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps='handled'>
 				<ui.Section>
 					<ui.InputRow
 						label={messages.SAMPLE_LABEL}
@@ -98,7 +100,7 @@ function FontSheet({ fonts, host, folder }: FontSheetProps) {
 					/>
 				))}
 			</ScrollView>
-		</Discord.ActionSheet>
+		</ActionSheet>
 	);
 }
 

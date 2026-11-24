@@ -1,7 +1,7 @@
 import { openSheet } from '@unbound-plugins/shared/action-sheets/open-sheet';
 import { toBase64 } from '@unbound-plugins/shared/media/gif/base64';
-import { ActivityIndicator, Image, ScrollView, View } from 'react-native';
-import { Discord } from '@unbound-app/api/metro/components';
+import { BottomSheets, Discord, GorhomSheet } from '@unbound-app/api/metro/components';
+import { ActivityIndicator, Image, View } from 'react-native';
 import type { NativeBridge } from '@unbound-app/api/native';
 import { format, messages } from '@unbound-app/i18n';
 import { flux, fs, metro, toasts, ui } from '@unbound-app/api';
@@ -84,13 +84,16 @@ function MosaicSheet({ channelId, image, bridge, folder, onClose }: MosaicSheetP
 		}
 	}
 
+	const { ActionSheet, BottomSheetTitleHeader } = BottomSheets;
+	const { BottomSheetScrollView: ScrollView } = GorhomSheet;
+
 	return (
-		<Discord.ActionSheet>
-			<Discord.BottomSheetTitleHeader
+		<ActionSheet scrollable>
+			<BottomSheetTitleHeader
 				title={messages.TITLE}
 				subtitle={format('GRID', { columns: grid.columns, rows: grid.rows, count })}
 			/>
-			<ScrollView style={styles.scroll} contentContainerStyle={styles.body}>
+			<ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps='handled'>
 				<Image source={{ uri: image.url }} resizeMode='contain' style={styles.image} />
 				<ui.Section>
 					<ui.StepperRow
@@ -143,7 +146,7 @@ function MosaicSheet({ channelId, image, bridge, folder, onClose }: MosaicSheetP
 					</View>
 				)}
 			</ScrollView>
-		</Discord.ActionSheet>
+		</ActionSheet>
 	);
 }
 

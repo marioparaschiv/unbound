@@ -127,6 +127,15 @@ export function collapseSame(parts: DiffPart[], keep = 40): DiffPart[] {
 }
 
 /**
+ * @description Whether a message holds a code block.
+ * @param text The message.
+ * @returns `true` when it has a ``` fence.
+ */
+export function hasCode(text: string): boolean {
+	return text.includes('```');
+}
+
+/**
  * @description Whether an edit is worth showing before saving: long messages, messages with code, or any edit when
  * the user asks for every one.
  * @param before The text before the edit.
@@ -143,17 +152,8 @@ export function shouldPreview(
 
 	return (
 		Math.max(before.length, after.length) >= minLength ||
-		(code && (before.includes('```') || after.includes('```')))
+		(code && (hasCode(before) || hasCode(after)))
 	);
-}
-
-/**
- * @description Whether a message holds a code block.
- * @param text The message.
- * @returns `true` when it has a ``` fence.
- */
-export function hasCode(text: string): boolean {
-	return text.includes('```');
 }
 
 /**

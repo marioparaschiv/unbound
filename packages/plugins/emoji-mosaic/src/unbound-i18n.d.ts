@@ -5,7 +5,7 @@ declare module '@unbound-app/i18n' {
 	export type Messages = {
 		/** Make Emoji Mosaic */
 		readonly MAKE: string;
-		/** Emoji Mosaic */
+		/** Emoji mosaic */
 		readonly TITLE: string;
 		/** {columns} × {rows} grid · {count} emoji */
 		readonly GRID: string;

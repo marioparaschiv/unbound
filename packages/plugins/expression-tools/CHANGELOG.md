@@ -4,7 +4,7 @@
 
 ### Changed
 
-- The emoji and sticker actions are sheet rows with icons, and the clone sheet uses a name field, Discord's search bar and a Your servers list.
+- The emoji and sticker actions are sheet rows with icons, and the clone sheet uses a name field, Discord's search bar and a Your servers list that scrolls.
 
 ## [1.0.9] - 2026-11-18
 

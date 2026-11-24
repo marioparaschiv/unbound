@@ -1,6 +1,6 @@
 import { openSheet } from '@unbound-plugins/shared/action-sheets/open-sheet';
-import { Image, Pressable, ScrollView, View } from 'react-native';
-import { Discord } from '@unbound-app/api/metro/components';
+import { BottomSheets, Discord, GorhomSheet } from '@unbound-app/api/metro/components';
+import { Image, Pressable, View } from 'react-native';
 import { format, messages } from '@unbound-app/i18n';
 import { assets, dialogs, toasts, ui } from '@unbound-app/api';
 import { useState } from 'react';
@@ -98,9 +98,12 @@ function StickerSheet({ channelId, folder, onClose }: SheetProps) {
 		if (!(await attachSticker(channelId, sticker, folder))) toasts.warning('ATTACH_FAILED');
 	}
 
+	const { ActionSheet, BottomSheetTitleHeader } = BottomSheets;
+	const { BottomSheetScrollView: ScrollView } = GorhomSheet;
+
 	return (
-		<Discord.ActionSheet>
-			<Discord.BottomSheetTitleHeader title={messages.TITLE} />
+		<ActionSheet scrollable>
+			<BottomSheetTitleHeader title={messages.TITLE} />
 			<ScrollView contentContainerStyle={styles.body}>
 				<ui.Section>
 					<ui.InputRow
@@ -128,7 +131,7 @@ function StickerSheet({ channelId, folder, onClose }: SheetProps) {
 					</Discord.Text>
 				)}
 			</ScrollView>
-		</Discord.ActionSheet>
+		</ActionSheet>
 	);
 }
 

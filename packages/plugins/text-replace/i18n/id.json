@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Text Replace",
-	"PLUGIN_TAGLINE": "Ubah pesan secara otomatis sebelum kamu mengirimnya.",
-	"TRY_YOUR_RULES": "Coba aturanmu",
-	"TEST_YOUR_RULES": "Uji aturanmu",
 	"EXAMPLE_MESSAGE": "Contoh pesan",
 	"EXAMPLE_PLACEHOLDER": "Ketik pesan untuk diuji",
 	"RESULT": "Hasil",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Ekspor atau impor kedua daftar aturan sebagai JSON portabel.",
 	"EXPORT_AND_SHARE": "Ekspor & bagikan",
 	"IMPORT_CLIPBOARD": "Impor dari papan klip",
-	"PASTE_JSON": "Tempel JSON",
-	"PASTE_JSON_PLACEHOLDER": "Tempel JSON Text Replace hasil ekspor di sini",
-	"IMPORT_PASTED": "Impor yang ditempel",
 	"RULESET_IMPORTED": "Set aturan diimpor.",
 	"IMPORT_FAILED": "Tidak dapat mengimpor set aturan.",
 	"CLIPBOARD_HAS_NO_RULESET": "Papan klipmu tidak berisi set aturan.",

@@ -1,3 +1,4 @@
+import { openSheet, type SheetProps } from '@unbound-plugins/shared/action-sheets/open-sheet';
 import { Discord } from '@unbound-app/api/metro/components';
 import { metro } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
@@ -6,17 +7,17 @@ import { Pressable, View } from 'react-native';
 
 import type { GreetSticker } from '~/lib/stickers';
 
-import styles from '~/components/greet-sheet.style';
+import useStyles from '~/components/greet-sheet.style';
 
-const SHEET_KEY = 'unbound-greet-sticker-picker';
 const STICKER_SIZE = 72;
 
-type GreetSheetProps = {
+type GreetSheetProps = SheetProps & {
 	stickers: GreetSticker[];
 	onPick: (sticker: GreetSticker) => void;
 };
 
-function GreetSheet({ stickers, onPick }: GreetSheetProps) {
+function GreetSheet({ stickers, onPick, onClose }: GreetSheetProps) {
+	const styles = useStyles();
 	const Sticker = metro.findByFilePath('modules/stickers/native/Sticker.tsx')?.default;
 
 	return (
@@ -29,7 +30,10 @@ function GreetSheet({ stickers, onPick }: GreetSheetProps) {
 							key={sticker.id}
 							accessibilityRole='button'
 							accessibilityLabel={sticker.description ?? sticker.name}
-							onPress={() => onPick(sticker)}
+							onPress={() => {
+								onClose();
+								onPick(sticker);
+							}}
 							style={({ pressed }) => [styles.cell, pressed && styles.pressed]}
 						>
 							{Sticker
@@ -59,20 +63,5 @@ export function openGreetSheet(
 	stickers: GreetSticker[],
 	onPick: (sticker: GreetSticker) => void,
 ): void {
-	const sheets = metro.api.ActionSheets;
-
-	sheets.openLazy(
-		Promise.resolve({
-			default: () => (
-				<GreetSheet
-					stickers={stickers}
-					onPick={(sticker) => {
-						sheets.hideActionSheet(SHEET_KEY);
-						onPick(sticker);
-					}}
-				/>
-			),
-		}),
-		SHEET_KEY,
-	);
+	openSheet('unbound-greet-sticker-picker', GreetSheet, { stickers, onPick });
 }

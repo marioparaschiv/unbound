@@ -4,7 +4,7 @@
 
 ### Changed
 
-- Badges use Discord's own badge styles, so they match your theme. Type badges are now grey.
+- Badges use Discord's own badge styles, so they match your theme. Type and Private badges are now grey.
 
 ## [1.1.1] - 2026-11-17
 

@@ -11,7 +11,6 @@
 	"DELETE": "Ištrinti",
 	"DELETE_COMMAND": "Ištrinti komandą",
 	"DELETE_COMMAND_BODY": "Ištrinti /{name} ir jos išsaugotus prisegtus failus?",
-	"DELETE_COMMAND_LABEL": "Ištrinti {name}",
 	"DESCRIPTION_OPTIONAL": "Aprašas (neprivaloma)",
 	"DESCRIPTION_PLACEHOLDER": "Rodomas brūkšninių komandų sąraše",
 	"DESCRIPTION_TOO_LONG": "Komandos apraše naudokite ne daugiau kaip {max} simbolių.",

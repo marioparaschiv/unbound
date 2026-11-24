@@ -11,7 +11,6 @@
 	"DELETE": "Sil",
 	"DELETE_COMMAND": "Komutu sil",
 	"DELETE_COMMAND_BODY": "/{name} ve kayıtlı ekleri silinsin mi?",
-	"DELETE_COMMAND_LABEL": "Sil: {name}",
 	"DESCRIPTION_OPTIONAL": "Açıklama (isteğe bağlı)",
 	"DESCRIPTION_PLACEHOLDER": "Eğik çizgi komutları listesinde gösterilir",
 	"DESCRIPTION_TOO_LONG": "Komut açıklaması için en fazla {max} karakter kullan.",

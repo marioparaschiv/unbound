@@ -1,4 +1,4 @@
-import { Discord } from '@unbound-app/api/metro/components';
+import { BottomSheets, Discord, GorhomSheet } from '@unbound-app/api/metro/components';
 import { messages } from '@unbound-app/i18n';
 import { ui } from '@unbound-app/api';
 import { Image, View } from 'react-native';
@@ -42,13 +42,16 @@ function CloneSheet({ expression, onClose }: CloneSheetProps) {
 			.finally(() => setBusy(false));
 	}
 
+	const { ActionSheet, BottomSheetTitleHeader } = BottomSheets;
+	const { BottomSheetScrollView: ScrollView } = GorhomSheet;
+
 	return (
-		<Discord.ActionSheet>
-			<Discord.BottomSheetTitleHeader
-				title={messages.CLONE_TO_SERVER}
-				subtitle={expression.name}
-			/>
-			<View style={styles.container}>
+		<ActionSheet scrollable>
+			<BottomSheetTitleHeader title={messages.CLONE_TO_SERVER} subtitle={expression.name} />
+			<ScrollView
+				contentContainerStyle={styles.container}
+				keyboardShouldPersistTaps='handled'
+			>
 				<Image source={{ uri: getAssetUrl(expression) }} style={styles.preview} />
 				<ui.Section>
 					<ui.InputRow
@@ -81,8 +84,8 @@ function CloneSheet({ expression, onClose }: CloneSheetProps) {
 						</Discord.Text>
 					</View>
 				)}
-			</View>
-		</Discord.ActionSheet>
+			</ScrollView>
+		</ActionSheet>
 	);
 }
 

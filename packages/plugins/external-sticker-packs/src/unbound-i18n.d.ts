@@ -29,7 +29,7 @@ declare module '@unbound-app/i18n' {
 		readonly REMOVE_LABEL: string;
 		/** Remove {title}? */
 		readonly REMOVE_TITLE: string;
-		/** Sticker Packs */
+		/** Sticker packs */
 		readonly TITLE: string;
 	};
 

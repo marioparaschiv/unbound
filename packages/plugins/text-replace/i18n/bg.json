@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Замяна на текст",
-	"PLUGIN_TAGLINE": "Автоматично преписва съобщенията, преди да ги изпратиш.",
-	"TRY_YOUR_RULES": "Изпробвай правилата си",
-	"TEST_YOUR_RULES": "Тествай правилата си",
 	"EXAMPLE_MESSAGE": "Примерно съобщение",
 	"EXAMPLE_PLACEHOLDER": "Напиши съобщение за тест",
 	"RESULT": "Резултат",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Експортирай или импортирай двата списъка с правила като преносим JSON.",
 	"EXPORT_AND_SHARE": "Експортирай и сподели",
 	"IMPORT_CLIPBOARD": "Импортирай от клипборда",
-	"PASTE_JSON": "Постави JSON",
-	"PASTE_JSON_PLACEHOLDER": "Постави тук експортиран JSON от Text Replace",
-	"IMPORT_PASTED": "Импортирай поставеното",
 	"RULESET_IMPORTED": "Наборът от правила е импортиран.",
 	"IMPORT_FAILED": "Наборът от правила не можа да бъде импортиран.",
 	"CLIPBOARD_HAS_NO_RULESET": "Клипбордът ти не съдържа набор от правила.",

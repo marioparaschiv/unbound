@@ -22,6 +22,6 @@ Every switch is on by default and applies straight away, with no restart.
 
 ## :circle-info: Differences from Vencord
 
-- :msg: Discord's mobile app draws message headers natively, so there is no space for colored icons there. Messages name the platforms after the timestamp instead, in its own grey text. A long name or tag cuts the names short to keep the header on one line.
+- :msg: Discord's mobile app draws message headers natively, so there is no space for colored icons there. Messages name the platforms after the timestamp instead, in its own grey text. A long name or tag cuts off the end of the timestamp to keep the header on one line.
 - :refresh: A message header updates when Discord redraws the message, not the moment someone's presence changes. The member list and profiles update live.
 - :pointer: Mobile has no hover tooltips. Profiles show the platform name when you tap an icon. The member list keeps taps for opening the profile, and screen readers read out the platforms.

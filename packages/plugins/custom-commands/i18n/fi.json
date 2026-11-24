@@ -11,7 +11,6 @@
 	"DELETE": "Poista",
 	"DELETE_COMMAND": "Poista komento",
 	"DELETE_COMMAND_BODY": "Poistetaanko /{name} ja sen tallennetut liitteet?",
-	"DELETE_COMMAND_LABEL": "Poista {name}",
 	"DESCRIPTION_OPTIONAL": "Kuvaus (valinnainen)",
 	"DESCRIPTION_PLACEHOLDER": "Näytetään kauttaviivakomentojen luettelossa",
 	"DESCRIPTION_TOO_LONG": "Komennon kuvauksessa voi olla enintään {max} merkkiä.",

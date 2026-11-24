@@ -125,7 +125,6 @@ function CommandForm({ original, tags, onClose }: CommandFormProps) {
 				/>
 			</ui.Section>
 			<ui.Section
-				title={messages.RESPONSE}
 				description={
 					detectedArguments.length
 						? format('ARGUMENTS', {

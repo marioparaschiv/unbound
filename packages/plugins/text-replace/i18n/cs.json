@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Nahrazování textu",
-	"PLUGIN_TAGLINE": "Automaticky upraví zprávy, než je odešleš.",
-	"TRY_YOUR_RULES": "Vyzkoušej svá pravidla",
-	"TEST_YOUR_RULES": "Otestuj svá pravidla",
 	"EXAMPLE_MESSAGE": "Ukázková zpráva",
 	"EXAMPLE_PLACEHOLDER": "Napiš zprávu k otestování",
 	"RESULT": "Výsledek",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Exportuj nebo importuj oba seznamy pravidel jako přenosný JSON.",
 	"EXPORT_AND_SHARE": "Exportovat a sdílet",
 	"IMPORT_CLIPBOARD": "Importovat ze schránky",
-	"PASTE_JSON": "Vložit JSON",
-	"PASTE_JSON_PLACEHOLDER": "Sem vlož JSON exportovaný z Nahrazování textu",
-	"IMPORT_PASTED": "Importovat vložené",
 	"RULESET_IMPORTED": "Sada pravidel importována.",
 	"IMPORT_FAILED": "Sadu pravidel se nepodařilo importovat.",
 	"CLIPBOARD_HAS_NO_RULESET": "Ve schránce není žádná sada pravidel.",

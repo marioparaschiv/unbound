@@ -1,6 +1,5 @@
-import { StyleSheet } from 'react-native';
+import { Discord } from '@unbound-app/api/metro/components';
 
-export default StyleSheet.create({
-	scroll: { maxHeight: '100%' },
+export default Discord.createStyles({
 	content: { gap: 16, paddingTop: 8, paddingBottom: 32 },
 });

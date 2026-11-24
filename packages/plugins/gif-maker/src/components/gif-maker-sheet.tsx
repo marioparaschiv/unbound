@@ -64,14 +64,6 @@ export default function GifMakerSheet({
 	const [status, setStatus] = useState<string | undefined>();
 
 	async function create() {
-		const seconds = Math.max(0.1, length);
-
-		if (seconds > MAX_SECONDS) {
-			toasts.warning('TOO_LONG', { seconds: MAX_SECONDS });
-
-			return;
-		}
-
 		Keyboard.dismiss();
 
 		try {
@@ -86,7 +78,7 @@ export default function GifMakerSheet({
 					reader,
 					{
 						start: Number(start) || 0,
-						length: seconds,
+						length,
 						fps: FPS,
 						width: SIZES[size],
 						crop,

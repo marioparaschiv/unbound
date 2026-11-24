@@ -4,7 +4,7 @@
 
 ### Changed
 
-- The follow-ups sheet uses Discord's sheet header.
+- The follow-ups sheet uses Discord's sheet header and scrolls when the list is long.
 
 ## [1.0.0] - 2026-11-16
 

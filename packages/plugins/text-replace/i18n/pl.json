@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Zamiana tekstu",
-	"PLUGIN_TAGLINE": "Automatycznie zmieniaj wiadomości przed wysłaniem.",
-	"TRY_YOUR_RULES": "Wypróbuj swoje reguły",
-	"TEST_YOUR_RULES": "Przetestuj swoje reguły",
 	"EXAMPLE_MESSAGE": "Przykładowa wiadomość",
 	"EXAMPLE_PLACEHOLDER": "Wpisz wiadomość do przetestowania",
 	"RESULT": "Wynik",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Eksportuj lub importuj obie listy reguł jako przenośny plik JSON.",
 	"EXPORT_AND_SHARE": "Eksportuj i udostępnij",
 	"IMPORT_CLIPBOARD": "Importuj ze schowka",
-	"PASTE_JSON": "Wklej JSON",
-	"PASTE_JSON_PLACEHOLDER": "Wklej tutaj JSON wyeksportowany z Zamiany tekstu",
-	"IMPORT_PASTED": "Importuj wklejone",
 	"RULESET_IMPORTED": "Zaimportowano zestaw reguł.",
 	"IMPORT_FAILED": "Nie udało się zaimportować zestawu reguł.",
 	"CLIPBOARD_HAS_NO_RULESET": "Schowek nie zawiera zestawu reguł.",

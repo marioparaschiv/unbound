@@ -11,7 +11,6 @@
 	"DELETE": "हटाएँ",
 	"DELETE_COMMAND": "कमांड हटाएँ",
 	"DELETE_COMMAND_BODY": "/{name} और इसके सेव किए गए अटैचमेंट हटाएँ?",
-	"DELETE_COMMAND_LABEL": "{name} हटाएँ",
 	"DESCRIPTION_OPTIONAL": "विवरण (वैकल्पिक)",
 	"DESCRIPTION_PLACEHOLDER": "स्लैश कमांड की सूची में दिखता है",
 	"DESCRIPTION_TOO_LONG": "कमांड के विवरण के लिए ज़्यादा से ज़्यादा {max} अक्षर इस्तेमाल करें।",

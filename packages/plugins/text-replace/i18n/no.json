@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Teksterstatning",
-	"PLUGIN_TAGLINE": "Skriv om meldinger automatisk før du sender dem.",
-	"TRY_YOUR_RULES": "Prøv reglene dine",
-	"TEST_YOUR_RULES": "Test reglene dine",
 	"EXAMPLE_MESSAGE": "Eksempelmelding",
 	"EXAMPLE_PLACEHOLDER": "Skriv en melding for å teste",
 	"RESULT": "Resultat",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Eksporter eller importer begge reglelistene som flyttbar JSON.",
 	"EXPORT_AND_SHARE": "Eksporter og del",
 	"IMPORT_CLIPBOARD": "Importer fra utklippstavlen",
-	"PASTE_JSON": "Lim inn JSON",
-	"PASTE_JSON_PLACEHOLDER": "Lim inn eksportert Teksterstatning-JSON her",
-	"IMPORT_PASTED": "Importer innlimt",
 	"RULESET_IMPORTED": "Regelsettet ble importert.",
 	"IMPORT_FAILED": "Kunne ikke importere regelsettet.",
 	"CLIPBOARD_HAS_NO_RULESET": "Utklippstavlen inneholder ikke noe regelsett.",

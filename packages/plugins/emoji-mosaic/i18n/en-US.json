@@ -1,6 +1,6 @@
 {
 	"MAKE": "Make Emoji Mosaic",
-	"TITLE": "Emoji Mosaic",
+	"TITLE": "Emoji mosaic",
 	"GRID": "{columns} × {rows} grid · {count} emoji",
 	"COLUMNS": "Columns",
 	"PREFIX": "Name prefix",

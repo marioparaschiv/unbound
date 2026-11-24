@@ -4,7 +4,7 @@
 
 ### Changed
 
-- The sheet uses Discord's sheet header, and each "Attachment N of M" heading sits on its row group.
+- The sheet uses Discord's sheet header, each "Attachment N of M" heading sits on its row group, and the sheet scrolls when a message has many attachments.
 
 ## [1.0.0] - 2026-11-16
 

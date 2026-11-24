@@ -1,12 +1,14 @@
 import { getActionSheetRow } from '@unbound-plugins/shared/action-sheets/action-sheet-row';
 import { openSheet } from '@unbound-plugins/shared/action-sheets/open-sheet';
-import { Discord } from '@unbound-app/api/metro/components';
+import { BottomSheets, GorhomSheet } from '@unbound-app/api/metro/components';
 import { assets, dialogs, toasts } from '@unbound-app/api';
 import { format, messages } from '@unbound-app/i18n';
 
 import { createCollection, deleteCollection, holds, toggleGif, type Gif } from '~/lib/collections';
 import { getCollections, saveCollections, useCollections } from '~/lib/store';
 import { openNewCollectionDialog } from '~/components/new-collection-dialog';
+
+import useStyles from '~/components/collections-sheet.style';
 
 type CollectionsSheetProps = { gif: Gif; onClose: () => void };
 
@@ -30,6 +32,9 @@ async function confirmDelete(name: string) {
 }
 
 function CollectionsSheet({ gif, onClose }: CollectionsSheetProps) {
+	const styles = useStyles();
+	const { ActionSheet, BottomSheetTitleHeader } = BottomSheets;
+	const { BottomSheetScrollView: ScrollView } = GorhomSheet;
 	const collections = useCollections();
 	const ActionSheetRow = getActionSheetRow();
 	const checkIcon = assets.getIdByName('CheckmarkLargeIcon');
@@ -43,34 +48,38 @@ function CollectionsSheet({ gif, onClose }: CollectionsSheetProps) {
 	}
 
 	return (
-		<Discord.ActionSheet>
-			<Discord.BottomSheetTitleHeader
+		<ActionSheet scrollable>
+			<BottomSheetTitleHeader
 				title={messages.ADD_TO_COLLECTION}
 				subtitle={collections.length ? messages.HOLD_TO_DELETE : messages.NO_COLLECTIONS}
 			/>
-			<ActionSheetRow.Group>
-				{collections.map((collection) => (
+			<ScrollView contentContainerStyle={styles.body}>
+				<ActionSheetRow.Group>
+					{collections.map((collection) => (
+						<ActionSheetRow
+							key={collection.name}
+							label={collection.name}
+							subLabel={format('GIF_COUNT', { count: collection.gifs.length })}
+							icon={
+								folderIcon ? <ActionSheetRow.Icon source={folderIcon} /> : undefined
+							}
+							trailing={
+								holds(collection, gif) && checkIcon ? (
+									<ActionSheetRow.Icon source={checkIcon} />
+								) : undefined
+							}
+							onPress={() => toggle(collection.name, gif)}
+							onLongPress={() => void confirmDelete(collection.name)}
+						/>
+					))}
 					<ActionSheetRow
-						key={collection.name}
-						label={collection.name}
-						subLabel={format('GIF_COUNT', { count: collection.gifs.length })}
-						icon={folderIcon ? <ActionSheetRow.Icon source={folderIcon} /> : undefined}
-						trailing={
-							holds(collection, gif) && checkIcon ? (
-								<ActionSheetRow.Icon source={checkIcon} />
-							) : undefined
-						}
-						onPress={() => toggle(collection.name, gif)}
-						onLongPress={() => void confirmDelete(collection.name)}
+						label={messages.NEW_COLLECTION}
+						icon={plusIcon ? <ActionSheetRow.Icon source={plusIcon} /> : undefined}
+						onPress={() => openNewCollectionDialog(create)}
 					/>
-				))}
-				<ActionSheetRow
-					label={messages.NEW_COLLECTION}
-					icon={plusIcon ? <ActionSheetRow.Icon source={plusIcon} /> : undefined}
-					onPress={() => openNewCollectionDialog(create)}
-				/>
-			</ActionSheetRow.Group>
-		</Discord.ActionSheet>
+				</ActionSheetRow.Group>
+			</ScrollView>
+		</ActionSheet>
 	);
 }
 

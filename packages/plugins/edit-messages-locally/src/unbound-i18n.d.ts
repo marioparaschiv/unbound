@@ -11,7 +11,7 @@ declare module '@unbound-app/i18n' {
 		readonly EDIT_LOCALLY_HELP: string;
 		/** Save */
 		readonly SAVE: string;
-		/** Restore Original */
+		/** Restore original */
 		readonly RESTORE: string;
 		/** Saved your local edit. */
 		readonly SAVED: string;

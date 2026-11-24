@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Text Replace",
-	"PLUGIN_TAGLINE": "Αυτόματη αναδιατύπωση μηνυμάτων πριν τα στείλεις.",
-	"TRY_YOUR_RULES": "Δοκίμασε τους κανόνες σου",
-	"TEST_YOUR_RULES": "Έλεγξε τους κανόνες σου",
 	"EXAMPLE_MESSAGE": "Παράδειγμα μηνύματος",
 	"EXAMPLE_PLACEHOLDER": "Πληκτρολόγησε ένα μήνυμα για δοκιμή",
 	"RESULT": "Αποτέλεσμα",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Εξαγωγή ή εισαγωγή και των δύο λιστών κανόνων ως φορητό JSON.",
 	"EXPORT_AND_SHARE": "Εξαγωγή και κοινοποίηση",
 	"IMPORT_CLIPBOARD": "Εισαγωγή από το πρόχειρο",
-	"PASTE_JSON": "Επικόλληση JSON",
-	"PASTE_JSON_PLACEHOLDER": "Επικόλλησε εδώ το JSON που εξήχθη από το Text Replace",
-	"IMPORT_PASTED": "Εισαγωγή επικολλημένου",
 	"RULESET_IMPORTED": "Το σύνολο κανόνων εισήχθη.",
 	"IMPORT_FAILED": "Δεν ήταν δυνατή η εισαγωγή του συνόλου κανόνων.",
 	"CLIPBOARD_HAS_NO_RULESET": "Το πρόχειρο δεν περιέχει σύνολο κανόνων.",

@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Text Replace",
-	"PLUGIN_TAGLINE": "Muokkaa viestejä automaattisesti ennen kuin lähetät ne.",
-	"TRY_YOUR_RULES": "Kokeile sääntöjäsi",
-	"TEST_YOUR_RULES": "Testaa sääntöjäsi",
 	"EXAMPLE_MESSAGE": "Esimerkkiviesti",
 	"EXAMPLE_PLACEHOLDER": "Kirjoita viesti testataksesi",
 	"RESULT": "Tulos",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Vie tai tuo molemmat sääntöluettelot siirrettävänä JSONina.",
 	"EXPORT_AND_SHARE": "Vie ja jaa",
 	"IMPORT_CLIPBOARD": "Tuo leikepöydältä",
-	"PASTE_JSON": "Liitä JSON",
-	"PASTE_JSON_PLACEHOLDER": "Liitä viety Text Replace -JSON tähän",
-	"IMPORT_PASTED": "Tuo liitetty",
 	"RULESET_IMPORTED": "Sääntökokoelma tuotu.",
 	"IMPORT_FAILED": "Sääntökokoelmaa ei voitu tuoda.",
 	"CLIPBOARD_HAS_NO_RULESET": "Leikepöydälläsi ei ole sääntökokoelmaa.",

@@ -1,5 +1,5 @@
 import { getActionSheetRow } from '@unbound-plugins/shared/action-sheets/action-sheet-row';
-import { Discord } from '@unbound-app/api/metro/components';
+import { BottomSheets, Discord, GorhomSheet } from '@unbound-app/api/metro/components';
 import { assets, toasts } from '@unbound-app/api';
 import { format, messages } from '@unbound-app/i18n';
 import { useEffect, useState } from 'react';
@@ -12,20 +12,24 @@ import { readerLanguage } from '~/lib/language';
 import { findRecording } from '~/lib/pronunciation';
 import { lookUp } from '~/lib/lookup';
 
+import useStyles from '~/components/definition-sheet.style';
+
 type DefinitionSheetProps = { word: string; onClose: () => void };
 
 type Lookup = { state: 'loading' } | { state: 'missing' } | { state: 'found'; entry: Entry };
 
 function Meanings({ entry }: { entry: Entry }) {
+	const styles = useStyles();
+
 	return (
-		<View style={{ paddingHorizontal: 16, gap: 12, paddingBottom: 12 }}>
+		<View style={styles.meanings}>
 			{entry.meanings.map((meaning, index) => (
-				<View key={index} style={{ gap: 4 }}>
+				<View key={index} style={styles.meaning}>
 					<Discord.Text variant='text-sm/semibold' color='text-muted'>
 						{meaning.partOfSpeech}
 					</Discord.Text>
 					{meaning.senses.map((sense, position) => (
-						<View key={position} style={{ gap: 2 }}>
+						<View key={position} style={styles.sense}>
 							<Discord.Text variant='text-md/normal'>{`${position + 1}. ${sense.definition}`}</Discord.Text>
 							{sense.example ? (
 								<Discord.Text variant='text-sm/normal' color='text-muted'>
@@ -57,6 +61,7 @@ async function play(entry: Entry) {
  * @returns The sheet.
  */
 export default function DefinitionSheet({ word }: DefinitionSheetProps) {
+	const styles = useStyles();
 	const [lookup, setLookup] = useState<Lookup>({ state: 'loading' });
 	const vocabulary = useVocabulary();
 	const ActionSheetRow = getActionSheetRow();
@@ -82,45 +87,49 @@ export default function DefinitionSheet({ word }: DefinitionSheetProps) {
 	}, [word]);
 
 	const entry = lookup.state === 'found' ? lookup.entry : undefined;
+	const { ActionSheet, BottomSheetTitleHeader } = BottomSheets;
+	const { BottomSheetScrollView: ScrollView } = GorhomSheet;
 
 	return (
-		<Discord.ActionSheet>
-			<Discord.BottomSheetTitleHeader
+		<ActionSheet scrollable>
+			<BottomSheetTitleHeader
 				title={entry?.word ?? word}
 				subtitle={entry?.phonetic || undefined}
 			/>
-			{lookup.state === 'loading' ? (
-				<Discord.Text variant='text-md/normal' color='text-muted' style={{ padding: 16 }}>
-					{messages.LOADING}
-				</Discord.Text>
-			) : null}
-			{lookup.state === 'missing' ? (
-				<Discord.Text variant='text-md/normal' color='text-muted' style={{ padding: 16 }}>
-					{messages.NOT_FOUND}
-				</Discord.Text>
-			) : null}
-			{entry ? <Meanings entry={entry} /> : null}
-			{entry ? (
-				<ActionSheetRow.Group>
-					<ActionSheetRow
-						label={messages.PLAY}
-						icon={speaker ? <ActionSheetRow.Icon source={speaker} /> : undefined}
-						onPress={() => void play(entry)}
-					/>
-					<ActionSheetRow
-						label={saved ? messages.SAVED : messages.SAVE}
-						icon={star ? <ActionSheetRow.Icon source={star} /> : undefined}
-						onPress={() => {
-							const nowSaved = toggleWord(
-								word,
-								entry.meanings[0]?.senses[0]?.definition ?? '',
-							);
+			<ScrollView contentContainerStyle={styles.body}>
+				{lookup.state === 'loading' ? (
+					<Discord.Text variant='text-md/normal' color='text-muted' style={styles.note}>
+						{messages.LOADING}
+					</Discord.Text>
+				) : null}
+				{lookup.state === 'missing' ? (
+					<Discord.Text variant='text-md/normal' color='text-muted' style={styles.note}>
+						{messages.NOT_FOUND}
+					</Discord.Text>
+				) : null}
+				{entry ? <Meanings entry={entry} /> : null}
+				{entry ? (
+					<ActionSheetRow.Group>
+						<ActionSheetRow
+							label={messages.PLAY}
+							icon={speaker ? <ActionSheetRow.Icon source={speaker} /> : undefined}
+							onPress={() => void play(entry)}
+						/>
+						<ActionSheetRow
+							label={saved ? messages.SAVED : messages.SAVE}
+							icon={star ? <ActionSheetRow.Icon source={star} /> : undefined}
+							onPress={() => {
+								const nowSaved = toggleWord(
+									word,
+									entry.meanings[0]?.senses[0]?.definition ?? '',
+								);
 
-							if (!nowSaved) toasts.info('REMOVED');
-						}}
-					/>
-				</ActionSheetRow.Group>
-			) : null}
-		</Discord.ActionSheet>
+								if (!nowSaved) toasts.info('REMOVED');
+							}}
+						/>
+					</ActionSheetRow.Group>
+				) : null}
+			</ScrollView>
+		</ActionSheet>
 	);
 }

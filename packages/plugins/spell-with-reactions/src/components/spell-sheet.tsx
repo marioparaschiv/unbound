@@ -1,5 +1,5 @@
 import { openSheet } from '@unbound-plugins/shared/action-sheets/open-sheet';
-import { Discord } from '@unbound-app/api/metro/components';
+import { BottomSheets, Discord } from '@unbound-app/api/metro/components';
 import { format, messages } from '@unbound-app/i18n';
 import { toasts } from '@unbound-app/api';
 import { View } from 'react-native';
@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { spell, type Spelling } from '~/lib/letters';
 import { addReactions } from '~/lib/react';
 import ReactionPreview from '~/components/reaction-preview';
+import useStyles from '~/components/spell-sheet.style';
 
 type Target = { channelId: string; messageId: string; taken: string[] };
 
@@ -29,6 +30,8 @@ function problem(spelling: Spelling): string | undefined {
 }
 
 function SpellSheet({ channelId, messageId, taken, onClose }: SpellSheetProps) {
+	const styles = useStyles();
+	const { ActionSheet, BottomSheetTitleHeader } = BottomSheets;
 	const [word, setWord] = useState('');
 	const spelling = spell(word, new Set(taken));
 
@@ -44,9 +47,9 @@ function SpellSheet({ channelId, messageId, taken, onClose }: SpellSheetProps) {
 	}
 
 	return (
-		<Discord.ActionSheet>
-			<View style={{ gap: 12, padding: 16 }}>
-				<Discord.Text variant='heading-lg/semibold'>{messages.SPELL}</Discord.Text>
+		<ActionSheet>
+			<BottomSheetTitleHeader title={messages.SPELL} />
+			<View style={styles.body}>
 				<Discord.TextInput
 					description={messages.HELP}
 					autoCorrect={false}
@@ -67,7 +70,7 @@ function SpellSheet({ channelId, messageId, taken, onClose }: SpellSheetProps) {
 					onPress={() => void react()}
 				/>
 			</View>
-		</Discord.ActionSheet>
+		</ActionSheet>
 	);
 }
 

@@ -4,7 +4,7 @@
 
 ### Changed
 
-- The collections sheet uses Discord's sheet header, and New collection opens a dialog to name it.
+- The collections sheet uses Discord's sheet header and scrolls when you have many collections. New collection opens a dialog to name it.
 
 ## [1.0.0] - 2026-11-14
 

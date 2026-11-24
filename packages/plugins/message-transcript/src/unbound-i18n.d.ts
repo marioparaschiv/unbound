@@ -5,7 +5,7 @@ declare module '@unbound-app/i18n' {
 	export type Messages = {
 		/** Select Messages */
 		readonly SELECT: string;
-		/** Select Messages */
+		/** Select messages */
 		readonly TITLE: string;
 		/** The message you pressed starts the selection. Tap another message to end it there. */
 		readonly HELP: string;

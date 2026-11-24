@@ -1,5 +1,6 @@
+import { Discord } from '@unbound-app/api/metro/components';
 import { metro } from '@unbound-app/api';
-import { Image, Text, View } from 'react-native';
+import { Image, View } from 'react-native';
 
 import useStyles from './reaction-preview.style';
 
@@ -35,7 +36,7 @@ function ReactionPreview({ emoji }: ReactionPreviewProps) {
 								accessibilityLabel={surrogate}
 							/>
 						) : (
-							<Text style={styles.emoji}>{surrogate}</Text>
+							<Discord.Text variant='text-md/normal'>{surrogate}</Discord.Text>
 						)}
 					</View>
 				);

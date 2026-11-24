@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Text Replace",
-	"PLUGIN_TAGLINE": "Skriv om meddelanden automatiskt innan du skickar dem.",
-	"TRY_YOUR_RULES": "Prova dina regler",
-	"TEST_YOUR_RULES": "Testa dina regler",
 	"EXAMPLE_MESSAGE": "Exempelmeddelande",
 	"EXAMPLE_PLACEHOLDER": "Skriv ett meddelande att testa",
 	"RESULT": "Resultat",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Exportera eller importera båda regellistorna som portabel JSON.",
 	"EXPORT_AND_SHARE": "Exportera och dela",
 	"IMPORT_CLIPBOARD": "Importera från urklipp",
-	"PASTE_JSON": "Klistra in JSON",
-	"PASTE_JSON_PLACEHOLDER": "Klistra in exporterad Text Replace-JSON här",
-	"IMPORT_PASTED": "Importera inklistrat",
 	"RULESET_IMPORTED": "Regeluppsättningen importerades.",
 	"IMPORT_FAILED": "Det gick inte att importera regeluppsättningen.",
 	"CLIPBOARD_HAS_NO_RULESET": "Urklippet innehåller ingen regeluppsättning.",

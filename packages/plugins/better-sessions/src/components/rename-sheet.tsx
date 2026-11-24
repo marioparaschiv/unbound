@@ -1,5 +1,5 @@
+import { openSheet, type SheetProps } from '@unbound-plugins/shared/action-sheets/open-sheet';
 import { Discord } from '@unbound-app/api/metro/components';
-import { metro } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
 import { useState } from 'react';
 import { View } from 'react-native';
@@ -7,18 +7,17 @@ import { View } from 'react-native';
 import { defaultName, type Session } from '~/lib/sessions';
 import { nameSession, sessionNames } from '~/lib/store';
 
-import styles from '~/components/rename-sheet.style';
+import useStyles from '~/components/rename-sheet.style';
 
-const SHEET_KEY = 'unbound-better-sessions-rename';
+type RenameSheetProps = SheetProps & { session: Session; onRenamed: () => void };
 
-type RenameSheetProps = { session: Session; onRenamed: () => void };
-
-function RenameSheet({ session, onRenamed }: RenameSheetProps) {
+function RenameSheet({ session, onRenamed, onClose }: RenameSheetProps) {
+	const styles = useStyles();
 	const [name, setName] = useState(sessionNames()[session.id_hash] ?? '');
 
 	function save(value: string) {
 		nameSession(session.id_hash, value);
-		metro.api.ActionSheets.hideActionSheet(SHEET_KEY);
+		onClose();
 		onRenamed();
 	}
 
@@ -49,8 +48,5 @@ function RenameSheet({ session, onRenamed }: RenameSheetProps) {
  * @param onRenamed Runs once the name is saved, to show it.
  */
 export function openRenameSheet(session: Session, onRenamed: () => void): void {
-	metro.api.ActionSheets.openLazy(
-		Promise.resolve({ default: () => <RenameSheet session={session} onRenamed={onRenamed} /> }),
-		SHEET_KEY,
-	);
+	openSheet('unbound-better-sessions-rename', RenameSheet, { session, onRenamed });
 }
