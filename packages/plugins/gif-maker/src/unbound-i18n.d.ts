@@ -41,14 +41,13 @@ declare module '@unbound-app/i18n' {
 		readonly ATTACHED: string;
 		/** Couldn't make a GIF from this video. */
 		readonly FAILED: string;
-		/** GIFs are limited to {seconds} seconds. */
-		readonly TOO_LONG: string;
+		/** Enter a number of seconds, such as 1.5. */
+		readonly NOT_SECONDS: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
 	export type FormatVars = {
 		FRAMES: { done: string | number; total: string | number };
-		TOO_LONG: { seconds: string | number };
 	};
 
 	/** Each message in the user's locale, falling back to en-US. */

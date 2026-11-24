@@ -11,7 +11,6 @@
 	"DELETE": "Verwijderen",
 	"DELETE_COMMAND": "Opdracht verwijderen",
 	"DELETE_COMMAND_BODY": "/{name} en de opgeslagen bijlagen verwijderen?",
-	"DELETE_COMMAND_LABEL": "{name} verwijderen",
 	"DESCRIPTION_OPTIONAL": "Beschrijving (optioneel)",
 	"DESCRIPTION_PLACEHOLDER": "Wordt getoond in de lijst met slash-opdrachten",
 	"DESCRIPTION_TOO_LONG": "Gebruik maximaal {max} tekens voor de beschrijving van de opdracht.",

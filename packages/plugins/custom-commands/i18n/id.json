@@ -11,7 +11,6 @@
 	"DELETE": "Hapus",
 	"DELETE_COMMAND": "Hapus perintah",
 	"DELETE_COMMAND_BODY": "Hapus /{name} beserta lampiran yang tersimpan?",
-	"DELETE_COMMAND_LABEL": "Hapus {name}",
 	"DESCRIPTION_OPTIONAL": "Deskripsi (opsional)",
 	"DESCRIPTION_PLACEHOLDER": "Ditampilkan di daftar perintah garis miring",
 	"DESCRIPTION_TOO_LONG": "Gunakan maksimal {max} karakter untuk deskripsi perintah.",

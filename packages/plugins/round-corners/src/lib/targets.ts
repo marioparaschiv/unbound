@@ -94,12 +94,12 @@ export function targets(selectedShape: SelectedShape): Target[] {
 			setting: 'chatInput',
 			components: [],
 			rule: () => undefined,
-			tokens: (active) => {
-				overrideToken('CHAT_INPUT_FLOATING_BORDER_RADIUS', active, (stock) =>
-					Math.max(stock, 24),
-				);
-				overrideToken('CHAT_INPUT_BORDER_RADIUS', active, (stock) => Math.max(stock, 24));
-			},
+			// A fixed radius near stock barely shows on the ~56pt composer; fully round makes it a pill at any height.
+			tokens: (active) =>
+				roundTokens(
+					['CHAT_INPUT_FLOATING_BORDER_RADIUS', 'CHAT_INPUT_BORDER_RADIUS'],
+					active,
+				),
 		},
 		{
 			setting: 'otherCorners',

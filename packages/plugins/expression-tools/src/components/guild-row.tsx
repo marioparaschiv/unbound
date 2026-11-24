@@ -11,8 +11,6 @@ type GuildIconProps = {
 type GuildRowProps = {
 	guild: Guild;
 	disabled: boolean;
-	start: boolean;
-	end: boolean;
 	onPress: () => void;
 };
 
@@ -32,15 +30,13 @@ function GuildIcon({ guild }: GuildIconProps) {
 	);
 }
 
-function GuildRow({ guild, disabled, start, end, onPress }: GuildRowProps) {
+function GuildRow({ guild, disabled, onPress }: GuildRowProps) {
 	return (
 		<Discord.TableRow
 			label={guild.name}
 			icon={<GuildIcon guild={guild} />}
 			arrow
 			disabled={disabled}
-			start={start}
-			end={end}
 			onPress={onPress}
 		/>
 	);

@@ -72,9 +72,8 @@ function EffectPickerSheet({ selected, onPick, onClose }: EffectPickerSheetProps
 	const effects = flux.useStore(CategoryStore, () => profileEffects(loadedProducts()));
 	const shown = [NONE, ...effects].filter((effect) => !effect.skuId || matches(effect, query));
 
-	useEffect(() => {
-		if (!effects.length) fetchShop();
-	}, [effects.length]);
+	// Discord keeps only the products it has needed so far, such as the user's own effect, so the sheet loads the whole shop.
+	useEffect(() => fetchShop(), []);
 
 	function pick(skuId: string) {
 		onPick(skuId);

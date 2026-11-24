@@ -1,12 +1,20 @@
 import { useComposerRow } from '@unbound-plugins/shared/composer/overlay-rows';
 import { useDraft } from '@unbound-plugins/shared/composer/composer-state';
+import { Discord } from '@unbound-app/api/metro/components';
 import { flux, metro } from '@unbound-app/api';
 import { format } from '@unbound-app/i18n';
-import { Image, Pressable, Text } from 'react-native';
+import { Image, Pressable, type ImageSourcePropType } from 'react-native';
+
+import useStyles, { PILL_HEIGHT } from '~/components/account-pill.style';
 
 type CurrentUser = {
 	username?: string;
 	globalName?: string | null;
+	getAvatarSource?: (
+		guildId: string | undefined,
+		animated?: boolean,
+		size?: number,
+	) => ImageSourcePropType | undefined;
 	getAvatarURL?: (
 		guildId: string | undefined,
 		size: number,
@@ -19,8 +27,17 @@ type UserStore = { getCurrentUser(): CurrentUser | undefined };
 type ManageAccounts = { openManageAccountsModal?: () => void; default?: () => void };
 
 const ChannelStore = flux.getStore('Channel');
-const PILL_HEIGHT = 24;
-const AVATAR_SIZE = 18;
+
+// `getAvatarSource` covers default avatars, whose URL is not one an `Image` can load.
+function avatarOf(user: CurrentUser): ImageSourcePropType | undefined {
+	const source = user.getAvatarSource?.(undefined, false, 64);
+
+	if (source) return source;
+
+	const uri = user.getAvatarURL?.(undefined, 64, false);
+
+	return uri ? { uri } : undefined;
+}
 
 function openAccounts() {
 	const module = metro.findByFilePath(
@@ -39,6 +56,7 @@ function openAccounts() {
  * @returns The pill, or nothing while the message box is empty.
  */
 export function AccountPill({ channelId }: { channelId: string }) {
+	const styles = useStyles();
 	const draft = useDraft(channelId);
 	const user = flux.useStore(flux.getStore('User'), (store) =>
 		(store as unknown as UserStore).getCurrentUser(),
@@ -56,7 +74,7 @@ export function AccountPill({ channelId }: { channelId: string }) {
 	if (!shown || !user) return null;
 
 	const name = user.globalName || user.username || '';
-	const uri = user.getAvatarURL?.(undefined, 64, false);
+	const avatar = avatarOf(user);
 
 	return (
 		<Pressable
@@ -64,33 +82,12 @@ export function AccountPill({ channelId }: { channelId: string }) {
 			accessibilityLabel={format('SENDING_AS', { name })}
 			onPress={openAccounts}
 			hitSlop={6}
-			style={{
-				position: 'absolute',
-				top,
-				left: 12,
-				zIndex: 10,
-				flexDirection: 'row',
-				alignItems: 'center',
-				gap: 5,
-				height: PILL_HEIGHT,
-				paddingLeft: 3,
-				paddingRight: 8,
-				borderRadius: 999,
-				backgroundColor: 'rgba(0, 0, 0, 0.35)',
-			}}
+			style={[styles.pill, { top }]}
 		>
-			{uri ? (
-				<Image
-					source={{ uri }}
-					style={{ width: AVATAR_SIZE, height: AVATAR_SIZE, borderRadius: 999 }}
-				/>
-			) : null}
-			<Text
-				style={{ color: '#f2f3f5', fontSize: 11, fontWeight: '600', lineHeight: 14 }}
-				numberOfLines={1}
-			>
+			{avatar ? <Image source={avatar} style={styles.avatar} /> : null}
+			<Discord.Text variant='text-xs/semibold' color='text-default' numberOfLines={1}>
 				{name}
-			</Text>
+			</Discord.Text>
 		</Pressable>
 	);
 }

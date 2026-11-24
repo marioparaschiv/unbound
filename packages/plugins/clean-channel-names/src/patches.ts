@@ -51,22 +51,83 @@ function clean(channel: CleanedChannel | undefined): void {
 	cleaned.add(channel);
 }
 
+type ChannelsById = Record<string, CleanedChannel | undefined>;
+
+type ChannelStore = {
+	getChannel(id: string): CleanedChannel | undefined;
+	getMutableGuildChannelsForGuild(guildId: string): ChannelsById;
+	getMutableBasicGuildChannelsForGuild(guildId: string): ChannelsById;
+};
+
+// `getChannels` groups a guild's channels by kind, such as `SELECTABLE` and `VOCAL`.
+type GuildChannelStore = {
+	getChannels(guildId: string): Record<string, unknown>;
+};
+
+function cleanAll(channels: ChannelsById | undefined): void {
+	for (const channel of Object.values(channels ?? {})) clean(channel);
+}
+
+function cleanGroups(groups: Record<string, unknown> | undefined): void {
+	for (const group of Object.values(groups ?? {})) {
+		if (!Array.isArray(group)) continue;
+
+		for (const entry of group) clean((entry as { channel?: CleanedChannel })?.channel);
+	}
+}
+
 /**
- * @description Shows channel names cleaned. Patches `getChannel` on Discord's `ChannelStore` to give each channel record a
- * `name` getter that cleans the name it keeps, and shows the original while the channel's settings are open.
+ * @description Shows channel names cleaned. Patches the `ChannelStore` and `GuildChannelStore` getters the chat header and
+ * channel list read to give each channel record a `name` getter that cleans the name it keeps, re-cleans records a
+ * channel update replaces, and shows the original while the channel's settings are open.
  * @returns A function that stops following setting changes.
  */
 export function patchChannelNames(): () => void {
-	const ChannelStore = flux.getStore('Channel') as unknown as {
-		getChannel(id: string): CleanedChannel | undefined;
-		emitChange(): void;
-	};
+	const ChannelStore = flux.getStore('Channel') as unknown as ChannelStore;
+	const GuildChannelStore = flux.getStore('GuildChannel') as unknown as
+		| GuildChannelStore
+		| undefined;
 
 	patcher.after(ChannelStore, 'getChannel', ({ result }) => {
 		clean(result as CleanedChannel | undefined);
 
 		return result;
 	});
+
+	for (const getter of [
+		'getMutableGuildChannelsForGuild',
+		'getMutableBasicGuildChannelsForGuild',
+	] as const) {
+		if (typeof ChannelStore[getter] !== 'function') continue;
+
+		patcher.after(ChannelStore, getter, ({ result }) => {
+			cleanAll(result as ChannelsById | undefined);
+
+			return result;
+		});
+	}
+
+	if (typeof GuildChannelStore?.getChannels === 'function') {
+		patcher.after(GuildChannelStore, 'getChannels', ({ result }) => {
+			cleanGroups(result as Record<string, unknown> | undefined);
+
+			return result;
+		});
+	}
+
+	// An update replaces the channel's record with a new object, which no getter may have returned yet.
+	for (const type of ['CHANNEL_CREATE', 'CHANNEL_UPDATES']) {
+		flux.onAction(type, (action) => {
+			const { channel, channels } = action as {
+				channel?: { id?: string };
+				channels?: { id?: string }[];
+			};
+
+			for (const each of channels ?? (channel ? [channel] : [])) {
+				if (each?.id) ChannelStore.getChannel(each.id);
+			}
+		});
+	}
 
 	flux.onAction('CHANNEL_SETTINGS_INIT', (action) => {
 		editing = (action as { channelId?: string }).channelId ?? null;

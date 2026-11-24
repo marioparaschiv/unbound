@@ -11,7 +11,6 @@
 	"DELETE": "ลบ",
 	"DELETE_COMMAND": "ลบคำสั่ง",
 	"DELETE_COMMAND_BODY": "ลบ /{name} และไฟล์แนบที่บันทึกไว้ใช่ไหม",
-	"DELETE_COMMAND_LABEL": "ลบ {name}",
 	"DESCRIPTION_OPTIONAL": "คำอธิบาย (ไม่บังคับ)",
 	"DESCRIPTION_PLACEHOLDER": "แสดงในรายการคำสั่งสแลช",
 	"DESCRIPTION_TOO_LONG": "คำอธิบายคำสั่งต้องมีไม่เกิน {max} ตัวอักษร",

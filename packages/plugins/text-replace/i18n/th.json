@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Text Replace",
-	"PLUGIN_TAGLINE": "แก้ไขข้อความโดยอัตโนมัติก่อนที่คุณจะส่ง",
-	"TRY_YOUR_RULES": "ลองใช้กฎของคุณ",
-	"TEST_YOUR_RULES": "ทดสอบกฎของคุณ",
 	"EXAMPLE_MESSAGE": "ข้อความตัวอย่าง",
 	"EXAMPLE_PLACEHOLDER": "พิมพ์ข้อความเพื่อทดสอบ",
 	"RESULT": "ผลลัพธ์",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "ส่งออกหรือนำเข้ารายการกฎทั้งสองเป็น JSON ที่พกพาได้",
 	"EXPORT_AND_SHARE": "ส่งออกและแชร์",
 	"IMPORT_CLIPBOARD": "นำเข้าจากคลิปบอร์ด",
-	"PASTE_JSON": "วาง JSON",
-	"PASTE_JSON_PLACEHOLDER": "วาง JSON ของ Text Replace ที่ส่งออกไว้ที่นี่",
-	"IMPORT_PASTED": "นำเข้าข้อมูลที่วาง",
 	"RULESET_IMPORTED": "นำเข้าชุดกฎแล้ว",
 	"IMPORT_FAILED": "ไม่สามารถนำเข้าชุดกฎได้",
 	"CLIPBOARD_HAS_NO_RULESET": "คลิปบอร์ดของคุณไม่มีชุดกฎ",

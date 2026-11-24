@@ -11,7 +11,6 @@
 	"DELETE": "Izbriši",
 	"DELETE_COMMAND": "Izbriši naredbu",
 	"DELETE_COMMAND_BODY": "Izbrisati /{name} i njezine spremljene privitke?",
-	"DELETE_COMMAND_LABEL": "Izbriši {name}",
 	"DESCRIPTION_OPTIONAL": "Opis (neobavezno)",
 	"DESCRIPTION_PLACEHOLDER": "Prikazuje se na popisu naredbi s kosom crtom",
 	"DESCRIPTION_TOO_LONG": "Opis naredbe može imati najviše {max} znakova.",

@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Reemplazo de texto",
-	"PLUGIN_TAGLINE": "Reescribe automáticamente los mensajes antes de enviarlos.",
-	"TRY_YOUR_RULES": "Prueba tus reglas",
-	"TEST_YOUR_RULES": "Prueba tus reglas",
 	"EXAMPLE_MESSAGE": "Mensaje de ejemplo",
 	"EXAMPLE_PLACEHOLDER": "Escribe un mensaje para probar",
 	"RESULT": "Resultado",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Exporta o importa ambas listas de reglas como JSON portable.",
 	"EXPORT_AND_SHARE": "Exportar y compartir",
 	"IMPORT_CLIPBOARD": "Importar del portapapeles",
-	"PASTE_JSON": "Pegar JSON",
-	"PASTE_JSON_PLACEHOLDER": "Pega aquí el JSON exportado de Text Replace",
-	"IMPORT_PASTED": "Importar lo pegado",
 	"RULESET_IMPORTED": "Conjunto de reglas importado.",
 	"IMPORT_FAILED": "No se pudo importar el conjunto de reglas.",
 	"CLIPBOARD_HAS_NO_RULESET": "Tu portapapeles no contiene un conjunto de reglas.",

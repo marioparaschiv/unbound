@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-24
+
+### Changed
+
+- Forgetting a key is a trash button that asks first, and the decrypt sheet uses Discord's sheet header.
+
 ## [1.0.3] - 2026-11-21
 
 ### Fixed

@@ -1,6 +1,5 @@
 import { formatIdList, parseIdList } from '@unbound-plugins/shared/entities/id-list';
 import EntityList from '@unbound-plugins/shared/entities/entity-list';
-import { Discord } from '@unbound-app/api/metro/components';
 import { settings, useSetting } from '@unbound-app/settings';
 import { messages } from '@unbound-app/i18n';
 import { ui } from '@unbound-app/api';
@@ -28,15 +27,12 @@ function KeywordsField() {
 	const keywords = useSetting('keywords');
 
 	return (
-		<Discord.TextInput
+		<ui.MultilineRow
 			label={messages.HIDDEN_KEYWORDS}
-			description={messages.HIDDEN_KEYWORDS_SUBTITLE}
+			subLabel={messages.HIDDEN_KEYWORDS_SUBTITLE}
 			placeholder={messages.HIDDEN_KEYWORDS_PLACEHOLDER}
-			autoCapitalize='none'
-			autoCorrect={false}
-			multiline
 			value={keywords}
-			onChange={(next: string) => {
+			onChange={(next) => {
 				settings.keywords = next;
 			}}
 		/>

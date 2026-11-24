@@ -4,5 +4,6 @@
 	"OUTPUT_TITLE": "{language} · izlaz {code}",
 	"OUTPUT_BODY": "{output}",
 	"NO_OUTPUT": "(nema izlaza)",
-	"RUN_FAILED": "Kod nije moguće pokrenuti"
+	"RUN_FAILED": "Kod nije moguće pokrenuti",
+	"CLOSE": "Zatvori"
 }

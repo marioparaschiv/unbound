@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-24
+
+### Changed
+
+- The size label uses Discord's text style.
+
 ## [1.0.9] - 2026-11-11
 
 ### Changed

@@ -19,9 +19,9 @@
 	"STICKER_UPLOAD_INVALID_RESPONSE": "Sticker upload returned an invalid response.",
 	"OPERATION_FAILED": "The operation could not be completed.",
 	"CLONE_TO_SERVER": "Clone to a server",
-	"NAME": "NAME",
+	"NAME": "Name",
 	"EXPRESSION_NAME_PLACEHOLDER": "Expression name",
-	"YOUR_SERVERS": "YOUR SERVERS",
+	"YOUR_SERVERS": "Your servers",
 	"SEARCH_SERVERS": "Search servers",
 	"NO_OWNED_SERVERS": "You do not own any servers.",
 	"NO_SERVERS_MATCH": "No servers match that search."

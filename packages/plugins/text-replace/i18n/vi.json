@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Text Replace",
-	"PLUGIN_TAGLINE": "Tự động viết lại tin nhắn trước khi bạn gửi.",
-	"TRY_YOUR_RULES": "Thử quy tắc của bạn",
-	"TEST_YOUR_RULES": "Kiểm tra quy tắc của bạn",
 	"EXAMPLE_MESSAGE": "Tin nhắn mẫu",
 	"EXAMPLE_PLACEHOLDER": "Nhập tin nhắn để thử",
 	"RESULT": "Kết quả",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Xuất hoặc nhập cả hai danh sách quy tắc dưới dạng JSON di động.",
 	"EXPORT_AND_SHARE": "Xuất & chia sẻ",
 	"IMPORT_CLIPBOARD": "Nhập từ bảng nhớ tạm",
-	"PASTE_JSON": "Dán JSON",
-	"PASTE_JSON_PLACEHOLDER": "Dán JSON Text Replace đã xuất vào đây",
-	"IMPORT_PASTED": "Nhập nội dung đã dán",
 	"RULESET_IMPORTED": "Đã nhập bộ quy tắc.",
 	"IMPORT_FAILED": "Không thể nhập bộ quy tắc.",
 	"CLIPBOARD_HAS_NO_RULESET": "Bảng nhớ tạm của bạn không chứa bộ quy tắc nào.",

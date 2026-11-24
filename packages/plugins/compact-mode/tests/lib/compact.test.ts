@@ -48,8 +48,24 @@ describe('compactMessage', () => {
 		});
 	});
 
-	test('leaves rows without an author or content alone', () => {
+	test('leaves rows without an author alone', () => {
 		expect(compactMessage({ content: [] }, true)).toBe(false);
-		expect(compactMessage({ username: 'a' }, true)).toBe(false);
+	});
+
+	test('compacts an attachment-only row, which has no content, to the bold name alone', () => {
+		const message: CompactMessage = {
+			username: 'User',
+			avatarURL: 'https://cdn/a.png',
+			timestamp: '4:34 AM',
+			isFirst: true,
+		};
+
+		expect(compactMessage(message, true)).toBe(true);
+		expect(message.avatarURL).toBeUndefined();
+		expect(message.timestamp).toBeUndefined();
+		expect(message.isFirst).toBe(false);
+		expect(message.content).toEqual([
+			{ type: 'strong', content: [{ type: 'text', content: 'User' }] },
+		]);
 	});
 });

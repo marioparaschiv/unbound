@@ -1,4 +1,5 @@
 import { useComposerRow } from '@unbound-plugins/shared/composer/overlay-rows';
+import { counterSurface } from '@unbound-plugins/shared/colors/counter-surface';
 import { flux, metro } from '@unbound-app/api';
 import { format } from '@unbound-app/i18n';
 import { settings } from '@unbound-app/settings';
@@ -76,13 +77,14 @@ export function SpeedPill({ channelId, inputs, live }: SpeedPillProps) {
 	if (!shown) return null;
 
 	const colors = metro.common.Theme.colors ?? {};
+	const textColor = colors.TEXT_DEFAULT ?? colors.TEXT_NORMAL;
 
 	return (
 		<View pointerEvents='none' style={{ position: 'absolute', top, left: 12, zIndex: 10 }}>
 			<View
 				style={{
 					alignItems: 'center',
-					backgroundColor: 'rgba(0, 0, 0, 0.35)',
+					backgroundColor: counterSurface(textColor),
 					borderRadius: 999,
 					height: PILL_HEIGHT,
 					justifyContent: 'center',
@@ -91,8 +93,7 @@ export function SpeedPill({ channelId, inputs, live }: SpeedPillProps) {
 			>
 				<Text
 					style={{
-						color:
-							typeof colors.TEXT_NORMAL === 'string' ? colors.TEXT_NORMAL : '#f2f3f5',
+						color: typeof textColor === 'string' ? textColor : '#f2f3f5',
 						fontSize: 11,
 						fontVariant: ['tabular-nums'],
 						fontWeight: '600',

@@ -1,61 +1,28 @@
+import { BottomSheets, Discord, GorhomSheet } from '@unbound-app/api/metro/components';
 import { openSheet } from '@unbound-plugins/shared/action-sheets/open-sheet';
-import { Pressable, ScrollView, View, type LayoutChangeEvent } from 'react-native';
-import { Discord } from '@unbound-app/api/metro/components';
+import { View, type LayoutChangeEvent } from 'react-native';
 import { format, messages } from '@unbound-app/i18n';
 import { metro, toasts } from '@unbound-app/api';
 import { useMemo, useRef, useState } from 'react';
 
 import { formatTranscript, selectRange, spansDays, type TranscriptMessage } from '~/lib/transcript';
+import useStyles from '~/components/select-sheet.style';
 import { loadedMessages } from '~/lib/messages';
 
 const PREVIEW_CHARACTERS = 80;
 const SHOWN_AROUND = 60;
-const LIST_HEIGHT = 380;
 const ANCHOR_INSET = 120;
 
 type Target = { channelId: string; messageId: string };
 
 type SelectSheetProps = Target & { onClose: () => void };
 
-type RowProps = {
-	message: TranscriptMessage;
-	picked: boolean;
-	anchor: boolean;
-	onPress: () => void;
-	onLayout?: (event: LayoutChangeEvent) => void;
-};
+type Scrollable = { scrollTo(options: { y: number; animated: boolean }): void };
 
-function preview({ content, attachments }: TranscriptMessage): string {
-	const text = content.replace(/\s+/g, ' ').trim() || attachments[0] || '';
+function preview({ content, fileNames }: TranscriptMessage): string {
+	const text = content.replace(/\s+/g, ' ').trim() || fileNames?.join(', ') || '';
 
 	return text.length > PREVIEW_CHARACTERS ? `${text.slice(0, PREVIEW_CHARACTERS - 1)}…` : text;
-}
-
-function Row({ message, picked, anchor, onPress, onLayout }: RowProps) {
-	return (
-		<Pressable
-			onPress={onPress}
-			onLayout={onLayout}
-			style={{
-				flexDirection: 'row',
-				gap: 10,
-				paddingVertical: 8,
-				paddingHorizontal: 12,
-				borderRadius: 8,
-				opacity: picked ? 1 : 0.55,
-			}}
-		>
-			<Discord.Text variant='text-md/semibold' color={anchor ? 'text-link' : 'text-default'}>
-				{picked ? '●' : '○'}
-			</Discord.Text>
-			<View style={{ flex: 1 }}>
-				<Discord.Text variant='text-sm/semibold'>{message.author}</Discord.Text>
-				<Discord.Text variant='text-sm/normal' color='text-muted'>
-					{preview(message)}
-				</Discord.Text>
-			</View>
-		</Pressable>
-	);
 }
 
 function around(all: TranscriptMessage[], messageId: string): TranscriptMessage[] {
@@ -65,6 +32,9 @@ function around(all: TranscriptMessage[], messageId: string): TranscriptMessage[
 }
 
 function SelectSheet({ channelId, messageId, onClose }: SelectSheetProps) {
+	const styles = useStyles();
+	const { ActionSheet, BottomSheetTitleHeader } = BottomSheets;
+	const { BottomSheetScrollView: ScrollView } = GorhomSheet;
 	const shown = useMemo(
 		() => around(loadedMessages(channelId), messageId),
 		[channelId, messageId],
@@ -72,17 +42,29 @@ function SelectSheet({ channelId, messageId, onClose }: SelectSheetProps) {
 	const [endId, setEndId] = useState(messageId);
 	const selected = selectRange(shown, messageId, endId);
 	const pickedIds = new Set(selected.map(({ id }) => id));
-	const list = useRef<ScrollView>(null);
-	const scrolled = useRef(false);
+	const list = useRef<Scrollable>(null);
+	const anchorY = useRef<number | undefined>(undefined);
+	const expanded = useRef(false);
+
+	// The sheet pins its scroll view to the top until it is fully open, so the scroll waits for both.
+	function scrollWhenReady() {
+		if (!expanded.current || anchorY.current === undefined) return;
+
+		list.current?.scrollTo({ y: anchorY.current, animated: false });
+	}
 
 	function scrollToAnchor({ nativeEvent }: LayoutChangeEvent) {
-		if (scrolled.current) return;
+		if (anchorY.current !== undefined) return;
 
-		scrolled.current = true;
-		list.current?.scrollTo({
-			y: Math.max(0, nativeEvent.layout.y - ANCHOR_INSET),
-			animated: false,
-		});
+		anchorY.current = Math.max(0, nativeEvent.layout.y - ANCHOR_INSET);
+		scrollWhenReady();
+	}
+
+	function onExpand() {
+		if (expanded.current) return;
+
+		expanded.current = true;
+		scrollWhenReady();
 	}
 
 	function copy() {
@@ -94,31 +76,37 @@ function SelectSheet({ channelId, messageId, onClose }: SelectSheetProps) {
 	}
 
 	return (
-		<Discord.ActionSheet>
-			<View style={{ gap: 12, padding: 16 }}>
-				<Discord.Text variant='heading-lg/semibold'>{messages.TITLE}</Discord.Text>
-				<Discord.Text variant='text-sm/normal' color='text-muted'>
+		<ActionSheet scrollable startExpanded onExpand={onExpand}>
+			<BottomSheetTitleHeader title={messages.TITLE} />
+			<ScrollView ref={list} contentContainerStyle={styles.body}>
+				<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.help}>
 					{messages.HELP}
 				</Discord.Text>
-				<ScrollView ref={list} style={{ maxHeight: LIST_HEIGHT }}>
-					{shown.map((message) => (
-						<Row
-							key={message.id}
-							message={message}
-							picked={pickedIds.has(message.id)}
-							anchor={message.id === messageId}
+				{/* Rows sit straight in the scroll content, so the anchor's layout y is its scroll offset. */}
+				{shown.map((message, index) => (
+					<View
+						key={message.id}
+						onLayout={message.id === messageId ? scrollToAnchor : undefined}
+					>
+						<Discord.TableCheckboxRow
+							label={message.author}
+							subLabel={preview(message)}
+							checked={pickedIds.has(message.id)}
 							onPress={() => setEndId(message.id)}
-							onLayout={message.id === messageId ? scrollToAnchor : undefined}
+							start={index === 0}
+							end={index === shown.length - 1}
 						/>
-					))}
-				</ScrollView>
+					</View>
+				))}
+			</ScrollView>
+			<View style={styles.footer}>
 				<Discord.Button
 					text={format('COPY', { count: selected.length })}
 					disabled={!selected.length}
 					onPress={copy}
 				/>
 			</View>
-		</Discord.ActionSheet>
+		</ActionSheet>
 	);
 }
 

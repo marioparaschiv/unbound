@@ -1,6 +1,7 @@
 import { patchChatInputButton } from '@unbound-plugins/shared/composer/input-button';
 import { attachFile } from '@unbound-plugins/shared/composer/attach-file';
-import { dialogs, metro, toasts } from '@unbound-app/api';
+import { openSheet } from '@unbound-plugins/shared/action-sheets/open-sheet';
+import { metro, toasts } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
 
 import {
@@ -11,19 +12,12 @@ import {
 	singleLink,
 	type PasteFormat,
 } from '~/lib/paste-formats';
+import FormatSheet from '~/components/format-sheet';
 
 type ChatInput = { insertText?: (text: string) => void };
 
 type ChatInputRegistry = {
 	getBestActiveInputForChannelId?: (channelId: string) => ChatInput | null | undefined;
-};
-
-const LABELS: Record<PasteFormat, () => string> = {
-	plain: () => messages.PLAIN,
-	code: () => messages.CODE,
-	quote: () => messages.QUOTE,
-	link: () => messages.LINK,
-	file: () => messages.FILE,
 };
 
 function insert(channelId: string, text: string) {
@@ -66,14 +60,9 @@ async function offerFormats(channelId: string, folder: string) {
 		return;
 	}
 
-	dialogs.showDialog({
-		title: messages.TITLE,
-		buttons: formatsFor(text).map((format) => ({
-			label: LABELS[format](),
-			variant: 'secondary',
-			onPress: () => void paste(channelId, format, text, folder),
-		})),
-		cancel: true,
+	openSheet('unbound-smart-paste', FormatSheet, {
+		formats: formatsFor(text),
+		onPick: (format: PasteFormat) => void paste(channelId, format, text, folder),
 	});
 }
 

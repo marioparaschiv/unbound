@@ -1,7 +1,7 @@
 import { useSetting } from '@unbound-app/settings';
 import { Discord } from '@unbound-app/api/metro/components';
-import { flux, metro, toasts, ui } from '@unbound-app/api';
-import { messages } from '@unbound-app/i18n';
+import { assets, dialogs, flux, metro, toasts, ui } from '@unbound-app/api';
+import { format, messages } from '@unbound-app/i18n';
 
 import { contactIds, contactKey, forgetContact, ownKeys } from '~/lib/keys';
 import { fingerprint, keyText } from '~/lib/key-text';
@@ -10,6 +10,17 @@ function userName(id: string): string {
 	const user = flux.getStore('User').getUser(id);
 
 	return user?.globalName || user?.username || id;
+}
+
+async function forget(id: string) {
+	const confirmed = await dialogs.confirm('FORGET_TITLE', {
+		titleVars: { name: userName(id) },
+		body: 'FORGET_BODY',
+		confirm: 'FORGET',
+		destructive: true,
+	});
+
+	if (confirmed) forgetContact(id);
 }
 
 function SettingsPanel() {
@@ -38,11 +49,14 @@ function SettingsPanel() {
 							label={userName(id)}
 							subLabel={fingerprint(contactKey(id)!)}
 							trailing={
-								<Discord.Button
+								<Discord.IconButton
 									size='sm'
 									variant='secondary'
-									text={messages.FORGET}
-									onPress={() => forgetContact(id)}
+									icon={assets.getIdByName('TrashIcon')}
+									accessibilityLabel={format('FORGET_LABEL', {
+										name: userName(id),
+									})}
+									onPress={() => void forget(id)}
 								/>
 							}
 						/>

@@ -1,6 +1,6 @@
 import { Discord } from '@unbound-app/api/metro/components';
 import { format, messages } from '@unbound-app/i18n';
-import { dialogs } from '@unbound-app/api';
+import { assets, dialogs, ui } from '@unbound-app/api';
 import { useState } from 'react';
 
 import { MAX_ATTACHMENTS, MAX_DESCRIPTION_LENGTH } from '~/lib/constants';
@@ -108,61 +108,59 @@ function CommandForm({ original, tags, onClose }: CommandFormProps) {
 	}
 
 	return (
-		<Discord.Stack spacing={16}>
-			<Discord.TextInput
-				label={messages.COMMAND_NAME}
-				placeholder={messages.COMMAND_NAME_PLACEHOLDER}
-				autoCapitalize='none'
-				autoCorrect={false}
-				value={name}
-				onChange={setName}
-			/>
-			<Discord.TextInput
-				label={messages.DESCRIPTION_OPTIONAL}
-				placeholder={messages.DESCRIPTION_PLACEHOLDER}
-				autoCapitalize='none'
-				autoCorrect={false}
-				maxLength={MAX_DESCRIPTION_LENGTH}
-				value={description}
-				onChange={setDescription}
-			/>
-			<Discord.TextInput
-				label={messages.RESPONSE}
-				placeholder={format('RESPONSE_PLACEHOLDER')}
-				description={format('RESPONSE_HELP')}
-				autoCapitalize='none'
-				autoCorrect={false}
-				multiline
-				value={message}
-				onChange={setMessage}
-			/>
-			{detectedArguments.length ? (
-				<Discord.Text variant='text-sm/normal' color='text-muted'>
-					{format('ARGUMENTS', {
-						names: detectedArguments.map((argument) => argument.name).join(', '),
-					})}
-				</Discord.Text>
-			) : null}
-			{media.length ? (
-				<Discord.TableRowGroup>
-					{media.map((item, index) => (
-						<MediaRow
-							key={isSaved(item) ? item.storedName : `${item.uri}-${index}`}
-							media={item}
-							onRemove={() =>
-								setMedia((current) =>
-									current.filter((_, position) => position !== index),
-								)
-							}
-						/>
-					))}
-				</Discord.TableRowGroup>
-			) : null}
-			<Discord.Button
-				variant='secondary'
-				text={picking ? messages.OPENING_PHOTOS : messages.ATTACH_MEDIA}
-				onPress={() => void addMedia()}
-			/>
+		<Discord.Stack spacing={24}>
+			<ui.Section>
+				<ui.InputRow
+					label={messages.COMMAND_NAME}
+					placeholder={messages.COMMAND_NAME_PLACEHOLDER}
+					value={name}
+					onChange={setName}
+				/>
+				<ui.InputRow
+					label={messages.DESCRIPTION_OPTIONAL}
+					placeholder={messages.DESCRIPTION_PLACEHOLDER}
+					maxLength={MAX_DESCRIPTION_LENGTH}
+					value={description}
+					onChange={setDescription}
+				/>
+			</ui.Section>
+			<ui.Section
+				description={
+					detectedArguments.length
+						? format('ARGUMENTS', {
+								names: detectedArguments
+									.map((argument) => argument.name)
+									.join(', '),
+							})
+						: format('RESPONSE_HELP')
+				}
+			>
+				<ui.MultilineRow
+					label={messages.RESPONSE}
+					placeholder={format('RESPONSE_PLACEHOLDER')}
+					value={message}
+					onChange={setMessage}
+				/>
+			</ui.Section>
+			<ui.Section>
+				{media.map((item, index) => (
+					<MediaRow
+						key={isSaved(item) ? item.storedName : `${item.uri}-${index}`}
+						media={item}
+						onRemove={() =>
+							setMedia((current) =>
+								current.filter((_, position) => position !== index),
+							)
+						}
+					/>
+				))}
+				<ui.Row
+					label={picking ? messages.OPENING_PHOTOS : messages.ATTACH_MEDIA}
+					icon={assets.getIdByName('ImagePlusIcon')}
+					disabled={picking}
+					onPress={() => void addMedia()}
+				/>
+			</ui.Section>
 			<Discord.Button
 				text={
 					saving
@@ -174,12 +172,13 @@ function CommandForm({ original, tags, onClose }: CommandFormProps) {
 				onPress={() => void save()}
 			/>
 			{original ? (
-				<Discord.Button
-					variant='destructive'
-					text={messages.DELETE_COMMAND}
-					accessibilityLabel={format('DELETE_COMMAND_LABEL', { name: original.name })}
-					onPress={() => void remove(original)}
-				/>
+				<ui.Section>
+					<ui.ButtonRow
+						label={messages.DELETE_COMMAND}
+						variant='danger'
+						onPress={() => void remove(original)}
+					/>
+				</ui.Section>
 			) : null}
 		</Discord.Stack>
 	);

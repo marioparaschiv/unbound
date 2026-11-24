@@ -1,11 +1,13 @@
+import { Discord } from '@unbound-app/api/metro/components';
 import { ScrollView, Text } from 'react-native';
 import { flux, metro } from '@unbound-app/api';
 
 import type { DiffPart } from '~/lib/diff';
+import useStyles from '~/components/diff-view.style';
 
 type ThemeStore = { theme?: string };
 
-type DiffViewProps = { parts: DiffPart[] };
+type DiffViewProps = { parts: DiffPart[]; code: boolean };
 
 function color(token: string): string {
 	const { Theme } = metro.common;
@@ -15,18 +17,23 @@ function color(token: string): string {
 }
 
 /**
- * @description Draws an edit's changes inline: removed text struck through in red, added text in green, and unchanged
- * text in the normal colour, scrolling when long.
- * @param props The diff's parts.
+ * @description Draws an edit's changes inline in Discord's message text: removed text struck through in red, added text
+ * in green, and unchanged text in the normal colour, scrolling when long. Code is drawn in Discord's code font.
+ * @param props The diff's parts, and whether the message is code.
  * @returns The diff.
  */
-export default function DiffView({ parts }: DiffViewProps) {
+export default function DiffView({ parts, code }: DiffViewProps) {
+	const styles = useStyles();
 	const added = color('TEXT_FEEDBACK_POSITIVE');
 	const removed = color('TEXT_FEEDBACK_CRITICAL');
 
 	return (
-		<ScrollView style={{ maxHeight: 320 }}>
-			<Text style={{ color: color('TEXT_DEFAULT'), fontSize: 15, lineHeight: 21 }}>
+		<ScrollView style={styles.scroll}>
+			<Discord.Text
+				variant='text-md/normal'
+				color='text-default'
+				style={code ? styles.code : undefined}
+			>
 				{parts.map((part, index) =>
 					part.kind === 'same' ? (
 						part.text
@@ -47,7 +54,7 @@ export default function DiffView({ parts }: DiffViewProps) {
 						</Text>
 					),
 				)}
-			</Text>
+			</Discord.Text>
 		</ScrollView>
 	);
 }

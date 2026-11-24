@@ -15,6 +15,8 @@ declare module '@unbound-app/i18n' {
 		readonly NO_OUTPUT: string;
 		/** Couldn't run the code */
 		readonly RUN_FAILED: string;
+		/** Close */
+		readonly CLOSE: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

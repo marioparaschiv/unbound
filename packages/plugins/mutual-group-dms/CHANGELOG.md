@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-11-24
+
+### Changed
+
+- Mutual group DMs open in a sheet with each group's icon and members, instead of a dialog.
+
 ## [1.1.0] - 2026-11-13
 
 ### Changed

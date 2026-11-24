@@ -11,7 +11,6 @@
 	"DELETE": "削除",
 	"DELETE_COMMAND": "コマンドを削除",
 	"DELETE_COMMAND_BODY": "/{name}と保存済みの添付ファイルを削除しますか?",
-	"DELETE_COMMAND_LABEL": "{name}を削除",
 	"DESCRIPTION_OPTIONAL": "説明(任意)",
 	"DESCRIPTION_PLACEHOLDER": "スラッシュコマンドの一覧に表示されます",
 	"DESCRIPTION_TOO_LONG": "コマンドの説明は{max}文字以内にしてください。",

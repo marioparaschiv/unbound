@@ -22,5 +22,8 @@
 	"KEY_COPIED": "Key copied. Paste it in a chat.",
 	"CONTACTS": "Saved keys",
 	"CONTACTS_EMPTY": "No saved keys yet. Long-press a message with someone's key and pick Save Encryption Key.",
-	"FORGET": "Forget"
+	"FORGET": "Forget",
+	"FORGET_LABEL": "Forget {name}'s key",
+	"FORGET_TITLE": "Forget {name}'s key?",
+	"FORGET_BODY": "You won't be able to encrypt files for them until they share it again."
 }

@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Заміна тексту",
-	"PLUGIN_TAGLINE": "Автоматично змінюй повідомлення перед надсиланням.",
-	"TRY_YOUR_RULES": "Випробуй свої правила",
-	"TEST_YOUR_RULES": "Перевір свої правила",
 	"EXAMPLE_MESSAGE": "Приклад повідомлення",
 	"EXAMPLE_PLACEHOLDER": "Введи повідомлення для перевірки",
 	"RESULT": "Результат",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Експортуй або імпортуй обидва списки правил у переносному форматі JSON.",
 	"EXPORT_AND_SHARE": "Експортувати й поділитися",
 	"IMPORT_CLIPBOARD": "Імпорт із буфера обміну",
-	"PASTE_JSON": "Вставити JSON",
-	"PASTE_JSON_PLACEHOLDER": "Встав сюди експортований JSON Text Replace",
-	"IMPORT_PASTED": "Імпортувати вставлене",
 	"RULESET_IMPORTED": "Набір правил імпортовано.",
 	"IMPORT_FAILED": "Не вдалося імпортувати набір правил.",
 	"CLIPBOARD_HAS_NO_RULESET": "У буфері обміну немає набору правил.",

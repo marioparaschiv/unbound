@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Substituir texto",
-	"PLUGIN_TAGLINE": "Reescreve as mensagens automaticamente antes de você enviá-las.",
-	"TRY_YOUR_RULES": "Experimente suas regras",
-	"TEST_YOUR_RULES": "Teste suas regras",
 	"EXAMPLE_MESSAGE": "Mensagem de exemplo",
 	"EXAMPLE_PLACEHOLDER": "Digite uma mensagem para testar",
 	"RESULT": "Resultado",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Exporte ou importe as duas listas de regras como JSON portátil.",
 	"EXPORT_AND_SHARE": "Exportar e compartilhar",
 	"IMPORT_CLIPBOARD": "Importar da área de transferência",
-	"PASTE_JSON": "Colar JSON",
-	"PASTE_JSON_PLACEHOLDER": "Cole aqui o JSON exportado do Text Replace",
-	"IMPORT_PASTED": "Importar o que foi colado",
 	"RULESET_IMPORTED": "Conjunto de regras importado.",
 	"IMPORT_FAILED": "Não foi possível importar o conjunto de regras.",
 	"CLIPBOARD_HAS_NO_RULESET": "Sua área de transferência não contém um conjunto de regras.",

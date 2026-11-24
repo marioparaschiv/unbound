@@ -1,17 +1,15 @@
+import { BottomSheets, Discord, GorhomSheet } from '@unbound-app/api/metro/components';
 import { format, messages } from '@unbound-app/i18n';
-import { Discord } from '@unbound-app/api/metro/components';
-import { ScrollView, View } from 'react-native';
 
+import useStyles from '~/components/history-sheet.style';
 import type { EditEntry } from '~/lib/log';
+
+// Enough lines for a long message, which a table row would otherwise cut to one.
+const FULL_TEXT_LINES = 40;
 
 type HistorySheetProps = {
 	current: string;
 	edits: readonly EditEntry[];
-};
-
-type VersionProps = {
-	label: string;
-	content: string;
 };
 
 function formatTime(timestamp: string): string {
@@ -20,39 +18,37 @@ function formatTime(timestamp: string): string {
 	return Number.isNaN(date.getTime()) ? timestamp : date.toLocaleString();
 }
 
-function Version({ label, content }: VersionProps) {
-	return (
-		<View style={{ gap: 4 }}>
-			<Discord.Text variant='text-xs/semibold' color='text-muted'>
-				{label}
-			</Discord.Text>
-			<Discord.Text variant='text-md/normal' selectable>
-				{content || messages.EMPTY_MESSAGE}
-			</Discord.Text>
-		</View>
-	);
-}
-
 /**
- * @description Lists a message's earlier versions, oldest first, then its current text.
+ * @description Lists a message's earlier versions, oldest first, then its current text, as rows of one table.
  * @param props The current text and the logged edits.
  * @returns The sheet.
  */
 export function HistorySheet({ current, edits }: HistorySheetProps) {
+	const styles = useStyles();
+	const { ActionSheet, BottomSheetTitleHeader } = BottomSheets;
+	const { BottomSheetScrollView: ScrollView } = GorhomSheet;
+
 	return (
-		<Discord.ActionSheet startExpanded>
-			<ScrollView style={{ maxHeight: 520 }} contentContainerStyle={{ gap: 16, padding: 16 }}>
-				<Discord.Text variant='text-lg/semibold'>{messages.HISTORY_TITLE}</Discord.Text>
-				{edits.map((edit, index) => (
-					<Version
-						key={`${edit.timestamp}-${index}`}
-						label={format('BEFORE_EDIT', { time: formatTime(edit.timestamp) })}
-						content={edit.content}
+		<ActionSheet scrollable startExpanded>
+			<BottomSheetTitleHeader title={messages.HISTORY_TITLE} />
+			<ScrollView contentContainerStyle={styles.body}>
+				<Discord.TableRowGroup>
+					{edits.map((edit, index) => (
+						<Discord.TableRow
+							key={`${edit.timestamp}-${index}`}
+							label={edit.content || messages.EMPTY_MESSAGE}
+							labelLineClamp={FULL_TEXT_LINES}
+							subLabel={format('BEFORE_EDIT', { time: formatTime(edit.timestamp) })}
+						/>
+					))}
+					<Discord.TableRow
+						label={current || messages.EMPTY_MESSAGE}
+						labelLineClamp={FULL_TEXT_LINES}
+						subLabel={messages.CURRENT_VERSION}
 					/>
-				))}
-				<Version label={messages.CURRENT_VERSION} content={current} />
+				</Discord.TableRowGroup>
 			</ScrollView>
-		</Discord.ActionSheet>
+		</ActionSheet>
 	);
 }
 

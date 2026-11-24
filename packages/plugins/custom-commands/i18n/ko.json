@@ -11,7 +11,6 @@
 	"DELETE": "삭제",
 	"DELETE_COMMAND": "명령어 삭제",
 	"DELETE_COMMAND_BODY": "/{name}과(와) 저장된 첨부 파일을 삭제할까요?",
-	"DELETE_COMMAND_LABEL": "{name} 삭제",
 	"DESCRIPTION_OPTIONAL": "설명 (선택)",
 	"DESCRIPTION_PLACEHOLDER": "슬래시 명령어 목록에 표시돼요",
 	"DESCRIPTION_TOO_LONG": "명령어 설명은 최대 {max}자까지 쓸 수 있어요.",

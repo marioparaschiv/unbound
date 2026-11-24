@@ -9,7 +9,7 @@ const keepNameRoom = native.definePlatform({ ios, android });
 let release: (() => void | Promise<void>) | undefined;
 
 /**
- * @description Keeps message names readable beside the platform symbols this plugin adds to their timestamps.
+ * @description Keeps message names readable beside the platform names this plugin adds to their timestamps.
  * @param context The plugin's native bridge.
  */
 export function startNameRoom(context: PluginContext): void {

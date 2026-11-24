@@ -9,6 +9,7 @@ import { format, messages } from '@unbound-app/i18n';
 
 import { registerEvent } from '~/commands';
 import { calendarUrls, type Attachment } from '~/lib/calendar-attachments';
+import { eventTime } from '~/lib/event-time';
 import { parseCalendar, type CalendarEvent } from '~/lib/ics';
 
 type SheetProps = { message?: { attachments?: Attachment[] } };
@@ -18,9 +19,7 @@ function when({ start, end, allDay }: CalendarEvent): string {
 
 	if (allDay) return format('ALL_DAY', { date: start.toLocaleDateString() });
 
-	const ends = end ? ` – ${end.toLocaleString()}` : '';
-
-	return `${start.toLocaleString()}${ends}`;
+	return eventTime(start, end);
 }
 
 async function showEvents(url: string) {

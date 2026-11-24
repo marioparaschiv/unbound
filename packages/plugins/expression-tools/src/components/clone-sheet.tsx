@@ -1,5 +1,6 @@
-import { Discord } from '@unbound-app/api/metro/components';
+import { BottomSheets, Discord, GorhomSheet } from '@unbound-app/api/metro/components';
 import { messages } from '@unbound-app/i18n';
+import { ui } from '@unbound-app/api';
 import { Image, View } from 'react-native';
 import { useMemo, useState } from 'react';
 
@@ -41,40 +42,41 @@ function CloneSheet({ expression, onClose }: CloneSheetProps) {
 			.finally(() => setBusy(false));
 	}
 
+	const { ActionSheet, BottomSheetTitleHeader } = BottomSheets;
+	const { BottomSheetScrollView: ScrollView } = GorhomSheet;
+
 	return (
-		<Discord.ActionSheet>
-			<Discord.BottomSheetTitleHeader
-				title={messages.CLONE_TO_SERVER}
-				subtitle={expression.name}
-			/>
-			<View style={styles.container}>
+		<ActionSheet scrollable>
+			<BottomSheetTitleHeader title={messages.CLONE_TO_SERVER} subtitle={expression.name} />
+			<ScrollView
+				contentContainerStyle={styles.container}
+				keyboardShouldPersistTaps='handled'
+			>
 				<Image source={{ uri: getAssetUrl(expression) }} style={styles.preview} />
-				<Discord.TextField
-					label={messages.NAME}
-					value={name}
-					onChange={setName}
-					placeholder={messages.EXPRESSION_NAME_PLACEHOLDER}
-				/>
-				<Discord.TextField
-					label={messages.YOUR_SERVERS}
+				<ui.Section>
+					<ui.InputRow
+						label={messages.NAME}
+						placeholder={messages.EXPRESSION_NAME_PLACEHOLDER}
+						value={name}
+						onChange={setName}
+					/>
+				</ui.Section>
+				<Discord.SearchBar
 					value={query}
 					onChange={setQuery}
 					placeholder={messages.SEARCH_SERVERS}
-					isClearable
 				/>
 				{visibleGuilds.length ? (
-					<View>
-						{visibleGuilds.map((guild, index) => (
+					<ui.Section title={messages.YOUR_SERVERS} hasIcons>
+						{visibleGuilds.map((guild) => (
 							<GuildRow
 								key={guild.id}
 								guild={guild}
 								disabled={disabled}
-								start={index === 0}
-								end={index === visibleGuilds.length - 1}
 								onPress={() => clone(guild)}
 							/>
 						))}
-					</View>
+					</ui.Section>
 				) : (
 					<View style={styles.empty}>
 						<Discord.Text variant='text-sm/normal' color='text-muted'>
@@ -82,8 +84,8 @@ function CloneSheet({ expression, onClose }: CloneSheetProps) {
 						</Discord.Text>
 					</View>
 				)}
-			</View>
-		</Discord.ActionSheet>
+			</ScrollView>
+		</ActionSheet>
 	);
 }
 

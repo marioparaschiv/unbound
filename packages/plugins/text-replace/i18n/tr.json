@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Metin Değiştirme",
-	"PLUGIN_TAGLINE": "Mesajlarını göndermeden önce otomatik olarak yeniden yaz.",
-	"TRY_YOUR_RULES": "Kurallarını dene",
-	"TEST_YOUR_RULES": "Kurallarını test et",
 	"EXAMPLE_MESSAGE": "Örnek mesaj",
 	"EXAMPLE_PLACEHOLDER": "Test etmek için bir mesaj yaz",
 	"RESULT": "Sonuç",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "İki kural listesini de taşınabilir JSON olarak dışa veya içe aktar.",
 	"EXPORT_AND_SHARE": "Dışa aktar ve paylaş",
 	"IMPORT_CLIPBOARD": "Panodan içe aktar",
-	"PASTE_JSON": "JSON yapıştır",
-	"PASTE_JSON_PLACEHOLDER": "Dışa aktarılan Metin Değiştirme JSON’unu buraya yapıştır",
-	"IMPORT_PASTED": "Yapıştırılanı içe aktar",
 	"RULESET_IMPORTED": "Kural seti içe aktarıldı.",
 	"IMPORT_FAILED": "Kural seti içe aktarılamadı.",
 	"CLIPBOARD_HAS_NO_RULESET": "Panonda bir kural seti yok.",

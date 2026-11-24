@@ -6,6 +6,7 @@ import { downloadVoiceMessage } from '~/download';
 import { parseSpeed } from '~/lib/speed';
 import { rememberSpeed, speedForChat, type ChatSpeeds } from '~/lib/chat-speeds';
 import { nextSpeed } from '~/lib/speeds';
+import { migrateSettings } from '~/lib/settings-migration';
 import { voicePillControls } from '~/native/pill';
 import { voiceMessageSpeed } from '~/native/speed';
 import { interceptAudioMessages, patchAudioSending } from '~/send';
@@ -52,6 +53,7 @@ function stepSpeed() {
 export function start(context: PluginContext) {
 	const chosenSpeed = () => parseSpeed(storedSpeed());
 
+	migrateSettings();
 	patchAudioSending();
 	interceptAudioMessages();
 	speed = voiceMessageSpeed(context.native, chosenSpeed);

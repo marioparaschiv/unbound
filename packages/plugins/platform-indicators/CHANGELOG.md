@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-24
+
+### Changed
+
+- In messages, the timestamp names the author's platforms in words, such as "Desktop, Mobile", instead of colour emoji.
+
 ## [1.0.3] - 2026-11-19
 
 ### Fixed

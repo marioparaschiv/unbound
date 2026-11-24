@@ -9,8 +9,6 @@ declare module '@unbound-app/i18n' {
 		readonly BACKGROUND_CHECK_SUBTITLE: string;
 		/** Check every (minutes) */
 		readonly CHECK_INTERVAL: string;
-		/** NEW */
-		readonly NEW: string;
 		/** New session */
 		readonly NEW_SESSION: string;
 		/** {name} in {location} */

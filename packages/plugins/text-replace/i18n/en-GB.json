@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Text Replace",
-	"PLUGIN_TAGLINE": "Automatically rewrite messages before you send them.",
-	"TRY_YOUR_RULES": "Try your rules",
-	"TEST_YOUR_RULES": "Test your rules",
 	"EXAMPLE_MESSAGE": "Example message",
 	"EXAMPLE_PLACEHOLDER": "Type a message to test",
 	"RESULT": "Result",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Export or import both rule lists as portable JSON.",
 	"EXPORT_AND_SHARE": "Export & share",
 	"IMPORT_CLIPBOARD": "Import clipboard",
-	"PASTE_JSON": "Paste JSON",
-	"PASTE_JSON_PLACEHOLDER": "Paste exported Text Replace JSON here",
-	"IMPORT_PASTED": "Import pasted",
 	"RULESET_IMPORTED": "Ruleset imported.",
 	"IMPORT_FAILED": "Could not import ruleset.",
 	"CLIPBOARD_HAS_NO_RULESET": "Your clipboard does not contain a ruleset.",

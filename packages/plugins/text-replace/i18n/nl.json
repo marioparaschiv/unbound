@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Text Replace",
-	"PLUGIN_TAGLINE": "Herschrijf berichten automatisch voordat je ze verstuurt.",
-	"TRY_YOUR_RULES": "Probeer je regels",
-	"TEST_YOUR_RULES": "Test je regels",
 	"EXAMPLE_MESSAGE": "Voorbeeldbericht",
 	"EXAMPLE_PLACEHOLDER": "Typ een bericht om te testen",
 	"RESULT": "Resultaat",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Exporteer of importeer beide regellijsten als overdraagbare JSON.",
 	"EXPORT_AND_SHARE": "Exporteren en delen",
 	"IMPORT_CLIPBOARD": "Importeren van klembord",
-	"PASTE_JSON": "JSON plakken",
-	"PASTE_JSON_PLACEHOLDER": "Plak hier geëxporteerde Text Replace-JSON",
-	"IMPORT_PASTED": "Geplakte importeren",
 	"RULESET_IMPORTED": "Regelset geïmporteerd.",
 	"IMPORT_FAILED": "Kan de regelset niet importeren.",
 	"CLIPBOARD_HAS_NO_RULESET": "Je klembord bevat geen regelset.",

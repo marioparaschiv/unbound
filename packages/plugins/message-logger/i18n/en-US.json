@@ -1,5 +1,8 @@
 {
 	"PREFERENCES": "Preferences",
+	"LOGGING": "Logging",
+	"DELETED_MESSAGES": "Deleted messages",
+	"EDITED_MESSAGES": "Edited messages",
 	"RED_TEXT": "Red text",
 	"RED_TEXT_SUBTITLE": "Show the text of deleted messages in red.",
 	"DELETED_HIGHLIGHT": "Highlight deleted messages",
@@ -41,7 +44,7 @@
 	"CLEAR_MESSAGE_HISTORY": "Clear Message History",
 	"CLEAR_MESSAGE_LOG": "Clear Message Log",
 	"LOG_CLEARED": "Cleared the log of {count, plural, one {# message} other {# messages}}.",
-	"HISTORY_TITLE": "Message History",
+	"HISTORY_TITLE": "Message history",
 	"BEFORE_EDIT": "Before the edit at {time}",
 	"CURRENT_VERSION": "Current",
 	"EMPTY_MESSAGE": "(empty)",

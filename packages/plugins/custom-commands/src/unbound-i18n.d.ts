@@ -29,8 +29,6 @@ declare module '@unbound-app/i18n' {
 		readonly DELETE_COMMAND: string;
 		/** Delete /{name} and its saved attachments? */
 		readonly DELETE_COMMAND_BODY: string;
-		/** Delete {name} */
-		readonly DELETE_COMMAND_LABEL: string;
 		/** Description (optional) */
 		readonly DESCRIPTION_OPTIONAL: string;
 		/** Shown in the slash-command list */
@@ -109,7 +107,6 @@ declare module '@unbound-app/i18n' {
 		COMMAND_TITLE: { name: string | number };
 		DEFAULT_DESCRIPTION: { name: string | number };
 		DELETE_COMMAND_BODY: { name: string | number };
-		DELETE_COMMAND_LABEL: { name: string | number };
 		DESCRIPTION_TOO_LONG: { max: string | number };
 		EDIT_COMMAND_LABEL: { name: string | number };
 		MEDIA_DETAILS: { kind: string | number; size: string | number };

@@ -23,7 +23,7 @@ export type InputRowProps = {
 	subLabel?: string;
 	/** The saved text; the input follows it whenever it changes. */
 	value: string;
-	/** Text shown while the input is empty. */
+	/** Text the dialog's input shows while it is empty; the row itself shows no trailing text then. */
 	placeholder?: string;
 	/** `text` is one line, `multiline` grows with its text, `secret` hides what is typed. */
 	variant?: InputVariant;
@@ -86,13 +86,14 @@ function InputRow({
 		});
 	}
 
+	const text = shown(value, variant);
+
+	// The placeholder belongs in the dialog's input only: trailing it here would read as a saved value.
 	return (
 		<Discord.TableRow
 			label={label}
 			subLabel={subLabel}
-			trailing={
-				<Discord.TableRowTrailingText text={shown(value, variant) || placeholder || ''} />
-			}
+			trailing={text ? <Discord.TableRowTrailingText text={text} /> : undefined}
 			arrow
 			disabled={disabled}
 			onPress={open}

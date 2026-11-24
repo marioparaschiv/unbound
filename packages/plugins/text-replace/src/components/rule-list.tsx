@@ -1,7 +1,7 @@
 import type { TextReplaceRule } from '@unbound-plugins/shared/text-replace/rules';
 import { Discord } from '@unbound-app/api/metro/components';
 import { format, messages } from '@unbound-app/i18n';
-import { ui } from '@unbound-app/api';
+import { assets, ui } from '@unbound-app/api';
 import { View } from 'react-native';
 
 import { ruleKindMessages } from '~/components/rule-kind-messages';
@@ -59,7 +59,7 @@ function RuleList({ kind, rules, onAdd, onEdit }: RuleListProps) {
 			) : (
 				<ui.Row label={messages.NO_RULES_YET} subLabel={messages.NO_RULES_SUBTITLE} />
 			)}
-			<ui.Row label={addRule} onPress={onAdd} />
+			<ui.Row label={addRule} icon={assets.getIdByName('PlusSmallIcon')} onPress={onAdd} />
 		</ui.Section>
 	);
 }

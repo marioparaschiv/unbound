@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.1] - 2026-11-24
+
+### Fixed
+
+- Messages with only an attachment are compacted too, losing the avatar and header like other messages.
+
 ## [1.0.0] - 2026-11-15
 
 ### Added

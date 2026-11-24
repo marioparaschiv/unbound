@@ -11,7 +11,6 @@
 	"DELETE": "Supprimer",
 	"DELETE_COMMAND": "Supprimer la commande",
 	"DELETE_COMMAND_BODY": "Supprimer /{name} et ses pièces jointes enregistrées ?",
-	"DELETE_COMMAND_LABEL": "Supprimer {name}",
 	"DESCRIPTION_OPTIONAL": "Description (facultative)",
 	"DESCRIPTION_PLACEHOLDER": "Affichée dans la liste des commandes slash",
 	"DESCRIPTION_TOO_LONG": "La description de la commande ne doit pas dépasser {max} caractères.",

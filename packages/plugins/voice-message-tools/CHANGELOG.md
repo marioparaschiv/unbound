@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.1] - 2026-11-24
+
+### Fixed
+
+- The Playback speed control lists its speeds in order, from 0.75× to 2×. Your chosen speed carries over.
+
 ## [1.6.0] - 2026-11-18
 
 ### Added

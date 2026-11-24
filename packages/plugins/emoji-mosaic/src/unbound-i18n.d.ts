@@ -5,11 +5,15 @@ declare module '@unbound-app/i18n' {
 	export type Messages = {
 		/** Make Emoji Mosaic */
 		readonly MAKE: string;
-		/** Emoji Mosaic */
+		/** Emoji mosaic */
 		readonly TITLE: string;
 		/** {columns} × {rows} grid · {count} emoji */
 		readonly GRID: string;
-		/** Name prefix. Each emoji gets a row and column after it, such as cat_r1c2. */
+		/** Columns */
+		readonly COLUMNS: string;
+		/** Name prefix */
+		readonly PREFIX: string;
+		/** Each emoji gets a row and column after it, such as cat_r1c2. */
 		readonly PREFIX_HELP: string;
 		/** Upload to */
 		readonly SERVER: string;

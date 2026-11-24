@@ -4,5 +4,6 @@
 	"OUTPUT_TITLE": "{language} · exit {code}",
 	"OUTPUT_BODY": "{output}",
 	"NO_OUTPUT": "(ingen utdata)",
-	"RUN_FAILED": "Kunne ikke kjøre koden"
+	"RUN_FAILED": "Kunne ikke kjøre koden",
+	"CLOSE": "Lukk"
 }

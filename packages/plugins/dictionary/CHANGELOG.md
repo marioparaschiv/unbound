@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-24
+
+### Changed
+
+- The definition sheet uses Discord's sheet header, with the phonetic spelling under the word, and scrolls when the definitions are long.
+
 ## [1.0.0] - 2026-11-16
 
 ### Added

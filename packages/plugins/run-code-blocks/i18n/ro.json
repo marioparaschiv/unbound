@@ -4,5 +4,6 @@
 	"OUTPUT_TITLE": "{language} · ieșire {code}",
 	"OUTPUT_BODY": "{output}",
 	"NO_OUTPUT": "(fără ieșire)",
-	"RUN_FAILED": "Codul nu a putut fi rulat"
+	"RUN_FAILED": "Codul nu a putut fi rulat",
+	"CLOSE": "Închide"
 }

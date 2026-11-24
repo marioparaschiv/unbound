@@ -5,6 +5,12 @@ declare module '@unbound-app/i18n' {
 	export type Messages = {
 		/** Preferences */
 		readonly PREFERENCES: string;
+		/** Logging */
+		readonly LOGGING: string;
+		/** Deleted messages */
+		readonly DELETED_MESSAGES: string;
+		/** Edited messages */
+		readonly EDITED_MESSAGES: string;
 		/** Red text */
 		readonly RED_TEXT: string;
 		/** Show the text of deleted messages in red. */
@@ -87,7 +93,7 @@ declare module '@unbound-app/i18n' {
 		readonly CLEAR_MESSAGE_LOG: string;
 		/** Cleared the log of {count, plural, one {# message} other {# messages}}. */
 		readonly LOG_CLEARED: string;
-		/** Message History */
+		/** Message history */
 		readonly HISTORY_TITLE: string;
 		/** Before the edit at {time} */
 		readonly BEFORE_EDIT: string;

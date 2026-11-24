@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-24
+
+### Changed
+
+- The sticker preview above the chat input uses your theme's colours.
+
 ## [1.0.5] - 2026-11-14
 
 ### Fixed

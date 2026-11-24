@@ -17,19 +17,19 @@ function row(overrides: Partial<MessageRow> = {}): MessageRow {
 }
 
 describe('platformSuffix', () => {
-	test('joins the symbols of each platform', () => {
-		expect(platformSuffix(desktopAndMobile)).toBe('🖥️📱');
-		expect(platformSuffix([])).toBe('');
+	test('names each platform in a short list', () => {
+		expect(platformSuffix(desktopAndMobile, 'en-US')).toBe('Desktop, Mobile');
+		expect(platformSuffix([], 'en-US')).toBe('');
 	});
 });
 
 describe('addPlatforms', () => {
-	test('adds symbols to the timestamp and words to its label', () => {
+	test('adds names to the timestamp and words to its label', () => {
 		const message = row();
 
 		addPlatforms(message, desktopAndMobile, 'en-US');
 
-		expect(message.timestamp).toBe('Today at 12:00 • 🖥️📱');
+		expect(message.timestamp).toBe('Today at 12:00 • Desktop, Mobile');
 		expect(message.timestampAccessibilityLabel).toBe(
 			'Today at 12:00 • Online on Desktop and Mobile',
 		);
@@ -41,18 +41,18 @@ describe('addPlatforms', () => {
 		addPlatforms(message, desktopAndMobile, 'en-US');
 		addPlatforms(message, desktopAndMobile, 'en-US');
 
-		expect(message.timestamp).toBe('Today at 12:00 • 🖥️📱');
+		expect(message.timestamp).toBe('Today at 12:00 • Desktop, Mobile');
 		expect(message.timestampAccessibilityLabel).toBe(
 			'Today at 12:00 • Online on Desktop and Mobile',
 		);
 	});
 
-	test('adds the symbols even when the name is long, since Discord shortens the name', () => {
+	test('adds the names even when the name is long, since Discord shortens the name', () => {
 		const message = row({ username: 'a'.repeat(30) });
 
 		addPlatforms(message, desktopAndMobile, 'en-US');
 
-		expect(message.timestamp).toBe('Today at 12:00 • 🖥️📱');
+		expect(message.timestamp).toBe('Today at 12:00 • Desktop, Mobile');
 	});
 
 	test('leaves rows without platforms or a timestamp alone', () => {

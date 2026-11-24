@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { collapseSame, diffWords, shouldPreview } from '~/lib/diff';
+import { collapseSame, diffWords, shouldPreview, stripFences } from '~/lib/diff';
 
 describe('diffWords', () => {
 	test('marks changed words and keeps the rest', () => {
@@ -44,6 +44,16 @@ describe('collapseSame', () => {
 		);
 
 		expect(parts[0]?.text).toBe('…xxxxx');
+	});
+});
+
+describe('stripFences', () => {
+	test('drops fence lines with their language and keeps the code', () => {
+		expect(stripFences('look:\n```ts\nconst a = 1;\n```\nok')).toBe('look:\nconst a = 1;\nok');
+	});
+
+	test('drops fences inline with the code', () => {
+		expect(stripFences('```x = 1```')).toBe('x = 1');
 	});
 });
 

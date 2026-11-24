@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Text Replace",
-	"PLUGIN_TAGLINE": "送信前にメッセージを自動で書き換えます。",
-	"TRY_YOUR_RULES": "ルールを試す",
-	"TEST_YOUR_RULES": "ルールをテスト",
 	"EXAMPLE_MESSAGE": "サンプルメッセージ",
 	"EXAMPLE_PLACEHOLDER": "テストするメッセージを入力",
 	"RESULT": "結果",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "両方のルールリストを、持ち運べるJSONとしてエクスポート・インポートします。",
 	"EXPORT_AND_SHARE": "エクスポートして共有",
 	"IMPORT_CLIPBOARD": "クリップボードからインポート",
-	"PASTE_JSON": "JSONを貼り付け",
-	"PASTE_JSON_PLACEHOLDER": "エクスポートしたText ReplaceのJSONをここに貼り付け",
-	"IMPORT_PASTED": "貼り付けた内容をインポート",
 	"RULESET_IMPORTED": "ルールセットをインポートしました。",
 	"IMPORT_FAILED": "ルールセットをインポートできませんでした。",
 	"CLIPBOARD_HAS_NO_RULESET": "クリップボードにルールセットがありません。",

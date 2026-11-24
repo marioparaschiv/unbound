@@ -4,7 +4,7 @@ import { onMessageRow, type RowMessage } from '@unbound-plugins/shared/metro/mes
 import { messages } from '@unbound-app/i18n';
 import { metro, patcher } from '@unbound-app/api';
 
-import { openEditSheet } from '~/components/edit-sheet';
+import { openEditDialog } from '~/components/edit-dialog';
 import { takeRedraw } from '~/lib/redraw';
 import { getEdits } from '~/lib/store';
 
@@ -88,7 +88,7 @@ export function patchActionSheets(): void {
 					icon: 'PencilIcon',
 					onPress: () => {
 						ActionSheets.hideActionSheet(key);
-						openEditSheet({ channelId, messageId, original: content ?? '' });
+						openEditDialog({ channelId, messageId, original: content ?? '' });
 					},
 				},
 			]);

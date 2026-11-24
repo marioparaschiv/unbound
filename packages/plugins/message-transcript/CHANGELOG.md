@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-24
+
+### Changed
+
+- The message picker lists messages as checkbox rows under Discord's sheet header. Messages with only attachments show their file names.
+
 ## [1.0.0] - 2026-11-17
 
 ### Added
