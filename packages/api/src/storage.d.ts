@@ -48,7 +48,8 @@ export declare function snapshot({
  * @description React hook that re-renders the component whenever a matching change occurs in the Bucket.
  * @param name The Bucket to subscribe to.
  * @param predicate Optional filter deciding which changes trigger a re-render.
- * @returns The Bucket, with every operation bound to `name`.
+ * @returns The Bucket, with every operation bound to `name`. Each matching change returns a new object, so the
+ * React Compiler re-runs the reads it memoised on the last one.
  */
 export declare function useBucket(name: string, predicate?: SettingsPredicate): Bucket;
 /**
