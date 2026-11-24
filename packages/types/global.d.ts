@@ -34,6 +34,10 @@ declare global {
 		runApplication(appKey: string, appParameters: RNAppParameters, displayMode?: number): void;
 	};
 
+	type RNSurfaceRegistry = {
+		renderSurface: (appKey: string, ...rest: unknown[]) => void;
+	};
+
 	/**
 	 * The parameters React Native runs the root application with.
 	 * @internal
@@ -89,6 +93,8 @@ declare global {
 	var __fbBatchedBridge: FbBatchedBridge | undefined;
 	/** @internal */
 	var RN$AppRegistry: RNAppRegistry | undefined;
+	/** @internal */
+	var RN$SurfaceRegistry: RNSurfaceRegistry | undefined;
 
 	/** @internal */
 	var UnboundNative: UnboundNativeBridge | undefined;
