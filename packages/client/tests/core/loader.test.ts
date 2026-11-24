@@ -59,6 +59,43 @@ test("initializes right after Discord's main module, then releases readiness cal
 	}
 });
 
+test("holds Fabric's restarts of plugin surfaces until Unbound is ready", async () => {
+	const state = (globalThis as typeof globalThis & { __unboundReady?: ReadyState })
+		.__unboundReady;
+
+	if (!state) {
+		throw new Error('Readiness state was not installed.');
+	}
+
+	const events: string[] = [];
+
+	globalThis.RN$SurfaceRegistry = {
+		renderSurface: (appKey: string) => {
+			events.push(`render:${appKey}`);
+		},
+	};
+
+	try {
+		deferUntilReady(async () => {
+			globalThis.RN$SurfaceRegistry?.renderSurface('ReactionAvatarSurface0');
+			globalThis.RN$SurfaceRegistry?.renderSurface('Discord');
+			events.push('initialize');
+		});
+
+		globalThis.__r = createRequire(() => undefined);
+		globalThis.__r(0);
+
+		await new Promise((resolve) => setTimeout(resolve, 0));
+
+		expect(events).toEqual(['render:Discord', 'initialize', 'render:ReactionAvatarSurface0']);
+	} finally {
+		Reflect.deleteProperty(globalThis, '__r');
+		Reflect.deleteProperty(globalThis, '__d');
+		Reflect.deleteProperty(globalThis, 'RN$SurfaceRegistry');
+		state.ready = false;
+	}
+});
+
 test("takes Metro's registry at the first read of __d, before any module is defined", () => {
 	const registry = new Map<number, MetroModuleRecord>();
 	let collected = 0;
