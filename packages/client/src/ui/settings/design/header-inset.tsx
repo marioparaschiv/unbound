@@ -8,7 +8,7 @@ type HeaderInsetProps = {
 	children: ReactNode;
 };
 
-/** @description Pads a page below a transparent header and anything overlaid with it. */
+/** @description Pads a page below the Design tabs overlaid on it. */
 function HeaderInset({ children }: HeaderInsetProps) {
 	const styles = useStyles();
 	const top = useContext(HeaderElements.HeaderHeightContext) ?? 0;

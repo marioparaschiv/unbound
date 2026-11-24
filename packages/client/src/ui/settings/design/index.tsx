@@ -21,8 +21,7 @@ type DesignPageProps = {
 
 /**
  * @description The Design settings page: Discord's App Theme picker for themes and icon packs, beside Fonts and Chat,
- * full-screen under its transparent header. The active picker owns the header; Fonts and Chat keep the back
- * button and title only.
+ * below its opaque header. The active picker owns the header; Fonts and Chat keep the back button and title only.
  */
 function DesignPage({ route }: DesignPageProps) {
 	const navigation = Discord.useNavigation();
@@ -42,7 +41,11 @@ function DesignPage({ route }: DesignPageProps) {
 
 		if (!base) return;
 
-		navigation.setOptions(picker ? base : { ...base, headerRight: () => null });
+		// The picker's transparent header insets by the native stack's estimated header height, which corrects itself a
+		// few frames in and shifts the page. An opaque header lays the page out below it natively.
+		const options = { ...base, headerTransparent: false };
+
+		navigation.setOptions(picker ? options : { ...options, headerRight: () => null });
 	}, [navigation, tab, headers]);
 
 	return (
