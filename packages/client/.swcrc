@@ -20,7 +20,11 @@
 	},
 	"env": {
 		"targets": "fully supports es6",
-		"include": ["transform-block-scoping", "transform-async-generator-functions", "transform-parameters"],
+		"include": [
+			"transform-block-scoping",
+			"transform-async-generator-functions",
+			"transform-parameters"
+		],
 		"exclude": [
 			"transform-async-to-generator",
 			"transform-class-properties",
