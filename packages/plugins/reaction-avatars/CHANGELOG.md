@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.12] - 2026-11-24
+
+### Fixed
+
+- The store page shows the plugin's screenshots, which 1.2.11 published without. The plugin works the same as before.
+
 ## [1.2.11] - 2026-11-24
 
 ### Changed
