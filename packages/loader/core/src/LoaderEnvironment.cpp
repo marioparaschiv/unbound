@@ -10,17 +10,12 @@
 namespace loader::environment {
 Receipt receiptKind(const std::optional<std::string> &receiptName, bool receiptExists)
 {
-    if (!receiptName)
+    if (!receiptName || !receiptExists)
     {
         return Receipt::None;
     }
 
-    if (*receiptName == kSandboxReceiptName)
-    {
-        return Receipt::TestFlight;
-    }
-
-    return receiptExists ? Receipt::AppStore : Receipt::None;
+    return *receiptName == kSandboxReceiptName ? Receipt::TestFlight : Receipt::AppStore;
 }
 
 bool isTrollStoreInstall(Receipt receipt, bool trollStore, bool trollStoreLite)
