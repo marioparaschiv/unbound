@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4] - 2026-11-24
+
+### Fixed
+
+- Sending works again on recent Discord builds. Messages no longer disappear after you tap Send without going out.
+
 ## [1.0.3] - 2026-11-24
 
 ### Fixed

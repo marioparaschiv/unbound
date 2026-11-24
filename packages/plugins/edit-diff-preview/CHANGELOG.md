@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4] - 2026-11-24
+
+### Fixed
+
+- Editing works again on recent Discord builds. Saved edits no longer get lost.
+
 ## [1.0.3] - 2026-11-24
 
 ### Fixed

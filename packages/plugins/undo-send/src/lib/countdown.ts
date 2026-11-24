@@ -7,7 +7,8 @@ export type CountdownOptions = {
 };
 
 /**
- * @description Counts down whole seconds, reporting each one left, then finishes, unless cancelled first.
+ * @description Counts down whole seconds, reporting each one left, then finishes, unless cancelled first. A count that
+ * is not a positive number, such as a missing setting, finishes at once, so a held message is never kept forever.
  * @param options How many seconds, what to do each second and what to do at the end.
  * @returns A handle whose `cancel` stops the countdown without finishing it.
  */
@@ -16,7 +17,7 @@ export function startCountdown({ seconds, onTick, onDone }: CountdownOptions): C
 	let timer: ReturnType<typeof setTimeout> | undefined;
 
 	function tick() {
-		if (left <= 0) {
+		if (!(left > 0)) {
 			timer = undefined;
 			onDone();
 

@@ -35,4 +35,18 @@ describe('startCountdown', () => {
 
 		expect(done).toBe(false);
 	});
+
+	test.each([undefined, Number.NaN, 0, -1])('finishes at once for a count of %p', (seconds) => {
+		const ticks: number[] = [];
+		let done = false;
+
+		startCountdown({
+			seconds: seconds as number,
+			onTick: (left) => ticks.push(left),
+			onDone: () => (done = true),
+		});
+
+		expect(ticks).toEqual([]);
+		expect(done).toBe(true);
+	});
 });
