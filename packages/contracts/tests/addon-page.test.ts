@@ -56,7 +56,7 @@ describe('addonPageSchema', () => {
 		expect(safeParse(addonPageSchema, { frontmatter, media }).success).toBe(true);
 	});
 
-	test('accepts a banner of exactly 1200x400 and media at the 9:16 and 21:9 bounds', () => {
+	test('accepts a banner of exactly 1200x400 and media at the 9:21 and 21:9 bounds', () => {
 		const page = {
 			frontmatter: {
 				banner: 'media/banner.png',
@@ -67,7 +67,7 @@ describe('addonPageSchema', () => {
 			},
 			media: [
 				measure('media/banner.png', 1200, 400),
-				measure('media/tall.png', 900, 1600),
+				measure('media/tall.png', 900, 2100),
 				measure('media/wide.png', 2100, 900),
 			],
 		};
@@ -93,12 +93,12 @@ describe('addonPageSchema', () => {
 		expect(issuePaths(page)).toEqual(['frontmatter.banner']);
 	});
 
-	test('rejects gallery media taller than 9:16 or wider than 21:9', () => {
+	test('rejects gallery media taller than 9:21 or wider than 21:9', () => {
 		const page = {
 			frontmatter,
 			media: [
 				banner,
-				measure('media/settings.png', 899, 1600),
+				measure('media/settings.png', 899, 2100),
 				measure('media/demo.mp4', 2101, 900),
 				poster,
 			],

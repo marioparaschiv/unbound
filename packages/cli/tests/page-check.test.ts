@@ -306,14 +306,14 @@ const REJECTIONS: Rejection[] = [
 		message: 'ADDON.md  The banner must be exactly 3:1 and at least 1200x400',
 	},
 	{
-		name: 'a gallery image taller than 9:16',
+		name: 'a gallery image taller than 9:21',
 		fixture: {
 			page: page(
 				'banner: media/banner.png\nmedia:\n  - image: media/tall.png\n    alt: A tall image',
 			),
 			images: { 'media/banner.png': BANNER, 'media/tall.png': { width: 100, height: 400 } },
 		},
-		message: 'ADDON.md  Media must be between 9:16 and 21:9; media/tall.png is 100x400.',
+		message: 'ADDON.md  Media must be between 9:21 and 21:9; media/tall.png is 100x400.',
 	},
 	{
 		name: 'a file whose contents do not match its extension',

@@ -52,7 +52,7 @@ YAML between two `---` lines, parsed with [`yaml`](https://eemeli.org/yaml/). A 
 	Image across the top. Exactly **3:1**, at least **1200x400**. Leave it out to open the page on the gallery.
 </ParamField>
 <ParamField path='media' type='PageMedia[]' default='[]'>
-	The gallery, in order. Up to 20 entries, each between **9:16** and **21:9**. An entry has `image` or `video`, never both.
+	The gallery, in order. Up to 20 entries, each between **9:21** and **21:9**. An entry has `image` or `video`, never both.
 
 	<Expandable title='Image entry'>
 		<ParamField path='image' type='string' required>
@@ -104,7 +104,7 @@ Every file lives in the addon's `media/` folder. Links to other sites fail the b
 | Where | Aspect ratio | Minimum size |
 | --- | --- | --- |
 | `banner` | Exactly 3:1 | 1200x400 |
-| `media` | 9:16 to 21:9 | None |
+| `media` | 9:21 to 21:9 | None |
 
 - Paths are relative to the addon and start with `media/`. Subfolders work: `media/screens/settings.png`.
 - Names use letters, digits, `_`, `-` and `.`, and never start with `.`. Paths are at most 200 characters.
