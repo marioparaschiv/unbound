@@ -30,8 +30,9 @@ export const SimpleMarkdown: SimpleMarkdownModule = find(
 );
 /** Discord's copy of `react-native-screens`, with `FullWindowOverlay`; found on first access. */
 export const Screens = find(byProps('FullWindowOverlay'));
-/** Discord's copy of `react-native-svg`, with `Svg` and `Path`; found on first access. */
-export const SVG = find(byProps('Svg', 'Path'));
+/** Discord's copy of `react-native-svg`, with `Svg`, `Path` and `SvgXml`; found on first access. */
+// `SvgXml` rules out `react-native-svg/elements`, which also exports `Svg` and `Path`.
+export const SVG = find(byProps('Svg', 'Path', 'SvgXml'));
 /** Discord's slash command module, with `getBuiltInCommands`; found on first access. */
 export const Commands = find(byProps('getBuiltInCommands'));
 /** Discord's copy of Moment.js; found on first access. */
