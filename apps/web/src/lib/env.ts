@@ -127,9 +127,10 @@ export const envSchema = Type.Object({
 	USER_LIST_PAGE_SIZE: positiveInt(25),
 	EVENT_PAGE_SIZE: positiveInt(100),
 
-	SYNC_MAX_INSTALLS: positiveInt(100),
+	// Per kind. A document over it is refused, never cut.
+	SYNC_MAX_INSTALLS: positiveInt(500),
 	SYNC_MAX_STORE_BYTES: positiveInt(32 * 1024),
-	SYNC_MAX_DOCUMENT_BYTES: positiveInt(256 * 1024),
+	SYNC_MAX_DOCUMENT_BYTES: positiveInt(1024 * 1024),
 	SYNC_RATE_LIMIT_WINDOW_SECONDS: positiveInt(60),
 	SYNC_RATE_LIMIT_MAX: positiveInt(30),
 	SYNC_SIGN_IN_RATE_LIMIT_WINDOW_SECONDS: positiveInt(60),

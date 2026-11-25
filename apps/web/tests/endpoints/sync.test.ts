@@ -444,11 +444,14 @@ describe('stripping', () => {
 		]);
 	});
 
-	test('caps installs per kind at 100', async () => {
-		const ids = Array.from({ length: 120 }, (_, index) => `p${index}.plugin`);
-		const { addons } = await strip(documentWith({ addons: plugins(...ids) }));
+	test('keeps 500 installs per kind and refuses more', async () => {
+		const ids = Array.from({ length: 501 }, (_, index) => `p${index}.plugin`);
+		const { addons } = await strip(documentWith({ addons: plugins(...ids.slice(0, 500)) }));
 
-		expect(addons.plugins.installs.map((install) => install.id)).toEqual(ids.slice(0, 100));
+		expect(addons.plugins.installs.map((install) => install.id)).toEqual(ids.slice(0, 500));
+		expect(
+			await failure(put(await signIn(), 0, documentWith({ addons: plugins(...ids) }))),
+		).toEqual({ status: 413, code: 'sync_document_too_large' });
 	});
 
 	test('drops an oversize store and too-deep values', async () => {
@@ -472,7 +475,7 @@ describe('stripping', () => {
 	});
 
 	test('refuses a document over the size cap', async () => {
-		const ids = Array.from({ length: 10 }, (_, index) => `big${index}.plugin`);
+		const ids = Array.from({ length: 40 }, (_, index) => `big${index}.plugin`);
 		const settings = Object.fromEntries(ids.map((id) => [id, { blob: 'x'.repeat(30 * 1024) }]));
 
 		expect(
