@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.3] - 2026-11-25
+
+### Fixed
+
+- The Copy URL, Copy markup and Clone rows on emoji and sticker sheets line up with the rest of the sheet instead of sitting inset on both sides.
+
 ## [1.1.2] - 2026-11-24
 
 ### Fixed
