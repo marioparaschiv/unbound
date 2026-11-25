@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/received.jpg",
+				"alt": "Fake Nitro turning emoji image links sent without Nitro back into real server emoji in a chat."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Fake Nitro's settings for fake emoji and stickers, their sizes, received links and stream quality."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/received.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCfaJd2mFdFc59b+bk=",
+			"bytes": 303848
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xwcGCwCWgwd4Z4NYL1r9M6M=",
+			"bytes": 328791
+		}
+	]
+}
