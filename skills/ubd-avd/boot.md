@@ -12,6 +12,8 @@
 
 Stop the emulator with `up.sh --restart=emu` or `tmux kill-session -t avd-emu`. `avd-emu` boots the emulator again 5 s after it exits on its own, so `adb emu kill` alone only restarts it. Each start and exit is a `== <time>` line in `avd-emu.log`; read those first when the AVD dropped. To start the emulator, `up.sh` waits for `sys.boot_completed`, switches adbd to root, and keeps the screen on and unlocked. It boots with `-no-snapshot`: loading the AVD's `default_boot` snapshot rolls the disk back to that moment and loses the Discord login.
 
+On a systemd host each emulator launch runs in its own user scope with hard caps of `AVD_CPU_QUOTA` (200%) and `AVD_MEMORY_MAX` (5G, no swap), with `AVD_CORES` (2) vCPUs and `AVD_RAM_MB` (3072) of guest RAM; override them in `.env`. The scope sits in `avd.slice`: define `~/.config/systemd/user/avd.slice` with `CPUQuota=` and `MemoryMax=` to cap all emulators on the host together.
+
 ## What up.sh repairs on its own
 
 | Situation                                                               | What it does                                                        |
