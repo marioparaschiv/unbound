@@ -75,7 +75,8 @@ mock.module('~/updates/addon-updates', () => ({
 	automaticUpdates: (pending: unknown[]) => pending,
 }));
 
-const { applyActions } = await import('~/sync/device');
+const { applyActions, summarize } = await import('~/sync/device');
+const { emptySyncDocument } = await import('@unbound-app/contracts/sync-buckets');
 
 const install = (id: string) => ({
 	type: 'install' as const,
@@ -109,5 +110,22 @@ describe('applyActions', () => {
 		const failed = await applyActions([install('flaky')]);
 
 		expect(failed).toEqual([install('flaky')]);
+	});
+});
+
+describe('summarize', () => {
+	test('names cloud installs missing here and local installs missing from the cloud', () => {
+		installed.add('both');
+		installed.add('local');
+
+		const document = emptySyncDocument();
+
+		document.addons.plugins.installs = ['both', 'cloud'].map((id) => install(id).install);
+
+		expect(summarize(document).plugins).toEqual({
+			cloud: 2,
+			missing: ['cloud'],
+			unsynced: ['local'],
+		});
 	});
 });

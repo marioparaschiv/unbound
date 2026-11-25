@@ -1,3 +1,5 @@
+import type { SyncKind } from '@unbound-app/contracts/sync';
+
 import type { MessageKey } from '~/i18n/message';
 import type { SyncStrategy } from '~/sync/merge';
 import type { SyncMode } from '~/sync/api';
@@ -30,6 +32,21 @@ export const SYNC_MODES: SyncOption<SyncMode>[] = [
 		icon: 'UploadIcon',
 		description: 'UNBOUND_CLOUD_SYNC_MODE_UPLOAD_DESC',
 	},
+];
+
+/** A kind's row under what the cloud holds. */
+export type SyncKindRow = {
+	kind: SyncKind;
+	label: MessageKey;
+	icon: string;
+};
+
+/** The kinds of install Sync carries, in the order the addon pages list them. */
+export const SYNC_KIND_ROWS: SyncKindRow[] = [
+	{ kind: 'plugins', label: 'UNBOUND_PLUGINS', icon: 'PuzzlePieceIcon' },
+	{ kind: 'themes', label: 'UNBOUND_THEMES', icon: 'PaintPaletteIcon' },
+	{ kind: 'icons', label: 'UNBOUND_ICONS', icon: 'ImageIcon' },
+	{ kind: 'fonts', label: 'UNBOUND_FONTS', icon: 'TextIcon' },
 ];
 
 /** The ways to combine this device with a cloud setup on the first sync, the cloud's first. */

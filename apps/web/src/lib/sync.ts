@@ -59,7 +59,7 @@ export function normalizeInstallUrl(raw: string): string | undefined {
 	return url.href;
 }
 
-function stripInstalls(input: SyncKindInput, limits: SyncLimits): SyncInstall[] {
+function stripInstalls(kind: SyncKind, input: SyncKindInput, limits: SyncLimits): SyncInstall[] {
 	const installs = new Map<string, SyncInstall>();
 
 	for (const install of input?.installs ?? []) {
@@ -74,7 +74,15 @@ function stripInstalls(input: SyncKindInput, limits: SyncLimits): SyncInstall[] 
 		installs.set(install.id, { id: install.id, url, enabled: install.enabled });
 	}
 
-	return [...installs.values()].slice(0, limits.SYNC_MAX_INSTALLS);
+	// Refused rather than cut, so the client reports it instead of losing the rest unseen.
+	if (installs.size > limits.SYNC_MAX_INSTALLS) {
+		throw new ApiError(
+			'sync_document_too_large',
+			`Sync fits up to ${limits.SYNC_MAX_INSTALLS} ${kind}. This device has ${installs.size}.`,
+		);
+	}
+
+	return [...installs.values()];
 }
 
 function stripApplied(kind: SyncKind, applied: string | null, installs: SyncInstall[]) {
@@ -90,7 +98,7 @@ function stripApplied(kind: SyncKind, applied: string | null, installs: SyncInst
 }
 
 function stripKind(kind: SyncKind, input: SyncDocumentInput, limits: SyncLimits): SyncKindDocument {
-	const installs = stripInstalls(input.addons[kind], limits);
+	const installs = stripInstalls(kind, input.addons[kind], limits);
 
 	return { installs, applied: stripApplied(kind, input.addons[kind]?.applied ?? null, installs) };
 }

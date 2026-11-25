@@ -1,6 +1,7 @@
 // Reads manager or settings state during render, which the React Compiler would cache past its changes.
 'use no memo';
 
+import type { SyncKind } from '@unbound-app/contracts/sync';
 import { Image } from 'react-native';
 import { useState } from 'react';
 
@@ -16,7 +17,9 @@ import {
 import { FIRST_SYNC_CHOICES, SYNC_MODES } from '~/ui/settings/sync/sync-options';
 import type { SyncStatus } from '~/ui/settings/sync/describe-sync';
 import type { SyncHeroAction } from '~/ui/settings/sync/sync-hero';
+import SyncCloudGroup from '~/ui/settings/sync/sync-cloud-group';
 import SyncFocusPage from '~/ui/settings/sync/sync-focus-page';
+import type { SyncKindSummary } from '~/sync/device';
 import SyncHero from '~/ui/settings/sync/sync-hero';
 import type { SyncStrategy } from '~/sync/merge';
 import useSignIn from '~/ui/account/use-sign-in';
@@ -41,6 +44,10 @@ function SyncPage() {
 	const account = useAccount();
 	const signIn = useSignIn();
 	const enabled = settings.get('enabled', false);
+	const summary = settings.get<Record<SyncKind, SyncKindSummary> | null>('summary', null);
+	const missing = summary
+		? Object.values(summary).reduce((count, kind) => count + kind.missing.length, 0)
+		: 0;
 
 	const status: SyncStatus = {
 		signedIn: Boolean(account),
@@ -49,6 +56,7 @@ function SyncPage() {
 		syncing: busy,
 		lastError: settings.get<string | null>('lastError', null),
 		lastSyncedAt: settings.get<string | null>('lastSyncedAt', null),
+		missing,
 	};
 
 	function track(task: Promise<boolean>) {
@@ -63,6 +71,23 @@ function SyncPage() {
 			confirmText: messages.UNBOUND_DELETE,
 			cancelText: messages.UNBOUND_CANCEL,
 			onConfirm: () => void deleteData(),
+		});
+	}
+
+	// Either direction replaces one side outright, so both ask first.
+	function confirmManual(strategy: 'push' | 'pull') {
+		Discord.showConfirmModal({
+			title:
+				strategy === 'push'
+					? messages.UNBOUND_CLOUD_SYNC_UPLOAD
+					: messages.UNBOUND_CLOUD_SYNC_DOWNLOAD,
+			content:
+				strategy === 'push'
+					? messages.UNBOUND_CLOUD_SYNC_CHOICE_PUSH_CONFIRM
+					: messages.UNBOUND_CLOUD_SYNC_CHOICE_PULL_CONFIRM,
+			confirmText: messages.UNBOUND_CLOUD_SYNC_CHOICE_PUSH_CONFIRM_ACTION,
+			cancelText: messages.UNBOUND_CANCEL,
+			onConfirm: () => track(now(strategy)),
 		});
 	}
 
@@ -172,6 +197,13 @@ function SyncPage() {
 				</Discord.TableRowGroup>
 			) : null}
 
+			{summary ? (
+				<SyncCloudGroup
+					summary={summary}
+					updatedAt={settings.get<string | null>('cloudUpdatedAt', null)}
+				/>
+			) : null}
+
 			<Discord.TableRadioGroup
 				title={messages.UNBOUND_CLOUD_SYNC_MODE}
 				hasIcons
@@ -188,6 +220,23 @@ function SyncPage() {
 					/>
 				))}
 			</Discord.TableRadioGroup>
+
+			<Discord.TableRowGroup title={messages.UNBOUND_CLOUD_SYNC_MANUAL}>
+				<Discord.TableRow
+					label={messages.UNBOUND_CLOUD_SYNC_UPLOAD}
+					subLabel={messages.UNBOUND_CLOUD_SYNC_CHOICE_PUSH_DESC}
+					icon={<Discord.TableRowIcon source={icons.UploadIcon} />}
+					disabled={busy}
+					onPress={() => confirmManual('push')}
+				/>
+				<Discord.TableRow
+					label={messages.UNBOUND_CLOUD_SYNC_DOWNLOAD}
+					subLabel={messages.UNBOUND_CLOUD_SYNC_CHOICE_PULL_DESC}
+					icon={<Discord.TableRowIcon source={icons.CloudDownloadIcon} />}
+					disabled={busy}
+					onPress={() => confirmManual('pull')}
+				/>
+			</Discord.TableRowGroup>
 
 			<Discord.TableRowGroup>
 				<Discord.TableRow

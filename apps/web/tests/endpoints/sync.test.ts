@@ -452,6 +452,14 @@ describe('stripping', () => {
 		expect(addons.plugins.installs.map((install) => install.id)).toEqual(ids);
 	});
 
+	test('refuses more installs than a request may carry', async () => {
+		const ids = Array.from({ length: SYNC_MAX_INSTALLS + 1 }, (_, index) => `p${index}.plugin`);
+
+		expect(
+			await failure(put(await signIn(), 0, documentWith({ addons: plugins(...ids) }))),
+		).toMatchObject({ status: 400 });
+	});
+
 	test('drops an oversize store and too-deep values', async () => {
 		let deep: SyncDocumentInput['settings'][string][string] = 'leaf';
 
@@ -473,7 +481,7 @@ describe('stripping', () => {
 	});
 
 	test('refuses a document over the size cap', async () => {
-		const ids = Array.from({ length: 10 }, (_, index) => `big${index}.plugin`);
+		const ids = Array.from({ length: 40 }, (_, index) => `big${index}.plugin`);
 		const settings = Object.fromEntries(ids.map((id) => [id, { blob: 'x'.repeat(30 * 1024) }]));
 
 		expect(

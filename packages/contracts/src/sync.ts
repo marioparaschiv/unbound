@@ -21,7 +21,7 @@ export {
 
 export const SYNC_URL_MAX_LENGTH = 2048;
 /** The most installs one kind may carry in a saved document. */
-export const SYNC_MAX_INSTALLS = 1000;
+export const SYNC_MAX_INSTALLS = 500;
 export const SYNC_SETTINGS_MAX_DEPTH = 8;
 
 export const syncKindSchema = Type.Enum(SYNC_KINDS);
