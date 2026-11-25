@@ -61,6 +61,12 @@ function GalleryLightbox({
 		}
 	}
 
+	// The content covers the viewport, so a press lands outside it only while a view transition hit-tests
+	// the page as `<html>`; `morph` forwards that click to the control under it instead.
+	function onPointerDownOutside(event: Event) {
+		event.preventDefault();
+	}
+
 	function onBackdropClick(event: MouseEvent) {
 		if (event.target === event.currentTarget) {
 			onClose();
@@ -75,6 +81,7 @@ function GalleryLightbox({
 					aria-describedby={undefined}
 					onKeyDown={onKeyDown}
 					onCloseAutoFocus={onCloseAutoFocus}
+					onPointerDownOutside={onPointerDownOutside}
 					onClick={onBackdropClick}
 					className='z-50 fixed inset-0 flex flex-col justify-center items-center gap-4 p-4 sm:p-8 outline-none'
 				>
