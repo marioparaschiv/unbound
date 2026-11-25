@@ -166,7 +166,12 @@ if wanted emu; then
 		# losing the Discord login and everything installed since. AVD_WINDOW=1 shows the emulator's own window.
 		window=-no-window
 		[[ ${AVD_WINDOW:-0} == 1 ]] && window=
-		emulator="'$EMULATOR' -avd '$AVD_NAME' -port $AVD_CONSOLE_PORT -grpc $AVD_GRPC_PORT -grpc-use-token -grpc-allowlist '$AVD_ALLOWLIST' $window -no-audio -no-boot-anim -gpu $AVD_GPU -no-snapshot"
+		emulator="'$EMULATOR' -avd '$AVD_NAME' -port $AVD_CONSOLE_PORT -grpc $AVD_GRPC_PORT -grpc-use-token -grpc-allowlist '$AVD_ALLOWLIST' $window -no-audio -no-boot-anim -gpu $AVD_GPU -no-snapshot -cores $AVD_CORES -memory $AVD_RAM_MB"
+		# Software rendering keeps every core busy. Each launch gets a hard-capped scope, so a restart keeps the cap, inside
+		# avd.slice, which caps every emulator on the host together when the machine defines it.
+		if command -v systemd-run >/dev/null && systemctl --user show-environment >/dev/null 2>&1; then
+			emulator="systemd-run --user --scope --quiet --slice=avd.slice -p CPUQuota=$AVD_CPU_QUOTA -p MemoryMax=$AVD_MEMORY_MAX -p MemorySwapMax=0 -p CPUWeight=20 $emulator"
+		fi
 		# An emulator that exits on its own boots again after 5 s, and the log keeps when and how it exited.
 		# --restart=emu and Ctrl+C end the loop by ending the tmux session.
 		start emu "while :; do echo \"== \$(date '+%F %T') starting $AVD_NAME\"; $emulator; echo \"== \$(date '+%F %T') $AVD_NAME exited with \$?\"; sleep 5; done" || true

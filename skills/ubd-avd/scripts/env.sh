@@ -151,8 +151,16 @@ else
 	: "${AVD_GPU:=swiftshader_indirect}"
 fi
 
+# The emulator shares the host with other work: 2 vCPUs, 3 GB of guest RAM and, on systemd, hard caps of 200% CPU and
+# 5 GB (past it the kernel kills the emulator, and avd-emu boots it again).
+: "${AVD_CORES:=2}"
+: "${AVD_RAM_MB:=3072}"
+: "${AVD_CPU_QUOTA:=200%}"
+: "${AVD_MEMORY_MAX:=5G}"
+
 AVD_SERIAL=emulator-$AVD_CONSOLE_PORT
 AVD_ALLOWLIST=$here/emulator-access.json
+export AVD_CORES AVD_RAM_MB AVD_CPU_QUOTA AVD_MEMORY_MAX
 export ANDROID_HOME AVD_NAME AVD_CONSOLE_PORT AVD_GRPC_PORT AVD_DEV_PORT AVD_BRIDGE_PORT AVD_PREVIEW_PORT AVD_LOG_DIR AVD_GPU
 export AVD_SERIAL AVD_ALLOWLIST AVD_DISCOVERY_DIR ADB EMULATOR
 
