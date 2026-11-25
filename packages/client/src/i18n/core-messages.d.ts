@@ -25,6 +25,7 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_UPDATES_CHECKED: { date: string | number };
 		UNBOUND_UPDATES_CHECK_FAILED: { error: string | number };
 		UNBOUND_UPDATES_ALL: { count: string | number };
+		UNBOUND_UPDATES_MORE: { count: number };
 		UNBOUND_UPDATES_CLIENT_UPDATED_DESC: { version: string | number };
 		UNBOUND_UPDATES_NOTIFY_TITLE: { count: number };
 		UNBOUND_UPDATES_LOADER_REQUIRED_DESC: { required: string | number; installed: string | number };
