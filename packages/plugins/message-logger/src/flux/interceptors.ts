@@ -46,7 +46,12 @@ function keepDeleted(channelId: string, messageId: string): boolean {
 
 	const message = MessageStore.getMessage(channelId, messageId);
 
-	if (!message || shouldIgnore(message, settings, filterContext(channelId), false)) {
+	// A send that never reached Discord exists only on this device; removing it is no deletion.
+	if (
+		!message ||
+		message.state !== 'SENT' ||
+		shouldIgnore(message, settings, filterContext(channelId), false)
+	) {
 		return false;
 	}
 
@@ -57,7 +62,7 @@ function keepDeleted(channelId: string, messageId: string): boolean {
 }
 
 /**
- * @description Keeps deleted messages in the chat by dropping the deletions the log records. A second deletion of a logged message, such as Dismiss message, goes through, and so do messages the user deleted themselves.
+ * @description Keeps deleted messages in the chat by dropping the deletions the log records. A second deletion of a logged message, such as Dismiss message, goes through, and so do messages the user deleted themselves and sends that never reached Discord.
  * Intercepts `MESSAGE_DELETE` and `MESSAGE_DELETE_BULK`.
  */
 export function interceptDeletions(): void {
