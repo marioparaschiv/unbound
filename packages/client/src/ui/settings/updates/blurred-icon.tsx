@@ -11,6 +11,8 @@ type BlurredIconProps = {
 	amount: SharedValue<number>;
 	/** The tint, from the caller's style sheet. */
 	style?: StyleProp<ImageStyle>;
+	/** Whether the icon can blur; a sharp one mounts only its centre copy, which keeps the page quick to open. */
+	blurring: boolean;
 };
 
 /** How far the outer ring of copies spreads at full blur, in points. */
@@ -43,23 +45,25 @@ const COPIES = RINGS.flatMap(({ count, distance, opacity }, ring) =>
  * @description A tinted icon that blurs by spreading faint copies of itself around a fading centre. Image
  * `blurRadius` drops the icon's transparency on both platforms, so the tint would fill its whole square.
  */
-function BlurredIcon({ source, amount, style }: BlurredIconProps) {
+function BlurredIcon({ source, amount, style, blurring }: BlurredIconProps) {
 	const styles = useStyles();
 
 	return (
 		<View style={styles.icon}>
 			<BlurCopy source={source} amount={amount} style={style} x={0} y={0} opacity={0.25} />
-			{COPIES.map(({ x, y, opacity }) => (
-				<BlurCopy
-					key={`${x}:${y}`}
-					source={source}
-					amount={amount}
-					style={style}
-					x={x}
-					y={y}
-					opacity={opacity}
-				/>
-			))}
+			{blurring
+				? COPIES.map(({ x, y, opacity }) => (
+						<BlurCopy
+							key={`${x}:${y}`}
+							source={source}
+							amount={amount}
+							style={style}
+							x={x}
+							y={y}
+							opacity={opacity}
+						/>
+					))
+				: null}
 		</View>
 	);
 }

@@ -65,6 +65,11 @@ async function fetchCatalog(current: Catalog | undefined): Promise<MarketplaceEv
 			headers: current ? { 'If-None-Match': `"${current.revision}"` } : undefined,
 		});
 
+		// iOS' URL cache answers a 304 with the cached 200, so an unchanged catalog can still arrive whole.
+		if (catalog.revision === current?.revision) {
+			return { type: 'not-modified' };
+		}
+
 		await store(catalog);
 
 		return { type: 'fetched', catalog };
