@@ -1,4 +1,4 @@
-import { Discord } from '@unbound-app/api/metro/components';
+import { getActionSheetRow } from '@unbound-plugins/shared/action-sheets/action-sheet-row';
 import { useState, type ReactNode } from 'react';
 
 import StateIcon from '~/components/state-icon';
@@ -13,9 +13,10 @@ type PermissionRowProps = {
 
 function PermissionRow({ title, description, state, icon, trailing }: PermissionRowProps) {
 	const [expanded, setExpanded] = useState(false);
+	const ActionSheetRow = getActionSheetRow();
 
 	return (
-		<Discord.TableRow
+		<ActionSheetRow
 			label={title}
 			subLabel={expanded ? description : undefined}
 			icon={icon ?? (state ? <StateIcon state={state} /> : undefined)}

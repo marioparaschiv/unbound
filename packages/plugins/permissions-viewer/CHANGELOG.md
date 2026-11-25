@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.9] - 2026-11-25
+
+### Fixed
+
+- On Android, the row of roles and members at the top of the permissions sheet scrolls sideways, so every entry can be reached.
+
+### Changed
+
+- The permissions sheets use Discord's own sheet title, scrolling and rows, and the entry chips look like Discord's filter tags. A shadow fades each end of the chip row while more chips hide past it.
+- The View Permissions row sits in its own section below Discord's rows, together with other plugins' rows, instead of inside Discord's group.
+
 ## [1.0.8] - 2026-11-24
 
 ### Fixed

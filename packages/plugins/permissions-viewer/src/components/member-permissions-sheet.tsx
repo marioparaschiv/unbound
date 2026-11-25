@@ -1,9 +1,10 @@
 import type { SheetProps } from '@unbound-plugins/shared/action-sheets/open-sheet';
-import { Discord } from '@unbound-app/api/metro/components';
+import { getActionSheetRow } from '@unbound-plugins/shared/action-sheets/action-sheet-row';
+import { BottomSheets, Discord, GorhomSheet } from '@unbound-app/api/metro/components';
 import { messages } from '@unbound-app/i18n';
 import { settings, useSetting } from '@unbound-app/settings';
 import { useMemo } from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 
 import { grantedPermissions, memberRoles, type GrantedPermission } from '~/lib/model';
 import { getPermissionBits, getSortedRoles } from '~/lib/views';
@@ -13,6 +14,8 @@ import PermissionRow from '~/components/permission-row';
 import { GuildMemberStore } from '~/lib/modules';
 import RoleDot from '~/components/role-dot';
 import type { Guild } from '~/lib/types';
+
+import useStyles from '~/components/permissions-sheet.style';
 
 type MemberPermissionsSheetProps = SheetProps & {
 	guild: Guild;
@@ -37,6 +40,7 @@ function MemberPermissionsSheet({
 	onClose,
 	onRoleDetails,
 }: MemberPermissionsSheetProps) {
+	const styles = useStyles();
 	const order = useSetting('sortOrder');
 	const bits = useMemo(getPermissionBits, []);
 	const text = useMemo(() => createPermissionText(guild), [guild.id]);
@@ -55,21 +59,21 @@ function MemberPermissionsSheet({
 		});
 	}, [member, order, bits, text]);
 
+	const ActionSheetRow = getActionSheetRow();
+	const { ActionSheet, BottomSheetTitleHeader } = BottomSheets;
+	const { BottomSheetScrollView: ScrollView } = GorhomSheet;
+
 	function openRoleDetails() {
 		onClose();
 		onRoleDetails();
 	}
 
 	return (
-		<Discord.ActionSheet startExpanded>
-			<ScrollView
-				contentContainerStyle={{ gap: 12, paddingBottom: 32, paddingHorizontal: 16 }}
-				style={{ maxHeight: '100%' }}
-			>
-				<Discord.Text variant='heading-lg/semibold'>{messages.PERMISSIONS}</Discord.Text>
-
-				<View style={{ flexDirection: 'row', gap: 8 }}>
-					<View style={{ flex: 1 }}>
+		<ActionSheet scrollable startExpanded>
+			<BottomSheetTitleHeader title={messages.PERMISSIONS} />
+			<ScrollView contentContainerStyle={styles.body}>
+				<View style={styles.buttons}>
+					<View style={styles.button}>
 						<Discord.Button
 							size='sm'
 							variant='secondary'
@@ -83,7 +87,7 @@ function MemberPermissionsSheet({
 							}}
 						/>
 					</View>
-					<View style={{ flex: 1 }}>
+					<View style={styles.button}>
 						<Discord.Button
 							size='sm'
 							variant='secondary'
@@ -94,7 +98,7 @@ function MemberPermissionsSheet({
 				</View>
 
 				{granted.length ? (
-					<Discord.TableRowGroup>
+					<ActionSheetRow.Group>
 						{granted.map((entry) => (
 							<PermissionRow
 								key={entry.permission}
@@ -102,12 +106,14 @@ function MemberPermissionsSheet({
 								trailing={<GrantedBy granted={entry} />}
 							/>
 						))}
-					</Discord.TableRowGroup>
+					</ActionSheetRow.Group>
 				) : (
-					<Discord.Text color='text-muted'>{messages.NO_ROLES_GRANT}</Discord.Text>
+					<View style={styles.section}>
+						<Discord.Text color='text-muted'>{messages.NO_ROLES_GRANT}</Discord.Text>
+					</View>
 				)}
 			</ScrollView>
-		</Discord.ActionSheet>
+		</ActionSheet>
 	);
 }
 

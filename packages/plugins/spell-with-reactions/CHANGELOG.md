@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.3] - 2026-11-25
+
+### Changed
+
+- Its action sheet rows sit in their own section below Discord's rows, together with other plugins' rows, instead of inside Discord's group.
+
 ## [1.1.2] - 2026-11-24
 
 ### Fixed
