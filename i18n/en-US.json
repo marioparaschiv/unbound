@@ -145,6 +145,7 @@
 	"UNBOUND_UPDATES_NOT_CHECKED": "Not checked yet",
 	"UNBOUND_UPDATES_CHECK_FAILED": "Couldn't check for updates: {error}",
 	"UNBOUND_UPDATES_ALL": "Update All ({count})",
+	"UNBOUND_UPDATES_MORE": "{count, plural, one {# more update} other {# more updates}}",
 	"UNBOUND_UPDATES_AUTO": "Automatic Updates",
 	"UNBOUND_UPDATES_AUTO_DESC": "Updates install when Discord starts. The loader can't update itself, and client updates apply after a restart.",
 	"UNBOUND_UPDATES_NOTIFY": "Notifications",

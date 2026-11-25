@@ -20,6 +20,8 @@ export {
 } from './sync-buckets';
 
 export const SYNC_URL_MAX_LENGTH = 2048;
+/** The most installs one kind may carry in a saved document. */
+export const SYNC_MAX_INSTALLS = 500;
 export const SYNC_SETTINGS_MAX_DEPTH = 8;
 
 export const syncKindSchema = Type.Enum(SYNC_KINDS);
@@ -76,7 +78,7 @@ const syncInstallInputSchema = Type.Object({
 });
 
 const syncKindInputSchema = Type.Object({
-	installs: Type.Array(syncInstallInputSchema, { maxItems: 1000 }),
+	installs: Type.Array(syncInstallInputSchema, { maxItems: SYNC_MAX_INSTALLS }),
 	applied: Type.Union([Type.String({ maxLength: 1024 }), Type.Null()], { default: null }),
 });
 
@@ -126,6 +128,7 @@ export default {
 	SYNC_DEFAULT_ICON_PACK,
 	SYNC_ID_PATTERN,
 	SYNC_URL_MAX_LENGTH,
+	SYNC_MAX_INSTALLS,
 	SYNC_SETTINGS_MAX_DEPTH,
 	syncKindSchema,
 	syncInstallSchema,

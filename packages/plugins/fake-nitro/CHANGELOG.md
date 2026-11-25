@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.3] - 2026-11-25
+
+### Fixed
+
+- Locked stickers send as links again. Sending any sticker crashed the plugin, which turned the sticker patch off after three tries.
+
 ## [1.3.2] - 2026-11-24
 
 ### Fixed

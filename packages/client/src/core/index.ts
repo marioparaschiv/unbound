@@ -20,6 +20,7 @@ import imageSourceGuard from '~/builtins/image-source-guard';
 import gatewayReconnect from '~/builtins/gateway-reconnect';
 import placeholderGuard from '~/builtins/placeholder-guard';
 import updater, { updatesSection } from '~/updates/builtin';
+import uploadPathGuard from '~/builtins/upload-path-guard';
 import { developerSection } from '~/settings/builtin.dev';
 import { themes as themeManager } from '~/themes/manager';
 import { benchMark, benchSpan } from '~/core/bench-span';
@@ -122,6 +123,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	['toasts', toasts],
 	['tracking', tracking],
 	['updater', updater],
+	['uploadPathGuard', uploadPathGuard],
 ];
 
 let initialized = false;

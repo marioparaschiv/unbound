@@ -8,18 +8,18 @@ import MarketplaceStore from '~/marketplace/state';
  * @returns The listed ids, or `undefined` until a catalog is available.
  */
 function useListedIds(): Set<string> | undefined {
-	const state = useStore(MarketplaceStore, (store) => store.state);
+	// The catalog alone, so a refresh that changes nothing keeps the set and skips re-rendering the page.
+	const catalog = useStore(MarketplaceStore, ({ state }) =>
+		state.status === 'ready' ? state.catalog : undefined,
+	);
 
 	useEffect(() => {
 		void MarketplaceStore.getState().load();
 	}, []);
 
 	return useMemo(
-		() =>
-			state.status === 'ready'
-				? new Set(state.catalog.addons.map((addon) => addon.id))
-				: undefined,
-		[state],
+		() => (catalog ? new Set(catalog.addons.map((addon) => addon.id)) : undefined),
+		[catalog],
 	);
 }
 

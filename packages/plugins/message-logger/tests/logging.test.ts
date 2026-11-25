@@ -51,6 +51,15 @@ describe('a deleted message', () => {
 		expect(isMarkedDeleted()).toBe(false);
 	});
 
+	test('goes straight through when it never reached Discord, as with a failed send', async () => {
+		message.state = 'SEND_FAILED';
+		await del();
+		message.state = 'SENT';
+
+		expect(reached).toMatchObject([{ type: 'MESSAGE_DELETE', id: 'm1' }]);
+		expect(isMarkedDeleted()).toBe(false);
+	});
+
 	test('goes through the second time, as with Dismiss message', async () => {
 		await del();
 		await del();
