@@ -63,12 +63,14 @@ function AddonGallery({ entries }: AddonGalleryProps) {
 	}
 
 	// The entry slides out the way the user stepped while the next one slides in after it, both blurred.
+	// A press mid-slide ends it and reaches the control under it, so stepping fast keeps stepping.
 	function step(index: number, direction: 'next' | 'previous') {
 		void morph({
 			name: MORPH_NAME,
 			from: frame.current,
 			to: () => frame.current,
 			update: () => setActive(index),
+			passThrough: true,
 			kind: `gallery-${direction}`,
 		});
 	}
