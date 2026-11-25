@@ -49,7 +49,7 @@ type OutgoingMessage = { content?: string };
 type SendOptions = { stickerIds?: string[] };
 
 function lockedStickers(channelId: string, stickerIds: string[]): FakeSticker[] {
-	const StickersStore = flux.getStore('Sticker');
+	const StickersStore = flux.getStore('Stickers');
 	const channel = flux.getStore('Channel').getChannel(channelId);
 
 	return stickerIds
