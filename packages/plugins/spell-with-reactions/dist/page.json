@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/sheet.jpg",
+				"alt": "Spell With Reactions previewing the letter reactions for a typed word before adding them."
+			},
+			{
+				"image": "media/row.jpg",
+				"alt": "Spell With Reactions' row in a message's long-press menu."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/sheet.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "w/cFCwBocNl3dImGl4+B6gk=",
+			"bytes": 208870
+		},
+		{
+			"path": "media/row.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwB8YBh3hXR3mH+PEwk=",
+			"bytes": 189842
+		}
+	]
+}

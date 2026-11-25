@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/list.jpg",
+				"alt": "Follow-Up Inbox's list of messages still waiting for an answer."
+			},
+			{
+				"image": "media/row.jpg",
+				"alt": "Follow-Up Inbox's Follow Up Later and Follow-Ups rows in a message's long-press menu."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/list.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwBpgQiXj3l0h3+dZgk=",
+			"bytes": 220394
+		},
+		{
+			"path": "media/row.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwB8YBiHhXOHmH+PIwg=",
+			"bytes": 189097
+		}
+	]
+}

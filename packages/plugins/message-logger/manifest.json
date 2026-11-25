@@ -41,5 +41,12 @@
 		"min": "1.0.0"
 	},
 	"icon": "EyeIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "2863650a62de1d862ca56e87e43f0e907d60addd02e0fd7cc87d57c2fdfab78a2f83519ac7300524f20268e3b9ff1124ec02aaf203cc81da92cf69c796291c60"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "7cnTNFtdZ0m6qyhucWUCPFUgfX20IZHDBp9z+n1lNa3AEJdSmzhfI+x9BBWihXbupfWXqOC+19R/3AEcCBj5Cg=="
+	}
 }

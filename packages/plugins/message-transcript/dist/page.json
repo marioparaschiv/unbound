@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/menu.jpg",
+				"alt": "Message Transcript's Select Messages option in a message's long-press menu."
+			},
+			{
+				"image": "media/select.jpg",
+				"alt": "Message Transcript's Select Messages sheet with a run of four messages ticked, ready to copy as a transcript."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/menu.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwBsYBiHhYJmmI/9xT4=",
+			"bytes": 207445
+		},
+		{
+			"path": "media/select.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "hgcGEwB4gJd3coqzeH+Sxwg=",
+			"bytes": 221126
+		}
+	]
+}

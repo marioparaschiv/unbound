@@ -1,0 +1,56 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/logged.jpg",
+				"alt": "Message Logger keeps a deleted message in red and shows an edited message's earlier version above it in a direct message."
+			},
+			{
+				"image": "media/highlight.jpg",
+				"alt": "Message Logger with Highlight deleted messages on, drawing deleted messages with a tinted background and side bar."
+			},
+			{
+				"image": "media/edit-history.jpg",
+				"alt": "Message Logger's Message History sheet listing every version of an edited message."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Message Logger's settings: how logged messages look, what gets logged, and who to ignore."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/logged.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwCPiKd2h2YnlI+Nlfo=",
+			"bytes": 357847
+		},
+		{
+			"path": "media/highlight.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "AwgGAwCPeZd2hmY1lI+NdPo=",
+			"bytes": 343270
+		},
+		{
+			"path": "media/edit-history.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwBpikeHcHKniIevxQo=",
+			"bytes": 134102
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xwcCCwDFgwZpkJKJL3n7Ulg=",
+			"bytes": 355830
+		}
+	]
+}

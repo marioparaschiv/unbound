@@ -21,5 +21,12 @@
 		"min": "1.0.0"
 	},
 	"icon": "ChevronLargeRightIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "8b00ea5ab2b2d3c15d2c25e236ee41e21beb4489763e283e5858db73871a6341b6e8a0f1ccb0186b9fb3fa029eeb302f3de41887402b652382575bb8f1c27cd2"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "utyHT6gmuJCA4Qsmp0neYBAXvAXkYe8WC+68LgsB17MtVvqkrj1wDT82XurtnZS62JcKV2cV3TLheT3WYMl7CA=="
+	}
 }

@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/reviews.jpg",
+				"alt": "ReviewDB's sheet listing reviews people left on eternal's profile."
+			},
+			{
+				"image": "media/profile-section.jpg",
+				"alt": "ReviewDB's Reviews section on a user's profile."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "ReviewDB's settings for signing in, notifications and hiding reviews."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/reviews.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xPcBAwB/VDaHY4OGqGCPCNY=",
+			"bytes": 308666
+		},
+		{
+			"path": "media/profile-section.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "AwgGCwKKf7ZVW1pqZn9/9uc=",
+			"bytes": 231556
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xgcCAwB6aAh4kYN3TqbfBpc=",
+			"bytes": 278158
+		}
+	]
+}

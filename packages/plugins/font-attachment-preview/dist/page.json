@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/preview.jpg",
+				"alt": "Font Attachment Preview's sheet showing each attached font at three sizes."
+			},
+			{
+				"image": "media/row.jpg",
+				"alt": "Font Attachment Preview's Preview Font row in the long-press menu of a message with font files."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/preview.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcGAwBZcHmIi3Zph4/7cTw=",
+			"bytes": 338725
+		},
+		{
+			"path": "media/row.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwB7YBiHhYJmiI/91T4=",
+			"bytes": 201974
+		}
+	]
+}

@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/menu.jpg",
+				"alt": "Background Remover's Remove Background row in the long-press menu of a photo."
+			},
+			{
+				"image": "media/cutout.jpg",
+				"alt": "Background Remover's transparent cutout of the photo, opened from the message being written."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/menu.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwBrYBiHdXN3iZ/91U4=",
+			"bytes": 201178
+		},
+		{
+			"path": "media/cutout.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "BwgGCwBmkgiZe1L9hGRAKAg=",
+			"bytes": 436953
+		}
+	]
+}

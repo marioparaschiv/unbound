@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/row.jpg",
+				"alt": "Flashing Media Warning's Check for Flashing row in the long-press menu of a GIF message."
+			},
+			{
+				"image": "media/report.jpg",
+				"alt": "Flashing Media Warning's report: a brightness timeline and frame-by-frame view of a GIF."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/row.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcGAwB6YCiHhYWZiI/Lhgs=",
+			"bytes": 207530
+		},
+		{
+			"path": "media/report.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "w/cFAwApcEuXjXWKF3d/Z/k=",
+			"bytes": 205033
+		}
+	]
+}

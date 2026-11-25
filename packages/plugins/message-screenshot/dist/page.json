@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/menu.jpg",
+				"alt": "Message Screenshot's Screenshot option in a message's long-press menu."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Message Screenshot's settings: how many messages to include, and whether to share or copy the picture."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/menu.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwB8cgiGdnNWmHu/B4Q=",
+			"bytes": 185781
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwB6nzdnYmZEeoW/lwc=",
+			"bytes": 165994
+		}
+	]
+}

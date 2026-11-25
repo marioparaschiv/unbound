@@ -13,5 +13,30 @@
 		"min": "1.0.0"
 	},
 	"icon": "ReactionIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.ffi.call",
+				"native.ffi.memory",
+				"native.ffi.symbols",
+				"native.objc.classes",
+				"native.objc.invoke"
+			]
+		},
+		"android": {
+			"capabilities": [
+				"native.java.classes",
+				"native.java.fields",
+				"native.java.invoke"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "608f9c224facd294f5cc088f3a4c286d2bd1ce1b226e08dfba3a8e09f9c7af4558384646e116e17c213e2dfdb140207137c5857a864c066f97ef561a9923923d"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "Gwcewc+MvK94+Bu1pF1vCjsRezMCL/mpsNAF5jGmMk5pnzS4kxGz0AUL+LhjouhyLo/A8KYx7PJGosDnVrYFBg=="
+	}
 }
