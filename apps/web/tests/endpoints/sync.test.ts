@@ -2,6 +2,7 @@ import {
 	emptySyncDocument,
 	SYNC_CORE_BUCKET,
 	SYNC_KINDS,
+	SYNC_MAX_INSTALLS,
 	syncDeleteResponseSchema,
 	syncStateSchema,
 } from '@unbound-app/contracts/sync';
@@ -444,11 +445,11 @@ describe('stripping', () => {
 		]);
 	});
 
-	test('caps installs per kind at 100', async () => {
-		const ids = Array.from({ length: 120 }, (_, index) => `p${index}.plugin`);
+	test('keeps every install a request may carry', async () => {
+		const ids = Array.from({ length: SYNC_MAX_INSTALLS }, (_, index) => `p${index}.plugin`);
 		const { addons } = await strip(documentWith({ addons: plugins(...ids) }));
 
-		expect(addons.plugins.installs.map((install) => install.id)).toEqual(ids.slice(0, 100));
+		expect(addons.plugins.installs.map((install) => install.id)).toEqual(ids);
 	});
 
 	test('drops an oversize store and too-deep values', async () => {
