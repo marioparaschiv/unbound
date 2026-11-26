@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.6.1](https://github.com/marioparaschiv/unbound/compare/cli-v3.6.0...cli-v3.6.1) (2026-11-26)
+
+
+### Bug Fixes
+
+* **cli:** lower async arrow params that Hermes mishandles ([#2279](https://github.com/marioparaschiv/unbound/issues/2279)) ([aea68ba](https://github.com/marioparaschiv/unbound/commit/aea68bab09842d8457057e8d268204ba54859edc))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/api bumped to 1.3.0
+
 ## [3.6.0](https://github.com/marioparaschiv/unbound/compare/cli-v3.5.9...cli-v3.6.0) (2026-11-24)
 
 
