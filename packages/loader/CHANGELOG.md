@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.13.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.9...loader-v1.13.0) (2026-11-26)
+
+
+### Features
+
+* **loader:** record where an uncaught ObjC exception was thrown ([#2367](https://github.com/marioparaschiv/unbound/issues/2367)) ([2f3cfaf](https://github.com/marioparaschiv/unbound/commit/2f3cfaf7f93d4e3ae0954b1a9e0b05d798895d2a))
+
+
+### Bug Fixes
+
+* **loader:** store a hook's original method before swapping it in on iOS ([#2361](https://github.com/marioparaschiv/unbound/issues/2361)) ([168b0e6](https://github.com/marioparaschiv/unbound/commit/168b0e63e5aa1f677dfad53d7f03aa3bb643fa11))
+* **loader:** wait for a plugin surface's first render only once it runs ([#2363](https://github.com/marioparaschiv/unbound/issues/2363)) ([66e88e3](https://github.com/marioparaschiv/unbound/commit/66e88e347d754a86f3f0fd28e2b72b2ba62ca63c))
+
 ## [1.12.9](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.8...loader-v1.12.9) (2026-11-26)
 
 
