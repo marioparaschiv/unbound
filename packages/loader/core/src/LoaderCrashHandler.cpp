@@ -54,6 +54,8 @@ static constexpr size_t kMaxOtherThreads = 64;
 static constexpr uintptr_t kMaxFrameSpan = 1024 * 1024;
 static char gException[512];
 static std::atomic<size_t> gExceptionLength{0};
+static char gThrownFrames[4096];
+static std::atomic<size_t> gThrownFramesLength{0};
 
 static void writeText(int descriptor, const char *text)
 {
@@ -353,6 +355,12 @@ static void writeNativeStack(int signal, siginfo_t *info, void *context)
         writeText(descriptor, "\n");
     }
 
+    if (size_t length = gThrownFramesLength.load(std::memory_order_acquire))
+    {
+        ssize_t written = write(descriptor, gThrownFrames, length);
+        (void) written;
+    }
+
     if (gImageLineLength > 0)
     {
         ssize_t written = write(descriptor, gImageLine, gImageLineLength);
@@ -502,6 +510,19 @@ void noteUncaughtException(const std::string &description)
     gExceptionLength.store(0, std::memory_order_release);
     std::memcpy(gException, line.data(), line.size());
     gExceptionLength.store(line.size(), std::memory_order_release);
+}
+
+void noteUncaughtExceptionFrames(const std::string &lines)
+{
+    size_t length = std::min(lines.size(), sizeof(gThrownFrames));
+    while (length > 0 && length < lines.size() && lines[length - 1] != '\n')
+    {
+        length--;
+    }
+
+    gThrownFramesLength.store(0, std::memory_order_release);
+    std::memcpy(gThrownFrames, lines.data(), length);
+    gThrownFramesLength.store(length, std::memory_order_release);
 }
 
 bool uncaughtExceptionNoted()
