@@ -43,6 +43,7 @@ import { colorFromArgb, findHighlightPainter } from '~/native/android/highlight'
 import { cellFallback } from '~/lib/cell-paint';
 import { bubbleProblem } from '~/lib/geometry';
 import { createRowGroups } from '~/lib/row-groups';
+import { createFrameGate } from '~/lib/frame-gate';
 import { accessoryGap, rowInset, rowRooms, type BubbleAppearance } from '~/lib/style';
 import { currentAppearance, themeMentionColor } from '~/lib/theme';
 import { messageAuthor, isOwnMessage } from '~/lib/author';
@@ -58,6 +59,8 @@ type AndroidNative = {
 const BUBBLE_LAYER_ID = 0x0b0b1e;
 const REPLY_ICON_ID = 0x0b0b1f;
 const PLACEMENT_WORKERS = 4;
+/** How many rows are read on the main thread in one frame, so a redraw of many rows never holds it for long. */
+const READS_PER_FRAME = 2;
 const MAX_TRACKED = 256;
 
 function bounded<T>(map: Map<string, T>, key: string, value: T) {
@@ -94,12 +97,16 @@ export function drawAndroidBubbles({ java, ui }: AndroidNative) {
 		media: java.createAssociationKey(),
 		mediaRadius: java.createAssociationKey(),
 	};
+	const readSlot = createFrameGate(READS_PER_FRAME);
 	const measure = createMeasure(
 		java,
-		(row) =>
-			'value' in row
-				? ui.call(readRow, scope, row.value, ids, idField)
-				: Promise.resolve(null),
+		async (row) => {
+			if (!('value' in row)) return null;
+
+			await readSlot();
+
+			return disposed ? null : ui.call(readRow, scope, row.value, ids, idField);
+		},
 		keys.media,
 	);
 	const neighbours = createNeighbours(currentAppearance, (id) => redraw([id]));

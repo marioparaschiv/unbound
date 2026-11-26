@@ -189,6 +189,9 @@ export function createMeasure(
 
 		if (!body) return;
 
+		// A card spans the whole content column, which each item's own box fills even when it draws narrower media.
+		const columnRight = Math.max(body.right, ...content.map(({ box }) => box.x + box.width));
+
 		const rights = content.map(({ view, box, reach }) =>
 			javaFlag(java.invoke(contentClass, 'isInstance', [view]))
 				? box.x + textRight(view, box.width * scale) / scale
@@ -208,7 +211,7 @@ export function createMeasure(
 		const columnBox = {
 			x: column,
 			y: start && header ? Math.min(header.box.y, body.top) : body.top,
-			width: body.right - column,
+			width: columnRight - column,
 			height: body.bottom - (start && header ? Math.min(header.box.y, body.top) : body.top),
 		};
 

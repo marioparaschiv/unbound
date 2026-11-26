@@ -152,12 +152,21 @@ function idField(java: NativeJavaBridge, from: NativeJavaReference, name: string
 
 // Discord reuses its message row outside the chat, such as in the in-app notification banner, which gets no bubble.
 // The banner's host holds that one row, while the chat list holds its rows and spacers. A row bound before it is
-// attached has no parent yet and counts as the chat's; its layout checks again.
-function inChatList(java: NativeJavaBridge, row: NativeJavaReference): boolean {
+// attached has no parent yet and counts as the chat's; its layout checks again. The list re-adds its rows one by one as it
+// lays them out, so the bottom row is laid out while it is the only child; the chat list already seen still counts.
+function inChatList(
+	java: NativeJavaBridge,
+	row: NativeJavaReference,
+	list: NativeJavaReference | null,
+): boolean {
 	'worklet';
 	const parent = javaReference(java.invoke(row, 'getParent', []));
 
-	return !parent || (javaNumber(java.invoke(parent, 'getChildCount', [])) ?? 0) > 1;
+	return (
+		!parent ||
+		(list !== null && javaFlag(java.invoke(list, 'equals', [parent]))) ||
+		(javaNumber(java.invoke(parent, 'getChildCount', [])) ?? 0) > 1
+	);
 }
 
 // Rows draw their bubbles past their own bounds, into the room of the rows around them.
@@ -394,7 +403,7 @@ export function installRowHooks(
 		(event: { self?: NativeJavaValue; args?: NativeJavaValue[] }) => {
 			const row = javaReference(event.self);
 
-			if (!row || !inChatList(java, row)) return;
+			if (!row || !inChatList(java, row, current.list)) return;
 
 			try {
 				const id = javaText(java.getField(row, current.config.idField));
@@ -429,7 +438,7 @@ export function installRowHooks(
 				const row = javaReference(java.invoke(accessories, 'getParent', []));
 				const id = row ? javaText(java.getField(row, current.config.idField)) : undefined;
 
-				if (!row || !id || !inChatList(java, row)) return;
+				if (!row || !id || !inChatList(java, row, current.list)) return;
 
 				const paint = current.paints.get(id);
 				const height = javaNumber(java.invoke(row, 'getHeight', [])) ?? 0;
