@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.4] - 2026-11-26
+
+### Fixed
+
+- On a loader without the native bridge the speed and download buttons need, those features are skipped with one warning instead of the plugin failing to start; sending audio files as voice messages keeps working.
+
 ## [1.6.3] - 2026-11-24
 
 ### Fixed
