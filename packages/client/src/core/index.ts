@@ -16,6 +16,7 @@ import { createSettings, generalSection, panelHostSection } from '~/settings/bui
 import { marketplaceSection, addonPageSection } from '~/marketplace/builtin';
 import promiseRejections, { crashesSection } from '~/diagnostics/builtin';
 import backgroundRefresh from '~/builtins/background-refresh';
+import fastConnectGuard from '~/builtins/fast-connect-guard';
 import imageSourceGuard from '~/builtins/image-source-guard';
 import gatewayReconnect from '~/builtins/gateway-reconnect';
 import placeholderGuard from '~/builtins/placeholder-guard';
@@ -102,6 +103,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	['profileExpiry', profileExpiry],
 	['diskFull', diskFull],
 	['errorBoundary', errorBoundary],
+	['fastConnectGuard', fastConnectGuard],
 	// Developer tooling ships only in the dev bundle; the hot refresh client also needs a local dev build.
 	...(import.meta.env.DEV_TOOLS ? ([['debug', debug]] as BuiltInEntry[]) : []),
 	...(import.meta.env.DEV ? ([['hotRefresh', hotRefresh]] as BuiltInEntry[]) : []),
