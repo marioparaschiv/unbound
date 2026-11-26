@@ -65,7 +65,7 @@ export function packsAndroid(native: NativeBridge, pack: () => PackId) {
 
 	install(1);
 
-	findAssetMethod(native.java)
+	findAssetMethod(native.java, () => disposed)
 		.then((found) => {
 			if (disposed) return;
 

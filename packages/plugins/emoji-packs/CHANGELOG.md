@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.7] - 2026-11-26
+
+### Fixed
+
+- On Android, finding the emoji picker's image method at start no longer freezes Discord; the search runs in small steps and stops when the plugin stops. On a loader without the native bridge the plugin needs, it logs one warning and stays off instead of failing to start.
+
 ## [1.2.6] - 2026-11-24
 
 ### Fixed

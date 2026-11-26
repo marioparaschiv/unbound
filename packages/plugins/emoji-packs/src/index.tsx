@@ -1,3 +1,4 @@
+import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import type { PluginContext } from '@unbound-app/api/native';
 import { storage } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
@@ -8,6 +9,8 @@ let packs: ReturnType<typeof emojiPacks> | undefined;
 let stopWatching: (() => void) | undefined;
 
 export function start(context: PluginContext) {
+	if (!ensureCapabilities(context.native, context.capabilities, 'Emoji packs')) return;
+
 	packs = emojiPacks(context.native, () => settings.pack);
 	stopWatching = storage.onChange(
 		({ store }) => store === addon.id,
