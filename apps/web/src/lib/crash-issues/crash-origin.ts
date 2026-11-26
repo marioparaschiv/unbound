@@ -13,6 +13,7 @@ const DISCORD_IMAGE =
 const DISCORD_JAVA = /^(com\.discord\.|com\.facebook\.react\.|com\.facebook\.hermes\.)/;
 const THREAD_SECTIONS = /^(Registers|Thread) /;
 const ADDON_LINE = /^Addon (\{.*\})$/;
+const ADDON_KIND_PREFIX = /^[a-z-]+:/;
 
 function crashingThread(stack: string | undefined): string[] {
 	const lines = (stack ?? '').split('\n');
@@ -55,7 +56,7 @@ export function nativeCrashAddon(stack: string | undefined): string | undefined 
 					'id' in parsed &&
 					typeof parsed.id === 'string'
 				) {
-					return parsed.id;
+					return parsed.id.replace(ADDON_KIND_PREFIX, '');
 				}
 			} catch {
 				return undefined;
