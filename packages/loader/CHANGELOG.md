@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.8](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.7...loader-v1.12.8) (2026-11-26)
+
+
+### Bug Fixes
+
+* **loader:** survive header subviews changing mid-update on iOS ([#2325](https://github.com/marioparaschiv/unbound/issues/2325)) ([e811370](https://github.com/marioparaschiv/unbound/commit/e811370f71a9e1cb85372d800807bc378afd5087)), closes [#2242](https://github.com/marioparaschiv/unbound/issues/2242)
+
 ## [1.12.7](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.6...loader-v1.12.7) (2026-11-26)
 
 
