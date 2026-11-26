@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.7] - 2026-11-26
+
+### Fixed
+
+- Profile effects play their layers in order again: the intro first, then the loop. Forcing every layer to animate had played them all at once.
+
 ## [1.0.6] - 2026-11-26
 
 ### Fixed

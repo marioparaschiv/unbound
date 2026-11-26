@@ -1,15 +1,15 @@
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 
-import { PROFILE_EFFECT_LAYER_PATH } from '~/lib/layer-path';
+import { PROFILE_EFFECT_PATH } from '~/lib/constants';
 import { forceProps } from '~/patches/force';
 
 function enable(): () => void {
-	return forceProps(PROFILE_EFFECT_LAYER_PATH, { animate: true });
+	return forceProps(PROFILE_EFFECT_PATH, { paused: false });
 }
 
 /**
- * @description Animates profile effects while the `profileEffects` setting is on, by setting `animate` on every
- * `ProfileEffectLayer`, the iOS or Android layer file.
+ * @description Keeps profile effects playing while the `profileEffects` setting is on, by unpausing Discord's
+ * `ProfileEffect`, which still plays each layer in its intro and loop order.
  */
 export function animateProfileEffects(): void {
 	whileEnabled('profileEffects', enable);
