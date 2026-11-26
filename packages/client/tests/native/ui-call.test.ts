@@ -111,6 +111,31 @@ describe('UI calls', () => {
 		dispose();
 	});
 
+	test('runs on a Reanimated whose native side sets no version once its UI runtime is installed', () => {
+		useReanimated4();
+		Reflect.deleteProperty(globalThis, '_REANIMATED_VERSION_CPP');
+		Reflect.deleteProperty(globalThis, '_WORKLETS_VERSION_CPP');
+		Reflect.set(globalThis, '__UI_WORKLET_RUNTIME_HOLDER', {});
+		const { bridge, dispose } = createScopedUIBridge([], 'ios');
+
+		try {
+			bridge.run(() => {});
+			expect(scheduled).toHaveLength(1);
+		} finally {
+			Reflect.deleteProperty(globalThis, '__UI_WORKLET_RUNTIME_HOLDER');
+			dispose();
+		}
+	});
+
+	test('refuses an unversioned native side without an installed UI runtime', () => {
+		useReanimated4();
+		Reflect.deleteProperty(globalThis, '_REANIMATED_VERSION_CPP');
+		const { bridge, dispose } = createScopedUIBridge([], 'ios');
+
+		expect(() => bridge.run(() => {})).toThrow('native undefined');
+		dispose();
+	});
+
 	test('refuses an unrecognized worklet runtime before scheduling work', () => {
 		Reflect.set(globalThis, '_REANIMATED_VERSION_JS', '4.0.0');
 		Reflect.set(globalThis, '_REANIMATED_VERSION_CPP', '4.0.0');
