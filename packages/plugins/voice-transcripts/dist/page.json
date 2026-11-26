@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/row.jpg",
+				"alt": "Voice Transcripts' Transcribe row in a voice message's long-press menu."
+			},
+			{
+				"image": "media/transcript.jpg",
+				"alt": "Voice Transcripts' transcript page: timed passages of a voice message to tap and play from, with Stop and Copy."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/row.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcGAwB6YCiHhYWZiI/chgw=",
+			"bytes": 198608
+		},
+		{
+			"path": "media/transcript.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwB/eHd2hGV1k6+m94s=",
+			"bytes": 312087
+		}
+	]
+}

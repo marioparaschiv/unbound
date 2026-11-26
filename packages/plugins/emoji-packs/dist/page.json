@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/fluent-animated.jpg",
+				"alt": "Emoji Packs with Microsoft's animated Fluent pack, the default, in the same chat."
+			},
+			{
+				"image": "media/noto.jpg",
+				"alt": "Emoji Packs with Google's Noto emoji in the same chat."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Emoji Packs' settings with the Fluent and Noto packs, animated or still."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/fluent-animated.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCfd4eGh2h4Y3yfQPU=",
+			"bytes": 283963
+		},
+		{
+			"path": "media/noto.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "AwgGAwCPdoiGmGiINli/EKQ=",
+			"bytes": 310988
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwB5jhd3YHaJe5O/lwc=",
+			"bytes": 183286
+		}
+	]
+}

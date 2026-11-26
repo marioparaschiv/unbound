@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/mentions.jpg",
+				"alt": "Mention Avatars shows user avatars and role icons inside mentions in the Unbound server's chat."
+			},
+			{
+				"image": "media/no-at.jpg",
+				"alt": "Mention Avatars with the @ symbol hidden, so each mention shows only the avatar and name."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/mentions.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "BAgGAwCfhXd2iGaWro/zuUs=",
+			"bytes": 391080
+		},
+		{
+			"path": "media/no-at.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "BAgGAwCfhXd2iGaWro/yqUs=",
+			"bytes": 384312
+		}
+	]
+}
