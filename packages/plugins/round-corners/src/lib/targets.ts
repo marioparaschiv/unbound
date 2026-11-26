@@ -28,6 +28,8 @@ export type SelectedShape = () => 'classic' | 'round';
 const YOU_BAR = 'modules/main_tabs_v2/native/you_bar/';
 const CHAT = 'modules/chat_input/native/';
 const YOU_BAR_PILL_RADIUS = 32;
+/** Half the one-line composer's ~56pt height: a pill on one line, a rounded box once it grows. */
+const CHAT_INPUT_PILL_RADIUS = 28;
 
 /**
  * @description Lists every target, with the server icon rule reading how the selected server should look.
@@ -94,12 +96,15 @@ export function targets(selectedShape: SelectedShape): Target[] {
 			setting: 'chatInput',
 			components: [],
 			rule: () => undefined,
-			// A fixed radius near stock barely shows on the ~56pt composer; fully round makes it a pill at any height.
-			tokens: (active) =>
-				roundTokens(
-					['CHAT_INPUT_FLOATING_BORDER_RADIUS', 'CHAT_INPUT_BORDER_RADIUS'],
-					active,
-				),
+			// Fully round turns a grown composer, its autocomplete and its overflow buttons into an ellipse that clips them.
+			tokens: (active) => {
+				for (const name of [
+					'CHAT_INPUT_FLOATING_BORDER_RADIUS',
+					'CHAT_INPUT_BORDER_RADIUS',
+				]) {
+					overrideToken(name, active, (stock) => Math.max(stock, CHAT_INPUT_PILL_RADIUS));
+				}
+			},
 		},
 		{
 			setting: 'otherCorners',
@@ -119,7 +124,6 @@ export function targets(selectedShape: SelectedShape): Target[] {
 						'MEDIA_KEYBOARD_BAR_BORDER_RADIUS',
 						'MEDIA_KEYBOARD_BUTTON_BORDER_RADIUS',
 						'VOICE_MESSAGE_RECORDING_PILL_BORDER_RADIUS',
-						'VOICE_PANEL_CONTROLS_BORDER_RADIUS',
 						'button.BORDER_RADIUS',
 						'button.BORDER_RADIUS_LG',
 					],
