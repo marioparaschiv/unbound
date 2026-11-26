@@ -4,6 +4,7 @@ export const AVATAR_UTILS_PATH = 'utils/AvatarUtils.tsx';
 export const GUILD_RECORD_PATH = 'records/GuildRecord.tsx';
 export const USER_SETTINGS_PATH = 'modules/user_settings/UserSettings.tsx';
 export const STICKERS_UTILS_PATH = 'modules/stickers/StickersUtils.tsx';
+export const PROFILE_EFFECT_PATH = 'modules/collectibles/profile_effects/native/ProfileEffect.tsx';
 
 export const ALWAYS_ANIMATE_STICKERS = 0;
 

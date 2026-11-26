@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import { memo, type ReactNode } from 'react';
 import { Text } from 'react-native';
 
-type AnimatedProps = { animate?: boolean; loop?: boolean };
+type AnimatedProps = { animate?: boolean; loop?: boolean; paused?: boolean };
 
 const PATHS = {
 	avatar: 'design/void/Avatar/native/Avatar.tsx',
@@ -12,7 +12,7 @@ const PATHS = {
 	groupDMAvatar: 'modules/group_dm/native/GroupDMAvatar.tsx',
 	decoration: 'modules/collectibles/native/components/CutoutableAvatarDecoration.tsx',
 	nameplate: 'modules/collectibles/nameplates/native/Nameplate.tsx',
-	profileEffect: 'modules/collectibles/profile_effects/native/ProfileEffectLayer.ios.tsx',
+	profileEffect: 'modules/collectibles/profile_effects/native/ProfileEffect.tsx',
 	guildIcon: 'modules/guild/native/GuildIcon.tsx',
 	activityEmoji: 'modules/activity_status/native/ActivityEmoji.tsx',
 };
@@ -32,8 +32,8 @@ const avatarUtils = {
 };
 
 function createComponent() {
-	return memo(({ animate, loop }: AnimatedProps) => (
-		<Text>{`animate:${Boolean(animate)} loop:${Boolean(loop)}`}</Text>
+	return memo(({ animate, loop, paused }: AnimatedProps) => (
+		<Text>{`animate:${Boolean(animate)} loop:${Boolean(loop)}${paused === undefined ? '' : ` paused:${paused}`}`}</Text>
 	));
 }
 
@@ -136,10 +136,12 @@ describe('nameplates', () => {
 });
 
 describe('profile effects', () => {
-	test('animate the effect layer', async () => {
+	test('unpause the effect and leave its layers to Discord', async () => {
 		await startPlugin();
 
-		expect(rendered(components.profileEffect)).toBe('animate:true loop:false');
+		const Effect = components.profileEffect as (props: AnimatedProps) => ReactNode;
+
+		expect(render(<Effect paused />).text()).toBe('animate:false loop:false paused:false');
 	});
 });
 
