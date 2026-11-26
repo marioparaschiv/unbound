@@ -97,9 +97,6 @@ on:
             patched_artifact_id:
                 description: 'Artifact ID of the LSPatch-patched Discord split APKs'
                 value: ${{ jobs.patch-discord.outputs.patched_artifact_id }}
-            emulator_artifact_id:
-                description: 'Artifact ID of the patched Discord emulator split'
-                value: ${{ jobs.patch-discord.outputs.emulator_artifact_id }}
             attested:
                 description: 'Whether the module is attested, so the smoke test ran and gated the build'
                 value: ${{ jobs.build-module.outputs.attested }}
@@ -348,7 +345,6 @@ jobs:
             patched_filename: ${{ steps.patch.outputs.patched_filename }}
             patched_url: ${{ steps.upload-patched.outputs.artifact-url }}
             patched_artifact_id: ${{ steps.upload-patched.outputs.artifact-id }}
-            emulator_artifact_id: ${{ steps.upload-emulator.outputs.artifact-id }}
         env:
             LSPATCH_VERSION: v1.2
             LSPATCH_JAR: lspatch-v1.2-487-release.jar
@@ -540,8 +536,6 @@ jobs:
                           fi
                       done
                   fi
-                  mkdir emulator
-                  mv patched/config.x86_64*.apk emulator/
                   name="Unbound.apks"
                   if [ "$DISCORD_CHANNEL" != stable ]; then name="Unbound-$DISCORD_CHANNEL.apks"; fi
                   (cd patched && zip -q "../$name" ./*.apk)
@@ -560,15 +554,6 @@ jobs:
               uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
               with:
                   subject-path: packages/loader/${{ steps.patch.outputs.patched_filename }}
-
-            - name: Upload the emulator split
-              id: upload-emulator
-              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-              with:
-                  name: patched discord emulator split${{ inputs.discord_channel != 'stable' && format(' {0}', inputs.discord_channel) || '' }}
-                  path: packages/loader/emulator/*.apk
-                  if-no-files-found: error
-                  retention-days: 1
 
     smoke:
         name: Smoke test patched Discord
@@ -609,36 +594,19 @@ jobs:
                   merge-multiple: true
                   path: packages/loader/smoke/package
 
-            - name: Download the emulator split
-              id: download-split
-              continue-on-error: true
-              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-              with:
-                  artifact-ids: ${{ needs.patch-discord.outputs.emulator_artifact_id }}
-                  merge-multiple: true
-                  path: packages/loader/smoke/apks
-
             - name: Wait before downloading again
-              if: steps.download-patched.outcome == 'failure' || steps.download-split.outcome == 'failure'
+              if: steps.download-patched.outcome == 'failure'
               run: |
-                  rm -rf smoke/package smoke/apks
+                  rm -rf smoke/package
                   sleep 60
 
             - name: Download patched Discord again
-              if: steps.download-patched.outcome == 'failure' || steps.download-split.outcome == 'failure'
+              if: steps.download-patched.outcome == 'failure'
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
                   artifact-ids: ${{ needs.patch-discord.outputs.patched_artifact_id }}
                   merge-multiple: true
                   path: packages/loader/smoke/package
-
-            - name: Download the emulator split again
-              if: steps.download-patched.outcome == 'failure' || steps.download-split.outcome == 'failure'
-              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-              with:
-                  artifact-ids: ${{ needs.patch-discord.outputs.emulator_artifact_id }}
-                  merge-multiple: true
-                  path: packages/loader/smoke/apks
 
             - name: Unpack patched Discord
               run: unzip -q smoke/package/*.apks -d smoke/apks

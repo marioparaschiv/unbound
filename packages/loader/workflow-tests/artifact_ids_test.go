@@ -11,13 +11,11 @@ import (
 // androidArtifactIDs names the artifact behind each ID an Android download takes. Calls in one run share
 // artifact names, and a download by name can take another call's build, so Android downloads take the ID.
 var androidArtifactIDs = map[string]string{
-	"${{ needs.android.outputs.module_artifact_id }}":         "android module",
-	"${{ needs.android.outputs.patched_artifact_id }}":        "patched discord",
-	"${{ needs.android.outputs.symbols_artifact_id }}":        "android symbols",
-	"${{ needs.android.outputs.emulator_artifact_id }}":       "patched discord emulator split",
-	"${{ needs.build-module.outputs.module_artifact_id }}":    "android module",
-	"${{ needs.patch-discord.outputs.patched_artifact_id }}":  "patched discord",
-	"${{ needs.patch-discord.outputs.emulator_artifact_id }}": "patched discord emulator split",
+	"${{ needs.android.outputs.module_artifact_id }}":        "android module",
+	"${{ needs.android.outputs.patched_artifact_id }}":       "patched discord",
+	"${{ needs.android.outputs.symbols_artifact_id }}":       "android symbols",
+	"${{ needs.build-module.outputs.module_artifact_id }}":   "android module",
+	"${{ needs.patch-discord.outputs.patched_artifact_id }}": "patched discord",
 }
 
 // androidChannelSuffix ends the names of beta and alpha Android artifacts: download-artifact keeps one artifact
