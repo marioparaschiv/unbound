@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cstring>
 #include <string>
+#include <unistd.h>
 #include <vector>
 
 #include "HermesBytecodeHeader.h"
@@ -211,7 +212,7 @@ void doesNothingWhenDisabled()
     assert(launch.server.downloads == 0);
 }
 
-void mapsBytecodeAndReadsSource()
+void readsBytecodeAndSourceIntoMemory()
 {
     bundle_test::Server server;
     std::string bytecode(64, '\0');
@@ -221,10 +222,13 @@ void mapsBytecodeAndReadsSource()
     assert(loader::writeTextFileAtomically(server.path("unbound.bundle"), bytecode));
     assert(loader::writeTextFileAtomically(server.path("unbound.js"), "source"));
 
-    auto mapped = loader::LoaderPipeline::readSavedBundle(server.path("unbound.bundle"));
-    assert(mapped && mapped->bundle.empty() && mapped->bytecode && !mapped->empty());
-    assert(std::string(reinterpret_cast<const char *>(mapped->bytecode->data()),
-                       mapped->bytecode->size())
+    auto saved = loader::LoaderPipeline::readSavedBundle(server.path("unbound.bundle"));
+    assert(saved && saved->bundle.empty() && saved->bytecode && !saved->empty());
+
+    // Hermes reads the buffer for the runtime's life; a file mapping would SIGBUS here (#2217).
+    assert(truncate(server.path("unbound.bundle").c_str(), 0) == 0);
+    assert(std::string(reinterpret_cast<const char *>(saved->bytecode->data()),
+                       saved->bytecode->size())
            == bytecode);
 
     auto source = loader::LoaderPipeline::readSavedBundle(server.path("unbound.js"));
@@ -393,7 +397,7 @@ int main()
     logsTheRuntimeBeforeAddonsLoadForIt();
     runsTheNewBundleOnTheFirstLaunchAfterALoaderUpdate();
     doesNothingWhenDisabled();
-    mapsBytecodeAndReadsSource();
+    readsBytecodeAndSourceIntoMemory();
     explainsWhyAFirstLaunchHasNoBundle();
     namesWhatToInstallForAnOutdatedLoader();
     guardsTheLaunchOncePerProcess();

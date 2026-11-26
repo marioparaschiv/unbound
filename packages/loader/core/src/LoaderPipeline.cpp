@@ -170,19 +170,18 @@ void LoaderPipeline::prepare()
 
 std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::readSavedBundle(const std::string &path)
 {
-    std::shared_ptr<MappedFileBuffer> mapped = MappedFileBuffer::map(path);
-    if (mapped && isHermesBytecode(mapped->data(), mapped->size()))
-    {
-        return SavedBundle{"", path, std::move(mapped)};
-    }
-
-    std::optional<std::string> source = readTextFile(path);
-    if (!source)
+    std::optional<std::string> contents = readTextFile(path);
+    if (!contents)
     {
         return std::nullopt;
     }
 
-    return SavedBundle{std::move(*source), path, nullptr};
+    if (isHermesBytecode(contents->data(), contents->size()))
+    {
+        return SavedBundle{"", path, std::make_shared<OwnedBuffer>(std::move(*contents))};
+    }
+
+    return SavedBundle{std::move(*contents), path, nullptr};
 }
 
 bool LoaderPipeline::savedFlavourIsCurrent(const std::string &path) const
