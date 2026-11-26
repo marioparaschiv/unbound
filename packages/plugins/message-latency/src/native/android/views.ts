@@ -174,6 +174,9 @@ export function createAndroidIndicators(
 			await runOnMain(java, readCalls(indicator.authorName, ['getHeight', 'getPaddingStart']))
 		).map((value) => javaNumber(value) ?? 0) as [number, number];
 
+		// `remove` may have run while this waited; placing now would put its host back in the row.
+		if (indicator.disposed) return;
+
 		await placeHost(
 			java,
 			indicator.host,
@@ -195,6 +198,9 @@ export function createAndroidIndicators(
 				indicator.mounting = null;
 				throw error;
 			});
+
+			if (indicator.disposed) return;
+
 			await placeHost(
 				java,
 				indicator.host,

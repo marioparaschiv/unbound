@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.21] - 2026-11-26
+
+### Fixed
+
+- On Android, an indicator removed while it was still being placed, such as when its row scrolled away or the plugin stopped, no longer comes back as a stray icon in another message.
+
 ## [1.2.20] - 2026-11-24
 
 ### Fixed
