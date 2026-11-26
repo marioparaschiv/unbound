@@ -73,6 +73,10 @@ function accepted(): boolean {
 	return getSetting('support-gate.accepted') === Users.getCurrentUser()?.id;
 }
 
+function dismissBanner() {
+	setSetting('support-gate.bannerDismissed', true);
+}
+
 function openForum() {
 	Router?.transitionToChannel?.(SUPPORT_FORUM_ID);
 }
@@ -139,7 +143,12 @@ function patchBanner(Container: MetroExport) {
 		const { channel, channelId } = props as ContainerProps;
 		const id = channel?.id ?? channelId ?? SelectedChannel.getChannelId();
 
-		if (id !== CHAT_CHANNEL_ID || !isGated() || !isValidElement<ParentProps>(result)) {
+		if (
+			id !== CHAT_CHANNEL_ID ||
+			getSetting('support-gate.bannerDismissed') ||
+			!isGated() ||
+			!isValidElement<ParentProps>(result)
+		) {
 			return result;
 		}
 
@@ -147,7 +156,11 @@ function patchBanner(Container: MetroExport) {
 			result,
 			{},
 			<>
-				<SupportBanner key='support-gate-banner' onOpenForum={openForum} />
+				<SupportBanner
+					key='support-gate-banner'
+					onOpenForum={openForum}
+					onDismiss={dismissBanner}
+				/>
 				{result.props.children}
 			</>,
 		);
@@ -156,8 +169,8 @@ function patchBanner(Container: MetroExport) {
 
 /**
  * @description Keeps new members of Unbound's server from asking for help in its chat: before their first message
- * there a red notice they must read and answer explains that support lives in the forum, and a red banner above the
- * chat input keeps pointing there.
+ * there a red notice they must read and answer explains that support lives in the forum, and a banner above the chat
+ * input keeps pointing there until dismissed.
  */
 export function start() {
 	patchSending();

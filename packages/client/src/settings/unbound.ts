@@ -55,6 +55,8 @@ const DEFAULTS = {
 	'profile-expiry.warned': '',
 	/** The user id that accepted the support gate in Unbound's server chat. */
 	'support-gate.accepted': '',
+	/** Once set, the support banner above the chat input never shows again, on any account. */
+	'support-gate.bannerDismissed': false,
 };
 
 /** The value type of every core setting. */
