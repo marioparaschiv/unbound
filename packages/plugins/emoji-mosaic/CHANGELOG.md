@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.4] - 2026-11-26
+
+### Fixed
+
+- On iOS, making a mosaic no longer risks crashing Discord when the source image is freed while it is being read.
+
 ## [1.1.3] - 2026-11-25
 
 ### Changed
