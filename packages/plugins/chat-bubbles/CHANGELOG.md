@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.37] - 2026-11-26
+
+### Fixed
+
+- Discord on Android no longer freezes while many messages get their bubbles. Each message is read in a few native calls instead of a hundred, and only a couple per frame.
+- A full-width card now spans the whole message on Android when it holds only a tall or small image, GIF or voice message.
+- The newest message's bubble on Android now shrinks with it when its media gets smaller, instead of hanging below it.
+
 ## [1.6.36] - 2026-11-26
 
 ### Fixed
