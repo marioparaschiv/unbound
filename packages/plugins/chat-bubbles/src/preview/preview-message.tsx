@@ -79,7 +79,9 @@ function PreviewMessage(props: PreviewMessageProps) {
 		<View style={[styles.avatarSlot, style.avatarLast ? styles.avatarLast : null]}>
 			{showAvatar ? (
 				<View style={[styles.avatar, { backgroundColor: avatarColor }]}>
-					<Text style={styles.initial}>{author.charAt(0)}</Text>
+					<Discord.Text variant='text-sm/bold' style={styles.initial}>
+						{author.charAt(0)}
+					</Discord.Text>
 				</View>
 			) : null}
 		</View>

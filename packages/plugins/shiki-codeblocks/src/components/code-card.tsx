@@ -1,4 +1,6 @@
 import registerAppSurface from '@unbound-plugins/shared/native/app-surface';
+import { Discord } from '@unbound-app/api/metro/components';
+import { metro } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
 import { Image, Pressable, ScrollView, Text, View, type TextStyle } from 'react-native';
 import { useSyncExternalStore } from 'react';
@@ -42,12 +44,15 @@ const COPY_WIDTH = 58;
 const deviconLanguages: Record<string, string> = devicons.languages;
 const deviconImages: Record<string, string> = devicons.images;
 
-const codeText: TextStyle = {
-	fontFamily: 'monospace',
-	fontSize: 12,
-	lineHeight: CODE_LINE_HEIGHT,
-	includeFontPadding: false,
-};
+// Discord's code font, read when a card renders rather than when the plugin loads.
+function codeText(): TextStyle {
+	return {
+		fontFamily: metro.common.Constants?.Fonts?.CODE_NORMAL ?? 'monospace',
+		fontSize: 12,
+		lineHeight: CODE_LINE_HEIGHT,
+		includeFontPadding: false,
+	};
+}
 
 function plainLines(code: string): ThemedToken[][] {
 	return code.split('\n').map((content) => [{ content, offset: 0 }]);
@@ -59,7 +64,9 @@ function tokenStyle(token: ThemedToken, foreground: string): TextStyle {
 	return {
 		color: token.color ?? foreground,
 		...(fontStyle & 1 ? { fontStyle: 'italic' } : {}),
-		...(fontStyle & 2 ? { fontWeight: 'bold' } : {}),
+		...(fontStyle & 2
+			? { fontFamily: metro.common.Constants?.Fonts?.CODE_BOLD, fontWeight: 'bold' }
+			: {}),
 		...(fontStyle & 4 ? { textDecorationLine: 'underline' } : {}),
 	};
 }
@@ -67,25 +74,29 @@ function tokenStyle(token: ThemedToken, foreground: string): TextStyle {
 function CodeLines({ card, wraps }: { card: CardContent; wraps: boolean }) {
 	const palette = Palette[card.appearance.light ? 'light' : 'dark'];
 	const lines = card.tokens ?? plainLines(card.code);
+	const code = codeText();
 
 	return (
 		<View>
 			{lines.map((line, index) => (
 				<View key={index} style={{ flexDirection: 'row' }}>
-					<Text
+					<Discord.Text
+						variant='text-xs/normal'
 						allowFontScaling={false}
-						style={[codeText, { color: palette.lineNumber }]}
+						style={[code, { color: palette.lineNumber }]}
 					>
 						{`${String(index + 1).padStart(2, ' ')} `}
-					</Text>
-					<Text
+					</Discord.Text>
+					<Discord.Text
+						variant='text-xs/normal'
 						allowFontScaling={false}
 						style={[
-							codeText,
+							code,
 							{ color: card.appearance.foreground },
 							wraps ? { flexShrink: 1 } : null,
 						]}
 					>
+						{/* Plain spans inherit the line's code font; Discord's text would reset it. */}
 						{line.map((token, tokenIndex) => (
 							<Text
 								key={tokenIndex}
@@ -94,7 +105,7 @@ function CodeLines({ card, wraps }: { card: CardContent; wraps: boolean }) {
 								{token.content}
 							</Text>
 						))}
-					</Text>
+					</Discord.Text>
 				</View>
 			))}
 		</View>
@@ -177,13 +188,14 @@ function Header({ card }: { card: CardContent }) {
 					justifyContent: 'center',
 				}}
 			>
-				<Text
+				<Discord.Text
+					variant='text-xs/semibold'
 					allowFontScaling={false}
 					numberOfLines={1}
-					style={[label, { fontWeight: '600' }]}
+					style={label}
 				>
 					{languageLabel(card.language)}
-				</Text>
+				</Discord.Text>
 			</View>
 			<Pressable
 				onPress={() => void copyCode(card.copyText)}
@@ -196,9 +208,9 @@ function Header({ card }: { card: CardContent }) {
 					justifyContent: 'center',
 				}}
 			>
-				<Text allowFontScaling={false} style={[label, { fontWeight: '500' }]}>
+				<Discord.Text variant='text-xs/medium' allowFontScaling={false} style={label}>
 					{messages.COPY}
-				</Text>
+				</Discord.Text>
 			</Pressable>
 		</View>
 	);

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.5] - 2026-11-26
+
+### Changed
+
+- Tooltips use Discord's font and are sized for it.
+
 ## [1.1.4] - 2026-11-24
 
 ### Fixed

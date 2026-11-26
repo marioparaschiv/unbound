@@ -36,7 +36,6 @@ export default Discord.createStyles(() => ({
 	},
 	initial: {
 		color: 'white',
-		fontWeight: '700',
 	},
 	name: {
 		marginBottom: 2,

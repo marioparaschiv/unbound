@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.13] - 2026-11-26
+
+### Changed
+
+- The `+N` count after the reactor avatars uses Discord's own text style and font.
+
 ## [1.2.12] - 2026-11-24
 
 ### Fixed

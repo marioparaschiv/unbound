@@ -1,5 +1,6 @@
+import { Discord } from '@unbound-app/api/metro/components';
 import { flux, metro } from '@unbound-app/api';
-import { Platform, Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { TooltipStyle } from '@unbound-plugins/shared/tooltips/tooltip-layout';
 
@@ -15,7 +16,6 @@ type ThemeStore = { theme?: string };
 const ARROW_HALF_WIDTH = 8;
 const PADDING = { horizontal: 14, vertical: 10 };
 const RADIUS = 8;
-const SYSTEM_FONT = Platform.select({ android: 'sans-serif', default: 'System' });
 
 function resolveColor(token: string): string {
 	const { Theme } = metro.common;
@@ -71,16 +71,17 @@ function TooltipBubble({ arrowDirection, arrowOffset, label, width }: TooltipBub
 					paddingVertical: PADDING.vertical,
 				}}
 			>
-				<Text
+				{/* The size matches the native text measurement that sizes the bubble. */}
+				<Discord.Text
+					variant='text-sm/normal'
 					allowFontScaling={false}
 					style={{
 						color: resolveColor('TEXT_DEFAULT'),
-						fontFamily: SYSTEM_FONT,
 						fontSize: TooltipStyle.fontSize,
 					}}
 				>
 					{label}
-				</Text>
+				</Discord.Text>
 			</View>
 			{arrowDirection === 'DOWN' ? arrow : null}
 		</View>

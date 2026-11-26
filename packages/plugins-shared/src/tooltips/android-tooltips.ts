@@ -29,6 +29,8 @@ import {
 	TooltipStyle,
 } from '@unbound-plugins/shared/tooltips/tooltip-layout';
 import TooltipBubble from '@unbound-plugins/shared/tooltips/tooltip-bubble';
+import { tooltipFontFamily } from '@unbound-plugins/shared/tooltips/tooltip-font';
+import { reactTypeface } from '@unbound-plugins/shared/native/fonts/android/font-host';
 
 type Native = {
 	java: NativeJavaBridge;
@@ -60,6 +62,7 @@ const REACT_TEXT_WIDTH_RATIO = 1.05;
 
 type Metrics = {
 	density: number;
+	assets: NativeJavaReference | null;
 };
 
 /**
@@ -79,6 +82,7 @@ export function createAndroidTooltips(
 	let generation = 0;
 	let disposed = false;
 	let surfaceName: string | undefined;
+	let discordTypeface: Promise<NativeJavaReference | undefined> | undefined;
 
 	function track(task: Promise<void>) {
 		const settled = task.catch(() => undefined);
@@ -131,19 +135,41 @@ export function createAndroidTooltips(
 			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
 			: null;
 
-		return { density: metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1 };
+		return {
+			density: metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1,
+			assets: resources ? javaReference(java.invoke(resources, 'getAssets', [])) : null,
+		};
 	}
 
-	function measure(text: string, maxWidth: number, metrics: Metrics) {
-		const paint = java.construct('android.text.TextPaint', []);
+	// Measures in Discord's font, as the bubble draws; the system font stands in when it is missing.
+	async function typefaceOf(metrics: Metrics) {
+		const family = tooltipFontFamily();
 
-		java.invoke(paint, 'setTextSize', [javaFloat(TooltipStyle.fontSize * metrics.density)]);
-		const typeface = javaReference(
+		if (family && metrics.assets) {
+			discordTypeface ??= reactTypeface(java, family, metrics.assets).catch(() => undefined);
+
+			const typeface = await discordTypeface;
+
+			if (typeface) return typeface;
+		}
+
+		return javaReference(
 			java.invoke(java.getClass('android.graphics.Typeface'), 'create', [
 				javaString('sans-serif'),
 				javaInt(0),
 			]),
 		);
+	}
+
+	function measure(
+		text: string,
+		maxWidth: number,
+		metrics: Metrics,
+		typeface: NativeJavaReference | null,
+	) {
+		const paint = java.construct('android.text.TextPaint', []);
+
+		java.invoke(paint, 'setTextSize', [javaFloat(TooltipStyle.fontSize * metrics.density)]);
 
 		if (typeface) java.invoke(paint, 'setTypeface', [typeface]);
 
@@ -205,7 +231,8 @@ export function createAndroidTooltips(
 		bounds.y /= metrics.density;
 		bounds.width /= metrics.density;
 		bounds.height /= metrics.density;
-		const text = measure(anchor.text, tooltipTextWidth(bounds.width), metrics);
+		const typeface = await typefaceOf(metrics);
+		const text = measure(anchor.text, tooltipTextWidth(bounds.width), metrics, typeface);
 		const anchorFrame = text ? await anchor.frame(metrics.density) : null;
 		const placement = text && anchorFrame ? placeTooltip(text, anchorFrame, bounds) : null;
 

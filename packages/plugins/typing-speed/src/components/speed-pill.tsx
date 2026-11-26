@@ -1,10 +1,11 @@
 import { useComposerRow } from '@unbound-plugins/shared/composer/overlay-rows';
 import { counterSurface } from '@unbound-plugins/shared/colors/counter-surface';
+import { Discord } from '@unbound-app/api/metro/components';
 import { flux, metro } from '@unbound-app/api';
 import { format } from '@unbound-app/i18n';
 import { settings } from '@unbound-app/settings';
 import { useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { createSpeedTracker, recordSpeed } from '~/lib/speed';
 
@@ -91,17 +92,14 @@ export function SpeedPill({ channelId, inputs, live }: SpeedPillProps) {
 					paddingHorizontal: 7,
 				}}
 			>
-				<Text
-					style={{
-						color: typeof textColor === 'string' ? textColor : '#f2f3f5',
-						fontSize: 11,
-						fontVariant: ['tabular-nums'],
-						fontWeight: '600',
-						lineHeight: 14,
-					}}
+				<Discord.Text
+					variant='text-xs/semibold'
+					color='text-default'
+					tabularNumbers
+					style={{ fontSize: 11, lineHeight: 14 }}
 				>
 					{format('WPM', { wpm })}
-				</Text>
+				</Discord.Text>
 			</View>
 		</View>
 	);

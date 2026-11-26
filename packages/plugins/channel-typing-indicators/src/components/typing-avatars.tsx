@@ -1,4 +1,5 @@
-import { Pressable, Text, View, type GestureResponderEvent } from 'react-native';
+import { Pressable, View, type GestureResponderEvent } from 'react-native';
+import { Discord } from '@unbound-app/api/metro/components';
 import type { FluxUser } from '@unbound-app/api/flux';
 import type { RefObject } from 'react';
 
@@ -92,7 +93,9 @@ function TypingAvatars({
 			{overflow > 0 ? (
 				<Pressable onPress={showTooltip} onLongPress={showTooltip} style={styles.overflow}>
 					<View style={styles.overflowBadge}>
-						<Text style={styles.overflowText}>{`+${overflow}`}</Text>
+						<Discord.Text variant='text-xxs/semibold' style={styles.overflowText}>
+							{`+${overflow}`}
+						</Discord.Text>
 					</View>
 				</Pressable>
 			) : null}

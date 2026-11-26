@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.5] - 2026-11-26
+
+### Changed
+
+- On Android, code cards use Discord's code font and text style for the code, line numbers and header.
+
 ## [1.2.4] - 2026-11-24
 
 ### Fixed
