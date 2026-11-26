@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Theme } from '@unbound-app/types';
 import { useStore } from 'zustand';
 
+import { openInputDialog } from '~/ui/settings-kit/input-dialog';
 import ThemeEditorStore from '~/themes/editor-state';
 import ButtonRow from '~/ui/settings-kit/button-row';
 import PickerRow from '~/ui/settings-kit/picker-row';
@@ -60,9 +61,17 @@ function ThemeEditorPage() {
 
 		if (!session || !theme || saving) return;
 
+		const name = session.name.trim();
+
+		// An unnamed theme asks for its name, then saves with it.
+		if (!name) {
+			askName();
+
+			return;
+		}
+
 		setSaving(true);
 
-		const name = session.name.trim();
 		const saved = await themes.saveLocal(session.id, theme, {
 			name,
 			description: session.description.trim(),
@@ -79,6 +88,23 @@ function ThemeEditorPage() {
 
 		end();
 		navigation.goBack();
+	}
+
+	function askName() {
+		openInputDialog({
+			label: messages.UNBOUND_THEME_NAME,
+			subLabel: messages.UNBOUND_THEME_NAME_REQUIRED,
+			value: '',
+			placeholder: messages.UNBOUND_THEME_NAME_PLACEHOLDER,
+			variant: 'text',
+			keyboardType: 'default',
+			maxLength: 64,
+			validate: (text) => (text.trim() ? undefined : messages.UNBOUND_THEME_NAME_PLACEHOLDER),
+			onChange(name) {
+				ThemeEditorStore.getState().setDetails({ name });
+				void save();
+			},
+		});
 	}
 
 	useEffect(() => {
