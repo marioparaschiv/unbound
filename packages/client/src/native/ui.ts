@@ -148,6 +148,10 @@ function reanimatedVersionsBuildingItsModule(): [unknown, unknown] {
 	return readReanimatedVersions();
 }
 
+function hasUIRuntimeHolder(): boolean {
+	return Reflect.get(globalThis, '__UI_WORKLET_RUNTIME_HOLDER') != null;
+}
+
 function uiRuntime(): ResolvedUIRuntime {
 	const runtime = Reanimated as UIRuntime | undefined;
 
@@ -156,10 +160,11 @@ function uiRuntime(): ResolvedUIRuntime {
 	}
 
 	const [version, nativeVersion] = reanimatedVersionsBuildingItsModule();
+	const unversionedNative = nativeVersion === undefined && hasUIRuntimeHolder();
 
 	if (
 		typeof version !== 'string' ||
-		version !== nativeVersion ||
+		(version !== nativeVersion && !unversionedNative) ||
 		!SUPPORTED_WORKLET_RUNTIMES.has(version)
 	) {
 		throw new NativeBridgeUnavailableError(
@@ -171,9 +176,12 @@ function uiRuntime(): ResolvedUIRuntime {
 	const workletsJS = Reflect.get(globalThis, '_WORKLETS_VERSION_JS');
 	const workletsNative = Reflect.get(globalThis, '_WORKLETS_VERSION_CPP');
 
+	const workletsNativeMatches =
+		workletsNative === workletsVersion || (unversionedNative && workletsNative === undefined);
+
 	if (
 		workletsVersion !== undefined &&
-		(workletsJS !== workletsVersion || workletsNative !== workletsVersion)
+		(workletsJS !== workletsVersion || !workletsNativeMatches)
 	) {
 		throw new NativeBridgeUnavailableError(
 			`The worklets runtime version is unsupported (Reanimated ${version}, JS ${String(workletsJS)}, native ${String(workletsNative)}).`,
