@@ -18,6 +18,9 @@ import { Screens } from '~/core/constants';
 import { onChange } from '~/storage/api';
 
 const Patcher = createPatcher('unbound::themes');
+const HookPatcher = createPatcher('unbound::themes-hooks');
+const hookPatched = new WeakSet<object>();
+let active = false;
 const Logger = createLogger('Themes');
 
 type ThemedTokenValue = {
@@ -114,10 +117,12 @@ function drawChatBackground(mdl: ChatViewModule) {
 // The fade would darken a chat background, so it hides while one is drawn. The original always renders, so its hooks
 // run on every render whichever way the background flips.
 function hideInputShadow(mdl: InputScrimModule) {
-	Patcher.after(mdl, 'ChatInputScrimGradient', ({ result }) => {
+	if (hookPatched.has(mdl)) return;
+	hookPatched.add(mdl);
+	HookPatcher.after(mdl, 'ChatInputScrimGradient', ({ result }) => {
 		const hasBackground = useStore(ThemeStore, (state) => Boolean(state.background));
 
-		return hasBackground ? null : result;
+		return hasBackground && active ? null : result;
 	});
 }
 
@@ -180,11 +185,15 @@ function tagExperiments(experiments: string[] = noExperiments, id: string) {
 // Two themes on one base share Discord's theme name, so the applied id tags the root theme context instead.
 // The chat background and each draft change recolour too, so they tag it as well.
 function tagThemeContext(mdl: ThemeContextModule) {
-	Patcher.before(mdl, 'RootThemeContextProvider', ({ args }) => {
+	if (hookPatched.has(mdl)) return;
+	hookPatched.add(mdl);
+	HookPatcher.before(mdl, 'RootThemeContextProvider', ({ args }) => {
 		const id = useStore(ThemeStore, (state) => state.applied);
 		const draft = useStore(ThemeStore, (state) => (state.preview ? state.revision : 0));
 		const background = useStore(ThemeStore, (state) => state.background);
 		const [props] = args;
+
+		if (!active) return;
 		const tag = [
 			id,
 			draft && `draft${draft}`,
@@ -235,6 +244,7 @@ function mountEditorButton(mdl: ThemeContextModule) {
 
 /** Recolours Discord's JavaScript colour tokens with the applied theme once Discord loads them, and follows theme changes. */
 export function start() {
+	active = true;
 	// Discord loads its colour tokens at launch; patching them as they load beats every read of them.
 	stopWaiting = onModuleLoaded(byProps('SemanticColor'), (mdl) => recolor(mdl.default));
 	stopWaitingForStore = onModuleLoaded(byFluxStore('Theme'), (store) => {
@@ -302,6 +312,7 @@ function recolor(tokens: ColorTokens | undefined) {
 
 /** Restores Discord's colour tokens and theme name. */
 export function stop() {
+	active = false;
 	stopWaiting?.();
 	stopWaiting = null;
 	stopWaitingForStore?.();
