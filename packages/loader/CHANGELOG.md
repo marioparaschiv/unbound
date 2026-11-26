@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.6](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.5...loader-v1.12.6) (2026-11-26)
+
+
+### Bug Fixes
+
+* **loader:** stop starting plugin Fabric surfaces twice on iOS ([#2321](https://github.com/marioparaschiv/unbound/issues/2321)) ([2e34877](https://github.com/marioparaschiv/unbound/commit/2e348772892ac67de88805fbcfff33eb5b0b55c8)), closes [#2206](https://github.com/marioparaschiv/unbound/issues/2206)
+
 ## [1.12.5](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.4...loader-v1.12.5) (2026-11-26)
 
 
