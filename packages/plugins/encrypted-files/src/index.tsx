@@ -15,11 +15,7 @@ export function start(context: PluginContext) {
 		return;
 	}
 
-	if (!useSecureRandom(context.native)) {
-		logger.error('Failed to start Encrypted Files: no secure random source on this platform.');
-
-		return;
-	}
+	if (!useSecureRandom(context.native)) return;
 
 	ownKeys();
 	patchComposer();
