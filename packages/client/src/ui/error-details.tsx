@@ -1,4 +1,4 @@
-import { Dimensions, ScrollView, Text, View } from 'react-native';
+import { Dimensions, ScrollView, View } from 'react-native';
 import { useState } from 'react';
 
 import type { CaughtError } from '~/ui/error-fallback';
@@ -59,9 +59,9 @@ function ErrorDetails({ error, componentStack }: CaughtError) {
 			{trace ? (
 				<View style={styles.code}>
 					<ScrollView nestedScrollEnabled contentContainerStyle={styles.codeContent}>
-						<Text selectable style={styles.codeText}>
+						<Discord.Text variant='text-xs/normal' selectable style={styles.codeText}>
 							{trace.text}
-						</Text>
+						</Discord.Text>
 					</ScrollView>
 				</View>
 			) : null}
