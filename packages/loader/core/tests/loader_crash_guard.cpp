@@ -217,13 +217,25 @@ static void startingMarkerTakesPrecedence(const std::filesystem::path &root)
     assert(loader::crashedAddonsJSON(disabled)[0]["phase"] == "starting");
 }
 
+static std::string pathOf(int descriptor)
+{
+    char path[PATH_MAX] = {0};
+#if defined(F_GETPATH)
+    return fcntl(descriptor, F_GETPATH, path) == 0 ? std::string(path) : std::string();
+#else
+    std::string link = "/proc/self/fd/" + std::to_string(descriptor);
+    ssize_t length   = readlink(link.c_str(), path, sizeof(path) - 1);
+    return length > 0 ? std::string(path, static_cast<size_t>(length)) : std::string();
+#endif
+}
+
 static int descriptorFor(const std::filesystem::path &file)
 {
     std::string wanted = std::filesystem::canonical(file).string();
     for (int descriptor = 3; descriptor < 1024; descriptor++)
     {
-        char path[PATH_MAX] = {0};
-        if (fcntl(descriptor, F_GETPATH, path) == 0 && std::filesystem::path(path) == wanted)
+        std::string path = pathOf(descriptor);
+        if (!path.empty() && std::filesystem::path(path) == wanted)
         {
             return descriptor;
         }
