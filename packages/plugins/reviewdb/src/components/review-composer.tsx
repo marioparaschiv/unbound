@@ -1,11 +1,17 @@
 import { Discord } from '@unbound-app/api/metro/components';
 import { format, messages } from '@unbound-app/i18n';
-import { View } from 'react-native';
+import { View, type TextInputChangeEvent } from 'react-native';
 import { useState } from 'react';
 
 import useStyles from '~/components/reviews-sheet.style';
 import { COMMENT_MAX_LENGTH } from '~/lib/constants';
 import { addReview } from '~/lib/api';
+
+type TextChange = string | TextInputChangeEvent;
+
+function textOf(change: TextChange): string {
+	return typeof change === 'string' ? change : change.nativeEvent.text;
+}
 
 type ReviewComposerProps = {
 	discordId: string;
@@ -48,7 +54,7 @@ function ReviewComposer({ discordId, name, isUpdate, onSubmitted }: ReviewCompos
 				}
 				maxLength={COMMENT_MAX_LENGTH}
 				value={comment}
-				onChangeText={setComment}
+				onChange={(change: TextChange) => setComment(textOf(change))}
 			/>
 			<Discord.Button
 				text={isUpdate ? messages.UPDATE_REVIEW : messages.SUBMIT_REVIEW}
