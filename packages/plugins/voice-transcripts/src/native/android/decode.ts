@@ -15,6 +15,8 @@ const TIMEOUT_US = 10_000;
 const END_OF_STREAM = 4;
 const FORMAT_CHANGED = -2;
 const MAX_STEPS = 20_000;
+// Each step can wait up to 2 * TIMEOUT_US in MediaCodec, so the loop yields this often to keep the JS thread responsive.
+const STEPS_PER_YIELD = 16;
 const SPEECH_RATE = 16_000;
 
 export type PcmAudio = { path: string; sampleRate: number; channels: number };
@@ -88,12 +90,12 @@ function copyOut(
 
 /**
  * @description Decodes an audio file, such as a voice message's Ogg Opus clip, to raw 16-bit PCM with Android's own
- * `MediaExtractor` and `MediaCodec`.
+ * `MediaExtractor` and `MediaCodec`, yielding between batches of steps so a long clip does not freeze Discord.
  * @param java The plugin's Java bridge.
  * @param source The audio file's path.
  * @returns The PCM file and its format.
  */
-export function decodeToPcm(java: Java, source: string): PcmAudio {
+export async function decodeToPcm(java: Java, source: string): Promise<PcmAudio> {
 	const extractor = java.construct('android.media.MediaExtractor', []);
 
 	java.invoke(extractor, 'setDataSource', [javaString(source)]);
@@ -126,6 +128,10 @@ export function decodeToPcm(java: Java, source: string): PcmAudio {
 
 	try {
 		for (let step = 0; step < MAX_STEPS; step++) {
+			if (step && step % STEPS_PER_YIELD === 0) {
+				await new Promise((resolve) => setTimeout(resolve));
+			}
+
 			if (!inputDone) {
 				const input = numberOf(
 					java.invoke(codec, 'dequeueInputBuffer', [{ type: 'long', value: TIMEOUT_US }]),

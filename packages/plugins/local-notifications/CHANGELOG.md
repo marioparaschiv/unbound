@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.6] - 2026-11-26
+
+### Fixed
+
+- On a loader without the native bridge this plugin needs, the plugin logs one warning and stays off instead of failing to start.
+
 ## [1.1.5] - 2026-11-24
 
 ### Fixed

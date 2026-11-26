@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.4] - 2026-11-26
+
+### Fixed
+
+- When the device's native bridge cannot give secure random bytes, the plugin stays off with a warning instead of failing to start with "The native bridge is unavailable."
+
 ## [1.1.3] - 2026-11-25
 
 ### Changed

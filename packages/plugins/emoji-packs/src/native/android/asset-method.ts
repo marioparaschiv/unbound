@@ -4,6 +4,8 @@ import { javaString, javaText } from '@unbound-plugins/shared/native/android/jav
 const PROBE = '😀';
 const PROBE_URL = 'asset:///emoji-1f600.png';
 const OBFUSCATED_CLASS = /^[a-z]{1,3}\.[a-zA-Z0-9]{1,4}$/;
+// Classes probed per turn of the JS thread, so the search never blocks it for long.
+const CLASSES_PER_TURN = 16;
 
 /** The static method that turns a unicode emoji into Discord's bundled image URL. */
 export type AssetMethod = { className: string; method: string };
@@ -40,15 +42,27 @@ function answers(java: NativeJavaBridge, className: string, method: string): boo
  * @description Finds the static method Discord's emoji picker builds `asset:///emoji-<codepoints>.png` with. Its class
  * and name are obfuscated, so each candidate of the right shape in Discord's own packages is asked for 😀's URL.
  * @param java The plugin's Java bridge.
- * @returns The method, or `undefined` when no candidate answers.
+ * @param cancelled Reports that the plugin stopped, which ends the search.
+ * @returns The method, or `undefined` when no candidate answers or the search was cancelled.
  */
-export async function findAssetMethod(java: NativeJavaBridge): Promise<AssetMethod | undefined> {
+export async function findAssetMethod(
+	java: NativeJavaBridge,
+	cancelled: () => boolean = () => false,
+): Promise<AssetMethod | undefined> {
 	const classes = await java.findClasses({
 		methods: [{ parameters: ['java.lang.String'], returns: 'java.lang.String', static: true }],
 		limit: 1000,
 	});
 
-	for (const className of classes.filter((name) => OBFUSCATED_CLASS.test(name))) {
+	for (const [index, className] of classes
+		.filter((name) => OBFUSCATED_CLASS.test(name))
+		.entries()) {
+		if (index > 0 && index % CLASSES_PER_TURN === 0) {
+			await new Promise((resolve) => setTimeout(resolve, 0));
+		}
+
+		if (cancelled()) return undefined;
+
 		const method = candidates(java, className).find((name) => answers(java, className, name));
 
 		if (method) return { className, method };

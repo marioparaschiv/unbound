@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.5] - 2026-11-26
+
+### Fixed
+
+- On iOS, making a GIF no longer risks crashing Discord when the source image is freed while it is being read.
+
 ## [1.0.4] - 2026-11-25
 
 ### Changed

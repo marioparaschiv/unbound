@@ -39,6 +39,9 @@ export function readPixels(
 
 	if (!cgImage) return undefined;
 
+	// The `UIImage` handle owns the `CGImage` and may be collected before the draw, freeing it mid-call.
+	cf('CGImageRetain', 'pointer', ['pointer'], cgImage);
+
 	const bytes = size * size * 4;
 	const buffer = ffi.alloc(bytes);
 	const colorSpace = cf<NativePointer>('CGColorSpaceCreateDeviceRGB', 'pointer', []);
@@ -70,6 +73,7 @@ export function readPixels(
 		return ffi.readBytes(buffer, bytes);
 	} finally {
 		cf('CGColorSpaceRelease', 'void', ['pointer'], colorSpace);
+		cf('CGImageRelease', 'void', ['pointer'], cgImage);
 		ffi.free(buffer);
 	}
 }

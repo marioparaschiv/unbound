@@ -1,3 +1,4 @@
+import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import type { PluginContext } from '@unbound-app/api/native';
 import { settings } from '@unbound-app/settings';
 import { messages } from '@unbound-app/i18n';
@@ -185,6 +186,8 @@ function onAppState(context: PluginContext, status: string) {
 }
 
 export function start(context: PluginContext) {
+	if (!ensureCapabilities(context.native, context.capabilities)) return;
+
 	permission(context.native);
 	actions(context.native, {
 		reply: messages.REPLY,

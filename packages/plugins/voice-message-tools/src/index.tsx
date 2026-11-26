@@ -1,3 +1,4 @@
+import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import type { PluginContext } from '@unbound-app/api/native';
 import { flux, patcher, storage } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
@@ -56,6 +57,13 @@ export function start(context: PluginContext) {
 	migrateSettings();
 	patchAudioSending();
 	interceptAudioMessages();
+
+	if (
+		!ensureCapabilities(context.native, context.capabilities, 'Voice message speed and buttons')
+	) {
+		return;
+	}
+
 	speed = voiceMessageSpeed(context.native, chosenSpeed);
 	pill = voicePillControls(context.native, chosenSpeed, (action, messageId) => {
 		if (action === 'speed') stepSpeed();
