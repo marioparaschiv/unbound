@@ -102,7 +102,7 @@ public:
     void onRuntimeCreated(facebook::jsi::Runtime &runtime);
 
     struct SavedBundle {
-        // Source text; empty when `bytecode` maps the file instead.
+        // Source text; empty when the file is Hermes bytecode, which `bytecode` holds instead.
         std::string bundle;
         std::string path;
         std::shared_ptr<const facebook::jsi::Buffer> bytecode;
@@ -113,7 +113,8 @@ public:
         }
     };
 
-    // Maps Hermes bytecode instead of copying it to the heap; reads source text whole.
+    // Reads the file whole into memory, as Hermes bytecode or as source text. Never a file mapping:
+    // Hermes reads bytecode for the runtime's life, and a page it cannot fault back in is a SIGBUS.
     static std::optional<SavedBundle> readSavedBundle(const std::string &path);
 
     std::optional<SavedBundle> takeSavedBundle();

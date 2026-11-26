@@ -1,10 +1,5 @@
 #include "LoaderJSI.h"
 
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
 #include "HermesBytecodeHeader.h"
 #include "LoaderLog.h"
 
@@ -21,52 +16,6 @@ size_t OwnedBuffer::size() const
 const uint8_t *OwnedBuffer::data() const
 {
     return reinterpret_cast<const uint8_t *>(data_.data());
-}
-
-std::shared_ptr<MappedFileBuffer> MappedFileBuffer::map(const std::string &path)
-{
-    int descriptor = open(path.c_str(), O_RDONLY | O_CLOEXEC);
-    if (descriptor < 0)
-    {
-        return nullptr;
-    }
-
-    struct stat status{};
-    if (fstat(descriptor, &status) != 0 || !S_ISREG(status.st_mode) || status.st_size <= 0)
-    {
-        close(descriptor);
-        return nullptr;
-    }
-
-    size_t size = static_cast<size_t>(status.st_size);
-    void *data  = mmap(nullptr, size, PROT_READ, MAP_PRIVATE, descriptor, 0);
-    close(descriptor);
-    if (data == MAP_FAILED)
-    {
-        return nullptr;
-    }
-
-    // The loader maps the bundle as Discord's runtime starts, well before Hermes runs it: start
-    // reading it in now so those reads overlap Discord's own startup instead of stalling Hermes.
-    madvise(data, size, MADV_WILLNEED);
-    return std::shared_ptr<MappedFileBuffer>(new MappedFileBuffer(data, size));
-}
-
-MappedFileBuffer::MappedFileBuffer(void *data, size_t size) : data_(data), size_(size) {}
-
-MappedFileBuffer::~MappedFileBuffer()
-{
-    munmap(data_, size_);
-}
-
-size_t MappedFileBuffer::size() const
-{
-    return size_;
-}
-
-const uint8_t *MappedFileBuffer::data() const
-{
-    return static_cast<const uint8_t *>(data_);
 }
 
 static void logEvaluationFailure(const std::string &tag, const char *kind, const char *detail)
