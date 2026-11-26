@@ -67,6 +67,12 @@ mock.module('~/diagnostics/crash-reports', () => ({
 	reportCrash: async (event: CrashEvent) => void crashes.push(event),
 }));
 
+// Start failures report after the first frame; this test checks what is reported, not when.
+mock.module('~/core/first-frame', () => ({
+	afterFirstFrame: (callback: () => void) => callback(),
+	watchFirstFrame: () => void 0,
+}));
+
 // Copied before the addon helpers replace the lookups, which this test exercises over the fake Metro.
 const lookups = { ...(await import('~/metro/lookups')) };
 const { FakeAddons, makeManifest, resetDevice, states } = await import('./helpers/addons');

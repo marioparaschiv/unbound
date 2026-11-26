@@ -19,12 +19,11 @@ import type { AddonAttribution, AddonFreeze, RunningAddon } from '~/addons/crash
 import { parseAddonManifest, resolveManifestCapabilities } from '~/addons/manifest';
 import type { AddonEvents, AddonResolveable, AddonState } from '~/addons/addon';
 import { validateNativeBridgeRequirements } from '~/native/capabilities';
+import { reportStartFailure } from '~/addons/report-start-failure';
 import { announceFreeze, freezeDisables } from '~/addons/freezes';
-import { crashReportAddon } from '~/diagnostics/crash-report';
 import { NativeConsentRequiredError } from '~/native/consent';
 import { turnOffWithdrawnAddon } from '~/addons/withdrawn';
 import { disableIfCrashed } from '~/addons/crash-disable';
-import { reportCrash } from '~/diagnostics/crash-reports';
 import { beginNativeStop } from '~/native/plugin-context';
 import { followAsyncStart } from '~/addons/async-start';
 import { afterFirstFrame } from '~/core/first-frame';
@@ -422,13 +421,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		this.errors.set(resolved.id, failure);
 		this.stateOf(resolved).failed = true;
 		this.emit('changed', resolved);
-		void reportCrash({
-			kind: 'start-failure',
-			phase,
-			addon: crashReportAddon(resolved),
-			message: failure.message,
-			stack: failure.stack,
-		});
+		reportStartFailure(resolved, failure, phase);
 	}
 
 	/**
