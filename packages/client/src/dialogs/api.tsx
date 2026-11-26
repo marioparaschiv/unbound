@@ -4,9 +4,9 @@ import { Alert } from 'react-native';
 
 import type { AlertOptions, ConfirmOptions, DialogReadOptions } from '~/dialogs/feedback';
 import type { MessageKey, PlainMessageKey, VarsMessageKey } from '~/i18n/message';
+import { dialogHostFailed, onDialogHostFailure } from '~/dialogs/host';
 import DialogCloseWatcher from '~/dialogs/dialog-close-watcher';
 import { createFeedbackDialogs } from '~/dialogs/feedback';
-import { systemDialogsHeld } from '~/dialogs/host';
 import { coreMessages } from '~/i18n/core-lookup';
 import { Discord } from '~/metro/design';
 
@@ -112,7 +112,8 @@ function showNativeAlert(options: AlertDialogProps, buttons: DialogButton[]) {
 /**
  * @description Opens a dialog with Discord's own alert: a title, an optional body and custom component,
  * and action buttons, each of which closes the dialog before running its handler. On a Discord build
- * without the alert, or over the crash screen, it falls back to the system alert: the title, body and buttons only.
+ * without the alert, or when the crash screen's copy of the alert host fails, it falls back to the system alert: the
+ * title, body and buttons only.
  * @param options The dialog's content and buttons.
  * @returns The dialog's key and a function that closes it.
  */
@@ -133,7 +134,7 @@ export function showDialog(options: AlertDialogProps): DialogHandle {
 	}
 
 	if (
-		systemDialogsHeld() ||
+		dialogHostFailed() ||
 		typeof Discord.openAlert !== 'function' ||
 		!Discord.AlertModal ||
 		!Discord.AlertActionButton
@@ -147,6 +148,14 @@ export function showDialog(options: AlertDialogProps): DialogHandle {
 	const { content: Content, modal: Modal } = options;
 
 	open.set(key, options.onDismiss);
+	onDialogHostFailure(() => {
+		if (!open.has(key)) return;
+
+		// Claimed first, so the failed alert's unmount does not run `onDismiss`.
+		open.delete(key);
+		Discord.dismissAlert?.(key);
+		showNativeAlert(options, buttons);
+	});
 
 	if (Modal) {
 		Discord.openAlert(
