@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.4] - 2026-11-26
+
+### Fixed
+
+- On Android, Discord stays responsive while a long voice message is transcribed, instead of freezing until the transcript is ready.
+
 ## [1.2.3] - 2026-11-25
 
 ### Changed

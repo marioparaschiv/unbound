@@ -38,7 +38,7 @@ export async function transcribeOnAndroid(
 		'unbound-transcript.audio',
 		toBase64(await response.arrayBuffer()),
 	);
-	const decoded = decodeToPcm(java, source);
+	const decoded = await decodeToPcm(java, source);
 	const raw = Uint8Array.from(atob(readCacheFile(java, decoded.path)), (character) =>
 		character.charCodeAt(0),
 	);
