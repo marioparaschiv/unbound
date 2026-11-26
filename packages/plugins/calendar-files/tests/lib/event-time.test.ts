@@ -2,8 +2,8 @@ import { describe, expect, test } from 'bun:test';
 
 import { eventTime } from '~/lib/event-time';
 
-// ICU versions differ on the space before AM/PM.
-const spaced = (text: string) => text.replace(/\s/g, ' ');
+// ICU versions differ on the space before AM/PM and on joining the date and time with ", " or " at ".
+const spaced = (text: string) => text.replace(/\s/g, ' ').replace(/(\d{4}) at /g, '$1, ');
 
 describe('eventTime', () => {
 	test('gives only the end time when the event ends the same day', () => {
