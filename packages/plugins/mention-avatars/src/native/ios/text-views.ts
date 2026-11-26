@@ -5,7 +5,7 @@ import {
 
 import { insertMentionImages } from '~/native/ios/attributed-text';
 import type { ImageCache } from '~/native/ios/image-cache';
-import type { Bridge, Handle } from '~/native/ios/bridge';
+import { createBridge, type Bridge, type Handle } from '~/native/ios/bridge';
 import viewKey from '@unbound-plugins/shared/native/ios/view-key';
 
 import { MENTION_PLACEHOLDER } from '~/lib/constants';
@@ -113,6 +113,8 @@ export async function searchTextViews(bridge: Bridge, root: Handle): Promise<Han
 export function createTextViews(bridge: Bridge, images: ImageCache, showAtSymbol: () => boolean) {
 	const states = new Map<string, TextViewState>();
 	const cellViews = new Map<string, CellTextViews>();
+	// The plugin's own copy of a view's text is edited on the JS thread, never waiting on the main thread.
+	const strings = createBridge(bridge.objc, 'current');
 
 	function attributedText(view: Handle) {
 		const text = bridge.handle(view, 'attributedText');
@@ -258,10 +260,15 @@ export function createTextViews(bridge: Bridge, images: ImageCache, showAtSymbol
 			state && !rebuildsFromLiveText(string, state.originalString)
 				? state
 				: { original: text, originalString: string };
+		// Copied on the main thread, which may still change the view's own text.
+		const copy = bridge.handle(base.original, 'mutableCopy');
+
+		if (!copy) return false;
+
 		const rendered = insertMentionImages(
-			bridge,
+			strings,
 			textEngine(textAttachmentBridge(bridge.objc), view),
-			base.original,
+			copy,
 			mentions,
 			images.imageFor,
 			showAtSymbol(),

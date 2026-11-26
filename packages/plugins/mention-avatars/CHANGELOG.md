@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.5] - 2026-11-26
+
+### Fixed
+
+- On iOS, drawing avatars into mentions no longer freezes Discord for seconds while the main thread is busy: the plugin builds the new message text without waiting on the main thread.
+
 ## [1.2.4] - 2026-11-24
 
 ### Fixed

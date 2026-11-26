@@ -3,6 +3,8 @@ import {
 	isAttachmentRun,
 	isTappableRun,
 	textAttachmentBridge,
+	type TextAttachmentBridge,
+	type TextAttachmentValue,
 	type TextEngine,
 } from '@unbound-plugins/shared/native/ios/text-attachments';
 
@@ -85,6 +87,15 @@ function nextMention(
 	return null;
 }
 
+// Builds attachments through `bridge`, so they are made on the same thread as the text they join.
+function attachmentBridge(bridge: Bridge): TextAttachmentBridge {
+	return {
+		...textAttachmentBridge(bridge.objc),
+		call: (target, selector, ...args) =>
+			(bridge.call(target, selector, ...args) ?? null) as TextAttachmentValue,
+	};
+}
+
 function attributedMention(
 	bridge: Bridge,
 	engine: TextEngine,
@@ -99,7 +110,7 @@ function attributedMention(
 
 	bridge.call(mention, 'initWithString:attributes:', text, attributes);
 
-	const avatar = imageAttachment(textAttachmentBridge(bridge.objc), engine, {
+	const avatar = imageAttachment(attachmentBridge(bridge), engine, {
 		attributes,
 		image,
 		leading,
@@ -132,26 +143,23 @@ function attributedMention(
 }
 
 /**
- * @description Copies attributed message text with an image beside each mention whose image is ready.
- * @param bridge The plugin's native bridge.
- * @param text The original attributed text.
+ * @description Puts an image beside each mention whose image is ready, in a copy of message text.
+ * @param bridge A `current` thread bridge: the copy belongs to no view yet, and main-thread calls per mention froze Discord.
+ * @param engine The text view's layout engine.
+ * @param result A mutable copy of the attributed text, which this edits.
  * @param mentions The message's mentions, in order.
  * @param imageFor Returns a mention's image, or `null` while it is not ready.
  * @param showAtSymbol Whether a mention keeps its `@` beside the image.
- * @returns The new attributed text, or `text` when it cannot be copied.
+ * @returns `result`.
  */
 export function insertMentionImages(
 	bridge: Bridge,
 	engine: TextEngine,
-	text: Handle,
+	result: Handle,
 	mentions: Mention[],
 	imageFor: (mention: Mention) => Handle | null,
 	showAtSymbol: boolean,
 ): Handle {
-	const result = bridge.handle(text, 'mutableCopy');
-
-	if (!result) return text;
-
 	let searchIndex = 0;
 
 	for (const mention of mentions) {

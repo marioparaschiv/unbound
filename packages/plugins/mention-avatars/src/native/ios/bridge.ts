@@ -14,13 +14,16 @@ export type TextAttributes = {
 };
 
 /**
- * @description Wraps the Objective-C bridge with main-thread calls that return `null` instead of throwing.
+ * @description Wraps the Objective-C bridge with calls that return `null` instead of throwing.
  * @param objc The plugin's Objective-C bridge.
+ * @param thread `main` for views; `current` for objects no view holds yet, such as attributed text being built, so the JS thread never waits on the main thread.
  * @returns The bridge plus typed call helpers.
  */
-export function createBridge(objc: NativeObjCBridge) {
+export function createBridge(objc: NativeObjCBridge, thread: 'main' | 'current' = 'main') {
 	function call(target: Handle, selector: string, ...args: unknown[]): unknown {
-		return safeInvoke(objc, target, selector, ...args);
+		return thread === 'main'
+			? safeInvoke(objc, target, selector, ...args)
+			: safeCall(objc, target, selector, ...args);
 	}
 
 	function handle(target: Handle, selector: string, ...args: unknown[]): Handle | null {
