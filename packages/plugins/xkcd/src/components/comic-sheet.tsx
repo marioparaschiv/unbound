@@ -106,7 +106,7 @@ export default function ComicSheet({ request, onClose }: ComicSheetProps) {
 	return (
 		<Discord.ActionSheet>
 			{shown.state === 'loading' || shown.state === 'failed' || shown.state === 'missing' ? (
-				<Discord.Text variant='text-md/normal' color='text-muted' style={{ padding: 16 }}>
+				<Discord.Text variant='body-md/normal' color='text-muted' style={{ padding: 16 }}>
 					{shown.state === 'loading'
 						? messages.LOADING
 						: shown.state === 'failed'
@@ -117,7 +117,7 @@ export default function ComicSheet({ request, onClose }: ComicSheetProps) {
 			{shown.state === 'results' ? (
 				<>
 					<Discord.Text
-						variant='text-md/semibold'
+						variant='body-md/semibold'
 						style={{ padding: 16, paddingBottom: 8 }}
 					>
 						{format('RESULTS', { query: shown.query })}
@@ -136,14 +136,14 @@ export default function ComicSheet({ request, onClose }: ComicSheetProps) {
 			{shown.state === 'comic' ? (
 				<View style={{ gap: 12, paddingBottom: 12 }}>
 					<View style={{ paddingHorizontal: 16, gap: 2 }}>
-						<Discord.Text variant='heading-lg/bold'>{`#${shown.comic.num} · ${shown.comic.title}`}</Discord.Text>
-						<Discord.Text variant='text-xs/normal' color='text-muted'>
+						<Discord.Text variant='heading-lg/semibold'>{`#${shown.comic.num} · ${shown.comic.title}`}</Discord.Text>
+						<Discord.Text variant='body-xs/normal' color='text-muted'>
 							{shown.comic.date}
 						</Discord.Text>
 					</View>
 					<ComicImage comic={shown.comic} />
 					<Discord.Text
-						variant='text-sm/normal'
+						variant='body-sm/normal'
 						color='text-muted'
 						style={{ paddingHorizontal: 16 }}
 					>

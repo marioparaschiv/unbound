@@ -29,7 +29,7 @@ function CommandPage({ name }: CommandPageProps) {
 	return (
 		<ui.Page>
 			{original === undefined ? (
-				<Discord.Text variant='text-md/normal' color='text-muted'>
+				<Discord.Text variant='body-md/normal' color='text-muted'>
 					{messages.COMMAND_NOT_FOUND}
 				</Discord.Text>
 			) : (

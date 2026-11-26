@@ -78,7 +78,7 @@ function PermissionsSheet({ view }: PermissionsSheetProps) {
 							</ActionSheetRow.Group>
 						) : (
 							<View style={styles.section}>
-								<Discord.Text color='text-muted'>
+								<Discord.Text variant='body-sm/medium' color='text-muted'>
 									This entry changes no permissions.
 								</Discord.Text>
 							</View>
@@ -86,7 +86,7 @@ function PermissionsSheet({ view }: PermissionsSheetProps) {
 					</>
 				) : (
 					<View style={styles.empty}>
-						<Discord.Text variant='text-lg/medium'>
+						<Discord.Text variant='body-lg/medium'>
 							No permissions to display!
 						</Discord.Text>
 					</View>

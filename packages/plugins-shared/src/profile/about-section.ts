@@ -41,7 +41,7 @@ export function AboutSection({
 		Icon ? createElement(Icon, { size: 'xs' }) : null,
 		createElement(
 			Discord.Text,
-			{ variant: 'text-md/normal', color: link ? 'text-link' : 'text-default' },
+			{ variant: 'body-md/normal', color: link ? 'text-link' : 'text-default' },
 			children,
 		),
 	);
@@ -53,7 +53,7 @@ export function AboutSection({
 			Discord.Text,
 			{
 				accessibilityRole: 'header',
-				variant: 'text-sm/semibold',
+				variant: 'body-sm/semibold',
 				color: 'user-profile-about-me-heading-text',
 				style: { marginBottom: HEADING_SPACING },
 			},

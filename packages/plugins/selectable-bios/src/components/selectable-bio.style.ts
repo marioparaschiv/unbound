@@ -22,9 +22,9 @@ export default Discord.createStyles(() => ({
 
 /**
  * @description Reads the typography of one of Discord's text variants.
- * @param variant The variant, such as `text-md/normal`.
+ * @param variant The variant, such as `body-md/normal`.
  * @returns Its font, size and line height, or nothing when Discord moved the style sheet.
  */
 export function variantStyle(variant: string | undefined): object | undefined {
-	return Typography?.TextStyleSheet?.[variant ?? 'text-md/normal'];
+	return Typography?.TextStyleSheet?.[variant ?? 'body-md/normal'];
 }

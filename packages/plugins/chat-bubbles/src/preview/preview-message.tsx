@@ -64,12 +64,12 @@ function PreviewMessage(props: PreviewMessageProps) {
 	const tailRoom = style.tail === TailPosition.off ? 0 : style.tailSize;
 	const showAvatar = style.avatarLast ? end : start;
 	const name = (
-		<Discord.Text variant='text-sm/semibold' style={styles.name}>
+		<Discord.Text variant='body-sm/semibold' style={styles.name}>
 			{author}
 		</Discord.Text>
 	);
 	const text = (
-		<Discord.Text variant='text-sm/normal'>
+		<Discord.Text variant='body-sm/normal'>
 			{props.mention ? <Text style={styles.mention}>@{messages.PREVIEW_YOU}</Text> : null}
 			{props.mention ? ' ' : null}
 			{props.text}
@@ -79,7 +79,7 @@ function PreviewMessage(props: PreviewMessageProps) {
 		<View style={[styles.avatarSlot, style.avatarLast ? styles.avatarLast : null]}>
 			{showAvatar ? (
 				<View style={[styles.avatar, { backgroundColor: avatarColor }]}>
-					<Discord.Text variant='text-sm/bold' style={styles.initial}>
+					<Discord.Text variant='body-sm/semibold' style={styles.initial}>
 						{author.charAt(0)}
 					</Discord.Text>
 				</View>

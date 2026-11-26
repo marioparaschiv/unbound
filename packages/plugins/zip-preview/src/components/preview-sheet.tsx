@@ -90,7 +90,7 @@ function PreviewSheet({ name, url }: PreviewSheetProps) {
 				{loaded.state === 'listed' && loaded.entries.length ? (
 					<EntryList entries={loaded.entries} />
 				) : (
-					<Discord.Text variant='text-md/medium' color='text-muted' style={styles.note}>
+					<Discord.Text variant='body-md/medium' color='text-muted' style={styles.note}>
 						{loaded.state === 'loading'
 							? messages.LOADING
 							: loaded.state === 'failed'

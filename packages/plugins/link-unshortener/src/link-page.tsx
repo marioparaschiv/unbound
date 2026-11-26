@@ -16,10 +16,10 @@ const Clipboard: Clipboard | undefined = metro.findByProps('setString', 'getStri
 function LinkPage({ resolved }: { resolved: Resolved }) {
 	return (
 		<View style={{ padding: 16, gap: 16 }}>
-			<Discord.Text variant='text-md/medium' color='text-default' selectable>
+			<Discord.Text variant='body-md/medium' color='text-default' selectable>
 				{resolved.url}
 			</Discord.Text>
-			<Discord.Text variant='text-sm/normal' color='text-muted'>
+			<Discord.Text variant='body-sm/normal' color='text-muted'>
 				{format('REDIRECTS', { count: resolved.redirects })}
 			</Discord.Text>
 			<Discord.Button

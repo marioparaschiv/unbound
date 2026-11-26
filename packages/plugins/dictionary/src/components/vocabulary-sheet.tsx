@@ -26,7 +26,7 @@ export default function VocabularySheet({ onClose }: VocabularySheetProps) {
 				{messages.VOCABULARY}
 			</Discord.Text>
 			<Discord.Text
-				variant='text-sm/medium'
+				variant='body-sm/medium'
 				color='text-muted'
 				style={{ paddingHorizontal: 16, paddingBottom: 12 }}
 			>

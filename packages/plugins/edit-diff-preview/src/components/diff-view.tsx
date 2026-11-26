@@ -30,7 +30,7 @@ export default function DiffView({ parts, code }: DiffViewProps) {
 	return (
 		<ScrollView style={styles.scroll}>
 			<Discord.Text
-				variant='text-md/normal'
+				variant='body-md/normal'
 				color='text-default'
 				style={code ? styles.code : undefined}
 			>

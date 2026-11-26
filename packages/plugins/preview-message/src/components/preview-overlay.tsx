@@ -68,7 +68,7 @@ function MessagePreview({ channelId, modules, content, stickers, embeds }: Messa
 	} catch (error) {
 		return (
 			<Discord.Text
-				variant='text-sm/normal'
+				variant='body-sm/normal'
 				color='text-feedback-critical'
 				style={styles.error}
 			>

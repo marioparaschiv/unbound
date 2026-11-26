@@ -55,7 +55,7 @@ export function PreviewVideo({ findFile, Video, uri, style, sound, thumbnail }: 
 				{thumbnail}
 				{progress === undefined ? null : (
 					<View style={DOWNLOAD_STYLE}>
-						<Discord.Text variant='text-sm/semibold' color='white'>
+						<Discord.Text variant='body-sm/semibold' color='white'>
 							{format('DOWNLOADING', { percent: Math.round(progress * 100) })}
 						</Discord.Text>
 					</View>

@@ -26,10 +26,10 @@ function RuleSummary({ rule, tag }: RuleSummaryProps) {
 
 	return (
 		<View>
-			<Discord.Text variant='text-xs/medium' color='text-muted' lineClamp={1}>
+			<Discord.Text variant='body-xs/medium' color='text-muted' lineClamp={1}>
 				→ {rule.replace || messages.REMOVE_IT}
 			</Discord.Text>
-			<Discord.Text variant='text-xs/medium' color='text-muted' lineClamp={1}>
+			<Discord.Text variant='body-xs/medium' color='text-muted' lineClamp={1}>
 				{tag}
 				{condition}
 			</Discord.Text>

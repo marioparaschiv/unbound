@@ -37,7 +37,7 @@ function VoteControls({ vote, score, busy, onVote }: VoteControlsProps) {
 					<Up size='xs' color={(vote === true ? styles.upvoted : styles.idle).color} />
 				) : null}
 				<Discord.Text
-					variant='text-sm/semibold'
+					variant='body-sm/semibold'
 					color={vote === true ? 'text-feedback-positive' : 'text-muted'}
 				>
 					{String(score)}

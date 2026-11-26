@@ -46,18 +46,18 @@ function FontPreview({ font, sample, host, folder }: PreviewProps) {
 
 	return (
 		<View style={styles.preview}>
-			<Discord.Text variant='text-sm/semibold' color='text-muted'>
+			<Discord.Text variant='body-sm/semibold' color='text-muted'>
 				{font.filename}
 			</Discord.Text>
 			{!loaded ? <ActivityIndicator /> : null}
 			{loaded && 'problem' in loaded ? (
-				<Discord.Text variant='text-md/medium'>{problemText(loaded.problem)}</Discord.Text>
+				<Discord.Text variant='body-md/medium'>{problemText(loaded.problem)}</Discord.Text>
 			) : null}
 			{loaded && 'family' in loaded
 				? SIZES.map((size) => (
 						<Discord.Text
 							key={size}
-							variant='text-md/normal'
+							variant='body-md/normal'
 							style={{
 								fontFamily: loaded.family,
 								fontSize: size,

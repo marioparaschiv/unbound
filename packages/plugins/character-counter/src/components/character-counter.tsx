@@ -54,7 +54,7 @@ export function CharacterCounter({ channelId, inputs }: CharacterCounterProps) {
 				}}
 			>
 				<Discord.Text
-					variant='text-xs/semibold'
+					variant='body-xs/semibold'
 					tabularNumbers
 					accessibilityLabel={format('COUNTER_LABEL', { length, limit })}
 					style={{

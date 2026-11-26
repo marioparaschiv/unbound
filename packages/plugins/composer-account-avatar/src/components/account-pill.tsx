@@ -85,7 +85,7 @@ export function AccountPill({ channelId }: { channelId: string }) {
 			style={[styles.pill, { top }]}
 		>
 			{avatar ? <Image source={avatar} style={styles.avatar} /> : null}
-			<Discord.Text variant='text-xs/semibold' color='text-default' numberOfLines={1}>
+			<Discord.Text variant='body-xs/semibold' color='text-default' numberOfLines={1}>
 				{name}
 			</Discord.Text>
 		</Pressable>

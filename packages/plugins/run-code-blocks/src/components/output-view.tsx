@@ -16,7 +16,7 @@ export default function OutputView({ output }: OutputViewProps) {
 	return (
 		<Discord.Card border='subtle' shadow='none' style={styles.card}>
 			<ScrollView style={styles.scroll} nestedScrollEnabled>
-				<Discord.Text variant='code' color='text-default' selectable>
+				<Discord.Text variant='mono-md/normal' color='text-default' selectable>
 					{output}
 				</Discord.Text>
 			</ScrollView>

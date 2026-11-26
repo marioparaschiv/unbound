@@ -44,10 +44,10 @@ function RuleEditor({ kind, rule, isNew, onClose }: RuleEditorProps) {
 					size='sm'
 					onPress={onClose}
 				/>
-				<Discord.Text variant='heading-xl/bold'>
+				<Discord.Text variant='heading-xl/semibold'>
 					{isNew ? newRule : messages.EDIT_RULE}
 				</Discord.Text>
-				<Discord.Text variant='text-md/normal' color='text-muted'>
+				<Discord.Text variant='body-md/normal' color='text-muted'>
 					{help}
 				</Discord.Text>
 			</Discord.Stack>

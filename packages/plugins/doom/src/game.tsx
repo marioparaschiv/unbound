@@ -35,7 +35,7 @@ function Game() {
 	if (!WebView) {
 		return (
 			<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-				<Discord.Text variant='text-md/medium'>{messages.NO_WEBVIEW}</Discord.Text>
+				<Discord.Text variant='body-md/medium'>{messages.NO_WEBVIEW}</Discord.Text>
 			</View>
 		);
 	}

@@ -97,7 +97,7 @@ function FlashSheet({ media, bridge, folder }: FlashSheetProps) {
 				<Discord.BottomSheetTitleHeader title={media.name} />
 				<View style={styles.status}>
 					<ActivityIndicator />
-					<Discord.Text variant='text-md/medium' color='text-muted'>
+					<Discord.Text variant='body-md/medium' color='text-muted'>
 						{messages.CHECKING}
 					</Discord.Text>
 				</View>
@@ -143,7 +143,7 @@ function FlashSheet({ media, bridge, folder }: FlashSheetProps) {
 						disabled={!index}
 						onPress={() => setIndex(index - 1)}
 					/>
-					<Discord.Text variant='text-sm/medium' color='text-muted'>
+					<Discord.Text variant='body-sm/medium' color='text-muted'>
 						{format('FRAME', {
 							index: index + 1,
 							count: frames.length,

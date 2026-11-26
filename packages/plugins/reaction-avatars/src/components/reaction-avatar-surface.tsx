@@ -125,7 +125,7 @@ function ReactionAvatarSurface({ surfaceId }: SurfaceProps) {
 						}}
 					>
 						<Discord.Text
-							variant='text-xxs/semibold'
+							variant='footnote/semibold'
 							adjustsFontSizeToFit
 							minimumFontScale={0.5}
 							numberOfLines={1}

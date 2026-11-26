@@ -59,12 +59,12 @@ function RawSheet({ type, json, content, onCopy, onClose }: RawSheetProps) {
 			<View style={styles.container}>
 				{content ? (
 					<>
-						<Discord.Text variant='text-sm/semibold' color='text-strong'>
+						<Discord.Text variant='body-sm/semibold' color='text-strong'>
 							{messages.MESSAGE_CONTENT}
 						</Discord.Text>
 						<CodeField value={content} style={styles.content} />
 						<Discord.Text
-							variant='text-sm/semibold'
+							variant='body-sm/semibold'
 							color='text-strong'
 							style={styles.heading}
 						>

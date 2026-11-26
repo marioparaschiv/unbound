@@ -23,7 +23,7 @@ function sessionRow(row: ReactElement<RowProps>, session: Session, rerender: () 
 	const name = sessionNames()[session.id_hash];
 	const time = lastUsed(session);
 	const label = name ? (
-		<Discord.Text variant='text-md/semibold' color='text-default'>
+		<Discord.Text variant='body-md/semibold' color='text-default'>
 			{name}
 		</Discord.Text>
 	) : (
@@ -41,7 +41,7 @@ function sessionRow(row: ReactElement<RowProps>, session: Session, rerender: () 
 			<View>
 				{row.props.subLabel}
 				{time ? (
-					<Discord.Text variant='text-sm/medium' color='text-muted'>
+					<Discord.Text variant='body-sm/medium' color='text-muted'>
 						{time}
 					</Discord.Text>
 				) : null}

@@ -99,7 +99,7 @@ function ReviewsSheet({ discordId, name, server = false, onClose }: ReviewsSheet
 						<Discord.Text variant='heading-md/semibold' color='text-strong'>
 							{messages.NO_REVIEWS}
 						</Discord.Text>
-						<Discord.Text variant='text-sm/normal' color='text-muted'>
+						<Discord.Text variant='body-sm/normal' color='text-muted'>
 							{messages.NO_REVIEWS_SUBTITLE}
 						</Discord.Text>
 					</View>

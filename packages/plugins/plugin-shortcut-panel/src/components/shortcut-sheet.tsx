@@ -222,7 +222,7 @@ export default function ShortcutSheet({ channelId, onClose }: ShortcutSheetProps
 						</View>
 					</>
 				) : (
-					<Discord.Text variant='text-md/normal' color='text-muted'>
+					<Discord.Text variant='body-md/normal' color='text-muted'>
 						{messages.EMPTY}
 					</Discord.Text>
 				)}

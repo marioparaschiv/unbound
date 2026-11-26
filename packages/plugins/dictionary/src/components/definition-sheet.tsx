@@ -25,14 +25,14 @@ function Meanings({ entry }: { entry: Entry }) {
 		<View style={styles.meanings}>
 			{entry.meanings.map((meaning, index) => (
 				<View key={index} style={styles.meaning}>
-					<Discord.Text variant='text-sm/semibold' color='text-muted'>
+					<Discord.Text variant='body-sm/semibold' color='text-muted'>
 						{meaning.partOfSpeech}
 					</Discord.Text>
 					{meaning.senses.map((sense, position) => (
 						<View key={position} style={styles.sense}>
-							<Discord.Text variant='text-md/normal'>{`${position + 1}. ${sense.definition}`}</Discord.Text>
+							<Discord.Text variant='body-md/normal'>{`${position + 1}. ${sense.definition}`}</Discord.Text>
 							{sense.example ? (
-								<Discord.Text variant='text-sm/normal' color='text-muted'>
+								<Discord.Text variant='body-sm/normal' color='text-muted'>
 									{format('EXAMPLE', { example: sense.example })}
 								</Discord.Text>
 							) : null}
@@ -40,7 +40,7 @@ function Meanings({ entry }: { entry: Entry }) {
 					))}
 				</View>
 			))}
-			<Discord.Text variant='text-xs/normal' color='text-muted'>
+			<Discord.Text variant='body-xs/normal' color='text-muted'>
 				{format('SOURCE', { source: entry.source })}
 			</Discord.Text>
 		</View>
@@ -98,12 +98,12 @@ export default function DefinitionSheet({ word }: DefinitionSheetProps) {
 			/>
 			<ScrollView contentContainerStyle={styles.body}>
 				{lookup.state === 'loading' ? (
-					<Discord.Text variant='text-md/normal' color='text-muted' style={styles.note}>
+					<Discord.Text variant='body-md/normal' color='text-muted' style={styles.note}>
 						{messages.LOADING}
 					</Discord.Text>
 				) : null}
 				{lookup.state === 'missing' ? (
-					<Discord.Text variant='text-md/normal' color='text-muted' style={styles.note}>
+					<Discord.Text variant='body-md/normal' color='text-muted' style={styles.note}>
 						{messages.NOT_FOUND}
 					</Discord.Text>
 				) : null}

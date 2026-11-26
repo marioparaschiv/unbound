@@ -28,7 +28,7 @@ function SettingsPanel({ command }: SettingsPanelProps) {
 
 	return (
 		<ui.Page>
-			<Discord.Text variant='text-md/normal' color='text-muted'>
+			<Discord.Text variant='body-md/normal' color='text-muted'>
 				{messages.SETTINGS_INTRO}
 			</Discord.Text>
 			<CommandList tags={getTags()} onOpen={(name) => openCommand(navigation, name)} />

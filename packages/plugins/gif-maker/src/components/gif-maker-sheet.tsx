@@ -163,7 +163,7 @@ export default function GifMakerSheet({
 					/>
 				</ui.Section>
 				{status ? (
-					<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.status}>
+					<Discord.Text variant='body-sm/medium' color='text-muted' style={styles.status}>
 						{status}
 					</Discord.Text>
 				) : null}

@@ -43,7 +43,7 @@ function GreetSheet({ stickers, onPick, onClose }: GreetSheetProps) {
 										animated: true,
 									})
 								: null}
-							<Discord.Text variant='text-xs/medium' color='text-muted'>
+							<Discord.Text variant='body-xs/medium' color='text-muted'>
 								{sticker.name}
 							</Discord.Text>
 						</Pressable>

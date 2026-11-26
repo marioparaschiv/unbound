@@ -18,7 +18,7 @@ function QRPage({ link }: { link: string }) {
 					<QRCode text={link} size={QR_SIZE} />
 				</View>
 			) : null}
-			<Discord.Text variant='text-sm/medium' color='text-muted' selectable>
+			<Discord.Text variant='body-sm/medium' color='text-muted' selectable>
 				{link}
 			</Discord.Text>
 		</View>
