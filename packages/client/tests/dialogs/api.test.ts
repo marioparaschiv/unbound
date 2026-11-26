@@ -24,27 +24,46 @@ type ExtraContentProps = {
 	children: ReactElement<WatcherProps>[];
 };
 
+type ModalProps = {
+	dismiss: () => void;
+};
+
+// A `modal` dialog opens as a fragment of the modal and its close watcher.
+type ModalFragmentProps = {
+	children: ReactElement<ModalProps>[];
+};
+
+type AlertModalProps = {
+	title: string;
+	content?: string;
+	extraContent: ReactElement<ExtraContentProps>;
+	actions: ReactElement<ActionsProps>;
+};
+
+// What `openAlert` receives: an `AlertModal`, or a `modal` dialog's fragment.
+type OpenedElement = ReactElement<AlertModalProps & ModalFragmentProps>;
+
 type Opened = {
 	key: string;
-	props: {
-		title: string;
-		content?: string;
-		extraContent: ReactElement<ExtraContentProps>;
-		actions: ReactElement<ActionsProps>;
-	};
+	element: OpenedElement;
+	props: AlertModalProps;
 };
 
 const opened: Opened[] = [];
 const dismissed: string[] = [];
 
-mock.module('react-native', () => ({ Alert: { alert: () => undefined } }));
+const systemAlerts: string[] = [];
+
+mock.module('react-native', () => ({
+	Alert: { alert: (title: string) => void systemAlerts.push(title) },
+}));
 
 mock.module('~/metro/design', () => ({
 	Discord: {
 		AlertModal: () => null,
 		AlertActionButton: () => null,
-		openAlert: (key: string, element: Opened['props'] & ReactElement) =>
-			void opened.push({ key, props: element.props as Opened['props'] }),
+		openAlert: (key: string, element: OpenedElement) =>
+			void opened.push({ key, element, props: element.props }),
 		dismissAlert: (key: string) => void dismissed.push(key),
 	},
 }));
@@ -52,6 +71,7 @@ mock.module('~/metro/design', () => ({
 mock.module('~/i18n/api', coreI18nMock);
 
 const { alert, confirm, dismissAll, showDialog } = await import('~/dialogs/api');
+const { holdSystemDialogs } = await import('~/dialogs/host');
 
 function buttonsOf(dialog: Opened | undefined): ActionButton[] {
 	return [dialog?.props.actions.props.children ?? []].flat();
@@ -74,6 +94,7 @@ function settled<T>(promise: Promise<T>): Promise<T | 'pending'> {
 beforeEach(() => {
 	opened.length = 0;
 	dismissed.length = 0;
+	systemAlerts.length = 0;
 });
 
 describe('dialogs', () => {
@@ -101,6 +122,37 @@ describe('dialogs', () => {
 
 		buttons[1]?.props.onPress();
 		expect(presses).toEqual(['cancel']);
+	});
+
+	test('opens a modal component in place of the alert, given a dismiss that closes it once', () => {
+		const closed: string[] = [];
+		const Modal = () => null;
+		const handle = showDialog({
+			title: 'Name',
+			modal: Modal,
+			onDismiss: () => closed.push('closed'),
+		});
+		const [modal] = opened[0]?.element.props.children ?? [];
+
+		expect(modal?.type).toBe(Modal);
+
+		modal?.props.dismiss();
+		modal?.props.dismiss();
+
+		expect(dismissed).toEqual([handle.key]);
+		expect(closed).toEqual(['closed']);
+	});
+
+	test("uses the system alert while a screen holds Discord's alert host unmounted", () => {
+		const release = holdSystemDialogs();
+
+		showDialog({ title: 'Report?', cancel: true });
+		release();
+		release();
+		showDialog({ title: 'After' }).dismiss();
+
+		expect(systemAlerts).toEqual(['Report?']);
+		expect(opened.map((dialog) => dialog.props.title)).toEqual(['After']);
 	});
 
 	test('gives every dialog its own key and closes the ones still open', () => {

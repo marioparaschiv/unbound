@@ -7,10 +7,13 @@ import { createHookRenderer } from '../../helpers/render-hook';
 // The props the dialog's elements carry that these tests read.
 type DialogProps = {
 	children?: ReactNode;
+	extraContent?: ReactNode;
+	actions?: ReactNode;
 	value?: string;
 	maxLength?: number;
 	errorMessage?: string;
 	onChange?: (text: string) => void;
+	text?: string;
 	onPress?: () => void;
 };
 
@@ -66,7 +69,13 @@ function find(node: ReactNode, type: string): Element | undefined {
 
 	if (!isElement(node)) return;
 
-	return node.type === type ? node : find(node.props.children, type);
+	if (node.type === type) {
+		return node;
+	}
+
+	const { children, extraContent, actions } = node.props;
+
+	return find([extraContent, actions, children], type);
 }
 
 function get(node: ReactNode, type: string): DialogProps {
@@ -83,6 +92,7 @@ function mountDialog(variant: 'text' | 'multiline', onChange: (text: string) => 
 	const closed: string[] = [];
 	const rendered = renderHook(() =>
 		InputDialog({
+			label: 'Bio',
 			value: 'old',
 			variant,
 			keyboardType: 'default',
@@ -109,7 +119,7 @@ describe('the settings input dialog', () => {
 		expect(saved).toEqual([]);
 		expect(get(rendered.current, 'TextArea').value).toBe('new bio');
 
-		get(rendered.current, 'Button').onPress?.();
+		get(rendered.current, 'AlertActionButton').onPress?.();
 
 		expect(saved).toEqual(['new bio']);
 		expect(closed).toEqual(['closed']);
@@ -119,6 +129,7 @@ describe('the settings input dialog', () => {
 		const saved: string[] = [];
 		const rendered = renderHook(() =>
 			InputDialog({
+				label: 'Link',
 				value: '',
 				variant: 'text',
 				keyboardType: 'url',
@@ -129,9 +140,26 @@ describe('the settings input dialog', () => {
 		);
 
 		get(rendered.current, 'TextInput').onChange?.('nope');
-		get(rendered.current, 'Button').onPress?.();
+		get(rendered.current, 'AlertActionButton').onPress?.();
 
 		expect(saved).toEqual([]);
 		expect(get(rendered.current, 'TextInput').errorMessage).toBe('Not a URL');
+	});
+
+	test("puts Save and Cancel together in the alert's actions, and Cancel closes without saving", () => {
+		const saved: string[] = [];
+		const { rendered, closed } = mountDialog('text', (text) => saved.push(text));
+		const actions = get(rendered.current, 'AlertModal').actions;
+		const buttons = isElement(actions) ? [actions.props.children].flat().filter(isElement) : [];
+
+		expect(buttons.map((button) => button.props.text)).toEqual([
+			'UNBOUND_SAVE',
+			'UNBOUND_CANCEL',
+		]);
+
+		buttons[1]?.props.onPress?.();
+
+		expect(saved).toEqual([]);
+		expect(closed).toEqual(['closed']);
 	});
 });

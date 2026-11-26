@@ -23,10 +23,11 @@ function openIssueDialog(issue: CrashIssueLink, reportId: string | undefined) {
 		return;
 	}
 
+	const title = format('UNBOUND_CRASH_NOTE_TITLE', { number: issue.number });
+
 	showDialog({
-		title: format('UNBOUND_CRASH_NOTE_TITLE', { number: issue.number }),
-		content: (props) =>
-			createElement(CrashNoteDialog, { ...props, reportId, issue: issue.number }),
+		title,
+		modal: (props) => createElement(CrashNoteDialog, { ...props, title, reportId, issue }),
 		buttons: [openIssue],
 		cancel: true,
 	});

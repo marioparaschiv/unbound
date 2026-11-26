@@ -90,7 +90,7 @@ export function openSupportGate(): void {
 	gateOpen = true;
 	showDialog({
 		title: messages.UNBOUND_SUPPORT_GATE_TITLE,
-		content: ({ dismiss }) => (
+		modal: ({ dismiss }) => (
 			<SupportGateContent
 				dismiss={dismiss}
 				onOpenForum={openForum}

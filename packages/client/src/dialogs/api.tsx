@@ -6,6 +6,7 @@ import type { AlertOptions, ConfirmOptions, DialogReadOptions } from '~/dialogs/
 import type { MessageKey, PlainMessageKey, VarsMessageKey } from '~/i18n/message';
 import DialogCloseWatcher from '~/dialogs/dialog-close-watcher';
 import { createFeedbackDialogs } from '~/dialogs/feedback';
+import { systemDialogsHeld } from '~/dialogs/host';
 import { coreMessages } from '~/i18n/core-lookup';
 import { Discord } from '~/metro/design';
 
@@ -36,6 +37,8 @@ export type AlertDialogProps = {
 	body?: string;
 	/** A component rendered below the body, given a way to close the dialog. */
 	content?: ComponentType<DialogContentProps>;
+	/** Renders Discord's whole `AlertModal` in place of `body`, `content` and the buttons, for actions that read the content's state. */
+	modal?: ComponentType<DialogContentProps>;
 	/** The action buttons, in order, before the cancel button. */
 	buttons?: DialogButton[];
 	/** Adds a cancel button last; a string sets its label. */
@@ -109,7 +112,7 @@ function showNativeAlert(options: AlertDialogProps, buttons: DialogButton[]) {
 /**
  * @description Opens a dialog with Discord's own alert: a title, an optional body and custom component,
  * and action buttons, each of which closes the dialog before running its handler. On a Discord build
- * without the alert it falls back to the system alert, which shows the title, body and buttons only.
+ * without the alert, or over the crash screen, it falls back to the system alert: the title, body and buttons only.
  * @param options The dialog's content and buttons.
  * @returns The dialog's key and a function that closes it.
  */
@@ -130,6 +133,7 @@ export function showDialog(options: AlertDialogProps): DialogHandle {
 	}
 
 	if (
+		systemDialogsHeld() ||
 		typeof Discord.openAlert !== 'function' ||
 		!Discord.AlertModal ||
 		!Discord.AlertActionButton
@@ -140,7 +144,22 @@ export function showDialog(options: AlertDialogProps): DialogHandle {
 	}
 
 	const { AlertModal, AlertActionButton } = Discord;
-	const Content = options.content;
+	const { content: Content, modal: Modal } = options;
+
+	open.set(key, options.onDismiss);
+
+	if (Modal) {
+		Discord.openAlert(
+			key,
+			<>
+				<Modal dismiss={dismiss} />
+				<DialogCloseWatcher onClose={handleUnmount} />
+			</>,
+		);
+
+		return { key, dismiss };
+	}
+
 	const extraContent: ReactNode = (
 		<>
 			{Content ? <Content dismiss={dismiss} /> : null}
@@ -148,7 +167,6 @@ export function showDialog(options: AlertDialogProps): DialogHandle {
 		</>
 	);
 
-	open.set(key, options.onDismiss);
 	Discord.openAlert(
 		key,
 		<AlertModal
