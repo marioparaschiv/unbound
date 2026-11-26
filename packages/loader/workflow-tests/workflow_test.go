@@ -542,7 +542,7 @@ func TestParsedWorkflowsSetUpGoAndBunOnlyThroughTheSharedActions(t *testing.T) {
 }
 
 func TestParsedLoaderArtifactsExpireOnlyOnPullRequests(t *testing.T) {
-	intermediates := map[string]bool{"discord-source-ipa": true, "source ipa": true, "patched discord emulator split": true, "loader-tools": true, "ios smoke inputs": true, "android smoke inputs": true}
+	intermediates := map[string]bool{"discord-source-ipa": true, "source ipa": true, "loader-tools": true, "ios smoke inputs": true, "android smoke inputs": true}
 	diagnostics := map[string]bool{"android smoke test": true, "ios smoke test": true}
 	uploaded := map[string]string{}
 
@@ -650,8 +650,8 @@ func TestParsedAndroidSmokeTestGatesTheAndroidBuild(t *testing.T) {
 	android := loadWorkflow(t, "loader-android.yml")
 
 	patch := android.job(t, "patch-discord")
-	if !strings.Contains(patch.step(t, "Download Discord").Run, "config.x86_64") || !strings.Contains(patch.step(t, "Patch Discord").Run, "mv patched/config.x86_64*.apk emulator/") {
-		t.Fatal("the emulator split must be patched with the release package but kept out of it")
+	if !strings.Contains(patch.step(t, "Download Discord").Run, "config.x86_64") || strings.Contains(patch.step(t, "Patch Discord").Run, "config.x86_64") {
+		t.Fatal("the release package must ship the x86_64 split so x86_64 devices can install it")
 	}
 
 	smoke := android.job(t, "smoke")
@@ -675,13 +675,8 @@ func TestParsedAndroidSmokeTestGatesTheAndroidBuild(t *testing.T) {
 		t.Fatal("the emulator needs KVM")
 	}
 
-	for _, name := range []string{"Download patched Discord", "Download the emulator split"} {
-		if !strings.HasPrefix(smoke.step(t, name).Uses, "actions/download-artifact@") {
-			t.Fatalf("%q must download the build's own patched Discord", name)
-		}
-	}
-
-	if downloadedArtifact(smoke.step(t, "Download patched Discord")) != "patched discord" || downloadedArtifact(smoke.step(t, "Download the emulator split")) != "patched discord emulator split" {
+	download := smoke.step(t, "Download patched Discord")
+	if !strings.HasPrefix(download.Uses, "actions/download-artifact@") || downloadedArtifact(download) != "patched discord" {
 		t.Fatal("the smoke test must install the patched Discord this run built")
 	}
 }

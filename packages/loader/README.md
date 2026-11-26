@@ -164,10 +164,10 @@ go run ./tools patch-apk --signer signer.pem patched/*.apk
 
 Discord does not report this versionCode to its servers: `client_build_number` and `client_version` are constants compiled into its bundle and `BuildConfig`. Bundled SDKs that read `PackageInfo` (Sentry, AppsFlyer, Play Billing) see `2000000000`.
 
-A release also publishes each split for Discord's in-app updater. `publish-android-build` gzips every split of the `.apks` plus the emulator's `config.x86_64`, uploads them to the public bucket under `android/{channel}/{discord versionCode}/{commit}/` with `build.json` last, and records the build at `POST /api/v1/loader/android-builds`. A build already in the bucket is never overwritten. `--dry-run` prints the record without uploading:
+A release also publishes each split for Discord's in-app updater. `publish-android-build` gzips every split of the `.apks`, uploads them to the public bucket under `android/{channel}/{discord versionCode}/{commit}/` with `build.json` last, and records the build at `POST /api/v1/loader/android-builds`. A build already in the bucket is never overwritten. `--dry-run` prints the record without uploading:
 
 ```bash
-go run ./tools publish-android-build --apks Unbound.apks --split emulator/config.x86_64.apk --channel stable --commit "$(git rev-parse HEAD)" --dry-run
+go run ./tools publish-android-build --apks Unbound.apks --channel stable --commit "$(git rev-parse HEAD)" --dry-run
 ```
 
 Loader releases reach every platform without a new Discord version. A loader-specific Release Please configuration reads Conventional Commits from the last published legacy build boundary; its release PR updates `packages/loader/version.json` and creates the `loader-vX.Y.Z` release. Merging that release PR makes `release.yml` call `loader-publish.yml`, and nothing else publishes a loader update. It:
