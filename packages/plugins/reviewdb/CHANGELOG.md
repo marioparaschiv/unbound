@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.2.5] - 2026-11-26
+
+### Fixed
+
+- You can type a review again. Discord's text area reports typing through its change event, which the review box ignored, so it cleared every letter.
+
 ## [2.2.4] - 2026-11-26
 
 ### Fixed
