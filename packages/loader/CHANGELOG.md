@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.7](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.6...loader-v1.12.7) (2026-11-26)
+
+
+### Bug Fixes
+
+* **loader:** read Unbound's bundle into memory instead of mapping it ([#2323](https://github.com/marioparaschiv/unbound/issues/2323)) ([fdbffc3](https://github.com/marioparaschiv/unbound/commit/fdbffc3b1999e31c1ed090b0a7ceefb474f34404)), closes [#2217](https://github.com/marioparaschiv/unbound/issues/2217)
+
 ## [1.12.6](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.5...loader-v1.12.6) (2026-11-26)
 
 
