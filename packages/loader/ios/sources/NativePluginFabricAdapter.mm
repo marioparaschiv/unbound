@@ -62,12 +62,6 @@
 
 static __weak id gNativePluginFabricHost = nil;
 
-static void fabricStart(id surface)
-{
-    using Function = void (*)(id, SEL);
-    ((Function) objc_msgSend)(surface, @selector(start));
-}
-
 static void fabricStop(id surface)
 {
     using Function = void (*)(id, SEL);
@@ -133,7 +127,8 @@ static IOSFabricSurface fabricMountNative(id host, UIView *containerView, NSStri
                       [surface respondsToSelector:@selector(view)],
                   "Fabric surface does not expose start and view");
 
-    fabricStart(surface);
+    // RCTHost already queued -start; a second -start is not idempotent while Discord starts
+    // surfaces off the main thread and leaves a dangling shadow tree (#2206).
     UIView *view = fabricView(surface);
     if (!view)
     {
@@ -203,28 +198,13 @@ static void fabricSetFrameNative(UIView *view, UIView *surfaceView, CGRect frame
     }
 }
 
-static constexpr int64_t kStoppedSurfaceLingerNanoseconds = 2 * NSEC_PER_SEC;
-
-static void releaseStoppedSurfaceLater(id surface, UIView *view)
-{
-    __block id lingeringSurface   = surface;
-    __block UIView *lingeringView = view;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, kStoppedSurfaceLingerNanoseconds),
-                   dispatch_get_main_queue(), ^{
-                       lingeringSurface = nil;
-                       lingeringView    = nil;
-                   });
-}
-
 static void fabricUnmountNative(id surface, UIView *view)
 {
+    [view removeFromSuperview];
     if ([surface respondsToSelector:@selector(stop)])
     {
         fabricStop(surface);
     }
-
-    [view removeFromSuperview];
-    releaseStoppedSurfaceLater(surface, view);
 }
 
 class IOSFabricView final : public loader::native::FabricView
