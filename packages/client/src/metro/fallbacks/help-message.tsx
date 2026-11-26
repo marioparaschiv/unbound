@@ -28,7 +28,7 @@ export type HelpMessageProps = {
 	children?: ReactNode;
 	/** A `HelpMessageTypes` value that picks the icon and feedback colors; `WARNING` when omitted. */
 	messageType?: HelpMessageType;
-	/** Discord's text variant for string children; `text-sm/medium` when omitted. */
+	/** Discord's text variant for string children; `body-sm/medium` when omitted. */
 	textVariant?: string;
 	/** The color of string children; the theme's default text color when omitted. */
 	textColor?: ColorValue;
@@ -76,7 +76,7 @@ function HelpMessage({
 			<View style={styles.text}>
 				{text ? (
 					<Discord.Text
-						variant={textVariant ?? 'text-sm/medium'}
+						variant={textVariant ?? 'body-sm/medium'}
 						style={[
 							styles.message,
 							textColor === undefined ? null : { color: textColor },

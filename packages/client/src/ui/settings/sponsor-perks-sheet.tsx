@@ -32,10 +32,10 @@ function SponsorPerksSheet({ onClose }: SponsorPerksSheetProps) {
 				<View style={styles.heart}>
 					<PixelHeart size={84} />
 				</View>
-				<Discord.Text variant='heading-lg/bold' color='mobile-text-heading-primary'>
+				<Discord.Text variant='heading-lg/semibold' color='mobile-text-heading-primary'>
 					{messages.UNBOUND_SPONSOR_PERKS_TITLE}
 				</Discord.Text>
-				<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.subtitle}>
+				<Discord.Text variant='body-sm/medium' color='text-muted' style={styles.subtitle}>
 					{messages.UNBOUND_SPONSOR_PERKS_PRICE}
 				</Discord.Text>
 			</View>

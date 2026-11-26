@@ -29,7 +29,7 @@ function AddonTag({ children, variant = 'default' }: AddonTagProps) {
 	return (
 		<View style={[styles.tag, variant === 'new' && styles.newTag]}>
 			<Discord.Text
-				variant={variant === 'new' ? 'text-xxs/bold' : 'text-xxs/semibold'}
+				variant={variant === 'new' ? 'footnote/semibold' : 'footnote/semibold'}
 				numberOfLines={1}
 				style={LABELS[variant](styles)}
 			>

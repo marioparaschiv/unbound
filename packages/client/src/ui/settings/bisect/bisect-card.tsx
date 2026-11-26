@@ -53,10 +53,10 @@ function BisectCard() {
 
 	return (
 		<Discord.Card style={styles.card}>
-			<Discord.Text variant='heading-md/bold' color='mobile-text-heading-primary'>
+			<Discord.Text variant='heading-md/semibold' color='mobile-text-heading-primary'>
 				{messages.UNBOUND_BISECT_TITLE}
 			</Discord.Text>
-			<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.body}>
+			<Discord.Text variant='body-sm/medium' color='text-muted' style={styles.body}>
 				{format('UNBOUND_BISECT_ROUND', {
 					round: status.round,
 					left: status.roundsLeft,

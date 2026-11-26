@@ -59,7 +59,7 @@ function TextSettingModal({
 						onSubmitEditing={() => (invalid ? null : save(trimmed))}
 					/>
 					{invalid && invalidMessage ? (
-						<Discord.Text variant='text-xs/medium' style={styles.error}>
+						<Discord.Text variant='body-xs/medium' style={styles.error}>
 							{invalidMessage}
 						</Discord.Text>
 					) : null}

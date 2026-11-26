@@ -99,7 +99,7 @@ function SliderRow({
 				</Discord.Text>
 			</View>
 			{subLabel ? (
-				<Discord.Text variant='text-sm/medium' color='text-muted'>
+				<Discord.Text variant='body-xs/medium' color='text-subtle'>
 					{subLabel}
 				</Discord.Text>
 			) : null}

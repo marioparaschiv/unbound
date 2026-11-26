@@ -19,7 +19,7 @@ function QuickAction({ label, icon, onPress }: QuickActionProps) {
 	return (
 		<Discord.Card accessibilityLabel={label} onPress={onPress} style={styles.tile}>
 			<Discord.TableRowIcon source={icons[icon]} />
-			<Discord.Text variant='text-sm/semibold' color='mobile-text-heading-primary'>
+			<Discord.Text variant='body-sm/semibold' color='mobile-text-heading-primary'>
 				{label}
 			</Discord.Text>
 		</Discord.Card>

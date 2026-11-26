@@ -16,7 +16,7 @@ function FontSampleIcon({ family, italic = false }: FontSampleIconProps) {
 
 	return (
 		<View style={styles.icon}>
-			<FontSample text='Aa' family={family} variant='text-lg/normal' italic={italic} />
+			<FontSample text='Aa' family={family} variant='body-lg/normal' italic={italic} />
 		</View>
 	);
 }

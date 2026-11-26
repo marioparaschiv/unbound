@@ -41,11 +41,11 @@ function FontInstallDialog({ dismiss }: DialogContentProps) {
 			/>
 			{install.resolved ? (
 				<View style={styles.found}>
-					<Discord.Text variant='text-md/semibold' color='mobile-text-heading-primary'>
+					<Discord.Text variant='body-md/semibold' color='mobile-text-heading-primary'>
 						{install.resolved.family}
 					</Discord.Text>
 					{install.wholeFiles ? (
-						<Discord.Text variant='text-sm/medium' color='text-muted'>
+						<Discord.Text variant='body-sm/medium' color='text-muted'>
 							{format('UNBOUND_FONTS_EVERY_FONT')}
 						</Discord.Text>
 					) : (
@@ -62,7 +62,7 @@ function FontInstallDialog({ dismiss }: DialogContentProps) {
 										style={[styles.chip, selected ? styles.selected : null]}
 									>
 										<Discord.Text
-											variant='text-sm/semibold'
+											variant='body-sm/semibold'
 											style={selected ? styles.selectedLabel : styles.label}
 										>
 											{variantLabel(variant)}

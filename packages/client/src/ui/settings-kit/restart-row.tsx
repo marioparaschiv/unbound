@@ -31,7 +31,7 @@ function RestartRow(): ReactElement {
 			<Discord.Stack direction='vertical' spacing={12}>
 				<Discord.Stack direction='horizontal' spacing={12} align='center'>
 					<Discord.TableRowIcon source={icons.RetryIcon} />
-					<Discord.Text variant='text-md/medium' style={styles.label}>
+					<Discord.Text variant='body-md/medium' style={styles.label}>
 						{messages.UNBOUND_SETTING_RESTART_HINT}
 					</Discord.Text>
 				</Discord.Stack>

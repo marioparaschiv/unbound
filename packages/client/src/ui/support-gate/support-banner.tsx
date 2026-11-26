@@ -30,10 +30,10 @@ export default function SupportBanner({ onOpenForum, onDismiss }: SupportBannerP
 			<Pressable accessibilityRole='link' onPress={onOpenForum} style={styles.bannerBody}>
 				<Image source={icons.WarningIcon} style={styles.bannerIcon} />
 				<View style={styles.bannerText}>
-					<Discord.Text variant='text-sm/semibold' color='mobile-text-heading-primary'>
+					<Discord.Text variant='body-sm/semibold' color='mobile-text-heading-primary'>
 						{messages.UNBOUND_SUPPORT_BANNER}
 					</Discord.Text>
-					<Discord.Text variant='text-sm/medium' color='text-link'>
+					<Discord.Text variant='body-sm/medium' color='text-link'>
 						{messages.UNBOUND_SUPPORT_BANNER_ACTION}
 					</Discord.Text>
 				</View>

@@ -75,7 +75,7 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 				<>
 					{description ? (
 						<Discord.Text
-							variant='text-sm/normal'
+							variant='body-sm/normal'
 							style={[styles.description, styles.above]}
 						>
 							{description}
@@ -89,7 +89,7 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 			) : (
 				<View style={styles.bottom}>
 					{description ? (
-						<Discord.Text variant='text-sm/normal' style={styles.description}>
+						<Discord.Text variant='body-sm/normal' style={styles.description}>
 							{description}
 						</Discord.Text>
 					) : (

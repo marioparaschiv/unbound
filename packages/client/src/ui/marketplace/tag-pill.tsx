@@ -20,7 +20,7 @@ function TagPill({ tag }: TagPillProps) {
 	return (
 		<View style={styles.pill}>
 			<TagDot color={tag.color} variant='pill' />
-			<Discord.Text variant='text-xxs/semibold' numberOfLines={1} style={styles.label}>
+			<Discord.Text variant='footnote/semibold' numberOfLines={1} style={styles.label}>
 				{tag.label}
 			</Discord.Text>
 		</View>

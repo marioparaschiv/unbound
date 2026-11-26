@@ -33,7 +33,7 @@ function FeaturedCard({ addon, kind }: FeaturedCardProps) {
 			onPress={() => open(addon, kind)}
 		>
 			<AddonIcon id={addon.id} kind={kind} />
-			<Discord.Text variant='text-md/semibold' style={styles.name} numberOfLines={1}>
+			<Discord.Text variant='body-md/semibold' style={styles.name} numberOfLines={1}>
 				{name}
 			</Discord.Text>
 		</Discord.Card>

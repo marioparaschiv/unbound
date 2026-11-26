@@ -45,13 +45,13 @@ function UpdatesHero({ state, pending, automatic, blocked, client }: UpdatesHero
 			<HeroBadge tone={hero.tone} icon={hero.icon} spinning={checking} />
 			<View style={styles.text}>
 				<Discord.Text
-					variant='heading-lg/bold'
+					variant='heading-lg/semibold'
 					color='mobile-text-heading-primary'
 					style={styles.centered}
 				>
 					{hero.title}
 				</Discord.Text>
-				<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.centered}>
+				<Discord.Text variant='body-sm/medium' color='text-muted' style={styles.centered}>
 					{hero.subtitle}
 				</Discord.Text>
 			</View>

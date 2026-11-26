@@ -60,7 +60,7 @@ const UserStore = flux.getStore('User');
 function Username() {
 	const username = flux.useStore(UserStore, (store) => store.getCurrentUser()?.username);
 
-	return <Discord.Text variant='text-md/medium'>{username}</Discord.Text>;
+	return <Discord.Text variant='body-md/medium'>{username}</Discord.Text>;
 }
 ```
 

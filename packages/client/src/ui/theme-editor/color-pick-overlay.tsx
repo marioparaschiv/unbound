@@ -31,7 +31,7 @@ function ColorPickOverlay() {
 		>
 			<SafeArea.SafeAreaPaddingView top pointerEvents='box-none'>
 				<View style={styles.hint}>
-					<Discord.Text style={styles.text} variant='text-sm/semibold'>
+					<Discord.Text style={styles.text} variant='body-sm/semibold'>
 						{messages.UNBOUND_THEME_PICK_HINT}
 					</Discord.Text>
 					<Discord.Button

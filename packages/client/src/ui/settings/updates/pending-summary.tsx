@@ -40,16 +40,16 @@ function PendingSummary({ items }: PendingSummaryProps) {
 				>
 					<TintedIcon source={item.icon ?? 0} size={18} />
 					<Discord.Text
-						variant='text-sm/semibold'
+						variant='body-sm/semibold'
 						color='mobile-text-heading-primary'
 						lineClamp={1}
 						style={styles.name}
 					>
 						{item.name}
 					</Discord.Text>
-					<Discord.Text variant='text-xs/medium' color='text-muted'>
+					<Discord.Text variant='body-xs/medium' color='text-muted'>
 						{`v${item.from} → `}
-						<Discord.Text variant='text-xs/semibold' style={styles.version}>
+						<Discord.Text variant='body-xs/semibold' style={styles.version}>
 							{`v${item.to}`}
 						</Discord.Text>
 					</Discord.Text>
@@ -58,7 +58,7 @@ function PendingSummary({ items }: PendingSummaryProps) {
 			))}
 			{more > 0 ? (
 				<Discord.Text
-					variant='text-xs/medium'
+					variant='body-xs/medium'
 					color='text-muted'
 					style={[styles.item, styles.separated]}
 				>

@@ -32,7 +32,7 @@ function GeneralHeader() {
 					pressed ? styles.pressed : null
 				}
 			>
-				<Discord.Text variant='text-sm/medium' color='text-muted'>
+				<Discord.Text variant='body-sm/medium' color='text-muted'>
 					v{CLIENT_VERSION} · {VERSION}
 				</Discord.Text>
 			</Pressable>

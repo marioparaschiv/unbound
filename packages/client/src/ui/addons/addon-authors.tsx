@@ -73,7 +73,7 @@ function AddonAuthors({ authors, style, nameStyle }: AddonAuthorsProps) {
 				))}
 			</AvatarPile>
 			<Discord.Text
-				variant='text-xs/medium'
+				variant='body-xs/medium'
 				animated={Boolean(nameStyle)}
 				color={nameStyle ? void 0 : 'text-muted'}
 				style={[styles.names, nameStyle]}

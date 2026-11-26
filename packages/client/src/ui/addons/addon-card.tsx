@@ -78,7 +78,7 @@ function AddonCard({ addon, kind, library }: AddonCardProps) {
 			</Discord.Stack>
 			<View style={styles.bottom}>
 				{description ? (
-					<Discord.Text variant='text-sm/normal' style={styles.description}>
+					<Discord.Text variant='body-sm/normal' style={styles.description}>
 						{description}
 					</Discord.Text>
 				) : (
@@ -92,7 +92,7 @@ function AddonCard({ addon, kind, library }: AddonCardProps) {
 				</Discord.Stack>
 			</View>
 			{error ? (
-				<Discord.Text variant='text-xs/medium' style={styles.error}>
+				<Discord.Text variant='body-xs/medium' style={styles.error}>
 					{String(error.message ?? error)}
 				</Discord.Text>
 			) : null}

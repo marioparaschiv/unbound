@@ -21,7 +21,7 @@ function ErrorAction({ label, icon, onPress }: ErrorActionProps) {
 		<Discord.Card accessibilityLabel={label} onPress={onPress} style={styles.tile}>
 			<Discord.TableRowIcon source={icons[icon]} />
 			<Discord.Text
-				variant='text-sm/semibold'
+				variant='body-sm/semibold'
 				color='mobile-text-heading-primary'
 				lineClamp={1}
 			>

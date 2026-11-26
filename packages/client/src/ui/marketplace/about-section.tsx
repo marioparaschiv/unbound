@@ -47,10 +47,10 @@ function AboutSection({ addon }: AboutSectionProps) {
 			<View style={styles.facts}>
 				{facts.map(([label, value]) => (
 					<View key={label} style={styles.fact}>
-						<Discord.Text variant='text-sm/medium' style={styles.label}>
+						<Discord.Text variant='body-sm/medium' style={styles.label}>
 							{label}
 						</Discord.Text>
-						<Discord.Text variant='text-sm/semibold' style={styles.value}>
+						<Discord.Text variant='body-sm/semibold' style={styles.value}>
 							{value}
 						</Discord.Text>
 					</View>

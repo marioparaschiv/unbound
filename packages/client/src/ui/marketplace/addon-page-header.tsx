@@ -34,11 +34,15 @@ function AddonPageHeader({ addon, kind }: AddonPageHeaderProps) {
 			<View style={styles.identity}>
 				<AddonIcon id={addon.id} kind={kind} size='large' />
 				<View style={styles.titles}>
-					<Discord.Text variant='heading-xl/bold' style={styles.name} numberOfLines={2}>
+					<Discord.Text
+						variant='heading-xl/semibold'
+						style={styles.name}
+						numberOfLines={2}
+					>
 						{addon.name ?? manifest.name}
 					</Discord.Text>
 					<View style={styles.metaRow}>
-						<Discord.Text variant='text-sm/medium' style={styles.meta}>
+						<Discord.Text variant='body-sm/medium' style={styles.meta}>
 							{`v${version} · ${updated}`}
 						</Discord.Text>
 						{addon.installs ? (
@@ -49,7 +53,7 @@ function AddonPageHeader({ addon, kind }: AddonPageHeaderProps) {
 			</View>
 			{manifest.authors.length ? <AddonAuthors authors={manifest.authors} /> : null}
 			{description ? (
-				<Discord.Text variant='text-md/normal' style={styles.description}>
+				<Discord.Text variant='body-md/normal' style={styles.description}>
 					{description}
 				</Discord.Text>
 			) : null}

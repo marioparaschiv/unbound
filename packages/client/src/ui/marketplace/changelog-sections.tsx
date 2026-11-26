@@ -26,17 +26,17 @@ function ChangelogSections({ changes }: ChangelogSectionsProps) {
 			{changes.sections.map((section) => (
 				<View key={section.type} style={styles.section}>
 					<Discord.Text
-						variant='text-xs/bold'
+						variant='body-xs/semibold'
 						style={[styles.label, styles[section.type]]}
 					>
 						{LABELS[section.type]().toUpperCase()}
 					</Discord.Text>
 					{section.items.map((item, index) => (
 						<View key={index} style={styles.item}>
-							<Discord.Text variant='text-sm/normal' style={styles.bullet}>
+							<Discord.Text variant='body-sm/normal' style={styles.bullet}>
 								•
 							</Discord.Text>
-							<Discord.Text variant='text-sm/normal' style={styles.text}>
+							<Discord.Text variant='body-sm/normal' style={styles.text}>
 								{item}
 							</Discord.Text>
 						</View>
