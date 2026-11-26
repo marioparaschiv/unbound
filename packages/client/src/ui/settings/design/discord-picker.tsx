@@ -129,6 +129,10 @@ function DiscordPicker({ kind }: DiscordPickerProps) {
 		);
 	}
 
+	// Called inline so its hooks run as this component's, and before the empty-list return so deleting the last addon
+	// keeps the hook count. It only resolves Discord's inner `ThemePicker`.
+	const screen = connected({ themeSelector: 'nitro' });
+
 	// Discord's picker reads its first swatch unguarded, so with no icon packs it gets none and keeps the install menu.
 	if (!themes.length) {
 		return (
@@ -142,9 +146,6 @@ function DiscordPicker({ kind }: DiscordPickerProps) {
 			</View>
 		);
 	}
-
-	// Called inline so its hooks run as this component's: it only resolves Discord's inner `ThemePicker`.
-	const screen = connected({ themeSelector: 'nitro' });
 
 	function measure({ nativeEvent: { layout } }: LayoutChangeEvent) {
 		setSize({ width: layout.width, height: layout.height });
