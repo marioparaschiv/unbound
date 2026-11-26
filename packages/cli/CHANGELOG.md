@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.6.2](https://github.com/marioparaschiv/unbound/compare/cli-v3.6.1...cli-v3.6.2) (2026-11-26)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/api bumped to 1.3.1
+
 ## [3.6.1](https://github.com/marioparaschiv/unbound/compare/cli-v3.6.0...cli-v3.6.1) (2026-11-26)
 
 

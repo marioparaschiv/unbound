@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.3.1](https://github.com/marioparaschiv/unbound/compare/api-v1.3.0...api-v1.3.1) (2026-11-26)
+
+
+### Bug Fixes
+
+* **client:** pass Client CI after the crash screen dialog host ([#2354](https://github.com/marioparaschiv/unbound/issues/2354)) ([1263ff3](https://github.com/marioparaschiv/unbound/commit/1263ff35ba8ffd44c0a6fdf8879ac3de0f911bea))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 1.3.1
+
 ## [1.3.0](https://github.com/marioparaschiv/unbound/compare/api-v1.2.0...api-v1.3.0) (2026-11-26)
 
 
