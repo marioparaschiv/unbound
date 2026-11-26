@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.9](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.8...loader-v1.12.9) (2026-11-26)
+
+
+### Bug Fixes
+
+* **loader:** ship the x86_64 split in Unbound.apks ([#2345](https://github.com/marioparaschiv/unbound/issues/2345)) ([b3e8f01](https://github.com/marioparaschiv/unbound/commit/b3e8f01f289f160de1b9a3c83c138fcd6c95c323))
+
 ## [1.12.8](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.7...loader-v1.12.8) (2026-11-26)
 
 
