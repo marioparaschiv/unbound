@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.6] - 2026-11-26
+
+### Fixed
+
+- A message box that grows, for more lines or more buttons, keeps rounded corners instead of turning into an oval that cuts off the send button.
+- The voice channel controls sheet keeps Discord's corners instead of an oval that cuts off its top.
+
 ## [1.0.5] - 2026-11-24
 
 ### Fixed
