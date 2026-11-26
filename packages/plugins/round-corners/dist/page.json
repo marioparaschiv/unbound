@@ -1,0 +1,56 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/server-list.jpg",
+				"alt": "Round Corners making server icons round again, with the selected server as a rounded square."
+			},
+			{
+				"image": "media/chat.jpg",
+				"alt": "Round Corners' pill-shaped message box and round chat bar buttons in a direct message."
+			},
+			{
+				"image": "media/round-selected.jpg",
+				"alt": "Round Corners with the selected server drawn round like every other server."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Round Corners' settings, with a switch for each part of Discord it rounds."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/server-list.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wvcBAwCfjNiJVGVjMFQZcOg=",
+			"bytes": 219352
+		},
+		{
+			"path": "media/chat.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwB/eId2hWVEpJ+p+Lo=",
+			"bytes": 338374
+		},
+		{
+			"path": "media/round-selected.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wvcBAwCfjNeJVGVjMFQYYMc=",
+			"bytes": 219005
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xgcCCwC1kgZZaoNHP2r8NJU=",
+			"bytes": 319359
+		}
+	]
+}
