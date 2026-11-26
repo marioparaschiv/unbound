@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.3.0](https://github.com/marioparaschiv/unbound/compare/api-v1.2.0...api-v1.3.0) (2026-11-26)
+
+
+### Bug Fixes
+
+* **client:** hold plugin surface restarts until Unbound is ready ([#2280](https://github.com/marioparaschiv/unbound/issues/2280)) ([041f28a](https://github.com/marioparaschiv/unbound/commit/041f28aa2169022b50d29c248a0ec3d18eca39dd))
+
+
+### Performance Improvements
+
+* **client:** compile components with the React Compiler ([#2274](https://github.com/marioparaschiv/unbound/issues/2274)) ([3b7d47c](https://github.com/marioparaschiv/unbound/commit/3b7d47c2e9a01fda23c1ce415d05d32e4a707619))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/client bumped to 1.3.0
+
 ## [1.2.0](https://github.com/marioparaschiv/unbound/compare/api-v1.1.2...api-v1.2.0) (2026-11-24)
 
 

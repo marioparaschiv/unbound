@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.3.0](https://github.com/marioparaschiv/unbound/compare/client-v1.2.0...client-v1.3.0) (2026-11-26)
+
+
+### Features
+
+* **client:** restyle the support banner and let members dismiss it ([#2337](https://github.com/marioparaschiv/unbound/issues/2337)) ([e6686dd](https://github.com/marioparaschiv/unbound/commit/e6686dd8fe31467437ea0465715ed31c1f60aa32))
+
+
+### Bug Fixes
+
+* **client:** hold plugin surface restarts until Unbound is ready ([#2280](https://github.com/marioparaschiv/unbound/issues/2280)) ([041f28a](https://github.com/marioparaschiv/unbound/commit/041f28aa2169022b50d29c248a0ec3d18eca39dd))
+* **client:** identify on a fast connect socket that opened early ([#2336](https://github.com/marioparaschiv/unbound/issues/2336)) ([1f353f6](https://github.com/marioparaschiv/unbound/commit/1f353f6e6073f3b8dd74bff319481b98b4166990)), closes [#1756](https://github.com/marioparaschiv/unbound/issues/1756)
+* **client:** keep hook-calling theme patches for the app's life ([#2319](https://github.com/marioparaschiv/unbound/issues/2319)) ([5d49b43](https://github.com/marioparaschiv/unbound/commit/5d49b43375665e02b341d30ba70266a13f52ad4d))
+* **client:** keep the Design page's header opaque so it stops shifting ([#2272](https://github.com/marioparaschiv/unbound/issues/2272)) ([04fb7c4](https://github.com/marioparaschiv/unbound/commit/04fb7c44d77f6b188df11bd8d887a68afc2d30f2))
+* **client:** keep the icon picker's hooks when the last pack is deleted ([#2351](https://github.com/marioparaschiv/unbound/issues/2351)) ([ff7f71f](https://github.com/marioparaschiv/unbound/commit/ff7f71fbbf59f48eb5aca23d2c40ede990a650fa))
+* **client:** scroll the marketplace Featured shelf sideways on Android ([#2310](https://github.com/marioparaschiv/unbound/issues/2310)) ([457748e](https://github.com/marioparaschiv/unbound/commit/457748ebac5bb9293e34e5f5291d2db57166e441))
+* **client:** send picked files with spaces in their names on sideloaded iOS ([#2298](https://github.com/marioparaschiv/unbound/issues/2298)) ([1af2d65](https://github.com/marioparaschiv/unbound/commit/1af2d655dceb0803fbdd8a657683c7251b753103))
+* **client:** skip patches on objects Discord removed ([#2281](https://github.com/marioparaschiv/unbound/issues/2281)) ([907bd98](https://github.com/marioparaschiv/unbound/commit/907bd982538e1dfaa7adb81ba418d9c395338196))
+* **client:** stop the Design page shifting down when it opens ([#2269](https://github.com/marioparaschiv/unbound/issues/2269)) ([26c975d](https://github.com/marioparaschiv/unbound/commit/26c975d8ba89f78fe8131cefcaa527ae7d5fce32))
+* **client:** theme editor Save, crash screen dialogs and dialog buttons ([#2352](https://github.com/marioparaschiv/unbound/issues/2352)) ([dff091f](https://github.com/marioparaschiv/unbound/commit/dff091f13db2b6044c373dff2964cbdac7603929))
+* **cli:** lower async arrow params that Hermes mishandles ([#2279](https://github.com/marioparaschiv/unbound/issues/2279)) ([aea68ba](https://github.com/marioparaschiv/unbound/commit/aea68bab09842d8457057e8d268204ba54859edc))
+* guard native plugins against crashes and freezes ([#2329](https://github.com/marioparaschiv/unbound/issues/2329)) ([a3469e6](https://github.com/marioparaschiv/unbound/commit/a3469e650dbbbdd8e3ec9ace33e820793612f42e))
+* **plugins:** use Discord's current text variants ([#2350](https://github.com/marioparaschiv/unbound/issues/2350)) ([be013ec](https://github.com/marioparaschiv/unbound/commit/be013ec27bbb7d717afa10dbb0a5eede5f043dfa))
+* **web:** sync up to 500 addons per kind and show cloud status ([#2300](https://github.com/marioparaschiv/unbound/issues/2300)) ([af21400](https://github.com/marioparaschiv/unbound/commit/af214007abb970015e0757a47da4c0483ddb7b46))
+
+
+### Performance Improvements
+
+* **client:** compile components with the React Compiler ([#2274](https://github.com/marioparaschiv/unbound/issues/2274)) ([3b7d47c](https://github.com/marioparaschiv/unbound/commit/3b7d47c2e9a01fda23c1ce415d05d32e4a707619))
+* **client:** open the updates page faster ([#2297](https://github.com/marioparaschiv/unbound/issues/2297)) ([f6df9d6](https://github.com/marioparaschiv/unbound/commit/f6df9d6d82c999284110a28ae469b62dcec45c49))
+
 ## [1.2.0](https://github.com/marioparaschiv/unbound/compare/client-v1.1.2...client-v1.2.0) (2026-11-24)
 
 
