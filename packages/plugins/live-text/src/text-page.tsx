@@ -23,7 +23,7 @@ function TextPage({ lines }: { lines: string[] }) {
 		<ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
 			<Discord.Button text={messages.COPY_ALL} onPress={() => copy(text)} />
 			<View>
-				<Discord.Text variant='text-md/normal' color='text-default' selectable>
+				<Discord.Text variant='body-md/normal' color='text-default' selectable>
 					{text}
 				</Discord.Text>
 			</View>

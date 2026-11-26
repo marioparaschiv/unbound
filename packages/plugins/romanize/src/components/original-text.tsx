@@ -13,7 +13,7 @@ export default function OriginalText({ text }: OriginalTextProps) {
 	const styles = useStyles();
 
 	return (
-		<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.text}>
+		<Discord.Text variant='body-sm/medium' color='text-muted' style={styles.text}>
 			{text}
 		</Discord.Text>
 	);

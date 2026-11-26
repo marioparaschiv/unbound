@@ -35,7 +35,7 @@ function VersionEntry({ version, latest, last }: VersionEntryProps) {
 			<View style={[styles.body, last ? null : styles.spaced]}>
 				<View style={styles.title}>
 					<Discord.Text
-						variant={latest ? 'text-md/bold' : 'text-md/semibold'}
+						variant={latest ? 'body-md/semibold' : 'body-md/semibold'}
 						style={styles.version}
 					>
 						{`v${version.version}`}
@@ -44,7 +44,7 @@ function VersionEntry({ version, latest, last }: VersionEntryProps) {
 						<AddonTag variant='brand'>{messages.UNBOUND_STORE_PAGE_LATEST}</AddonTag>
 					) : null}
 				</View>
-				<Discord.Text variant='text-xs/medium' style={styles.date}>
+				<Discord.Text variant='body-xs/medium' style={styles.date}>
 					{formatListingDate(version.publishedAt)}
 				</Discord.Text>
 				{changes?.sections.length ? (
@@ -52,7 +52,7 @@ function VersionEntry({ version, latest, last }: VersionEntryProps) {
 				) : changelog ? (
 					<ChangelogMarkdown text={changelog} />
 				) : (
-					<Discord.Text variant='text-sm/normal' style={styles.plain}>
+					<Discord.Text variant='body-sm/normal' style={styles.plain}>
 						{messages.UNBOUND_UPDATES_NO_CHANGELOG}
 					</Discord.Text>
 				)}

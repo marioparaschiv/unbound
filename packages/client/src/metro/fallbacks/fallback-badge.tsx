@@ -27,7 +27,7 @@ function FallbackBadge({ type, variant }: ComponentProps<DesignModule['Badge']>)
 	return (
 		<View style={[styles.badge, brand ? styles.brand : null]}>
 			<Discord.Text
-				variant='text-xxs/bold'
+				variant='footnote/semibold'
 				numberOfLines={1}
 				style={[styles.label, brand ? styles.brandLabel : null]}
 			>

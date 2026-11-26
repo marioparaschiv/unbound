@@ -93,7 +93,7 @@ export function SpeedPill({ channelId, inputs, live }: SpeedPillProps) {
 				}}
 			>
 				<Discord.Text
-					variant='text-xs/semibold'
+					variant='body-xs/semibold'
 					color='text-default'
 					tabularNumbers
 					style={{ fontSize: 11, lineHeight: 14 }}

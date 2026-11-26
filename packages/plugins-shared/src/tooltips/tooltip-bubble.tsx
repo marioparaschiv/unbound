@@ -73,7 +73,7 @@ function TooltipBubble({ arrowDirection, arrowOffset, label, width }: TooltipBub
 			>
 				{/* The size matches the native text measurement that sizes the bubble. */}
 				<Discord.Text
-					variant='text-sm/normal'
+					variant='body-sm/normal'
 					allowFontScaling={false}
 					style={{
 						color: resolveColor('TEXT_DEFAULT'),

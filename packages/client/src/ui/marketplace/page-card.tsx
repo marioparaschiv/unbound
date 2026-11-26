@@ -15,7 +15,11 @@ function PageCard({ title, children }: PageCardProps) {
 
 	return (
 		<Discord.Card variant='primary' border='subtle' style={styles.card}>
-			<Discord.Text variant='heading-md/bold' style={styles.title} accessibilityRole='header'>
+			<Discord.Text
+				variant='heading-md/semibold'
+				style={styles.title}
+				accessibilityRole='header'
+			>
 				{title}
 			</Discord.Text>
 			{children}

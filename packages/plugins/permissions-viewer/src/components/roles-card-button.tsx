@@ -36,7 +36,7 @@ function RolesCardButton({ guildId, userId }: RolesCardButtonProps) {
 				}}
 			>
 				{icon != null ? <Image source={icon} style={[styles.small, styles.muted]} /> : null}
-				<Discord.Text variant='text-sm/semibold' color='text-muted'>
+				<Discord.Text variant='body-sm/semibold' color='text-muted'>
 					{messages.VIEW_PERMISSIONS}
 				</Discord.Text>
 			</View>

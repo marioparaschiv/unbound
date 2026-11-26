@@ -36,7 +36,7 @@ function InstallCountLabel({ count, variant = 'card' }: InstallCountLabelProps) 
 				style={card ? styles.cardIcon : styles.pageIcon}
 			/>
 			<Discord.Text
-				variant={card ? 'text-xs/medium' : 'text-sm/medium'}
+				variant={card ? 'body-xs/medium' : 'body-sm/medium'}
 				color='text-muted'
 				numberOfLines={1}
 			>

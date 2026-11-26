@@ -23,7 +23,7 @@ function AddonPanelHost({ addon }: AddonPanelHostProps) {
 	return Panel ? (
 		<Panel />
 	) : (
-		<Discord.Text variant='text-md/medium' style={styles.notice}>
+		<Discord.Text variant='body-md/medium' style={styles.notice}>
 			{messages.UNBOUND_PLUGIN_NOT_RUNNING}
 		</Discord.Text>
 	);

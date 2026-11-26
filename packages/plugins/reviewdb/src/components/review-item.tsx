@@ -124,7 +124,7 @@ function ReviewItem({ review, profileId, hideTimestamps, onChanged }: ReviewItem
 			<View style={styles.body}>
 				<View style={styles.header}>
 					<Discord.Text
-						variant='text-md/semibold'
+						variant='body-md/semibold'
 						color='text-strong'
 						numberOfLines={1}
 						style={styles.name}
@@ -133,19 +133,19 @@ function ReviewItem({ review, profileId, hideTimestamps, onChanged }: ReviewItem
 					</Discord.Text>
 					{isAuthorBlocked ? <Discord.Badge type={{ text: messages.BLOCKED }} /> : null}
 					{showTimestamp ? (
-						<Discord.Text variant='text-xs/medium' color='text-muted'>
+						<Discord.Text variant='body-xs/medium' color='text-muted'>
 							{new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(
 								review.timestamp * 1000,
 							)}
 						</Discord.Text>
 					) : null}
 				</View>
-				<Discord.Text variant='text-md/normal' color='text-default'>
+				<Discord.Text variant='body-md/normal' color='text-default'>
 					{isLong && !expanded ? `${comment.slice(0, COMMENT_PREVIEW_LENGTH)}…` : comment}
 				</Discord.Text>
 				{isLong ? (
 					<Pressable hitSlop={6} onPress={() => setExpanded((value) => !value)}>
-						<Discord.Text variant='text-sm/semibold' color='text-link'>
+						<Discord.Text variant='body-sm/semibold' color='text-link'>
 							{expanded ? messages.SHOW_LESS : messages.READ_MORE}
 						</Discord.Text>
 					</Pressable>

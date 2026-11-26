@@ -126,7 +126,7 @@ function StickerSheet({ channelId, folder, onClose }: SheetProps) {
 						/>
 					))
 				) : (
-					<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.empty}>
+					<Discord.Text variant='body-sm/medium' color='text-muted' style={styles.empty}>
 						{messages.EMPTY}
 					</Discord.Text>
 				)}

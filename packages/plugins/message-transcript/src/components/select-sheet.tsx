@@ -79,7 +79,7 @@ function SelectSheet({ channelId, messageId, onClose }: SelectSheetProps) {
 		<ActionSheet scrollable startExpanded onExpand={onExpand}>
 			<BottomSheetTitleHeader title={messages.TITLE} />
 			<ScrollView ref={list} contentContainerStyle={styles.body}>
-				<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.help}>
+				<Discord.Text variant='body-sm/medium' color='text-muted' style={styles.help}>
 					{messages.HELP}
 				</Discord.Text>
 				{/* Rows sit straight in the scroll content, so the anchor's layout y is its scroll offset. */}

@@ -78,11 +78,11 @@ export default function SupportGateContent({
 			<View style={styles.notice}>
 				<View style={styles.heading}>
 					<Image source={icons.WarningIcon} style={styles.icon} />
-					<Discord.Text variant='heading-md/extrabold' color='text-feedback-critical'>
+					<Discord.Text variant='heading-md/semibold' color='text-feedback-critical'>
 						{messages.UNBOUND_SUPPORT_GATE_HEADING}
 					</Discord.Text>
 				</View>
-				<Discord.Text variant='text-md/medium'>
+				<Discord.Text variant='body-md/medium'>
 					{messages.UNBOUND_SUPPORT_GATE_BODY}
 				</Discord.Text>
 				<Discord.Button
@@ -94,7 +94,7 @@ export default function SupportGateContent({
 					}}
 				/>
 			</View>
-			<Discord.Text variant='text-md/semibold'>
+			<Discord.Text variant='body-md/semibold'>
 				{messages.UNBOUND_SUPPORT_GATE_QUESTION}
 			</Discord.Text>
 			{answers.map((answer) => (
@@ -105,14 +105,14 @@ export default function SupportGateContent({
 					onPress={() => pick(answer)}
 					style={[styles.answer, picked === answer && wrong ? styles.answerWrong : null]}
 				>
-					<Discord.Text variant='text-md/medium'>
+					<Discord.Text variant='body-md/medium'>
 						{picked === answer ? '● ' : '○ '}
 						{ANSWER_LABELS[answer]()}
 					</Discord.Text>
 				</Pressable>
 			))}
 			{wrong ? (
-				<Discord.Text variant='text-sm/medium' color='text-feedback-critical'>
+				<Discord.Text variant='body-sm/medium' color='text-feedback-critical'>
 					{messages.UNBOUND_SUPPORT_GATE_WRONG}
 				</Discord.Text>
 			) : null}

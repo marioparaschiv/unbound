@@ -72,7 +72,7 @@ function TranscriptPage({ text, segments, player }: TranscriptPageProps) {
 			{segments?.length && player ? (
 				<Passages segments={segments} player={player} />
 			) : (
-				<Discord.Text variant='text-md/normal' color='text-default' selectable>
+				<Discord.Text variant='body-md/normal' color='text-default' selectable>
 					{text}
 				</Discord.Text>
 			)}

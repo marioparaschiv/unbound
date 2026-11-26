@@ -89,7 +89,7 @@ function FilterAuthors({ filters, options, onChange, onBack }: FilterAuthorsProp
 						))}
 					</Discord.TableRowGroup>
 				) : (
-					<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.none}>
+					<Discord.Text variant='body-sm/medium' color='text-muted' style={styles.none}>
 						{messages.UNBOUND_EMPTY_RESULTS}
 					</Discord.Text>
 				)}

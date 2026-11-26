@@ -36,7 +36,7 @@ function ReactionPreview({ emoji }: ReactionPreviewProps) {
 								accessibilityLabel={surrogate}
 							/>
 						) : (
-							<Discord.Text variant='text-md/normal'>{surrogate}</Discord.Text>
+							<Discord.Text variant='body-md/normal'>{surrogate}</Discord.Text>
 						)}
 					</View>
 				);

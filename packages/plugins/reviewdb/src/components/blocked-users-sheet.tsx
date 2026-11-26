@@ -68,7 +68,7 @@ function BlockedUsersSheet() {
 				) : null}
 
 				{users?.length === 0 ? (
-					<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.note}>
+					<Discord.Text variant='body-sm/medium' color='text-muted' style={styles.note}>
 						{messages.NO_BLOCKED_USERS}
 					</Discord.Text>
 				) : null}

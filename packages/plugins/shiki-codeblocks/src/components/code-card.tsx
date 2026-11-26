@@ -81,14 +81,14 @@ function CodeLines({ card, wraps }: { card: CardContent; wraps: boolean }) {
 			{lines.map((line, index) => (
 				<View key={index} style={{ flexDirection: 'row' }}>
 					<Discord.Text
-						variant='text-xs/normal'
+						variant='body-xs/normal'
 						allowFontScaling={false}
 						style={[code, { color: palette.lineNumber }]}
 					>
 						{`${String(index + 1).padStart(2, ' ')} `}
 					</Discord.Text>
 					<Discord.Text
-						variant='text-xs/normal'
+						variant='body-xs/normal'
 						allowFontScaling={false}
 						style={[
 							code,
@@ -189,7 +189,7 @@ function Header({ card }: { card: CardContent }) {
 				}}
 			>
 				<Discord.Text
-					variant='text-xs/semibold'
+					variant='body-xs/semibold'
 					allowFontScaling={false}
 					numberOfLines={1}
 					style={label}
@@ -208,7 +208,7 @@ function Header({ card }: { card: CardContent }) {
 					justifyContent: 'center',
 				}}
 			>
-				<Discord.Text variant='text-xs/medium' allowFontScaling={false} style={label}>
+				<Discord.Text variant='body-xs/medium' allowFontScaling={false} style={label}>
 					{messages.COPY}
 				</Discord.Text>
 			</Pressable>

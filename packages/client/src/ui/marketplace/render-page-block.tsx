@@ -15,15 +15,15 @@ import PageMedia from './page-media';
 import PageIcon from './page-icon';
 
 type TextVariant =
-	| 'heading-xl/bold'
-	| 'heading-lg/bold'
+	| 'heading-xl/semibold'
+	| 'heading-lg/semibold'
 	| 'heading-md/semibold'
-	| 'text-md/semibold';
+	| 'body-md/semibold';
 
 // Headings shift down a level, as on the website: the addon's name is the page's only title.
 const HEADING_VARIANTS: Record<number, TextVariant> = {
-	1: 'heading-lg/bold',
-	2: 'heading-lg/bold',
+	1: 'heading-lg/semibold',
+	2: 'heading-lg/semibold',
 	3: 'heading-md/semibold',
 };
 
@@ -45,7 +45,7 @@ function trimRun(nodes: PageNode[]): PageNode[] {
 
 function renderText(nodes: PageNode[], ctx: PageRenderContext, key: number): ReactNode {
 	return (
-		<Discord.Text key={key} variant='text-md/normal' style={ctx.styles.text}>
+		<Discord.Text key={key} variant='body-md/normal' style={ctx.styles.text}>
 			{renderPageInline(trimRun(nodes), ctx)}
 		</Discord.Text>
 	);
@@ -79,7 +79,7 @@ function renderList(list: PageList, ctx: PageRenderContext, key: number): ReactN
 							{svg ? (
 								<PageIcon svg={svg} />
 							) : (
-								<Discord.Text variant='text-md/semibold' style={styles.bullet}>
+								<Discord.Text variant='body-md/semibold' style={styles.bullet}>
 									{list.ordered ? `${start + index}.` : '•'}
 								</Discord.Text>
 							)}
@@ -101,7 +101,7 @@ function renderHeading(level: number, content: PageNode[], ctx: PageRenderContex
 		<View key={key} style={styles.heading} accessibilityRole='header'>
 			{svg ? <PageIcon svg={svg} size={level <= 2 ? 20 : 18} /> : null}
 			<Discord.Text
-				variant={HEADING_VARIANTS[level] ?? 'text-md/semibold'}
+				variant={HEADING_VARIANTS[level] ?? 'body-md/semibold'}
 				style={styles.headingText}
 			>
 				{renderPageInline(rest, ctx)}
@@ -121,7 +121,7 @@ function renderTable(rows: PageNode[][][], ctx: PageRenderContext, key: number):
 						{row.map((cell, column) => (
 							<View key={column} style={styles.cell}>
 								<Discord.Text
-									variant={index === 0 ? 'text-sm/semibold' : 'text-sm/normal'}
+									variant={index === 0 ? 'body-sm/semibold' : 'body-sm/normal'}
 									style={styles.text}
 								>
 									{renderPageInline(cell, ctx)}
@@ -164,7 +164,7 @@ export function renderPageBlock(node: PageNode, ctx: PageRenderContext, key: num
 					showsHorizontalScrollIndicator={false}
 					style={styles.codeBlock}
 				>
-					<Discord.Text variant='text-sm/normal' style={styles.code}>
+					<Discord.Text variant='body-sm/normal' style={styles.code}>
 						{node.content}
 					</Discord.Text>
 				</ScrollView>

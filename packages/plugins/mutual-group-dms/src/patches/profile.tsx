@@ -35,7 +35,7 @@ const SEPARATOR = ' ∙ ';
 
 function MutualGroupsText({ count }: { count: number }) {
 	return (
-		<Discord.Text variant='text-sm/medium' color='text-default'>
+		<Discord.Text variant='body-sm/medium' color='text-default'>
 			{format('MUTUAL_GROUP_DMS', { count })}
 		</Discord.Text>
 	);
@@ -67,7 +67,7 @@ function separator() {
 	return (
 		<Discord.Text
 			key='mutual-group-dms-separator'
-			variant='text-sm/medium'
+			variant='body-sm/medium'
 			color='text-default'
 			accessibilityElementsHidden
 			importantForAccessibility='no-hide-descendants'

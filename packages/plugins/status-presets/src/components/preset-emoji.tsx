@@ -22,7 +22,7 @@ export function PresetEmoji({ preset }: { preset: StatusPreset }) {
 	}
 
 	return preset.emojiName ? (
-		<Discord.Text variant='text-lg/normal' style={styles.glyph}>
+		<Discord.Text variant='body-lg/normal' style={styles.glyph}>
 			{preset.emojiName}
 		</Discord.Text>
 	) : null;

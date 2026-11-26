@@ -60,11 +60,11 @@ The table-row family is the backbone of every settings page.
 
 ### Text & typography
 
-| Primitive        | Notes                                                                                                                                                                       |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Text`           | Base text. `variant` (a `TextStyleSheet` key) + `color` (a `Theme` token literal).                                                                                          |
-| `Heading`        | Semantic heading.                                                                                                                                                           |
-| `TextStyleSheet` | Runtime map of every typography variant. Keys look like `heading-sm/semibold`, `text-md/medium`, `display-lg`, `eyebrow`, `code`. Use these strings for `Text`'s `variant`. |
+| Primitive        | Notes                                                                                                                                                                                         |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Text`           | Base text. `variant` (a `TextStyleSheet` key) + `color` (a `Theme` token literal).                                                                                                            |
+| `Heading`        | Semantic heading.                                                                                                                                                                             |
+| `TextStyleSheet` | Runtime map of every typography variant. Keys look like `heading-sm/semibold`, `body-md/medium`, `footnote/normal`, `display-lg`, `mono-md/normal`. Use these strings for `Text`'s `variant`. |
 
 ### Inputs
 

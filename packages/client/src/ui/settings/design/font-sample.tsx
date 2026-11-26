@@ -25,7 +25,7 @@ type FontSampleProps = {
 function FontSample({
 	text,
 	family,
-	variant = 'text-md/normal',
+	variant = 'body-md/normal',
 	lines = 1,
 	italic = false,
 }: FontSampleProps) {

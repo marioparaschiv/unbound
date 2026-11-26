@@ -22,7 +22,7 @@ function EmptyState({ children, icon = 'MagnifyingGlassIcon', tone = 'neutral' }
 	return (
 		<View style={styles.container}>
 			<HeroBadge tone={tone} icon={icon} spinning={false} />
-			<Discord.Text variant='text-md/medium' color='text-muted' style={styles.text}>
+			<Discord.Text variant='body-md/medium' color='text-muted' style={styles.text}>
 				{children}
 			</Discord.Text>
 		</View>

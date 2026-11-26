@@ -89,12 +89,12 @@ function DecryptSheet({ url, bridge, onClose }: DecryptSheetProps) {
 			<View style={styles.body}>
 				{!result ? <ActivityIndicator /> : null}
 				{result === 'denied' ? (
-					<Discord.Text variant='text-md/medium' color='text-muted'>
+					<Discord.Text variant='body-md/medium' color='text-muted'>
 						{messages.NOT_FOR_YOU}
 					</Discord.Text>
 				) : null}
 				{result === 'failed' ? (
-					<Discord.Text variant='text-md/medium' color='text-muted'>
+					<Discord.Text variant='body-md/medium' color='text-muted'>
 						{messages.DECRYPT_FAILED}
 					</Discord.Text>
 				) : null}

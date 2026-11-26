@@ -42,7 +42,7 @@ function FontPreview({ lines }: FontPreviewProps) {
 								family={line.family}
 								variant='heading-md/medium'
 							/>
-							<Discord.Text variant='text-xs/medium' color='text-muted'>
+							<Discord.Text variant='body-xs/medium' color='text-muted'>
 								{line.label}
 							</Discord.Text>
 						</View>
@@ -68,7 +68,7 @@ function FontPreview({ lines }: FontPreviewProps) {
 						<FontSample
 							text={CODE}
 							family={familyOf('CODE', 400)}
-							variant='text-sm/normal'
+							variant='body-sm/normal'
 						/>
 					</>
 				)}

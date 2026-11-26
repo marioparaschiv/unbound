@@ -44,10 +44,10 @@ function ErrorDetails({ error, componentStack }: CaughtError) {
 			shadow='low'
 			style={[styles.card, styles.fill]}
 		>
-			<Discord.Text variant='text-xs/bold' style={styles.errorName}>
+			<Discord.Text variant='body-xs/semibold' style={styles.errorName}>
 				{error?.name || 'Error'}
 			</Discord.Text>
-			<Discord.Text variant='text-md/semibold' color='mobile-text-heading-primary' selectable>
+			<Discord.Text variant='body-md/semibold' color='mobile-text-heading-primary' selectable>
 				{error?.message ?? String(error)}
 			</Discord.Text>
 			{traces.length > 1 ? (
@@ -59,7 +59,7 @@ function ErrorDetails({ error, componentStack }: CaughtError) {
 			{trace ? (
 				<View style={styles.code}>
 					<ScrollView nestedScrollEnabled contentContainerStyle={styles.codeContent}>
-						<Discord.Text variant='text-xs/normal' selectable style={styles.codeText}>
+						<Discord.Text variant='body-xs/normal' selectable style={styles.codeText}>
 							{trace.text}
 						</Discord.Text>
 					</ScrollView>

@@ -68,7 +68,7 @@ function StepperRow({
 						disabled={disabled || value <= minimum}
 						onPress={() => move(-1)}
 					/>
-					<Discord.Text variant='text-md/semibold' color='mobile-text-heading-primary'>
+					<Discord.Text variant='body-md/semibold' color='mobile-text-heading-primary'>
 						{String(value)}
 					</Discord.Text>
 					<Discord.Button

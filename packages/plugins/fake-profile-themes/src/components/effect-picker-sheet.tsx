@@ -42,7 +42,7 @@ function EffectTile({ effect, selected, onPress }: TileProps) {
 					/>
 				) : null}
 			</View>
-			<Discord.Text variant='text-xs/medium' color='text-muted' lineClamp={1}>
+			<Discord.Text variant='body-xs/medium' color='text-muted' lineClamp={1}>
 				{title}
 			</Discord.Text>
 		</Pressable>

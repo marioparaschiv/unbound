@@ -122,12 +122,12 @@ function MosaicSheet({ channelId, image, bridge, folder, onClose }: MosaicSheetP
 						onChange={setGuildId}
 					/>
 				) : (
-					<Discord.Text variant='text-md/medium' color='text-muted'>
+					<Discord.Text variant='body-md/medium' color='text-muted'>
 						{messages.NO_SERVERS}
 					</Discord.Text>
 				)}
 				{target && count > target.free ? (
-					<Discord.Text variant='text-sm/medium' color='text-danger'>
+					<Discord.Text variant='body-sm/medium' color='text-danger'>
 						{format('TOO_MANY', { count, free: target.free })}
 					</Discord.Text>
 				) : null}
@@ -140,7 +140,7 @@ function MosaicSheet({ channelId, image, bridge, folder, onClose }: MosaicSheetP
 				) : (
 					<View style={styles.progress}>
 						<ActivityIndicator />
-						<Discord.Text variant='text-md/medium'>
+						<Discord.Text variant='body-md/medium'>
 							{format('PROGRESS', { done: progress, count })}
 						</Discord.Text>
 					</View>

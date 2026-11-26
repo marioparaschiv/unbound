@@ -93,7 +93,7 @@ function TypingAvatars({
 			{overflow > 0 ? (
 				<Pressable onPress={showTooltip} onLongPress={showTooltip} style={styles.overflow}>
 					<View style={styles.overflowBadge}>
-						<Discord.Text variant='text-xxs/semibold' style={styles.overflowText}>
+						<Discord.Text variant='footnote/semibold' style={styles.overflowText}>
 							{`+${overflow}`}
 						</Discord.Text>
 					</View>

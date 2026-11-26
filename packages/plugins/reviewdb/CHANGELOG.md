@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.2.4] - 2026-11-26
+
+### Fixed
+
+- Text renders in Discord's font again. Discord renamed its text styles, so text using the old names fell back to the system font.
+
 ## [2.2.3] - 2026-11-25
 
 ### Changed

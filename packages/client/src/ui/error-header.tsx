@@ -21,7 +21,7 @@ function ErrorHeader({ plugin }: ErrorHeaderProps) {
 					<Discord.Text variant='heading-lg/semibold' color='mobile-text-heading-primary'>
 						{messages.UNBOUND_CRASH_TITLE}
 					</Discord.Text>
-					<Discord.Text variant='text-sm/normal' color='text-muted'>
+					<Discord.Text variant='body-sm/normal' color='text-muted'>
 						{plugin
 							? format('UNBOUND_CRASH_DESCRIPTION_PLUGIN', { name: plugin })
 							: messages.UNBOUND_CRASH_DESCRIPTION}

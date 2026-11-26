@@ -28,13 +28,13 @@ function NoAddons({ kind }: NoAddonsProps) {
 			<HeroBadge tone='brand' icon='PuzzlePieceIcon' spinning={false} />
 			<View style={styles.text}>
 				<Discord.Text
-					variant='heading-lg/bold'
+					variant='heading-lg/semibold'
 					color='mobile-text-heading-primary'
 					style={styles.centered}
 				>
 					{messages.UNBOUND_NO_ADDONS_TITLE}
 				</Discord.Text>
-				<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.centered}>
+				<Discord.Text variant='body-sm/medium' color='text-muted' style={styles.centered}>
 					{format('UNBOUND_NO_ADDONS_BODY', { type })}
 				</Discord.Text>
 			</View>

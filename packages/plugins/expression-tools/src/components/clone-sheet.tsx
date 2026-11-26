@@ -79,7 +79,7 @@ function CloneSheet({ expression, onClose }: CloneSheetProps) {
 					</ui.Section>
 				) : (
 					<View style={styles.empty}>
-						<Discord.Text variant='text-sm/normal' color='text-muted'>
+						<Discord.Text variant='body-sm/normal' color='text-muted'>
 							{guilds.length ? messages.NO_SERVERS_MATCH : messages.NO_OWNED_SERVERS}
 						</Discord.Text>
 					</View>

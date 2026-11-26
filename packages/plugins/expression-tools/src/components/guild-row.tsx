@@ -23,7 +23,7 @@ function GuildIcon({ guild }: GuildIconProps) {
 
 	return (
 		<View style={styles.icon}>
-			<Discord.Text variant='text-sm/semibold' color='text-default'>
+			<Discord.Text variant='body-sm/semibold' color='text-default'>
 				{guild.name.slice(0, 1).toUpperCase()}
 			</Discord.Text>
 		</View>

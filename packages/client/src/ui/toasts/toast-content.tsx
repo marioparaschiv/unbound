@@ -20,11 +20,11 @@ function ToastContent({ title, content }: ToastContentProps) {
 				typeof title === 'function' ? (
 					createElement(title)
 				) : (
-					<Discord.Text variant='text-sm/semibold'>{title}</Discord.Text>
+					<Discord.Text variant='body-sm/semibold'>{title}</Discord.Text>
 				)
 			) : null}
 			{content ? (
-				<Discord.Text style={styles.content} variant='text-sm/normal' color='text-muted'>
+				<Discord.Text style={styles.content} variant='body-sm/normal' color='text-muted'>
 					{content}
 				</Discord.Text>
 			) : null}

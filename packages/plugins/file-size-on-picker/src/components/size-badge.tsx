@@ -23,7 +23,7 @@ function SizeBadge({ label, left }: SizeBadgeProps) {
 				top: BADGE_INSET,
 			}}
 		>
-			<Discord.Text variant='text-xxs/semibold' color='text-overlay-light'>
+			<Discord.Text variant='footnote/semibold' color='text-overlay-light'>
 				{label}
 			</Discord.Text>
 		</View>

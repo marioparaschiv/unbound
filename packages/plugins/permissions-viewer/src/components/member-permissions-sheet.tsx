@@ -27,7 +27,7 @@ function GrantedBy({ granted }: { granted: GrantedPermission }) {
 	return (
 		<View style={{ alignItems: 'center', flexDirection: 'row', gap: 6, maxWidth: 140 }}>
 			<RoleDot color={granted.roleColor} size={10} />
-			<Discord.Text variant='text-xs/medium' color='text-muted' lineClamp={1}>
+			<Discord.Text variant='body-xs/medium' color='text-muted' lineClamp={1}>
 				{granted.roleName}
 			</Discord.Text>
 		</View>
@@ -109,7 +109,9 @@ function MemberPermissionsSheet({
 					</ActionSheetRow.Group>
 				) : (
 					<View style={styles.section}>
-						<Discord.Text color='text-muted'>{messages.NO_ROLES_GRANT}</Discord.Text>
+						<Discord.Text variant='body-sm/medium' color='text-muted'>
+							{messages.NO_ROLES_GRANT}
+						</Discord.Text>
 					</View>
 				)}
 			</ScrollView>

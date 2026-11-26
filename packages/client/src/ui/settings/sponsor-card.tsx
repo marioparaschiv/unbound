@@ -32,14 +32,14 @@ function SponsorCard() {
 					<TintedIcon source={icons.HeartIcon ?? 0} size={18} style={styles.heartIcon} />
 				</View>
 				<Discord.Text
-					variant='heading-md/bold'
+					variant='heading-md/semibold'
 					color='mobile-text-heading-primary'
 					style={styles.title}
 				>
 					{messages.UNBOUND_SPONSOR_TITLE}
 				</Discord.Text>
 			</Discord.Stack>
-			<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.body}>
+			<Discord.Text variant='body-sm/medium' color='text-muted' style={styles.body}>
 				{messages.UNBOUND_SPONSOR_BODY}
 			</Discord.Text>
 			<View style={styles.actions}>

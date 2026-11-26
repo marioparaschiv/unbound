@@ -54,7 +54,7 @@ function MembersSheet({ guildId, roleId, roleName, onClose }: MembersSheetProps)
 						})}
 					</Discord.TableRowGroup>
 				) : null}
-				<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.note}>
+				<Discord.Text variant='body-sm/medium' color='text-muted' style={styles.note}>
 					{ids.length ? messages.LOADED_ONLY : messages.NO_MEMBERS}
 				</Discord.Text>
 			</ScrollView>

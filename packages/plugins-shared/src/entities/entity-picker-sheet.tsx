@@ -95,7 +95,7 @@ function EntityPickerSheet({ kind, labels, exclude, onPick, onClose }: EntityPic
 						))}
 					</Discord.TableRowGroup>
 				) : (
-					<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.none}>
+					<Discord.Text variant='body-sm/medium' color='text-muted' style={styles.none}>
 						{labels.noResults}
 					</Discord.Text>
 				)}

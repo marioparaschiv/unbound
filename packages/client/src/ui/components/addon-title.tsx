@@ -21,7 +21,7 @@ function AddonTitle({ name, version, tag, tagVariant = 'brand' }: AddonTitleProp
 
 	return (
 		<Discord.Stack direction='horizontal' spacing={8} align='center'>
-			<Discord.Text variant='text-md/semibold' style={styles.name} numberOfLines={1}>
+			<Discord.Text variant='body-md/semibold' style={styles.name} numberOfLines={1}>
 				{name}
 			</Discord.Text>
 			{version ? <AddonTag>{`v${version}`}</AddonTag> : null}

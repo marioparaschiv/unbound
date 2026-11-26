@@ -60,7 +60,7 @@ function SpellSheet({ channelId, messageId, taken, onClose }: SpellSheetProps) {
 				{!word.trim() ? null : spelling.ok ? (
 					<ReactionPreview emoji={spelling.emoji} />
 				) : (
-					<Discord.Text variant='text-sm/medium' color='text-feedback-critical'>
+					<Discord.Text variant='body-sm/medium' color='text-feedback-critical'>
 						{problem(spelling)}
 					</Discord.Text>
 				)}

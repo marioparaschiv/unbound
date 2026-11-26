@@ -11,7 +11,7 @@ function SectionTitle({ children }: SectionTitleProps) {
 	const styles = useStyles();
 
 	return (
-		<Discord.Text variant='heading-md/bold' style={styles.title} accessibilityRole='header'>
+		<Discord.Text variant='heading-md/semibold' style={styles.title} accessibilityRole='header'>
 			{children}
 		</Discord.Text>
 	);

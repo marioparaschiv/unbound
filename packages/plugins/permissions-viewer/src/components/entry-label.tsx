@@ -31,7 +31,7 @@ function RoleIconView({ role }: { role: GuildRole }) {
 	if (!icon) return null;
 
 	if (icon.kind === 'emoji')
-		return <Discord.Text variant='text-sm/medium'>{icon.emoji}</Discord.Text>;
+		return <Discord.Text variant='body-sm/medium'>{icon.emoji}</Discord.Text>;
 
 	return <Image source={{ uri: icon.uri }} style={{ height: 18, width: 18 }} />;
 }
@@ -42,7 +42,7 @@ function OwnerLabel() {
 
 	return (
 		<View style={{ alignItems: 'center', flexDirection: 'row', gap: 4 }}>
-			<Discord.Text variant='text-sm/medium'>{messages.OWNER_LABEL}</Discord.Text>
+			<Discord.Text variant='body-sm/medium'>{messages.OWNER_LABEL}</Discord.Text>
 			{crown != null ? <Image source={crown} style={[styles.small, styles.owner]} /> : null}
 		</View>
 	);
@@ -69,7 +69,7 @@ function EntryLabel({ entry, role, user }: EntryLabelProps) {
 						style={{ borderRadius: 9, height: 18, width: 18 }}
 					/>
 				) : null}
-				<Discord.Text variant='text-sm/medium'>{userName(user)}</Discord.Text>
+				<Discord.Text variant='body-sm/medium'>{userName(user)}</Discord.Text>
 			</View>
 		);
 	}
@@ -78,7 +78,7 @@ function EntryLabel({ entry, role, user }: EntryLabelProps) {
 		<View style={{ alignItems: 'center', flexDirection: 'row', gap: 6 }}>
 			<RoleDot color={role?.colorString} />
 			{role ? <RoleIconView role={role} /> : null}
-			<Discord.Text variant='text-sm/medium'>
+			<Discord.Text variant='body-sm/medium'>
 				{role?.name ?? messages.UNKNOWN_ROLE}
 			</Discord.Text>
 		</View>
