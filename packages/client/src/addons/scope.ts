@@ -95,10 +95,12 @@ function liveUnbound(): object {
  */
 export function createAddonScope(addon: Addon<Plugin>, directory: string): AddonScope {
 	const tagged = createPatcher(addon.id);
-	const timers = createScopedTimers();
 	const subscriptions = createSubscriptions();
 	const startLog = createStartLog(createLogger('Plugins', addon.name));
 	const { logger } = startLog;
+	const timers = createScopedTimers((error) =>
+		logger.error(`Failed to run a timer for ${addon.id}:`, error),
+	);
 	const assets = scopeAssets(subscriptions, addon.id);
 	const { main, assets: listed = {} } = addon.manifest;
 	const i18n = scopeI18n(subscriptions, {

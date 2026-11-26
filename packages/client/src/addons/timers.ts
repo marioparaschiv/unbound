@@ -19,12 +19,22 @@ export type ScopedTimers = {
 
 /**
  * @description Creates timer functions for one addon that clear every pending timeout and interval on dispose.
- * A timer scheduled after dispose is cleared at once and never runs.
+ * A timer scheduled after dispose is cleared at once and never runs. A callback that throws goes to `onError`, since
+ * Discord drops timer errors without logging them.
+ * @param onError Receives what a timer callback threw.
  * @returns The scoped timer functions and their `dispose`.
  */
-export function createScopedTimers(): ScopedTimers {
+export function createScopedTimers(onError: (error: unknown) => void): ScopedTimers {
 	const pending = new Map<TimerHandle, Clear>();
 	let disposed = false;
+
+	function guard<A extends unknown[]>(callback: (...args: A) => void, ...params: A): void {
+		try {
+			callback(...params);
+		} catch (error) {
+			onError(error);
+		}
+	}
 
 	function track(handle: TimerHandle, clear: Clear): TimerHandle {
 		if (disposed) {
@@ -49,7 +59,7 @@ export function createScopedTimers(): ScopedTimers {
 			const handle = globalThis.setTimeout(
 				(...params: typeof args) => {
 					pending.delete(handle);
-					callback(...params);
+					guard(callback, ...params);
 				},
 				delay,
 				...args,
@@ -59,7 +69,11 @@ export function createScopedTimers(): ScopedTimers {
 		},
 		setInterval(callback, delay, ...args) {
 			return track(
-				globalThis.setInterval(callback, delay, ...args),
+				globalThis.setInterval(
+					(...params: typeof args) => guard(callback, ...params),
+					delay,
+					...args,
+				),
 				globalThis.clearInterval,
 			);
 		},
