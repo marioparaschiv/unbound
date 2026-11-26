@@ -1,7 +1,3 @@
----
-banner: media/banner.png
----
-
 ## :sparkle: What it does
 
 - :user-arrow-right: Long-press a voice channel to disconnect, server mute, unmute, deafen, undeafen or move everyone in it at once, except you.

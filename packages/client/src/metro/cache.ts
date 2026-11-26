@@ -23,9 +23,11 @@ export function getModuleIds(): readonly number[] {
 /** Version of the stored module cache's layout; a stored cache with another version is discarded. */
 export const CACHE_VERSION = 3;
 
+// Discord's over-the-air JS updates renumber modules under the same native build and can keep the module count.
 const CurrentCacheInfo = {
 	cacheVersion: CACHE_VERSION,
 	buildNumber: BundleInfo.Build,
+	otaBuild: BundleInfo.OTABuild ?? '',
 	moduleCount: window.modules.size,
 };
 
@@ -280,6 +282,10 @@ export function hasModuleFlag(id: number, flag: ModuleFlags) {
 
 function isValidCache() {
 	if (BundleInfo.Build !== state.info.buildNumber) {
+		return false;
+	}
+
+	if (CurrentCacheInfo.otaBuild !== state.info.otaBuild) {
 		return false;
 	}
 

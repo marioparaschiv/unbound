@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Photo Metadata's settings for removing photo locations or all metadata before attaching.
 ---
 
 ## :sparkle: What it does

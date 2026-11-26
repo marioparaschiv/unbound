@@ -1,5 +1,13 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/dark-plus.jpg
+      alt: Shiki Codeblocks' syntax-coloured code cards with line numbers and language headers, in the default Dark Plus theme.
+    - image: media/catppuccin.jpg
+      alt: Shiki Codeblocks with the Catppuccin Mocha theme and coloured language icons.
+    - image: media/github-light.jpg
+      alt: Shiki Codeblocks with the GitHub Light theme.
+    - image: media/settings.jpg
+      alt: "Shiki Codeblocks' settings: theme, custom theme URL, language icons, card opacity and long lines."
 ---
 
 ## :sparkle: What it does

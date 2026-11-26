@@ -1,7 +1,3 @@
----
-banner: media/banner.png
----
-
 ## :sparkle: What it does
 
 - :clipboard: Tap inline code in a message, like `npm install`, and it's copied, with a toast showing what was copied.

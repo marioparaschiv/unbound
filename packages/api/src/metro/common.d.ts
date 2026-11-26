@@ -33,7 +33,7 @@ export declare const REST: any;
 export declare const Radius: any;
 /** Discord's copy of `react-native-reanimated`; found on first access. */
 export declare const Reanimated: any;
-/** Discord's copy of `react-native-svg`, with `Svg` and `Path`; found on first access. */
+/** Discord's copy of `react-native-svg`, with `Svg`, `Path` and `SvgXml`; found on first access. */
 export declare const SVG: any;
 /** Discord's copy of `react-native-screens`, with `FullWindowOverlay`; found on first access. */
 export declare const Screens: any;

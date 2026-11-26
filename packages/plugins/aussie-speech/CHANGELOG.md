@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.8] - 2026-11-24
+
+### Fixed
+
+- The store page shows the plugin's screenshots, which 1.2.7 published without. The plugin works the same as before.
+
+## [1.2.7] - 2026-11-24
+
+### Changed
+
+- The store page shows screenshots of the plugin instead of a banner. The plugin works the same as before.
+
 ## [1.2.6] - 2026-11-18
 
 ### Changed

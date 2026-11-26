@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.2.0](https://github.com/marioparaschiv/unbound/compare/client-v1.1.2...client-v1.2.0) (2026-11-24)
+
+
+### Features
+
+* **client:** sort the marketplace by popularity by default ([#2268](https://github.com/marioparaschiv/unbound/issues/2268)) ([73a219d](https://github.com/marioparaschiv/unbound/commit/73a219d7b18084cf7162a395acd7da2d5a30366b))
+* **contracts:** make the store page banner optional ([#2251](https://github.com/marioparaschiv/unbound/issues/2251)) ([03ee4a5](https://github.com/marioparaschiv/unbound/commit/03ee4a5fcb69f082b7774872785adf1ab261eea0))
+
+
+### Bug Fixes
+
+* **client:** drop the metro cache after a Discord OTA update ([#2263](https://github.com/marioparaschiv/unbound/issues/2263)) ([13f1855](https://github.com/marioparaschiv/unbound/commit/13f185574c88e5f838a2a717284ac9552d82aecb))
+* **client:** match react-native-svg by SvgXml ([#2262](https://github.com/marioparaschiv/unbound/issues/2262)) ([1c274ba](https://github.com/marioparaschiv/unbound/commit/1c274ba179b512afe99d7841b9bfe9e4d32550d3))
+* **loader:** fix a reload freeze and a native callback crash ([#2246](https://github.com/marioparaschiv/unbound/issues/2246)) ([267c6e1](https://github.com/marioparaschiv/unbound/commit/267c6e11c3136598d991db2e6262790e64f5758c))
+* **plugins:** match Discord's sheets and rows in 50 plugins ([#2261](https://github.com/marioparaschiv/unbound/issues/2261)) ([ef3e401](https://github.com/marioparaschiv/unbound/commit/ef3e4016c84e201e5a66e2e1b5084aef359780e3))
+
 ## [1.1.2](https://github.com/marioparaschiv/unbound/compare/client-v1.1.1...client-v1.1.2) (2026-11-22)
 
 

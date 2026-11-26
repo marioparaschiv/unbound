@@ -43,34 +43,37 @@ function SwitchRow({
 	);
 }
 
-function HighlightRows() {
-	const enabled = useSetting('deletedHighlight');
+// Each child of a section is one row: the group finds its first and last row by position, so a child that renders
+// nothing or several rows breaks the separators. Conditions live in the sections instead.
+function HighlightBackgroundRow() {
 	const background = useSetting('highlightBackground');
-	const bar = useSetting('highlightBar');
-
-	if (!enabled) return null;
 
 	return (
-		<>
-			<ui.ColorRow
-				label={messages.HIGHLIGHT_BACKGROUND}
-				color={background || undefined}
-				fallbackColor='#f23f4326'
-				fallbackLabel={messages.HIGHLIGHT_BACKGROUND_FALLBACK}
-				onChange={(value) => {
-					settings.highlightBackground = value ?? '';
-				}}
-			/>
-			<ui.ColorRow
-				label={messages.HIGHLIGHT_BAR}
-				color={bar || undefined}
-				fallbackColor='#f23f43'
-				fallbackLabel={messages.HIGHLIGHT_BAR_FALLBACK}
-				onChange={(value) => {
-					settings.highlightBar = value ?? '';
-				}}
-			/>
-		</>
+		<ui.ColorRow
+			label={messages.HIGHLIGHT_BACKGROUND}
+			color={background || undefined}
+			fallbackColor='#f23f4326'
+			fallbackLabel={messages.HIGHLIGHT_BACKGROUND_FALLBACK}
+			onChange={(value) => {
+				settings.highlightBackground = value ?? '';
+			}}
+		/>
+	);
+}
+
+function HighlightBarRow() {
+	const bar = useSetting('highlightBar');
+
+	return (
+		<ui.ColorRow
+			label={messages.HIGHLIGHT_BAR}
+			color={bar || undefined}
+			fallbackColor='#f23f43'
+			fallbackLabel={messages.HIGHLIGHT_BAR_FALLBACK}
+			onChange={(value) => {
+				settings.highlightBar = value ?? '';
+			}}
+		/>
 	);
 }
 
@@ -115,69 +118,118 @@ function DeletedChannelsRow() {
 	);
 }
 
-type SwitchSpec = [SwitchKey, string, string];
+// What gets logged comes first; each kind's look follows only while that kind is logged.
+function LoggingSection() {
+	const logEdits = useSetting('logEdits');
+	const logDeletedChannels = useSetting('logDeletedChannels');
 
-function SwitchRows({ rows }: { rows: SwitchSpec[] }) {
-	return rows.map(([setting, label, subLabel]) => (
-		<SwitchRow key={setting} setting={setting} label={label} subLabel={subLabel} />
-	));
+	return (
+		<ui.Section title={messages.LOGGING}>
+			<SwitchRow
+				setting='logDeletes'
+				label={messages.LOG_DELETES}
+				subLabel={messages.LOG_DELETES_SUBTITLE}
+			/>
+			<SwitchRow
+				setting='logEdits'
+				label={messages.LOG_EDITS}
+				subLabel={messages.LOG_EDITS_SUBTITLE}
+			/>
+			{logEdits ? (
+				<SwitchRow
+					setting='logDeletedAttachments'
+					label={messages.LOG_DELETED_ATTACHMENTS}
+					subLabel={messages.LOG_DELETED_ATTACHMENTS_SUBTITLE}
+				/>
+			) : null}
+			<SwitchRow
+				setting='logDeletedChannels'
+				label={messages.LOG_DELETED_CHANNELS}
+				subLabel={messages.LOG_DELETED_CHANNELS_SUBTITLE}
+			/>
+			{logDeletedChannels ? <DeletedChannelsRow /> : null}
+			<SwitchRow
+				setting='persistLog'
+				label={messages.PERSIST_LOG}
+				subLabel={messages.PERSIST_LOG_SUBTITLE}
+			/>
+		</ui.Section>
+	);
+}
+
+function DeletedMessagesSection() {
+	const highlight = useSetting('deletedHighlight');
+
+	if (!useSetting('logDeletes')) return null;
+
+	return (
+		<ui.Section title={messages.DELETED_MESSAGES}>
+			<SwitchRow
+				setting='redText'
+				label={messages.RED_TEXT}
+				subLabel={messages.RED_TEXT_SUBTITLE}
+			/>
+			<SwitchRow
+				setting='deletedMarker'
+				label={messages.DELETED_MARKER}
+				subLabel={messages.DELETED_MARKER_SUBTITLE}
+			/>
+			<SwitchRow
+				setting='deletedHighlight'
+				label={messages.DELETED_HIGHLIGHT}
+				subLabel={messages.DELETED_HIGHLIGHT_SUBTITLE}
+			/>
+			{highlight ? <HighlightBackgroundRow /> : null}
+			{highlight ? <HighlightBarRow /> : null}
+		</ui.Section>
+	);
+}
+
+function EditedMessagesSection() {
+	const inlineEdits = useSetting('inlineEdits');
+
+	if (!useSetting('logEdits')) return null;
+
+	return (
+		<ui.Section title={messages.EDITED_MESSAGES}>
+			<SwitchRow
+				setting='inlineEdits'
+				label={messages.INLINE_EDITS}
+				subLabel={messages.INLINE_EDITS_SUBTITLE}
+			/>
+			{inlineEdits ? <EditedTextRow /> : null}
+		</ui.Section>
+	);
+}
+
+function IgnoredSection() {
+	return (
+		<ui.Section title={messages.IGNORED}>
+			<SwitchRow
+				setting='ignoreBots'
+				label={messages.IGNORE_BOTS}
+				subLabel={messages.IGNORE_BOTS_SUBTITLE}
+			/>
+			<SwitchRow
+				setting='ignoreSelf'
+				label={messages.IGNORE_SELF}
+				subLabel={messages.IGNORE_SELF_SUBTITLE}
+			/>
+			<IgnoreListRow setting='ignoreUsers' />
+			<IgnoreListRow setting='ignoreChannels' />
+			<IgnoreListRow setting='ignoreGuilds' />
+		</ui.Section>
+	);
 }
 
 // A custom panel, so each ignore list is a page of users, channels or servers rather than typed ids.
 function SettingsPanel() {
 	return (
 		<ui.Page>
-			<ui.Section title={messages.PREFERENCES}>
-				<SwitchRows
-					rows={[
-						['redText', messages.RED_TEXT, messages.RED_TEXT_SUBTITLE],
-						[
-							'deletedHighlight',
-							messages.DELETED_HIGHLIGHT,
-							messages.DELETED_HIGHLIGHT_SUBTITLE,
-						],
-					]}
-				/>
-				<HighlightRows />
-				<SwitchRows
-					rows={[
-						[
-							'deletedMarker',
-							messages.DELETED_MARKER,
-							messages.DELETED_MARKER_SUBTITLE,
-						],
-						['inlineEdits', messages.INLINE_EDITS, messages.INLINE_EDITS_SUBTITLE],
-					]}
-				/>
-				<EditedTextRow />
-				<SwitchRows
-					rows={[
-						['logDeletes', messages.LOG_DELETES, messages.LOG_DELETES_SUBTITLE],
-						['logEdits', messages.LOG_EDITS, messages.LOG_EDITS_SUBTITLE],
-						['persistLog', messages.PERSIST_LOG, messages.PERSIST_LOG_SUBTITLE],
-						[
-							'logDeletedAttachments',
-							messages.LOG_DELETED_ATTACHMENTS,
-							messages.LOG_DELETED_ATTACHMENTS_SUBTITLE,
-						],
-						[
-							'logDeletedChannels',
-							messages.LOG_DELETED_CHANNELS,
-							messages.LOG_DELETED_CHANNELS_SUBTITLE,
-						],
-						['ignoreBots', messages.IGNORE_BOTS, messages.IGNORE_BOTS_SUBTITLE],
-						['ignoreSelf', messages.IGNORE_SELF, messages.IGNORE_SELF_SUBTITLE],
-					]}
-				/>
-			</ui.Section>
-			<ui.Section title={messages.DELETED_CHANNELS}>
-				<DeletedChannelsRow />
-			</ui.Section>
-			<ui.Section title={messages.IGNORED}>
-				<IgnoreListRow setting='ignoreUsers' />
-				<IgnoreListRow setting='ignoreChannels' />
-				<IgnoreListRow setting='ignoreGuilds' />
-			</ui.Section>
+			<LoggingSection />
+			<DeletedMessagesSection />
+			<EditedMessagesSection />
+			<IgnoredSection />
 			<ui.ResetRow onReset={resetSettings} />
 		</ui.Page>
 	);

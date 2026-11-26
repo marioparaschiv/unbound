@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/warning.jpg
+      alt: Anti Rickroll asking before opening a short link that leads to Never Gonna Give You Up.
 ---
 
 ## :sparkle: What it does

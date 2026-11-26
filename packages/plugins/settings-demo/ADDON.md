@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Settings Demo's generated panel with switches, sliders, steppers and inputs.
+    - image: media/settings-more.jpg
+      alt: Settings Demo's panel further down, with choices, lists, a danger button and colour pickers.
 ---
 
 ## :sparkle: What it does

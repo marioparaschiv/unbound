@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.4] - 2026-11-24
+
+### Changed
+
+- The store page no longer shows a banner. The plugin works the same as before.
+
 ## [1.1.3] - 2026-11-19
 
 ### Fixed

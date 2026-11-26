@@ -1,6 +1,6 @@
 import { getActionSheetRow } from '@unbound-plugins/shared/action-sheets/action-sheet-row';
-import { isActionSheetRowGroup } from '@unbound-plugins/shared/action-sheets/row-group';
-import { findElement } from '@unbound-plugins/shared/react/find-element';
+import { sectionRows } from '@unbound-plugins/shared/action-sheets/sheet-section';
+import { isElementNode } from '@unbound-plugins/shared/react/find-element';
 import { assets } from '@unbound-app/api';
 import { createElement } from 'react';
 
@@ -12,20 +12,21 @@ export type SheetRowSpec = {
 };
 
 /**
- * @description Appends rows to the first row group an action sheet renders, once each.
+ * @description Adds rows to the untitled section plugins share on an action sheet, once each, creating it after the sheet's first row group when no plugin has yet.
  * @param result One rendered level of the sheet.
  * @param specs The rows to add, keyed so a re-render does not add them twice.
  */
 // UNKNOWN: an action sheet may render any node.
 export function insertSheetRows(result: unknown, specs: readonly SheetRowSpec[]): void {
-	const rows = findElement(result, isActionSheetRowGroup)?.props?.children;
-
-	if (!Array.isArray(rows) || !specs.length) return;
+	if (!specs.length) return;
 
 	const ActionSheetRow = getActionSheetRow();
+	const rows = sectionRows(result, ActionSheetRow.Group);
+
+	if (!rows) return;
 
 	for (const spec of specs) {
-		if (rows.some((row) => row?.key === spec.key)) {
+		if (rows.some((row) => isElementNode(row) && row.key === spec.key)) {
 			continue;
 		}
 

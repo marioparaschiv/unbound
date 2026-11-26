@@ -1,6 +1,6 @@
-import { StyleSheet } from 'react-native';
+import { Discord } from '@unbound-app/api/metro/components';
 
-export default StyleSheet.create({
+export default Discord.createStyles({
 	content: { gap: 16, paddingBottom: 32 },
 	grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },
 	cell: { alignItems: 'center', borderRadius: 12, gap: 4, padding: 8, width: 96 },

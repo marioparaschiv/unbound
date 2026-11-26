@@ -19,7 +19,7 @@ func TestPatchDiscordAppIconReplacesLauncherSlotsAndPreservesOtherEntries(t *tes
 		t.Fatal(err)
 	}
 
-	writeAndroidAppIconFixture(t, apkPath, true)
+	writeAndroidAppIconFixture(t, apkPath, discordIconEntries(allDensities...))
 
 	if err := patchDiscordAppIcon(apkPath, iconPath); err != nil {
 		t.Fatal(err)
@@ -52,7 +52,7 @@ func TestPatchDiscordAppIconReplacesLauncherSlotsAndPreservesOtherEntries(t *tes
 		entries[entry.Name] = content
 	}
 
-	for name := range discordIconEntries() {
+	for _, name := range discordIconEntries(allDensities...) {
 		if !bytes.Equal(entries[name], icon) {
 			t.Errorf("%s was not replaced", name)
 		}
@@ -76,7 +76,7 @@ func TestPatchDiscordAppIconLeavesAPKUnchangedWhenRequiredResourceIsMissing(t *t
 		t.Fatal(err)
 	}
 
-	writeAndroidAppIconFixture(t, apkPath, false)
+	writeAndroidAppIconFixture(t, apkPath, []string{"res/mipmap-mdpi-v4/brand_inverted.webp"})
 
 	before, err := os.ReadFile(apkPath)
 	if err != nil {
@@ -97,7 +97,25 @@ func TestPatchDiscordAppIconLeavesAPKUnchangedWhenRequiredResourceIsMissing(t *t
 	}
 }
 
-func writeAndroidAppIconFixture(t *testing.T, path string, includeAllIcons bool) {
+var allDensities = []string{"mdpi", "hdpi", "xhdpi", "xxhdpi", "xxxhdpi"}
+
+func TestPatchDiscordAppIconReplacesTheDensitiesTheAPKShips(t *testing.T) {
+	directory := t.TempDir()
+	apkPath := filepath.Join(directory, "base.apk")
+	iconPath := filepath.Join(directory, "unbound.webp")
+
+	if err := os.WriteFile(iconPath, []byte("unbound-icon"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	writeAndroidAppIconFixture(t, apkPath, discordIconEntries("xxxhdpi"))
+
+	if err := patchDiscordAppIcon(apkPath, iconPath); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func writeAndroidAppIconFixture(t *testing.T, path string, icons []string) {
 	t.Helper()
 
 	file, err := os.Create(path)
@@ -108,13 +126,7 @@ func writeAndroidAppIconFixture(t *testing.T, path string, includeAllIcons bool)
 	writer := zip.NewWriter(file)
 	entries := []string{"assets/untouched.bin"}
 
-	if includeAllIcons {
-		for name := range discordIconEntries() {
-			entries = append(entries, name)
-		}
-	} else {
-		entries = append(entries, "res/mipmap-mdpi-v4/brand_inverted.webp")
-	}
+	entries = append(entries, icons...)
 
 	for _, name := range entries {
 		entry, err := writer.Create(name)
@@ -142,4 +154,16 @@ func writeAndroidAppIconFixture(t *testing.T, path string, includeAllIcons bool)
 	if err := file.Close(); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func discordIconEntries(densities ...string) []string {
+	entries := make([]string, 0, len(densities)*len(discordIconVariants))
+
+	for _, density := range densities {
+		for _, variant := range discordIconVariants {
+			entries = append(entries, "res/mipmap-"+density+"-v4/"+variant+".webp")
+		}
+	}
+
+	return entries
 }

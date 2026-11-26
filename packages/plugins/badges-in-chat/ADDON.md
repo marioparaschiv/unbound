@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/chat.jpg
+      alt: Badges In Chat showing each person's profile badge next to their name in a direct message.
 ---
 
 ## :sparkle: What it does

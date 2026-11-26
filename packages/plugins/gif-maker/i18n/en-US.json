@@ -18,5 +18,5 @@
 	"ENCODING": "Encoding the GIF…",
 	"ATTACHED": "GIF attached to your message.",
 	"FAILED": "Couldn't make a GIF from this video.",
-	"TOO_LONG": "GIFs are limited to {seconds} seconds."
+	"NOT_SECONDS": "Enter a number of seconds, such as 1.5."
 }

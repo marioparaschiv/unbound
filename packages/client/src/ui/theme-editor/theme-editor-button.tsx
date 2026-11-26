@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { useStore } from 'zustand';
 
 import ThemeEditorStore from '~/themes/editor-state';
 import { Screens } from '~/metro/common';
@@ -11,7 +12,7 @@ import EditorButtons from './editor-buttons';
  * while it waits for a tap. Nothing is drawn while the picker reads the screen, so it finds what is underneath.
  */
 function ThemeEditorButton() {
-	const picker = ThemeEditorStore((state) => state.picker);
+	const picker = useStore(ThemeEditorStore, (state) => state.picker);
 
 	if (picker === 'reading') return null;
 

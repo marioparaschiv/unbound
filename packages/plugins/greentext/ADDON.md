@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/green.jpg
+      alt: Greentext drawing lines that start with > in imageboard green in a direct message.
+    - image: media/custom-color.jpg
+      alt: Greentext with a custom orange color picked in its settings.
 ---
 
 ## :sparkle: What it does

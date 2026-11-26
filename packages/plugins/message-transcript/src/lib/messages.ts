@@ -43,5 +43,8 @@ export function loadedMessages(channelId: string): TranscriptMessage[] {
 		timestamp: message.timestamp ?? 0,
 		content: message.content ?? '',
 		attachments: (message.attachments ?? []).flatMap(({ url }) => (url ? [url] : [])),
+		fileNames: (message.attachments ?? []).flatMap(({ filename }) =>
+			filename ? [filename] : [],
+		),
 	}));
 }

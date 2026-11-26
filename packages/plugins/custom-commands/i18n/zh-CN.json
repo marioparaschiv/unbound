@@ -11,7 +11,6 @@
 	"DELETE": "删除",
 	"DELETE_COMMAND": "删除命令",
 	"DELETE_COMMAND_BODY": "要删除 /{name} 及其保存的附件吗？",
-	"DELETE_COMMAND_LABEL": "删除 {name}",
 	"DESCRIPTION_OPTIONAL": "描述（可选）",
 	"DESCRIPTION_PLACEHOLDER": "显示在斜杠命令列表中",
 	"DESCRIPTION_TOO_LONG": "命令描述最多 {max} 个字符。",

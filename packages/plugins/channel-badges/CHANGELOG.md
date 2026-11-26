@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.2.2] - 2026-11-24
+
+### Fixed
+
+- The store page shows the plugin's screenshots, which 1.2.1 published without. The plugin works the same as before.
+
+## [1.2.1] - 2026-11-24
+
+### Changed
+
+- The store page shows screenshots of the plugin instead of a banner. The plugin works the same as before.
+
+## [1.2.0] - 2026-11-24
+
+### Changed
+
+- Badges use Discord's own badge styles, so they match your theme. Type and Private badges are now grey.
+
 ## [1.1.1] - 2026-11-17
 
 ### Changed

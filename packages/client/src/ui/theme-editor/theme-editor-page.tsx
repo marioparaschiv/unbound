@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Theme } from '@unbound-app/types';
+import { useStore } from 'zustand';
 
 import ThemeEditorStore from '~/themes/editor-state';
 import ButtonRow from '~/ui/settings-kit/button-row';
@@ -37,8 +38,8 @@ function isBase(value: string): value is Theme['type'] {
  */
 function ThemeEditorPage() {
 	const navigation = Discord.useNavigation();
-	const session = ThemeEditorStore((state) => state.session);
-	const draft = ThemeStore((state) => state.preview);
+	const session = useStore(ThemeEditorStore, (state) => state.session);
+	const draft = useStore(ThemeStore, (state) => state.preview);
 	const [saving, setSaving] = useState(false);
 	const scroll = useEditorScreen({ screen: Screens.ThemeEditor });
 	const names = useMemo(() => tokenNames(), []);

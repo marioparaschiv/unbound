@@ -6,12 +6,12 @@ import { Discord } from '@unbound-app/api/metro/components';
 import type { NativeBridge } from '@unbound-app/api/native';
 import { format, messages } from '@unbound-app/i18n';
 import { useEffect, useState } from 'react';
+import { assets } from '@unbound-app/api';
 
 import { analyseFlashes, type FlashReport, type TimedFrame } from '~/lib/flashes';
 import { readFrames, type Media } from '~/lib/sources';
 
-const BAR_HEIGHT = 48;
-const FRAME_HEIGHT = 260;
+import useStyles, { BAR_HEIGHT } from '~/components/flash-sheet.style';
 
 type Target = { media: Media; bridge: NativeBridge; folder: string };
 
@@ -28,20 +28,20 @@ function frameUri({ rgba, width, height }: TimedFrame): string {
 }
 
 function Timeline({ report, index }: { report: FlashReport; index: number }) {
+	const styles = useStyles();
 	const step = Math.max(1, Math.ceil(report.brightness.length / 80));
 	const bars = report.brightness.filter((_, at) => at % step === 0);
 
 	return (
-		<View style={{ flexDirection: 'row', alignItems: 'flex-end', height: BAR_HEIGHT, gap: 1 }}>
+		<View style={styles.timeline}>
 			{bars.map((value, at) => (
 				<View
 					key={at}
-					style={{
-						flex: 1,
-						height: Math.max(2, value * BAR_HEIGHT),
-						borderRadius: 1,
-						backgroundColor: Math.floor(index / step) === at ? '#5865f2' : '#8a8e99',
-					}}
+					style={[
+						styles.bar,
+						Math.floor(index / step) === at ? styles.barCurrent : null,
+						{ height: Math.max(2, value * BAR_HEIGHT) },
+					]}
 				/>
 			))}
 		</View>
@@ -61,6 +61,7 @@ function verdict(report: FlashReport): string {
 }
 
 function FlashSheet({ media, bridge, folder }: FlashSheetProps) {
+	const styles = useStyles();
 	const [result, setResult] = useState<Result>();
 	const [index, setIndex] = useState(0);
 
@@ -93,9 +94,12 @@ function FlashSheet({ media, bridge, folder }: FlashSheetProps) {
 	if (!result) {
 		return (
 			<Discord.ActionSheet>
-				<View style={{ gap: 12, padding: 16, alignItems: 'center' }}>
+				<Discord.BottomSheetTitleHeader title={media.name} />
+				<View style={styles.status}>
 					<ActivityIndicator />
-					<Discord.Text variant='text-md/medium'>{messages.CHECKING}</Discord.Text>
+					<Discord.Text variant='text-md/medium' color='text-muted'>
+						{messages.CHECKING}
+					</Discord.Text>
 				</View>
 			</Discord.ActionSheet>
 		);
@@ -104,8 +108,9 @@ function FlashSheet({ media, bridge, folder }: FlashSheetProps) {
 	if ('error' in result || !result.frames.length) {
 		return (
 			<Discord.ActionSheet>
-				<View style={{ padding: 16 }}>
-					<Discord.Text variant='text-md/medium'>{messages.FAILED}</Discord.Text>
+				<Discord.BottomSheetTitleHeader title={media.name} />
+				<View style={styles.body}>
+					<Discord.InlineNotice type='critical' message={messages.FAILED} />
 				</View>
 			</Discord.ActionSheet>
 		);
@@ -116,37 +121,40 @@ function FlashSheet({ media, bridge, folder }: FlashSheetProps) {
 
 	return (
 		<Discord.ActionSheet>
-			<View style={{ gap: 12, padding: 16 }}>
-				<Discord.Text variant='heading-lg/semibold'>{media.name}</Discord.Text>
-				<Discord.Text
-					variant='text-md/semibold'
-					color={report.flagged ? 'text-danger' : 'text-default'}
-				>
-					{verdict(report)}
-				</Discord.Text>
+			<Discord.BottomSheetTitleHeader title={media.name} />
+			<View style={styles.body}>
+				<Discord.InlineNotice
+					// Android builds style only info, warning and critical notices; 'positive' crashes the sheet.
+					type={report.flagged ? 'warning' : 'info'}
+					message={verdict(report)}
+				/>
 				<Timeline report={report} index={index} />
 				<Image
 					source={{ uri: frameUri(frame) }}
 					resizeMode='contain'
-					style={{ width: '100%', height: FRAME_HEIGHT, borderRadius: 8 }}
+					style={styles.frame}
 				/>
-				<Discord.Text variant='text-sm/medium' color='text-muted'>
-					{format('FRAME', {
-						index: index + 1,
-						count: frames.length,
-						time: seconds(frame.atMs),
-					})}
-				</Discord.Text>
-				<View style={{ flexDirection: 'row', gap: 8 }}>
-					<Discord.Button
-						text='◀'
+				<View style={styles.stepper}>
+					<Discord.IconButton
+						size='sm'
 						variant='secondary'
+						icon={assets.getIdByName('ArrowSmallLeftIcon')}
+						accessibilityLabel={messages.PREVIOUS_FRAME}
 						disabled={!index}
 						onPress={() => setIndex(index - 1)}
 					/>
-					<Discord.Button
-						text='▶'
+					<Discord.Text variant='text-sm/medium' color='text-muted'>
+						{format('FRAME', {
+							index: index + 1,
+							count: frames.length,
+							time: seconds(frame.atMs),
+						})}
+					</Discord.Text>
+					<Discord.IconButton
+						size='sm'
 						variant='secondary'
+						icon={assets.getIdByName('ArrowSmallRightIcon')}
+						accessibilityLabel={messages.NEXT_FRAME}
 						disabled={index >= frames.length - 1}
 						onPress={() => setIndex(index + 1)}
 					/>

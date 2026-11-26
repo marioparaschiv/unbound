@@ -4,7 +4,8 @@ export const MESSAGE_LINK_PATTERN =
 export const Surface = {
 	minWidth: 80,
 	minHeight: 72,
-	maxHeight: 520,
+	// About a phone screen, so a linked post with media and buttons fits whole instead of being cut off.
+	maxHeight: 900,
 	bottomTrim: 5,
 	settleDelay: 80,
 	spacerFontSize: 3,

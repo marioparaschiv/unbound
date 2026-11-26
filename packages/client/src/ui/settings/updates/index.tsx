@@ -1,15 +1,14 @@
 import { View } from 'react-native';
+import { useStore } from 'zustand';
 
-import { automaticUpdates, type PendingUpdate } from '~/updates/addon-updates';
 import { describeRequiredLoader } from '~/updates/describe-required-loader';
+import type { PendingUpdate } from '~/updates/addon-updates';
 import type { ClientUpdate } from '~/updates/client-update';
-import { hasStagedBundle } from '~/native/unbound-native';
 import { readInstallKind } from '~/updates/install-kind';
 import { useUnboundSettings } from '~/settings/unbound';
 import { Discord, SafeArea } from '~/metro/components';
 import NoticeRow from '~/ui/settings-kit/notice-row';
 import FlashList from '~/ui/components/flash-list';
-import { Manager } from '~/addons/manager';
 import { Screens } from '~/core/constants';
 import UpdatesStore from '~/updates/state';
 import { messages } from '~/i18n/api';
@@ -21,6 +20,7 @@ import useInstalledAddons from './use-installed-addons';
 import DiscordBuildGroup from './discord-build-group';
 import AddonGroupHeader from './addon-group-header';
 import { listPendingItems } from './pending-items';
+import useStagedBundle from './use-staged-bundle';
 import useListedIds from './use-listed-ids';
 import UnboundGroup from './unbound-group';
 import UpdatesHero from './updates-hero';
@@ -42,7 +42,7 @@ const keyOf = (item: AddonRowItem) => item.entry.id;
 function UpdatesPage() {
 	const styles = useStyles();
 	const navigation = Discord.useNavigation();
-	const state = UpdatesStore((store) => store.state);
+	const state = useStore(UpdatesStore, (store) => store.state);
 	const settings = useUnboundSettings();
 	const addons = useInstalledAddons();
 	const listed = useListedIds();
@@ -53,12 +53,10 @@ function UpdatesPage() {
 	const discord = ready ? state.discord : null;
 	const requiredLoader = ready ? state.requiredLoader : null;
 	// The loader also stages bundles on its own, after the last check.
-	const client: ClientUpdate = hasStagedBundle() ? 'staged' : ready ? state.client : 'current';
+	const client: ClientUpdate = useStagedBundle() ? 'staged' : ready ? state.client : 'current';
 	// Paused client updates keep the cached client, so the newer one's loader requirement doesn't block it.
 	const blocked = Boolean(requiredLoader) && settings.get('updater.auto.client');
-	// Held addons keep their own Update button but sit out Update all.
-	const automatic = automaticUpdates(updates, (kind) => Manager.for(kind));
-	const { rows, expanded, toggle } = useAddonRows(addons, updates, listed);
+	const { rows, automatic, expanded, toggle } = useAddonRows(addons, updates, listed);
 
 	function renderRow({ item, index }: AddonRowInfo) {
 		return (
@@ -68,6 +66,7 @@ function UpdatesPage() {
 				checked={ready}
 				checking={checking}
 				listed={item.listed}
+				held={item.held}
 				end={index === rows.length - 1}
 			/>
 		);
@@ -85,7 +84,7 @@ function UpdatesPage() {
 			<UpdatesHero
 				state={state}
 				pending={listPendingItems(updates, loader, discord)}
-				automatic={automatic.length}
+				automatic={automatic}
 				blocked={blocked}
 				client={client}
 			/>

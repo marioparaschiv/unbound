@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/messages.jpg
+      alt: 'Aussie Speech: plain English typed in the message box, and earlier messages it sent rewritten into Aussie English.'
+    - image: media/toggle.jpg
+      alt: Aussie Speech's toggle in the chat input, on, while a plain-English message is written.
+    - image: media/settings.jpg
+      alt: Aussie Speech's settings for keeping the toggle on in every channel or turning it off after one message.
 ---
 
 ## :sparkle: What it does

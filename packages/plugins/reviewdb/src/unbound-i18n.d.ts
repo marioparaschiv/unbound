@@ -115,7 +115,7 @@ declare module '@unbound-app/i18n' {
 		readonly UPDATE_REVIEW: string;
 		/** Submit review */
 		readonly SUBMIT_REVIEW: string;
-		/** Blocked Users */
+		/** Blocked users */
 		readonly BLOCKED_USERS: string;
 		/** No blocked users. */
 		readonly NO_BLOCKED_USERS: string;

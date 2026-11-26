@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import { memo } from 'react';
 
 import FlashList from '~/ui/components/flash-list';
+import { Gestures } from '~/metro/common';
 import { messages } from '~/i18n/api';
 
 import useStyles from './featured-shelf.style';
@@ -44,6 +45,8 @@ function FeaturedShelf({ addons, kind }: FeaturedShelfProps) {
 				keyExtractor={keyOf}
 				renderItem={renderCard}
 				estimatedItemSize={220}
+				// Gesture-handler's scroll view takes part in the tab pager's gesture arbitration; React Native's loses sideways drags to it on Android.
+				renderScrollComponent={Gestures.ScrollView}
 				style={styles.scroller}
 				contentContainerStyle={styles.row}
 			/>

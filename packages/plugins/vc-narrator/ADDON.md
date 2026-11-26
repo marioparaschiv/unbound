@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: "VC Narrator's settings: which voice channel joins, leaves and moves it announces, and the speech rate."
 ---
 
 ## :sparkle: What it does

@@ -4,5 +4,6 @@
 	"OUTPUT_TITLE": "{language} · exit {code}",
 	"OUTPUT_BODY": "{output}",
 	"NO_OUTPUT": "(intet output)",
-	"RUN_FAILED": "Kunne ikke køre koden"
+	"RUN_FAILED": "Kunne ikke køre koden",
+	"CLOSE": "Luk"
 }

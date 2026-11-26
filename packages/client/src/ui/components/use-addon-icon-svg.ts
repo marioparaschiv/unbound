@@ -1,3 +1,4 @@
+import { useStore } from 'zustand';
 import { useEffect } from 'react';
 
 import { findIconSvg } from '~/marketplace/catalog';
@@ -18,7 +19,7 @@ function useAddonIconSvg(id: string): string | undefined {
 		}
 	}, []);
 
-	return MarketplaceStore((store) => findIconSvg(store.state, id));
+	return useStore(MarketplaceStore, (store) => findIconSvg(store.state, id));
 }
 
 export default useAddonIconSvg;

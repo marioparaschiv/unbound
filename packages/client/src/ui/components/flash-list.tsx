@@ -1,5 +1,5 @@
+import { createElement, type ComponentType, type ReactElement, type Ref } from 'react';
 import type { ScrollViewProps, StyleProp, ViewStyle } from 'react-native';
-import { createElement, type ReactElement, type Ref } from 'react';
 
 import { FlashList as FlashListModule } from '~/metro/components';
 
@@ -27,6 +27,7 @@ type FlashListProps<T> = {
 	showsHorizontalScrollIndicator?: boolean;
 	keyboardDismissMode?: ScrollViewProps['keyboardDismissMode'];
 	refreshControl?: ScrollViewProps['refreshControl'];
+	renderScrollComponent?: ComponentType<ScrollViewProps>;
 	style?: StyleProp<ViewStyle>;
 	contentContainerStyle?: StyleProp<ViewStyle>;
 };

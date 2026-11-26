@@ -34,12 +34,49 @@ describe('receipts', () => {
 		]);
 	});
 
-	test("leaves a message's own small text alone", () => {
+	test("ends a message's own small text with the mark, on its line", () => {
 		const own = { type: 'subtext', content: [{ type: 'text', content: 'footnote' }] };
+		const sending = withReceipt([own], 'sending');
 
-		expect(withReceipt([own], 'sending')).toEqual([
-			own,
-			{ type: 'subtext', content: [{ type: 'text', content: ' 🕓' }] },
+		expect(sending).toEqual([
+			{
+				type: 'subtext',
+				content: [
+					{ type: 'text', content: 'footnote' },
+					{ type: 'text', content: ' 🕓' },
+				],
+			},
 		]);
+		expect(withReceipt(sending, 'acknowledged')).toEqual([
+			{
+				type: 'subtext',
+				content: [
+					{ type: 'text', content: 'footnote' },
+					{ type: 'text', content: ' ✓' },
+				],
+			},
+		]);
+	});
+
+	test('puts the mark inside a closing heading or quote', () => {
+		const heading = { type: 'heading', content: [{ type: 'text', content: 'Plans' }] };
+
+		expect(withReceipt([heading], 'acknowledged')).toEqual([
+			{
+				type: 'heading',
+				content: [
+					{ type: 'text', content: 'Plans' },
+					{ type: 'subtext', content: [{ type: 'text', content: ' ✓' }] },
+				],
+			},
+		]);
+	});
+
+	test('leaves a message ending in a code block or list unmarked', () => {
+		const code = { type: 'codeBlock', content: 'ls' };
+		const list = { type: 'list', content: [] };
+
+		expect(withReceipt([code], 'acknowledged')).toEqual([code]);
+		expect(withReceipt([list], 'failed')).toEqual([list]);
 	});
 });

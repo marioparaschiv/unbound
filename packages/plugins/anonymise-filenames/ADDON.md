@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Anonymise Filenames' settings with the Random Characters method and its length slider.
 ---
 
 ## :sparkle: What it does

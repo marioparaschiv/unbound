@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.4.2] - 2026-11-24
+
+### Fixed
+
+- The store page shows the plugin's screenshots, which 1.4.1 published without. The plugin works the same as before.
+
+## [1.4.1] - 2026-11-24
+
+### Changed
+
+- The store page shows screenshots of the plugin instead of a banner. The plugin works the same as before.
+
+## [1.4.0] - 2026-11-24
+
+### Changed
+
+- The language rows in the settings show the language's name, such as "English", instead of its code.
+
 ## [1.3.0] - 2026-11-18
 
 ### Added

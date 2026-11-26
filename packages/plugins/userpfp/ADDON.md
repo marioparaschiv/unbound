@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/chat.jpg
+      alt: UserPFP showing the community avatars people set on UserPFP next to their messages.
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/merged.jpg
+      alt: Message Burst joins three quick follow-ups into one edited message in a direct message.
+    - image: media/settings.jpg
+      alt: "Message Burst's settings: burst length, merging into messages with attachments, and joining with a space."
 ---
 
 ## :sparkle: What it does

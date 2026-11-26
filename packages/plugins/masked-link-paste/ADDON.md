@@ -1,7 +1,3 @@
----
-banner: media/banner.png
----
-
 ## :sparkle: What it does
 
 - :link: Select text in the message box and paste a link over it to get `[text](link)`.

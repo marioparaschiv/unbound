@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/picker.jpg
+      alt: Greet Sticker Picker's sheet of greet stickers, opened from a new member's Wave to say hi! button.
 ---
 
 ## :sparkle: What it does

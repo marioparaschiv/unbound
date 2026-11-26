@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Always Animate's settings, with a switch for avatars, decorations, nameplates, profile effects, server icons, emojis, stickers and GIFs.
 ---
 
 ## :sparkle: What it does

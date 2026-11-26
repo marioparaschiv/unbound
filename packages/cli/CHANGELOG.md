@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.6.0](https://github.com/marioparaschiv/unbound/compare/cli-v3.5.9...cli-v3.6.0) (2026-11-24)
+
+
+### Features
+
+* **contracts:** make the store page banner optional ([#2251](https://github.com/marioparaschiv/unbound/issues/2251)) ([03ee4a5](https://github.com/marioparaschiv/unbound/commit/03ee4a5fcb69f082b7774872785adf1ab261eea0))
+* **plugins:** add store screenshots and drop banners ([#2265](https://github.com/marioparaschiv/unbound/issues/2265)) ([ff3e790](https://github.com/marioparaschiv/unbound/commit/ff3e7909a174ad71db0122b10c3c6065601e221b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @unbound-app/api bumped to 1.2.0
+
 ## [3.5.9](https://github.com/marioparaschiv/unbound/compare/cli-v3.5.8...cli-v3.5.9) (2026-11-22)
 
 

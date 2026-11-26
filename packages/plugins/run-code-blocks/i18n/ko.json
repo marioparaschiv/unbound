@@ -4,5 +4,6 @@
 	"OUTPUT_TITLE": "{language} · 종료 코드 {code}",
 	"OUTPUT_BODY": "{output}",
 	"NO_OUTPUT": "(출력 없음)",
-	"RUN_FAILED": "코드를 실행하지 못했어요"
+	"RUN_FAILED": "코드를 실행하지 못했어요",
+	"CLOSE": "닫기"
 }

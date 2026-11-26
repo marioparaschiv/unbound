@@ -55,7 +55,7 @@
 	"REVIEW_PLACEHOLDER": "Review @{name}",
 	"UPDATE_REVIEW": "Update review",
 	"SUBMIT_REVIEW": "Submit review",
-	"BLOCKED_USERS": "Blocked Users",
+	"BLOCKED_USERS": "Blocked users",
 	"NO_BLOCKED_USERS": "No blocked users.",
 	"UNBLOCK": "Unblock",
 	"HIDE_SYSTEM_REVIEWS": "Hide the ReviewDB notice",

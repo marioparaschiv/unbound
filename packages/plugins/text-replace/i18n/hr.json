@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Zamjena teksta",
-	"PLUGIN_TAGLINE": "Automatski prepravi poruke prije slanja.",
-	"TRY_YOUR_RULES": "Isprobaj svoja pravila",
-	"TEST_YOUR_RULES": "Testiraj svoja pravila",
 	"EXAMPLE_MESSAGE": "Primjer poruke",
 	"EXAMPLE_PLACEHOLDER": "Upiši poruku za test",
 	"RESULT": "Rezultat",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Izvezi ili uvezi oba popisa pravila kao prenosivi JSON.",
 	"EXPORT_AND_SHARE": "Izvezi i podijeli",
 	"IMPORT_CLIPBOARD": "Uvezi iz međuspremnika",
-	"PASTE_JSON": "Zalijepi JSON",
-	"PASTE_JSON_PLACEHOLDER": "Ovdje zalijepi izvezeni JSON iz Zamjene teksta",
-	"IMPORT_PASTED": "Uvezi zalijepljeno",
 	"RULESET_IMPORTED": "Skup pravila je uvezen.",
 	"IMPORT_FAILED": "Uvoz skupa pravila nije uspio.",
 	"CLIPBOARD_HAS_NO_RULESET": "Tvoj međuspremnik ne sadrži skup pravila.",

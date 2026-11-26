@@ -3,25 +3,33 @@
 declare module '@unbound-app/i18n' {
 	/** Every en-US message, read in the user's locale. */
 	export type Messages = {
-		/** Add */
-		readonly ADD: string;
 		/** Couldn't load that pack: {reason} */
 		readonly ADD_FAILED: string;
+		/** Add a pack */
+		readonly ADD_PACK: string;
 		/** Added {title}. */
 		readonly ADDED: string;
+		/** Adding… */
+		readonly ADDING: string;
 		/** Couldn't attach that sticker. */
 		readonly ATTACH_FAILED: string;
 		/** Sticker packs */
 		readonly BUTTON: string;
-		/** No packs yet. Paste a LINE sticker shop link above. */
+		/** No packs yet. Add a LINE sticker shop link above. */
 		readonly EMPTY: string;
 		/** A store.line.me sticker link or its pack number */
 		readonly LINK_HELP: string;
+		/** store.line.me/stickershop/product/… */
+		readonly LINK_PLACEHOLDER: string;
 		/** That isn't a LINE sticker pack link or number. */
 		readonly NOT_A_PACK: string;
 		/** Remove */
 		readonly REMOVE: string;
-		/** Sticker Packs */
+		/** Remove {title} */
+		readonly REMOVE_LABEL: string;
+		/** Remove {title}? */
+		readonly REMOVE_TITLE: string;
+		/** Sticker packs */
 		readonly TITLE: string;
 	};
 
@@ -29,6 +37,8 @@ declare module '@unbound-app/i18n' {
 	export type FormatVars = {
 		ADD_FAILED: { reason: string | number };
 		ADDED: { title: string | number };
+		REMOVE_LABEL: { title: string | number };
+		REMOVE_TITLE: { title: string | number };
 	};
 
 	/** Each message in the user's locale, falling back to en-US. */

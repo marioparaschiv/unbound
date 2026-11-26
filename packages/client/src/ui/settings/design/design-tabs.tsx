@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import noop from '@unbound-app/utils/noop';
 
@@ -53,15 +53,21 @@ function renderTab(id: DesignTab, renderPage: DesignTabsProps['renderPage']) {
 
 /**
  * @description The Design page's frame: Discord's large segmented control over Themes, Icons, Fonts and Chat, floating
- * below a transparent header over full-screen pages, which inset past both through the header height. Discord keeps
+ * over full-screen pages, which inset past it through the header height. Discord keeps
  * each page frozen until a swipe or press first reaches it, so it mounts as it slides in. Themes and Icons are
  * Discord's theme picker; Fonts is the shared override list; Chat holds the chat's look, such as its background.
  */
 function DesignTabs({ renderPage, initialTab = 'theme', onTabChange = noop }: DesignTabsProps) {
 	const styles = useStyles();
-	const headerHeight = HeaderElements.useHeaderHeight();
 	const [tabsHeight, setTabsHeight] = useState(0);
+	const tabs = useRef<View>(null);
 	const page = usePageWidth();
+
+	// Fabric measures synchronously here, so the pages' first painted frame already insets past the tabs; waiting for
+	// onLayout painted them under the tabs for a frame, then shifted them down.
+	useLayoutEffect(() => {
+		tabs.current?.measure((_x, _y, _width, height) => setTabsHeight(height));
+	}, []);
 
 	const items = useMemo(
 		() =>
@@ -85,14 +91,15 @@ function DesignTabs({ renderPage, initialTab = 'theme', onTabChange = noop }: De
 
 	return (
 		<View style={styles.frame} onLayout={page.onLayout}>
-			<HeaderElements.HeaderHeightContext.Provider value={headerHeight + tabsHeight}>
+			<HeaderElements.HeaderHeightContext.Provider value={tabsHeight}>
 				<View style={StyleSheet.absoluteFill}>
 					<Discord.SegmentedControlPages state={state} />
 				</View>
 			</HeaderElements.HeaderHeightContext.Provider>
 			<View
+				ref={tabs}
 				onLayout={(event) => setTabsHeight(event.nativeEvent.layout.height)}
-				style={[styles.tabs, { top: headerHeight }]}
+				style={styles.tabs}
 			>
 				<Discord.SegmentedControl state={state} variant='experimental_Large' />
 			</View>

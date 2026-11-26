@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Save to Album's setting for the Photos album saved images and videos go into.
 ---
 
 ## :sparkle: What it does

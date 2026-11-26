@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/mistakes.jpg
+      alt: Grammar Check listing LanguageTool's spelling and grammar fixes for a draft, with a Fix all button.
+    - image: media/button.jpg
+      alt: Grammar Check's Check grammar button in the chat input next to a draft.
 ---
 
 ## :sparkle: What it does

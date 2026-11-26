@@ -3,14 +3,16 @@ import type { SheetProps } from '@unbound-plugins/shared/action-sheets/open-shee
 import type { NativeBridge } from '@unbound-app/api/native';
 import { BottomSheets, Discord, GorhomSheet } from '@unbound-app/api/metro/components';
 import { format, messages } from '@unbound-app/i18n';
-import { toasts } from '@unbound-app/api';
-import { Keyboard, View } from 'react-native';
+import { toasts, ui } from '@unbound-app/api';
+import { Keyboard } from 'react-native';
 import { useState } from 'react';
 
 import { openFrameReader, type Crop } from '@unbound-plugins/shared/media/frames/frame-reader';
 import { downloadVideo } from '~/lib/video';
 import { toBase64 } from '@unbound-plugins/shared/media/gif/base64';
 import { makeGif } from '~/lib/make-gif';
+
+import useStyles from '~/components/gif-maker-sheet.style';
 
 /** What the GIF Maker sheet works on: the video, the channel, the native bridge and the temporary folder. */
 export type GifMakerProps = {
@@ -22,51 +24,22 @@ export type GifMakerProps = {
 
 type GifMakerSheetProps = GifMakerProps & SheetProps;
 
-type Choice<T> = { value: T; label: () => string };
-
 const MAX_SECONDS = 15;
 const FPS = 10;
-const SIZES: Choice<number>[] = [
-	{ value: 240, label: () => messages.SIZE_SMALL },
-	{ value: 320, label: () => messages.SIZE_MEDIUM },
-	{ value: 480, label: () => messages.SIZE_LARGE },
-];
-const CROPS: Choice<Crop>[] = [
-	{ value: 'original', label: () => messages.CROP_ORIGINAL },
-	{ value: 'square', label: () => messages.CROP_SQUARE },
-];
+const SIZES = { small: 240, medium: 320, large: 480 } as const;
 
-function Choices<T>({
-	options,
-	value,
-	onChange,
-}: {
-	options: Choice<T>[];
-	value: T;
-	onChange: (value: T) => void;
-}) {
-	return (
-		<View style={{ flexDirection: 'row', gap: 8 }}>
-			{options.map((option) => (
-				<View key={String(option.value)} style={{ flex: 1 }}>
-					<Discord.Button
-						text={option.label()}
-						size='sm'
-						variant={option.value === value ? 'primary' : 'secondary'}
-						onPress={() => onChange(option.value)}
-					/>
-				</View>
-			))}
-		</View>
-	);
+type Size = keyof typeof SIZES;
+
+function isSize(value: string): value is Size {
+	return value in SIZES;
 }
 
-function Label({ children }: { children: string }) {
-	return (
-		<Discord.Text variant='text-sm/semibold' color='text-muted'>
-			{children}
-		</Discord.Text>
-	);
+function isCrop(value: string): value is Crop {
+	return value === 'original' || value === 'square';
+}
+
+function validSeconds(text: string): string | undefined {
+	return Number.isFinite(Number(text)) && Number(text) >= 0 ? undefined : messages.NOT_SECONDS;
 }
 
 /**
@@ -82,22 +55,15 @@ export default function GifMakerSheet({
 	folder,
 	onClose,
 }: GifMakerSheetProps) {
+	const styles = useStyles();
 	const [start, setStart] = useState('0');
-	const [length, setLength] = useState('3');
-	const [width, setWidth] = useState(320);
+	const [length, setLength] = useState(3);
+	const [size, setSize] = useState<Size>('medium');
 	const [crop, setCrop] = useState<Crop>('original');
 	const [caption, setCaption] = useState('');
 	const [status, setStatus] = useState<string | undefined>();
 
 	async function create() {
-		const seconds = Math.max(0.1, Number(length) || 3);
-
-		if (seconds > MAX_SECONDS) {
-			toasts.warning('TOO_LONG', { seconds: MAX_SECONDS });
-
-			return;
-		}
-
 		Keyboard.dismiss();
 
 		try {
@@ -112,9 +78,9 @@ export default function GifMakerSheet({
 					reader,
 					{
 						start: Number(start) || 0,
-						length: seconds,
+						length,
 						fps: FPS,
-						width,
+						width: SIZES[size],
 						crop,
 						caption: caption.trim(),
 					},
@@ -145,53 +111,59 @@ export default function GifMakerSheet({
 		}
 	}
 
-	const { ActionSheet } = BottomSheets;
+	const { ActionSheet, BottomSheetTitleHeader } = BottomSheets;
 	const { BottomSheetScrollView: ScrollView } = GorhomSheet;
 
 	return (
 		<ActionSheet scrollable>
-			<ScrollView
-				contentContainerStyle={{ padding: 16, gap: 12 }}
-				keyboardShouldPersistTaps='handled'
-			>
-				<Discord.Text variant='heading-lg/semibold'>{messages.TITLE}</Discord.Text>
-				<View style={{ flexDirection: 'row', gap: 8 }}>
-					<View style={{ flex: 1, gap: 4 }}>
-						<Label>{messages.START}</Label>
-						<Discord.TextField
-							size='md'
-							value={start}
-							onChange={setStart}
-							keyboardType='decimal-pad'
-							isRound
-						/>
-					</View>
-					<View style={{ flex: 1, gap: 4 }}>
-						<Label>{messages.LENGTH}</Label>
-						<Discord.TextField
-							size='md'
-							value={length}
-							onChange={setLength}
-							keyboardType='decimal-pad'
-							isRound
-						/>
-					</View>
-				</View>
-				<Label>{messages.SIZE}</Label>
-				<Choices options={SIZES} value={width} onChange={setWidth} />
-				<Label>{messages.CROP}</Label>
-				<Choices options={CROPS} value={crop} onChange={setCrop} />
-				<Label>{messages.CAPTION}</Label>
-				<Discord.TextField
-					size='md'
-					value={caption}
-					onChange={setCaption}
-					placeholder={messages.CAPTION_PLACEHOLDER}
-					isClearable
-					isRound
-				/>
+			<BottomSheetTitleHeader title={messages.TITLE} />
+			<ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps='handled'>
+				<ui.Section>
+					<ui.InputRow
+						label={messages.START}
+						value={start}
+						keyboardType='decimal-pad'
+						validate={validSeconds}
+						onChange={setStart}
+					/>
+					<ui.StepperRow
+						label={messages.LENGTH}
+						value={length}
+						minimum={0.5}
+						maximum={MAX_SECONDS}
+						step={0.5}
+						onChange={setLength}
+					/>
+				</ui.Section>
+				<ui.Section>
+					<ui.SegmentedRow
+						label={messages.SIZE}
+						value={size}
+						options={[
+							{ value: 'small', label: messages.SIZE_SMALL },
+							{ value: 'medium', label: messages.SIZE_MEDIUM },
+							{ value: 'large', label: messages.SIZE_LARGE },
+						]}
+						onChange={(value) => isSize(value) && setSize(value)}
+					/>
+					<ui.SegmentedRow
+						label={messages.CROP}
+						value={crop}
+						options={[
+							{ value: 'original', label: messages.CROP_ORIGINAL },
+							{ value: 'square', label: messages.CROP_SQUARE },
+						]}
+						onChange={(value) => isCrop(value) && setCrop(value)}
+					/>
+					<ui.InputRow
+						label={messages.CAPTION}
+						placeholder={messages.CAPTION_PLACEHOLDER}
+						value={caption}
+						onChange={setCaption}
+					/>
+				</ui.Section>
 				{status ? (
-					<Discord.Text variant='text-sm/medium' color='text-muted'>
+					<Discord.Text variant='text-sm/medium' color='text-muted' style={styles.status}>
 						{status}
 					</Discord.Text>
 				) : null}

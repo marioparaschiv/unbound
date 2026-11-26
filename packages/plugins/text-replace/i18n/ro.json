@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Text Replace",
-	"PLUGIN_TAGLINE": "Rescrie automat mesajele înainte să le trimiți.",
-	"TRY_YOUR_RULES": "Încearcă regulile",
-	"TEST_YOUR_RULES": "Testează regulile",
 	"EXAMPLE_MESSAGE": "Mesaj de exemplu",
 	"EXAMPLE_PLACEHOLDER": "Scrie un mesaj de test",
 	"RESULT": "Rezultat",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Exportă sau importă ambele liste de reguli ca JSON portabil.",
 	"EXPORT_AND_SHARE": "Exportă și distribuie",
 	"IMPORT_CLIPBOARD": "Importă din clipboard",
-	"PASTE_JSON": "Lipește JSON",
-	"PASTE_JSON_PLACEHOLDER": "Lipește aici JSON-ul exportat din Text Replace",
-	"IMPORT_PASTED": "Importă textul lipit",
 	"RULESET_IMPORTED": "Setul de reguli a fost importat.",
 	"IMPORT_FAILED": "Setul de reguli nu a putut fi importat.",
 	"CLIPBOARD_HAS_NO_RULESET": "Clipboardul nu conține un set de reguli.",

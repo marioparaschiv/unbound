@@ -1,5 +1,9 @@
 #include <cassert>
+#include <climits>
+#include <fcntl.h>
 #include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <string>
 #include <unistd.h>
 
@@ -213,6 +217,68 @@ static void startingMarkerTakesPrecedence(const std::filesystem::path &root)
     assert(loader::crashedAddonsJSON(disabled)[0]["phase"] == "starting");
 }
 
+static std::string pathOf(int descriptor)
+{
+    char path[PATH_MAX] = {0};
+#if defined(F_GETPATH)
+    return fcntl(descriptor, F_GETPATH, path) == 0 ? std::string(path) : std::string();
+#else
+    std::string link = "/proc/self/fd/" + std::to_string(descriptor);
+    ssize_t length   = readlink(link.c_str(), path, sizeof(path) - 1);
+    return length > 0 ? std::string(path, static_cast<size_t>(length)) : std::string();
+#endif
+}
+
+static int descriptorFor(const std::filesystem::path &file)
+{
+    std::string wanted = std::filesystem::canonical(file).string();
+    for (int descriptor = 3; descriptor < 1024; descriptor++)
+    {
+        std::string path = pathOf(descriptor);
+        if (!path.empty() && std::filesystem::path(path) == wanted)
+        {
+            return descriptor;
+        }
+    }
+
+    return -1;
+}
+
+static std::string contents(const std::filesystem::path &file)
+{
+    std::ifstream stream(file);
+    return std::string(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+}
+
+static void reusedDescriptorIsLeftAlone(const std::filesystem::path &root)
+{
+    loader::AddonCrashGuard guard(root.string());
+    assert(guard.beginStart("plugins:a", "A"));
+    std::filesystem::path marker;
+    for (const auto &entry : std::filesystem::directory_iterator(root))
+    {
+        if (entry.path().filename().string().find("start") != std::string::npos)
+        {
+            marker = entry.path();
+        }
+    }
+
+    int stolen = descriptorFor(marker);
+    assert(stolen >= 0);
+    close(stolen);
+    std::filesystem::path other = root / "other.txt";
+    int reused                  = open(other.c_str(), O_RDWR | O_CREAT, 0600);
+    assert(reused == stolen);
+    assert(write(reused, "keep", 4) == 4);
+
+    assert(!guard.finishStart("plugins:a"));
+    assert(guard.beginStart("plugins:b", "B"));
+    assert(fcntl(reused, F_GETFD) != -1);
+    assert(contents(other) == "keep");
+    assert(guard.finishStart("plugins:b"));
+    close(reused);
+}
+
 int main()
 {
     const auto root = makeTemporaryDirectory();
@@ -233,6 +299,7 @@ int main()
     run("running-clean", emptyRunningMarkerIsACleanLaunch);
     run("start-and-run", startAndRunCrashesCountTogether);
     run("precedence", startingMarkerTakesPrecedence);
+    run("reused-descriptor", reusedDescriptorIsLeftAlone);
 
     std::filesystem::remove_all(root);
     return 0;

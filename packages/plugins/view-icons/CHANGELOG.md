@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.0.8] - 2026-11-24
+
+### Fixed
+
+- The store page shows the plugin's screenshots, which 1.0.7 published without. The plugin works the same as before.
+
+## [1.0.7] - 2026-11-24
+
+### Changed
+
+- The store page shows screenshots of the plugin instead of a banner. The plugin works the same as before.
+
+## [1.0.6] - 2026-11-24
+
+### Fixed
+
+- View Banner shows for users with a profile banner, and opens the animated banner when there is one.
+
 ## [1.0.5] - 2026-11-11
 
 ### Changed

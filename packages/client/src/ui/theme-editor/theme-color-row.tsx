@@ -1,3 +1,4 @@
+import { useStore } from 'zustand';
 import { memo } from 'react';
 
 import { resetColor, setColor } from '~/themes/draft';
@@ -21,7 +22,7 @@ const opacityOf = (token: string) => readTokenColor(token)?.alpha;
  * press, and a reset back to Discord's colour once edited.
  */
 function ThemeColorRow({ label, tokens }: ThemeColorRowProps) {
-	const draft = ThemeStore((state) => state.preview);
+	const draft = useStore(ThemeStore, (state) => state.preview);
 	const shown = readTokenColor(tokens[0])?.hex ?? '#000000';
 	const edited = Boolean(draft && tokens.some((token) => token in draft.semantic));
 

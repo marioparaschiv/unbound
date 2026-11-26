@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/player.jpg
+      alt: SoundCloud Player playing a tapped SoundCloud link in a sheet over the chat.
 ---
 
 ## :sparkle: What it does

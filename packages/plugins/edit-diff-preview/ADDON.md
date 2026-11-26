@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/code-diff.jpg
+      alt: Edit Diff Preview showing removed code struck through in red and added code in green before an edit is saved.
+    - image: media/settings.jpg
+      alt: "Edit Diff Preview's settings: the length that triggers a preview and always previewing code."
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/invites.jpg
+      alt: Better Invites showing who sent an invite, its channel and when it expires above the server card.
 ---
 
 ## :sparkle: What it does

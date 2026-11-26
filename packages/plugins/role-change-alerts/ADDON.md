@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Role Change Alerts' settings for alerts when a server gives you or takes away a role, and persistent notices.
 ---
 
 ## :sparkle: What it does

@@ -1,7 +1,3 @@
----
-banner: media/banner.png
----
-
 ## :sparkle: What it does
 
 - :dots: The three typing dots stay still instead of pulsing, so they no longer redraw every frame.

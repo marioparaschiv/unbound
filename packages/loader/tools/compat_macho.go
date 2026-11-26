@@ -52,11 +52,12 @@ func (index *objcIndex) lookupMethod(className, selector string) (objcLookup, st
 			return objcFound, current.Name
 		}
 
-		if current.SuperExternal {
+		next := index.Classes[current.Super]
+		if current.SuperExternal && next == nil {
 			return objcInheritedExternally, current.Super
 		}
 
-		current = index.Classes[current.Super]
+		current = next
 	}
 
 	return objcMissing, ""

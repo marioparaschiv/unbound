@@ -71,6 +71,16 @@ const UPDATABLE_KINDS: Record<SyncKind, UpdatableKind | undefined> = {
 
 type InstallOutcome = 'installed' | 'present' | 'failed';
 
+/** How one kind of install stands between this device and the cloud after a sync. */
+export type SyncKindSummary = {
+	/** How many installs the cloud holds. */
+	cloud: number;
+	/** In the cloud but not installed here, such as an install that failed. */
+	missing: string[];
+	/** Installed here but not in the cloud: installed from no URL and not listed in the marketplace. */
+	unsynced: string[];
+};
+
 // Run in this order so an applied theme or an enabled plugin is installed before it is used.
 const ACTION_ORDER: Record<SyncAction['type'], number> = {
 	install: 0,
@@ -238,6 +248,31 @@ export function collectLocalDocument(): SyncDocument {
 	}
 
 	return { addons, settings: synced };
+}
+
+function summarizeKind(kind: SyncKind, document: SyncDocument): SyncKindSummary {
+	const adapter = adapters[kind];
+	const ids = new Set(document.addons[kind].installs.map((install) => install.id));
+
+	return {
+		cloud: ids.size,
+		missing: [...ids].filter((id) => !adapter.isInstalled(id)),
+		unsynced: adapter.listInstalled().filter((id) => !ids.has(id)),
+	};
+}
+
+/**
+ * @description Compares a document with what this device has installed, for the Sync page's status.
+ * @param document The document the cloud now holds.
+ * @returns Each kind's cloud count, and the ids installed on only one side.
+ */
+export function summarize(document: SyncDocument): Record<SyncKind, SyncKindSummary> {
+	return {
+		plugins: summarizeKind('plugins', document),
+		themes: summarizeKind('themes', document),
+		icons: summarizeKind('icons', document),
+		fonts: summarizeKind('fonts', document),
+	};
 }
 
 async function applyInstall(action: SyncInstallAction): Promise<InstallOutcome> {

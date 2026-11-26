@@ -2,7 +2,14 @@ import { dialogs, flux, metro, patcher } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
 import { messages } from '@unbound-app/i18n';
 
-import { collapseSame, diffWords, shouldPreview, type DiffPart } from '~/lib/diff';
+import {
+	collapseSame,
+	diffWords,
+	hasCode,
+	shouldPreview,
+	stripFences,
+	type DiffPart,
+} from '~/lib/diff';
 import DiffView from '~/components/diff-view';
 
 type MessageStore = {
@@ -23,11 +30,11 @@ function isEditArgs(args: unknown[]): args is EditArgs {
 	);
 }
 
-function confirmChanges(parts: DiffPart[]): Promise<boolean> {
+function confirmChanges(parts: DiffPart[], code: boolean): Promise<boolean> {
 	return new Promise((resolve) => {
 		dialogs.showDialog({
 			title: messages.TITLE,
-			content: () => <DiffView parts={parts} />,
+			content: () => <DiffView parts={parts} code={code} />,
 			buttons: [{ label: messages.SAVE, onPress: () => resolve(true) }],
 			cancel: messages.KEEP_EDITING,
 			onCancel: () => resolve(false),
@@ -59,7 +66,12 @@ export function patchEdits(): void {
 
 		if (!shouldPreview(before, edit.content, options)) return original.apply(self, args);
 
-		if (await confirmChanges(collapseSame(diffWords(before, edit.content)))) {
+		const code = hasCode(before) || hasCode(edit.content);
+		const parts = code
+			? diffWords(stripFences(before), stripFences(edit.content))
+			: diffWords(before, edit.content);
+
+		if (await confirmChanges(collapseSame(parts), code)) {
 			return original.apply(self, args);
 		}
 

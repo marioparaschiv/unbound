@@ -1,4 +1,5 @@
 import type { PatchCallback, PatchParent } from 'possess';
+import { createLogger } from '@unbound-app/logger';
 import noop from '@unbound-app/utils/noop';
 import uuid from '@unbound-app/utils/uuid';
 import * as Possess from 'possess';
@@ -24,6 +25,11 @@ export type PatcherInstance = {
 };
 
 const repeats = createRepeatTracker();
+const logger = createLogger('Patcher');
+
+function isPatchable(parent: unknown): parent is PatchParent {
+	return (typeof parent === 'object' && parent !== null) || typeof parent === 'function';
+}
 
 /**
  * @description Creates a patcher whose patches share default options, so they can be removed together.
@@ -46,6 +52,15 @@ export function createPatcher(defaultOptions: string | UnboundPatchOptions): Pat
 		const merged = { ...defaults, ...options };
 		const unpatch = patchWhenLoaded(parent, merged.caller, (target) => {
 			const place = locate(target);
+
+			if (!isPatchable(place.parent)) {
+				logger.warn(
+					`Failed to patch ${place.method} for ${merged.caller}: its object is ${String(place.parent)}, so Discord likely moved it.`,
+				);
+
+				return noop;
+			}
+
 			const uncount = repeats.add(place.parent, `${merged.caller} ${place.method}`);
 			const remove = unpatchKeepingReplacement(
 				place.parent,

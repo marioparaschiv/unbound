@@ -17,6 +17,10 @@ declare module '@unbound-app/i18n' {
 		readonly CLEAR: string;
 		/** Frame {index} of {count} · {time}s */
 		readonly FRAME: string;
+		/** Previous frame */
+		readonly PREVIOUS_FRAME: string;
+		/** Next frame */
+		readonly NEXT_FRAME: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Chat Gestures' settings, picking what a double tap, a triple tap and a swipe do on a message.
 ---
 
 ## :sparkle: What it does

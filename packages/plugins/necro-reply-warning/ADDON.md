@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/warning.jpg
+      alt: Necro Reply Warning asks before replying to a message that is over a year old.
 ---
 
 ## :sparkle: What it does

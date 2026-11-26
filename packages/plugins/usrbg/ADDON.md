@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/profile.jpg
+      alt: USRBG showing a community banner from USRBG on a user's profile.
 ---
 
 ## :sparkle: What it does

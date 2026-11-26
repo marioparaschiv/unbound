@@ -22,6 +22,8 @@ type UpdateRowProps = {
 	checking: boolean;
 	/** Whether the Marketplace lists it; an unlisted addon never updates. */
 	listed: boolean;
+	/** Whether its updates are paused at the installed version. */
+	held: boolean;
 	/** Whether it is the group's last row, which rounds the card's bottom. */
 	end: boolean;
 };
@@ -52,11 +54,9 @@ function describe(
  * update. Pressing a listed one opens its update, version and pause actions. Outside a `TableRowGroup`, as the
  * page's virtualised list lays it out, the row draws its own divider and card corners.
  */
-function UpdateRow({ entry, update, checked, checking, listed, end }: UpdateRowProps) {
+function UpdateRow({ entry, update, checked, checking, listed, held, end }: UpdateRowProps) {
 	const navigation = Discord.useNavigation();
-	const manager = Manager.for(entry.kind);
-	const held = manager.getHeldVersion(entry.id) !== void 0;
-	const icon = icons[manager.icon];
+	const icon = icons[Manager.for(entry.kind).icon];
 
 	function trailing() {
 		if (update) {

@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/dm.jpg
+      alt: Typing Avatars showing a friend's avatar beside the typing indicator in a direct message.
 ---
 
 ## :sparkle: What it does

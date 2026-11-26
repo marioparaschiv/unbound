@@ -33,7 +33,7 @@ describe('badgesFor', () => {
 				{ id: '1', type: 0, nsfw: true, locked: false, private: false, isRules: false },
 				{ ...all, oneBadge: true },
 			),
-		).toEqual([{ label: 'BADGE_NSFW', color: 'STATUS_DANGER' }]);
+		).toEqual([{ label: 'BADGE_NSFW', variant: 'notification' }]);
 	});
 
 	test('shows nothing for a plain channel with type badges off', () => {

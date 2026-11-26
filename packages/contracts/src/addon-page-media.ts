@@ -102,12 +102,12 @@ export function isBannerAspect(media: MeasuredMedia): boolean {
 }
 
 /**
- * @description Checks a gallery entry's shape: between 9:16 (portrait) and 21:9 (ultrawide), inclusive.
+ * @description Checks a gallery entry's shape: between 9:21 (a phone screenshot) and 21:9 (ultrawide), inclusive.
  * @param media The measured image or video.
  * @returns Whether the store accepts it in the gallery.
  */
 export function isGalleryAspect(media: MeasuredMedia): boolean {
-	return media.width * 16 >= media.height * 9 && media.width * 9 <= media.height * 21;
+	return media.width * 21 >= media.height * 9 && media.width * 9 <= media.height * 21;
 }
 
 /**
@@ -159,7 +159,7 @@ export function measuredPageIssues(page: MeasuredPage): SchemaIssue[] {
 		if (media && !isGalleryAspect(media)) {
 			issues.push({
 				path: at,
-				message: `Media must be between 9:16 and 21:9; ${media.path} is ${media.width}x${media.height}.`,
+				message: `Media must be between 9:21 and 21:9; ${media.path} is ${media.width}x${media.height}.`,
 			});
 		}
 

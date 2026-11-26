@@ -1,7 +1,6 @@
 import { Discord } from '@unbound-app/api/metro/components';
-import { Pressable, ScrollView, View } from 'react-native';
 import { messages } from '@unbound-app/i18n';
-import { metro, toasts } from '@unbound-app/api';
+import { assets, metro, toasts, ui } from '@unbound-app/api';
 import { useEffect, useState } from 'react';
 
 import { formatTime, type TranscriptSegment } from '~/lib/segments';
@@ -38,70 +37,56 @@ function Passages({ segments, player }: PassagesProps) {
 	}
 
 	return (
-		<View style={{ gap: 4 }}>
-			<Discord.Text variant='text-sm/medium' color='text-muted'>
-				{messages.TAP_TO_PLAY}
-			</Discord.Text>
-			{segments.map((segment, index) => (
-				<Pressable
-					key={index}
-					accessibilityRole='button'
-					onPress={() => void play(index)}
-					style={({ pressed }) => ({
-						flexDirection: 'row',
-						gap: 12,
-						paddingVertical: 8,
-						paddingHorizontal: 8,
-						borderRadius: 8,
-						opacity: pressed ? 0.6 : 1,
-						backgroundColor:
-							index === playing ? 'rgba(88, 101, 242, 0.18)' : 'transparent',
-					})}
-				>
-					<Discord.Text
-						variant='text-sm/semibold'
-						color='text-link'
-						style={{ minWidth: 40 }}
-					>
-						{formatTime(segment.start)}
-					</Discord.Text>
-					<Discord.Text variant='text-md/normal' color='text-default' style={{ flex: 1 }}>
-						{segment.text}
-					</Discord.Text>
-				</Pressable>
-			))}
-			<Discord.Button
-				text={messages.STOP}
-				variant='secondary'
-				onPress={() => {
-					setPlaying(undefined);
-					void player.stop();
-				}}
-			/>
-		</View>
+		<>
+			<ui.Section description={messages.TAP_TO_PLAY} hasIcons>
+				{segments.map((segment, index) => (
+					<ui.Row
+						key={index}
+						label={segment.text}
+						subLabel={formatTime(segment.start)}
+						icon={assets.getIdByName(
+							index === playing ? 'VoiceNormalIcon' : 'PlayIcon',
+						)}
+						onPress={() => void play(index)}
+					/>
+				))}
+			</ui.Section>
+			<ui.Section hasIcons>
+				<ui.Row
+					label={messages.STOP}
+					icon={assets.getIdByName('StopIcon')}
+					disabled={playing === undefined}
+					onPress={() => {
+						setPlaying(undefined);
+						void player.stop();
+					}}
+				/>
+			</ui.Section>
+		</>
 	);
 }
 
 function TranscriptPage({ text, segments, player }: TranscriptPageProps) {
 	return (
-		<ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
+		<ui.Page>
 			{segments?.length && player ? (
 				<Passages segments={segments} player={player} />
 			) : (
-				<View>
-					<Discord.Text variant='text-md/normal' color='text-default' selectable>
-						{text}
-					</Discord.Text>
-				</View>
+				<Discord.Text variant='text-md/normal' color='text-default' selectable>
+					{text}
+				</Discord.Text>
 			)}
-			<Discord.Button
-				text={messages.COPY}
-				onPress={() => {
-					Clipboard?.setString(text);
-					toasts.show({ title: addon.name, content: messages.COPIED });
-				}}
-			/>
-		</ScrollView>
+			<ui.Section hasIcons>
+				<ui.Row
+					label={messages.COPY}
+					icon={assets.getIdByName('CopyIcon')}
+					onPress={() => {
+						Clipboard?.setString(text);
+						toasts.show({ title: addon.name, content: messages.COPIED });
+					}}
+				/>
+			</ui.Section>
+		</ui.Page>
 	);
 }
 

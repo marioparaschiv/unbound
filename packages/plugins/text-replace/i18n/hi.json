@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "टेक्स्ट बदलें",
-	"PLUGIN_TAGLINE": "मैसेज भेजने से पहले उन्हें अपने-आप दोबारा लिखें।",
-	"TRY_YOUR_RULES": "अपने नियम आज़माएँ",
-	"TEST_YOUR_RULES": "अपने नियम टेस्ट करें",
 	"EXAMPLE_MESSAGE": "उदाहरण मैसेज",
 	"EXAMPLE_PLACEHOLDER": "टेस्ट करने के लिए कोई मैसेज लिखें",
 	"RESULT": "नतीजा",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "दोनों नियम सूचियों को पोर्टेबल JSON के रूप में एक्सपोर्ट या इंपोर्ट करें।",
 	"EXPORT_AND_SHARE": "एक्सपोर्ट और शेयर करें",
 	"IMPORT_CLIPBOARD": "क्लिपबोर्ड से इंपोर्ट करें",
-	"PASTE_JSON": "JSON पेस्ट करें",
-	"PASTE_JSON_PLACEHOLDER": "“टेक्स्ट बदलें” से एक्सपोर्ट किया गया JSON यहाँ पेस्ट करें",
-	"IMPORT_PASTED": "पेस्ट किया गया इंपोर्ट करें",
 	"RULESET_IMPORTED": "नियमों का सेट इंपोर्ट हो गया।",
 	"IMPORT_FAILED": "नियमों का सेट इंपोर्ट नहीं हो सका।",
 	"CLIPBOARD_HAS_NO_RULESET": "आपके क्लिपबोर्ड में नियमों का कोई सेट नहीं है।",

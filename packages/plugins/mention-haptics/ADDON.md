@@ -1,7 +1,3 @@
----
-banner: media/banner.png
----
-
 ## :sparkle: What it does
 
 - :bell: Your phone taps when a new message mentions you, the way Discord counts mentions, including @everyone and roles unless you suppress them.

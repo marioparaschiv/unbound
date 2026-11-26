@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/mirrored-input.jpg
+      alt: Left Handed Mode mirroring the chat input so send and emoji sit on the left and the attachment button on the right.
 ---
 
 ## :sparkle: What it does

@@ -35,7 +35,8 @@ function passClicksThrough(transition: ViewTransition): void {
 
 		if (!target || target === root) return;
 
-		event.stopPropagation();
+		// Immediate, so another morph's listener on the same press cannot forward it a second time.
+		event.stopImmediatePropagation();
 		target.dispatchEvent(new MouseEvent('click', event));
 	}
 

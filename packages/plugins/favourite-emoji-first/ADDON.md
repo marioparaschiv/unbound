@@ -1,7 +1,3 @@
----
-banner: media/banner.png
----
-
 ## :sparkle: What it does
 
 - :star: Typing `:` and a name lists your favourite emoji that match before any others.

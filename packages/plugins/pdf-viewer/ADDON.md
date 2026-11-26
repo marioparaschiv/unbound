@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/quick-look.jpg
+      alt: PDF Viewer opening a PDF attachment from a direct message in iOS Quick Look.
 ---
 
 ## :sparkle: What it does

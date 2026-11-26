@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/dialog.jpg
+      alt: Sensitive Paste Guard asking before a message with a GitHub token goes out.
+    - image: media/redacted.jpg
+      alt: Sensitive Paste Guard's Redact and send, which replaces the secret with [redacted].
 ---
 
 ## :sparkle: What it does

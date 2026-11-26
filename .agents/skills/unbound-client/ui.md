@@ -17,7 +17,8 @@
 - Logic goes in a sibling `use-*.ts` hook.
 - One `variant: 'primary' | 'secondary'` prop over several booleans.
 - Derive values during render.
-- Read stores through a selector: `ThemeStore((state) => state.applied)`.
+- Read stores through a selector: `useStore(ThemeStore, (state) => state.applied)`. The React Compiler treats only `use*` calls as hooks, so `ThemeStore(selector)` would be memoised away.
+- The React Compiler memoises every render read on its inputs. A manager, native or module value read during render goes stale, so read it through a hook whose value changes with it (`useBucket`, `useState`), or opt the file out with `'use no memo'` and say why.
 
 Test: everything rendered comes from props, a hook, or a selector.
 

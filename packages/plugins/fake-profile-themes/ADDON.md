@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: "Fake Profile Themes' settings: primary and accent colors, a profile effect and the bio code to copy."
+    - image: media/effects.jpg
+      alt: Fake Profile Themes' sheet for picking one of Discord's profile effects.
 ---
 
 ## :sparkle: What it does

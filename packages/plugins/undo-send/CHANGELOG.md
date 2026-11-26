@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.3] - 2026-11-24
+
+### Fixed
+
+- Sending works again on recent Discord builds. Messages no longer disappear after you tap Send without going out.
+
+## [1.0.2] - 2026-11-24
+
+### Changed
+
+- The store page no longer shows a banner. The plugin works the same as before.
+
 ## [1.0.1] - 2026-11-17
 
 ### Fixed

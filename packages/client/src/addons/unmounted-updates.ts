@@ -46,6 +46,9 @@ function useGuarded<A extends unknown[]>(
  */
 export function guardUnmountedUpdates<T extends ReactModule>(react: T, report: () => void): T {
 	function useState<S>(initial: S | (() => S)) {
+		// Stands in for React's own hook, so it adds no memo cache of its own.
+		'use no memo';
+
 		const [state, setState] = react.useState(initial);
 		const mounted = useMounted(react);
 
@@ -53,6 +56,9 @@ export function guardUnmountedUpdates<T extends ReactModule>(react: T, report: (
 	}
 
 	function useReducer(...args: Parameters<ReactModule['useReducer']>) {
+		// Stands in for React's own hook, so it adds no memo cache of its own.
+		'use no memo';
+
 		const [state, dispatch] = react.useReducer(...args);
 		const mounted = useMounted(react);
 

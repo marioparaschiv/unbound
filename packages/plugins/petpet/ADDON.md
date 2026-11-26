@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/command.jpg
+      alt: PetPet's /petpet command in the slash command autocomplete.
+    - image: media/pet-row.jpg
+      alt: PetPet's Pet row in a message's long-press menu.
+    - image: media/gif.jpg
+      alt: PetPet's head-patting GIF of eternal's avatar attached in the chat input, ready to send.
 ---
 
 ## :sparkle: What it does

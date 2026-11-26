@@ -1,4 +1,3 @@
-import { Keyboard, TextInput, View, type GestureResponderEvent } from 'react-native';
 import { Discord } from '@unbound-app/api/metro/components';
 import { storage, ui } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
@@ -11,17 +10,6 @@ type CommandPageProps = {
 	/** The command to edit; `undefined` creates a new one. */
 	name?: string;
 };
-
-// The multiline response field can cover the buttons, so a tap anywhere else closes the keyboard.
-function dismissKeyboardOutsideInput({ target }: GestureResponderEvent) {
-	const focused = TextInput.State.currentlyFocusedInput();
-
-	if (!focused || target === focused) return;
-
-	if (Number(target) === TextInput.State.currentlyFocusedField()) return;
-
-	Keyboard.dismiss();
-}
 
 /**
  * @description The sub-page that edits one saved command, or creates one; it returns to the list once saved or deleted.
@@ -40,19 +28,13 @@ function CommandPage({ name }: CommandPageProps) {
 
 	return (
 		<ui.Page>
-			<View onTouchStart={dismissKeyboardOutsideInput}>
-				{original === undefined ? (
-					<Discord.Text variant='text-md/normal' color='text-muted'>
-						{messages.COMMAND_NOT_FOUND}
-					</Discord.Text>
-				) : (
-					<CommandForm
-						original={original}
-						tags={tags}
-						onClose={() => navigation.goBack()}
-					/>
-				)}
-			</View>
+			{original === undefined ? (
+				<Discord.Text variant='text-md/normal' color='text-muted'>
+					{messages.COMMAND_NOT_FOUND}
+				</Discord.Text>
+			) : (
+				<CommandForm original={original} tags={tags} onClose={() => navigation.goBack()} />
+			)}
 		</ui.Page>
 	);
 }

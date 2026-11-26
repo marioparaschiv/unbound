@@ -11,7 +11,6 @@
 	"DELETE": "Delete",
 	"DELETE_COMMAND": "Delete command",
 	"DELETE_COMMAND_BODY": "Delete /{name} and its saved attachments?",
-	"DELETE_COMMAND_LABEL": "Delete {name}",
 	"DESCRIPTION_OPTIONAL": "Description (optional)",
 	"DESCRIPTION_PLACEHOLDER": "Shown in the slash-command list",
 	"DESCRIPTION_TOO_LONG": "Use at most {max} characters for the command description.",

@@ -10,7 +10,8 @@ using namespace loader::environment;
 static void checkInstallSources()
 {
     assert(receiptKind(std::nullopt, true) == Receipt::None);
-    assert(receiptKind("sandboxReceipt", false) == Receipt::TestFlight);
+    assert(receiptKind("sandboxReceipt", false) == Receipt::None);
+    assert(receiptKind("sandboxReceipt", true) == Receipt::TestFlight);
     assert(receiptKind("receipt", true) == Receipt::AppStore);
     assert(receiptKind("receipt", false) == Receipt::None);
 

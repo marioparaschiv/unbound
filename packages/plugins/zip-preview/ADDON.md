@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/files.jpg
+      alt: Zip Preview listing every file inside a zip archive with its size, without saving it.
+    - image: media/row.jpg
+      alt: Zip Preview's Show Files row in the long-press menu of a message with a zip archive.
 ---
 
 ## :sparkle: What it does

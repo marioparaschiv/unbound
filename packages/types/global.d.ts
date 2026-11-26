@@ -35,6 +35,14 @@ declare global {
 	};
 
 	/**
+	 * Fabric's surface registry, which restarts surfaces such as plugin surfaces.
+	 * @internal
+	 */
+	type RNSurfaceRegistry = {
+		renderSurface: (appKey: string, ...rest: unknown[]) => void;
+	};
+
+	/**
 	 * The parameters React Native runs the root application with.
 	 * @internal
 	 */
@@ -89,6 +97,8 @@ declare global {
 	var __fbBatchedBridge: FbBatchedBridge | undefined;
 	/** @internal */
 	var RN$AppRegistry: RNAppRegistry | undefined;
+	/** @internal */
+	var RN$SurfaceRegistry: RNSurfaceRegistry | undefined;
 
 	/** @internal */
 	var UnboundNative: UnboundNativeBridge | undefined;

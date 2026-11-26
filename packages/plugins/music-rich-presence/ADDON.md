@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Music Rich Presence's settings, with the Last.fm scrobbler, username, API key and activity name options.
 ---
 
 ## :sparkle: What it does

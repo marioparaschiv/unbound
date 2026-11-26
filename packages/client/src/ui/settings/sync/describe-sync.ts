@@ -1,4 +1,5 @@
 import type { Hero } from '~/ui/settings/updates/describe-hero';
+import type { SyncKindSummary } from '~/sync/device';
 import { messages, format } from '~/i18n/api';
 import { Moment } from '~/metro/common';
 
@@ -11,7 +12,37 @@ export type SyncStatus = {
 	syncing: boolean;
 	lastError: string | null;
 	lastSyncedAt: string | null;
+	/** How many cloud installs the last sync could not install here. */
+	missing: number;
 };
+
+/** How many ids a row names before it counts the rest. */
+const LISTED_IDS = 3;
+
+function listIds(ids: string[]): string {
+	const rest = ids.length - LISTED_IDS;
+	const listed = ids.slice(0, LISTED_IDS).join(', ');
+
+	return rest > 0 ? `${listed} +${rest}` : listed;
+}
+
+/**
+ * @description Words how one kind differs between this device and the cloud, for its row on the Sync page.
+ * @param summary The kind's summary from the last sync.
+ * @returns The row's sub-label.
+ */
+export function describeKind(summary: SyncKindSummary): string {
+	const parts = [
+		summary.missing.length
+			? format('UNBOUND_CLOUD_SYNC_MISSING', { names: listIds(summary.missing) })
+			: null,
+		summary.unsynced.length
+			? format('UNBOUND_CLOUD_SYNC_UNSYNCED', { names: listIds(summary.unsynced) })
+			: null,
+	].filter(Boolean);
+
+	return parts.length ? parts.join('\n') : messages.UNBOUND_CLOUD_SYNC_IN_SYNC;
+}
 
 /**
  * @description Words where Sync stands for the status hero, mirroring the updates page's.
@@ -67,6 +98,15 @@ export function describeSync(status: SyncStatus): Hero {
 			icon: 'WarningIcon',
 			title: messages.UNBOUND_CLOUD_SYNC_STATUS_FAILED,
 			subtitle: status.lastError,
+		};
+	}
+
+	if (status.missing > 0) {
+		return {
+			tone: 'warning',
+			icon: 'WarningIcon',
+			title: format('UNBOUND_CLOUD_SYNC_STATUS_MISSING', { count: status.missing }),
+			subtitle: synced,
 		};
 	}
 

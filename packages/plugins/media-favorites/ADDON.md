@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/star.jpg
+      alt: Media Favorites' star in the media viewer on a regular photo, ready to add it to your favorites.
 ---
 
 ## :sparkle: What it does

@@ -4,6 +4,8 @@ export type TranscriptMessage = {
 	timestamp: string | number | Date;
 	content: string;
 	attachments: string[];
+	/** The attachments' file names, in the same order, for previews. */
+	fileNames?: string[];
 };
 
 export type TranscriptOptions = { dates: boolean };

@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/faces.jpg
+      alt: Reaction Avatars showing the faces of the people behind each reaction, with a +N badge for the rest.
 ---
 
 ## :sparkle: What it does

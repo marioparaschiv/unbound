@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.1.3] - 2026-11-25
+
+### Fixed
+
+- The Copy URL, Copy markup and Clone rows on emoji and sticker sheets line up with the rest of the sheet instead of sitting inset on both sides.
+
+## [1.1.2] - 2026-11-24
+
+### Fixed
+
+- The store page shows the plugin's screenshots, which 1.1.1 published without. The plugin works the same as before.
+
+## [1.1.1] - 2026-11-24
+
+### Changed
+
+- The store page shows screenshots of the plugin instead of a banner. The plugin works the same as before.
+
+## [1.1.0] - 2026-11-24
+
+### Changed
+
+- The emoji and sticker actions are sheet rows with icons, and the clone sheet uses a name field, Discord's search bar and a Your servers list that scrolls.
+
 ## [1.0.9] - 2026-11-18
 
 ### Changed

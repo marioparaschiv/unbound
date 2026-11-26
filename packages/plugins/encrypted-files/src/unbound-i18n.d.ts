@@ -51,6 +51,12 @@ declare module '@unbound-app/i18n' {
 		readonly CONTACTS_EMPTY: string;
 		/** Forget */
 		readonly FORGET: string;
+		/** Forget {name}'s key */
+		readonly FORGET_LABEL: string;
+		/** Forget {name}'s key? */
+		readonly FORGET_TITLE: string;
+		/** You won't be able to encrypt files for them until they share it again. */
+		readonly FORGET_BODY: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
@@ -61,6 +67,8 @@ declare module '@unbound-app/i18n' {
 		KEY_SAVED: { fingerprint: string | number };
 		FILE_INFO: { name: string | number; size: string | number };
 		SAVED: { where: string | number };
+		FORGET_LABEL: { name: string | number };
+		FORGET_TITLE: { name: string | number };
 	};
 
 	/** Each message in the user's locale, falling back to en-US. */

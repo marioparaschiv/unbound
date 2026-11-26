@@ -11,7 +11,6 @@
 	"DELETE": "Slett",
 	"DELETE_COMMAND": "Slett kommando",
 	"DELETE_COMMAND_BODY": "Slette /{name} og de lagrede vedleggene?",
-	"DELETE_COMMAND_LABEL": "Slett {name}",
 	"DESCRIPTION_OPTIONAL": "Beskrivelse (valgfritt)",
 	"DESCRIPTION_PLACEHOLDER": "Vises i listen over skråstrekkommandoer",
 	"DESCRIPTION_TOO_LONG": "Bruk maks {max} tegn i kommandobeskrivelsen.",

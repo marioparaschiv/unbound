@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/sheet.jpg
+      alt: GIF Maker's sheet for picking the start, length, size, crop and caption of a GIF made from a video.
+    - image: media/make-gif-row.jpg
+      alt: GIF Maker's Make GIF row in the long-press menu of a message with a video.
 ---
 
 ## :sparkle: What it does

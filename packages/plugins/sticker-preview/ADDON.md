@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/staged-with-text.jpg
+      alt: Sticker Preview holding a picked sticker above the chat input while a message is typed to go with it.
+    - image: media/staged.jpg
+      alt: Sticker Preview showing a sticker waiting above the message box instead of being sent right away.
 ---
 
 ## :sparkle: What it does

@@ -23,7 +23,7 @@ function grown(frame: Frame, dx: number, dw: number): Frame {
 
 /**
  * @description Gives a name Discord squeezed to make room for a long timestamp, such as one ending in platform
- * symbols, part of the timestamp's room back and then part of the tags' room, so their ends are cut before the name.
+ * names, part of the timestamp's room back and then part of the tags' room, so their ends are cut before the name.
  * @param header The header's frames as Discord laid them out.
  * @param natural How wide the name would draw uncut.
  * @returns The header's new frames, or `undefined` when the name has its room or the timestamp and tags have none to give.

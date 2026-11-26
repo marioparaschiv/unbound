@@ -1,7 +1,3 @@
----
-banner: media/banner.png
----
-
 ## :sparkle: What it does
 
 - :msgs: After you switch accounts and back, or restart Discord, it opens the channel you last had open.

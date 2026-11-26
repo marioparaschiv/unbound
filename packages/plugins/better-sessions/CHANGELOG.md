@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.1.2] - 2026-11-24
+
+### Fixed
+
+- The store page shows the plugin's screenshots, which 1.1.1 published without. The plugin works the same as before.
+
+## [1.1.1] - 2026-11-24
+
+### Changed
+
+- The store page shows screenshots of the plugin instead of a banner. The plugin works the same as before.
+
+## [1.1.0] - 2026-11-24
+
+### Changed
+
+- New sessions show Discord's own NEW badge, and the rename sheet uses Discord's sheet header.
+
 ## [1.0.0] - 2026-11-13
 
 ### Added

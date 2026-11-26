@@ -4,7 +4,7 @@ import { ApiRequestError } from '@unbound-app/web/client';
 import { createLogger } from '@unbound-app/logger';
 import toError from '@unbound-app/utils/to-error';
 
-import { applyActions, collectLocalDocument } from '~/sync/device';
+import { applyActions, collectLocalDocument, summarize } from '~/sync/device';
 import { isJsonEqual, plan, reconcileBase } from '~/sync/merge';
 import type { ApiRequest } from '~/account/client';
 import type { SyncStrategy } from '~/sync/merge';
@@ -58,9 +58,12 @@ export function isApplying(): boolean {
 	return applying;
 }
 
+// The summary describes the agreed document, so it goes with it.
 function resetBase() {
 	bucket.set('base', null);
 	bucket.set('revision', 0);
+	bucket.set('summary', null);
+	bucket.set('cloudUpdatedAt', null);
 }
 
 function readBase(remoteRevision: number): SyncDocument {
@@ -96,6 +99,8 @@ async function attempt(request: ApiRequest, strategy: SyncStrategy) {
 
 	bucket.set('base', reconcileBase(saved.document, base, failed));
 	bucket.set('revision', saved.revision);
+	bucket.set('summary', summarize(saved.document));
+	bucket.set('cloudUpdatedAt', saved.updatedAt);
 }
 
 function isConflict(error: Error): boolean {

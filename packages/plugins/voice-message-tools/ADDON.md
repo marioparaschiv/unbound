@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/player.jpg
+      alt: Voice Message Tools' speed and download controls in the voice message player.
+    - image: media/faster.jpg
+      alt: Voice Message Tools playing voice messages at 1.5× speed.
+    - image: media/settings.jpg
+      alt: "Voice Message Tools' settings: playback speed and sending or showing audio files as voice messages."
 ---
 
 ## :sparkle: What it does

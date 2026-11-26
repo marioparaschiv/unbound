@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/server-profile.jpg
+      alt: Last Message Date's Last Message section on a profile opened from the Unbound server, naming when and where they last wrote.
+    - image: media/dm-profile.jpg
+      alt: Last Message Date's Last Message section on a profile opened from a direct message.
 ---
 
 ## :sparkle: What it does

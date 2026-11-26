@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/sprout.jpg
+      alt: New Member Sprout shows desktop's green sprout beside people who joined the Unbound server this week.
 ---
 
 ## :sparkle: What it does

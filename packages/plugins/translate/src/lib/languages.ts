@@ -13,6 +13,19 @@ export function languageLabel({ name, nativeName }: Language): string {
 }
 
 /**
+ * @description Names a saved language code for the settings rows.
+ * @param code The language code, or `auto`.
+ * @returns The language's label, "Auto detect" for `auto`, or the code itself when no language has it.
+ */
+export function languageNameFor(code: string): string {
+	if (code === 'auto') return messages.AUTO_DETECT;
+
+	const language = LANGUAGES.find((entry) => entry.code === code);
+
+	return language ? languageLabel(language) : code;
+}
+
+/**
  * @description Lists the languages whose code, name, or native name contains the query.
  * @param query The user's search text; blank matches every language.
  * @param includeAuto Whether to lead with the "Auto detect" choice, which ignores the query.

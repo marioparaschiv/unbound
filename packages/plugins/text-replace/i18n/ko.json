@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Text Replace",
-	"PLUGIN_TAGLINE": "메시지를 보내기 전에 자동으로 고쳐 써요.",
-	"TRY_YOUR_RULES": "규칙 사용해 보기",
-	"TEST_YOUR_RULES": "규칙 테스트",
 	"EXAMPLE_MESSAGE": "예시 메시지",
 	"EXAMPLE_PLACEHOLDER": "테스트할 메시지를 입력하세요",
 	"RESULT": "결과",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "두 규칙 목록을 이동 가능한 JSON으로 내보내거나 가져와요.",
 	"EXPORT_AND_SHARE": "내보내고 공유",
 	"IMPORT_CLIPBOARD": "클립보드에서 가져오기",
-	"PASTE_JSON": "JSON 붙여넣기",
-	"PASTE_JSON_PLACEHOLDER": "내보낸 Text Replace JSON을 여기에 붙여넣으세요",
-	"IMPORT_PASTED": "붙여넣은 내용 가져오기",
 	"RULESET_IMPORTED": "규칙 세트를 가져왔어요.",
 	"IMPORT_FAILED": "규칙 세트를 가져오지 못했어요.",
 	"CLIPBOARD_HAS_NO_RULESET": "클립보드에 규칙 세트가 없어요.",

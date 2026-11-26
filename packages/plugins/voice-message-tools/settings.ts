@@ -7,15 +7,15 @@ export default defineSettings({
 		subtitle: 'SEND_AUDIO_SUBTITLE',
 	}),
 	speed: setting.choice({
-		default: '1',
+		default: '1.0',
 		title: 'SPEED',
 		subtitle: 'SPEED_SUBTITLE',
 		displayAs: 'segmented',
 		options: {
 			'0.75': 'SPEED_075',
-			'1': 'SPEED_1',
+			'1.0': 'SPEED_1',
 			'1.5': 'SPEED_15',
-			'2': 'SPEED_2',
+			'2.0': 'SPEED_2',
 		},
 	}),
 	perChat: setting.boolean({

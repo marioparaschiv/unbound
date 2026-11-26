@@ -11,7 +11,6 @@
 	"DELETE": "Excluir",
 	"DELETE_COMMAND": "Excluir comando",
 	"DELETE_COMMAND_BODY": "Excluir /{name} e os anexos salvos dele?",
-	"DELETE_COMMAND_LABEL": "Excluir {name}",
 	"DESCRIPTION_OPTIONAL": "Descrição (opcional)",
 	"DESCRIPTION_PLACEHOLDER": "Exibida na lista de comandos de barra",
 	"DESCRIPTION_TOO_LONG": "Use no máximo {max} caracteres na descrição do comando.",

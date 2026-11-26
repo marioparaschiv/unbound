@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.3.3] - 2026-11-25
+
+### Fixed
+
+- Locked stickers send as links again. Sending any sticker crashed the plugin, which turned the sticker patch off after three tries.
+
+## [1.3.2] - 2026-11-24
+
+### Fixed
+
+- The store page shows the plugin's screenshots, which 1.3.1 published without. The plugin works the same as before.
+
+## [1.3.1] - 2026-11-24
+
+### Changed
+
+- The store page shows screenshots of the plugin instead of a banner. The plugin works the same as before.
+
 ## [1.3.0] - 2026-11-22
 
 ### Added

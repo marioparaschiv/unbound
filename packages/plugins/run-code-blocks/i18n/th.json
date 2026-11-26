@@ -4,5 +4,6 @@
 	"OUTPUT_TITLE": "{language} · exit {code}",
 	"OUTPUT_BODY": "{output}",
 	"NO_OUTPUT": "(ไม่มีผลลัพธ์)",
-	"RUN_FAILED": "รันโค้ดไม่ได้"
+	"RUN_FAILED": "รันโค้ดไม่ได้",
+	"CLOSE": "ปิด"
 }

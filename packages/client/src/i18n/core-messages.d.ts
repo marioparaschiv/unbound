@@ -10,6 +10,9 @@ declare module '@unbound-app/i18n' {
 	export type FormatVars = {
 		UNBOUND_ACCOUNT_SIGN_OUT_CONFIRM: { name: string | number };
 		UNBOUND_CLOUD_SYNC_LAST_SYNCED: { date: string | number };
+		UNBOUND_CLOUD_SYNC_MISSING: { names: string | number };
+		UNBOUND_CLOUD_SYNC_UNSYNCED: { names: string | number };
+		UNBOUND_CLOUD_SYNC_STATUS_MISSING: { count: number };
 		UNBOUND_BISECT_ROUND: { round: string | number; left: number; count: number };
 		UNBOUND_BISECT_FOUND: { name: string | number };
 		UNBOUND_SEARCH: { type: string | number };
@@ -25,6 +28,7 @@ declare module '@unbound-app/i18n' {
 		UNBOUND_UPDATES_CHECKED: { date: string | number };
 		UNBOUND_UPDATES_CHECK_FAILED: { error: string | number };
 		UNBOUND_UPDATES_ALL: { count: string | number };
+		UNBOUND_UPDATES_MORE: { count: number };
 		UNBOUND_UPDATES_CLIENT_UPDATED_DESC: { version: string | number };
 		UNBOUND_UPDATES_NOTIFY_TITLE: { count: number };
 		UNBOUND_UPDATES_LOADER_REQUIRED_DESC: { required: string | number; installed: string | number };

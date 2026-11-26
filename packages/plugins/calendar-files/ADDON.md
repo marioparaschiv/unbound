@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/event.jpg
+      alt: Calendar Files previewing a calendar invite with an Add to Calendar button.
+    - image: media/menu.jpg
+      alt: Calendar Files' Show calendar event row in the long-press menu of a message with an .ics invite.
+    - image: media/command.jpg
+      alt: Calendar Files' /event command in the slash-command list.
 ---
 
 ## :sparkle: What it does

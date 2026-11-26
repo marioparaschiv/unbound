@@ -1,5 +1,13 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/logged.jpg
+      alt: Message Logger keeps a deleted message in red and shows an edited message's earlier version above it in a direct message.
+    - image: media/highlight.jpg
+      alt: Message Logger with Highlight deleted messages on, drawing deleted messages with a tinted background and side bar.
+    - image: media/edit-history.jpg
+      alt: Message Logger's Message History sheet listing every version of an edited message.
+    - image: media/settings.jpg
+      alt: "Message Logger's settings: how logged messages look, what gets logged, and who to ignore."
 ---
 
 ## :sparkle: What it does

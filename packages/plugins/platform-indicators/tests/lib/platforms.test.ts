@@ -8,7 +8,6 @@ import {
 	isMobileShown,
 	ownClientStatus,
 	parseStatusesKey,
-	platformGlyph,
 	platformLabel,
 	platformStatuses,
 	statusesKey,
@@ -119,13 +118,6 @@ describe('describePlatforms', () => {
 				'ar',
 			),
 		).toBe('Online on Desktop and Mobile');
-	});
-});
-
-describe('platformGlyph', () => {
-	test('falls back to the desktop symbol', () => {
-		expect(platformGlyph('mobile')).toBe('📱');
-		expect(platformGlyph('console')).toBe(platformGlyph('desktop'));
 	});
 });
 

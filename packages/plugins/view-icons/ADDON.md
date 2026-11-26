@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/profile-rows.jpg
+      alt: View Icons' View Avatar and View Banner items in a user profile's overflow menu.
+    - image: media/avatar.jpg
+      alt: View Icons opening a user's avatar at full size.
+    - image: media/server-rows.jpg
+      alt: View Icons' View Server Icon row in the Unbound server's long-press sheet.
 ---
 
 ## :sparkle: What it does

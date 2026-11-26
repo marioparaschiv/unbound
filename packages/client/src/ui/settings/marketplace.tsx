@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AddonKind } from '@unbound-app/types/addons';
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { View } from 'react-native';
+import { useStore } from 'zustand';
 
 import MarketplaceList from '~/ui/marketplace/marketplace-list';
 import useOpenListing from '~/ui/marketplace/use-open-listing';
@@ -44,7 +45,7 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 	const browse = useMemo(() => ({ search, filters }), [search, filters]);
 	const active = ADDON_KINDS[tab] ?? 'plugin';
 	// Read only to open a linked addon: each tab subscribes on its own, so catalog loads skip re-rendering the page.
-	const catalog = MarketplaceStore((store) => (id ? store.state : undefined));
+	const catalog = useStore(MarketplaceStore, (store) => (id ? store.state : undefined));
 	const lastOpened = useRef<string | undefined>(undefined);
 	const openListing = useOpenListing();
 	const page = usePageWidth();

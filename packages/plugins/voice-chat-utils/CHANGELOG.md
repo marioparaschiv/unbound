@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.3] - 2026-11-25
+
+### Changed
+
+- Its action sheet rows sit in their own section below Discord's rows, together with other plugins' rows, instead of inside Discord's group.
+
+## [1.0.2] - 2026-11-24
+
+### Changed
+
+- The store page no longer shows a banner. The plugin works the same as before.
+
 ## [1.0.1] - 2026-11-14
 
 ### Fixed

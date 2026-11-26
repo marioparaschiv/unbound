@@ -158,7 +158,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "1.1.2",
+      "version": "1.2.0",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -172,7 +172,7 @@
     },
     "packages/cli": {
       "name": "@unbound-app/cli",
-      "version": "3.5.9",
+      "version": "3.6.0",
       "bin": {
         "ubd": "src/index.ts",
       },
@@ -213,6 +213,7 @@
         "typebox": "^1.4.7",
       },
       "devDependencies": {
+        "@swc/core": "^1.16.22",
         "@types/bun": "latest",
         "@unbound-app/api": "workspace:*",
         "@unbound-app/client-build": "workspace:*",
@@ -231,7 +232,7 @@
     },
     "packages/client": {
       "name": "@unbound-app/client",
-      "version": "1.1.2",
+      "version": "1.2.0",
       "dependencies": {
         "@unbound-app/contracts": "workspace:*",
         "@unbound-app/debugger-protocol": "workspace:*",
@@ -273,6 +274,7 @@
         "@types/babel__core": "^7.20.5",
         "@types/bun": "catalog:",
         "@unbound-app/rollup-plugin-hermes": "workspace:*",
+        "babel-plugin-react-compiler": "1.0.0",
         "react-devtools-core": "8.0.0",
         "rolldown": "^1.3.3",
         "rollup-plugin-swc3": "^0.12.2",
@@ -377,7 +379,6 @@
       "name": "@unbound-app/plugin-scripts",
       "devDependencies": {
         "@mdx-js/mdx": "^3.1.1",
-        "@resvg/resvg-js": "^2.6.2",
         "@types/bun": "catalog:",
         "@types/react": "catalog:react",
         "@unbound-app/api": "workspace:*",
@@ -5057,6 +5058,8 @@
     "babel-plugin-polyfill-corejs3": ["babel-plugin-polyfill-corejs3@0.13.0", "", { "dependencies": { "@babel/helper-define-polyfill-provider": "^0.6.5", "core-js-compat": "^3.43.0" }, "peerDependencies": { "@babel/core": "^7.4.0 || ^8.0.0-0 <8.0.0" } }, "sha512-U+GNwMdSFgzVmfhNm8GJUX88AadB3uo9KpJqS3FaqNIPKgySuvMb+bHPsOmmuWyIcuqZj/pzt1RUIUZns4y2+A=="],
 
     "babel-plugin-polyfill-regenerator": ["babel-plugin-polyfill-regenerator@0.6.8", "", { "dependencies": { "@babel/helper-define-polyfill-provider": "^0.6.8" }, "peerDependencies": { "@babel/core": "^7.4.0 || ^8.0.0-0 <8.0.0" } }, "sha512-M762rNHfSF1EV3SLtnCJXFoQbbIIz0OyRwnCmV0KPC7qosSfCO0QLTSuJX3ayAebubhE6oYBAYPrBA5ljowaZg=="],
+
+    "babel-plugin-react-compiler": ["babel-plugin-react-compiler@1.0.0", "", { "dependencies": { "@babel/types": "^7.26.0" } }, "sha512-Ixm8tFfoKKIPYdCCKYTsqv+Fd4IJ0DQqMyEimo+pxUOMUR9cVPlwTrFt9Avu+3cb6Zp3mAzl+t1MrG2fxxKsxw=="],
 
     "babel-plugin-syntax-hermes-parser": ["babel-plugin-syntax-hermes-parser@0.36.0", "", { "dependencies": { "hermes-parser": "0.36.0" } }, "sha512-LhD0xdoedDw7ansQgXbB2DADLZIK/LRXuWNBPuVzMc5S2WK5GyT89tCM+cQzxFGO0mGyLK6D5TrVOJJzAoDy8Q=="],
 

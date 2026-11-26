@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/default.jpg
+      alt: "Custom Timestamps writing today's message times as HH:mm and older ones with the full date."
+    - image: media/twelve-hour.jpg
+      alt: Custom Timestamps with a 12-hour format for today and a weekday and date for older messages.
+    - image: media/settings.jpg
+      alt: Custom Timestamps' settings, with the patterns for today and for older messages.
 ---
 
 ## :sparkle: What it does

@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/embed.jpg
+      alt: Bandcamp Cards adding an album's price to its Bandcamp embed.
 ---
 
 ## :sparkle: What it does

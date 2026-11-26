@@ -3,14 +3,6 @@
 declare module '@unbound-app/i18n' {
 	/** Every en-US message, read in the user's locale. */
 	export type Messages = {
-		/** Text Replace */
-		readonly PLUGIN_NAME: string;
-		/** Automatically rewrite messages before you send them. */
-		readonly PLUGIN_TAGLINE: string;
-		/** Try your rules */
-		readonly TRY_YOUR_RULES: string;
-		/** Test your rules */
-		readonly TEST_YOUR_RULES: string;
 		/** Example message */
 		readonly EXAMPLE_MESSAGE: string;
 		/** Type a message to test */
@@ -93,12 +85,6 @@ declare module '@unbound-app/i18n' {
 		readonly EXPORT_AND_SHARE: string;
 		/** Import clipboard */
 		readonly IMPORT_CLIPBOARD: string;
-		/** Paste JSON */
-		readonly PASTE_JSON: string;
-		/** Paste exported Text Replace JSON here */
-		readonly PASTE_JSON_PLACEHOLDER: string;
-		/** Import pasted */
-		readonly IMPORT_PASTED: string;
 		/** Ruleset imported. */
 		readonly RULESET_IMPORTED: string;
 		/** Could not import ruleset. */

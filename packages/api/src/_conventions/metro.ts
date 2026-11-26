@@ -11,7 +11,7 @@ export const COMMON_PROPS = {
 	MarkdownParser: ['parse', 'parseToAST', 'reactParserFor'],
 	SimpleMarkdown: ['parserFor', 'outputFor', 'defaultRules'],
 	Screens: ['FullWindowOverlay'],
-	SVG: ['Svg', 'Path'],
+	SVG: ['Svg', 'Path', 'SvgXml'],
 	Commands: ['getBuiltInCommands'],
 	Moment: ['isMoment'],
 	Util: ['inspect'],

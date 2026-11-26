@@ -4,5 +4,6 @@
 	"OUTPUT_TITLE": "{language} · keluar {code}",
 	"OUTPUT_BODY": "{output}",
 	"NO_OUTPUT": "(tanpa keluaran)",
-	"RUN_FAILED": "Tidak dapat menjalankan kode"
+	"RUN_FAILED": "Tidak dapat menjalankan kode",
+	"CLOSE": "Tutup"
 }

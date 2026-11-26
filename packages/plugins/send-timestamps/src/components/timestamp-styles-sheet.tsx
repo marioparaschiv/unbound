@@ -1,12 +1,11 @@
-import { Discord } from '@unbound-app/api/metro/components';
-import { ScrollView } from 'react-native';
+import { BottomSheets, Discord, GorhomSheet } from '@unbound-app/api/metro/components';
 import { assets } from '@unbound-app/api';
 import { format, messages } from '@unbound-app/i18n';
 
 import { previewTimestamp } from '~/lib/preview';
 import { timestamp, TIMESTAMP_STYLES, type TimestampStyle } from '~/lib/timestamps';
 
-import styles from '~/components/timestamp-styles-sheet.style';
+import useStyles from '~/components/timestamp-styles-sheet.style';
 
 type TimestampStylesSheetProps = {
 	moment: Date;
@@ -31,12 +30,19 @@ function TimestampStylesSheet({
 	onCopy,
 	onChangeTime,
 }: TimestampStylesSheetProps) {
+	const styles = useStyles();
+	const { ActionSheet, BottomSheetTitleHeader } = BottomSheets;
+	const { BottomSheetScrollView: ScrollView } = GorhomSheet;
 	const copyIcon = assets.getIdByName('CopyIcon');
 
 	return (
-		<Discord.ActionSheet startExpanded>
-			<ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-				<Discord.TableRowGroup title={messages.STYLES_TITLE}>
+		<ActionSheet scrollable startExpanded>
+			<BottomSheetTitleHeader
+				title={messages.PICKER_BUTTON}
+				subtitle={messages.STYLES_TITLE}
+			/>
+			<ScrollView contentContainerStyle={styles.content}>
+				<Discord.TableRowGroup>
 					{TIMESTAMP_STYLES.map((style) => {
 						const markup = timestamp(moment, style);
 						const name = messages[STYLE_NAMES[style]];
@@ -68,7 +74,7 @@ function TimestampStylesSheet({
 					onPress={onChangeTime}
 				/>
 			</ScrollView>
-		</Discord.ActionSheet>
+		</ActionSheet>
 	);
 }
 

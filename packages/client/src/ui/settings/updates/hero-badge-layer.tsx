@@ -20,6 +20,7 @@ function HeroBadgeLayer({ tone, icon, spinning, entering, leaving }: BadgeLayer)
 					source={icons[icon] ?? 0}
 					amount={motion.blur}
 					style={styles[`${tone}Icon`]}
+					blurring={entering || leaving}
 				/>
 			</Animated.View>
 		</Animated.View>

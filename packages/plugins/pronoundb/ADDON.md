@@ -1,5 +1,13 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/after-time.jpg
+      alt: PronounDB showing each author's pronouns after the time in message headers.
+    - image: media/pill.jpg
+      alt: PronounDB with the Pill style, showing pronouns as tags beside names.
+    - image: media/custom-pill.jpg
+      alt: PronounDB with the Custom pill style in pink.
+    - image: media/settings.jpg
+      alt: PronounDB's settings for pronoun format, source, style and showing your own.
 ---
 
 ## :sparkle: What it does

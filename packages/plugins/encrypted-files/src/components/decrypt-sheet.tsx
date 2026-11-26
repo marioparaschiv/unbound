@@ -11,6 +11,8 @@ import { saveDecrypted } from '~/native/save';
 import { toBase64 } from '~/lib/key-text';
 import { ownKeys } from '~/lib/keys';
 
+import useStyles from '~/components/decrypt-sheet.style';
+
 const IMAGE = /\.(png|jpe?g|gif|webp)$/i;
 const MIME: Record<string, string> = { png: 'image/png', gif: 'image/gif', webp: 'image/webp' };
 const PREVIEW_BYTES = 8 * 1024 * 1024;
@@ -44,6 +46,7 @@ function dataUri({ name, bytes }: Opened): string | undefined {
 }
 
 function DecryptSheet({ url, bridge, onClose }: DecryptSheetProps) {
+	const styles = useStyles();
 	const [result, setResult] = useState<Result>();
 
 	useEffect(() => {
@@ -72,28 +75,36 @@ function DecryptSheet({ url, bridge, onClose }: DecryptSheetProps) {
 
 	return (
 		<Discord.ActionSheet>
-			<View style={{ gap: 12, padding: 16 }}>
-				<Discord.Text variant='heading-lg/semibold'>{messages.DECRYPT_TITLE}</Discord.Text>
+			<Discord.BottomSheetTitleHeader
+				title={messages.DECRYPT_TITLE}
+				subtitle={
+					typeof result === 'object'
+						? format('FILE_INFO', {
+								name: result.name,
+								size: Math.ceil(result.bytes.byteLength / 1024),
+							})
+						: undefined
+				}
+			/>
+			<View style={styles.body}>
 				{!result ? <ActivityIndicator /> : null}
 				{result === 'denied' ? (
-					<Discord.Text variant='text-md/medium'>{messages.NOT_FOR_YOU}</Discord.Text>
+					<Discord.Text variant='text-md/medium' color='text-muted'>
+						{messages.NOT_FOR_YOU}
+					</Discord.Text>
 				) : null}
 				{result === 'failed' ? (
-					<Discord.Text variant='text-md/medium'>{messages.DECRYPT_FAILED}</Discord.Text>
+					<Discord.Text variant='text-md/medium' color='text-muted'>
+						{messages.DECRYPT_FAILED}
+					</Discord.Text>
 				) : null}
 				{typeof result === 'object' ? (
 					<>
-						<Discord.Text variant='text-md/semibold'>
-							{format('FILE_INFO', {
-								name: result.name,
-								size: Math.ceil(result.bytes.byteLength / 1024),
-							})}
-						</Discord.Text>
 						{preview ? (
 							<Image
 								source={{ uri: preview }}
 								resizeMode='contain'
-								style={{ width: '100%', height: 240, borderRadius: 8 }}
+								style={styles.preview}
 							/>
 						) : null}
 						<Discord.Button text={messages.SAVE} onPress={() => void save(result)} />

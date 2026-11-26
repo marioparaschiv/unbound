@@ -1,6 +1,6 @@
 import { format, messages } from '@unbound-app/i18n';
 
-import { MESSAGE_LOCALES, PLATFORM_GLYPHS, type Platform } from '~/lib/constants';
+import { MESSAGE_LOCALES, type Platform } from '~/lib/constants';
 
 export type ClientStatusMap = Partial<Record<string, string>>;
 
@@ -106,15 +106,6 @@ export function parseStatusesKey(key: string): PlatformStatus[] {
  */
 export function isMobileShown(statusMap: ClientStatusMap | null | undefined): boolean {
 	return statusMap?.mobile != null && statusMap.desktop !== 'online';
-}
-
-/**
- * @description Reads the symbol a message header shows for a platform.
- * @param platform A client status key.
- * @returns The platform's symbol, the desktop one for a platform Vencord has no icon for.
- */
-export function platformGlyph(platform: string): string {
-	return PLATFORM_GLYPHS[platform as Platform] ?? PLATFORM_GLYPHS.desktop;
 }
 
 /**

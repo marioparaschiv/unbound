@@ -1,7 +1,3 @@
----
-banner: media/banner.png
----
-
 ## :sparkle: What it does
 
 - :pointer: Jumping to a message from someone you blocked or ignored goes straight there, without the unblock prompt.

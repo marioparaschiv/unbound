@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/readings.jpg
+      alt: Furigana showing kanji readings under Japanese messages in a direct message.
 ---
 
 ## :sparkle: What it does

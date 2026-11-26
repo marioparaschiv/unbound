@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/definition.jpg
+      alt: Dictionary's definition sheet for a word from a message, with pronunciation and definitions.
+    - image: media/menu-row.jpg
+      alt: Dictionary's Define Words row in a message's long-press menu.
+    - image: media/commands.jpg
+      alt: Dictionary's /define command in the slash-command list.
 ---
 
 ## :sparkle: What it does

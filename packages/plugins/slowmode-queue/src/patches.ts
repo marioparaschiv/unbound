@@ -44,7 +44,7 @@ function waitForCooldown(Slowmode: SlowmodeStore, channelId: string): Promise<bo
 		});
 
 		function tick() {
-			if (secondsLeft(Slowmode, channelId) <= 0) {
+			if (!(secondsLeft(Slowmode, channelId) > 0)) {
 				timer = setTimeout(() => {
 					toast.close();
 					resolve(true);
@@ -64,7 +64,8 @@ function waitForCooldown(Slowmode: SlowmodeStore, channelId: string): Promise<bo
 /**
  * @description Keeps the send button working while slowmode cools down, by reporting no message cooldown to it, and
  * holds each send until the cooldown ends, one at a time per channel, with a countdown toast whose Cancel puts the
- * message back in the chat input.
+ * message back in the chat input. A cooldown that is not a positive number ends the wait, and a hold always frees its
+ * place in the channel's line, so one failed hold never keeps later messages waiting.
  */
 export function patchSlowmode(): void {
 	const Slowmode = flux.getStore('Slowmode') as unknown as SlowmodeStore;
@@ -75,12 +76,17 @@ export function patchSlowmode(): void {
 
 	guardSends('Slowmode Queue', async ([channelId]) => {
 		const release = await queue.enqueue(channelId);
-		const send =
-			secondsLeft(Slowmode, channelId) <= 0 || (await waitForCooldown(Slowmode, channelId));
+		let send = true;
 
-		setTimeout(release, send ? NEXT_HOLD_DELAY : 0);
+		try {
+			send =
+				!(secondsLeft(Slowmode, channelId) > 0) ||
+				(await waitForCooldown(Slowmode, channelId));
 
-		return send;
+			return send;
+		} finally {
+			setTimeout(release, send ? NEXT_HOLD_DELAY : 0);
+		}
 	});
 }
 

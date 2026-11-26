@@ -28,14 +28,6 @@ function SettingsPanel() {
 
 	return (
 		<ui.Page>
-			<Discord.Stack spacing={8}>
-				<Discord.Text variant='heading-xl/bold'>{messages.PLUGIN_NAME}</Discord.Text>
-				<Discord.Text variant='text-md/normal' color='text-muted'>
-					{messages.PLUGIN_TAGLINE}
-				</Discord.Text>
-			</Discord.Stack>
-			<RuleTester ruleset={ruleset} />
-			<RulesetTransfer ruleset={ruleset} />
 			<Discord.TableRadioGroup title={messages.RULE_TYPE} value={kind} onChange={setKind}>
 				<Discord.TableRadioRow label={messages.RULE_TYPE_TEXT} value='stringRules' />
 				<Discord.TableRadioRow label={messages.RULE_TYPE_REGEX} value='regexRules' />
@@ -46,6 +38,8 @@ function SettingsPanel() {
 				onAdd={() => setEditing({ kind, rule: createRule(), isNew: true })}
 				onEdit={(rule) => setEditing({ kind, rule, isNew: false })}
 			/>
+			<RuleTester ruleset={ruleset} />
+			<RulesetTransfer ruleset={ruleset} />
 		</ui.Page>
 	);
 }

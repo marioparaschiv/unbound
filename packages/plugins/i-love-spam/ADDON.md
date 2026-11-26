@@ -1,7 +1,3 @@
----
-banner: media/banner.png
----
-
 ## :sparkle: What it does
 
 - :msg: Messages from accounts Discord flags as likely spammers show like any other message instead of being hidden.

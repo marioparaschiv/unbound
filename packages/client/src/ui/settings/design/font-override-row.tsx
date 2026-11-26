@@ -1,3 +1,6 @@
+// Reads manager or settings state during render, which the React Compiler would cache past its changes.
+'use no memo';
+
 import { Discord } from '~/metro/components';
 import { nearestSlot } from '~/fonts/slots';
 import { Manager } from '~/addons/manager';

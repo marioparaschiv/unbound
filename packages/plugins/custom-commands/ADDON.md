@@ -1,5 +1,13 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/autocomplete.jpg
+      alt: A saved command from Custom Commands in Discord's slash-command list.
+    - image: media/response.jpg
+      alt: The message a Custom Commands command sends, with its argument filled in.
+    - image: media/settings.jpg
+      alt: Custom Commands' settings, listing saved slash commands and a button to create one.
+    - image: media/command-page.jpg
+      alt: 'Editing a saved command in Custom Commands: name, description, response with an argument, and media.'
 ---
 
 ## :sparkle: What it does

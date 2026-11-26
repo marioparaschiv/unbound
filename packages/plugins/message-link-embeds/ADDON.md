@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/chat.jpg
+      alt: Message Link Embeds draws a linked chat message as a full chat row, with its author and avatar.
+    - image: media/announcement.jpg
+      alt: Message Link Embeds previews a linked theme post from the Unbound server's themes channel right inside a direct message.
 ---
 
 ## :sparkle: What it does

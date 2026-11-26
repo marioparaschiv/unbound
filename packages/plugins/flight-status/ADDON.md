@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/row.jpg
+      alt: Flight Status's flight status row in the long-press menu of a message that mentions a flight.
+    - image: media/status.jpg
+      alt: Flight Status's dialog with a flight's altitude, speed, heading and aircraft, live from adsb.lol.
 ---
 
 ## :sparkle: What it does

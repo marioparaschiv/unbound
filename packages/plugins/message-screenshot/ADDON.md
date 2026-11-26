@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/menu.jpg
+      alt: Message Screenshot's Screenshot option in a message's long-press menu.
+    - image: media/settings.jpg
+      alt: "Message Screenshot's settings: how many messages to include, and whether to share or copy the picture."
 ---
 
 ## :sparkle: What it does

@@ -28,7 +28,7 @@ function pressRow(view: ReturnType<typeof render>, label: string) {
 }
 
 function pressButton(view: ReturnType<typeof render>, text: string) {
-	const button = view.find((node) => node.props.text === text);
+	const button = view.find((node) => node.props.text === text || node.props.label === text);
 
 	if (!button) throw new Error(`No button reading ${text}.`);
 
@@ -94,7 +94,7 @@ describe('the command list', () => {
 		const page = render(pushed[0]?.render());
 
 		expect(page.find((node) => node.props.text === 'Create command')).toBeDefined();
-		expect(page.findAll((node) => node.props.text === 'Delete command')).toEqual([]);
+		expect(page.findAll((node) => node.props.label === 'Delete command')).toEqual([]);
 	});
 });
 

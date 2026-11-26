@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/typing.jpg
+      alt: Typing ++ and the fire emoji's name with Better Plus Reacts to react to the second-last message.
+    - image: media/reacted.jpg
+      alt: The second-last message reacted to with a fire emoji by Better Plus Reacts.
 ---
 
 ## :sparkle: What it does

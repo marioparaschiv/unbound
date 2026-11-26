@@ -7,6 +7,7 @@ type HeaderButtonProps = { tintColor?: string; canGoBack?: boolean };
 
 /** The header options the Design page reads or overrides; the rest pass through `navigation.setOptions` as set. */
 export type HeaderOptions = {
+	headerTransparent?: boolean;
 	headerRight?: (props: HeaderButtonProps) => ReactNode;
 };
 
@@ -19,7 +20,6 @@ type NavigationModule = { NavigationContext: Context<Navigation | undefined> };
 
 type HeaderModule = {
 	HeaderHeightContext: Context<number | undefined>;
-	useHeaderHeight: () => number;
 };
 
 /** React Navigation's core: its context is what `useNavigation` reads. */
@@ -28,12 +28,11 @@ export const NavigationCore: NavigationModule | undefined = findByProps(
 	'useNavigation',
 );
 
-// Stands in when Discord moved the header elements, so the Design page's hooks still run, with no inset.
+// Stands in when Discord moved the header elements, so the Design page still renders.
 const NoHeaderElements: HeaderModule = {
 	HeaderHeightContext: createContext<number | undefined>(undefined),
-	useHeaderHeight: () => 0,
 };
 
-/** `@react-navigation/elements`: the header height a transparent header leaves screens to inset by. */
+/** `@react-navigation/elements`: the context Discord's theme picker reads its top inset from. */
 export const HeaderElements: HeaderModule =
 	findByProps('HeaderHeightContext', 'useHeaderHeight') ?? NoHeaderElements;

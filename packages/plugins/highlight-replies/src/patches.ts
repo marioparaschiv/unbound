@@ -1,47 +1,68 @@
 import {
 	onMessageRow,
 	type MessageRow,
+	type RowHighlight,
 	type RowMessage,
 } from '@unbound-plugins/shared/metro/message-rows';
-import { flux } from '@unbound-app/api';
+import { flux, metro } from '@unbound-app/api';
 
 import { repliesToMe, type ReplyMessage } from '~/lib/replies';
 
-type Highlight = { backgroundColor?: number; gutterColor?: number };
+type MentionMessage = RowMessage & ReplyMessage & { mentioned?: boolean };
 
-type MentionRow = MessageRow & {
-	message?: { mentioned?: boolean };
-	backgroundHighlight?: Highlight | null;
+type MentionRow = MessageRow & { mentioned?: boolean };
+
+type HighlightInput = {
+	message: { mentioned: boolean; hasFlag(flag: number): boolean };
+	theme: string | undefined;
+	isEditing: boolean;
+	isAutomodBlockedMessage: boolean;
 };
 
-const FALLBACK_HIGHLIGHT: Highlight = { backgroundColor: 351838976, gutterColor: -1002958 };
-
-let mentionHighlight: Highlight | undefined;
+type RowHighlights = {
+	createBackgroundHighlight(input: HighlightInput): RowHighlight | undefined;
+};
 
 type MessageStore = {
 	getMessage(channelId: string, messageId: string): { author?: { id?: string } } | undefined;
 };
 
 /**
- * @description Highlights replies to your messages like mentions, by giving their chat rows the mention row's highlight
- * colors, copied from the last mention Discord drew.
+ * @description Highlights replies to your messages like mentions, by giving their chat rows the highlight Discord
+ * draws for a mention in the row's theme, or the last mention highlight it drew when that builder moved.
  */
 export function patchReplyRows(): void {
 	const Users = flux.getStore('User');
+	const Themes = flux.getStore('Theme') as unknown as { theme?: string };
 	const Messages = flux.getStore('Message') as unknown as MessageStore;
+	const Highlights = metro.findByProps('createBackgroundHighlight') as RowHighlights | undefined;
+	let lastMentionHighlight: RowHighlight | undefined;
 
-	onMessageRow<RowMessage & ReplyMessage, MentionRow>({
+	function mentionHighlight(forcedTheme: unknown): RowHighlight | undefined {
+		const theme = typeof forcedTheme === 'string' ? forcedTheme : Themes.theme;
+
+		return (
+			Highlights?.createBackgroundHighlight({
+				message: { mentioned: true, hasFlag: () => false },
+				theme,
+				isEditing: false,
+				isAutomodBlockedMessage: false,
+			}) ?? lastMentionHighlight
+		);
+	}
+
+	onMessageRow<MentionMessage, MentionRow>({
 		feature: 'Highlight replies',
-		after({ message, row }) {
-			if (!row?.message || !message?.channel_id) return;
+		after({ message, options, row, rowData }) {
+			if (!row || !rowData || !message?.channel_id) return;
 
-			if (row.message.mentioned) {
-				if (row.backgroundHighlight) mentionHighlight = row.backgroundHighlight;
+			if (message.mentioned) {
+				if (rowData.backgroundHighlight) lastMentionHighlight = rowData.backgroundHighlight;
 
 				return;
 			}
 
-			if (row.backgroundHighlight) return;
+			if (rowData.backgroundHighlight) return;
 
 			const channelId = message.channel_id;
 			const mine = repliesToMe(
@@ -49,8 +70,13 @@ export function patchReplyRows(): void {
 				Users.getCurrentUser()?.id,
 				(id) => Messages.getMessage(channelId, id)?.author?.id,
 			);
+			const highlight = mine ? mentionHighlight(options?.forcedTheme) : undefined;
 
-			if (mine) row.backgroundHighlight = { ...(mentionHighlight ?? FALLBACK_HIGHLIGHT) };
+			if (!highlight) return;
+
+			// Discord's iOS row draws a highlight only for a row flagged as mentioning you, in its own mention colours.
+			row.mentioned = true;
+			rowData.backgroundHighlight = { ...highlight };
 		},
 	});
 }

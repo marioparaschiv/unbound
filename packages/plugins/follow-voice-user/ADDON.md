@@ -1,5 +1,11 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/command.jpg
+      alt: Follow Voice User's /follow command in the slash-command autocomplete.
+    - image: media/following.jpg
+      alt: Follow Voice User confirming it is following a friend in voice.
+    - image: media/settings.jpg
+      alt: "Follow Voice User's settings: follow only while in voice, and leave when they leave."
 ---
 
 ## :sparkle: What it does

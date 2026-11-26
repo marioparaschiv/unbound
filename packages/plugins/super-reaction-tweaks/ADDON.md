@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: "Super Reaction Tweaks' settings: Super React by Default and the Playing Limit for Super Reaction animations."
 ---
 
 ## :sparkle: What it does

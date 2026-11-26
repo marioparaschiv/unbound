@@ -4,5 +4,6 @@
 	"OUTPUT_TITLE": "{language} · návratový kód {code}",
 	"OUTPUT_BODY": "{output}",
 	"NO_OUTPUT": "(žádný výstup)",
-	"RUN_FAILED": "Kód se nepodařilo spustit"
+	"RUN_FAILED": "Kód se nepodařilo spustit",
+	"CLOSE": "Zavřít"
 }

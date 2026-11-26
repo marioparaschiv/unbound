@@ -4,5 +4,6 @@
 	"OUTPUT_TITLE": "{language} · çıkış {code}",
 	"OUTPUT_BODY": "{output}",
 	"NO_OUTPUT": "(çıktı yok)",
-	"RUN_FAILED": "Kod çalıştırılamadı"
+	"RUN_FAILED": "Kod çalıştırılamadı",
+	"CLOSE": "Kapat"
 }

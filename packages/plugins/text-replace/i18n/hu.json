@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Szövegcsere",
-	"PLUGIN_TAGLINE": "Üzenetek automatikus átírása küldés előtt.",
-	"TRY_YOUR_RULES": "Próbáld ki a szabályaidat",
-	"TEST_YOUR_RULES": "Szabályok tesztelése",
 	"EXAMPLE_MESSAGE": "Példaüzenet",
 	"EXAMPLE_PLACEHOLDER": "Írj be egy üzenetet a teszteléshez",
 	"RESULT": "Eredmény",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Mindkét szabálylista exportálása vagy importálása hordozható JSON formátumban.",
 	"EXPORT_AND_SHARE": "Exportálás és megosztás",
 	"IMPORT_CLIPBOARD": "Importálás vágólapról",
-	"PASTE_JSON": "JSON beillesztése",
-	"PASTE_JSON_PLACEHOLDER": "Illeszd be ide az exportált Szövegcsere-JSON-t",
-	"IMPORT_PASTED": "Beillesztett importálása",
 	"RULESET_IMPORTED": "Szabálykészlet importálva.",
 	"IMPORT_FAILED": "Nem sikerült importálni a szabálykészletet.",
 	"CLIPBOARD_HAS_NO_RULESET": "A vágólapon nincs szabálykészlet.",

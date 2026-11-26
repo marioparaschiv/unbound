@@ -133,6 +133,20 @@ test('re-renders useBucket only for changes to its Bucket that its predicate acc
 	expect([all.renders, watched.renders]).toEqual([3, 2]);
 });
 
+test('returns a new useBucket handle after each change, and the same one between changes', () => {
+	const hook = render(() => storage.useBucket('storage-identity'));
+	const first = hook.current;
+
+	storage.getBucket('storage-identity-other').set('value', 1);
+
+	expect(hook.current).toBe(first);
+
+	storage.getBucket('storage-identity').set('value', 2);
+
+	expect(hook.current).not.toBe(first);
+	expect(hook.current.get('value', 0)).toBe(2);
+});
+
 describe('useSetting', () => {
 	test('re-renders when the selected value changes, and not on a write to another key', () => {
 		const bucket = storage.getBucket('use-setting');

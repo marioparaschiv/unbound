@@ -1,10 +1,14 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/svg.jpg
+      alt: Image Embeds showing SVG attachments as pictures in chat instead of files.
+    - image: media/avif.jpg
+      alt: Image Embeds showing an AVIF photo inline in chat.
 ---
 
 ## :sparkle: What it does
 
 - :photo: SVG, AVIF, HEIC/HEIF, TIFF, BMP, ICO and JPEG XL attachments show in chat as pictures, right where Discord would show any other image, instead of as files.
 - :circle-check: Each one is drawn once on your device. SVGs use iOS's own renderer or an off-screen web view on Android, after scripts, event handlers and embedded HTML are stripped; the other formats are decoded by the system.
-- :mobile: Android has no decoder for TIFF and JPEG XL, so those stay files there.
+- :mobile: Android has no decoder for TIFF and JPEG XL, so those stay files there. An image that fails to draw also stays a file.
 - :circle-info: SVGs up to 2 MB, other images up to 25 MB.

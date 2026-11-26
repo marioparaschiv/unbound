@@ -9,6 +9,8 @@ declare module '@unbound-app/i18n' {
 		readonly COLLECTIONS: string;
 		/** New collection */
 		readonly NEW_COLLECTION: string;
+		/** Reactions */
+		readonly NEW_COLLECTION_PLACEHOLDER: string;
 		/** Create */
 		readonly CREATE: string;
 		/** {count, plural, one {# GIF} other {# GIFs}} */
@@ -23,7 +25,7 @@ declare module '@unbound-app/i18n' {
 		readonly DELETE_COLLECTION_BODY: string;
 		/** Delete */
 		readonly DELETE: string;
-		/** Name a collection below to start one with this GIF. */
+		/** Start a new collection with this GIF. */
 		readonly NO_COLLECTIONS: string;
 		/** Hold a collection to delete it. */
 		readonly HOLD_TO_DELETE: string;

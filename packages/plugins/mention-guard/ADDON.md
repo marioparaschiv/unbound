@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/everyone.jpg
+      alt: Mention Guard asks before sending a message that pings @everyone in the Unbound server's chat.
+    - image: media/settings.jpg
+      alt: "Mention Guard's settings: ask before @everyone and @here, and how many people or roles trigger the question."
 ---
 
 ## :sparkle: What it does

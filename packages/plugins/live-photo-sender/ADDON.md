@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: Live Photo Sender's setting for sending Live Photos as a still, a video or a GIF, or asking each time.
 ---
 
 ## :sparkle: What it does

@@ -71,11 +71,11 @@ export function ChannelBadges({ channel }: { channel: Channel }) {
 	return (
 		<View style={styles.row}>
 			{badges.map((badge) => (
-				<View key={badge.label} style={[styles.badge, styles[badge.color]]}>
-					<Discord.Text variant='text-xxs/bold' color='white'>
-						{messages[badge.label]}
-					</Discord.Text>
-				</View>
+				<Discord.Badge
+					key={badge.label}
+					type={{ text: messages[badge.label] }}
+					variant={badge.variant}
+				/>
 			))}
 		</View>
 	);

@@ -176,7 +176,8 @@ public:
 
     bool clear(const std::string &id)
     {
-        if (id_.empty() || id_ != id || descriptor_ < 0)
+        struct stat status = {};
+        if (id_.empty() || id_ != id || !ownsDescriptor(status))
         {
             return false;
         }
@@ -186,26 +187,49 @@ public:
     }
 
 private:
+    bool ownsDescriptor(struct stat &status) const
+    {
+        return descriptor_ >= 0 && fstat(descriptor_, &status) == 0 && status.st_dev == device_
+               && status.st_ino == inode_;
+    }
+
     bool reopenIfUnlinked(const std::string &directory, const std::string &path)
     {
         struct stat status = {};
-        if (descriptor_ >= 0 && fstat(descriptor_, &status) == 0 && status.st_nlink > 0)
+        bool owned         = ownsDescriptor(status);
+        if (owned && status.st_nlink > 0)
         {
             return true;
         }
 
-        if (descriptor_ >= 0)
+        if (owned)
         {
             close(descriptor_);
         }
 
+        descriptor_ = -1;
         id_.clear();
         createDirectories(directory);
-        descriptor_ = open(path.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, 0600);
-        return descriptor_ >= 0;
+        int opened = open(path.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, 0600);
+        if (opened < 0 || fstat(opened, &status) != 0)
+        {
+            if (opened >= 0)
+            {
+                close(opened);
+            }
+
+            return false;
+        }
+
+        descriptor_ = opened;
+        device_     = status.st_dev;
+        inode_      = status.st_ino;
+        return true;
     }
 
     int descriptor_ = -1;
+    dev_t device_   = 0;
+    ino_t inode_    = 0;
     std::string id_;
 };
 

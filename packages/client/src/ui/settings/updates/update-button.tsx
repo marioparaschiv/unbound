@@ -1,5 +1,6 @@
 import type { DesignModule } from '@unbound-app/types/components';
 import type { ComponentProps } from 'react';
+import { useStore } from 'zustand';
 
 import { Discord } from '~/metro/components';
 import UpdatesStore from '~/updates/state';
@@ -15,8 +16,8 @@ type UpdateButtonProps = {
 
 /** Applies one pending update, showing a spinner while it runs and a retry after it fails. */
 function UpdateButton({ id, text, size = 'sm', grow, onUpdated }: UpdateButtonProps) {
-	const status = UpdatesStore((state) => state.applying[id]);
-	const apply = UpdatesStore((state) => state.apply);
+	const status = useStore(UpdatesStore, (state) => state.applying[id]);
+	const apply = useStore(UpdatesStore, (state) => state.apply);
 
 	async function update() {
 		if (await apply(id)) {

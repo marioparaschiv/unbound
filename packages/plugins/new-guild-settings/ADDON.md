@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/settings.jpg
+      alt: "New Guild Settings' defaults for servers you join: mute, suppress pings and highlights, show all channels and notification level."
 ---
 
 ## :sparkle: What it does

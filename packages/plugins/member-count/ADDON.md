@@ -1,7 +1,3 @@
----
-banner: media/banner.png
----
-
 ## :sparkle: What it does
 
 - :users: The channel header reads, for example, '2 Online · 6 Members', instead of only the online count.

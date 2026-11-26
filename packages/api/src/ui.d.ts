@@ -419,7 +419,7 @@ export type InputRowProps = {
 	subLabel?: string;
 	/** The saved text; the input follows it whenever it changes. */
 	value: string;
-	/** Text shown while the input is empty. */
+	/** Text the dialog's input shows while it is empty; the row itself shows no trailing text then. */
 	placeholder?: string;
 	/** `text` is one line, `multiline` grows with its text, `secret` hides what is typed. */
 	variant?: InputVariant;

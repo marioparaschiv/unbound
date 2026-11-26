@@ -1,5 +1,7 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/pill.jpg
+      alt: Composer Account Avatar showing which account you are writing from, as a small name pill just above the message box.
 ---
 
 ## :sparkle: What it does

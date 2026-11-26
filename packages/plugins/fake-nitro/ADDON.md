@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/received.jpg
+      alt: Fake Nitro turning emoji image links sent without Nitro back into real server emoji in a chat.
+    - image: media/settings.jpg
+      alt: Fake Nitro's settings for fake emoji and stickers, their sizes, received links and stream quality.
 ---
 
 ## :sparkle: What it does

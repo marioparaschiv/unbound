@@ -1,5 +1,6 @@
 import { MEDIA_MAX_BYTES, MEDIA_TOTAL_MAX_BYTES } from '@unbound-app/contracts/addon-page';
 import { safeParse, Type, type StaticDecode } from '@unbound-app/contracts/schema';
+import { SYNC_MAX_INSTALLS } from '@unbound-app/contracts/sync';
 
 import { DEFAULT_PERK_GRACE_DAYS } from '~/lib/sponsors/standing';
 import { isBotTokenHost } from '~/lib/discord';
@@ -127,9 +128,10 @@ export const envSchema = Type.Object({
 	USER_LIST_PAGE_SIZE: positiveInt(25),
 	EVENT_PAGE_SIZE: positiveInt(100),
 
-	SYNC_MAX_INSTALLS: positiveInt(100),
+	// Matches what a request may carry, so a save never silently drops installs past a lower cap.
+	SYNC_MAX_INSTALLS: positiveInt(SYNC_MAX_INSTALLS),
 	SYNC_MAX_STORE_BYTES: positiveInt(32 * 1024),
-	SYNC_MAX_DOCUMENT_BYTES: positiveInt(256 * 1024),
+	SYNC_MAX_DOCUMENT_BYTES: positiveInt(1024 * 1024),
 	SYNC_RATE_LIMIT_WINDOW_SECONDS: positiveInt(60),
 	SYNC_RATE_LIMIT_MAX: positiveInt(30),
 	SYNC_SIGN_IN_RATE_LIMIT_WINDOW_SECONDS: positiveInt(60),

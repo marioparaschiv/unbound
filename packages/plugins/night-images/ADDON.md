@@ -1,5 +1,9 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/dimmed.jpg
+      alt: Night Images dimming a bright white photo in a dark chat while a dark night photo above it stays as it was.
+    - image: media/settings.jpg
+      alt: "Night Images' settings: when to dim, night hours, brightness threshold and how much to dim."
 ---
 
 ## :sparkle: What it does

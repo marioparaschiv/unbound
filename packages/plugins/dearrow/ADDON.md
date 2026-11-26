@@ -1,5 +1,13 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/dearrowed.jpg
+      alt: DeArrow replacing a clickbait YouTube embed's title and thumbnail with community-voted ones.
+    - image: media/original.jpg
+      alt: The same YouTube embed with DeArrow by default off, showing the original clickbait title and thumbnail.
+    - image: media/menu-toggle.jpg
+      alt: DeArrow's Show Original Embed row in a message's long-press menu.
+    - image: media/settings.jpg
+      alt: "DeArrow's settings: what to replace, dearrow by default and the menu toggle."
 ---
 
 ## :sparkle: What it does

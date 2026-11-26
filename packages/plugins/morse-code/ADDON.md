@@ -1,5 +1,13 @@
 ---
-banner: media/banner.png
+media:
+    - image: media/command.jpg
+      alt: Morse Code's /morse command in the slash-command autocomplete.
+    - image: media/menu.jpg
+      alt: Morse Code's Decode Morse and Play Morse options in a Morse message's long-press menu.
+    - image: media/decoded.jpg
+      alt: Morse Code decoding a Morse message into plain text.
+    - image: media/settings.jpg
+      alt: "Morse Code's settings: play Morse as sound, vibration or both, and its speed."
 ---
 
 ## :sparkle: What it does

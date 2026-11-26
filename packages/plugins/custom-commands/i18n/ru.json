@@ -11,7 +11,6 @@
 	"DELETE": "Удалить",
 	"DELETE_COMMAND": "Удалить команду",
 	"DELETE_COMMAND_BODY": "Удалить /{name} и сохранённые к ней вложения?",
-	"DELETE_COMMAND_LABEL": "Удалить {name}",
 	"DESCRIPTION_OPTIONAL": "Описание (необязательно)",
 	"DESCRIPTION_PLACEHOLDER": "Показывается в списке слеш-команд",
 	"DESCRIPTION_TOO_LONG": "Описание команды должно быть не длиннее {max} символов.",

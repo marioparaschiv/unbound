@@ -1,41 +1,22 @@
 ---
 title: 'Roadmap'
-description: 'What works today and what is next.'
+description: 'What the finished Unbound client does.'
 icon: 'map'
 ---
 
-What Unbound does today and what's underway. Everything works on iOS and Android unless noted.
-
-## Coming Next
-
-Numbers link to the pull request or issue.
-
-### For Everyone
-
-| Feature | Status |
-| --- | --- |
-| Theme editor with live preview in Discord ([#66](https://github.com/marioparaschiv/unbound/issues/66), [#340](https://github.com/marioparaschiv/unbound/pull/340)) | <Icon icon='clock' color='#E6A700' label='In progress' /> In progress |
-| Adjust corner radius, spacing and other design details without a theme ([#35](https://github.com/marioparaschiv/unbound/issues/35)) | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
-
-### For Developers
-
-| Feature | Status |
-| --- | --- |
-| Typed native calls, such as `UIKit.UIView.animate()`, instead of string class and method names | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
-| Metro cache viewer on the **Developer** page ([#31](https://github.com/marioparaschiv/unbound/issues/31)) | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
-| `.help` and `.clearhistory` in the terminal debugger | <Icon icon='circle-dashed' color='#9CA3AF' label='Planned' /> Planned |
+The Unbound client is feature-complete. Updates now only keep it working with new Discord versions. Everything below works on iOS and Android unless noted.
 
 ## Available Now
 
 | Area | What works |
 | --- | --- |
-| [Addons](/docs/user/marketplace) | Marketplace for plugins, themes and icon packs, with addon pages. Install older versions, from the website or a manifest URL. Libraries install with their plugin and stay hidden. Sort by popularity or newest. Official plugins such as Chat Bubbles, Avatar Radius, Message Logger and Translate, plus ports of Vencord plugins |
-| [Updates](/docs/user/updating) | Unbound updates in the background for the next launch. Addons update at startup, or by hand with changelogs. New app versions show on **Updates** |
-| [Customization](/docs/user/fonts) | Themes that reach native screens, icon packs, fonts including WOFF2 and variable fonts, configurable toasts, Discord's staff settings, and slash commands such as `/reload`, `/recovery` and `/debug`. Unbound speaks every language Discord does |
-| [Account and Sync](/docs/user/sync) | Discord sign-in. Two-way, download-only or upload-only sync, with a merge choice for new devices, so addons and settings return after a reinstall. Delete cloud data. Sponsor badge for $5 a month or $30 once, and a sponsor role while sponsoring |
-| [Recovery](/docs/user/troubleshooting) | Toolbox by shake or three fingers. Recovery Mode, also from the app icon shortcut. Auto-disable for plugins that crash two launches in a row or freeze, turned back on after they update. The Toolbox opens when Discord never draws. A recovery screen when a screen fails to draw. **Report Bug**. A warning when Discord is older than supported |
-| [Privacy](/docs/user/privacy) | Discord analytics blocked. Crash reports opt-in, never with your account. Plugins ask before calling native code. Unbound updates are signature-checked |
-| [iOS Extensions](/docs/user/ios-extensions) | Open Discord links from Safari, share to Discord, passkey login through Safari, Unbound app icon (sideloaded) |
+| [Addons](/docs/user/marketplace) | Marketplace for plugins, themes and icon packs, with addon pages. Install older versions, from the website or a manifest URL. Libraries install with their plugin and stay hidden. Sort by popularity or newest, or hide what you already have. Third-party plugins show what they can access before you install them. Over 200 official plugins, including Chat Bubbles, Message Logger, Translate and Voice Transcripts, plus Vencord and Equicord ports and over 70 community themes |
+| [Updates](/docs/user/updating) | Unbound downloads only what changed and applies it on the next launch. Addons update at startup, in the background, or by hand with changelogs. If an addon update crashes, Unbound rolls it back. Versions pulled from the store turn off. Update the client from **Updates**. Sideloaded installs update through their sideloader |
+| [Customization](/docs/user/fonts) | Themes that reach native screens, a Theme Editor with live preview, icon packs, font packs, fonts including WOFF2 and variable fonts, configurable toasts, Discord's staff settings, and slash commands such as `/reload`, `/recovery` and `/debug`. Unbound speaks every language Discord does |
+| [Account and Sync](/docs/user/sync) | Discord sign-in. Two-way, download-only or upload-only sync, with a merge choice for new devices, so addons and settings return after a reinstall. Delete cloud data. The Sync page shows what the cloud holds and uploads or downloads by hand. Sponsor badge for $5 a month or $30 once, and a sponsor role while sponsoring |
+| [Recovery](/docs/user/troubleshooting) | Toolbox by shake or three fingers. Recovery Mode, also from the app icon shortcut. Auto-disable for plugins that crash two launches in a row or freeze, turned back on after they update. The Toolbox opens when Discord never draws. A recovery screen when a screen fails to draw, naming the plugin behind it. **Find a Problem Plugin** turns off half your plugins at a time until it finds the bad one. **Recent Crashes** links each crash to its GitHub issue. The Toolbox can go back to the previous Unbound version. **Report Bug** attaches a diagnostics zip from `/debug`. Unbound warns you when Discord is older than supported, before a Discord update breaks it on Android, and before a sideloaded signing profile expires |
+| [Privacy](/docs/user/privacy) | Unbound blocks Discord analytics, Sentry and other tracking. Crash reports are opt-in and never include your account. Plugins ask before calling native code, list the servers they contact, and only get your account token if they request it. Unbound updates are signature-checked |
+| [iOS Extensions](/docs/user/ios-extensions) | Open Discord links from Safari, share files, text and links into Discord, sign in with a passkey through Safari, and use the animated Unbound app icon (sideloaded) |
 
 ## Install Options
 
@@ -56,14 +37,16 @@ Unbound also builds on Discord's test versions: TestFlight on iOS, Google Play b
 - `ubd` [CLI](/docs/developer/tools/cli): create an addon, rebuild and reload on device while editing, submit for review.
 - Components refresh in place without a restart.
 - A `ubd` push is tagged **Dev copy**, skips update checks, and reinstalls from the Marketplace in one tap.
-- The CLI runs code, reads logs and inspects native views. Its MCP server gives AI clients the same.
-- [Debugger](/docs/developer/tools/debugger): terminal REPL inside Discord. Unbound DevTools: desktop app for macOS, Windows and Linux with React DevTools, a native view tree, a class explorer and the `ubd` commands.
+- The CLI runs code, reads logs and inspects native views. It can also send test messages, run slash commands and background jobs, and copy files in and out of Discord. Its MCP server gives AI clients the same tools.
+- [Debugger](/docs/developer/tools/debugger): terminal REPL inside Discord. Unbound DevTools: desktop app for macOS, Windows and Linux with React DevTools, a TypeScript console, live device logs, a Metro module browser, a native view tree, a class explorer and the `ubd` commands.
+- Plugins can run background jobs, react to low memory, show Live Activities on iOS, and build Objective-C blocks and classes.
+- Unbound turns off patches that keep throwing or loop forever. `/debug` and crash reports name slow or crashing plugins.
 - **Developer Mode** adds the debugger, React DevTools, the Asset Browser and a custom bundle URL.
 - Guides for plugins, themes and icon packs, plus an SDK reference per package version.
 
 ## Website
 
-- Browse addons by tag, author and update date, and install to your device.
+- Browse addons by tag, author, popularity and update date, and install to your device.
 - Addon pages with versions and changelogs.
 - Sign in with Discord.
 - Developer profiles with addons and badges.
@@ -71,3 +54,4 @@ Unbound also builds on Discord's test versions: TestFlight on iOS, Google Play b
 - Submit from GitHub, preview the addon page and follow review.
 - Dashboard for addons and submissions, with maintainers.
 - Approve a device so `ubd auth login` can publish.
+- Crash reports become GitHub issues, with short links and a count of affected devices.

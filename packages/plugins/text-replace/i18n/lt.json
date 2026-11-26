@@ -1,8 +1,4 @@
 {
-	"PLUGIN_NAME": "Teksto keitimas",
-	"PLUGIN_TAGLINE": "Automatiškai perrašykite žinutes prieš jas išsiųsdami.",
-	"TRY_YOUR_RULES": "Išbandykite taisykles",
-	"TEST_YOUR_RULES": "Patikrinkite taisykles",
 	"EXAMPLE_MESSAGE": "Pavyzdinė žinutė",
 	"EXAMPLE_PLACEHOLDER": "Įveskite žinutę, kad išbandytumėte",
 	"RESULT": "Rezultatas",
@@ -44,9 +40,6 @@
 	"SHARE_RULES_DESCRIPTION": "Eksportuokite arba importuokite abu taisyklių sąrašus kaip perkeliamą JSON.",
 	"EXPORT_AND_SHARE": "Eksportuoti ir bendrinti",
 	"IMPORT_CLIPBOARD": "Importuoti iš iškarpinės",
-	"PASTE_JSON": "Įklijuoti JSON",
-	"PASTE_JSON_PLACEHOLDER": "Įklijuokite eksportuotą Text Replace JSON čia",
-	"IMPORT_PASTED": "Importuoti įklijuotą",
 	"RULESET_IMPORTED": "Taisyklių rinkinys importuotas.",
 	"IMPORT_FAILED": "Nepavyko importuoti taisyklių rinkinio.",
 	"CLIPBOARD_HAS_NO_RULESET": "Iškarpinėje nėra taisyklių rinkinio.",

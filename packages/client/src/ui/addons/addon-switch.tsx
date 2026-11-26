@@ -1,3 +1,6 @@
+// Reads manager or settings state during render, which the React Compiler would cache past its changes.
+'use no memo';
+
 import { useState, memo } from 'react';
 
 import useAddonState from '~/ui/hooks/use-addon-state';

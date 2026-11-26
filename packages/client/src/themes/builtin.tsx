@@ -1,5 +1,6 @@
 import { cloneElement, isValidElement, type ReactNode } from 'react';
 import { createLogger } from '@unbound-app/logger';
+import { useStore } from 'zustand';
 
 import { byFilePath, byFluxStore, byProps } from '~/metro/filters';
 import { clearGuardUnderlay } from '~/themes/clear-guard-underlay';
@@ -17,6 +18,9 @@ import { Screens } from '~/core/constants';
 import { onChange } from '~/storage/api';
 
 const Patcher = createPatcher('unbound::themes');
+const HookPatcher = createPatcher('unbound::themes-hooks');
+const hookPatched = new WeakSet<object>();
+let active = false;
 const Logger = createLogger('Themes');
 
 type ThemedTokenValue = {
@@ -113,10 +117,13 @@ function drawChatBackground(mdl: ChatViewModule) {
 // The fade would darken a chat background, so it hides while one is drawn. The original always renders, so its hooks
 // run on every render whichever way the background flips.
 function hideInputShadow(mdl: InputScrimModule) {
-	Patcher.after(mdl, 'ChatInputScrimGradient', ({ result }) => {
-		const hasBackground = ThemeStore((state) => Boolean(state.background));
+	if (hookPatched.has(mdl)) return;
 
-		return hasBackground ? null : result;
+	hookPatched.add(mdl);
+	HookPatcher.after(mdl, 'ChatInputScrimGradient', ({ result }) => {
+		const hasBackground = useStore(ThemeStore, (state) => Boolean(state.background));
+
+		return hasBackground && active ? null : result;
 	});
 }
 
@@ -179,11 +186,17 @@ function tagExperiments(experiments: string[] = noExperiments, id: string) {
 // Two themes on one base share Discord's theme name, so the applied id tags the root theme context instead.
 // The chat background and each draft change recolour too, so they tag it as well.
 function tagThemeContext(mdl: ThemeContextModule) {
-	Patcher.before(mdl, 'RootThemeContextProvider', ({ args }) => {
-		const id = ThemeStore((state) => state.applied);
-		const draft = ThemeStore((state) => (state.preview ? state.revision : 0));
-		const background = ThemeStore((state) => state.background);
+	if (hookPatched.has(mdl)) return;
+
+	hookPatched.add(mdl);
+	HookPatcher.before(mdl, 'RootThemeContextProvider', ({ args }) => {
+		const id = useStore(ThemeStore, (state) => state.applied);
+		const draft = useStore(ThemeStore, (state) => (state.preview ? state.revision : 0));
+		const background = useStore(ThemeStore, (state) => state.background);
 		const [props] = args;
+
+		if (!active) return;
+
 		const tag = [
 			id,
 			draft && `draft${draft}`,
@@ -200,7 +213,10 @@ function tagThemeContext(mdl: ThemeContextModule) {
 
 // Shown while a theme edit is open and no editor screen is, so the user can return to it from anywhere.
 function ThemeEditorButtonSlot() {
-	const shown = ThemeEditorStore((state) => state.session !== null && state.mounted === 0);
+	const shown = useStore(
+		ThemeEditorStore,
+		(state) => state.session !== null && state.mounted === 0,
+	);
 
 	if (!shown) return null;
 
@@ -231,6 +247,7 @@ function mountEditorButton(mdl: ThemeContextModule) {
 
 /** Recolours Discord's JavaScript colour tokens with the applied theme once Discord loads them, and follows theme changes. */
 export function start() {
+	active = true;
 	// Discord loads its colour tokens at launch; patching them as they load beats every read of them.
 	stopWaiting = onModuleLoaded(byProps('SemanticColor'), (mdl) => recolor(mdl.default));
 	stopWaitingForStore = onModuleLoaded(byFluxStore('Theme'), (store) => {
@@ -298,6 +315,7 @@ function recolor(tokens: ColorTokens | undefined) {
 
 /** Restores Discord's colour tokens and theme name. */
 export function stop() {
+	active = false;
 	stopWaiting?.();
 	stopWaiting = null;
 	stopWaitingForStore?.();
