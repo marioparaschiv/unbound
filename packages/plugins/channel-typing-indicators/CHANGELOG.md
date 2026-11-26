@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.9] - 2026-11-26
+
+### Changed
+
+- The `+N` count beside the typing avatars uses Discord's own text style and font.
+
 ## [1.0.8] - 2026-11-24
 
 ### Fixed

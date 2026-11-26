@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4] - 2026-11-26
+
+### Changed
+
+- The WPM pill uses Discord's own text style and font.
+
 ## [1.0.3] - 2026-11-24
 
 ### Fixed

@@ -15,6 +15,7 @@ import {
 	TooltipStyle,
 } from '@unbound-plugins/shared/tooltips/tooltip-layout';
 import TooltipBubble from '@unbound-plugins/shared/tooltips/tooltip-bubble';
+import { tooltipFontFamily } from '@unbound-plugins/shared/tooltips/tooltip-font';
 
 export type IOSTooltipAnchor = {
 	/** Names what the tooltip belongs to, so `dismissFor` can close it. */
@@ -104,14 +105,28 @@ export function createIOSTooltips({ objc, fabric }: Native, surfaceKey: string):
 		await safeInvokeAsync(objc, label, 'setNumberOfLines:', 0);
 
 		const UIFont = objc.getClass('UIFont');
-		const font = UIFont
-			? ((await safeInvokeAsync(
-					objc,
-					UIFont,
-					'systemFontOfSize:',
-					TooltipStyle.fontSize,
-				)) as NativeObjectHandle | null)
-			: null;
+		const family = tooltipFontFamily();
+		// Measures in Discord's font, as the bubble draws; the system font stands in when it is missing.
+		const discordFont =
+			UIFont && family
+				? ((await safeInvokeAsync(
+						objc,
+						UIFont,
+						'fontWithName:size:',
+						family,
+						TooltipStyle.fontSize,
+					)) as NativeObjectHandle | null)
+				: null;
+		const font =
+			discordFont ??
+			(UIFont
+				? ((await safeInvokeAsync(
+						objc,
+						UIFont,
+						'systemFontOfSize:',
+						TooltipStyle.fontSize,
+					)) as NativeObjectHandle | null)
+				: null);
 
 		if (!font) return null;
 

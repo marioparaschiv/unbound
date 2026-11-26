@@ -1,5 +1,6 @@
 import type { LayoutChangeEvent } from 'react-native';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Discord } from '@unbound-app/api/metro/components';
 import { flux, utils } from '@unbound-app/api';
 
 import { findUserSummaryItem, UserStore } from '~/lib/modules';
@@ -123,14 +124,14 @@ function ReactionAvatarSurface({ surfaceId }: SurfaceProps) {
 							width: Avatar.size,
 						}}
 					>
-						<Text
+						<Discord.Text
+							variant='text-xxs/semibold'
 							adjustsFontSizeToFit
 							minimumFontScale={0.5}
 							numberOfLines={1}
 							style={{
 								color: '#fff',
 								fontSize: 8,
-								fontWeight: '600',
 								height: Avatar.size,
 								includeFontPadding: false,
 								lineHeight: Avatar.size,
@@ -139,7 +140,7 @@ function ReactionAvatarSurface({ surfaceId }: SurfaceProps) {
 							}}
 						>
 							{`+${stack.overflowCount}`}
-						</Text>
+						</Discord.Text>
 					</View>
 				) : null}
 			</View>

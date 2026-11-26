@@ -36,6 +36,5 @@ export default Discord.createStyles(() => ({
 	overflowText: {
 		color: '#fff',
 		fontSize: 8,
-		fontWeight: '600',
 	},
 }));

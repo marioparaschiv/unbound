@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.35] - 2026-11-26
+
+### Changed
+
+- The avatar letters in the settings preview use Discord's own text style and font.
+
 ## [1.6.34] - 2026-11-24
 
 ### Fixed

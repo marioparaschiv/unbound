@@ -1,9 +1,10 @@
 import { COMPOSER_ROW_RIGHT, useComposerRow } from '@unbound-plugins/shared/composer/overlay-rows';
 import { counterSurface } from '@unbound-plugins/shared/colors/counter-surface';
 import { useSetting } from '@unbound-app/settings';
+import { Discord } from '@unbound-app/api/metro/components';
 import { flux, metro } from '@unbound-app/api';
 import { format } from '@unbound-app/i18n';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { characterLimit, counterTone } from '~/lib/limit';
 import { toneColor } from '~/lib/colors';
@@ -52,19 +53,19 @@ export function CharacterCounter({ channelId, inputs }: CharacterCounterProps) {
 					paddingHorizontal: 7,
 				}}
 			>
-				<Text
+				<Discord.Text
+					variant='text-xs/semibold'
+					tabularNumbers
 					accessibilityLabel={format('COUNTER_LABEL', { length, limit })}
 					style={{
 						color: toneColor(tone, colors),
 						fontSize: 11,
-						fontVariant: ['tabular-nums'],
-						fontWeight: '600',
 						lineHeight: 14,
 						textAlign: 'center',
 					}}
 				>
 					{length}/{limit}
-				</Text>
+				</Discord.Text>
 			</View>
 		</View>
 	);

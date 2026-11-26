@@ -1,4 +1,8 @@
-import { javaReference, javaString } from '@unbound-plugins/shared/native/android/java-values';
+import {
+	javaInt,
+	javaReference,
+	javaString,
+} from '@unbound-plugins/shared/native/android/java-values';
 import type { NativeBridge, NativeJavaBridge, NativeJavaReference } from '@unbound-app/api/native';
 
 import type { FontHost } from '../font-host';
@@ -10,20 +14,25 @@ const MAX_CANDIDATES = 20;
 
 type Description = ReturnType<NativeJavaBridge['describe']>;
 
-function isFontManager(description: Description): boolean {
-	return description.methods.some(
+/** React Native's font manager: its typeface lookup by family, style and assets, and its custom typeface cache. */
+type FontManager = {
+	manager: NativeJavaReference;
+	lookup: string;
+	customTypefaces: NativeJavaReference | undefined;
+};
+
+function typefaceLookup(description: Description): string | undefined {
+	return description.methods.find(
 		(method) =>
 			!method.static &&
 			method.returnType === TYPEFACE &&
 			method.parameters.length === 3 &&
 			method.parameters[0] === 'java.lang.String' &&
 			method.parameters[2] === ASSETS,
-	);
+	)?.name;
 }
 
-async function findCustomTypefaces(
-	java: NativeJavaBridge,
-): Promise<NativeJavaReference | undefined> {
+async function findFontManager(java: NativeJavaBridge): Promise<FontManager | undefined> {
 	const names = await java.findClasses({
 		methods: [{ returns: TYPEFACE, static: false }],
 		fields: [{ type: CACHE }],
@@ -32,19 +41,53 @@ async function findCustomTypefaces(
 
 	for (const name of names) {
 		const description = java.describe(name);
+		const lookup = typefaceLookup(description);
 		const self = description.fields.find((field) => field.static && field.type === name);
 		const caches = description.fields.filter((field) => !field.static && field.type === CACHE);
 
-		if (!isFontManager(description) || !self || caches.length < 2) continue;
+		if (!lookup || !self || caches.length < 2) continue;
 
 		const manager = javaReference(java.getField(java.getClass(name), self.name));
 
-		return manager
-			? (javaReference(java.getField(manager, caches[1]!.name)) ?? undefined)
-			: undefined;
+		if (!manager) return undefined;
+
+		return {
+			manager,
+			lookup,
+			customTypefaces: javaReference(java.getField(manager, caches[1]!.name)) ?? undefined,
+		};
 	}
 
 	return undefined;
+}
+
+async function findCustomTypefaces(
+	java: NativeJavaBridge,
+): Promise<NativeJavaReference | undefined> {
+	return (await findFontManager(java))?.customTypefaces;
+}
+
+/**
+ * @description Loads a font family the way React Native text does, so native code can measure text in it.
+ * @param java The plugin's Java bridge.
+ * @param family The family, such as `ggsans-Normal`.
+ * @param assets The app's `AssetManager`, which holds Discord's bundled fonts.
+ * @returns The typeface, or `undefined` when React Native's font manager is not found.
+ */
+export async function reactTypeface(
+	java: NativeJavaBridge,
+	family: string,
+	assets: NativeJavaReference,
+): Promise<NativeJavaReference | undefined> {
+	const fonts = await findFontManager(java);
+
+	if (!fonts) return undefined;
+
+	return (
+		javaReference(
+			java.invoke(fonts.manager, fonts.lookup, [javaString(family), javaInt(0), assets]),
+		) ?? undefined
+	);
 }
 
 function inflate(java: NativeJavaBridge, compressed: Uint8Array): Uint8Array {
