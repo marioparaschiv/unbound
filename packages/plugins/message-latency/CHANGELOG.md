@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.24] - 2026-11-26
+
+### Fixed
+
+- Tapping the latency icon on iOS no longer risks crashing Discord. The tooltip used to hook and unhook the window's touch handling on every tap; it now hooks it once.
+
 ## [1.2.23] - 2026-11-26
 
 ### Fixed
