@@ -424,6 +424,7 @@ Value makeHook(Runtime &runtime, const Value *args, size_t count)
             }
 
             gClosureDispatchers[dispatcher.get()] = dispatcher;
+            dispatcher->original                  = method_getImplementation(method);
             MSHookMessageEx(cls, selector, (IMP) dispatcher->code, &dispatcher->original);
             gDispatchers[key] = dispatcher;
         }
