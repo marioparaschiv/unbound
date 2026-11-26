@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/fit.jpg",
+				"alt": "Chat Bubbles' default Fit to message layout in a direct message."
+			},
+			{
+				"image": "media/cards.jpg",
+				"alt": "Chat Bubbles with the Full-width cards layout."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Chat Bubbles' settings, with a live preview and style presets."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/fit.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwA/dmiGh1iJk39vqPg=",
+			"bytes": 253911
+		},
+		{
+			"path": "media/cards.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwAdaGZliIADoY991/g=",
+			"bytes": 306901
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwBukGZ3XFdFSG9IMIU=",
+			"bytes": 276608
+		}
+	]
+}

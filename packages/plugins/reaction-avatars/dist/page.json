@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/faces.jpg",
+				"alt": "Reaction Avatars showing the faces of the people behind each reaction, with a +N badge for the rest."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/faces.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwB/eYd1hmVTpY+q9Pg=",
+			"bytes": 315579
+		}
+	]
+}

@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/indicators.jpg",
+				"alt": "Message Latency marks messages that took seconds or minutes to send with signal-bar icons beside the name."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Message Latency's settings: delay threshold, milliseconds, ignoring your own messages and legacy Android detection."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/indicators.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwCfdXdlh2eZkHttafg=",
+			"bytes": 316775
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcGAwB5jAd3cmhoanbPlgY=",
+			"bytes": 211953
+		}
+	]
+}
