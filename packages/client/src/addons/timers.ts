@@ -24,6 +24,7 @@ export type ScopedTimers = {
  * @param onError Receives what a timer callback threw.
  * @returns The scoped timer functions and their `dispose`.
  */
+// UNKNOWN: a timer callback can throw any value.
 export function createScopedTimers(onError: (error: unknown) => void): ScopedTimers {
 	const pending = new Map<TimerHandle, Clear>();
 	let disposed = false;
