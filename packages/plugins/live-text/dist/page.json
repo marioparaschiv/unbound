@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/menu.jpg",
+				"alt": "Live Text's Copy Text option in the image viewer's menu for a photo of a menu."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/menu.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "BggGAwB2eAZ4h5RYr/JxaAo=",
+			"bytes": 196204
+		}
+	]
+}

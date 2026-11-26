@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/emoji-sheet.jpg",
+				"alt": "Expression Tools' Copy URL, Copy markup and Clone rows on a custom emoji's sheet."
+			},
+			{
+				"image": "media/clone.jpg",
+				"alt": "Expression Tools' Clone sheet for copying an emoji to one of your servers, with its name and server search."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/emoji-sheet.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xfcFCwR5cEh3jIZJiH+ImPc=",
+			"bytes": 231564
+		},
+		{
+			"path": "media/clone.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwBZcCi4jGo3mH/qa7A=",
+			"bytes": 161307
+		}
+	]
+}

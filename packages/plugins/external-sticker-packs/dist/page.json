@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/picker.jpg",
+				"alt": "External Sticker Packs' picker with two LINE sticker packs, opened from the chat input's sticker button."
+			},
+			{
+				"image": "media/sent.jpg",
+				"alt": "A LINE sticker sent as an image with External Sticker Packs, beside the chat input's sticker button."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/picker.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcGAwBYcIl3iXZ5ilSvA7U=",
+			"bytes": 330500
+		},
+		{
+			"path": "media/sent.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcGAwAPc0ulnXTTIHBaAJc=",
+			"bytes": 269638
+		}
+	]
+}

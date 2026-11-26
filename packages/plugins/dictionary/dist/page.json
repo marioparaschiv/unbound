@@ -1,0 +1,44 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/definition.jpg",
+				"alt": "Dictionary's definition sheet for a word from a message, with pronunciation and definitions."
+			},
+			{
+				"image": "media/menu-row.jpg",
+				"alt": "Dictionary's Define Words row in a message's long-press menu."
+			},
+			{
+				"image": "media/commands.jpg",
+				"alt": "Dictionary's /define command in the slash-command list."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/definition.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwBqcCiXjXd2h4+Z9Jc=",
+			"bytes": 229492
+		},
+		{
+			"path": "media/menu-row.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwB8YBh3hYJmiI/N9Xs=",
+			"bytes": 199412
+		},
+		{
+			"path": "media/commands.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcCAwB/iIZ0kmRDiG+2+bU=",
+			"bytes": 312120
+		}
+	]
+}

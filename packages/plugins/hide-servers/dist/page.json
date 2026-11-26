@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/hide-row.jpg",
+				"alt": "Hide Servers' Hide Server row in a server's long-press menu."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Hide Servers' settings listing the hidden servers, each with a button to unhide it."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/hide-row.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wvcBAwCvm8iIRWh2IFUJYdY=",
+			"bytes": 205978
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xPcBAwB5nld3YGK4U1IPUXM=",
+			"bytes": 139752
+		}
+	]
+}

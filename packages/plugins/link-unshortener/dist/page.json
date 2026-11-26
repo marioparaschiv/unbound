@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/row.jpg",
+				"alt": "Link Unshortener's Unshorten Link option in the long-press menu of a bit.ly link."
+			},
+			{
+				"image": "media/real-link.jpg",
+				"alt": "Link Unshortener's page showing where a bit.ly link really goes, with Open and Copy buttons."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/row.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wgcGAwB5cMiHeHWKl3+DBrg=",
+			"bytes": 192705
+		},
+		{
+			"path": "media/real-link.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xfcFCwBojmd4cHHHl3CNCMg=",
+			"bytes": 173730
+		}
+	]
+}

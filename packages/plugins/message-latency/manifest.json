@@ -18,5 +18,41 @@
 	},
 	"icon": "TimerIcon",
 	"minNativeBridgeApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.fabric.async",
+				"native.objc.batch",
+				"native.objc.classes",
+				"native.objc.hooks",
+				"native.objc.invoke",
+				"native.objc.invokeAsync",
+				"native.objc.ivars",
+				"native.runtime.events"
+			]
+		},
+		"android": {
+			"capabilities": [
+				"native.fabric.async",
+				"native.java.associations",
+				"native.java.batch",
+				"native.java.classSearch",
+				"native.java.classes",
+				"native.java.construct",
+				"native.java.fields",
+				"native.java.hooks",
+				"native.java.invoke",
+				"native.java.invokeAsync",
+				"native.runtime.events"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "35b5a714ea2c3d802f8fd46e8457c0e6417a67547353e1d8918ad94bc0d87c2640a6fb51c6b28640f05bf8418f6d35fd8332a524087e8822655fc92f36b8676e"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "cc37bpliwZ0zZWCx601AWG2MEndTkC9/jnyYzaSIMZyaNyZ80w6UeLbv13DlBNiwaVjZ//EiY7oANvh/erP+CA=="
+	}
 }

@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/profile.jpg",
+				"alt": "Mutual Group DMs shows how many group DMs you share with someone on their profile."
+			},
+			{
+				"image": "media/groups.jpg",
+				"alt": "Mutual Group DMs listing the shared group DMs, each tappable to open it."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/profile.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "CBgKEwR3f3d3dYVVWIx/9bg=",
+			"bytes": 394123
+		},
+		{
+			"path": "media/groups.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "w/cBAwCKggmHio1VQ05/Amk=",
+			"bytes": 143336
+		}
+	]
+}

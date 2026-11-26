@@ -13,5 +13,31 @@
 		"min": "1.0.0"
 	},
 	"icon": "MicrophoneIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.objc.blocks",
+				"native.objc.classes",
+				"native.objc.invoke",
+				"native.objc.invokeAsync"
+			]
+		},
+		"android": {
+			"capabilities": [
+				"native.java.classes",
+				"native.java.construct",
+				"native.java.fields",
+				"native.java.hooks",
+				"native.java.invoke"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "7e2091dde3ca35d1d7847a18960032a4780e451b224cc88a582294121d3b60085a0dac09e9bae1e45c3ff9436ed1285396bf44d7da4b6dce95f75a4e052f5a6d"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "YmGo20KotfqPJvJLviQu0FJu/TbdLLg5Msfxu4uZbdBLdrOCdzuO/I/b9YvE3NWJeF0xtmgoDDwSzxiX9kILDA=="
+	}
 }

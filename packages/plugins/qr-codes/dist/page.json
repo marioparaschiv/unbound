@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/link-menu.jpg",
+				"alt": "QR Codes' Show QR Code row in a link's long-press menu."
+			},
+			{
+				"image": "media/qr-code.jpg",
+				"alt": "QR Codes showing a link from chat as a QR code another phone can scan."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/link-menu.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "wwcGAwB5cKiHenV4h3+GFvg=",
+			"bytes": 181683
+		},
+		{
+			"path": "media/qr-code.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "yQcKAwAnfUWYgHSIR3+n8co=",
+			"bytes": 148627
+		}
+	]
+}

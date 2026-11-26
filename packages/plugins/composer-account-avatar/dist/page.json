@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/pill.jpg",
+				"alt": "Composer Account Avatar showing which account you are writing from, as a small name pill just above the message box."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/pill.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCPdpaFk2VkeG+V95g=",
+			"bytes": 335735
+		}
+	]
+}

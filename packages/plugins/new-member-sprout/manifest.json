@@ -13,5 +13,36 @@
 		"min": "1.0.0"
 	},
 	"icon": "UserPlusIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.fabric.async",
+				"native.objc.classes",
+				"native.objc.hooks",
+				"native.objc.invoke",
+				"native.objc.invokeAsync"
+			]
+		},
+		"android": {
+			"capabilities": [
+				"native.fabric.async",
+				"native.java.batch",
+				"native.java.classSearch",
+				"native.java.classes",
+				"native.java.construct",
+				"native.java.fields",
+				"native.java.hooks",
+				"native.java.invoke",
+				"native.java.invokeAsync"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "183c707ee50f133a7817b0d469c2a221d90d0f0f79fcb0d54f4d68484f994327cb780e6d858a7efb0b549d88594ebbf0552b288a3f0598cbfb4202b1de0d3e43"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "/phoLQzKI5P2mUjhhLmj//ZQn40fMmsjKJ4DGAl3Ld5kenl1jc9eVTW4ZjPh/Q0kDZVel1FfQgktiinT8LzRBQ=="
+	}
 }

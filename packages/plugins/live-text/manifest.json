@@ -13,5 +13,21 @@
 		"min": "1.0.0"
 	},
 	"icon": "TextIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platforms": {
+		"ios": {
+			"capabilities": [
+				"native.objc.batch",
+				"native.objc.classes",
+				"native.objc.invoke"
+			]
+		}
+	},
+	"bytecode": {
+		"98": "5d1d5580d10a31132c850e6bedfdceb7dde3c9794bbc925d99aa73154a5e43882fa7a426face41cf5aa28816f490d5d0122efdd3affee430ec88c6afeabe7ab2"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "Ws+UqCZN13DyWviwDqU9Mrj86MOCiRf26/bIbSdNK9oyJnT1GzW2/DxA0SkqMAYVW0Kumk4TXlg3NA10swsvCg=="
+	}
 }

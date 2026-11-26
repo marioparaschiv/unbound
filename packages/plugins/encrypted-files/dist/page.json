@@ -1,0 +1,56 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/save-key.jpg",
+				"alt": "Encrypted Files' Save Encryption Key row on a message that shares a key."
+			},
+			{
+				"image": "media/decrypt.jpg",
+				"alt": "Encrypted Files' Decrypt File row on an encrypted .ufx attachment."
+			},
+			{
+				"image": "media/decrypted.jpg",
+				"alt": "Encrypted Files' sheet showing an encrypted photo opened with your key, ready to save."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "Encrypted Files' settings with your key's fingerprint and a saved contact key."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/save-key.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcCAwBsYBiHhYJmiI+99ns=",
+			"bytes": 202554
+		},
+		{
+			"path": "media/decrypt.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xQcGAwB6YCiHhYWZiI/L1Qs=",
+			"bytes": 202267
+		},
+		{
+			"path": "media/decrypted.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xgcKCwBZcKl4inR5iW2gBWU=",
+			"bytes": 248716
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwBqnjZocHSIh3Zv92Y=",
+			"bytes": 157314
+		}
+	]
+}

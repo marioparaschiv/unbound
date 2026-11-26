@@ -1,0 +1,20 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/profile.jpg",
+				"alt": "Friends Since's Friends Since date on a friend's profile."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/profile.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "AwgGCwKJf7ZVW2l5dn5/9+c=",
+			"bytes": 223045
+		}
+	]
+}

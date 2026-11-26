@@ -1,0 +1,32 @@
+{
+	"frontmatter": {
+		"media": [
+			{
+				"image": "media/reply-mention-off.jpg",
+				"alt": "No Reply Mention starting a reply to eternal with the mention toggle already off."
+			},
+			{
+				"image": "media/settings.jpg",
+				"alt": "No Reply Mention's settings with eternal on the exceptions list and Only Ping Listed Users on."
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/reply-mention-off.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCPd4d1lGSFlo+W95k=",
+			"bytes": 324219
+		},
+		{
+			"path": "media/settings.jpg",
+			"kind": "image",
+			"width": 1290,
+			"height": 2796,
+			"thumbhash": "xAcCAwCIj0docGSaXJS/82k=",
+			"bytes": 147904
+		}
+	]
+}
