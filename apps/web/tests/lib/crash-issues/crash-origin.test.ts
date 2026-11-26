@@ -94,6 +94,16 @@ describe('crashOrigin', () => {
 		expect(filesIssue(report, 'addon')).toBe(true);
 	});
 
+	test('reads the bare id from the loader registry key', () => {
+		const report = {
+			...native('Discord + 0x1'),
+			stack: 'Signal 11\nAddon {"id":"plugins:unbound.message-latency","name":"Message Latency"}\n#0 0x1 Discord + 0x1',
+		};
+
+		expect(nativeCrashAddon(report.stack)).toBe('unbound.message-latency');
+		expect(unfiledReason(report, 'addon', true)).toBe('failed');
+	});
+
 	test('counts JavaScript crashes without an addon as Unbound', () => {
 		expect(crashOrigin({ ...base, kind: 'crash' })).toBe('unbound');
 	});
