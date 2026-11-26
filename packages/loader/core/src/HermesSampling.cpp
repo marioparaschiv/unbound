@@ -252,8 +252,8 @@ static JavaScriptProfiler hermesProfiler()
         [] {
             HermesRootAPI *api = rootAPI();
             std::ostringstream trace;
-            api->dumpSampledTraceToStream(trace);
             api->disableSamplingProfiler();
+            api->dumpSampledTraceToStream(trace);
             return trace.str();
         },
     };

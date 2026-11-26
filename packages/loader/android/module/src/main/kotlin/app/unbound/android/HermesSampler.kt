@@ -22,12 +22,12 @@ object HermesSampler {
         val context = Platform.application() ?: return ""
         val trace = File(context.cacheDir, "unbound-sampled-trace.json")
 
+        val disabled = runCatching { profiler.getMethod("disable").invoke(null) }.isSuccess
+        if (!disabled) return ""
+
         return runCatching {
             profiler.getMethod("dumpSampledTraceToFile", String::class.java).invoke(null, trace.path)
             trace.readText()
-        }.getOrDefault("").also {
-            runCatching { profiler.getMethod("disable").invoke(null) }
-            trace.delete()
-        }
+        }.getOrDefault("").also { trace.delete() }
     }
 }
