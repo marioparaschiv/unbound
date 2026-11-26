@@ -3,6 +3,7 @@ import type { AnyProps } from '@unbound-app/api/metro';
 import { metro, patcher } from '@unbound-app/api';
 
 import { forceAnimateArgument, type AnimateArgument } from '~/lib/arguments';
+import { isRenderingStatic } from '~/lib/static-render';
 import { USER_SETTINGS_PATH } from '~/lib/constants';
 
 type Cleanup = () => void;
@@ -59,7 +60,7 @@ function holdersOf(module: AnyProps): AnyProps[] {
 }
 
 /**
- * @description Makes the builders of a module, and of its `default` export, always build animated URLs or sources.
+ * @description Makes the builders of a module, and of its `default` export, build animated URLs or sources, except inside a static render.
  * @param module The module's exports.
  * @param rules The builders to patch and the argument that makes each animate.
  * @returns A function that removes the patches.
@@ -75,7 +76,9 @@ export function forceAnimateArguments(
 			if (typeof holder[rule.method] !== 'function') continue;
 
 			cleanups.push(
-				patcher.before(holder, rule.method, ({ args }) => forceAnimateArgument(args, rule)),
+				patcher.before(holder, rule.method, ({ args }) =>
+					isRenderingStatic() ? undefined : forceAnimateArgument(args, rule),
+				),
 			);
 		}
 	}
