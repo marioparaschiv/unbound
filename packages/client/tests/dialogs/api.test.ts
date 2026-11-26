@@ -71,7 +71,7 @@ mock.module('~/metro/design', () => ({
 mock.module('~/i18n/api', coreI18nMock);
 
 const { alert, confirm, dismissAll, showDialog } = await import('~/dialogs/api');
-const { holdSystemDialogs } = await import('~/dialogs/host');
+const { failDialogHost, holdDialogHost } = await import('~/dialogs/host');
 
 function buttonsOf(dialog: Opened | undefined): ActionButton[] {
 	return [dialog?.props.actions.props.children ?? []].flat();
@@ -143,16 +143,45 @@ describe('dialogs', () => {
 		expect(closed).toEqual(['closed']);
 	});
 
-	test("uses the system alert while a screen holds Discord's alert host unmounted", () => {
-		const release = holdSystemDialogs();
+	test('reopens a screen-hosted alert as a system alert when that host fails, and uses it until released', async () => {
+		const release = holdDialogHost();
+		const answer = confirm('UNBOUND_CRASH_REPORT_TITLE', {
+			confirm: 'UNBOUND_CRASH_REPORT_CONFIRM',
+		});
+		const [dialog] = opened;
 
-		showDialog({ title: 'Report?', cancel: true });
+		expect(dialog?.props.title).toBe(enUS.UNBOUND_CRASH_REPORT_TITLE);
+
+		failDialogHost();
+		unmount(dialog);
+		showDialog({ title: 'During' });
+
+		expect(dismissed).toEqual([dialog?.key]);
+		expect(systemAlerts).toEqual([enUS.UNBOUND_CRASH_REPORT_TITLE, 'During']);
+		expect(await settled(answer)).toBe('pending');
+
 		release();
 		release();
 		showDialog({ title: 'After' }).dismiss();
 
-		expect(systemAlerts).toEqual(['Report?']);
-		expect(opened.map((dialog) => dialog.props.title)).toEqual(['After']);
+		expect(opened.map((after) => after.props.title)).toEqual([
+			enUS.UNBOUND_CRASH_REPORT_TITLE,
+			'After',
+		]);
+	});
+
+	test('leaves a closed alert closed when the screen host fails later', async () => {
+		const release = holdDialogHost();
+		const answer = confirm('UNBOUND_CRASH_REPORT_TITLE', {
+			confirm: 'UNBOUND_CRASH_REPORT_CONFIRM',
+		});
+
+		buttonsOf(opened[0])[0]?.props.onPress();
+		failDialogHost();
+		release();
+
+		expect(await answer).toBe(true);
+		expect(systemAlerts).toEqual([]);
 	});
 
 	test('gives every dialog its own key and closes the ones still open', () => {
