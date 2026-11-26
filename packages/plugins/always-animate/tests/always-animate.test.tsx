@@ -37,9 +37,19 @@ function createComponent() {
 	));
 }
 
+type CutoutProps = AnimatedProps & { cutout?: { nativeCutouts?: object[] } };
+
+// Like Discord's: a cutout turns animation off and the source is built during the render.
+function createCutoutableAvatarImage() {
+	return memo(({ animate, cutout }: CutoutProps) => (
+		<Text>{avatarUtils.getUserAvatarURL({ id: '1' }, Boolean(animate) && cutout == null)}</Text>
+	));
+}
+
 beforeEach(() => {
 	for (const name of Object.keys(PATHS) as (keyof typeof PATHS)[]) {
-		components[name] = createComponent();
+		components[name] =
+			name === 'cutoutableAvatarImage' ? createCutoutableAvatarImage() : createComponent();
 		modules[name] = { default: components[name] };
 		metro.register(modules[name], PATHS[name]);
 	}
@@ -79,6 +89,17 @@ describe('avatars', () => {
 		await startPlugin();
 
 		expect(rendered(components.avatar)).toBe('animate:true loop:false');
+	});
+
+	test('keeps avatars drawn through an SVG mask still, and animates the rest', async () => {
+		await startPlugin();
+
+		const Cutoutable = components.cutoutableAvatarImage as (props: CutoutProps) => ReactNode;
+
+		expect(render(<Cutoutable cutout={{}} />).text()).toBe('avatar.png');
+		expect(render(<Cutoutable cutout={{ nativeCutouts: [{}] }} />).text()).toBe('avatar.gif');
+		expect(render(<Cutoutable />).text()).toBe('avatar.gif');
+		expect(avatarUtils.getUserAvatarURL({ id: '1' }, false)).toBe('avatar.gif');
 	});
 
 	test('goes back to still avatars when switched off, and animates again when switched on', async () => {

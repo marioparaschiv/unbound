@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.6] - 2026-11-26
+
+### Fixed
+
+- Discord on Android no longer crashes when an animated avatar shows with a cutout, such as the people in a voice channel in the channel list. Those avatars stay still; the rest still animate.
+
 ## [1.0.5] - 2026-11-24
 
 ### Fixed
