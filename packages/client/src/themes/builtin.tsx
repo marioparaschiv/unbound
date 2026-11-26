@@ -118,6 +118,7 @@ function drawChatBackground(mdl: ChatViewModule) {
 // run on every render whichever way the background flips.
 function hideInputShadow(mdl: InputScrimModule) {
 	if (hookPatched.has(mdl)) return;
+
 	hookPatched.add(mdl);
 	HookPatcher.after(mdl, 'ChatInputScrimGradient', ({ result }) => {
 		const hasBackground = useStore(ThemeStore, (state) => Boolean(state.background));
@@ -186,6 +187,7 @@ function tagExperiments(experiments: string[] = noExperiments, id: string) {
 // The chat background and each draft change recolour too, so they tag it as well.
 function tagThemeContext(mdl: ThemeContextModule) {
 	if (hookPatched.has(mdl)) return;
+
 	hookPatched.add(mdl);
 	HookPatcher.before(mdl, 'RootThemeContextProvider', ({ args }) => {
 		const id = useStore(ThemeStore, (state) => state.applied);
@@ -194,6 +196,7 @@ function tagThemeContext(mdl: ThemeContextModule) {
 		const [props] = args;
 
 		if (!active) return;
+
 		const tag = [
 			id,
 			draft && `draft${draft}`,
