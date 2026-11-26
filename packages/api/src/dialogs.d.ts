@@ -46,7 +46,8 @@ export declare function dismissAll(): void;
 /**
  * @description Opens a dialog with Discord's own alert: a title, an optional body and custom component,
  * and action buttons, each of which closes the dialog before running its handler. On a Discord build
- * without the alert it falls back to the system alert, which shows the title, body and buttons only.
+ * without the alert, or when the crash screen's copy of the alert host fails, it falls back to the system alert: the
+ * title, body and buttons only.
  * @param options The dialog's content and buttons.
  * @returns The dialog's key and a function that closes it.
  */
@@ -59,6 +60,8 @@ export type AlertDialogProps = {
 	body?: string;
 	/** A component rendered below the body, given a way to close the dialog. */
 	content?: React$1.ComponentType<DialogContentProps>;
+	/** Renders Discord's whole `AlertModal` in place of `body`, `content` and the buttons, for actions that read the content's state. */
+	modal?: React$1.ComponentType<DialogContentProps>;
 	/** The action buttons, in order, before the cancel button. */
 	buttons?: DialogButton[];
 	/** Adds a cancel button last; a string sets its label. */

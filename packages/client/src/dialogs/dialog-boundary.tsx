@@ -1,5 +1,5 @@
-import { Component, type ReactNode } from 'react';
 import { createLogger } from '@unbound-app/logger';
+import { Component, type ReactNode } from 'react';
 
 type DialogBoundaryProps = {
 	/** Runs once the children throw. */

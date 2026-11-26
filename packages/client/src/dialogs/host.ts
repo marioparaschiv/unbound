@@ -20,10 +20,10 @@ export function holdDialogHost(): () => void {
 		released = true;
 		holds -= 1;
 
-		if (holds === 0) {
-			failed = false;
-			fallbacks.clear();
-		}
+		if (holds > 0) return;
+
+		failed = false;
+		fallbacks.clear();
 	};
 }
 
