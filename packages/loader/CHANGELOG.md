@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.12.5](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.4...loader-v1.12.5) (2026-11-26)
+
+
+### Bug Fixes
+
+* **loader:** follow indexed superclasses in the iOS compat scan ([#2287](https://github.com/marioparaschiv/unbound/issues/2287)) ([1777a00](https://github.com/marioparaschiv/unbound/commit/1777a001b8008a166e1dbbb4007d5c1cc965355d))
+* **loader:** hook the bundle accessors on newer Discord Android ([#2254](https://github.com/marioparaschiv/unbound/issues/2254)) ([b033747](https://github.com/marioparaschiv/unbound/commit/b0337472cc3a4a4cd809bf0c6b82e95d8207d979))
+* **loader:** leave reused descriptors alone in the crash marker ([#2293](https://github.com/marioparaschiv/unbound/issues/2293)) ([18cd10a](https://github.com/marioparaschiv/unbound/commit/18cd10a4760f2f67310d699945c2befe243cea88))
+* **loader:** replace the launcher icon at the densities Discord ships ([#2285](https://github.com/marioparaschiv/unbound/issues/2285)) ([f334fdc](https://github.com/marioparaschiv/unbound/commit/f334fdca995697341499b6c7009f524749d78f50))
+* **loader:** stop Hermes' sampler before dumping its trace ([#2320](https://github.com/marioparaschiv/unbound/issues/2320)) ([eb8cedf](https://github.com/marioparaschiv/unbound/commit/eb8cedf5a1643490b0ab00c90e7118ede96e58e5))
+* **loader:** stop labelling sideloaded installs as TestFlight ([#2283](https://github.com/marioparaschiv/unbound/issues/2283)) ([baf2d97](https://github.com/marioparaschiv/unbound/commit/baf2d97945a538d0f2761a4c5e3d3ba7cd8f927b))
+* **loader:** stop native callbacks racing their release ([#2282](https://github.com/marioparaschiv/unbound/issues/2282)) ([05ae51e](https://github.com/marioparaschiv/unbound/commit/05ae51e166e069700d2d462ba55fc8cfc0b72f00))
+
 ## [1.12.4](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.3...loader-v1.12.4) (2026-11-23)
 
 
