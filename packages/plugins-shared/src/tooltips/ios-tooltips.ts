@@ -54,6 +54,7 @@ export function createIOSTooltips({ objc, fabric }: Native, surfaceKey: string):
 	let timer: ReturnType<typeof setTimeout> | null = null;
 	let dismissHook: NativeHookToken | null = null;
 	let generation = 0;
+	let closingGeneration: number | null = null;
 	let disposed = false;
 	let surfaceName: string | undefined;
 	let queue: Promise<void> = Promise.resolve();
@@ -71,8 +72,7 @@ export function createIOSTooltips({ objc, fabric }: Native, surfaceKey: string):
 
 		timer = null;
 		generation++;
-		dismissHook?.remove();
-		dismissHook = null;
+		closingGeneration = null;
 
 		const previous = shown;
 
@@ -85,12 +85,21 @@ export function createIOSTooltips({ objc, fabric }: Native, surfaceKey: string):
 	}
 
 	function closeOnNextTouch(current: number) {
-		if (!shown || dismissHook || current !== generation) return;
+		if (!shown || current !== generation) return;
+
+		closingGeneration = current;
+
+		if (dismissHook) return;
 
 		try {
 			dismissHook = objc.hook('UIWindow', 'sendEvent:', {
 				after: () => {
-					if (current === generation) setTimeout(() => track(dismiss()), 0);
+					const closing = closingGeneration;
+
+					if (closing !== null && closing === generation) {
+						closingGeneration = null;
+						setTimeout(() => track(dismiss()), 0);
+					}
 				},
 			});
 		} catch {
@@ -230,6 +239,8 @@ export function createIOSTooltips({ objc, fabric }: Native, surfaceKey: string):
 		},
 		async dispose() {
 			disposed = true;
+			dismissHook?.remove();
+			dismissHook = null;
 			await dismiss();
 			await Promise.all([...tasks]);
 		},

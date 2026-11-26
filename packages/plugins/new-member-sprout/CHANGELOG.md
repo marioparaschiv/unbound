@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.7] - 2026-11-26
+
+### Fixed
+
+- Tapping the sprout on iOS no longer risks crashing Discord. The tooltip used to hook and unhook the window's touch handling on every tap; it now hooks it once.
+
 ## [1.1.6] - 2026-11-26
 
 ### Fixed
