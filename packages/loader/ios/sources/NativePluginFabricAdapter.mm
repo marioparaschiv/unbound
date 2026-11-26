@@ -96,10 +96,25 @@ static void fabricRequire(bool condition, const char *message)
 }
 
 static constexpr NSTimeInterval kFabricFirstRenderWait = 0.1;
+static constexpr NSInteger kFabricSurfaceDidRun        = 1 << 3;
+static constexpr NSInteger kFabricSurfaceDidStop       = 1 << 7;
+
+static bool fabricSurfaceRunning(id surface)
+{
+    if (![surface respondsToSelector:@selector(stage)])
+    {
+        return false;
+    }
+
+    using Function  = NSInteger (*)(id, SEL);
+    NSInteger stage = ((Function) objc_msgSend)(surface, @selector(stage));
+    return (stage & kFabricSurfaceDidRun) != 0 && (stage & kFabricSurfaceDidStop) == 0;
+}
 
 static void fabricWaitForFirstRender(id surface)
 {
-    if (![surface respondsToSelector:@selector(synchronouslyWaitFor:)])
+    if (![surface respondsToSelector:@selector(synchronouslyWaitFor:)]
+        || !fabricSurfaceRunning(surface))
     {
         return;
     }
