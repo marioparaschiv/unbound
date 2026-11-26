@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1](https://github.com/marioparaschiv/unbound/compare/client-v1.3.0...client-v1.3.1) (2026-11-26)
+
+
+### Bug Fixes
+
+* **client:** pass Client CI after the crash screen dialog host ([#2354](https://github.com/marioparaschiv/unbound/issues/2354)) ([1263ff3](https://github.com/marioparaschiv/unbound/commit/1263ff35ba8ffd44c0a6fdf8879ac3de0f911bea))
+* **client:** run UI worklets when Reanimated sets no native version ([#2364](https://github.com/marioparaschiv/unbound/issues/2364)) ([1845a58](https://github.com/marioparaschiv/unbound/commit/1845a58f7b833b0dca027a065367c9aae5ec6ef1))
+
 ## [1.3.0](https://github.com/marioparaschiv/unbound/compare/client-v1.2.0...client-v1.3.0) (2026-11-26)
 
 
