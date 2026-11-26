@@ -1,6 +1,6 @@
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { useState } from 'react';
 
 import { crashDiagnostics, pluginsLine } from '~/ui/error-fallback';
 import { reportCaughtError } from '~/ui/settings/report-crash';
@@ -10,6 +10,7 @@ import { Discord, SafeArea } from '~/metro/components';
 import type { CaughtError } from '~/ui/error-fallback';
 import { useCrashUpdate } from '~/ui/use-crash-update';
 import { getAll as getPlugins } from '~/plugins/api';
+import { holdSystemDialogs } from '~/dialogs/host';
 import { Clipboard } from '~/metro/common';
 import { messages } from '~/i18n/api';
 import { icons } from '~/assets/api';
@@ -43,6 +44,9 @@ function ErrorFallback({
 	const caught = { error, componentStack };
 	const [copied, setCopied] = useState(false);
 	const update = useCrashUpdate();
+
+	// This screen replaces the tree holding Discord's alert host, so Report's dialogs use the system alert.
+	useEffect(holdSystemDialogs, []);
 
 	function copyDiagnostics() {
 		const enabled = getPlugins().filter((plugin) => plugin.isEnabled());

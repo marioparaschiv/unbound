@@ -30,15 +30,17 @@ export type InputDialogOptions = {
 	onChange: (text: string) => void;
 };
 
-/** Props for `InputDialog`: the options below the dialog's title and description. */
-export type InputDialogProps = Omit<InputDialogOptions, 'label' | 'subLabel'> & DialogContentProps;
+/** Props for `InputDialog`: its options and a way to close it. */
+export type InputDialogProps = InputDialogOptions & DialogContentProps;
 
 /**
- * @description The body of a text input dialog: one focused input, its error, and a Save button that writes once
- * and closes the dialog. A multiline value uses Discord's `TextArea`, which reports text through `onChange` and
+ * @description A text input dialog in Discord's alert: one focused input and its error, then Save, which writes once
+ * and closes, and Cancel. A multiline value uses Discord's `TextArea`, which reports text through `onChange` and
  * shows a counter for `maxLength`.
  */
 function InputDialog({
+	label,
+	subLabel,
 	value,
 	placeholder,
 	variant,
@@ -68,24 +70,43 @@ function InputDialog({
 		errorMessage: error,
 	} as const;
 
+	const input =
+		variant === 'multiline' && Discord.TextArea ? (
+			<Discord.TextArea
+				{...props}
+				onChange={(change: TextChange) => setDraft(textOf(change))}
+			/>
+		) : (
+			<Discord.TextInput
+				{...props}
+				keyboardType={keyboardType}
+				secureTextEntry={variant === 'secret'}
+				onChange={setDraft}
+				onSubmitEditing={submit}
+			/>
+		);
+
+	// Save sits in `actions` beside Cancel, spaced as Discord spaces its own dialog buttons.
 	return (
-		<View style={styles.content}>
-			{variant === 'multiline' && Discord.TextArea ? (
-				<Discord.TextArea
-					{...props}
-					onChange={(change: TextChange) => setDraft(textOf(change))}
-				/>
-			) : (
-				<Discord.TextInput
-					{...props}
-					keyboardType={keyboardType}
-					secureTextEntry={variant === 'secret'}
-					onChange={setDraft}
-					onSubmitEditing={submit}
-				/>
-			)}
-			<Discord.Button text={messages.UNBOUND_SAVE} variant='primary' onPress={submit} />
-		</View>
+		<Discord.AlertModal
+			title={label}
+			content={subLabel}
+			extraContent={<View style={styles.content}>{input}</View>}
+			actions={
+				<>
+					<Discord.AlertActionButton
+						text={messages.UNBOUND_SAVE}
+						variant='primary'
+						onPress={submit}
+					/>
+					<Discord.AlertActionButton
+						text={messages.UNBOUND_CANCEL}
+						variant='secondary'
+						onPress={dismiss}
+					/>
+				</>
+			}
+		/>
 	);
 }
 
@@ -94,11 +115,11 @@ function InputDialog({
  * input is focused as it opens; Save writes once, Cancel closes without writing.
  * @param options The dialog's label, starting text, input variant, validation and save handler.
  */
-export function openInputDialog({ label, subLabel, ...input }: InputDialogOptions): void {
+export function openInputDialog(options: InputDialogOptions): void {
 	showDialog({
-		title: label,
-		body: subLabel,
-		content: ({ dismiss }) => <InputDialog {...input} dismiss={dismiss} />,
+		title: options.label,
+		body: options.subLabel,
+		modal: ({ dismiss }) => <InputDialog {...options} dismiss={dismiss} />,
 		cancel: messages.UNBOUND_CANCEL,
 	});
 }

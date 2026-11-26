@@ -47,10 +47,10 @@ function useCountdown(seconds: number, restart: number): number {
 }
 
 /**
- * @description The support gate's body: the red notice, a question that only a reader can answer, and the accept
- * button, which unlocks once the reading time has passed and the right answer is picked.
+ * @description The support gate's dialog: the red notice, a question that only a reader can answer, then the accept
+ * button, which unlocks once the reading time has passed and the right answer is picked, and Later.
  * @param props `dismiss` closes the dialog; `onAccept` records the acceptance; `onOpenForum` goes to the forum.
- * @returns The gate's content.
+ * @returns The gate's dialog.
  */
 export default function SupportGateContent({
 	dismiss,
@@ -73,7 +73,7 @@ export default function SupportGateContent({
 		}
 	}
 
-	return (
+	const content = (
 		<View style={styles.gate}>
 			<View style={styles.notice}>
 				<View style={styles.heading}>
@@ -116,14 +116,32 @@ export default function SupportGateContent({
 					{messages.UNBOUND_SUPPORT_GATE_WRONG}
 				</Discord.Text>
 			) : null}
-			<Discord.Button
-				text={buttonLabel(left, picked === 'forum')}
-				disabled={!ready}
-				onPress={() => {
-					dismiss();
-					onAccept();
-				}}
-			/>
 		</View>
+	);
+
+	// Accept sits in `actions` beside Later, spaced as Discord spaces its own dialog buttons.
+	return (
+		<Discord.AlertModal
+			title={messages.UNBOUND_SUPPORT_GATE_TITLE}
+			extraContent={content}
+			actions={
+				<>
+					<Discord.AlertActionButton
+						text={buttonLabel(left, picked === 'forum')}
+						variant='primary'
+						disabled={!ready}
+						onPress={() => {
+							dismiss();
+							onAccept();
+						}}
+					/>
+					<Discord.AlertActionButton
+						text={messages.UNBOUND_SUPPORT_GATE_LATER}
+						variant='secondary'
+						onPress={dismiss}
+					/>
+				</>
+			}
+		/>
 	);
 }

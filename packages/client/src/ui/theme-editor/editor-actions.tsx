@@ -13,13 +13,12 @@ type EditorActionsProps = {
 };
 
 /**
- * @description The theme editor's header actions, as Discord's nav-bar buttons: Undo and Redo, then Save, which needs a name.
+ * @description The theme editor's header actions, as Discord's nav-bar buttons: Undo and Redo, then Save.
  */
 function EditorActions({ saving, onSave }: EditorActionsProps) {
 	const styles = useStyles();
 	const canUndo = useStore(ThemeEditorStore, (state) => state.past.length > 0);
 	const canRedo = useStore(ThemeEditorStore, (state) => state.future.length > 0);
-	const named = useStore(ThemeEditorStore, (state) => Boolean(state.session?.name.trim()));
 
 	return (
 		<Discord.Stack direction='horizontal' spacing={16} align='center' style={styles.actions}>
@@ -38,11 +37,7 @@ function EditorActions({ saving, onSave }: EditorActionsProps) {
 			{saving ? (
 				<Discord.HeaderSubmittingIndicator />
 			) : (
-				<Discord.HeaderActionButton
-					text={messages.UNBOUND_SAVE}
-					disabled={!named}
-					onPress={onSave}
-				/>
+				<Discord.HeaderActionButton text={messages.UNBOUND_SAVE} onPress={onSave} />
 			)}
 		</Discord.Stack>
 	);
