@@ -1,10 +1,10 @@
 // Reads manager or settings state during render, which the React Compiler would cache past its changes.
 'use no memo';
 
+import { useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import { pickFeatured } from '@unbound-app/contracts/featured-addons';
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 import { memo, useContext, useMemo, useState } from 'react';
-import { View, type LayoutChangeEvent } from 'react-native';
 import type { AddonKind } from '@unbound-app/types/addons';
 import { useStore } from 'zustand';
 
@@ -22,6 +22,9 @@ import MarketplaceSkeleton from './marketplace-skeleton';
 import useStyles from './marketplace-list.style';
 import BrowseContext from './browse-context';
 
+/** Cards a hidden tab mounts ahead of its first visit: a screenful, so the tab opens drawn. */
+const PREFETCH_CARDS = 8;
+
 type MarketplaceListProps = {
 	kind: AddonKind;
 };
@@ -30,8 +33,8 @@ type MarketplaceListProps = {
  * @description One marketplace tab: the Featured shelf, then the stored catalog narrowed to the tab's
  * kind, the search and the filters, as a virtualised list of cards. The shelf steps aside while anything
  * narrows the list, and an empty state replaces the list when nothing matches.
- * The list mounts once its tab has been on screen and its page has laid out with a real size, and is told
- * that size: mounted on a page the pager hides, it measures 0×0 and mounts every card at once.
+ * A hidden tab prefetches only its first cards: the pager hides it with `display: none`, where the list measures
+ * 0×0 and mounts every card it holds. The whole list arrives once the tab is on screen.
  */
 function MarketplaceList({ kind }: MarketplaceListProps) {
 	const styles = useStyles();
@@ -40,12 +43,16 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 	// Read once per mount: the Updated window and the day's Featured picks hold still while the page is open.
 	const [now] = useState(Date.now);
 	const [pageSize, setPageSize] = useState<PageSize | undefined>();
+	const window = useWindowDimensions();
 	const active = tab === kind;
 	const [visited, setVisited] = useState(active);
 
 	if (active && !visited) {
 		setVisited(true);
 	}
+
+	// A hidden page never lays out, so a prefetched list starts from the window's size; a shown one waits for its own.
+	const size = pageSize ?? (visited ? undefined : { width: window.width, height: window.height });
 
 	const installs = useInstalledRevision(kind);
 	const browsing = !search.trim() && countActiveFilters(filters) === 0;
@@ -123,12 +130,12 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 
 	return (
 		<View style={styles.page} onLayout={measurePage}>
-			{pageSize && visited ? (
+			{size ? (
 				<MarketplaceRows
 					kind={kind}
-					addons={addons}
+					addons={visited ? addons : addons.slice(0, PREFETCH_CARDS)}
 					featured={featured}
-					pageSize={pageSize}
+					pageSize={size}
 					active={active}
 				/>
 			) : (
