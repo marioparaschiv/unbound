@@ -20,6 +20,7 @@ type FlashListProps<T> = {
 	keyExtractor: (item: T) => string;
 	renderItem: (info: ListItemInfo<T>) => ReactElement;
 	estimatedItemSize: number;
+	estimatedListSize?: { width: number; height: number };
 	ListEmptyComponent?: ReactElement;
 	ListHeaderComponent?: ReactElement;
 	ListFooterComponent?: ReactElement;

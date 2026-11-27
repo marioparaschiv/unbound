@@ -5,7 +5,7 @@ import { pickFeatured } from '@unbound-app/contracts/featured-addons';
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 import { memo, useContext, useMemo, useState } from 'react';
 import type { AddonKind } from '@unbound-app/types/addons';
-import { RefreshControl, View } from 'react-native';
+import { RefreshControl, View, type LayoutChangeEvent } from 'react-native';
 import { useStore } from 'zustand';
 
 import { countActiveFilters, filterCatalog } from '~/marketplace/filters';
@@ -32,6 +32,8 @@ type MarketplaceListProps = {
 
 type CardInfo = { item: ListedAddon };
 
+type PageSize = { width: number; height: number };
+
 const keyOf = (addon: ListedAddon) => addon.id;
 
 /**
@@ -39,7 +41,8 @@ const keyOf = (addon: ListedAddon) => addon.id;
  * kind, the search and the filters, as a virtualised list of cards. The shelf steps aside while anything
  * narrows the list, and an empty state replaces the list when nothing matches.
  * Pulling down refreshes the catalog; a failed refresh keeps the stored copy and says so.
- * The list mounts after its page lays out: on Android, one mounted with the pager's first page never shows its rows.
+ * The list mounts once its page lays out with a real size and is told that size: on some Android pagers the
+ * list never gets a layout of its own, and without one it draws its header but no rows.
  */
 function MarketplaceList({ kind }: MarketplaceListProps) {
 	const styles = useStyles();
@@ -49,7 +52,7 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 	const [pulling, setPulling] = useState(false);
 	// Read once per mount: the Updated window and the day's Featured picks hold still while the page is open.
 	const [now] = useState(Date.now);
-	const [pageReady, setPageReady] = useState(false);
+	const [pageSize, setPageSize] = useState<PageSize | undefined>();
 
 	const installs = useInstalledRevision(kind);
 	const browsing = !search.trim() && countActiveFilters(filters) === 0;
@@ -93,6 +96,13 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 				content: messages.UNBOUND_MARKETPLACE_REFRESH_FAILED,
 				icon: 'CircleXIcon',
 			});
+		}
+	}
+
+	function measurePage(event: LayoutChangeEvent) {
+		const { width, height } = event.nativeEvent.layout;
+		if (width > 0 && height > 0) {
+			setPageSize({ width, height });
 		}
 	}
 
@@ -145,13 +155,15 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 	}
 
 	return (
-		<View style={styles.page} onLayout={() => setPageReady(true)}>
-			{pageReady ? (
+		<View style={styles.page} onLayout={measurePage}>
+			{pageSize ? (
 				<FlashList
+					key={Math.round(pageSize.width)}
 					data={addons}
 					keyExtractor={keyOf}
 					renderItem={renderCard}
 					estimatedItemSize={160}
+					estimatedListSize={pageSize}
 					ListHeaderComponent={
 						featured.length ? (
 							<View style={styles.header}>
