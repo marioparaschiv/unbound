@@ -4,55 +4,48 @@
 import { pickFeatured } from '@unbound-app/contracts/featured-addons';
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 import { memo, useContext, useMemo, useState } from 'react';
+import { View, type LayoutChangeEvent } from 'react-native';
 import type { AddonKind } from '@unbound-app/types/addons';
-import { RefreshControl, View, type LayoutChangeEvent } from 'react-native';
 import { useStore } from 'zustand';
 
 import { countActiveFilters, filterCatalog } from '~/marketplace/filters';
 import { queryCatalog } from '~/marketplace/catalog';
 import MarketplaceStore from '~/marketplace/state';
-import FlashList from '~/ui/components/flash-list';
 import Empty from '~/ui/components/empty-state';
 import { messages, format } from '~/i18n/api';
 import { SafeArea } from '~/metro/components';
 import { Manager } from '~/addons/manager';
-import { show } from '~/toasts/api';
 
+import MarketplaceRows, { type PageSize } from './marketplace-rows';
 import useInstalledRevision from './use-installed-revision';
 import MarketplaceSkeleton from './marketplace-skeleton';
-import MarketplaceCard from './marketplace-card';
 import useStyles from './marketplace-list.style';
 import BrowseContext from './browse-context';
-import FeaturedShelf from './featured-shelf';
-import SectionTitle from './section-title';
 
 type MarketplaceListProps = {
 	kind: AddonKind;
 };
 
-type CardInfo = { item: ListedAddon };
-
-type PageSize = { width: number; height: number };
-
-const keyOf = (addon: ListedAddon) => addon.id;
-
 /**
  * @description One marketplace tab: the Featured shelf, then the stored catalog narrowed to the tab's
  * kind, the search and the filters, as a virtualised list of cards. The shelf steps aside while anything
  * narrows the list, and an empty state replaces the list when nothing matches.
- * Pulling down refreshes the catalog; a failed refresh keeps the stored copy and says so.
- * The list mounts once its page lays out with a real size and is told that size: on some Android pagers the
- * list never gets a layout of its own, and without one it draws its header but no rows.
+ * The list mounts once its tab has been on screen and its page has laid out with a real size, and is told
+ * that size: mounted on a page the pager hides, it measures 0×0 and mounts every card at once.
  */
 function MarketplaceList({ kind }: MarketplaceListProps) {
 	const styles = useStyles();
 	const state = useStore(MarketplaceStore, (store) => store.state);
-	const { search, filters } = useContext(BrowseContext);
-	// Only a pull shows the spinner, so the background refresh on open doesn't shift the list.
-	const [pulling, setPulling] = useState(false);
+	const { search, filters, tab } = useContext(BrowseContext);
 	// Read once per mount: the Updated window and the day's Featured picks hold still while the page is open.
 	const [now] = useState(Date.now);
 	const [pageSize, setPageSize] = useState<PageSize | undefined>();
+	const active = tab === kind;
+	const [visited, setVisited] = useState(active);
+
+	if (active && !visited) {
+		setVisited(true);
+	}
 
 	const installs = useInstalledRevision(kind);
 	const browsing = !search.trim() && countActiveFilters(filters) === 0;
@@ -83,35 +76,12 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 		[state, kind, browsing, now],
 	);
 
-	async function pull() {
-		setPulling(true);
-
-		const ok = await MarketplaceStore.getState().refresh();
-
-		setPulling(false);
-
-		if (!ok && MarketplaceStore.getState().state.status === 'ready') {
-			show({
-				title: messages.UNBOUND_MARKETPLACE,
-				content: messages.UNBOUND_MARKETPLACE_REFRESH_FAILED,
-				icon: 'CircleXIcon',
-			});
-		}
-	}
-
 	function measurePage(event: LayoutChangeEvent) {
 		const { width, height } = event.nativeEvent.layout;
+
 		if (width > 0 && height > 0) {
 			setPageSize({ width, height });
 		}
-	}
-
-	function renderCard({ item }: CardInfo) {
-		return (
-			<View style={styles.card}>
-				<MarketplaceCard addon={item} kind={kind} />
-			</View>
-		);
 	}
 
 	if (state.status === 'idle' || state.status === 'loading') {
@@ -122,13 +92,10 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 		);
 	}
 
-	const manager = Manager.for(kind);
-	const plural = messages[manager.label];
-
 	if (!addons.length) {
 		const failed = state.status === 'failed';
 		const searching = Boolean(search.trim());
-		const type = messages[manager.noun];
+		const type = messages[Manager.for(kind).noun];
 		const message = failed
 			? messages.UNBOUND_MARKETPLACE_ERROR
 			: browsing
@@ -156,37 +123,19 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 
 	return (
 		<View style={styles.page} onLayout={measurePage}>
-			{pageSize ? (
-				<FlashList
-					key={Math.round(pageSize.width)}
-					data={addons}
-					keyExtractor={keyOf}
-					renderItem={renderCard}
-					estimatedItemSize={160}
-					estimatedListSize={pageSize}
-					ListHeaderComponent={
-						featured.length ? (
-							<View style={styles.header}>
-								<FeaturedShelf addons={featured} kind={kind} />
-								<SectionTitle>
-									{format('UNBOUND_MARKETPLACE_ALL', { type: plural })}
-								</SectionTitle>
-							</View>
-						) : undefined
-					}
-					// The bottom inset pads the end of the list, so the cards scroll under the home indicator, as on the Plugins page.
-					ListFooterComponent={<SafeArea.SafeAreaPaddingView bottom />}
-					keyboardDismissMode='on-drag'
-					contentContainerStyle={styles.content}
-					refreshControl={
-						<RefreshControl
-							refreshing={pulling}
-							onRefresh={pull}
-							tintColor={styles.spinner.color}
-						/>
-					}
+			{pageSize && visited ? (
+				<MarketplaceRows
+					kind={kind}
+					addons={addons}
+					featured={featured}
+					pageSize={pageSize}
+					active={active}
 				/>
-			) : null}
+			) : (
+				<View style={styles.loading}>
+					<MarketplaceSkeleton />
+				</View>
+			)}
 		</View>
 	);
 }
