@@ -260,6 +260,8 @@ export type SegmentedControlState = {
 	items: SegmentedControlItem[];
 	/** Selects the tab at `index`. */
 	setActiveIndex: (index: number) => void;
+	/** The pressed tab's index, or -1: a Reanimated shared value. `SegmentedControlPages` mounts the pages it spans. */
+	pressedIndex?: { get: () => number; set: (index: number) => void };
 };
 
 /** A tab of a segmented control, with the page it shows. */

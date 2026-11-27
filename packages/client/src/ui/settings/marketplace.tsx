@@ -4,6 +4,7 @@ import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { View } from 'react-native';
 import { useStore } from 'zustand';
 
+import usePrefetchPages from '~/ui/marketplace/use-prefetch-pages';
 import MarketplaceList from '~/ui/marketplace/marketplace-list';
 import useOpenListing from '~/ui/marketplace/use-open-listing';
 import BrowseContext from '~/ui/marketplace/browse-context';
@@ -70,6 +71,8 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 		defaultIndex: kind ? ADDON_KINDS.indexOf(kind) : 0,
 		onPageChange: setTab,
 	});
+
+	usePrefetchPages(state, ADDON_KINDS.length);
 
 	// A link opened while the page is mounted only changes its params.
 	useEffect(() => {
