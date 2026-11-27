@@ -35,12 +35,18 @@ type CreatedMessage = {
 
 function keepDeleted(channelId: string, messageId: string): boolean {
 	if (messageLog.isDeleted(messageId)) {
+		if (ownDeletions.has(messageId)) {
+			ownDeletions.forget(messageId);
+
+			return true;
+		}
+
 		messageLog.forget(messageId);
 
 		return false;
 	}
 
-	if (ownDeletions.has(messageId) || isDebugLocalMessage(channelId, messageId)) {
+	if (isDebugLocalMessage(channelId, messageId)) {
 		return false;
 	}
 
@@ -62,7 +68,7 @@ function keepDeleted(channelId: string, messageId: string): boolean {
 }
 
 /**
- * @description Keeps deleted messages in the chat by dropping the deletions the log records. A second deletion of a logged message, such as Dismiss message, goes through, and so do messages the user deleted themselves and sends that never reached Discord.
+ * @description Keeps deleted messages in the chat by dropping the deletions the log records. A second deletion of a logged message, such as Dismiss message, goes through, except the gateway's echo of the user's own deletion; sends that never reached Discord go through.
  * Intercepts `MESSAGE_DELETE` and `MESSAGE_DELETE_BULK`.
  */
 export function interceptDeletions(): void {
@@ -172,7 +178,7 @@ export function trackNonces(): void {
 }
 
 /**
- * @description Marks the messages the user deletes, so their deletion is never logged. Patches `deleteMessage` on Discord's `MessageActions`.
+ * @description Marks the messages the user deletes, so the gateway's echo of the deletion does not count as Dismiss message. Patches `deleteMessage` on Discord's `MessageActions`.
  */
 export function trackOwnDeletions(): void {
 	const Messages = metro.api.Messages;

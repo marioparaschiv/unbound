@@ -43,8 +43,19 @@ describe('a deleted message', () => {
 		expect(isMarkedDeleted()).toBe(true);
 	});
 
-	test('goes straight through when you deleted it yourself', async () => {
+	test('stays logged when you deleted it yourself, through the gateway echo', async () => {
 		MessageActions.deleteMessage('c1', 'm1');
+		await del();
+		await del();
+
+		expect(reached).toEqual([]);
+		expect(isMarkedDeleted()).toBe(true);
+	});
+
+	test('goes through when you dismiss your own logged deletion', async () => {
+		MessageActions.deleteMessage('c1', 'm1');
+		await del();
+		await del();
 		await del();
 
 		expect(reached).toMatchObject([{ type: 'MESSAGE_DELETE', id: 'm1' }]);

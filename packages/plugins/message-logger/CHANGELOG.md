@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.5] - 2026-11-27
+
+### Fixed
+
+- Messages you delete yourself are logged like everyone else's, unless Ignore yourself is on. Before, they skipped the log.
+
 ## [1.5.4] - 2026-11-26
 
 ### Fixed
