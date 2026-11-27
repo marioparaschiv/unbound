@@ -19,6 +19,7 @@ static loader::toolbox::MenuStep menuStep(NSDictionary *item, BOOL confirmed)
 
 @interface ToolboxViewController ()
 @property (nonatomic, assign) BOOL dismissalInProgress;
+@property (nonatomic, weak) UIWindow *originalKeyWindow;
 @end
 
 @implementation Toolbox
@@ -594,7 +595,7 @@ static NSString *iconForMenuItem(NSString *identifier)
 - (void)finishDismissal
 {
     UIWindow *storedWindow  = objc_getAssociatedObject(self, "recoveryTopWindow");
-    UIWindow *origKeyWindow = objc_getAssociatedObject(self, "recoveryOriginalKeyWindow");
+    UIWindow *origKeyWindow = self.originalKeyWindow;
 
     if (storedWindow)
     {
@@ -604,8 +605,7 @@ static NSString *iconForMenuItem(NSString *identifier)
 
     [origKeyWindow makeKeyAndVisible];
 
-    objc_setAssociatedObject(self, "recoveryTopWindow", nil, OBJC_ASSOCIATION_ASSIGN);
-    objc_setAssociatedObject(self, "recoveryOriginalKeyWindow", nil, OBJC_ASSOCIATION_ASSIGN);
+    objc_setAssociatedObject(self, "recoveryTopWindow", nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 void showToolboxSheet(void)
@@ -651,11 +651,7 @@ void showToolboxSheet(void)
 
     objc_setAssociatedObject(settingsVC, "recoveryTopWindow", topWindow,
                              OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    if (originalKeyWindow)
-    {
-        objc_setAssociatedObject(settingsVC, "recoveryOriginalKeyWindow", originalKeyWindow,
-                                 OBJC_ASSOCIATION_ASSIGN);
-    }
+    settingsVC.originalKeyWindow = originalKeyWindow;
 }
 
 @end
