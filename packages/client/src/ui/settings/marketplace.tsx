@@ -42,8 +42,8 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 	const [search, setSearch] = useState(id ?? '');
 	const [filters, setFilters] = useState(DEFAULT_FILTERS);
 	const [tab, setTab] = useState(kind ? ADDON_KINDS.indexOf(kind) : 0);
-	const browse = useMemo(() => ({ search, filters }), [search, filters]);
 	const active = ADDON_KINDS[tab] ?? 'plugin';
+	const browse = useMemo(() => ({ search, filters, tab: active }), [search, filters, active]);
 	// Read only to open a linked addon: each tab subscribes on its own, so catalog loads skip re-rendering the page.
 	const catalog = useStore(MarketplaceStore, (store) => (id ? store.state : undefined));
 	const lastOpened = useRef<string | undefined>(undefined);
