@@ -5,7 +5,7 @@ import {
 import type { NativeObjCBridge } from '@unbound-app/api/native';
 import viewKey from '@unbound-plugins/shared/native/ios/view-key';
 
-import { createTextViews, findTextViews } from '~/native/ios/text-views';
+import { createTextViews } from '~/native/ios/text-views';
 import { createBridge, type Handle } from '~/native/ios/bridge';
 import { createImageCache } from '~/native/ios/image-cache';
 import type { MentionIndex } from '~/lib/mention-index';
@@ -186,9 +186,7 @@ export function createRenderer(
 	}
 
 	function restoreAll() {
-		for (const cell of activeCells.values()) {
-			for (const view of findTextViews(bridge, cell)) textViews.restore(view);
-		}
+		for (const view of textViews.rewrittenViews()) textViews.restore(view);
 
 		activeCells.clear();
 		pendingCells.clear();

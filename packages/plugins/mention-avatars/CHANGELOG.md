@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.6] - 2026-11-28
+
+### Fixed
+
+- Switching channels restores only the message text the plugin rewrote. Before, it walked up to 1,600 views per visible message with a native call each, which could freeze Discord for seconds in busy channels.
+
 ## [1.2.5] - 2026-11-26
 
 ### Fixed
