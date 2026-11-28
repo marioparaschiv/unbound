@@ -1,7 +1,6 @@
 import type { RoleColorStyle } from '@unbound-plugins/shared/colors/role-colors';
 import type {
 	NativeClassHandle,
-	NativeHookToken,
 	NativeObjCBridge,
 	NativeObjectHandle,
 	NativeUIScope,
@@ -70,7 +69,6 @@ type TagRecord = {
 	signature: string;
 	originalBackground: NativeObjectHandle | null;
 	originalOpaque: boolean;
-	follows: NativeHookToken[];
 };
 
 type TagState = {
@@ -461,10 +459,6 @@ function removeRecord(current: TagState, id: string, record: TagRecord) {
 
 	current.records.delete(id);
 
-	for (const follow of record.follows) {
-		follow.remove();
-	}
-
 	objc.invoke(record.layer, 'removeFromSuperlayer', []);
 
 	const background = objc.invoke(
@@ -482,30 +476,34 @@ function removeRecord(current: TagState, id: string, record: TagRecord) {
 	}
 }
 
-function followLabel(current: TagState, record: TagRecord): NativeHookToken[] {
+function followRecord(current: TagState, label: NativeObjectHandle) {
 	'worklet';
-	const follow = () => {
-		try {
-			fit(current, record);
-		} catch (error) {
-			reportWorkletError('More User Tags', error);
-		}
-	};
 
-	return FOLLOWED_SELECTORS.flatMap((selector) => {
-		try {
-			return [
-				current.objc.hook(
-					LABEL_CLASS,
-					selector,
-					{ after: follow },
-					{ instance: record.label },
-				),
-			];
-		} catch {
-			return [];
-		}
-	});
+	if (!current.records.size) {
+		return;
+	}
+
+	const record = current.records.get(keyOf(current.objc, label));
+
+	if (!record) {
+		return;
+	}
+
+	try {
+		fit(current, record);
+	} catch (error) {
+		reportWorkletError('More User Tags', error);
+	}
+}
+
+function followLabels(current: TagState) {
+	'worklet';
+
+	for (const selector of FOLLOWED_SELECTORS) {
+		current.objc.hook(LABEL_CLASS, selector, {
+			after: ({ self }) => followRecord(current, self),
+		});
+	}
 }
 
 function createRecord(
@@ -536,13 +534,10 @@ function createRecord(
 		signature: '',
 		originalBackground: objc.invoke(label, 'backgroundColor', []) as NativeObjectHandle | null,
 		originalOpaque: Boolean(objc.invoke(label, 'isOpaque', [])),
-		follows: [],
 	};
 
 	objc.invoke(layer, 'setName:', [GRADIENT_LAYER_NAME]);
 	objc.invoke(parentLayer, 'insertSublayer:below:', [layer, objc.invoke(label, 'layer', [])]);
-	record.follows = followLabel(current, record);
-
 	return record;
 }
 
@@ -774,6 +769,7 @@ export function installTagGradients(scope: NativeUIScope, settings: TagSettings)
 
 	objc.hook(LABEL_CLASS, 'setText:', { after: onLabel });
 	objc.hook(LABEL_CLASS, 'setBackgroundColor:', { after: onLabel });
+	followLabels(current);
 
 	if (objc.getClass(TAG_VIEW_CLASS)) {
 		objc.hook(TAG_VIEW_CLASS, 'layoutSubviews', {
