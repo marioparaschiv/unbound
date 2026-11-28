@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.3] - 2026-11-28
+
+### Fixed
+
+- Gradient tags follow their label with one hook per property instead of five per tag. Before, a long chat filled the app's 256 native hooks, so other plugins failed to hook, and could freeze Discord.
+
 ## [1.4.2] - 2026-11-24
 
 ### Fixed
