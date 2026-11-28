@@ -190,25 +190,33 @@ function tagThemeContext(mdl: ThemeContextModule) {
 
 	hookPatched.add(mdl);
 	HookPatcher.before(mdl, 'RootThemeContextProvider', ({ args }) => {
-		const id = useStore(ThemeStore, (state) => state.applied);
-		const draft = useStore(ThemeStore, (state) => (state.preview ? state.revision : 0));
-		const background = useStore(ThemeStore, (state) => state.background);
-		const [props] = args;
-
-		if (!active) return;
-
-		const tag = [
-			id,
-			draft && `draft${draft}`,
-			background && `${background.url}@${background.opacity}`,
-		]
-			.filter(Boolean)
-			.join(':');
-
-		if (!tag) return;
-
-		args[0] = { ...props, enabledExperiments: tagExperiments(props.enabledExperiments, tag) };
+		try {
+			tagRootProps(args);
+		} catch (error) {
+			Logger.error('Failed to tag the root theme context:', error);
+		}
 	});
+}
+
+function tagRootProps(args: [ThemeContextProps?, ...unknown[]]) {
+	const id = useStore(ThemeStore, (state) => state.applied);
+	const draft = useStore(ThemeStore, (state) => (state.preview ? state.revision : 0));
+	const background = useStore(ThemeStore, (state) => state.background);
+	const [props] = args;
+
+	if (!active) return;
+
+	const tag = [
+		id,
+		draft && `draft${draft}`,
+		background && `${background.url}@${background.opacity}`,
+	]
+		.filter(Boolean)
+		.join(':');
+
+	if (!tag) return;
+
+	args[0] = { ...props, enabledExperiments: tagExperiments(props?.enabledExperiments, tag) };
 }
 
 // Shown while a theme edit is open and no editor screen is, so the user can return to it from anywhere.
