@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.3.2](https://github.com/marioparaschiv/unbound/compare/client-v1.3.1...client-v1.3.2) (2026-11-28)
+
+
+### Bug Fixes
+
+* **client:** draw marketplace rows on Android pagers ([#2378](https://github.com/marioparaschiv/unbound/issues/2378)) ([0edb786](https://github.com/marioparaschiv/unbound/commit/0edb7864e2d7f78fc2188f5c7c128f7fdbe7ae41))
+* **client:** draw marketplace tabs only while on screen ([#2385](https://github.com/marioparaschiv/unbound/issues/2385)) ([cb958e6](https://github.com/marioparaschiv/unbound/commit/cb958e6cb83159aad03331d5e3a788f2b5f62aeb))
+* **client:** keep the root theme patch when tagging the context fails ([#2400](https://github.com/marioparaschiv/unbound/issues/2400)) ([1c1c3f0](https://github.com/marioparaschiv/unbound/commit/1c1c3f0aba91d7d23d32073ab2c2eb55f5ed3006))
+
+
+### Performance Improvements
+
+* **client:** prefetch every marketplace tab ([#2387](https://github.com/marioparaschiv/unbound/issues/2387)) ([d4b4af1](https://github.com/marioparaschiv/unbound/commit/d4b4af10bad763d3f65b95b483f409a92882672e))
+
 ## [1.3.1](https://github.com/marioparaschiv/unbound/compare/client-v1.3.0...client-v1.3.1) (2026-11-26)
 
 
