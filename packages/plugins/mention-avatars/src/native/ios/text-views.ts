@@ -20,6 +20,7 @@ type TextViewState = {
 	originalString: string;
 	rendered: Handle;
 	signature: string;
+	view: Handle;
 };
 
 type CellTextViews = {
@@ -29,52 +30,6 @@ type CellTextViews = {
 };
 
 export type TextViews = ReturnType<typeof createTextViews>;
-
-/**
- * @description Collects the text views under a view, depth-first, at most 40 levels and 1,600 views deep.
- * @param bridge The plugin's native bridge.
- * @param root The view to search.
- * @returns Every view with settable attributed text.
- */
-export function findTextViews(bridge: Bridge, root: Handle): Handle[] {
-	const { objc } = bridge;
-	const maxDepth = 40;
-	const maxVisited = 1_600;
-	const views: Handle[] = [];
-	const pending: [Handle, number][] = [[root, 0]];
-	let visited = 0;
-
-	while (pending.length && visited < maxVisited) {
-		const [view, depth] = pending.pop()!;
-
-		visited++;
-
-		if (isTextView(bridge, view)) views.push(view);
-
-		// Reaction pills hold their own text views, and never a mention.
-		if (
-			depth >= maxDepth ||
-			!objc.respondsTo(view, 'subviews') ||
-			objc.className(view) === 'DCDReactionListView'
-		) {
-			continue;
-		}
-
-		const children = bridge.call(view, 'subviews');
-
-		if (!Array.isArray(children)) {
-			continue;
-		}
-
-		const remaining = maxVisited - visited - pending.length;
-
-		for (let index = Math.min(children.length, remaining) - 1; index >= 0; index--) {
-			pending.push([children[index], depth + 1]);
-		}
-	}
-
-	return views;
-}
 
 function isTextView(bridge: Bridge, view: Handle): boolean {
 	return (
@@ -282,6 +237,7 @@ export function createTextViews(bridge: Bridge, images: ImageCache, showAtSymbol
 			originalString: base.originalString,
 			rendered,
 			signature,
+			view,
 		});
 
 		if (bridge.call(rendered, 'isEqual:', text)) return false;
@@ -308,6 +264,7 @@ export function createTextViews(bridge: Bridge, images: ImageCache, showAtSymbol
 			cellViews.delete(key);
 		},
 		knownViews: (key: string): Handle[] => cellViews.get(key)?.views ?? [],
+		rewrittenViews: (): Handle[] => [...states.values()].map((state) => state.view),
 		clear() {
 			states.clear();
 			cellViews.clear();
