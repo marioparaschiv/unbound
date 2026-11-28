@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.14] - 2026-11-28
+
+### Fixed
+
+- Builds an embed's text on the JavaScript thread instead of waiting on the main thread for each step, so placing embeds while the chat scrolls can no longer hold Discord up.
+
 ## [1.1.13] - 2026-11-24
 
 ### Fixed

@@ -1,5 +1,5 @@
 import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/native';
-import { safeInvoke } from '@unbound-plugins/shared/native/ios/safe-invoke';
+import { safeCall } from '@unbound-plugins/shared/native/ios/safe-invoke';
 import {
 	isAttachmentRun,
 	textAttachmentBridge,
@@ -40,12 +40,12 @@ export function linkFont(
 	attributedText: NativeObjectHandle,
 	range: TextRange,
 ): NativeObjectHandle | null {
-	const text = nativeString(objc, safeInvoke(objc, attributedText, 'string')) ?? '';
+	const text = nativeString(objc, safeCall(objc, attributedText, 'string')) ?? '';
 
 	for (let index = range.location, end = range.location + range.length; index < end; index++) {
 		if (text[index] !== '\uFFFC') continue;
 
-		const attributes = safeInvoke(
+		const attributes = safeCall(
 			objc,
 			attributedText,
 			'attributesAtIndex:effectiveRange:',
@@ -68,7 +68,7 @@ function isFontRun(value: unknown): value is FontRun {
 function plainText(objc: NativeObjCBridge, value: string, font: NativeObjectHandle | null) {
 	const text = objc.alloc('NSMutableAttributedString');
 
-	safeInvoke(objc, text, 'initWithString:attributes:', value, font ? { NSFont: font } : {});
+	safeCall(objc, text, 'initWithString:attributes:', value, font ? { NSFont: font } : {});
 
 	return text;
 }
@@ -93,12 +93,12 @@ export function surfaceInsertion(
 
 	if (!attachment) return null;
 
-	const sourceText = nativeString(objc, safeInvoke(objc, original, 'string')) ?? '';
+	const sourceText = nativeString(objc, safeCall(objc, original, 'string')) ?? '';
 	const insertAt = range.location + range.length;
 	const leadingNewline = sourceText[insertAt - 1] === '\n' ? '' : '\n';
 	const trailingNewline = sourceText.slice(insertAt).trim().length > 0 ? '\n' : '';
 	const spacerFont = font
-		? (safeInvoke(
+		? (safeCall(
 				objc,
 				font,
 				'fontWithSize:',
@@ -107,7 +107,7 @@ export function surfaceInsertion(
 		: null;
 	const insertion = objc.alloc('NSMutableAttributedString');
 
-	safeInvoke(objc, insertion, 'init');
+	safeCall(objc, insertion, 'init');
 
 	for (const part of [
 		plainText(objc, leadingNewline, font),
@@ -115,7 +115,7 @@ export function surfaceInsertion(
 		attachment,
 		plainText(objc, trailingNewline, font),
 	]) {
-		safeInvoke(objc, insertion, 'appendAttributedString:', part);
+		safeCall(objc, insertion, 'appendAttributedString:', part);
 	}
 
 	return { text: insertion, attachmentOffset: leadingNewline.length + 2 };

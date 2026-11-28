@@ -4,7 +4,7 @@ import type {
 	NativeObjectHandle,
 } from '@unbound-app/api/native';
 import { LATEST_CALL_PER_RECEIVER } from '@unbound-plugins/shared/native/ios/hook-options';
-import { safeInvoke } from '@unbound-plugins/shared/native/ios/safe-invoke';
+import { safeCall, safeInvoke } from '@unbound-plugins/shared/native/ios/safe-invoke';
 import { toRect } from '@unbound-plugins/shared/native/ios/rect';
 import {
 	MESSAGE_TEXT_VIEW_CLASSES,
@@ -112,7 +112,7 @@ function applyAttachment(
 
 		const insertAt = surface.range.location + surface.range.length;
 
-		const updated = safeInvoke(
+		const updated = safeCall(
 			objc,
 			surface.original,
 			'mutableCopy',
@@ -120,9 +120,9 @@ function applyAttachment(
 
 		if (!updated) return false;
 
-		safeInvoke(objc, updated, 'insertAttributedString:atIndex:', insertion.text, insertAt);
+		safeCall(objc, updated, 'insertAttributedString:atIndex:', insertion.text, insertAt);
 
-		const text = nativeString(objc, safeInvoke(objc, updated, 'string'));
+		const text = nativeString(objc, safeCall(objc, updated, 'string'));
 
 		if (text === undefined) return false;
 
@@ -184,7 +184,7 @@ export function updateSurface(
 	attributedText: NativeObjectHandle,
 	range: TextRange,
 ) {
-	const text = nativeString(session.objc, safeInvoke(session.objc, attributedText, 'string'));
+	const text = nativeString(session.objc, safeCall(session.objc, attributedText, 'string'));
 	const [owned] =
 		text === undefined
 			? []
@@ -270,7 +270,7 @@ export function teardownSurface(session: Session, surface: EmbeddedSurface, rest
 			'attributedText',
 		) as NativeObjectHandle | null;
 		const currentText = current
-			? nativeString(objc, safeInvoke(objc, current, 'string'))
+			? nativeString(objc, safeCall(objc, current, 'string'))
 			: undefined;
 
 		// Only restore text the embed wrote; Discord may have set new text since.
