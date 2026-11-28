@@ -1,0 +1,199 @@
+/* Light theme */
+:root {
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #ffffff;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --accent-primary: #aa454d;
+  --accent-secondary: #8f3941;
+  --gradient: linear-gradient(135deg, #c25760 0%, #aa454d 100%);
+  --border-color: rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --danger-bg: #fee2e2;
+  --danger-text: #991b1b;
+}
+
+/* Dark theme */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #1a1b1e;
+    --bg-secondary: #2a2b2e;
+    --text-primary: #f3f4f6;
+    --text-secondary: #d1d5db;
+    --text-muted: #9ca3af;
+    --accent-primary: #d97a80;
+    --accent-secondary: #c25760;
+    --gradient: linear-gradient(135deg, #d97a80 0%, #c25760 100%);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+    --danger-bg: #7f1d1d;
+    --danger-text: #fecaca;
+  }
+}
+
+body {
+  background-color: var(--bg-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  color: var(--text-primary);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Header components */
+.package-header,
+.repo-header,
+.changelog-header,
+.screenshots-header {
+  background: var(--gradient);
+  color: white;
+  padding: 3rem 0;
+  margin-bottom: 2rem;
+}
+
+.repo-header img {
+  width: 64px;
+  height: 64px;
+  margin-right: 1rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+}
+
+/* Grid and cards */
+.screenshot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.screenshot-card,
+.card {
+  background-color: var(--bg-secondary);
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.screenshot-card:hover,
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.screenshot-caption {
+  padding: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.card-header {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: 1rem 1.25rem;
+}
+
+/* Typography */
+.section-title {
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.card-title,
+.card-text {
+  color: var(--text-primary);
+}
+
+.h5 {
+  margin-top: -10px;
+}
+
+/* Lists and items */
+.list-group {
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.list-group-item {
+  background-color: var(--bg-secondary);
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 1rem 1.25rem;
+}
+
+.link-item {
+  color: var(--accent-primary);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.link-item:hover {
+  background-color: var(--bg-primary);
+  color: var(--accent-secondary);
+}
+
+/* Components */
+.badge,
+.version-tag {
+  background-color: var(--accent-primary);
+  color: white;
+  font-weight: 600;
+  padding: 0.5em 1em;
+  border-radius: 6px;
+}
+
+.alert {
+  border: none;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+}
+
+.alert-danger {
+  background-color: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.changelog-date {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.btn-primary {
+  background-color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  margin: 0.25rem;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+}
+
+/* Media queries */
+@media (max-width: 768px) {
+  .screenshot-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
+
+/* Smooth transitions */
+* {
+  transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+}

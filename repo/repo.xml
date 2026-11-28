@@ -1,0 +1,14 @@
+<repo>
+    <footerlinks>
+        <link>
+            <name>View on GitHub</name>
+            <url>https://github.com/marioparaschiv/unbound</url>
+            <iconclass>fa-brands fa-github</iconclass>
+        </link>
+        <link>
+            <name>Powered by repo.me</name>
+            <url>https://github.com/uchks/repo.me</url>
+            <iconclass>fa-solid fa-thumbs-up</iconclass>
+        </link>
+    </footerlinks>
+</repo>
