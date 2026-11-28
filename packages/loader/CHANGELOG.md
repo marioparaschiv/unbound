@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.1](https://github.com/marioparaschiv/unbound/compare/loader-v1.13.0...loader-v1.13.1) (2026-11-28)
+
+
+### Bug Fixes
+
+* **loader:** keep the toolbox's previous window weakly on iOS ([#2382](https://github.com/marioparaschiv/unbound/issues/2382)) ([3fd71ee](https://github.com/marioparaschiv/unbound/commit/3fd71ee0c8cd5a00f853af15f75867b4df91f610))
+
 ## [1.13.0](https://github.com/marioparaschiv/unbound/compare/loader-v1.12.9...loader-v1.13.0) (2026-11-26)
 
 
